@@ -48,7 +48,7 @@ export default function Contact() {
       {/* Hero */}
       <section className="relative h-[40vh] min-h-[300px] overflow-hidden">
         <img
-          src="/manus-storage/deals-section_ee7752d9.jpg"
+          src="/images/deals-section_ee7752d9.jpg"
           alt="Contact"
           className="absolute inset-0 w-full h-full object-cover"
         />

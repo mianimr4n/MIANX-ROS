@@ -14,41 +14,41 @@ const menuCategories = ["All", "Pizzas", "Burgers", "Pasta", "Deals", "Sides", "
 
 const menuItems = [
   // Signature Pizzas
-  { id: "p1", name: "Kabab Stuffed Crust Pizza", price: 1200, category: "Pizzas", description: "Signature kabab-stuffed crust with special toppings — our most loved item", image: "/manus-storage/menu-pizza_f729e710.jpg", badge: "Signature" },
-  { id: "p2", name: "Chicago Extreme Pizza", price: 1500, category: "Pizzas", description: "Loaded with premium toppings and extra cheese", image: "/manus-storage/menu-pizza_f729e710.jpg", badge: null },
-  { id: "p3", name: "Chicken Supreme Pizza", price: 1100, category: "Pizzas", description: "Tender chicken, bell peppers, and mozzarella", image: "/manus-storage/menu-pizza_f729e710.jpg", badge: null },
-  { id: "p4", name: "Sunset Paradise Pizza", price: 1300, category: "Pizzas", description: "A tropical twist with pineapple and ham", image: "/manus-storage/hero-food-spread_368dc5ce.jpg", badge: null },
-  { id: "p5", name: "Pepperoni Pizza", price: 950, category: "Pizzas", description: "Classic pepperoni with melted mozzarella", image: "/manus-storage/hero-banner_37686ed3.jpg", badge: null },
+  { id: "p1", name: "Kabab Stuffed Crust Pizza", price: 1200, category: "Pizzas", description: "Signature kabab-stuffed crust with special toppings — our most loved item", image: "/images/menu-pizza_f729e710.jpg", badge: "Signature" },
+  { id: "p2", name: "Chicago Extreme Pizza", price: 1500, category: "Pizzas", description: "Loaded with premium toppings and extra cheese", image: "/images/menu-pizza_f729e710.jpg", badge: null },
+  { id: "p3", name: "Chicken Supreme Pizza", price: 1100, category: "Pizzas", description: "Tender chicken, bell peppers, and mozzarella", image: "/images/menu-pizza_f729e710.jpg", badge: null },
+  { id: "p4", name: "Sunset Paradise Pizza", price: 1300, category: "Pizzas", description: "A tropical twist with pineapple and ham", image: "/images/hero-food-spread_368dc5ce.jpg", badge: null },
+  { id: "p5", name: "Pepperoni Pizza", price: 950, category: "Pizzas", description: "Classic pepperoni with melted mozzarella", image: "/images/hero-banner_37686ed3.jpg", badge: null },
 
   // Burgers
-  { id: "b1", name: "Injected Broast Burger", price: 375, category: "Burgers", description: "Crispy injected broast with special sauce — a local favorite", image: "/manus-storage/menu-burger_bf9b42fb.jpg", badge: "Popular" },
-  { id: "b2", name: "Zinger Burger", price: 400, category: "Burgers", description: "Spicy crispy chicken fillet with zinger sauce", image: "/manus-storage/menu-burger_bf9b42fb.jpg", badge: null },
-  { id: "b3", name: "Beef Burger", price: 450, category: "Burgers", description: "Juicy beef patty with fresh lettuce and tomato", image: "/manus-storage/menu-burger_bf9b42fb.jpg", badge: null },
+  { id: "b1", name: "Injected Broast Burger", price: 375, category: "Burgers", description: "Crispy injected broast with special sauce — a local favorite", image: "/images/menu-burger_bf9b42fb.jpg", badge: "Popular" },
+  { id: "b2", name: "Zinger Burger", price: 400, category: "Burgers", description: "Spicy crispy chicken fillet with zinger sauce", image: "/images/menu-burger_bf9b42fb.jpg", badge: null },
+  { id: "b3", name: "Beef Burger", price: 450, category: "Burgers", description: "Juicy beef patty with fresh lettuce and tomato", image: "/images/menu-burger_bf9b42fb.jpg", badge: null },
 
   // Pasta
-  { id: "pa1", name: "Crispy Chicken Pasta", price: 850, category: "Pasta", description: "Creamy pasta with crispy chicken pieces", image: "/manus-storage/pasta-dish_6d0eeea5.jpg", badge: null },
-  { id: "pa2", name: "Alfredo Pasta", price: 750, category: "Pasta", description: "Rich creamy alfredo sauce with mushrooms", image: "/manus-storage/pasta-dish_6d0eeea5.jpg", badge: null },
+  { id: "pa1", name: "Crispy Chicken Pasta", price: 850, category: "Pasta", description: "Creamy pasta with crispy chicken pieces", image: "/images/pasta-dish_6d0eeea5.jpg", badge: null },
+  { id: "pa2", name: "Alfredo Pasta", price: 750, category: "Pasta", description: "Rich creamy alfredo sauce with mushrooms", image: "/images/pasta-dish_6d0eeea5.jpg", badge: null },
 
   // Deals
-  { id: "d1", name: "Family Deal", price: 1899, category: "Deals", description: "2 large pizzas + 2 burgers + fries + drinks", image: "/manus-storage/deals-section_ee7752d9.jpg", badge: "Best Value" },
-  { id: "d2", name: "Couple Deal", price: 1500, category: "Deals", description: "1 medium pizza + 2 drinks + garlic bread", image: "/manus-storage/hero-food-spread_368dc5ce.jpg", badge: null },
+  { id: "d1", name: "Family Deal", price: 1899, category: "Deals", description: "2 large pizzas + 2 burgers + fries + drinks", image: "/images/deals-section_ee7752d9.jpg", badge: "Best Value" },
+  { id: "d2", name: "Couple Deal", price: 1500, category: "Deals", description: "1 medium pizza + 2 drinks + garlic bread", image: "/images/hero-food-spread_368dc5ce.jpg", badge: null },
 
   // Sides
-  { id: "s1", name: "Garlic Bread", price: 300, category: "Sides", description: "Oven-baked garlic bread with cheese", image: "/manus-storage/sides-platter_782cdd37.jpg", badge: null },
-  { id: "s2", name: "Cheese Sticks", price: 350, category: "Sides", description: "Golden crispy cheese sticks", image: "/manus-storage/sides-platter_782cdd37.jpg", badge: null },
-  { id: "s3", name: "French Fries", price: 200, category: "Sides", description: "Crispy golden fries with ketchup", image: "/manus-storage/sides-platter_782cdd37.jpg", badge: null },
+  { id: "s1", name: "Garlic Bread", price: 300, category: "Sides", description: "Oven-baked garlic bread with cheese", image: "/images/sides-platter_782cdd37.jpg", badge: null },
+  { id: "s2", name: "Cheese Sticks", price: 350, category: "Sides", description: "Golden crispy cheese sticks", image: "/images/sides-platter_782cdd37.jpg", badge: null },
+  { id: "s3", name: "French Fries", price: 200, category: "Sides", description: "Crispy golden fries with ketchup", image: "/images/sides-platter_782cdd37.jpg", badge: null },
 
   // Desserts — expanded per customer review data
-  { id: "de1", name: "Brownie with Ice Cream", price: 400, category: "Desserts", description: "Warm chocolate brownie with vanilla ice cream", image: "/manus-storage/desserts-drinks_397216c1.jpg", badge: "Fan Favorite" },
-  { id: "de2", name: "Gulab Jamun Cheesecake", price: 450, category: "Desserts", description: "Fusion dessert — gulab jamun meets creamy cheesecake", image: "/manus-storage/desserts-drinks_397216c1.jpg", badge: "New" },
-  { id: "de3", name: "Kulfi", price: 250, category: "Desserts", description: "Traditional Pakistani kulfi with pistachios", image: "/manus-storage/desserts-drinks_397216c1.jpg", badge: null },
+  { id: "de1", name: "Brownie with Ice Cream", price: 400, category: "Desserts", description: "Warm chocolate brownie with vanilla ice cream", image: "/images/desserts-drinks_397216c1.jpg", badge: "Fan Favorite" },
+  { id: "de2", name: "Gulab Jamun Cheesecake", price: 450, category: "Desserts", description: "Fusion dessert — gulab jamun meets creamy cheesecake", image: "/images/desserts-drinks_397216c1.jpg", badge: "New" },
+  { id: "de3", name: "Kulfi", price: 250, category: "Desserts", description: "Traditional Pakistani kulfi with pistachios", image: "/images/desserts-drinks_397216c1.jpg", badge: null },
 
   // Drinks — expanded per customer review data (shakes & frappe are most praised)
-  { id: "dr1", name: "Chocolate Milkshake", price: 350, category: "Drinks", description: "Thick creamy chocolate milkshake — customers rave about this", image: "/manus-storage/desserts-drinks_397216c1.jpg", badge: "Top Rated" },
-  { id: "dr2", name: "Vanilla Milkshake", price: 350, category: "Drinks", description: "Rich vanilla milkshake with real ice cream", image: "/manus-storage/desserts-drinks_397216c1.jpg", badge: null },
-  { id: "dr3", name: "Strawberry Frappe", price: 400, category: "Drinks", description: "Blended strawberry frappe with whipped cream", image: "/manus-storage/desserts-drinks_397216c1.jpg", badge: "Top Rated" },
-  { id: "dr4", name: "Mango Frappe", price: 400, category: "Drinks", description: "Tropical mango frappe — a summer essential", image: "/manus-storage/desserts-drinks_397216c1.jpg", badge: null },
-  { id: "dr5", name: "Iced Coffee", price: 300, category: "Drinks", description: "Smooth iced coffee with caramel drizzle", image: "/manus-storage/desserts-drinks_397216c1.jpg", badge: null },
+  { id: "dr1", name: "Chocolate Milkshake", price: 350, category: "Drinks", description: "Thick creamy chocolate milkshake — customers rave about this", image: "/images/desserts-drinks_397216c1.jpg", badge: "Top Rated" },
+  { id: "dr2", name: "Vanilla Milkshake", price: 350, category: "Drinks", description: "Rich vanilla milkshake with real ice cream", image: "/images/desserts-drinks_397216c1.jpg", badge: null },
+  { id: "dr3", name: "Strawberry Frappe", price: 400, category: "Drinks", description: "Blended strawberry frappe with whipped cream", image: "/images/desserts-drinks_397216c1.jpg", badge: "Top Rated" },
+  { id: "dr4", name: "Mango Frappe", price: 400, category: "Drinks", description: "Tropical mango frappe — a summer essential", image: "/images/desserts-drinks_397216c1.jpg", badge: null },
+  { id: "dr5", name: "Iced Coffee", price: 300, category: "Drinks", description: "Smooth iced coffee with caramel drizzle", image: "/images/desserts-drinks_397216c1.jpg", badge: null },
 ];
 
 export default function Menu() {
@@ -67,7 +67,7 @@ export default function Menu() {
       {/* Hero */}
       <section className="relative h-[40vh] min-h-[300px] overflow-hidden">
         <img
-          src="/manus-storage/deals-section_ee7752d9.jpg"
+          src="/images/deals-section_ee7752d9.jpg"
           alt="Menu"
           className="absolute inset-0 w-full h-full object-cover"
         />
