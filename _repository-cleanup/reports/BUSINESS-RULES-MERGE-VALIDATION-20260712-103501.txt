@@ -1,0 +1,31 @@
+﻿TELEPIZZA BUSINESS RULES MERGE VALIDATION
+
+Generated:
+2026-07-12 10:35:01
+
+Canonical file:
+D:\projects\telepizza\docs\01-business\BUSINESS_RULES.md
+
+Canonical lines after merge:
+587
+
+Legacy candidate still in docs:
+False
+
+Archived candidate:
+D:\projects\telepizza\_repository-cleanup\archive\business-rules-legacy-20260712-103501.md
+
+Archive verified:
+True
+
+Remaining normalized duplicate groups:
+0
+
+Merge marker verified:
+True
+
+Backup:
+D:\projects\telepizza\_repository-cleanup\backups\business-rules-merge-20260712-103501
+
+Result:
+SUCCESS

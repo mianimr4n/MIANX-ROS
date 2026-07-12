@@ -1,0 +1,6 @@
+﻿"Path","Issue","Action"
+"docs\01-business\BUSINESS_RULES.md","Possible duplicate authority","Compare with business-rules.md before merge"
+"docs\01-business\business-rules.md","Possible duplicate authority","Do not delete until content comparison"
+"docs\05-ai-agents\08 Governance Team","Folder naming inconsistency","Rename to 08-governance-team"
+"docs\05-ai-agents\10-devops-team\─09_AI_RELEASE_MANAGER.md","Invalid leading character and duplicate candidate","Compare hash/content with 09_AI_RELEASE_MANAGER.md"
+"docs\05-ai-agents\10-devops-team\7_AI_SITE_RELIABILITY_ENGINEERING_MANAGER.md","Numbering inconsistency","Rename to 07_AI_SITE_RELIABILITY_ENGINEERING_MANAGER.md"

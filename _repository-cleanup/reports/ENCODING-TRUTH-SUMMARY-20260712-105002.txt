@@ -1,0 +1,31 @@
+﻿TELEPIZZA ENCODING TRUTH CHECK
+
+Generated:
+2026-07-12 10:50:02
+
+Total Markdown files:
+463
+
+Valid UTF-8 and clean:
+463
+
+Valid UTF-8 containing literal mojibake:
+0
+
+Invalid UTF-8:
+0
+
+UTF-8 BOM files:
+0
+
+====================================================
+FILES WITH LITERAL MOJIBAKE
+====================================================
+
+
+
+====================================================
+INVALID UTF-8 FILES
+====================================================
+
+

@@ -1,0 +1,5 @@
+﻿"Timestamp","Action","Source","Target","Result","Notes"
+"2026-07-12 10:17:27","Rename folder","D:\projects\telepizza\docs\05-ai-agents\08 Governance Team","D:\projects\telepizza\docs\05-ai-agents\08-governance-team","SUCCESS","Normalized folder name to kebab-case"
+"2026-07-12 10:17:27","Rename file","D:\projects\telepizza\docs\05-ai-agents\10-devops-team\7_AI_SITE_RELIABILITY_ENGINEERING_MANAGER.md","D:\projects\telepizza\docs\05-ai-agents\10-devops-team\07_AI_SITE_RELIABILITY_ENGINEERING_MANAGER.md","SUCCESS","Normalized numeric prefix to two digits"
+"2026-07-12 10:17:27","Archive verified duplicate","D:\projects\telepizza\docs\05-ai-agents\10-devops-team\─09_AI_RELEASE_MANAGER.md","D:\projects\telepizza\_repository-cleanup\archive\─09_AI_RELEASE_MANAGER-20260712-101726.md","SUCCESS","SHA256 hashes identical; canonical file retained"
+"2026-07-12 10:17:28","Compare duplicate candidate","D:\projects\telepizza\docs\01-business\business-rules.md","D:\projects\telepizza\docs\01-business\BUSINESS_RULES.md","MANUAL REVIEW REQUIRED","Hashes differ; no file moved"

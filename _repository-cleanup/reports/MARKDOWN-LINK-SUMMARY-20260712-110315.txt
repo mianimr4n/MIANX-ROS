@@ -1,0 +1,33 @@
+﻿TELEPIZZA MARKDOWN LINK AUDIT
+
+Generated:
+2026-07-12 11:03:17
+
+Total internal links:
+60
+
+Valid links:
+54
+
+Broken links:
+6
+
+Invalid paths:
+0
+
+====================================================
+BROKEN LINKS
+====================================================
+
+04-engineering\DEVELOPMENT_DOCUMENTATION_INDEX.md:53 -> ../04-engineering/07-testing/README.md
+04-engineering\DEVELOPMENT_DOCUMENTATION_INDEX.md:214 -> ../../project-management/M2_REQUIREMENTS_COMPLETION.md
+04-engineering\DEVELOPMENT_DOCUMENTATION_INDEX.md:215 -> ../../project-management/M3_ARCHITECTURE_COMPLETION.md
+04-engineering\DEVELOPMENT_DOCUMENTATION_INDEX.md:216 -> ../../project-management/M4_ENGINEERING_COMPLETION.md
+04-engineering\DEVELOPMENT_DOCUMENTATION_INDEX.md:217 -> ../../project-management/M5_PROJECT_MANAGEMENT.md
+04-engineering\DEVELOPMENT_ENVIRONMENT_SETUP.md:634 -> ./CODING_STANDARDS.md
+
+====================================================
+INVALID PATHS
+====================================================
+
+

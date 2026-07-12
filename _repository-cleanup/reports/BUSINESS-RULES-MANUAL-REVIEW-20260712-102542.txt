@@ -1,0 +1,132 @@
+﻿TELEPIZZA BUSINESS RULES COMPARISON
+Generated: 2026-07-12 10:25:42
+
+CANONICAL FILE
+D:\projects\telepizza\docs\01-business\BUSINESS_RULES.md
+Lines: 461
+
+CANDIDATE FILE
+D:\projects\telepizza\docs\01-business\business-rules.md
+Lines: 37
+
+====================================================
+HEADINGS UNIQUE TO BUSINESS_RULES.md
+====================================================
+
+# ðŸ“– BUSINESS RULES
+# Document Information
+# Purpose
+# Order Rules
+## BR-001
+## BR-002
+## BR-003
+## BR-004
+## BR-005
+## BR-006
+## BR-007
+# Customer Rules
+## BR-101
+## BR-102
+## BR-103
+## BR-104
+## BR-105
+# Branch Rules
+## BR-201
+## BR-202
+## BR-203
+## BR-204
+# Menu Rules
+## BR-301
+## BR-302
+## BR-303
+## BR-304
+## BR-305
+# Payment Rules
+## BR-401
+## BR-402
+## BR-403
+# Coupon Rules
+## BR-501
+## BR-502
+## BR-503
+# Loyalty Rules
+## BR-601
+## BR-602
+## BR-603
+# Kitchen Rules
+## BR-701
+## BR-702
+## BR-703
+# Rider Rules
+## BR-801
+## BR-802
+## BR-803
+# Inventory Rules
+## BR-901
+## BR-902
+## BR-903
+# AI Rules
+## BR-1001
+## BR-1002
+## BR-1003
+## BR-1004
+# Security Rules
+## BR-1101
+## BR-1102
+# Audit Rules
+# Business Rule Priority
+# Future Rules
+# Related Documents
+
+====================================================
+HEADINGS UNIQUE TO business-rules.md
+====================================================
+
+# Business Rules â€” Telepizza
+## Confirmed (from research)
+## Resolved â€” Founder Working Assumptions (2026-07-10)
+## Still Genuinely Open
+## Why This File Matters Now
+
+====================================================
+FULL CANDIDATE CONTENT
+Review this content and decide what must be merged.
+====================================================
+
+# Business Rules â€” Telepizza
+
+**Version:** v1.0
+**Status:** Draft â€” half of this needs founder input before Phase 3 can start
+**Owner:** Founder
+**Last Updated:** 2026-07-09
+
+---
+
+## Confirmed (from research)
+
+| Rule | Value |
+|---|---|
+| Operating hours (Branch 1) | 10:00 AM â€“ 2:30 AM, every day, no variation found |
+| Service types | Dine-in, takeaway, delivery, contactless delivery, curbside pickup |
+| Cuisine scope | Fast Food, Chinese, Cafe |
+| Price tier | Mid-range ("$" on Facebook), roughly Rs 1,000â€“2,000/person typical, bundle deals observed around Rs 1,899 |
+
+## Resolved â€” Founder Working Assumptions (2026-07-10)
+
+ðŸ“‹ These were decided directly by the founder/Mianx.ai, not sourced from Telepizza's real operations. Fine for building V1; confirm with actual Telepizza ownership before treating as final if this platform goes live for them.
+
+- [x] **Minimum order value for delivery** â€” free delivery above a to-be-set threshold (based on real average order value once available); no hard minimum otherwise
+- [x] **Delivery radius / zones** â€” ~5 km from Royal Orchard as starting point; Branch 2 zone TBD once it opens
+- [x] **Accepted payment methods** â€” Cash on Delivery + JazzCash + EasyPaisa for V1; card deferred
+
+## Still Genuinely Open
+
+- [ ] **Refund / complaint policy** â€” given delivery-time and food-quality complaints already show up in reviews, this needs an explicit rule before the platform can display anything like an order guarantee
+- [ ] **Order cancellation window**
+- [ ] **Peak-hour handling** â€” does the kitchen ever pause new orders when overloaded? (Relevant given delivery-time complaints in `customer-journey.md`)
+- [ ] **Branch routing logic** â€” once Branch 2 opens, how is a customer's order assigned to a branch? Nearest-branch automatically, or customer choice?
+- [ ] **Discounts/loyalty rules** â€” none observed publicly; confirm if any informal ones already exist (e.g., regulars getting deals) before designing a loyalty feature
+
+## Why This File Matters Now
+
+Per the project's own `ROADMAP.md`, Phase 3 (Requirements Engineering) and Phase 4 (System Architecture) come right after this phase. Every unchecked item above is a decision that Phase 4's database schema and order flow will need to encode. Getting these from the founder now is faster than discovering the gap mid-architecture.
