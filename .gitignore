@@ -10,3 +10,10 @@ coverage/
 
 _repository-cleanup/backups/
 _repository-cleanup/archive/
+
+# Website app exclusions
+apps/website/node_modules/
+apps/website/dist/
+apps/website/.manus-logs/
+apps/website/.env
+apps/website/.env.*
