@@ -1,0 +1,35 @@
+﻿TELEPIZZA REQUIREMENTS SEMANTIC-COVERAGE CONTEXT
+
+Generated:
+2026-07-12 11:47:45
+
+Requirements files scanned:
+29
+
+Context findings:
+239
+
+Decisions with context findings:
+9
+
+====================================================
+FINDINGS BY DECISION
+====================================================
+
+BD-001: 4
+BD-005: 5
+BD-006: 55
+BD-007: 66
+BD-008: 3
+BD-009: 2
+BD-010: 23
+BD-011: 78
+BD-012: 3
+
+====================================================
+DECISIONS WITH NO CONTEXT
+====================================================
+
+BD-002 - Small Pizza price
+BD-003 - Large Pizza price
+BD-004 - Zinger Burger price

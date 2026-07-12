@@ -1,0 +1,22 @@
+﻿TELEPIZZA REQUIREMENT ID COLLISION AUDIT
+
+Generated:
+2026-07-12 13:30:56
+
+Requirements files scanned:
+29
+
+Proposed IDs reviewed:
+41
+
+Available IDs:
+41
+
+Collisions:
+0
+
+====================================================
+COLLISIONS
+====================================================
+
+None

@@ -1,0 +1,25 @@
+﻿TELEPIZZA DOCUMENTATION COMPLETENESS INVENTORY
+
+Generated:
+2026-07-12 11:28:40
+
+Total documents:
+463
+
+====================================================
+INITIAL CLASSIFICATION
+====================================================
+
+OPEN_DECISIONS: 58
+STRUCTURALLY_POPULATED: 405
+
+====================================================
+IMPORTANT LIMITATION
+====================================================
+
+This report is an initial structural triage only.
+
+STRUCTURALLY_POPULATED does not mean approved, correct, complete,
+consistent, or implementation-ready.
+
+Every critical document still requires semantic review.
