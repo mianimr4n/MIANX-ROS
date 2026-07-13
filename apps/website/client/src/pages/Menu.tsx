@@ -5,7 +5,7 @@
    Categories reordered to surface drinks earlier. */
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Minus, ShoppingCart, Search, Star, Flame, Zap } from "lucide-react";
+import { Plus, Search, Star, Flame } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -147,7 +147,7 @@ export default function Menu() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: i * 0.06, ease: [0.23, 1, 0.32, 1] }}
-              className="group bg-white rounded-2xl overflow-hidden border border-border hover:border-brand-red/30 hover:shadow-xl hover:shadow-brand-red/5 transition-all duration-300"
+              className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-border hover:border-brand-red/30 hover:shadow-xl hover:shadow-brand-red/5 transition-all duration-300"
             >
               <div className="relative aspect-[4/3] overflow-hidden">
                 <img
@@ -164,34 +164,14 @@ export default function Menu() {
                       <Flame className="w-3 h-3" /> Signature
                     </span>
                   )}
-                  {item.badge === "Popular" && (
-                    <span className="bg-brand-red-light text-white text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                      <Zap className="w-3 h-3" /> Popular
-                    </span>
-                  )}
-                  {item.badge === "Top Rated" && (
-                    <span className="bg-brand-gold text-brand-charcoal text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                      <Star className="w-3 h-3 fill-brand-charcoal" /> Top Rated
-                    </span>
-                  )}
-                  {item.badge === "Fan Favorite" && (
-                    <span className="bg-brand-red text-white text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                      <Star className="w-3 h-3 fill-white" /> Fan Favorite
-                    </span>
-                  )}
-                  {item.badge === "Best Value" && (
-                    <span className="bg-green-600 text-white text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full">
-                      Best Value
-                    </span>
-                  )}
-                  {item.badge === "New" && (
-                    <span className="bg-blue-600 text-white text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full">
-                      New
+                  {item.badge && item.badge !== "Signature" && (
+                    <span className="bg-brand-gold text-brand-charcoal text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full">
+                      {item.badge}
                     </span>
                   )}
                 </div>
               </div>
-              <div className="p-5">
+              <div className="flex flex-col flex-1 p-5">
                 <h3 className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal mb-1">
                   {item.name}
                 </h3>
@@ -231,7 +211,7 @@ export default function Menu() {
                     })}
                   </div>
                 )}
-                <div className="flex items-center justify-between">
+                <div className="mt-auto flex items-center justify-between">
                   <span className="font-[var(--font-accent)] font-bold text-xl text-brand-red">
                     Rs {getItemPrice(item)?.toLocaleString() ?? "Unavailable"}
                   </span>
