@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
+import { isApiConfigured } from "@/lib/api";
 import { fetchBranches } from "@/lib/telepizza-api";
 import type { Branch } from "@/lib/telepizza-types";
 
@@ -46,10 +47,17 @@ const BranchContext = createContext<BranchContextType | null>(null);
 export function BranchProvider({ children }: { children: ReactNode }) {
   const [allBranches, setAllBranches] = useState<Branch[]>(fallbackBranches);
   const [selectedBranchId, setSelectedBranchId] = useState(defaultBranch.id);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(isApiConfigured);
   const [error, setError] = useState<string | null>(null);
 
   const reloadBranches = async () => {
+    // Bundled branches are the canonical fallback. The live API is optional
+    // and only consulted when explicitly configured.
+    if (!isApiConfigured) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -69,13 +77,9 @@ export function BranchProvider({ children }: { children: ReactNode }) {
 
       setError(null);
     } catch (loadError) {
-      const message =
-        loadError instanceof Error
-          ? loadError.message
-          : "Unable to load live branch data. Using bundled branch configuration.";
-
+      console.warn("Live branch data unavailable; using bundled branches.", loadError);
       setAllBranches((currentBranches) => (currentBranches.length > 0 ? currentBranches : fallbackBranches));
-      setError(message);
+      setError(null);
     } finally {
       setIsLoading(false);
     }

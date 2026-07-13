@@ -9,7 +9,9 @@ import { Plus, Search, Star, Flame } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { isApiConfigured } from "@/lib/api";
 import { fetchMenuCatalog } from "@/lib/telepizza-api";
+import { handleImageError } from "@/lib/image-fallback";
 import type { MenuCategory } from "@/lib/telepizza-types";
 import {
   menuCategories as fallbackMenuCategories,
@@ -28,11 +30,17 @@ export default function Menu() {
       .map((category, index) => ({ name: category, sortOrder: index + 1 })),
   );
   const [items, setItems] = useState<MenuItem[]>(fallbackMenuItems);
-  const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
-  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [isLoadingCatalog, setIsLoadingCatalog] = useState(isApiConfigured);
   const { addItem } = useCart();
 
   useEffect(() => {
+    // The bundled menu (menu-data.ts) is the canonical fallback. Only try the
+    // live catalog when a backend has been explicitly configured; a failed
+    // optional request must never block or degrade the menu.
+    if (!isApiConfigured) {
+      return;
+    }
+
     let ignore = false;
 
     const loadCatalog = async () => {
@@ -51,15 +59,11 @@ export default function Menu() {
                 })),
           );
           setItems(catalog.items.length > 0 ? catalog.items : fallbackMenuItems);
-          setCatalogError(null);
         }
       } catch (loadError) {
+        console.warn("Live menu unavailable; using bundled menu.", loadError);
+
         if (!ignore) {
-          setCatalogError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Unable to load the live menu right now. Showing the bundled menu instead.",
-          );
           setCategories(
             fallbackMenuCategories
               .filter((category) => category !== "All")
@@ -132,8 +136,9 @@ export default function Menu() {
       {/* Hero */}
       <section className="relative h-[40vh] min-h-[300px] overflow-hidden">
         <img
-          src="/images/deals-section_ee7752d9.jpg"
+          src="/images/deals-section.jpg"
           alt="Menu"
+          onError={handleImageError}
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-charcoal/90 via-brand-charcoal/50 to-brand-charcoal/30" />
@@ -199,12 +204,7 @@ export default function Menu() {
               </button>
             ))}
           </div>
-          {catalogError && (
-            <p className="mt-3 text-xs text-amber-700 font-[var(--font-accent)]">
-              {catalogError}
-            </p>
-          )}
-          {!catalogError && isLoadingCatalog && (
+          {isLoadingCatalog && (
             <p className="mt-3 text-xs text-muted-foreground font-[var(--font-accent)]">
               Refreshing live menu from the backend...
             </p>
@@ -227,6 +227,7 @@ export default function Menu() {
                 <img
                   src={item.image}
                   alt={item.name}
+                  onError={handleImageError}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
