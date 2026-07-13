@@ -1,0 +1,495 @@
+export type MenuSize = "Small" | "Medium" | "Large";
+
+export interface MenuVariant {
+  label: string;
+  price: number;
+}
+
+export interface MenuItem {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  image: string;
+  badge?: string;
+  price?: number;
+  variants?: MenuVariant[];
+}
+
+const signatureVariants: MenuVariant[] = [
+  { label: "6 inch Small", price: 499 },
+  { label: "9 inch Medium", price: 950 },
+  { label: "12 inch Large", price: 1570 },
+];
+
+const classicVariants: MenuVariant[] = [
+  { label: "6 inch Small", price: 470 },
+  { label: "9 inch Medium", price: 890 },
+  { label: "12 inch Large", price: 1470 },
+];
+
+export const menuCategories = [
+  "All",
+  "Signature Pizzas",
+  "Classic Pizzas",
+  "Specialty Pizzas",
+  "Burgers",
+  "Sandwiches",
+  "Wings",
+  "Fries",
+  "Wraps & Rolls",
+  "Pasta",
+  "Chicken & Sides",
+  "Drinks",
+  "Deals",
+] as const;
+
+export const menuItems: MenuItem[] = [
+  {
+    id: "tele-special",
+    name: "Tele Special",
+    category: "Signature Pizzas",
+    description:
+      "Special chicken with special sauce, topped with olive, mushroom, and capsicum.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    badge: "Signature",
+    variants: signatureVariants,
+  },
+  {
+    id: "peri-peri",
+    name: "Peri Peri",
+    category: "Signature Pizzas",
+    description:
+      "Peri peri sauce with tikka chicken, topped with kabab, sausages, and tomato.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    variants: signatureVariants,
+  },
+  {
+    id: "bihari-kabab",
+    name: "Bihari Kabab",
+    category: "Signature Pizzas",
+    description:
+      "Garlic sauce with tikka chicken, topped with kabab slice, onion, and mushroom.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    variants: signatureVariants,
+  },
+  {
+    id: "kababish",
+    name: "Kababish",
+    category: "Signature Pizzas",
+    description:
+      "Special sauce with fajita chicken, topped with kabab, mushroom, and capsicum.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    variants: signatureVariants,
+  },
+  {
+    id: "tikka",
+    name: "Tikka",
+    category: "Classic Pizzas",
+    description:
+      "Tikka sauce with tikka chicken, topped with olive and onion.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    variants: classicVariants,
+  },
+  {
+    id: "bonfire",
+    name: "Bonfire",
+    category: "Classic Pizzas",
+    description:
+      "Bonfire sauce with fajita chicken, topped with jalapeno, mushroom, and tomato.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    variants: classicVariants,
+  },
+  {
+    id: "chicken-supreme",
+    name: "Chicken Supreme",
+    category: "Classic Pizzas",
+    description:
+      "Original red base sauce, three types of chicken, topped with olive, mushroom, jalapeno, and capsicum.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    variants: classicVariants,
+  },
+  {
+    id: "real-fajita",
+    name: "Real Fajita",
+    category: "Classic Pizzas",
+    description:
+      "Fajita sauce with fajita chicken, topped with onion and capsicum.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    variants: classicVariants,
+  },
+  {
+    id: "mexicana",
+    name: "Mexicana",
+    category: "Classic Pizzas",
+    description:
+      "Special sauce with smoked chicken, topped with sausages, black olive, tomato, and capsicum.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    variants: classicVariants,
+  },
+  {
+    id: "cheese-lover",
+    name: "Cheese Lover",
+    category: "Classic Pizzas",
+    description:
+      "Original red base sauce, loaded with mozzarella cheese.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    variants: classicVariants,
+  },
+  {
+    id: "behari-kabab-pizza",
+    name: "Behari Kabab Pizza",
+    category: "Specialty Pizzas",
+    description: "Specialty Behari Kabab pizza.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    price: 549,
+    badge: "Starting Price",
+  },
+  {
+    id: "crown-crust",
+    name: "Crown Crust",
+    category: "Specialty Pizzas",
+    description:
+      "Any flavour with chicken stuffing on the edges and Tele Pizza signature sauce.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    variants: [
+      { label: "Medium", price: 1199 },
+      { label: "Large", price: 1799 },
+    ],
+  },
+  {
+    id: "chicago-extreme",
+    name: "Chicago Extreme",
+    category: "Specialty Pizzas",
+    description:
+      "Double-layer pizza with two premium sauces, lots of cheese, and chicken.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    variants: [
+      { label: "Medium", price: 1199 },
+      { label: "Large", price: 1899 },
+    ],
+  },
+  {
+    id: "stuffed-crust",
+    name: "Stuffed Crust",
+    category: "Specialty Pizzas",
+    description: "Any flavour with kabab stuffing on the edges.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    price: 1749,
+  },
+  {
+    id: "tele-extreme",
+    name: "Tele Extreme Pizza",
+    category: "Specialty Pizzas",
+    description:
+      "Two premium sauces with loaded chicken and lots of cheese.",
+    image: "/images/menu-pizza_f729e710.jpg",
+    price: 1699,
+  },
+  {
+    id: "sixteen-inch-incher",
+    name: '16" Incher',
+    category: "Specialty Pizzas",
+    description: 'Large 16-inch specialty pizza.',
+    image: "/images/menu-pizza_f729e710.jpg",
+    price: 2399,
+  },
+  {
+    id: "patty-burger",
+    name: "Patty Burger",
+    category: "Burgers",
+    description: "Tele Pizza patty burger.",
+    image: "/images/menu-burger_bf9b42fb.jpg",
+    price: 299,
+  },
+  {
+    id: "crunchy-sandwich",
+    name: "Crunchy Sandwich",
+    category: "Sandwiches",
+    description: "Served with dip sauce and fries.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 799,
+  },
+  {
+    id: "special-sandwich",
+    name: "Special Sandwich",
+    category: "Sandwiches",
+    description: "Served with dip sauce and fries.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 749,
+  },
+  {
+    id: "baked-smoked-sandwich",
+    name: "Baked Smoked Sandwich",
+    category: "Sandwiches",
+    description: "Served with dip sauce and fries.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 749,
+  },
+  {
+    id: "sizzling-sandwich",
+    name: "Sizzling Sandwich",
+    category: "Sandwiches",
+    description: "Served with dip sauce and fries.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 749,
+  },
+  {
+    id: "fried-crispy-wings",
+    name: "Fried & Crispy Wings",
+    category: "Wings",
+    description: "Crispy fried chicken wings.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 599,
+  },
+  {
+    id: "bbq-wings",
+    name: "BBQ Wings",
+    category: "Wings",
+    description: "BBQ-flavoured chicken wings.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 599,
+  },
+  {
+    id: "creamo-wings",
+    name: "Creamo Wings",
+    category: "Wings",
+    description: "Creamy-style chicken wings.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 599,
+  },
+  {
+    id: "oven-baked-wings",
+    name: "Oven Baked Wings",
+    category: "Wings",
+    description: "Oven-baked chicken wings.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 549,
+  },
+  {
+    id: "flaming-wings",
+    name: "Flaming Wings",
+    category: "Wings",
+    description: "Spicy flaming chicken wings.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 549,
+  },
+  {
+    id: "loaded-fries",
+    name: "Loaded Fries",
+    category: "Fries",
+    description: "Loaded fries.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 650,
+  },
+  {
+    id: "french-fries",
+    name: "French Fries",
+    category: "Fries",
+    description: "French fries.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 199,
+  },
+  {
+    id: "family-fries",
+    name: "Family Fries",
+    category: "Fries",
+    description: "Family-size fries.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 350,
+  },
+  {
+    id: "jumbo-wrap",
+    name: "Tele Pizza Special Jumbo Wrap",
+    category: "Wraps & Rolls",
+    description: "Tele Pizza special jumbo wrap.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 649,
+  },
+  {
+    id: "crunchy-wrap",
+    name: "Crunchy Wrap",
+    category: "Wraps & Rolls",
+    description: "Crunchy chicken wrap.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 399,
+  },
+  {
+    id: "dynamite-wrap",
+    name: "Dynamite Wrap",
+    category: "Wraps & Rolls",
+    description: "Dynamite-flavoured wrap.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 399,
+  },
+  {
+    id: "behari-roll",
+    name: "Behari Roll",
+    category: "Wraps & Rolls",
+    description:
+      "Four pieces with special chicken and sauce, baked with cheese, mushroom, and olives; served with dip sauce and fries.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 799,
+  },
+  {
+    id: "crunchy-pasta",
+    name: "Crunchy Pasta",
+    category: "Pasta",
+    description: "Crunchy pasta.",
+    image: "/images/pasta-dish_6d0eeea5.jpg",
+    price: 849,
+  },
+  {
+    id: "chicken-tender-strips",
+    name: "Chicken Tender Strips",
+    category: "Chicken & Sides",
+    description: "Five pieces, served with dip sauce.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 590,
+  },
+  {
+    id: "crispy-box",
+    name: "Crispy Box",
+    category: "Chicken & Sides",
+    description:
+      "Three pieces of crispy chicken with one garlic ranch dip.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 670,
+  },
+  {
+    id: "fried-chicken-chest",
+    name: "Fried Chicken — Chest",
+    category: "Chicken & Sides",
+    description: "Fried chicken chest piece.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 250,
+  },
+  {
+    id: "fried-chicken",
+    name: "Fried Chicken",
+    category: "Chicken & Sides",
+    description: "Fried chicken piece.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 220,
+  },
+  {
+    id: "nuggets",
+    name: "Nuggets",
+    category: "Chicken & Sides",
+    description: "10 pieces.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 449,
+  },
+  {
+    id: "hot-shots",
+    name: "Hot Shots",
+    category: "Chicken & Sides",
+    description: "10 pieces.",
+    image: "/images/sides-platter_782cdd37.jpg",
+    price: 449,
+  },
+  {
+    id: "drink-1-5l",
+    name: "1.5 Liter Drink",
+    category: "Drinks",
+    description: "1.5 liter soft drink.",
+    image: "/images/desserts-drinks_397216c1.jpg",
+    price: 210,
+  },
+  {
+    id: "drink-1l",
+    name: "1 Liter Drink",
+    category: "Drinks",
+    description: "1 liter soft drink.",
+    image: "/images/desserts-drinks_397216c1.jpg",
+    price: 170,
+  },
+  {
+    id: "drink-500ml",
+    name: "500 ml Drink",
+    category: "Drinks",
+    description: "500 ml soft drink.",
+    image: "/images/desserts-drinks_397216c1.jpg",
+    price: 110,
+  },
+  {
+    id: "drink-345ml",
+    name: "345 ml Drink",
+    category: "Drinks",
+    description: "345 ml soft drink.",
+    image: "/images/desserts-drinks_397216c1.jpg",
+    price: 70,
+  },
+  {
+    id: "large-water",
+    name: "Large Water",
+    category: "Drinks",
+    description: "Large bottled water.",
+    image: "/images/desserts-drinks_397216c1.jpg",
+    price: 99,
+  },
+  {
+    id: "small-water",
+    name: "Small Water",
+    category: "Drinks",
+    description: "Small bottled water.",
+    image: "/images/desserts-drinks_397216c1.jpg",
+    price: 50,
+  },
+  {
+    id: "family-deal",
+    name: "Family Deal",
+    category: "Deals",
+    description: "1 large pizza, 10 pcs wings, and 1.5 liter drink.",
+    image: "/images/deals-section_ee7752d9.jpg",
+    price: 2250,
+  },
+  {
+    id: "pizza-fest",
+    name: "Pizza Fest",
+    category: "Deals",
+    description: "1 large pizza and 1.5 liter drink.",
+    image: "/images/deals-section_ee7752d9.jpg",
+    price: 1680,
+  },
+  {
+    id: "mega-offer",
+    name: "Mega Offer",
+    category: "Deals",
+    description: "2 large pizzas and 1.5 liter Coke.",
+    image: "/images/deals-section_ee7752d9.jpg",
+    price: 3140,
+  },
+  {
+    id: "pair-deal",
+    name: "Pair Deal",
+    category: "Deals",
+    description: "2 medium pizzas and 1.5 liter Coke.",
+    image: "/images/deals-section_ee7752d9.jpg",
+    price: 1999,
+  },
+  {
+    id: "family-festival",
+    name: "Family Festival",
+    category: "Deals",
+    description: "5 Zinger burgers and 1.5 liter drink.",
+    image: "/images/deals-section_ee7752d9.jpg",
+    price: 2350,
+  },
+  {
+    id: "deal-for-two",
+    name: "Deal for 2",
+    category: "Deals",
+    description: "2 Zinger burgers and 2 drinks of 345 ml.",
+    image: "/images/deals-section_ee7752d9.jpg",
+    price: 999,
+  },
+  {
+    id: "knock-out-deal",
+    name: "Knock Out Deal",
+    category: "Deals",
+    description: "3 Zinger burgers and 1 liter drink.",
+    image: "/images/deals-section_ee7752d9.jpg",
+    price: 1440,
+  },
+];

@@ -1,0 +1,50 @@
+﻿TELEPIZZA BUSINESS-TO-REQUIREMENTS TRACEABILITY AUDIT
+
+Generated:
+2026-07-12 11:44:21
+
+Business decisions reviewed:
+12
+
+Requirements documents scanned:
+29
+
+Explicitly traceable:
+0
+
+Keyword coverage only:
+9
+
+No requirements coverage:
+3
+
+====================================================
+NO REQUIREMENTS COVERAGE
+====================================================
+
+BD-002 - Small Pizza price
+BD-003 - Large Pizza price
+BD-004 - Zinger Burger price
+
+====================================================
+KEYWORD COVERAGE ONLY
+====================================================
+
+BD-001 - Northern Bypass branch operating hours
+BD-005 - Delivery-charge model
+BD-006 - Production payment methods
+BD-007 - Refund and complaint policy
+BD-008 - Order-cancellation policy
+BD-009 - Peak-hour order handling
+BD-010 - Multi-branch order routing
+BD-011 - Discount and loyalty rules
+BD-012 - Free-delivery threshold
+
+====================================================
+IMPORTANT LIMITATION
+====================================================
+
+Keyword coverage does not prove that a complete, testable, approved
+requirement exists.
+
+Manual semantic review is required before any decision is marked covered.

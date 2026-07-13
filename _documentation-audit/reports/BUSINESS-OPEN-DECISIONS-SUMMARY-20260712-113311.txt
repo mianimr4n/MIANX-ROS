@@ -1,0 +1,24 @@
+﻿TELEPIZZA BUSINESS OPEN-DECISION AUDIT
+
+Generated:
+2026-07-12 11:33:11
+
+Files reviewed:
+12
+
+Open-decision findings:
+20
+
+Affected files:
+6
+
+====================================================
+FINDINGS BY FILE
+====================================================
+
+BUSINESS_RULES.md: 12
+PRICING_STRATEGY.md: 3
+BUSINESS_MODEL.md: 2
+TARGET_AUDIENCE.md: 1
+BRANCHES.md: 1
+DELIVERY_POLICY.md: 1
