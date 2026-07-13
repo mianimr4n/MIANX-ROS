@@ -1,0 +1,23 @@
+{
+  "name": "telepizza-platform",
+  "private": true,
+  "packageManager": "pnpm@10.15.1",
+  "scripts": {
+    "dev:website": "pnpm --filter telepizza-pakistan dev",
+    "build:website": "pnpm --filter telepizza-pakistan build",
+    "check:website": "pnpm --filter telepizza-pakistan check",
+    "check:backend": "pnpm --filter @telepizza/api check",
+    "test:db": "node --test tests/database/**/*.test.mjs",
+    "test:backend": "pnpm --filter @telepizza/api test",
+    "check": "pnpm check:website && pnpm check:backend",
+    "test": "pnpm test:db && pnpm test:backend"
+  },
+  "pnpm": {
+    "overrides": {
+      "tailwindcss>nanoid": "3.3.7"
+    },
+    "ignoredBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

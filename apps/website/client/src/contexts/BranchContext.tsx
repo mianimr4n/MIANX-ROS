@@ -1,20 +1,12 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-export interface Branch {
-  id: string;
-  name: string;
-  shortName: string;
-  address: string;
-  phone: string;
-  city: string;
-  coordinates: { lat: number; lng: number };
-  hours: string;
-  status: "operating" | "coming-soon";
-}
+import { fetchBranches } from "@/lib/telepizza-api";
+import type { Branch } from "@/lib/telepizza-types";
 
-export const branches: Branch[] = [
+export const fallbackBranches: Branch[] = [
   {
     id: "royal-orchard",
+    code: "royal-orchard",
     name: "Royal Orchard Branch",
     shortName: "Royal Orchard",
     address: "Royal Orchard Main Business Plaza, Musa Wala, Multan, 60000",
@@ -26,6 +18,7 @@ export const branches: Branch[] = [
   },
   {
     id: "northern-bypass",
+    code: "northern-bypass",
     name: "Northern Bypass Road Branch",
     shortName: "Northern Bypass",
     address: "Northern Bypass Road, Multan",
@@ -37,19 +30,77 @@ export const branches: Branch[] = [
   },
 ];
 
+const defaultBranch = fallbackBranches[0]!;
+
 interface BranchContextType {
   selectedBranch: Branch;
   setSelectedBranch: (branch: Branch) => void;
   allBranches: Branch[];
+  isLoading: boolean;
+  error: string | null;
+  reloadBranches: () => Promise<void>;
 }
 
 const BranchContext = createContext<BranchContextType | null>(null);
 
 export function BranchProvider({ children }: { children: ReactNode }) {
-  const [selectedBranch, setSelectedBranch] = useState<Branch>(branches[0]);
+  const [allBranches, setAllBranches] = useState<Branch[]>(fallbackBranches);
+  const [selectedBranchId, setSelectedBranchId] = useState(defaultBranch.id);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const reloadBranches = async () => {
+    setIsLoading(true);
+
+    try {
+      const remoteBranches = await fetchBranches();
+
+      if (remoteBranches.length > 0) {
+        setAllBranches(remoteBranches);
+        setSelectedBranchId((currentBranchId) => {
+          const existing = remoteBranches.find((branch) => branch.id === currentBranchId);
+          if (existing) {
+            return existing.id;
+          }
+
+          return remoteBranches.find((branch) => branch.status === "operating")?.id ?? remoteBranches[0].id;
+        });
+      }
+
+      setError(null);
+    } catch (loadError) {
+      const message =
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load live branch data. Using bundled branch configuration.";
+
+      setAllBranches((currentBranches) => (currentBranches.length > 0 ? currentBranches : fallbackBranches));
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void reloadBranches();
+  }, []);
+
+  const selectedBranch = useMemo(() => {
+    return (
+      allBranches.find((branch) => branch.id === selectedBranchId) ??
+      allBranches[0] ??
+      defaultBranch
+    );
+  }, [allBranches, selectedBranchId]);
+
+  const setSelectedBranch = (branch: Branch) => {
+    setSelectedBranchId(branch.id);
+  };
 
   return (
-    <BranchContext.Provider value={{ selectedBranch, setSelectedBranch, allBranches: branches }}>
+    <BranchContext.Provider
+      value={{ selectedBranch, setSelectedBranch, allBranches, isLoading, error, reloadBranches }}
+    >
       {children}
     </BranchContext.Provider>
   );
