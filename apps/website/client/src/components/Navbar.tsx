@@ -60,7 +60,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
           <img
-            src="/images/telepizza-logo_f910db9a.png"
+            src="/images/telepizza-logo.png"
             alt="Telepizza"
             className="h-9 w-9 transition-transform duration-200 group-hover:scale-105"
           />
@@ -271,7 +271,7 @@ export default function Navbar() {
                 <div className="flex items-center justify-between p-6 border-b border-white/10">
                   <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2">
                     <img
-                      src="/images/telepizza-logo_f910db9a.png"
+                      src="/images/telepizza-logo.png"
                       alt="Telepizza"
                       className="h-8 w-8"
                     />

@@ -1,0 +1,30 @@
+import type { SyntheticEvent } from "react";
+
+/**
+ * Inline SVG placeholder in Telepizza brand colors. Being a data URI, it can
+ * never 404, so a missing or broken image file degrades to a branded tile
+ * instead of the browser's broken-image icon.
+ */
+export const FALLBACK_FOOD_IMAGE = `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+    <rect width="400" height="300" fill="#faf5ec"/>
+    <circle cx="200" cy="138" r="64" fill="#e63b2e"/>
+    <circle cx="200" cy="138" r="50" fill="#f7b32b"/>
+    <circle cx="182" cy="124" r="7" fill="#e63b2e"/>
+    <circle cx="214" cy="146" r="7" fill="#e63b2e"/>
+    <circle cx="196" cy="162" r="6" fill="#e63b2e"/>
+    <text x="200" y="242" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#2e2a26">Telepizza</text>
+  </svg>`,
+)}`;
+
+/**
+ * onError handler for <img>: swaps the source to the inline placeholder
+ * exactly once (guarded so a failing placeholder cannot loop).
+ */
+export function handleImageError(event: SyntheticEvent<HTMLImageElement>) {
+  const image = event.currentTarget;
+
+  if (image.src !== FALLBACK_FOOD_IMAGE) {
+    image.src = FALLBACK_FOOD_IMAGE;
+  }
+}

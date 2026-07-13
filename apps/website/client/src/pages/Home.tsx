@@ -5,18 +5,19 @@ import { Flame, ChevronRight, Clock, Truck, Star, Shield, Plus, MapPin, Zap, Cod
 import { Link } from "wouter";
 import { useCart } from "@/contexts/CartContext";
 import { useBranch } from "@/contexts/BranchContext";
+import { handleImageError } from "@/lib/image-fallback";
 import { Button } from "@/components/ui/button";
 
 const featuredItems = [
-  { id: "f1", name: "Kabab Stuffed Crust", price: 1200, category: "Pizza", image: "/images/menu-pizza_f729e710.jpg" },
-  { id: "f2", name: "Injected Broast", price: 375, category: "Burger", image: "/images/menu-burger_bf9b42fb.jpg" },
-  { id: "f3", name: "Chicago Extreme Pizza", price: 1500, category: "Pizza", image: "/images/menu-pizza_f729e710.jpg" },
+  { id: "f1", name: "Kabab Stuffed Crust", price: 1200, category: "Pizza", image: "/images/menu-pizza.jpg" },
+  { id: "f2", name: "Injected Broast", price: 375, category: "Burger", image: "/images/menu-burger.jpg" },
+  { id: "f3", name: "Chicago Extreme Pizza", price: 1500, category: "Pizza", image: "/images/menu-pizza.jpg" },
 ];
 
 const deals = [
-  { name: "Family Feast", desc: "2 Large Pizzas + 4 Drinks + Garlic Bread", price: 3500, oldPrice: 4500, image: "/images/deals-section_ee7752d9.jpg" },
-  { name: "Couple Special", desc: "1 Medium Pizza + 2 Drinks + Fries", price: 1500, oldPrice: 2000, image: "/images/deals-section_ee7752d9.jpg" },
-  { name: "Solo Deal", desc: "1 Regular Pizza + 1 Drink", price: 650, oldPrice: 900, image: "/images/menu-pizza_f729e710.jpg" },
+  { name: "Family Feast", desc: "2 Large Pizzas + 4 Drinks + Garlic Bread", price: 3500, oldPrice: 4500, image: "/images/deals-section.jpg" },
+  { name: "Couple Special", desc: "1 Medium Pizza + 2 Drinks + Fries", price: 1500, oldPrice: 2000, image: "/images/deals-section.jpg" },
+  { name: "Solo Deal", desc: "1 Regular Pizza + 1 Drink", price: 650, oldPrice: 900, image: "/images/menu-pizza.jpg" },
 ];
 
 export default function Home() {
@@ -30,7 +31,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative min-h-[90vh] overflow-hidden">
         <img
-          src="/images/hero-banner_37686ed3.jpg"
+          src="/images/hero-banner.jpg"
           alt="Telepizza Hero"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -179,6 +180,7 @@ export default function Home() {
                 <img
                   src={item.image}
                   alt={item.name}
+                  onError={handleImageError}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute top-3 left-3">
@@ -214,7 +216,7 @@ export default function Home() {
       <section className="bg-brand-charcoal py-16 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <img
-            src="/images/app-mockup-bg_6f8a25be.jpg"
+            src="/images/app-mockup-bg.jpg"
             alt=""
             className="w-full h-full object-cover"
           />
@@ -249,6 +251,7 @@ export default function Home() {
                   <img
                     src={deal.image}
                     alt={deal.name}
+                    onError={handleImageError}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute top-3 right-3">
@@ -462,7 +465,7 @@ export default function Home() {
       {/* App Download CTA */}
       <section className="relative overflow-hidden py-20">
         <img
-          src="/images/app-mockup-bg_6f8a25be.jpg"
+          src="/images/app-mockup-bg.jpg"
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
         />

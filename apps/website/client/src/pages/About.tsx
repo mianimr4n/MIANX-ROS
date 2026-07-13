@@ -7,7 +7,7 @@ export default function About() {
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[400px] overflow-hidden">
         <img
-          src="/images/hero-banner_37686ed3.jpg"
+          src="/images/hero-banner.jpg"
           alt="About Telepizza"
           className="absolute inset-0 w-full h-full object-cover"
         />

@@ -17,7 +17,7 @@ export default function Footer() {
           <div>
             <Link href="/" className="flex items-center gap-3 mb-4">
               <img
-                src="/images/telepizza-logo_f910db9a.png"
+                src="/images/telepizza-logo.png"
                 alt="Telepizza"
                 className="h-8 w-8"
               />
