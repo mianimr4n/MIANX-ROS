@@ -24,7 +24,7 @@ export default function CartDrawer() {
 
     state.items.forEach((item) => {
       lines.push(
-        `  - ${item.name} x${item.quantity} — Rs ${(item.price * item.quantity).toLocaleString()}`
+        `  - ${item.name}${item.variant ? ` (${item.variant})` : ""} x${item.quantity} — Rs ${(item.price * item.quantity).toLocaleString()}`
       );
     });
 
@@ -106,6 +106,11 @@ export default function CartDrawer() {
                         <h4 className="font-[var(--font-accent)] font-semibold text-sm text-brand-charcoal truncate">
                           {item.name}
                         </h4>
+                        {item.variant && (
+                          <p className="text-muted-foreground text-xs">
+                            {item.variant}
+                          </p>
+                        )}
                         <p className="text-brand-red text-xs font-[var(--font-accent)] font-bold">
                           Rs {item.price.toLocaleString()}
                         </p>

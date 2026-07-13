@@ -5,56 +5,57 @@
    Categories reordered to surface drinks earlier. */
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Minus, ShoppingCart, Search, Star, Flame, Zap } from "lucide-react";
+import { Plus, Search, Star, Flame } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-const menuCategories = ["All", "Pizzas", "Burgers", "Pasta", "Deals", "Sides", "Desserts", "Drinks"];
-
-const menuItems = [
-  // Signature Pizzas
-  { id: "p1", name: "Kabab Stuffed Crust Pizza", price: 1200, category: "Pizzas", description: "Signature kabab-stuffed crust with special toppings — our most loved item", image: "/images/menu-pizza_f729e710.jpg", badge: "Signature" },
-  { id: "p2", name: "Chicago Extreme Pizza", price: 1500, category: "Pizzas", description: "Loaded with premium toppings and extra cheese", image: "/images/menu-pizza_f729e710.jpg", badge: null },
-  { id: "p3", name: "Chicken Supreme Pizza", price: 1100, category: "Pizzas", description: "Tender chicken, bell peppers, and mozzarella", image: "/images/menu-pizza_f729e710.jpg", badge: null },
-  { id: "p4", name: "Sunset Paradise Pizza", price: 1300, category: "Pizzas", description: "A tropical twist with pineapple and ham", image: "/images/hero-food-spread_368dc5ce.jpg", badge: null },
-  { id: "p5", name: "Pepperoni Pizza", price: 950, category: "Pizzas", description: "Classic pepperoni with melted mozzarella", image: "/images/hero-banner_37686ed3.jpg", badge: null },
-
-  // Burgers
-  { id: "b1", name: "Injected Broast Burger", price: 375, category: "Burgers", description: "Crispy injected broast with special sauce — a local favorite", image: "/images/menu-burger_bf9b42fb.jpg", badge: "Popular" },
-  { id: "b2", name: "Zinger Burger", price: 400, category: "Burgers", description: "Spicy crispy chicken fillet with zinger sauce", image: "/images/menu-burger_bf9b42fb.jpg", badge: null },
-  { id: "b3", name: "Beef Burger", price: 450, category: "Burgers", description: "Juicy beef patty with fresh lettuce and tomato", image: "/images/menu-burger_bf9b42fb.jpg", badge: null },
-
-  // Pasta
-  { id: "pa1", name: "Crispy Chicken Pasta", price: 850, category: "Pasta", description: "Creamy pasta with crispy chicken pieces", image: "/images/pasta-dish_6d0eeea5.jpg", badge: null },
-  { id: "pa2", name: "Alfredo Pasta", price: 750, category: "Pasta", description: "Rich creamy alfredo sauce with mushrooms", image: "/images/pasta-dish_6d0eeea5.jpg", badge: null },
-
-  // Deals
-  { id: "d1", name: "Family Deal", price: 1899, category: "Deals", description: "2 large pizzas + 2 burgers + fries + drinks", image: "/images/deals-section_ee7752d9.jpg", badge: "Best Value" },
-  { id: "d2", name: "Couple Deal", price: 1500, category: "Deals", description: "1 medium pizza + 2 drinks + garlic bread", image: "/images/hero-food-spread_368dc5ce.jpg", badge: null },
-
-  // Sides
-  { id: "s1", name: "Garlic Bread", price: 300, category: "Sides", description: "Oven-baked garlic bread with cheese", image: "/images/sides-platter_782cdd37.jpg", badge: null },
-  { id: "s2", name: "Cheese Sticks", price: 350, category: "Sides", description: "Golden crispy cheese sticks", image: "/images/sides-platter_782cdd37.jpg", badge: null },
-  { id: "s3", name: "French Fries", price: 200, category: "Sides", description: "Crispy golden fries with ketchup", image: "/images/sides-platter_782cdd37.jpg", badge: null },
-
-  // Desserts — expanded per customer review data
-  { id: "de1", name: "Brownie with Ice Cream", price: 400, category: "Desserts", description: "Warm chocolate brownie with vanilla ice cream", image: "/images/desserts-drinks_397216c1.jpg", badge: "Fan Favorite" },
-  { id: "de2", name: "Gulab Jamun Cheesecake", price: 450, category: "Desserts", description: "Fusion dessert — gulab jamun meets creamy cheesecake", image: "/images/desserts-drinks_397216c1.jpg", badge: "New" },
-  { id: "de3", name: "Kulfi", price: 250, category: "Desserts", description: "Traditional Pakistani kulfi with pistachios", image: "/images/desserts-drinks_397216c1.jpg", badge: null },
-
-  // Drinks — expanded per customer review data (shakes & frappe are most praised)
-  { id: "dr1", name: "Chocolate Milkshake", price: 350, category: "Drinks", description: "Thick creamy chocolate milkshake — customers rave about this", image: "/images/desserts-drinks_397216c1.jpg", badge: "Top Rated" },
-  { id: "dr2", name: "Vanilla Milkshake", price: 350, category: "Drinks", description: "Rich vanilla milkshake with real ice cream", image: "/images/desserts-drinks_397216c1.jpg", badge: null },
-  { id: "dr3", name: "Strawberry Frappe", price: 400, category: "Drinks", description: "Blended strawberry frappe with whipped cream", image: "/images/desserts-drinks_397216c1.jpg", badge: "Top Rated" },
-  { id: "dr4", name: "Mango Frappe", price: 400, category: "Drinks", description: "Tropical mango frappe — a summer essential", image: "/images/desserts-drinks_397216c1.jpg", badge: null },
-  { id: "dr5", name: "Iced Coffee", price: 300, category: "Drinks", description: "Smooth iced coffee with caramel drizzle", image: "/images/desserts-drinks_397216c1.jpg", badge: null },
-];
+import {
+  menuCategories,
+  menuItems,
+  type MenuItem,
+  type MenuVariant,
+} from "@/data/menu-data";
 
 export default function Menu() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const { addItem } = useCart();
+
+  const getSelectedVariant = (item: MenuItem): MenuVariant | undefined => {
+    if (!item.variants?.length) return undefined;
+
+    const selectedLabel = selectedVariants[item.id];
+
+    return (
+      item.variants.find((variant) => variant.label === selectedLabel) ??
+      item.variants[0]
+    );
+  };
+
+  const getItemPrice = (item: MenuItem): number | undefined =>
+    getSelectedVariant(item)?.price ?? item.price;
+
+  const handleAddItem = (item: MenuItem) => {
+    const selectedVariant = getSelectedVariant(item);
+    const price = selectedVariant?.price ?? item.price;
+
+    if (price === undefined) return;
+
+    const variantId = selectedVariant
+      ? selectedVariant.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+      : null;
+
+    addItem({
+      id: variantId ? `${item.id}-${variantId}` : item.id,
+      name: item.name,
+      price,
+      category: item.category,
+      variant: selectedVariant?.label,
+      image: item.image,
+      description: item.description,
+    });
+  };
 
   const filteredItems = menuItems.filter((item) => {
     const matchesCategory = activeCategory === "All" || item.category === activeCategory;
@@ -146,7 +147,7 @@ export default function Menu() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: i * 0.06, ease: [0.23, 1, 0.32, 1] }}
-              className="group bg-white rounded-2xl overflow-hidden border border-border hover:border-brand-red/30 hover:shadow-xl hover:shadow-brand-red/5 transition-all duration-300"
+              className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-border hover:border-brand-red/30 hover:shadow-xl hover:shadow-brand-red/5 transition-all duration-300"
             >
               <div className="relative aspect-[4/3] overflow-hidden">
                 <img
@@ -163,46 +164,59 @@ export default function Menu() {
                       <Flame className="w-3 h-3" /> Signature
                     </span>
                   )}
-                  {item.badge === "Popular" && (
-                    <span className="bg-brand-red-light text-white text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                      <Zap className="w-3 h-3" /> Popular
-                    </span>
-                  )}
-                  {item.badge === "Top Rated" && (
-                    <span className="bg-brand-gold text-brand-charcoal text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                      <Star className="w-3 h-3 fill-brand-charcoal" /> Top Rated
-                    </span>
-                  )}
-                  {item.badge === "Fan Favorite" && (
-                    <span className="bg-brand-red text-white text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                      <Star className="w-3 h-3 fill-white" /> Fan Favorite
-                    </span>
-                  )}
-                  {item.badge === "Best Value" && (
-                    <span className="bg-green-600 text-white text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full">
-                      Best Value
-                    </span>
-                  )}
-                  {item.badge === "New" && (
-                    <span className="bg-blue-600 text-white text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full">
-                      New
+                  {item.badge && item.badge !== "Signature" && (
+                    <span className="bg-brand-gold text-brand-charcoal text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full">
+                      {item.badge}
                     </span>
                   )}
                 </div>
               </div>
-              <div className="p-5">
+              <div className="flex flex-col flex-1 p-5">
                 <h3 className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal mb-1">
                   {item.name}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                   {item.description}
                 </p>
-                <div className="flex items-center justify-between">
+
+                {item.variants && item.variants.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {item.variants.map((variant) => {
+                      const selectedVariant = getSelectedVariant(item);
+                      const isSelected =
+                        selectedVariant?.label === variant.label;
+
+                      return (
+                        <button
+                          key={variant.label}
+                          type="button"
+                          onClick={() =>
+                            setSelectedVariants((current) => ({
+                              ...current,
+                              [item.id]: variant.label,
+                            }))
+                          }
+                          className={`rounded-lg border px-3 py-2 text-xs font-[var(--font-accent)] font-semibold transition-all ${
+                            isSelected
+                              ? "border-brand-red bg-brand-red text-white"
+                              : "border-border bg-white text-brand-charcoal hover:border-brand-red/40"
+                          }`}
+                        >
+                          {variant.label}
+                          <span className="ml-1 opacity-80">
+                            Rs {variant.price.toLocaleString()}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <div className="mt-auto flex items-center justify-between">
                   <span className="font-[var(--font-accent)] font-bold text-xl text-brand-red">
-                    Rs {item.price.toLocaleString()}
+                    Rs {getItemPrice(item)?.toLocaleString() ?? "Unavailable"}
                   </span>
                   <Button
-                    onClick={() => addItem({ id: item.id, name: item.name, price: item.price, category: item.category })}
+                    onClick={() => handleAddItem(item)}
                     size="sm"
                     className="bg-brand-red hover:bg-brand-red-light text-white font-[var(--font-accent)] font-semibold rounded-xl transition-all active:scale-95 shadow-md shadow-brand-red/20"
                   >
