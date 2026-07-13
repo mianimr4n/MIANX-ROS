@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, Menu as MenuIcon, X, Phone, MapPin, ChevronDown, ChevronUp, Check, Construction } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useIsMobile } from "@/hooks/useMobile";
-import { useBranch, branches } from "@/contexts/BranchContext";
+import { useBranch } from "@/contexts/BranchContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -26,7 +26,7 @@ export default function Navbar() {
   const [location] = useLocation();
   const { totalItems, toggleCart } = useCart();
   const isMobile = useIsMobile();
-  const { selectedBranch, setSelectedBranch } = useBranch();
+  const { selectedBranch, setSelectedBranch, allBranches } = useBranch();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,8 +45,8 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const operatingBranches = branches.filter((b) => b.status === "operating");
-  const comingSoonBranches = branches.filter((b) => b.status === "coming-soon");
+  const operatingBranches = allBranches.filter((branch) => branch.status === "operating");
+  const comingSoonBranches = allBranches.filter((branch) => branch.status === "coming-soon");
 
   return (
     <header

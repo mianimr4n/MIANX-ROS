@@ -1,6 +1,20 @@
 import type { NextFunction, Request, Response } from "express";
 import { ZodError, type ZodSchema } from "zod";
 
+export class ApiError extends Error {
+  statusCode: number;
+  code: string;
+  details?: unknown;
+
+  constructor(statusCode: number, code: string, message: string, details?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.statusCode = statusCode;
+    this.code = code;
+    this.details = details;
+  }
+}
+
 export function validateBody<T>(schema: ZodSchema<T>) {
   return (req: Request, res: Response, next: NextFunction) => {
     const result = schema.safeParse(req.body);
@@ -76,6 +90,17 @@ export function errorHandler(error: unknown, _req: Request, res: Response, _next
         code: "VALIDATION_ERROR",
         message: "Request validation failed.",
         details: error.flatten(),
+      },
+    });
+  }
+
+  if (error instanceof ApiError) {
+    return res.status(error.statusCode).json({
+      ok: false,
+      error: {
+        code: error.code,
+        message: error.message,
+        details: error.details,
       },
     });
   }

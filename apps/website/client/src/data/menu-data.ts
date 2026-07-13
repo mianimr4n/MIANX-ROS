@@ -1,20 +1,7 @@
+import type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
+
 export type MenuSize = "Small" | "Medium" | "Large";
-
-export interface MenuVariant {
-  label: string;
-  price: number;
-}
-
-export interface MenuItem {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  image: string;
-  badge?: string;
-  price?: number;
-  variants?: MenuVariant[];
-}
+export type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
 
 const signatureVariants: MenuVariant[] = [
   { label: "6 inch Small", price: 499 },

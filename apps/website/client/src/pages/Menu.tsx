@@ -3,15 +3,17 @@
    customer strength per real review data (customers consistently praise shakes,
    frappes, and desserts more than main items).
    Categories reordered to surface drinks earlier. */
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, Search, Star, Flame } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { fetchMenuCatalog } from "@/lib/telepizza-api";
+import type { MenuCategory } from "@/lib/telepizza-types";
 import {
-  menuCategories,
-  menuItems,
+  menuCategories as fallbackMenuCategories,
+  menuItems as fallbackMenuItems,
   type MenuItem,
   type MenuVariant,
 } from "@/data/menu-data";
@@ -20,7 +22,69 @@ export default function Menu() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
+  const [categories, setCategories] = useState<MenuCategory[]>(
+    fallbackMenuCategories
+      .filter((category) => category !== "All")
+      .map((category, index) => ({ name: category, sortOrder: index + 1 })),
+  );
+  const [items, setItems] = useState<MenuItem[]>(fallbackMenuItems);
+  const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
   const { addItem } = useCart();
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadCatalog = async () => {
+      setIsLoadingCatalog(true);
+
+      try {
+        const catalog = await fetchMenuCatalog();
+
+        if (!ignore) {
+          setCategories(
+            catalog.categories.length > 0
+              ? catalog.categories
+              : Array.from(new Set(catalog.items.map((item) => item.category))).map((category, index) => ({
+                  name: category,
+                  sortOrder: index + 1,
+                })),
+          );
+          setItems(catalog.items.length > 0 ? catalog.items : fallbackMenuItems);
+          setCatalogError(null);
+        }
+      } catch (loadError) {
+        if (!ignore) {
+          setCatalogError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Unable to load the live menu right now. Showing the bundled menu instead.",
+          );
+          setCategories(
+            fallbackMenuCategories
+              .filter((category) => category !== "All")
+              .map((category, index) => ({ name: category, sortOrder: index + 1 })),
+          );
+          setItems(fallbackMenuItems);
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoadingCatalog(false);
+        }
+      }
+    };
+
+    void loadCatalog();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const availableCategories = useMemo(
+    () => ["All", ...categories.map((category) => category.name)],
+    [categories],
+  );
 
   const getSelectedVariant = (item: MenuItem): MenuVariant | undefined => {
     if (!item.variants?.length) return undefined;
@@ -42,9 +106,9 @@ export default function Menu() {
 
     if (price === undefined) return;
 
-    const variantId = selectedVariant
-      ? selectedVariant.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")
-      : null;
+    const variantId =
+      selectedVariant?.id ??
+      (selectedVariant ? selectedVariant.label.toLowerCase().replace(/[^a-z0-9]+/g, "-") : null);
 
     addItem({
       id: variantId ? `${item.id}-${variantId}` : item.id,
@@ -57,7 +121,7 @@ export default function Menu() {
     });
   };
 
-  const filteredItems = menuItems.filter((item) => {
+  const filteredItems = items.filter((item) => {
     const matchesCategory = activeCategory === "All" || item.category === activeCategory;
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
     return matchesCategory && matchesSearch;
@@ -121,7 +185,7 @@ export default function Menu() {
           </div>
           {/* Category Tabs */}
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {menuCategories.map((cat) => (
+            {availableCategories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
@@ -135,6 +199,16 @@ export default function Menu() {
               </button>
             ))}
           </div>
+          {catalogError && (
+            <p className="mt-3 text-xs text-amber-700 font-[var(--font-accent)]">
+              {catalogError}
+            </p>
+          )}
+          {!catalogError && isLoadingCatalog && (
+            <p className="mt-3 text-xs text-muted-foreground font-[var(--font-accent)]">
+              Refreshing live menu from the backend...
+            </p>
+          )}
         </div>
       </section>
 

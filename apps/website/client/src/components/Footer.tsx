@@ -2,13 +2,12 @@
    Footer updated with multi-branch support and platform-level branding. */
 import { Link } from "wouter";
 import { MapPin, Phone, Instagram, Facebook, MessageCircle, Heart, Zap, Construction } from "lucide-react";
-import { useBranch, branches } from "@/contexts/BranchContext";
-
-const operatingBranches = branches.filter((b) => b.status === "operating");
-const comingSoonBranches = branches.filter((b) => b.status === "coming-soon");
+import { useBranch } from "@/contexts/BranchContext";
 
 export default function Footer() {
-  const { selectedBranch } = useBranch();
+  const { selectedBranch, allBranches } = useBranch();
+  const operatingBranches = allBranches.filter((branch) => branch.status === "operating");
+  const comingSoonBranches = allBranches.filter((branch) => branch.status === "coming-soon");
 
   return (
     <footer className="bg-brand-charcoal text-white">

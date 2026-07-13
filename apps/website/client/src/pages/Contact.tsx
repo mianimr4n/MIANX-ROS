@@ -1,29 +1,34 @@
 /* Flame & Crust Design: Bold street-food energy with Telepizza Red accent.
    Contact page updated with multi-branch support and both locations on map. */
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { MapPin, Phone, Clock, Instagram, Facebook, MessageCircle, Navigation, Construction } from "lucide-react";
 import { MapView } from "@/components/Map";
 import { Button } from "@/components/ui/button";
-import { useBranch, branches } from "@/contexts/BranchContext";
+import { useBranch } from "@/contexts/BranchContext";
 
 export default function Contact() {
   const mapRef = useRef<google.maps.Map | null>(null);
-  const { selectedBranch } = useBranch();
+  const [isMapReady, setIsMapReady] = useState(false);
+  const { selectedBranch, allBranches } = useBranch();
 
   useEffect(() => {
-    if (mapRef.current) {
-      // Add markers for ALL branches
-      branches.forEach((branch) => {
-        const marker = new google.maps.marker.AdvancedMarkerElement({
-          map: mapRef.current,
-          position: branch.coordinates,
-          title: `${branch.name} - ${branch.phone}`,
-        });
+    if (!isMapReady || !mapRef.current || !window.google?.maps?.marker) {
+      return;
+    }
 
-        // Click to open Google Maps directions
-        const infoWindow = new google.maps.InfoWindow({
-          content: `
+    const markers: google.maps.marker.AdvancedMarkerElement[] = [];
+    const infoWindows: google.maps.InfoWindow[] = [];
+
+    allBranches.forEach((branch) => {
+      const marker = new google.maps.marker.AdvancedMarkerElement({
+        map: mapRef.current,
+        position: branch.coordinates,
+        title: `${branch.name} - ${branch.phone}`,
+      });
+
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
             <div style="padding: 8px; font-family: 'Poppins', sans-serif;">
               <h3 style="font-weight: 700; margin: 0 0 4px 0; color: #D22630;">${branch.name}</h3>
               <p style="margin: 0; font-size: 13px; color: #333;">${branch.address}</p>
@@ -31,17 +36,29 @@ export default function Contact() {
               <a href="https://www.google.com/maps/dir/?api=1&destination=${branch.coordinates.lat},${branch.coordinates.lng}" target="_blank" style="color: #D22630; font-size: 12px; font-weight: 600; display: inline-block; margin-top: 4px;">Get Directions</a>
             </div>
           `,
-        });
+      });
 
-        marker.addListener("gmp-click", () => {
-          infoWindow.open({
-            map: mapRef.current,
-            anchor: marker,
-          });
+      marker.addListener("gmp-click", () => {
+        infoWindow.open({
+          map: mapRef.current,
+          anchor: marker,
         });
       });
-    }
-  }, []);
+
+      markers.push(marker);
+      infoWindows.push(infoWindow);
+    });
+
+    return () => {
+      for (const marker of markers) {
+        marker.map = null;
+      }
+
+      for (const infoWindow of infoWindows) {
+        infoWindow.close();
+      }
+    };
+  }, [allBranches, isMapReady]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -77,7 +94,7 @@ export default function Contact() {
       <section className="container py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {/* Operating branches */}
-          {branches.filter((b) => b.status === "operating").map((branch, i) => (
+          {allBranches.filter((branch) => branch.status === "operating").map((branch, i) => (
             <motion.div
               key={branch.id}
               initial={{ opacity: 0, y: 20 }}
@@ -175,6 +192,7 @@ export default function Contact() {
               initialZoom={13}
               onMapReady={(map) => {
                 mapRef.current = map;
+                setIsMapReady(true);
               }}
             />
 

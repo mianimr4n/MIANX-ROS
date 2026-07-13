@@ -1,5 +1,6 @@
 import type { Express } from "express";
 
+import type { AppDependencies } from "../app-dependencies.js";
 import { createAdminRouter } from "./admin/routes.js";
 import { createAuthRouter } from "./auth/routes.js";
 import { createBranchesRouter } from "./branches/routes.js";
@@ -46,10 +47,10 @@ export const apiModules: ApiModuleDescriptor[] = [
   },
 ];
 
-export function registerApiModules(app: Express) {
+export function registerApiModules(app: Express, dependencies: AppDependencies) {
   app.use("/api/v1/auth", createAuthRouter());
-  app.use("/api/v1/branches", createBranchesRouter());
-  app.use("/api/v1/menu", createMenuRouter());
+  app.use("/api/v1/branches", createBranchesRouter(dependencies.catalogDataSource));
+  app.use("/api/v1/menu", createMenuRouter(dependencies.catalogDataSource));
   app.use("/api/v1/orders", createOrdersRouter());
   app.use("/api/v1/riders", createRidersRouter());
   app.use("/api/v1/admin", createAdminRouter());

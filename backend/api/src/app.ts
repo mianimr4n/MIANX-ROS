@@ -2,12 +2,20 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 
+import { createAppDependencies, type AppDependencies } from "./app-dependencies.js";
 import { errorHandler, notFoundHandler } from "./common/http.js";
 import { getEnvironmentStatus } from "./config/env.js";
 import { apiModules, registerApiModules } from "./modules/index.js";
 
-export function createApp(sourceEnv: NodeJS.ProcessEnv = process.env) {
+export function createApp(
+  sourceEnv: NodeJS.ProcessEnv = process.env,
+  dependencyOverrides: Partial<AppDependencies> = {},
+) {
   const envStatus = getEnvironmentStatus(sourceEnv);
+  const dependencies: AppDependencies = {
+    ...createAppDependencies(envStatus),
+    ...dependencyOverrides,
+  };
   const app = express();
 
   app.use(helmet());
@@ -47,7 +55,7 @@ export function createApp(sourceEnv: NodeJS.ProcessEnv = process.env) {
     });
   });
 
-  registerApiModules(app);
+  registerApiModules(app, dependencies);
   app.use(notFoundHandler);
   app.use(errorHandler);
 

@@ -4,11 +4,8 @@ import { motion } from "framer-motion";
 import { Flame, ChevronRight, Clock, Truck, Star, Shield, Plus, MapPin, Zap, Code2, Bot, BarChart3, ShoppingCart, Phone, Construction } from "lucide-react";
 import { Link } from "wouter";
 import { useCart } from "@/contexts/CartContext";
-import { useBranch, branches } from "@/contexts/BranchContext";
+import { useBranch } from "@/contexts/BranchContext";
 import { Button } from "@/components/ui/button";
-
-const operatingBranches = branches.filter((b) => b.status === "operating");
-const comingSoonBranches = branches.filter((b) => b.status === "coming-soon");
 
 const featuredItems = [
   { id: "f1", name: "Kabab Stuffed Crust", price: 1200, category: "Pizza", image: "/images/menu-pizza_f729e710.jpg" },
@@ -24,7 +21,9 @@ const deals = [
 
 export default function Home() {
   const { addItem } = useCart();
-  const { selectedBranch } = useBranch();
+  const { selectedBranch, allBranches } = useBranch();
+  const operatingBranches = allBranches.filter((branch) => branch.status === "operating");
+  const comingSoonBranches = allBranches.filter((branch) => branch.status === "coming-soon");
 
   return (
     <div className="min-h-screen bg-background">
