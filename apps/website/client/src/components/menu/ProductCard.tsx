@@ -5,7 +5,7 @@ import { handleImageError } from "@/lib/image-fallback";
 import { useAddMenuItem } from "@/hooks/useAddMenuItem";
 import { isPizzaItem } from "@/data/cart-config";
 import { getDefaultVariant, getDisplayPrice } from "@/lib/menu-utils";
-import type { MenuItem } from "@/data/menu-data";
+import type { MenuItem } from "@/lib/telepizza-types";
 import { ProductBadge } from "./ProductBadge";
 
 type ProductCardProps = {
