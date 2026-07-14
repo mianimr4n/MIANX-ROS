@@ -1,4 +1,5 @@
 import type { SyntheticEvent } from "react";
+import { BRAND } from "@/lib/brand";
 
 /**
  * Inline SVG placeholder in Telepizza brand colors. Being a data URI, it can
@@ -38,6 +39,11 @@ export const FALLBACK_LOGO_IMAGE = `data:image/svg+xml,${encodeURIComponent(
 
 export function handleLogoError(event: SyntheticEvent<HTMLImageElement>) {
   const image = event.currentTarget;
+
+  if (!image.src.endsWith(BRAND.logoWordmark) && image.src !== FALLBACK_LOGO_IMAGE) {
+    image.src = BRAND.logoWordmark;
+    return;
+  }
 
   if (image.src !== FALLBACK_LOGO_IMAGE) {
     image.src = FALLBACK_LOGO_IMAGE;

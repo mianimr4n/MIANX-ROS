@@ -10,7 +10,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useBranch } from "@/contexts/BranchContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { handleLogoError } from "@/lib/image-fallback";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -61,26 +61,9 @@ export default function Navbar() {
     >
       <div className="container flex items-center justify-between h-16 md:h-20">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <img
-            src="/images/telepizza-logo.png"
-            alt="Telepizza"
-            onError={handleLogoError}
-            className="h-10 w-auto md:h-11 object-contain transition-transform duration-200 group-hover:scale-105"
-          />
-          <div>
-            <span
-              className={`font-[var(--font-display)] font-extrabold text-lg tracking-tight transition-colors ${
-                scrolled ? "text-brand-charcoal" : "text-white"
-              }`}
-            >
-              TELEPIZZA
-            </span>
-            <span className="block text-[10px] font-[var(--font-accent)] text-brand-gold uppercase tracking-[0.15em] -mt-1">
-              Pakistan
-            </span>
-          </div>
-        </Link>
+        <BrandLogo
+          imageClassName={scrolled ? undefined : "ring-2 ring-white/20"}
+        />
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1">
@@ -286,15 +269,11 @@ export default function Navbar() {
               <div className="flex flex-col h-full">
                 {/* Mobile Header */}
                 <div className="flex items-center justify-between p-6 border-b border-white/10">
-                  <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2">
-                    <img
-                      src="/images/telepizza-logo.png"
-                      alt="Telepizza"
-                      onError={handleLogoError}
-                      className="h-8 w-auto object-contain"
-                    />
-                    <span className="font-[var(--font-display)] font-bold text-lg">TELEPIZZA</span>
-                  </Link>
+                  <BrandLogo
+                    href="/"
+                    onClick={() => setMobileOpen(false)}
+                    imageClassName="h-9 w-9"
+                  />
                 </div>
                 <nav className="flex-1 p-6 flex flex-col gap-4">
                   {navLinks.map((link) => (

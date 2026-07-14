@@ -1,4 +1,5 @@
 import type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
+import { withMenuItemImages } from "@/lib/menu-images";
 
 export type MenuSize = "Small" | "Medium" | "Large";
 export type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
@@ -32,7 +33,7 @@ export const menuCategories = [
   "Deals",
 ] as const;
 
-export const menuItems: MenuItem[] = [
+const baseMenuItems: MenuItem[] = [
   {
     id: "tele-special",
     name: "Tele Special",
@@ -531,3 +532,5 @@ export const menuItems: MenuItem[] = [
     price: 1440,
   },
 ];
+
+export const menuItems: MenuItem[] = withMenuItemImages(baseMenuItems);

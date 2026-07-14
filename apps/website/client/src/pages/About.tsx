@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import { Flame, Clock, MapPin, Heart, Users, Star } from "lucide-react";
+import { BrandLogoMark } from "@/components/BrandLogo";
+import { BRAND } from "@/lib/brand";
 
 export default function About() {
   return (
@@ -13,6 +15,7 @@ export default function About() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-charcoal/95 via-brand-charcoal/60 to-brand-charcoal/30" />
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
+          <BrandLogoMark className="h-24 w-24 mb-6 ring-4 ring-white/20" />
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -27,7 +30,7 @@ export default function About() {
             transition={{ duration: 0.7, delay: 0.1, ease: [0.23, 1, 0.32, 1] }}
             className="mt-4 text-lg text-white/80 font-[var(--font-body)] max-w-xl"
           >
-            Pakistan's boldest pizza experience — delivering heat, flavor, and speed
+            Pakistan&apos;s boldest pizza experience — {BRAND.tagline}
           </motion.p>
         </div>
       </section>
