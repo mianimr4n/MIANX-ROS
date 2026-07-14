@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { createApp } from "../src/app.js";
 import type { CatalogDataSource } from "../src/services/catalog/types.js";
+import type { OrdersDataSource } from "../src/services/orders/types.js";
 
 const readyEnv = {
   API_PORT: "4000",
@@ -55,9 +56,48 @@ const catalogDataSource: CatalogDataSource = {
   },
 };
 
+const ordersDataSource: OrdersDataSource = {
+  async createOrder(input) {
+    return {
+      id: "order-1",
+      orderNumber: "TP-TEST-1",
+      status: "pending",
+      subtotal: input.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+      totalAmount: input.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+      createdAt: new Date().toISOString(),
+    };
+  },
+  async getOrderTracking(orderNumber, contactPhone) {
+    if (orderNumber !== "TP-TEST-1") return null;
+    return {
+      orderNumber,
+      status: "pending",
+      orderType: "delivery",
+      contactName: "Test User",
+      contactPhone,
+      subtotal: 499,
+      totalAmount: 499,
+      deliveryAddress: "Multan",
+      notes: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      items: [
+        {
+          productName: "Tele Special",
+          variantName: "Small",
+          quantity: 1,
+          unitPrice: 499,
+          totalPrice: 499,
+          instructions: null,
+        },
+      ],
+    };
+  },
+};
+
 describe("Telepizza API app", () => {
   it("returns the registered modules on /healthz", async () => {
-    const { app } = createApp(readyEnv, { catalogDataSource });
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
     const response = await request(app).get("/healthz");
 
     expect(response.status).toBe(200);
@@ -79,9 +119,9 @@ describe("Telepizza API app", () => {
   });
 
   it("validates order creation payloads", async () => {
-    const { app } = createApp(readyEnv, { catalogDataSource });
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
     const response = await request(app).post("/api/v1/orders").send({
-      branchId: "bad-id",
+      branchCode: "royal-orchard",
       orderType: "delivery",
       orderSource: "website",
       contactName: "A",
@@ -94,7 +134,7 @@ describe("Telepizza API app", () => {
   });
 
   it("guards admin routes with role checks", async () => {
-    const { app } = createApp(readyEnv, { catalogDataSource });
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
     const response = await request(app).get("/api/v1/admin/controls");
 
     expect(response.status).toBe(403);
@@ -102,7 +142,7 @@ describe("Telepizza API app", () => {
   });
 
   it("returns branches from the configured catalog source", async () => {
-    const { app } = createApp(readyEnv, { catalogDataSource });
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
     const response = await request(app).get("/api/v1/branches");
 
     expect(response.status).toBe(200);
@@ -111,11 +151,46 @@ describe("Telepizza API app", () => {
   });
 
   it("returns the menu catalog from the configured catalog source", async () => {
-    const { app } = createApp(readyEnv, { catalogDataSource });
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
     const response = await request(app).get("/api/v1/menu/catalog");
 
     expect(response.status).toBe(200);
     expect(response.body.data.categories[0].slug).toBe("signature-pizzas");
     expect(response.body.data.items[0].variants[0].price).toBe(499);
+  });
+
+  it("creates orders through the configured orders source", async () => {
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
+    const response = await request(app).post("/api/v1/orders").send({
+      branchCode: "royal-orchard",
+      orderType: "delivery",
+      orderSource: "website",
+      contactName: "Test User",
+      contactPhone: "03041110495",
+      deliveryAddress: "Multan",
+      items: [
+        {
+          menuItemSlug: "tele-special",
+          variantLabel: "6 inch Small",
+          quantity: 1,
+          unitPrice: 499,
+          productName: "Tele Special",
+          variantName: "6 inch Small",
+        },
+      ],
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data.orderNumber).toBe("TP-TEST-1");
+  });
+
+  it("returns order tracking through the configured orders source", async () => {
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
+    const response = await request(app)
+      .get("/api/v1/orders/TP-TEST-1/tracking")
+      .query({ phone: "03041110495" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.orderNumber).toBe("TP-TEST-1");
   });
 });

@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { ChevronRight } from "lucide-react";
-import { menuItems, type MenuItem } from "@/data/menu-data";
+import { menuItems } from "@/data/menu-data";
 import { getItemsByCategory, getItemsByIds } from "@/lib/menu-utils";
 import { ProductCard } from "@/components/menu/ProductCard";
 
@@ -12,7 +12,6 @@ type MenuSectionRowProps = {
   itemIds?: string[];
   limit?: number;
   viewAllCategory?: string;
-  onAdd: (item: MenuItem) => void;
   dark?: boolean;
 };
 
@@ -24,7 +23,6 @@ export function MenuSectionRow({
   itemIds,
   limit = 3,
   viewAllCategory,
-  onAdd,
   dark = false,
 }: MenuSectionRowProps) {
   const items = itemIds
@@ -66,7 +64,7 @@ export function MenuSectionRow({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map((item, index) => (
-            <ProductCard key={item.id} item={item} index={index} onAdd={onAdd} />
+            <ProductCard key={item.id} item={item} index={index} />
           ))}
         </div>
       </div>

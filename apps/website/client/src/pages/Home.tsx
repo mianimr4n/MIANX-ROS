@@ -14,10 +14,9 @@ import {
   Truck,
 } from "lucide-react";
 import { Link } from "wouter";
-import { useCart } from "@/contexts/CartContext";
 import { useBranch } from "@/contexts/BranchContext";
-import { menuItems, type MenuItem } from "@/data/menu-data";
-import { buildCartItemPayload, getDisplayPrice, getItemsByIds } from "@/lib/menu-utils";
+import { menuItems } from "@/data/menu-data";
+import { getDisplayPrice, getItemsByIds } from "@/lib/menu-utils";
 import { Button } from "@/components/ui/button";
 import { DealCard } from "@/components/menu/DealCard";
 import { ProductCard } from "@/components/menu/ProductCard";
@@ -43,15 +42,9 @@ const todaysDeals = getItemsByIds(menuItems, TODAYS_DEAL_IDS);
 const customerFavorites = getItemsByIds(menuItems, CUSTOMER_FAVORITE_IDS);
 
 export default function Home() {
-  const { addItem } = useCart();
   const { selectedBranch, allBranches } = useBranch();
   const operatingBranches = allBranches.filter((branch) => branch.status === "operating");
   const comingSoonBranches = allBranches.filter((branch) => branch.status === "coming-soon");
-
-  const handleAddItem = (item: MenuItem) => {
-    const payload = buildCartItemPayload(item);
-    if (payload) addItem(payload);
-  };
 
   const mockupDeal = todaysDeals[0];
   const mockupItems = customerFavorites.slice(0, 3);
@@ -100,7 +93,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {todaysDeals.map((deal, index) => (
-              <DealCard key={deal.id} deal={deal} index={index} onAdd={handleAddItem} />
+              <DealCard key={deal.id} deal={deal} index={index} />
             ))}
           </div>
         </div>
@@ -112,7 +105,6 @@ export default function Home() {
         subtitle="Signature and specialty pizzas from our verified menu"
         itemIds={FEATURED_PIZZA_IDS}
         viewAllCategory="Signature Pizzas"
-        onAdd={handleAddItem}
       />
 
       <MenuSectionRow
@@ -121,7 +113,6 @@ export default function Home() {
         subtitle="Quarter, half, and full broast combos with fries and dips"
         itemIds={FEATURED_BROAST_IDS}
         viewAllCategory="Broast"
-        onAdd={handleAddItem}
         dark
       />
 
@@ -131,7 +122,6 @@ export default function Home() {
         subtitle="Patty burgers and loaded sandwiches from our verified menu"
         itemIds={FEATURED_BURGER_SANDWICH_IDS}
         viewAllCategory="Burgers"
-        onAdd={handleAddItem}
       />
 
       <MenuSectionRow
@@ -140,7 +130,6 @@ export default function Home() {
         subtitle="Crunchy pasta, loaded fries, tenders, and more"
         itemIds={FEATURED_PASTA_SIDES_IDS}
         viewAllCategory="Pasta"
-        onAdd={handleAddItem}
         dark
       />
 
@@ -164,7 +153,7 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {customerFavorites.map((item, index) => (
-            <ProductCard key={item.id} item={item} index={index} onAdd={handleAddItem} />
+            <ProductCard key={item.id} item={item} index={index} />
           ))}
         </div>
       </section>

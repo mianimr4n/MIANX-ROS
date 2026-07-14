@@ -3,15 +3,16 @@ import { Plus, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { handleImageError } from "@/lib/image-fallback";
 import type { MenuItem } from "@/data/menu-data";
+import { useAddMenuItem } from "@/hooks/useAddMenuItem";
 import { ProductBadge } from "./ProductBadge";
 
 type DealCardProps = {
   deal: MenuItem;
   index?: number;
-  onAdd: (item: MenuItem) => void;
 };
 
-export function DealCard({ deal, index = 0, onAdd }: DealCardProps) {
+export function DealCard({ deal, index = 0 }: DealCardProps) {
+  const addMenuItem = useAddMenuItem();
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -50,7 +51,7 @@ export function DealCard({ deal, index = 0, onAdd }: DealCardProps) {
             </span>
           </div>
           <Button
-            onClick={() => onAdd(deal)}
+            onClick={() => addMenuItem(deal)}
             size="lg"
             className="rounded-2xl bg-white text-brand-red hover:bg-brand-cream font-[var(--font-accent)] font-bold shadow-lg transition-all active:scale-95"
           >

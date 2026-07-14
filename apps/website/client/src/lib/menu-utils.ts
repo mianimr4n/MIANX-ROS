@@ -25,9 +25,10 @@ export function buildCartItemPayload(
 
   const variantId = selectedVariant ? getVariantId(selectedVariant) : null;
 
-  return {
-    id: variantId ? `${item.id}-${variantId}` : item.id,
-    name: item.name,
+    return {
+      id: variantId ? `${item.id}-${variantId}` : item.id,
+      menuSlug: item.id,
+      name: item.name,
     price,
     category: item.category,
     variant: selectedVariant?.label,

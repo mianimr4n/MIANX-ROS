@@ -2,6 +2,8 @@ import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { handleImageError } from "@/lib/image-fallback";
+import { useAddMenuItem } from "@/hooks/useAddMenuItem";
+import { isPizzaItem } from "@/data/cart-config";
 import { getDefaultVariant, getDisplayPrice } from "@/lib/menu-utils";
 import type { MenuItem } from "@/data/menu-data";
 import { ProductBadge } from "./ProductBadge";
@@ -9,11 +11,11 @@ import { ProductBadge } from "./ProductBadge";
 type ProductCardProps = {
   item: MenuItem;
   index?: number;
-  onAdd: (item: MenuItem) => void;
   compact?: boolean;
 };
 
-export function ProductCard({ item, index = 0, onAdd, compact = false }: ProductCardProps) {
+export function ProductCard({ item, index = 0, compact = false }: ProductCardProps) {
+  const addMenuItem = useAddMenuItem();
   const defaultVariant = getDefaultVariant(item);
   const displayPrice = getDisplayPrice(item);
 
@@ -25,7 +27,7 @@ export function ProductCard({ item, index = 0, onAdd, compact = false }: Product
       transition={{ duration: 0.45, delay: index * 0.06 }}
       className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-border hover:border-brand-red/40 hover:shadow-2xl hover:shadow-brand-red/10 transition-all duration-300"
     >
-      <div className={`relative overflow-hidden ${compact ? "aspect-[4/3]" : "aspect-[4/3]"}`}>
+      <div className="relative overflow-hidden aspect-[4/3]">
         <img
           src={item.image}
           alt={item.name}
@@ -60,12 +62,12 @@ export function ProductCard({ item, index = 0, onAdd, compact = false }: Product
             </span>
           </div>
           <Button
-            onClick={() => onAdd(item)}
+            onClick={() => addMenuItem(item, defaultVariant?.label)}
             size="sm"
             className="rounded-2xl bg-brand-red hover:bg-brand-red-dark text-white font-[var(--font-accent)] font-semibold shadow-lg shadow-brand-red/25 transition-all active:scale-95"
           >
             <Plus className="w-4 h-4 mr-1" />
-            Add
+            {isPizzaItem(item) ? "Customize" : "Add"}
           </Button>
         </div>
       </div>
