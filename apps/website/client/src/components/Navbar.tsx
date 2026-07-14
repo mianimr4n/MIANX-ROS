@@ -62,7 +62,7 @@ export default function Navbar() {
           <img
             src="/images/telepizza-logo.png"
             alt="Telepizza"
-            className="h-9 w-9 transition-transform duration-200 group-hover:scale-105"
+            className="h-10 w-10 md:h-11 md:w-11 transition-transform duration-200 group-hover:scale-105"
           />
           <div>
             <span
