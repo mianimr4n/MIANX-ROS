@@ -7,13 +7,14 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, Search } from "lucide-react";
 import { useSearch } from "wouter";
-import { useCart } from "@/contexts/CartContext";
+import { useAddMenuItem } from "@/hooks/useAddMenuItem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { isApiConfigured } from "@/lib/api";
 import { fetchMenuCatalog } from "@/lib/telepizza-api";
 import { handleImageError } from "@/lib/image-fallback";
 import type { MenuCategory } from "@/lib/telepizza-types";
+import { isPizzaItem } from "@/data/cart-config";
 import { ProductBadge } from "@/components/menu/ProductBadge";
 import {
   menuCategories as fallbackMenuCategories,
@@ -42,7 +43,7 @@ export default function Menu() {
   );
   const [items, setItems] = useState<MenuItem[]>(fallbackMenuItems);
   const [isLoadingCatalog, setIsLoadingCatalog] = useState(isApiConfigured);
-  const { addItem } = useCart();
+  const addMenuItem = useAddMenuItem();
 
   useEffect(() => {
     setActiveCategory(initialCategory);
@@ -120,24 +121,7 @@ export default function Menu() {
     getSelectedVariant(item)?.price ?? item.price;
 
   const handleAddItem = (item: MenuItem) => {
-    const selectedVariant = getSelectedVariant(item);
-    const price = selectedVariant?.price ?? item.price;
-
-    if (price === undefined) return;
-
-    const variantId =
-      selectedVariant?.id ??
-      (selectedVariant ? selectedVariant.label.toLowerCase().replace(/[^a-z0-9]+/g, "-") : null);
-
-    addItem({
-      id: variantId ? `${item.id}-${variantId}` : item.id,
-      name: item.name,
-      price,
-      category: item.category,
-      variant: selectedVariant?.label,
-      image: item.image,
-      description: item.description,
-    });
+    addMenuItem(item, getSelectedVariant(item)?.label);
   };
 
   const filteredItems = items.filter((item) => {
@@ -298,7 +282,7 @@ export default function Menu() {
                     className="bg-brand-red hover:bg-brand-red-light text-white font-[var(--font-accent)] font-semibold rounded-xl transition-all active:scale-95 shadow-md shadow-brand-red/20"
                   >
                     <Plus className="w-4 h-4 mr-1" />
-                    Add
+                    {isPizzaItem(item) ? "Customize" : "Add"}
                   </Button>
                 </div>
               </div>
