@@ -25,7 +25,7 @@ export function ProductCard({ item, index = 0, compact = false }: ProductCardPro
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.45, delay: index * 0.06 }}
-      className="group flex flex-col h-full bg-white rounded-3xl overflow-hidden border border-border hover:border-brand-red/40 hover:shadow-2xl hover:shadow-brand-red/10 transition-all duration-300"
+      className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-border hover:border-brand-red/40 hover:shadow-2xl hover:shadow-brand-red/10 transition-all duration-300"
     >
       <div className="relative overflow-hidden aspect-[4/3]">
         <img
@@ -64,7 +64,7 @@ export function ProductCard({ item, index = 0, compact = false }: ProductCardPro
           <Button
             onClick={() => addMenuItem(item, defaultVariant?.label)}
             size="sm"
-            className="rounded-2xl bg-brand-red hover:bg-brand-red-light text-white font-[var(--font-accent)] font-semibold shadow-lg shadow-brand-red/25 transition-all active:scale-95"
+            className="rounded-2xl bg-brand-red hover:bg-brand-red-dark text-white font-[var(--font-accent)] font-semibold shadow-lg shadow-brand-red/25 transition-all active:scale-95"
           >
             <Plus className="w-4 h-4 mr-1" />
             {isPizzaItem(item) ? "Customize" : "Add"}

@@ -2,6 +2,7 @@
    Footer updated with multi-branch support and platform-level branding. */
 import { Link } from "wouter";
 import { MapPin, Phone, Instagram, Facebook, MessageCircle, Heart, Zap, Construction } from "lucide-react";
+import { handleLogoError } from "@/lib/image-fallback";
 import { useBranch } from "@/contexts/BranchContext";
 
 export default function Footer() {
@@ -19,7 +20,8 @@ export default function Footer() {
               <img
                 src="/images/telepizza-logo.png"
                 alt="Telepizza"
-                className="h-8 w-8"
+                onError={handleLogoError}
+                className="h-8 w-auto object-contain"
               />
               <div>
                 <span className="font-[var(--font-display)] font-extrabold text-lg">TELEPIZZA</span>
