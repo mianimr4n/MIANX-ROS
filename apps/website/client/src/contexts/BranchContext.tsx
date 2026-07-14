@@ -46,7 +46,10 @@ const BranchContext = createContext<BranchContextType | null>(null);
 
 export function BranchProvider({ children }: { children: ReactNode }) {
   const [allBranches, setAllBranches] = useState<Branch[]>(fallbackBranches);
-  const [selectedBranchId, setSelectedBranchId] = useState(defaultBranch.id);
+  const [selectedBranchId, setSelectedBranchId] = useState(() => {
+    if (typeof window === "undefined") return defaultBranch.id;
+    return localStorage.getItem("telepizza.selectedBranchId") ?? defaultBranch.id;
+  });
   const [isLoading, setIsLoading] = useState(isApiConfigured);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,6 +102,7 @@ export function BranchProvider({ children }: { children: ReactNode }) {
 
   const setSelectedBranch = (branch: Branch) => {
     setSelectedBranchId(branch.id);
+    localStorage.setItem("telepizza.selectedBranchId", branch.id);
   };
 
   return (

@@ -1,4 +1,5 @@
 /* Telepizza cart drawer — delivery, instructions, coupons, WhatsApp checkout */
+import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingBag,
@@ -304,7 +305,13 @@ export default function CartDrawer() {
                     Rs {totalPrice.toLocaleString()}
                   </span>
                 </div>
-                <div className="flex gap-3 pt-1">
+                <div className="flex flex-col gap-3 pt-1">
+                  <Link href="/checkout" onClick={toggleCart}>
+                    <Button className="w-full rounded-2xl brand-gradient text-white font-[var(--font-accent)] font-bold shadow-lg">
+                      Proceed to Checkout
+                    </Button>
+                  </Link>
+                  <div className="flex gap-3">
                   <Button
                     variant="outline"
                     onClick={clearCart}
@@ -321,12 +328,14 @@ export default function CartDrawer() {
                   >
                     <Button
                       disabled={checkoutDisabled}
-                      className="w-full rounded-2xl brand-gradient text-white font-[var(--font-accent)] font-bold shadow-lg shadow-brand-red/25 flex items-center justify-center gap-2"
+                      variant="outline"
+                      className="w-full rounded-2xl border-brand-red/30 text-brand-red hover:bg-brand-red hover:text-white flex items-center justify-center gap-2"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      WhatsApp Checkout
+                      WhatsApp
                     </Button>
                   </a>
+                  </div>
                 </div>
               </div>
             )}

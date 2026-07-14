@@ -8,6 +8,17 @@ import Home from "./pages/Home";
 import Menu from "./pages/Menu";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import Checkout from "./pages/Checkout";
+import OrderSuccess from "./pages/OrderSuccess";
+import TrackOrder from "./pages/TrackOrder";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Account from "./pages/Account";
+import Orders from "./pages/Orders";
+import Branches from "./pages/Branches";
+import Loyalty from "./pages/Loyalty";
+import Notifications from "./pages/Notifications";
+import { AuthProvider } from "./contexts/AuthContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CartDrawer from "./components/CartDrawer";
@@ -32,7 +43,17 @@ function Router() {
       <Route path="/menu" component={Menu} />
       <Route path="/about" component={About} />
       <Route path="/contact" component={Contact} />
-      <Route path="/branches" component={Home} />
+      <Route path="/branches" component={Branches} />
+      <Route path="/checkout" component={Checkout} />
+      <Route path="/order-success/:orderNumber" component={OrderSuccess} />
+      <Route path="/track/:orderNumber" component={TrackOrder} />
+      <Route path="/track" component={TrackOrder} />
+      <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
+      <Route path="/account" component={Account} />
+      <Route path="/orders" component={Orders} />
+      <Route path="/loyalty" component={Loyalty} />
+      <Route path="/notifications" component={Notifications} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -45,19 +66,21 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <CartProvider>
-            <BranchProvider>
-              <PizzaCustomizerProvider>
-                <Navbar />
-                <ScrollToTop />
-                <main className="min-h-screen pt-[72px]">
-                  <Router />
-                </main>
-                <Footer />
-                <CartDrawer />
-              </PizzaCustomizerProvider>
-            </BranchProvider>
-          </CartProvider>
+          <AuthProvider>
+            <CartProvider>
+              <BranchProvider>
+                <PizzaCustomizerProvider>
+                  <Navbar />
+                  <ScrollToTop />
+                  <main className="min-h-screen pt-[72px]">
+                    <Router />
+                  </main>
+                  <Footer />
+                  <CartDrawer />
+                </PizzaCustomizerProvider>
+              </BranchProvider>
+            </CartProvider>
+          </AuthProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

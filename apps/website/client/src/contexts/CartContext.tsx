@@ -9,6 +9,7 @@ export interface CartExtra {
 
 export interface CartItem {
   id: string;
+  menuSlug: string;
   name: string;
   price: number;
   quantity: number;

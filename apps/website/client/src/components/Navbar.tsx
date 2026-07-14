@@ -9,6 +9,7 @@ import { ShoppingCart, Menu as MenuIcon, X, Phone, MapPin, ChevronDown, ChevronU
 import { useCart } from "@/contexts/CartContext";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useBranch } from "@/contexts/BranchContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -27,6 +28,7 @@ export default function Navbar() {
   const { totalItems, toggleCart } = useCart();
   const isMobile = useIsMobile();
   const { selectedBranch, setSelectedBranch, allBranches } = useBranch();
+  const { isAuthenticated } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -225,6 +227,19 @@ export default function Navbar() {
               <span>{selectedBranch.phone}</span>
             </a>
           )}
+
+          {/* Account */}
+          <Link href={isAuthenticated ? "/account" : "/login"}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`hidden md:inline-flex rounded-xl font-[var(--font-accent)] font-semibold ${
+                scrolled ? "text-brand-charcoal hover:text-brand-red" : "text-white hover:text-brand-gold"
+              }`}
+            >
+              {isAuthenticated ? "Account" : "Login"}
+            </Button>
+          </Link>
 
           {/* Cart Button */}
           <button
