@@ -21,3 +21,9 @@ apps/website/.env.*
 # Supabase CLI local state (not project source)
 supabase/.temp/
 supabase/.branches/
+
+# Supabase CLI
+supabase/.branches/
+supabase/.temp/
+supabase/.cache/
+supabase/.DS_Store
