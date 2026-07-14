@@ -58,39 +58,47 @@
 }
 
 :root {
-  --primary: #E31E24;
-  --primary-foreground: #FFFFFF;
-  --sidebar-primary: #E31E24;
-  --sidebar-primary-foreground: #FFFFFF;
+  /* Telepizza Brand Colors */
+  --brand-red: #E31E24;
+  --brand-red-dark: #B5121B;
+  --brand-cream: #FFF7F3;
+  --brand-charcoal: #1F1F1F;
+  --brand-white: #FFFFFF;
+  --brand-gray: #F5F5F5;
+
+  --primary: var(--brand-red);
+  --primary-foreground: var(--brand-white);
+  --sidebar-primary: var(--brand-red);
+  --sidebar-primary-foreground: var(--brand-white);
   --chart-1: #F5B800;
   --chart-2: #FF6B35;
   --chart-3: #E31E24;
   --chart-4: #B5121B;
   --chart-5: #1F1F1F;
   --radius: 1rem;
-  --background: #FFF7F3;
-  --foreground: #1F1F1F;
-  --card: #FFFFFF;
-  --card-foreground: #1F1F1F;
-  --popover: #FFF7F3;
-  --popover-foreground: #1F1F1F;
+  --background: var(--brand-cream);
+  --foreground: var(--brand-charcoal);
+  --card: var(--brand-white);
+  --card-foreground: var(--brand-charcoal);
+  --popover: var(--brand-cream);
+  --popover-foreground: var(--brand-charcoal);
   --secondary: #F5EBE4;
   --secondary-foreground: #3D3D3D;
   --muted: #F5EBE4;
   --muted-foreground: #6B6B6B;
   --accent: #F5EBE4;
   --accent-foreground: #1F1F1F;
-  --destructive: #B5121B;
-  --destructive-foreground: #FFFFFF;
+  --destructive: var(--brand-red-dark);
+  --destructive-foreground: var(--brand-white);
   --border: #EDE0D8;
   --input: #EDE0D8;
-  --ring: #E31E24;
-  --sidebar: #FFF7F3;
-  --sidebar-foreground: #1F1F1F;
+  --ring: var(--brand-red);
+  --sidebar: var(--brand-cream);
+  --sidebar-foreground: var(--brand-charcoal);
   --sidebar-accent: #F5EBE4;
   --sidebar-accent-foreground: #1F1F1F;
   --sidebar-border: #EDE0D8;
-  --sidebar-ring: #E31E24;
+  --sidebar-ring: var(--brand-red);
 }
 
 .dark {
@@ -145,6 +153,12 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  a:not([class]) {
+    color: var(--brand-red);
+  }
+  a:not([class]):hover {
+    color: var(--brand-red-dark);
+  }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [type="button"]:not(:disabled),
@@ -188,17 +202,17 @@
   }
 
   .brand-gradient {
-    background: linear-gradient(135deg, #E31E24 0%, #B5121B 100%);
+    background: linear-gradient(135deg, var(--brand-red) 0%, var(--brand-red-dark) 100%);
   }
 
   .brand-gradient-soft {
-    background: linear-gradient(180deg, #FFF7F3 0%, #FFFFFF 100%);
+    background: linear-gradient(180deg, var(--brand-cream) 0%, var(--brand-white) 100%);
   }
 
   .brand-heading {
     font-family: var(--font-display);
     font-weight: 800;
     letter-spacing: -0.02em;
-    color: var(--color-brand-charcoal);
+    color: var(--brand-charcoal);
   }
 }

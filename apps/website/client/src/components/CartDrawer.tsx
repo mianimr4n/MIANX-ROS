@@ -169,7 +169,7 @@ export default function CartDrawer() {
                     rel="noopener noreferrer"
                     className="flex-1"
                   >
-                    <Button className="w-full bg-brand-red hover:bg-brand-red-light text-white font-[var(--font-accent)] font-bold shadow-lg shadow-brand-red/25 transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <Button className="w-full bg-brand-red hover:bg-brand-red-dark text-white font-[var(--font-accent)] font-bold shadow-lg shadow-brand-red/25 transition-all active:scale-95 flex items-center justify-center gap-2">
                       <MessageCircle className="w-4 h-4" />
                       Order via WhatsApp
                     </Button>

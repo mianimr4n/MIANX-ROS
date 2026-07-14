@@ -7,12 +7,7 @@ const categories = [
   {
     name: "Signature Pizzas",
     image: "/images/menu-pizza.jpg",
-    accent: "Pizzas",
-  },
-  {
-    name: "Burgers",
-    image: "/images/menu-burger.jpg",
-    accent: "Burgers",
+    accent: "Pizza",
   },
   {
     name: "Broast",
@@ -20,14 +15,19 @@ const categories = [
     accent: "Broast",
   },
   {
+    name: "Burgers",
+    image: "/images/menu-burger.jpg",
+    accent: "Burgers",
+  },
+  {
     name: "Pasta",
     image: "/images/pasta-dish.jpg",
     accent: "Pasta",
   },
   {
-    name: "Deals",
-    image: "/images/promos/family-deal.jpg",
-    accent: "Deals",
+    name: "Fries",
+    image: "/images/sides-platter.jpg",
+    accent: "Sides",
   },
   {
     name: "Drinks",

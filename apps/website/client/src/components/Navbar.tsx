@@ -9,6 +9,7 @@ import { ShoppingCart, Menu as MenuIcon, X, Phone, MapPin, ChevronDown, ChevronU
 import { useCart } from "@/contexts/CartContext";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useBranch } from "@/contexts/BranchContext";
+import { handleLogoError } from "@/lib/image-fallback";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -62,7 +63,8 @@ export default function Navbar() {
           <img
             src="/images/telepizza-logo.png"
             alt="Telepizza"
-            className="h-10 w-10 md:h-11 md:w-11 transition-transform duration-200 group-hover:scale-105"
+            onError={handleLogoError}
+            className="h-10 w-auto md:h-11 object-contain transition-transform duration-200 group-hover:scale-105"
           />
           <div>
             <span
@@ -246,7 +248,7 @@ export default function Navbar() {
           {/* Order Now CTA */}
           <Link href="/menu">
             <Button
-              className="hidden sm:flex bg-brand-red hover:bg-brand-red-light text-white font-[var(--font-accent)] font-bold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-brand-red/20 transition-all active:scale-95"
+              className="hidden sm:flex bg-brand-red hover:bg-brand-red-dark text-white font-[var(--font-accent)] font-bold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-brand-red/20 transition-all active:scale-95"
             >
               Order Now
             </Button>
@@ -273,7 +275,8 @@ export default function Navbar() {
                     <img
                       src="/images/telepizza-logo.png"
                       alt="Telepizza"
-                      className="h-8 w-8"
+                      onError={handleLogoError}
+                      className="h-8 w-auto object-contain"
                     />
                     <span className="font-[var(--font-display)] font-bold text-lg">TELEPIZZA</span>
                   </Link>

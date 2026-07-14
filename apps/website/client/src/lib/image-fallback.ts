@@ -28,3 +28,18 @@ export function handleImageError(event: SyntheticEvent<HTMLImageElement>) {
     image.src = FALLBACK_FOOD_IMAGE;
   }
 }
+
+export const FALLBACK_LOGO_IMAGE = `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+    <rect width="120" height="120" rx="24" fill="#E31E24"/>
+    <text x="60" y="72" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#FFFFFF">T</text>
+  </svg>`,
+)}`;
+
+export function handleLogoError(event: SyntheticEvent<HTMLImageElement>) {
+  const image = event.currentTarget;
+
+  if (image.src !== FALLBACK_LOGO_IMAGE) {
+    image.src = FALLBACK_LOGO_IMAGE;
+  }
+}
