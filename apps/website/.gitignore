@@ -108,3 +108,5 @@ temp/
 # Webdev artifacts
 .webdev/
 .project-config.json
+.vercel
+.env*
