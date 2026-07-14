@@ -2,6 +2,8 @@ import { Link, useRoute } from "wouter";
 import { CheckCircle2, MapPin, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBranch } from "@/contexts/BranchContext";
+import { BrandLogoMark } from "@/components/BrandLogo";
+import { BRAND } from "@/lib/brand";
 
 export default function OrderSuccess() {
   const [, params] = useRoute("/order-success/:orderNumber");
@@ -22,7 +24,11 @@ export default function OrderSuccess() {
   return (
     <div className="min-h-screen bg-background py-16">
       <div className="container max-w-xl text-center">
-        <CheckCircle2 className="w-16 h-16 text-brand-red mx-auto mb-4" />
+        <BrandLogoMark className="mx-auto mb-4" />
+        <CheckCircle2 className="w-12 h-12 text-brand-red mx-auto mb-4" />
+        <p className="text-brand-gold font-[var(--font-accent)] font-bold uppercase tracking-[0.2em] text-xs mb-3">
+          {BRAND.tagline}
+        </p>
         <h1 className="brand-heading text-3xl md:text-4xl mb-3">Order Received</h1>
         <p className="text-muted-foreground mb-6">
           {source === "api"

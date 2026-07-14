@@ -2,6 +2,7 @@ import {
   menuCategories as fallbackMenuCategories,
   menuItems as fallbackMenuItems,
 } from "@/data/menu-data";
+import { getCategoryPlaceholderImage, getMenuItemImage } from "@/lib/menu-images";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import type { MenuCategory, MenuItem, MenuVariant } from "@/lib/telepizza-types";
 
@@ -49,43 +50,8 @@ interface SupabaseMenuItemRow {
   variants: SupabaseMenuVariantRow[] | null;
 }
 
-/** Existing bundled artwork only — never invent image URLs. */
-export function getCategoryPlaceholderImage(categoryName: string): string {
-  const normalized = categoryName.toLowerCase();
-
-  if (normalized.includes("pizza")) {
-    return "/images/menu-pizza.jpg";
-  }
-
-  if (normalized.includes("burger") || normalized.includes("broast")) {
-    return "/images/menu-burger.jpg";
-  }
-
-  if (normalized.includes("pasta")) {
-    return "/images/pasta-dish.jpg";
-  }
-
-  if (
-    normalized.includes("drink") ||
-    normalized.includes("dessert") ||
-    normalized.includes("telebar") ||
-    normalized.includes("mojito") ||
-    normalized.includes("smoothie") ||
-    normalized.includes("matcha") ||
-    normalized.includes("frappe") ||
-    normalized.includes("shake") ||
-    normalized.includes("mocktail") ||
-    normalized.includes("coffee")
-  ) {
-    return "/images/desserts-drinks.jpg";
-  }
-
-  if (normalized.includes("deal")) {
-    return "/images/deals-section.jpg";
-  }
-
-  return "/images/sides-platter.jpg";
-}
+/** Re-export for category previews and Supabase fallbacks. */
+export { getCategoryPlaceholderImage } from "@/lib/menu-images";
 
 function parseNumber(value: number | string | null | undefined): number {
   if (typeof value === "number") {
@@ -130,7 +96,7 @@ function mapMenuItemRow(row: SupabaseMenuItemRow): MenuItem {
     category: categoryName,
     categorySlug,
     description: row.description ?? "",
-    image: row.image_url?.trim() || getCategoryPlaceholderImage(categoryName),
+    image: row.image_url?.trim() || getMenuItemImage(row.slug, categoryName),
     badge: row.badge ?? undefined,
     price:
       variants.length > 0

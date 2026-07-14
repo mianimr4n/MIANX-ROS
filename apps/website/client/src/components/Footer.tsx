@@ -2,8 +2,9 @@
    Footer updated with multi-branch support and platform-level branding. */
 import { Link } from "wouter";
 import { MapPin, Phone, Instagram, Facebook, MessageCircle, Heart, Zap, Construction } from "lucide-react";
-import { handleLogoError } from "@/lib/image-fallback";
+import { BRAND } from "@/lib/brand";
 import { useBranch } from "@/contexts/BranchContext";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export default function Footer() {
   const { selectedBranch, allBranches } = useBranch();
@@ -16,23 +17,10 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
           {/* Brand */}
           <div>
-            <Link href="/" className="flex items-center gap-3 mb-4">
-              <img
-                src="/images/telepizza-logo.png"
-                alt="Telepizza"
-                onError={handleLogoError}
-                className="h-8 w-auto object-contain"
-              />
-              <div>
-                <span className="font-[var(--font-display)] font-extrabold text-lg">TELEPIZZA</span>
-                <span className="block text-[10px] font-[var(--font-accent)] text-brand-gold uppercase tracking-[0.15em]">
-                  Pakistan
-                </span>
-              </div>
-            </Link>
-            <p className="text-white/50 text-sm leading-relaxed max-w-xs">
-              Pakistan's boldest pizza experience. Fresh dough, premium toppings, and flavors
-              that fire up your craving.
+            <BrandLogo showRegion imageClassName="h-9 w-9" />
+            <p className="text-white/50 text-sm leading-relaxed max-w-xs mt-4">
+              {BRAND.tagline}. Pakistan&apos;s boldest pizza experience — fresh dough, premium toppings,
+              and flavors that fire up your craving.
             </p>
           </div>
 
