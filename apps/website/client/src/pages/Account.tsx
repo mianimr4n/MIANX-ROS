@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { Bell, Gift, LogOut, Package, UserCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { getLoyaltyPoints, listNotifications } from "@/lib/customer-store";
+import { listNotifications } from "@/lib/customer-store";
 
 export default function Account() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -13,7 +13,7 @@ export default function Account() {
         <div className="container max-w-md text-center">
           <UserCircle2 className="w-16 h-16 text-brand-red mx-auto mb-4" />
           <h1 className="brand-heading text-3xl mb-3">My Account</h1>
-          <p className="text-muted-foreground mb-6">Login or register to view orders, loyalty, and notifications.</p>
+          <p className="text-muted-foreground mb-6">Login or register to view orders and notifications on this device.</p>
           <div className="flex gap-3 justify-center">
             <Link href="/login"><Button className="rounded-2xl brand-gradient text-white">Login</Button></Link>
             <Link href="/register"><Button variant="outline" className="rounded-2xl">Register</Button></Link>
@@ -23,7 +23,6 @@ export default function Account() {
     );
   }
 
-  const points = getLoyaltyPoints(user.phone);
   const unreadNotifications = listNotifications(user.phone).filter((entry) => !entry.read).length;
 
   return (
@@ -52,8 +51,8 @@ export default function Account() {
           <Link href="/loyalty">
             <div className="rounded-3xl border border-border bg-white p-5 hover:border-brand-red/30 transition-colors">
               <Gift className="w-6 h-6 text-brand-red mb-3" />
-              <div className="font-bold">Loyalty Points</div>
-              <div className="text-sm text-brand-red font-bold">{points} pts</div>
+              <div className="font-bold">Loyalty</div>
+              <div className="text-sm text-muted-foreground">Coming Soon</div>
             </div>
           </Link>
           <Link href="/notifications">

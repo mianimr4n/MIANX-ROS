@@ -1,15 +1,20 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const workspaceRoot = "/workspace";
+const workspaceRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const schemaMigration = readFileSync(
   join(workspaceRoot, "supabase", "migrations", "20260713190000_foundation_schema.sql"),
   "utf8",
 );
 const seedMigration = readFileSync(
   join(workspaceRoot, "supabase", "migrations", "20260713191000_seed_foundation_data.sql"),
+  "utf8",
+);
+const catalogSyncMigration = readFileSync(
+  join(workspaceRoot, "supabase", "migrations", "20260714100000_sync_verified_menu_catalog.sql"),
   "utf8",
 );
 
@@ -68,5 +73,13 @@ test("seed migration populates core roles, permissions, branches, and starter ca
 
   for (const menuSlug of ["tele-special", "tikka", "crown-crust", "family-deal"]) {
     assert.match(seedMigration, new RegExp(`'${menuSlug}'`, "i"));
+  }
+});
+
+test("catalog sync migration adds broast and remaining verified menu slugs", () => {
+  assert.match(catalogSyncMigration, /'broast'/i);
+
+  for (const menuSlug of ["quarter-broast", "half-broast", "full-broast", "pizza-fest", "knock-out-deal"]) {
+    assert.match(catalogSyncMigration, new RegExp(`'${menuSlug}'`, "i"));
   }
 });
