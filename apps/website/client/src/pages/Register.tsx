@@ -22,7 +22,10 @@ export default function Register() {
     <div className="min-h-screen bg-background py-16">
       <div className="container max-w-md">
         <h1 className="brand-heading text-3xl mb-2">Create Account</h1>
-        <p className="text-muted-foreground mb-8">Save your details for faster checkout and order history.</p>
+        <p className="text-muted-foreground mb-2">Save your details for faster checkout and order history.</p>
+        <p className="text-xs text-muted-foreground mb-8">
+          Preview account — stored on this device only until full customer login launches.
+        </p>
         <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-white p-6 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Full name</Label>

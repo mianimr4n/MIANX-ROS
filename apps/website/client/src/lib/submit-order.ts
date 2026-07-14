@@ -3,7 +3,6 @@ import {
   type CreateWebsiteOrderPayload,
   type CreatedOrderResult,
   saveLocalOrder,
-  addLoyaltyPoints,
   pushNotification,
 } from "@/lib/customer-store";
 import { createOrder } from "@/lib/telepizza-api";
@@ -40,11 +39,6 @@ export async function submitWebsiteOrder(
         source: "api",
       });
 
-      const points = Math.floor(apiOrder.totalAmount / 100);
-      if (points > 0) {
-        addLoyaltyPoints(payload.contactPhone, points);
-      }
-
       pushNotification(
         payload.contactPhone,
         "Order placed",
@@ -58,10 +52,6 @@ export async function submitWebsiteOrder(
   }
 
   const local = saveLocalOrder(payload);
-  const points = Math.floor(local.totalAmount / 100);
-  if (points > 0) {
-    addLoyaltyPoints(payload.contactPhone, points);
-  }
   pushNotification(
     payload.contactPhone,
     "Order saved locally",

@@ -25,7 +25,10 @@ export default function Login() {
     <div className="min-h-screen bg-background py-16">
       <div className="container max-w-md">
         <h1 className="brand-heading text-3xl mb-2">Login</h1>
-        <p className="text-muted-foreground mb-8">Sign in with the phone number you used to register.</p>
+        <p className="text-muted-foreground mb-2">Sign in with the phone number you used to register.</p>
+        <p className="text-xs text-muted-foreground mb-8">
+          Preview account — stored on this device only until full customer login launches.
+        </p>
         <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-white p-6 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="phone">Phone</Label>

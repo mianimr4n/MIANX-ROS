@@ -17,3 +17,7 @@ apps/website/dist/
 apps/website/.manus-logs/
 apps/website/.env
 apps/website/.env.*
+
+# Supabase CLI local state (not project source)
+supabase/.temp/
+supabase/.branches/
