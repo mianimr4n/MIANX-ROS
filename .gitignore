@@ -27,3 +27,4 @@ supabase/.branches/
 supabase/.temp/
 supabase/.cache/
 supabase/.DS_Store
+.vercel
