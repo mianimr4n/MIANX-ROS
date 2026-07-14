@@ -26,12 +26,18 @@ export class ApiRequestError extends Error {
 }
 
 export async function fetchApiData<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    ...(init?.headers as Record<string, string> | undefined),
+  };
+
+  if (init?.body && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const response = await fetch(resolveApiUrl(path), {
-    headers: {
-      Accept: "application/json",
-      ...(init?.headers ?? {}),
-    },
     ...init,
+    headers,
   });
 
   let payload: unknown;

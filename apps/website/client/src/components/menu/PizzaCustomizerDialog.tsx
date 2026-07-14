@@ -117,6 +117,7 @@ export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: Pi
 
     addItem({
       id: cartId,
+      menuSlug: item.id,
       name: item.name,
       price: basePrice,
       category: item.category,
