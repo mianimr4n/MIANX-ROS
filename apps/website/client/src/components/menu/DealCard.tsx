@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Plus, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { handleImageError } from "@/lib/image-fallback";
-import type { MenuItem } from "@/data/menu-data";
+import type { MenuItem } from "@/lib/telepizza-types";
 import { useAddMenuItem } from "@/hooks/useAddMenuItem";
 import { ProductBadge } from "./ProductBadge";
 
@@ -19,7 +19,7 @@ export function DealCard({ deal, index = 0 }: DealCardProps) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.45, delay: index * 0.08 }}
-      className="group relative flex flex-col h-full overflow-hidden rounded-3xl border-2 border-brand-red/20 shadow-xl shadow-brand-red/10 hover:shadow-2xl hover:shadow-brand-red/20 transition-all duration-300"
+      className="group relative flex flex-col h-full overflow-hidden rounded-2xl border-2 border-brand-red/20 shadow-xl shadow-brand-red/10 hover:shadow-2xl hover:shadow-brand-red/20 transition-all duration-300"
     >
       <div className="absolute inset-0 brand-gradient opacity-95" />
       <div className="relative aspect-[16/10] overflow-hidden">

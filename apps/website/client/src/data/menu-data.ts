@@ -338,7 +338,7 @@ export const menuItems: MenuItem[] = [
       "1 Leg & 1 Thigh OR 1 Wing & 1 Chest, 1 Bun, Fries, (1 Dip) Garlic Dip OR Mustard Dip.",
     image: "/images/sides-platter.jpg",
     price: 750,
-    badge: "Hot",
+    badge: "POPULAR",
   },
   {
     id: "half-broast",
@@ -357,6 +357,7 @@ export const menuItems: MenuItem[] = [
       "2 Legs, 2 Thighs, 2 wings, 2 chests, 2 Buns, Fries, (6 Dips) 2 Garlic Dips, 2 Mustard Dips & 2 Tangy Dips.",
     image: "/images/sides-platter.jpg",
     price: 2590,
+    badge: "BEST VALUE",
   },
   {
     id: "broast-garlic-dip",

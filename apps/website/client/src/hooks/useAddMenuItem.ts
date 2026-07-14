@@ -1,4 +1,4 @@
-import type { MenuItem } from "@/data/menu-data";
+import type { MenuItem } from "@/lib/telepizza-types";
 import { isPizzaItem } from "@/data/cart-config";
 import { buildCartItemPayload } from "@/lib/menu-utils";
 import { useCart } from "@/contexts/CartContext";

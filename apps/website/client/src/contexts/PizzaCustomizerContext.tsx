@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
-import type { MenuItem } from "@/data/menu-data";
+import type { MenuItem } from "@/lib/telepizza-types";
 import { PizzaCustomizerDialog } from "@/components/menu/PizzaCustomizerDialog";
 
 interface PizzaCustomizerState {

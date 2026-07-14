@@ -1,4 +1,5 @@
-/* Telepizza Pakistan — brand-forward homepage driven by canonical menu-data.ts */
+/* Telepizza Pakistan — brand-forward homepage driven by the live menu catalog */
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ChevronRight,
@@ -15,7 +16,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { useBranch } from "@/contexts/BranchContext";
-import { menuItems } from "@/data/menu-data";
+import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 import { getDisplayPrice, getItemsByIds } from "@/lib/menu-utils";
 import { Button } from "@/components/ui/button";
 import { DealCard } from "@/components/menu/DealCard";
@@ -25,18 +26,28 @@ import { HeroSlider } from "@/components/home/HeroSlider";
 import { MenuSectionRow } from "@/components/home/MenuSectionRow";
 
 const TODAYS_DEAL_IDS = ["family-deal", "pizza-fest", "pair-deal", "knock-out-deal"];
-const FEATURED_PIZZA_IDS = ["tele-special", "crown-crust", "bihari-kabab"];
-const FEATURED_BURGER_IDS = ["patty-burger"];
+const FEATURED_PIZZA_IDS = [
+  "tele-special",
+  "peri-peri",
+  "bihari-kabab",
+  "crown-crust",
+  "chicago-extreme",
+  "kababish",
+];
+const FEATURED_BURGER_SANDWICH_IDS = ["patty-burger", "special-sandwich", "crunchy-sandwich"];
 const FEATURED_BROAST_IDS = ["quarter-broast", "half-broast", "full-broast"];
-const FEATURED_PASTA_IDS = ["crunchy-pasta"];
-const FEATURED_SIDES_IDS = ["loaded-fries", "chicken-tender-strips", "nuggets"];
+const FEATURED_PASTA_SIDES_IDS = ["crunchy-pasta", "loaded-fries", "chicken-tender-strips", "nuggets"];
 const CUSTOMER_FAVORITE_IDS = ["tele-special", "patty-burger", "behari-roll"];
 
-const todaysDeals = getItemsByIds(menuItems, TODAYS_DEAL_IDS);
-const customerFavorites = getItemsByIds(menuItems, CUSTOMER_FAVORITE_IDS);
-
 export default function Home() {
+  const { items } = useMenuCatalog();
   const { selectedBranch, allBranches } = useBranch();
+
+  const todaysDeals = useMemo(() => getItemsByIds(items, TODAYS_DEAL_IDS), [items]);
+  const customerFavorites = useMemo(
+    () => getItemsByIds(items, CUSTOMER_FAVORITE_IDS),
+    [items],
+  );
   const operatingBranches = allBranches.filter((branch) => branch.status === "operating");
   const comingSoonBranches = allBranches.filter((branch) => branch.status === "coming-soon");
 
@@ -102,37 +113,29 @@ export default function Home() {
       />
 
       <MenuSectionRow
-        title="Telepizza"
-        highlight="Burgers"
-        subtitle="Crispy chicken burgers made fresh"
-        itemIds={FEATURED_BURGER_IDS}
-        viewAllCategory="Burgers"
-        dark
-      />
-
-      <MenuSectionRow
-        title="Injected"
+        title="Crispy"
         highlight="Broast"
         subtitle="Quarter, half, and full broast combos with fries and dips"
         itemIds={FEATURED_BROAST_IDS}
         viewAllCategory="Broast"
-      />
-
-      <MenuSectionRow
-        title="Crunchy"
-        highlight="Pasta"
-        subtitle="Telepizza pasta favourites"
-        itemIds={FEATURED_PASTA_IDS}
-        viewAllCategory="Pasta"
         dark
       />
 
       <MenuSectionRow
-        title="Sides &"
-        highlight="Snacks"
-        subtitle="Loaded fries, tenders, and more"
-        itemIds={FEATURED_SIDES_IDS}
-        viewAllCategory="Fries"
+        title="Burgers &"
+        highlight="Sandwiches"
+        subtitle="Patty burgers and loaded sandwiches from our verified menu"
+        itemIds={FEATURED_BURGER_SANDWICH_IDS}
+        viewAllCategory="Burgers"
+      />
+
+      <MenuSectionRow
+        title="Pasta &"
+        highlight="Sides"
+        subtitle="Crunchy pasta, loaded fries, tenders, and more"
+        itemIds={FEATURED_PASTA_SIDES_IDS}
+        viewAllCategory="Pasta"
+        dark
       />
 
       {/* Customer Favorites */}
@@ -156,6 +159,54 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {customerFavorites.map((item, index) => (
             <ProductCard key={item.id} item={item} index={index} />
+          ))}
+        </div>
+      </section>
+
+      {/* Why Telepizza */}
+      <section className="container py-14 md:py-16">
+        <div className="text-center mb-10">
+          <h2 className="brand-heading text-3xl md:text-4xl">
+            Why <span className="text-brand-red">Telepizza</span>
+          </h2>
+          <p className="text-muted-foreground mt-2 font-[var(--font-body)] max-w-xl mx-auto">
+            Fresh food, verified prices, and bold flavors you can trust
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              icon: Truck,
+              title: "Order Your Way",
+              desc: `Call ${selectedBranch.phone} or order online from ${selectedBranch.shortName}. Open ${selectedBranch.hours}.`,
+            },
+            {
+              icon: Flame,
+              title: "Bold Telepizza Flavors",
+              desc: "Tele Special, Behari Roll, Crown Crust, Broast, and more from our verified menu.",
+            },
+            {
+              icon: Shield,
+              title: "Fresh & Hot",
+              desc: "Made to order with verified prices — no fake deals or invented savings on this site.",
+            },
+          ].map((feature, i) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08 }}
+              className="rounded-2xl bg-white border border-border p-8 hover:border-brand-red/30 hover:shadow-xl hover:shadow-brand-red/5 transition-all"
+            >
+              <div className="w-14 h-14 rounded-2xl brand-gradient flex items-center justify-center mb-5">
+                <feature.icon className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="font-[var(--font-display)] font-bold text-xl text-brand-charcoal mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">{feature.desc}</p>
+            </motion.div>
           ))}
         </div>
       </section>
@@ -243,46 +294,6 @@ export default function Home() {
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Trust strip — no fabricated reviews */}
-      <section className="container py-14 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              icon: Truck,
-              title: "Order Your Way",
-              desc: `Call ${selectedBranch.phone} or order online from ${selectedBranch.shortName}. Open ${selectedBranch.hours}.`,
-            },
-            {
-              icon: Flame,
-              title: "Bold Telepizza Flavors",
-              desc: "Tele Special, Behari Roll, Crown Crust, Injected Broast, and more from our real menu.",
-            },
-            {
-              icon: Shield,
-              title: "Fresh & Hot",
-              desc: "Made to order with verified prices — no fake deals or invented savings on this site.",
-            },
-          ].map((feature, i) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
-              className="rounded-3xl bg-white border border-border p-8 hover:border-brand-red/30 hover:shadow-xl hover:shadow-brand-red/5 transition-all"
-            >
-              <div className="w-14 h-14 rounded-2xl brand-gradient flex items-center justify-center mb-5">
-                <feature.icon className="w-7 h-7 text-white" />
-              </div>
-              <h3 className="font-[var(--font-display)] font-bold text-xl text-brand-charcoal mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">{feature.desc}</p>
-            </motion.div>
-          ))}
         </div>
       </section>
 
