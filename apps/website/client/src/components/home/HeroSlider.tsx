@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Flame } from "lucide-react";
 import { Link } from "wouter";
@@ -12,8 +12,9 @@ import {
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { handleImageError } from "@/lib/image-fallback";
-import { menuItems, type MenuItem } from "@/data/menu-data";
+import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 import { useBranch } from "@/contexts/BranchContext";
+import { getItemsByIds } from "@/lib/menu-utils";
 
 const HERO_DEAL_IDS = [
   "family-deal",
@@ -22,17 +23,15 @@ const HERO_DEAL_IDS = [
   "knock-out-deal",
 ] as const;
 
-const heroDeals = HERO_DEAL_IDS.map((id) => menuItems.find((item) => item.id === id)).filter(
-  (item): item is MenuItem => item !== undefined,
-);
-
 export function HeroSlider() {
+  const { items } = useMenuCatalog();
   const { selectedBranch } = useBranch();
+  const heroDeals = useMemo(() => getItemsByIds(items, [...HERO_DEAL_IDS]), [items]);
   const [api, setApi] = useState<CarouselApi>();
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    if (!api) return;
+    if (!api || heroDeals.length === 0) return;
 
     const onSelect = () => setActiveIndex(api.selectedScrollSnap());
     api.on("select", onSelect);
@@ -50,7 +49,11 @@ export function HeroSlider() {
       api.off("select", onSelect);
       window.clearInterval(timer);
     };
-  }, [api]);
+  }, [api, heroDeals.length]);
+
+  if (heroDeals.length === 0) {
+    return null;
+  }
 
   return (
     <section className="relative overflow-hidden -mt-[72px] pt-[72px] min-h-[88vh] bg-brand-charcoal">

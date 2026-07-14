@@ -1,42 +1,40 @@
+import { useMemo } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
+import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
+import { getCategoryPlaceholderImage } from "@/lib/menu-catalog";
 import { handleImageError } from "@/lib/image-fallback";
 
-const categories = [
-  {
-    name: "Signature Pizzas",
-    image: "/images/menu-pizza.jpg",
-    accent: "Pizza",
-  },
-  {
-    name: "Broast",
-    image: "/images/sides-platter.jpg",
-    accent: "Broast",
-  },
-  {
-    name: "Burgers",
-    image: "/images/menu-burger.jpg",
-    accent: "Burgers",
-  },
-  {
-    name: "Pasta",
-    image: "/images/pasta-dish.jpg",
-    accent: "Pasta",
-  },
-  {
-    name: "Fries",
-    image: "/images/sides-platter.jpg",
-    accent: "Sides",
-  },
-  {
-    name: "Drinks",
-    image: "/images/desserts-drinks.jpg",
-    accent: "Drinks",
-  },
+const CURATED_CATEGORY_PREVIEWS = [
+  { menuCategory: "Signature Pizzas", label: "Signature Pizzas", accent: "Pizza" },
+  { menuCategory: "Broast", label: "Broast", accent: "Broast" },
+  { menuCategory: "Burgers", label: "Burgers", accent: "Burgers" },
+  { menuCategory: "Pasta", label: "Pasta", accent: "Pasta" },
+  { menuCategory: "Fries", label: "Fries", accent: "Sides" },
+  { menuCategory: "Drinks", label: "Drinks", accent: "Drinks" },
 ] as const;
 
 export function CategoryStrip() {
+  const { availableCategories } = useMenuCatalog();
+
+  const categories = useMemo(() => {
+    const available = new Set(availableCategories);
+
+    return CURATED_CATEGORY_PREVIEWS.filter((preview) => available.has(preview.menuCategory)).map(
+      (preview) => ({
+        name: preview.label,
+        menuCategory: preview.menuCategory,
+        image: getCategoryPlaceholderImage(preview.menuCategory),
+        accent: preview.accent,
+      }),
+    );
+  }, [availableCategories]);
+
+  if (categories.length === 0) {
+    return null;
+  }
+
   return (
     <section className="container py-12 md:py-16">
       <div className="flex items-end justify-between mb-8">
@@ -59,13 +57,13 @@ export function CategoryStrip() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-5">
         {categories.map((category, index) => (
           <motion.div
-            key={category.name}
+            key={category.menuCategory}
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4, delay: index * 0.05 }}
           >
-            <Link href={`/menu?category=${encodeURIComponent(category.name)}`}>
+            <Link href={`/menu?category=${encodeURIComponent(category.menuCategory)}`}>
               <div className="group relative overflow-hidden rounded-3xl aspect-square border border-border hover:border-brand-red/40 hover:shadow-xl hover:shadow-brand-red/10 transition-all duration-300">
                 <img
                   src={category.image}

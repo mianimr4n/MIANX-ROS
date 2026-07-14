@@ -1,6 +1,7 @@
+import { useMemo } from "react";
 import { Link } from "wouter";
 import { ChevronRight } from "lucide-react";
-import { menuItems } from "@/data/menu-data";
+import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 import { getItemsByCategory, getItemsByIds } from "@/lib/menu-utils";
 import { ProductCard } from "@/components/menu/ProductCard";
 
@@ -25,11 +26,17 @@ export function MenuSectionRow({
   viewAllCategory,
   dark = false,
 }: MenuSectionRowProps) {
-  const items = itemIds
-    ? getItemsByIds(menuItems, itemIds)
-    : category
-      ? getItemsByCategory(menuItems, category).slice(0, limit)
-      : [];
+  const { items: catalogItems } = useMenuCatalog();
+
+  const items = useMemo(
+    () =>
+      itemIds
+        ? getItemsByIds(catalogItems, itemIds)
+        : category
+          ? getItemsByCategory(catalogItems, category).slice(0, limit)
+          : [],
+    [catalogItems, category, itemIds, limit],
+  );
 
   if (items.length === 0) {
     return null;

@@ -14,34 +14,39 @@ export interface MenuCatalogResult {
 }
 
 interface SupabaseMenuCategoryRow {
-  id: number;
+  id: number | string;
   name: string;
   slug: string;
-  display_order: number;
+  sort_order: number;
 }
 
-interface SupabaseVariantJson {
-  id: number;
+interface SupabaseMenuCategoryJoin {
+  name: string;
+  slug: string;
+}
+
+interface SupabaseMenuVariantRow {
+  id: number | string;
   label: string;
+  price: number | string;
   size_code: string | null;
-  price: number;
+  sort_order: number;
+  is_default: boolean;
   is_available: boolean;
 }
 
 interface SupabaseMenuItemRow {
-  id: number;
-  category_name: string;
-  category_slug: string;
-  name: string;
+  id: number | string;
   slug: string;
+  name: string;
   description: string | null;
   image_url: string | null;
   badge: string | null;
-  base_price: number | null;
-  is_available: boolean;
+  base_price: number | string | null;
+  product_type: string;
   is_featured: boolean;
-  display_order: number;
-  variants: SupabaseVariantJson[] | null;
+  category: SupabaseMenuCategoryJoin | SupabaseMenuCategoryJoin[] | null;
+  variants: SupabaseMenuVariantRow[] | null;
 }
 
 /** Existing bundled artwork only — never invent image URLs. */
@@ -82,42 +87,58 @@ export function getCategoryPlaceholderImage(categoryName: string): string {
   return "/images/sides-platter.jpg";
 }
 
-function parseVariants(raw: unknown): MenuVariant[] {
-  if (!Array.isArray(raw)) {
-    return [];
+function parseNumber(value: number | string | null | undefined): number {
+  if (typeof value === "number") {
+    return value;
   }
 
-  return raw
-    .filter((entry): entry is SupabaseVariantJson => {
-      return (
-        typeof entry === "object" &&
-        entry !== null &&
-        "label" in entry &&
-        "price" in entry &&
-        entry.is_available !== false
-      );
-    })
-    .map((entry) => ({
-      id: String(entry.id),
-      label: entry.label,
-      price: Number(entry.price),
-      sizeCode: entry.size_code ?? undefined,
-    }));
+  if (typeof value === "string" && value.trim().length > 0) {
+    return Number(value);
+  }
+
+  return 0;
+}
+
+function getCategory(category: SupabaseMenuItemRow["category"]) {
+  if (Array.isArray(category)) {
+    return category[0] ?? null;
+  }
+
+  return category;
 }
 
 function mapMenuItemRow(row: SupabaseMenuItemRow): MenuItem {
-  const variants = parseVariants(row.variants);
+  const category = getCategory(row.category);
+  const categoryName = category?.name ?? "Uncategorized";
+  const categorySlug = category?.slug ?? "uncategorized";
+
+  const variants: MenuVariant[] = (row.variants ?? [])
+    .filter((variant) => variant.is_available !== false)
+    .sort((left, right) => left.sort_order - right.sort_order)
+    .map((variant) => ({
+      id: String(variant.id),
+      label: variant.label,
+      price: parseNumber(variant.price),
+      sizeCode: variant.size_code ?? undefined,
+      isDefault: variant.is_default,
+    }));
 
   return {
     id: row.slug,
     slug: row.slug,
     name: row.name,
-    category: row.category_name,
-    categorySlug: row.category_slug,
+    category: categoryName,
+    categorySlug,
     description: row.description ?? "",
-    image: row.image_url?.trim() || getCategoryPlaceholderImage(row.category_name),
+    image: row.image_url?.trim() || getCategoryPlaceholderImage(categoryName),
     badge: row.badge ?? undefined,
-    price: variants.length > 0 ? undefined : row.base_price != null ? Number(row.base_price) : undefined,
+    price:
+      variants.length > 0
+        ? undefined
+        : row.base_price != null
+          ? parseNumber(row.base_price)
+          : undefined,
+    productType: row.product_type,
     featured: row.is_featured,
     variants: variants.length > 0 ? variants : undefined,
   };
@@ -147,16 +168,16 @@ export async function fetchMenuCatalogFromSupabase(): Promise<MenuCatalogResult>
   const [categoriesResult, itemsResult] = await Promise.all([
     supabase
       .from("menu_categories")
-      .select("id, name, slug, display_order")
+      .select("id, name, slug, sort_order")
       .eq("is_active", true)
-      .order("display_order", { ascending: true }),
+      .order("sort_order", { ascending: true }),
     supabase
-      .from("menu_items_with_pricing")
+      .from("menu_items")
       .select(
-        "id, category_name, category_slug, name, slug, description, image_url, badge, base_price, is_available, is_featured, display_order, variants",
+        "id, slug, name, description, image_url, base_price, badge, product_type, is_featured, category:menu_categories(name, slug), variants:menu_item_variants(id, label, price, size_code, sort_order, is_default, is_available)",
       )
       .eq("is_available", true)
-      .order("display_order", { ascending: true }),
+      .order("name", { ascending: true }),
   ]);
 
   if (categoriesResult.error) {
@@ -171,7 +192,7 @@ export async function fetchMenuCatalogFromSupabase(): Promise<MenuCatalogResult>
     id: String(row.id),
     name: row.name,
     slug: row.slug,
-    sortOrder: row.display_order,
+    sortOrder: row.sort_order,
   }));
 
   const items = (itemsResult.data as SupabaseMenuItemRow[]).map(mapMenuItemRow);

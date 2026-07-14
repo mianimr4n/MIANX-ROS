@@ -1,4 +1,4 @@
-import type { MenuItem } from "@/data/menu-data";
+import type { MenuItem } from "@/lib/telepizza-types";
 
 /** Verified extra topping prices from REAL-MENU Link 3 (Small / Medium / Large). */
 export type ToppingSizeTier = "small" | "medium" | "large";

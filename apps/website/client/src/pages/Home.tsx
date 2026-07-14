@@ -1,4 +1,5 @@
-/* Telepizza Pakistan — brand-forward homepage driven by canonical menu-data.ts */
+/* Telepizza Pakistan — brand-forward homepage driven by the live menu catalog */
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ChevronRight,
@@ -15,7 +16,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { useBranch } from "@/contexts/BranchContext";
-import { menuItems } from "@/data/menu-data";
+import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 import { getDisplayPrice, getItemsByIds } from "@/lib/menu-utils";
 import { Button } from "@/components/ui/button";
 import { DealCard } from "@/components/menu/DealCard";
@@ -38,11 +39,15 @@ const FEATURED_BROAST_IDS = ["quarter-broast", "half-broast", "full-broast"];
 const FEATURED_PASTA_SIDES_IDS = ["crunchy-pasta", "loaded-fries", "chicken-tender-strips", "nuggets"];
 const CUSTOMER_FAVORITE_IDS = ["tele-special", "patty-burger", "behari-roll"];
 
-const todaysDeals = getItemsByIds(menuItems, TODAYS_DEAL_IDS);
-const customerFavorites = getItemsByIds(menuItems, CUSTOMER_FAVORITE_IDS);
-
 export default function Home() {
+  const { items } = useMenuCatalog();
   const { selectedBranch, allBranches } = useBranch();
+
+  const todaysDeals = useMemo(() => getItemsByIds(items, TODAYS_DEAL_IDS), [items]);
+  const customerFavorites = useMemo(
+    () => getItemsByIds(items, CUSTOMER_FAVORITE_IDS),
+    [items],
+  );
   const operatingBranches = allBranches.filter((branch) => branch.status === "operating");
   const comingSoonBranches = allBranches.filter((branch) => branch.status === "coming-soon");
 

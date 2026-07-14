@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Plus, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { handleImageError } from "@/lib/image-fallback";
-import type { MenuItem } from "@/data/menu-data";
+import type { MenuItem } from "@/lib/telepizza-types";
 import { useAddMenuItem } from "@/hooks/useAddMenuItem";
 import { ProductBadge } from "./ProductBadge";
 
