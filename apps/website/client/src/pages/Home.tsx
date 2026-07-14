@@ -7,18 +7,30 @@ import { useCart } from "@/contexts/CartContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { handleImageError } from "@/lib/image-fallback";
 import { Button } from "@/components/ui/button";
+import { menuItems, type MenuItem, type MenuVariant } from "@/data/menu-data";
 
-const featuredItems = [
-  { id: "f1", name: "Kabab Stuffed Crust", price: 1200, category: "Pizza", image: "/images/menu-pizza.jpg" },
-  { id: "f2", name: "Injected Broast", price: 375, category: "Burger", image: "/images/menu-burger.jpg" },
-  { id: "f3", name: "Chicago Extreme Pizza", price: 1500, category: "Pizza", image: "/images/menu-pizza.jpg" },
-];
+/* All homepage items, deals, and prices come from the verified canonical
+   menu (menu-data.ts). Nothing here may be hardcoded or invented. */
+const FEATURED_ITEM_IDS = ["tele-special", "patty-burger", "behari-roll"];
+const FEATURED_DEAL_IDS = ["family-deal", "pizza-fest", "mega-offer"];
 
-const deals = [
-  { name: "Family Feast", desc: "2 Large Pizzas + 4 Drinks + Garlic Bread", price: 3500, oldPrice: 4500, image: "/images/deals-section.jpg" },
-  { name: "Couple Special", desc: "1 Medium Pizza + 2 Drinks + Fries", price: 1500, oldPrice: 2000, image: "/images/deals-section.jpg" },
-  { name: "Solo Deal", desc: "1 Regular Pizza + 1 Drink", price: 650, oldPrice: 900, image: "/images/menu-pizza.jpg" },
-];
+const featuredItems = FEATURED_ITEM_IDS
+  .map((id) => menuItems.find((item) => item.id === id))
+  .filter((item): item is MenuItem => item !== undefined);
+
+const featuredDeals = FEATURED_DEAL_IDS
+  .map((id) => menuItems.find((item) => item.id === id))
+  .filter((item): item is MenuItem => item !== undefined);
+
+/* Variant items are represented by their first (smallest) variant, shown
+   explicitly on the card so the customer sees exactly what "Add" adds. */
+function getDefaultVariant(item: MenuItem): MenuVariant | undefined {
+  return item.variants?.[0];
+}
+
+function getDisplayPrice(item: MenuItem): number | undefined {
+  return getDefaultVariant(item)?.price ?? item.price;
+}
 
 export default function Home() {
   const { addItem } = useCart();
@@ -26,10 +38,34 @@ export default function Home() {
   const operatingBranches = allBranches.filter((branch) => branch.status === "operating");
   const comingSoonBranches = allBranches.filter((branch) => branch.status === "coming-soon");
 
+  const handleAddItem = (item: MenuItem) => {
+    const variant = getDefaultVariant(item);
+    const price = variant?.price ?? item.price;
+    if (price === undefined) return;
+
+    const variantId = variant
+      ? variant.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+      : null;
+
+    addItem({
+      id: variantId ? `${item.id}-${variantId}` : item.id,
+      name: item.name,
+      price,
+      category: item.category,
+      variant: variant?.label,
+      image: item.image,
+      description: item.description,
+    });
+  };
+
+  /* Phone mockup uses the same verified featured items and deals as the page. */
+  const mockupDeal = featuredDeals[0];
+  const mockupItems = featuredItems.slice(0, 3);
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] overflow-hidden">
+      {/* Hero Section — negative margin pulls image under the transparent navbar */}
+      <section className="relative min-h-[90vh] overflow-hidden -mt-[72px] pt-[72px]">
         <img
           src="/images/hero-banner.jpg"
           alt="Telepizza Hero"
@@ -46,7 +82,7 @@ export default function Home() {
               <div className="inline-flex items-center gap-2 bg-brand-red/20 backdrop-blur-sm border border-brand-red/30 rounded-full px-4 py-2 mb-6">
                 <Flame className="w-4 h-4 text-brand-gold" />
                 <span className="text-brand-gold text-sm font-[var(--font-accent)] font-medium">
-                  Now Delivering Till 2:30 AM
+                  Open Daily · {selectedBranch.hours}
                 </span>
               </div>
             </motion.div>
@@ -99,9 +135,9 @@ export default function Home() {
               className="mt-10 flex flex-wrap gap-6"
             >
               {[
-                { icon: Star, label: "4.3 Rating", sub: "642+ Reviews" },
-                { icon: Clock, label: "Fast Delivery", sub: "30 min avg" },
-                { icon: Shield, label: "Fresh & Hot", sub: "Every time" },
+                { icon: Clock, label: "Branch Hours", sub: selectedBranch.hours },
+                { icon: Phone, label: "Call to Order", sub: selectedBranch.phone },
+                { icon: Shield, label: "Fresh & Hot", sub: "Made to order" },
               ].map((badge) => (
                 <div key={badge.label} className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center">
@@ -128,9 +164,9 @@ export default function Home() {
         <div className="container py-6">
           <div className="flex flex-wrap justify-center gap-8 md:gap-16">
             {[
-              { value: "Rs 1–5,000", label: "Per Person" },
-              { value: selectedBranch.hours, label: "Every Day" },
-              { value: "Free Delivery", label: "On Orders Above Rs 1,000" },
+              { value: selectedBranch.hours, label: "Opening Hours" },
+              { value: selectedBranch.phone, label: "Call to Order" },
+              { value: selectedBranch.city, label: "Serving" },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="font-[var(--font-display)] font-bold text-xl text-brand-charcoal">{stat.value}</div>
@@ -167,14 +203,18 @@ export default function Home() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {featuredItems.map((item, i) => (
+          {featuredItems.map((item, i) => {
+            const defaultVariant = getDefaultVariant(item);
+            const displayPrice = getDisplayPrice(item);
+
+            return (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="group bg-white rounded-2xl overflow-hidden border border-border hover:border-brand-red/30 hover:shadow-xl hover:shadow-brand-red/5 transition-all duration-300"
+              className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-border hover:border-brand-red/30 hover:shadow-xl hover:shadow-brand-red/5 transition-all duration-300"
             >
               <div className="relative aspect-[4/3] overflow-hidden">
                 <img
@@ -189,16 +229,21 @@ export default function Home() {
                   </span>
                 </div>
               </div>
-              <div className="p-5">
-                <h3 className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal mb-2">
+              <div className="flex flex-col flex-1 p-5">
+                <h3 className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal mb-1">
                   {item.name}
                 </h3>
-                <div className="flex items-center justify-between">
+                {defaultVariant && (
+                  <p className="text-xs text-muted-foreground mb-2 font-[var(--font-accent)]">
+                    {defaultVariant.label}
+                  </p>
+                )}
+                <div className="mt-auto flex items-center justify-between">
                   <span className="font-[var(--font-accent)] font-bold text-xl text-brand-red">
-                    Rs {item.price.toLocaleString()}
+                    Rs {displayPrice?.toLocaleString() ?? "—"}
                   </span>
                   <Button
-                    onClick={() => addItem({ id: item.id, name: item.name, price: item.price, category: item.category })}
+                    onClick={() => handleAddItem(item)}
                     size="sm"
                     className="bg-brand-red hover:bg-brand-red-light text-white font-[var(--font-accent)] font-semibold rounded-xl transition-all active:scale-95 shadow-md shadow-brand-red/20"
                   >
@@ -208,7 +253,8 @@ export default function Home() {
                 </div>
               </div>
             </motion.div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -233,19 +279,19 @@ export default function Home() {
               Hot <span className="text-brand-red">Deals</span>
             </h2>
             <p className="text-white/60 mt-2 font-[var(--font-body)]">
-              Save big on our best meal combos
+              Verified meal combos from our menu
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {deals.map((deal, i) => (
+            {featuredDeals.map((deal, i) => (
               <motion.div
-                key={deal.name}
+                key={deal.id}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="group bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden hover:border-brand-red/40 hover:bg-white/10 transition-all duration-300"
+                className="group flex flex-col h-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden hover:border-brand-red/40 hover:bg-white/10 transition-all duration-300"
               >
                 <div className="relative aspect-[16/9] overflow-hidden">
                   <img
@@ -254,24 +300,24 @@ export default function Home() {
                     onError={handleImageError}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute top-3 right-3">
-                    <span className="bg-brand-red text-white text-sm font-[var(--font-accent)] font-bold px-3 py-1 rounded-full">
-                      SAVE Rs {(deal.oldPrice - deal.price).toLocaleString()}
-                    </span>
-                  </div>
                 </div>
-                <div className="p-5">
+                <div className="flex flex-col flex-1 p-5">
                   <h3 className="font-[var(--font-display)] font-bold text-lg text-white mb-1">
                     {deal.name}
                   </h3>
-                  <p className="text-white/50 text-sm mb-3">{deal.desc}</p>
-                  <div className="flex items-center gap-3">
+                  <p className="text-white/50 text-sm mb-3 line-clamp-2">{deal.description}</p>
+                  <div className="mt-auto flex items-center justify-between">
                     <span className="font-[var(--font-accent)] font-extrabold text-2xl text-brand-red">
-                      Rs {deal.price.toLocaleString()}
+                      Rs {deal.price?.toLocaleString()}
                     </span>
-                    <span className="text-white/30 line-through text-sm">
-                      Rs {deal.oldPrice.toLocaleString()}
-                    </span>
+                    <Button
+                      onClick={() => handleAddItem(deal)}
+                      size="sm"
+                      className="bg-brand-red hover:bg-brand-red-light text-white font-[var(--font-accent)] font-semibold rounded-xl transition-all active:scale-95"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add
+                    </Button>
                   </div>
                 </div>
               </motion.div>
@@ -388,9 +434,17 @@ export default function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { icon: Truck, title: "Fast Delivery", desc: "From our oven to your door in 30 minutes. We deliver till 2:30 AM because cravings don't sleep." },
-            { icon: Flame, title: "Fresh & Hot", desc: "Every pizza is made from scratch with fresh dough and premium ingredients. No shortcuts, no compromises." },
-            { icon: Star, title: "Bold Flavors", desc: "From Kabab Stuffed Crust to Injected Broast — our menu is packed with unique flavors you won't find anywhere else." },
+            {
+              icon: Truck,
+              title: "Order Your Way",
+              desc: `Call ${selectedBranch.phone} or order online from ${selectedBranch.shortName}. Open ${selectedBranch.hours}.`,
+            },
+            {
+              icon: Flame,
+              title: "Bold Flavors",
+              desc: "Tele Special, Behari Roll, Crown Crust, and more — verified items from our real menu.",
+            },
+            { icon: Star, title: "Fresh & Hot", desc: "Every pizza is made from scratch with fresh dough and premium ingredients." },
           ].map((feature, i) => (
             <motion.div
               key={feature.title}
@@ -484,7 +538,7 @@ export default function Home() {
                 <span className="text-brand-red">Our App</span>
               </h2>
               <p className="mt-4 text-white/60 text-lg font-[var(--font-body)] max-w-md">
-                Skip the call. Track your order in real-time. Get exclusive app-only deals. The Telepizza app is coming soon to iOS and Android.
+                Skip the call. Track your order in real-time. The Telepizza app is coming soon to iOS and Android.
               </p>
               <div className="mt-8 flex gap-4">
                 <div className="px-6 py-3 bg-white/10 rounded-xl border border-white/10">
@@ -515,31 +569,40 @@ export default function Home() {
                     <ShoppingCart className="w-5 h-5 text-white" />
                   </div>
                   {/* Mock App Content */}
-                  <div className="bg-brand-red/20 rounded-2xl p-4 mb-4">
-                    <div className="text-brand-gold text-xs font-[var(--font-accent)] font-bold mb-1">NEW DEAL</div>
-                    <div className="text-white font-bold text-base">Family Feast</div>
-                    <div className="text-white/60 text-xs mt-1">2 Large Pizzas + Drinks</div>
-                    <div className="text-brand-red font-bold text-lg mt-2">Rs 3,500</div>
-                  </div>
+                  {mockupDeal && (
+                    <div className="bg-brand-red/20 rounded-2xl p-4 mb-4">
+                      <div className="text-brand-gold text-xs font-[var(--font-accent)] font-bold mb-1">DEAL</div>
+                      <div className="text-white font-bold text-base">{mockupDeal.name}</div>
+                      <div className="text-white/60 text-xs mt-1 line-clamp-2">{mockupDeal.description}</div>
+                      <div className="text-brand-red font-bold text-lg mt-2">
+                        Rs {mockupDeal.price?.toLocaleString()}
+                      </div>
+                    </div>
+                  )}
                   <div className="space-y-3">
-                    {[
-                      { name: "Kabab Stuffed Crust", price: "Rs 1,200" },
-                      { name: "Chicago Extreme", price: "Rs 1,500" },
-                      { name: "Chicken Supreme", price: "Rs 1,100" },
-                    ].map((item) => (
-                      <div key={item.name} className="flex items-center gap-3 bg-white/5 rounded-xl p-3">
+                    {mockupItems.map((item) => {
+                      const price = getDisplayPrice(item);
+                      const variant = getDefaultVariant(item);
+                      return (
+                      <div key={item.id} className="flex items-center gap-3 bg-white/5 rounded-xl p-3">
                         <div className="w-12 h-12 bg-brand-red/20 rounded-lg flex items-center justify-center">
                           <Flame className="w-5 h-5 text-brand-red" />
                         </div>
-                        <div className="flex-1">
-                          <div className="text-white text-xs font-semibold">{item.name}</div>
-                          <div className="text-brand-gold text-xs font-bold">{item.price}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-white text-xs font-semibold truncate">{item.name}</div>
+                          {variant && (
+                            <div className="text-white/40 text-[10px] truncate">{variant.label}</div>
+                          )}
+                          <div className="text-brand-gold text-xs font-bold">
+                            Rs {price?.toLocaleString()}
+                          </div>
                         </div>
                         <div className="w-6 h-6 bg-brand-red rounded-full flex items-center justify-center">
                           <Plus className="w-3 h-3 text-white" />
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   {/* Bottom Nav */}
                   <div className="absolute bottom-0 left-0 right-0 flex justify-around py-3 bg-white/5 border-t border-white/10">
@@ -573,7 +636,7 @@ export default function Home() {
             transition={{ delay: 0.1 }}
             className="text-white/80 mb-8 max-w-md mx-auto"
           >
-            Call us or order online — we'll have it to you in no time
+            Call us or order online from {selectedBranch.shortName}
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
