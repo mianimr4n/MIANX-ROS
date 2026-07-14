@@ -1,4 +1,4 @@
-import type { MenuItem, MenuVariant } from "@/data/menu-data";
+import type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
 
 export function getDefaultVariant(item: MenuItem): MenuVariant | undefined {
   return item.variants?.[0];

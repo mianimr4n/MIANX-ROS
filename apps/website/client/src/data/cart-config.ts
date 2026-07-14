@@ -23,8 +23,17 @@ export const VERIFIED_COUPON_CODES: Record<string, { description: string }> = {}
 
 export function getToppingTierFromVariantLabel(label: string): ToppingSizeTier {
   const normalized = label.toLowerCase();
-  if (normalized.includes("12 inch") || normalized === "large") return "large";
-  if (normalized.includes("9 inch") || normalized === "medium") return "medium";
+  if (normalized.includes("12 inch") || normalized.includes('12"') || normalized === "large") {
+    return "large";
+  }
+  if (
+    normalized.includes("10 inch") ||
+    normalized.includes('10"') ||
+    normalized.includes("9 inch") ||
+    normalized === "medium"
+  ) {
+    return "medium";
+  }
   return "small";
 }
 
