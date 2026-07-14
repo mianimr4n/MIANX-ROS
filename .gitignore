@@ -17,3 +17,9 @@ apps/website/dist/
 apps/website/.manus-logs/
 apps/website/.env
 apps/website/.env.*
+
+# Supabase CLI
+supabase/.branches/
+supabase/.temp/
+supabase/.cache/
+supabase/.DS_Store
