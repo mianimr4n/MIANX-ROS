@@ -134,6 +134,24 @@ export function getMenuItemImage(slug: string, categoryName: string): string {
   return SLUG_IMAGE_OVERRIDES[slug] ?? getCategoryImage(categoryName);
 }
 
+/** Prefer curated local assets; only trust remote URLs when absolute (CDN/storage). */
+export function resolveMenuItemImage(
+  slug: string,
+  categoryName: string,
+  imageUrl?: string | null,
+): string {
+  if (SLUG_IMAGE_OVERRIDES[slug]) {
+    return SLUG_IMAGE_OVERRIDES[slug];
+  }
+
+  const remote = imageUrl?.trim();
+  if (remote?.startsWith("http://") || remote?.startsWith("https://")) {
+    return remote;
+  }
+
+  return getMenuItemImage(slug, categoryName);
+}
+
 export function getCategoryPlaceholderImage(categoryName: string): string {
   return getCategoryImage(categoryName);
 }

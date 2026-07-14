@@ -2,7 +2,7 @@ import {
   menuCategories as fallbackMenuCategories,
   menuItems as fallbackMenuItems,
 } from "@/data/menu-data";
-import { getCategoryPlaceholderImage, getMenuItemImage } from "@/lib/menu-images";
+import { getCategoryPlaceholderImage, resolveMenuItemImage } from "@/lib/menu-images";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import type { MenuCategory, MenuItem, MenuVariant } from "@/lib/telepizza-types";
 
@@ -96,7 +96,7 @@ function mapMenuItemRow(row: SupabaseMenuItemRow): MenuItem {
     category: categoryName,
     categorySlug,
     description: row.description ?? "",
-    image: row.image_url?.trim() || getMenuItemImage(row.slug, categoryName),
+    image: resolveMenuItemImage(row.slug, categoryName, row.image_url),
     badge: row.badge ?? undefined,
     price:
       variants.length > 0
