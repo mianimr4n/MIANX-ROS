@@ -1,4 +1,14 @@
-const DEFAULT_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim() || "/api/v1";
+const CONFIGURED_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim();
+
+/**
+ * The live API is optional: the site ships with a complete bundled menu and
+ * branch list. Network calls are attempted only when a backend URL has been
+ * explicitly configured, so a missing backend can never surface errors to
+ * customers.
+ */
+export const isApiConfigured = Boolean(CONFIGURED_API_BASE_URL);
+
+const DEFAULT_API_BASE_URL = CONFIGURED_API_BASE_URL || "/api/v1";
 
 function resolveApiUrl(path: string) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
@@ -16,12 +26,18 @@ export class ApiRequestError extends Error {
 }
 
 export async function fetchApiData<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    ...(init?.headers as Record<string, string> | undefined),
+  };
+
+  if (init?.body && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const response = await fetch(resolveApiUrl(path), {
-    headers: {
-      Accept: "application/json",
-      ...(init?.headers ?? {}),
-    },
     ...init,
+    headers,
   });
 
   let payload: unknown;

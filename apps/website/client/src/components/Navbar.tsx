@@ -9,6 +9,7 @@ import { ShoppingCart, Menu as MenuIcon, X, Phone, MapPin, ChevronDown, ChevronU
 import { useCart } from "@/contexts/CartContext";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useBranch } from "@/contexts/BranchContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -27,6 +28,7 @@ export default function Navbar() {
   const { totalItems, toggleCart } = useCart();
   const isMobile = useIsMobile();
   const { selectedBranch, setSelectedBranch, allBranches } = useBranch();
+  const { isAuthenticated } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,9 +62,9 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
           <img
-            src="/images/telepizza-logo_f910db9a.png"
+            src="/images/telepizza-logo.png"
             alt="Telepizza"
-            className="h-9 w-9 transition-transform duration-200 group-hover:scale-105"
+            className="h-10 w-10 md:h-11 md:w-11 transition-transform duration-200 group-hover:scale-105"
           />
           <div>
             <span
@@ -226,6 +228,19 @@ export default function Navbar() {
             </a>
           )}
 
+          {/* Account */}
+          <Link href={isAuthenticated ? "/account" : "/login"}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`hidden md:inline-flex rounded-xl font-[var(--font-accent)] font-semibold ${
+                scrolled ? "text-brand-charcoal hover:text-brand-red" : "text-white hover:text-brand-gold"
+              }`}
+            >
+              {isAuthenticated ? "Account" : "Login"}
+            </Button>
+          </Link>
+
           {/* Cart Button */}
           <button
             onClick={toggleCart}
@@ -271,7 +286,7 @@ export default function Navbar() {
                 <div className="flex items-center justify-between p-6 border-b border-white/10">
                   <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2">
                     <img
-                      src="/images/telepizza-logo_f910db9a.png"
+                      src="/images/telepizza-logo.png"
                       alt="Telepizza"
                       className="h-8 w-8"
                     />
