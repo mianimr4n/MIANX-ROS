@@ -5,8 +5,8 @@ import { getEnvironmentStatus } from "../src/config/env.js";
 describe("getEnvironmentStatus", () => {
   it("returns ready when all required variables are present", () => {
     const status = getEnvironmentStatus({
-      API_PORT: "4100",
-      API_CORS_ORIGIN: "http://localhost:3000",
+      PORT: "4100",
+      CORS_ORIGIN: "http://localhost:3000",
       API_JWT_SECRET: "super-secret-token-123",
       SUPABASE_URL: "https://example.supabase.co",
       SUPABASE_ANON_KEY: "anon-key",
@@ -16,11 +16,12 @@ describe("getEnvironmentStatus", () => {
     expect(status.isReady).toBe(true);
     expect(status.issues).toEqual([]);
     expect(status.config.port).toBe(4100);
+    expect(status.config.corsOrigin).toBe("http://localhost:3000");
   });
 
   it("reports missing and invalid variables", () => {
     const status = getEnvironmentStatus({
-      API_PORT: "99999",
+      PORT: "99999",
       API_CORS_ORIGIN: "not-a-url",
       API_JWT_SECRET: "short",
       SUPABASE_URL: "bad-url",
@@ -31,7 +32,7 @@ describe("getEnvironmentStatus", () => {
     expect(status.isReady).toBe(false);
     expect(status.issues.map((issue) => issue.key)).toEqual(
       expect.arrayContaining([
-        "API_PORT",
+        "PORT",
         "API_CORS_ORIGIN",
         "API_JWT_SECRET",
         "SUPABASE_URL",

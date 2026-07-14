@@ -29,8 +29,8 @@ function parsePort(value: string | undefined, issues: EnvironmentIssue[]) {
   const port = Number(value);
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     issues.push({
-      key: "API_PORT",
-      message: "API_PORT must be an integer between 1 and 65535.",
+      key: "PORT",
+      message: "PORT must be an integer between 1 and 65535.",
     });
     return DEFAULT_PORT;
   }
@@ -89,8 +89,13 @@ export function getEnvironmentStatus(source: NodeJS.ProcessEnv = process.env): E
   }
 
   const config: ApiEnvironment = {
-    port: parsePort(source.API_PORT, issues),
-    corsOrigin: validateUrl("API_CORS_ORIGIN", source.API_CORS_ORIGIN, DEFAULT_CORS_ORIGIN, issues),
+    port: parsePort(source.PORT ?? source.API_PORT, issues),
+    corsOrigin: validateUrl(
+      "API_CORS_ORIGIN",
+      source.API_CORS_ORIGIN ?? source.CORS_ORIGIN,
+      DEFAULT_CORS_ORIGIN,
+      issues,
+    ),
     jwtSecret,
     supabaseUrl: validateUrl("SUPABASE_URL", source.SUPABASE_URL, "http://127.0.0.1:54321", issues),
     supabaseAnonKey: validateRequiredString("SUPABASE_ANON_KEY", source.SUPABASE_ANON_KEY, issues),
