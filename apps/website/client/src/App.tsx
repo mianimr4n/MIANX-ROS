@@ -25,6 +25,7 @@ import CartDrawer from "./components/CartDrawer";
 import { CartProvider } from "./contexts/CartContext";
 import { PizzaCustomizerProvider } from "./contexts/PizzaCustomizerContext";
 import { BranchProvider } from "./contexts/BranchContext";
+import { MenuCatalogProvider } from "./contexts/MenuCatalogContext";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 
@@ -68,6 +69,7 @@ function App() {
           <Toaster />
           <AuthProvider>
             <CartProvider>
+              <MenuCatalogProvider>
               <BranchProvider>
                 <PizzaCustomizerProvider>
                   <Navbar />
@@ -79,6 +81,7 @@ function App() {
                   <CartDrawer />
                 </PizzaCustomizerProvider>
               </BranchProvider>
+              </MenuCatalogProvider>
             </CartProvider>
           </AuthProvider>
         </TooltipProvider>

@@ -19,7 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCart, type CartExtra } from "@/contexts/CartContext";
-import { menuItems, type MenuItem, type MenuVariant } from "@/data/menu-data";
+import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
+import type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
 import {
   EXTRA_TOPPING_PRICES,
   PIZZA_ADDON_DRINK_IDS,
@@ -36,6 +37,7 @@ type PizzaCustomizerDialogProps = {
 
 export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: PizzaCustomizerDialogProps) {
   const { addItem } = useCart();
+  const { items: catalogItems } = useMenuCatalog();
   const [selectedVariantLabel, setSelectedVariantLabel] = useState("");
   const [extraChicken, setExtraChicken] = useState(false);
   const [extraCheese, setExtraCheese] = useState(false);
@@ -45,13 +47,19 @@ export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: Pi
   const [instructions, setInstructions] = useState("");
 
   const drinkOptions = useMemo(
-    () => menuItems.filter((entry) => PIZZA_ADDON_DRINK_IDS.includes(entry.id as (typeof PIZZA_ADDON_DRINK_IDS)[number])),
-    [],
+    () =>
+      catalogItems.filter((entry) =>
+        PIZZA_ADDON_DRINK_IDS.includes(entry.id as (typeof PIZZA_ADDON_DRINK_IDS)[number]),
+      ),
+    [catalogItems],
   );
 
   const friesOptions = useMemo(
-    () => menuItems.filter((entry) => PIZZA_ADDON_FRIES_IDS.includes(entry.id as (typeof PIZZA_ADDON_FRIES_IDS)[number])),
-    [],
+    () =>
+      catalogItems.filter((entry) =>
+        PIZZA_ADDON_FRIES_IDS.includes(entry.id as (typeof PIZZA_ADDON_FRIES_IDS)[number]),
+      ),
+    [catalogItems],
   );
 
   useEffect(() => {
