@@ -5,14 +5,17 @@
    Categories reordered to surface drinks earlier. */
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Search, Star, Flame } from "lucide-react";
-import { useCart } from "@/contexts/CartContext";
+import { Plus, Search } from "lucide-react";
+import { useSearch } from "wouter";
+import { useAddMenuItem } from "@/hooks/useAddMenuItem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { isApiConfigured } from "@/lib/api";
 import { fetchMenuCatalog } from "@/lib/telepizza-api";
 import { handleImageError } from "@/lib/image-fallback";
 import type { MenuCategory } from "@/lib/telepizza-types";
+import { isPizzaItem } from "@/data/cart-config";
+import { ProductBadge } from "@/components/menu/ProductBadge";
 import {
   menuCategories as fallbackMenuCategories,
   menuItems as fallbackMenuItems,
@@ -21,7 +24,16 @@ import {
 } from "@/data/menu-data";
 
 export default function Menu() {
-  const [activeCategory, setActiveCategory] = useState("All");
+  const searchString = useSearch();
+  const initialCategory = useMemo(() => {
+    const params = new URLSearchParams(searchString);
+    const category = params.get("category");
+    return category && fallbackMenuCategories.includes(category as (typeof fallbackMenuCategories)[number])
+      ? category
+      : "All";
+  }, [searchString]);
+
+  const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [search, setSearch] = useState("");
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const [categories, setCategories] = useState<MenuCategory[]>(
@@ -31,7 +43,11 @@ export default function Menu() {
   );
   const [items, setItems] = useState<MenuItem[]>(fallbackMenuItems);
   const [isLoadingCatalog, setIsLoadingCatalog] = useState(isApiConfigured);
-  const { addItem } = useCart();
+  const addMenuItem = useAddMenuItem();
+
+  useEffect(() => {
+    setActiveCategory(initialCategory);
+  }, [initialCategory]);
 
   useEffect(() => {
     // The bundled menu (menu-data.ts) is the canonical fallback. Only try the
@@ -105,24 +121,7 @@ export default function Menu() {
     getSelectedVariant(item)?.price ?? item.price;
 
   const handleAddItem = (item: MenuItem) => {
-    const selectedVariant = getSelectedVariant(item);
-    const price = selectedVariant?.price ?? item.price;
-
-    if (price === undefined) return;
-
-    const variantId =
-      selectedVariant?.id ??
-      (selectedVariant ? selectedVariant.label.toLowerCase().replace(/[^a-z0-9]+/g, "-") : null);
-
-    addItem({
-      id: variantId ? `${item.id}-${variantId}` : item.id,
-      name: item.name,
-      price,
-      category: item.category,
-      variant: selectedVariant?.label,
-      image: item.image,
-      description: item.description,
-    });
+    addMenuItem(item, getSelectedVariant(item)?.label);
   };
 
   const filteredItems = items.filter((item) => {
@@ -162,16 +161,12 @@ export default function Menu() {
         </div>
       </section>
 
-      {/* Reviews Proof-Point Banner */}
-      <section className="bg-brand-cream-dark/30 border-b border-border">
+      {/* Menu intro strip */}
+      <section className="bg-brand-cream border-b border-border">
         <div className="container py-4">
-          <div className="flex items-center gap-3 justify-center flex-wrap">
-            <Star className="w-5 h-5 text-brand-gold fill-brand-gold" />
-            <span className="text-sm font-[var(--font-accent)] font-medium text-brand-charcoal">
-              "Beverages, shakes, and frappes are outstanding"
-            </span>
-            <span className="text-xs text-muted-foreground">— based on 642+ real Google reviews</span>
-          </div>
+          <p className="text-center text-sm font-[var(--font-accent)] font-medium text-brand-charcoal">
+            Verified Telepizza menu — prices and items from our canonical catalog
+          </p>
         </div>
       </section>
 
@@ -231,22 +226,13 @@ export default function Menu() {
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
-                  <span className="bg-brand-red text-white text-xs font-[var(--font-accent)] font-bold px-3 py-1 rounded-full">
-                    {item.category}
-                  </span>
-                  {item.badge === "Signature" && (
-                    <span className="bg-brand-gold text-brand-charcoal text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                      <Flame className="w-3 h-3" /> Signature
-                    </span>
-                  )}
-                  {item.badge && item.badge !== "Signature" && (
-                    <span className="bg-brand-gold text-brand-charcoal text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
+                  {item.badge && <ProductBadge badge={item.badge} />}
                 </div>
               </div>
               <div className="flex flex-col flex-1 p-5">
+                <p className="text-[11px] uppercase tracking-wider text-brand-red font-[var(--font-accent)] font-bold mb-1">
+                  {item.category}
+                </p>
                 <h3 className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal mb-1">
                   {item.name}
                 </h3>
@@ -296,7 +282,7 @@ export default function Menu() {
                     className="bg-brand-red hover:bg-brand-red-light text-white font-[var(--font-accent)] font-semibold rounded-xl transition-all active:scale-95 shadow-md shadow-brand-red/20"
                   >
                     <Plus className="w-4 h-4 mr-1" />
-                    Add
+                    {isPizzaItem(item) ? "Customize" : "Add"}
                   </Button>
                 </div>
               </div>

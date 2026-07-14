@@ -12,6 +12,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CartDrawer from "./components/CartDrawer";
 import { CartProvider } from "./contexts/CartContext";
+import { PizzaCustomizerProvider } from "./contexts/PizzaCustomizerContext";
 import { BranchProvider } from "./contexts/BranchContext";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
@@ -46,13 +47,15 @@ function App() {
           <Toaster />
           <CartProvider>
             <BranchProvider>
-              <Navbar />
-              <ScrollToTop />
-              <main className="min-h-screen pt-[72px]">
-                <Router />
-              </main>
-              <Footer />
-              <CartDrawer />
+              <PizzaCustomizerProvider>
+                <Navbar />
+                <ScrollToTop />
+                <main className="min-h-screen pt-[72px]">
+                  <Router />
+                </main>
+                <Footer />
+                <CartDrawer />
+              </PizzaCustomizerProvider>
             </BranchProvider>
           </CartProvider>
         </TooltipProvider>

@@ -21,6 +21,7 @@ export const menuCategories = [
   "Classic Pizzas",
   "Specialty Pizzas",
   "Burgers",
+  "Broast",
   "Sandwiches",
   "Wings",
   "Fries",
@@ -58,6 +59,7 @@ export const menuItems: MenuItem[] = [
     description:
       "Garlic sauce with tikka chicken, topped with kabab slice, onion, and mushroom.",
     image: "/images/menu-pizza.jpg",
+    badge: "Hot",
     variants: signatureVariants,
   },
   {
@@ -139,6 +141,7 @@ export const menuItems: MenuItem[] = [
     description:
       "Any flavour with chicken stuffing on the edges and Tele Pizza signature sauce.",
     image: "/images/menu-pizza.jpg",
+    badge: "Chef Special",
     variants: [
       { label: "Medium", price: 1199 },
       { label: "Large", price: 1799 },
@@ -325,6 +328,51 @@ export const menuItems: MenuItem[] = [
     description: "Crunchy pasta.",
     image: "/images/pasta-dish.jpg",
     price: 849,
+    badge: "Hot",
+  },
+  {
+    id: "quarter-broast",
+    name: "Quarter Broast",
+    category: "Broast",
+    description:
+      "1 Leg & 1 Thigh OR 1 Wing & 1 Chest, 1 Bun, Fries, (1 Dip) Garlic Dip OR Mustard Dip.",
+    image: "/images/sides-platter.jpg",
+    price: 750,
+    badge: "Hot",
+  },
+  {
+    id: "half-broast",
+    name: "Half Broast",
+    category: "Broast",
+    description:
+      "1 Leg, 1 Thigh, 1 wing, 1 chest, 1 Bun, Fries, (3 Dips) 1 Garlic Dip, 1 Mustard Dip & 1 Tangy Dip.",
+    image: "/images/sides-platter.jpg",
+    price: 1390,
+  },
+  {
+    id: "full-broast",
+    name: "Full Broast",
+    category: "Broast",
+    description:
+      "2 Legs, 2 Thighs, 2 wings, 2 chests, 2 Buns, Fries, (6 Dips) 2 Garlic Dips, 2 Mustard Dips & 2 Tangy Dips.",
+    image: "/images/sides-platter.jpg",
+    price: 2590,
+  },
+  {
+    id: "broast-garlic-dip",
+    name: "Extra Garlic Dip",
+    category: "Broast",
+    description: "Extra garlic sauce dip for broast.",
+    image: "/images/sides-platter.jpg",
+    price: 60,
+  },
+  {
+    id: "broast-mustard-dip",
+    name: "Extra Mustard Dip",
+    category: "Broast",
+    description: "Extra mustard sauce dip for broast.",
+    image: "/images/sides-platter.jpg",
+    price: 60,
   },
   {
     id: "chicken-tender-strips",
@@ -428,7 +476,7 @@ export const menuItems: MenuItem[] = [
     name: "Family Deal",
     category: "Deals",
     description: "1 large pizza, 10 pcs wings, and 1.5 liter drink.",
-    image: "/images/deals-section.jpg",
+    image: "/images/promos/family-deal.jpg",
     price: 2250,
   },
   {
@@ -436,8 +484,9 @@ export const menuItems: MenuItem[] = [
     name: "Pizza Fest",
     category: "Deals",
     description: "1 large pizza and 1.5 liter drink.",
-    image: "/images/deals-section.jpg",
+    image: "/images/promos/pizza-fest.jpg",
     price: 1680,
+    badge: "Hot",
   },
   {
     id: "mega-offer",
@@ -452,8 +501,9 @@ export const menuItems: MenuItem[] = [
     name: "Pair Deal",
     category: "Deals",
     description: "2 medium pizzas and 1.5 liter Coke.",
-    image: "/images/deals-section.jpg",
+    image: "/images/promos/pair-deal.jpg",
     price: 1999,
+    badge: "Hot",
   },
   {
     id: "family-festival",
@@ -476,7 +526,7 @@ export const menuItems: MenuItem[] = [
     name: "Knock Out Deal",
     category: "Deals",
     description: "3 Zinger burgers and 1 liter drink.",
-    image: "/images/deals-section.jpg",
+    image: "/images/promos/knock-out-deal.jpg",
     price: 1440,
   },
 ];
