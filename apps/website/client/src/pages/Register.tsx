@@ -1,46 +1,123 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthPageShell } from "@/components/AuthPageShell";
+import { AUTH_MIN_PASSWORD_LENGTH, isGoogleOAuthConfigured } from "@/lib/auth-utils";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 export default function Register() {
   const [, navigate] = useLocation();
-  const { register } = useAuth();
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const { signUp, isAuthenticated, isLoading } = useAuth();
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/account");
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    register({ name: name.trim(), phone: phone.trim(), email: email.trim() || undefined });
-    navigate("/account");
+    setError(null);
+    setInfo(null);
+    setSubmitting(true);
+
+    try {
+      const result = await signUp({
+        email,
+        password,
+        fullName: fullName.trim() || undefined,
+      });
+
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+
+      if (result.needsEmailConfirmation) {
+        setInfo("Account created. Please confirm your email, then sign in.");
+        return;
+      }
+
+      navigate("/account");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <AuthPageShell
       title="Create Account"
-      description="Save your details for faster checkout and order history."
-      note="Preview account — stored on this device only until full customer login launches."
+      description="Register with email and password for a secure customer account."
+      note={
+        isSupabaseConfigured
+          ? undefined
+          : "Registration is temporarily unavailable until authentication is configured."
+      }
     >
       <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-white p-6 space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Full name</Label>
-          <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="rounded-2xl" required />
+          <Label htmlFor="fullName">Full name (optional)</Label>
+          <Input
+            id="fullName"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className="rounded-2xl"
+            disabled={!isSupabaseConfigured || submitting}
+          />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} className="rounded-2xl" required />
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="rounded-2xl"
+            required
+            disabled={!isSupabaseConfigured || submitting}
+          />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">Email (optional)</Label>
-          <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-2xl" />
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="rounded-2xl"
+            required
+            minLength={AUTH_MIN_PASSWORD_LENGTH}
+            disabled={!isSupabaseConfigured || submitting}
+          />
+          <p className="text-xs text-muted-foreground">
+            At least {AUTH_MIN_PASSWORD_LENGTH} characters.
+          </p>
         </div>
-        <Button type="submit" className="w-full rounded-2xl brand-gradient text-white font-bold py-6">
-          Register
+        {error && <p className="text-sm text-brand-red">{error}</p>}
+        {info && <p className="text-sm text-emerald-700">{info}</p>}
+        <Button
+          type="submit"
+          className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
+          disabled={!isSupabaseConfigured || submitting}
+        >
+          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Register"}
         </Button>
+        {/* Google OAuth intentionally omitted — Slice 1 keeps it disabled. */}
+        {isGoogleOAuthConfigured() ? (
+          <p className="text-xs text-muted-foreground text-center">Google sign-in</p>
+        ) : null}
       </form>
       <p className="text-sm text-muted-foreground mt-4 text-center">
         Already registered?{" "}

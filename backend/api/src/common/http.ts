@@ -35,6 +35,12 @@ export function validateBody<T>(schema: ZodSchema<T>) {
   };
 }
 
+/**
+ * @deprecated Legacy stub authorization via the `x-telepizza-role` header.
+ * Do NOT use for real authenticated identity or privilege decisions.
+ * New auth code must verify Supabase bearer tokens and load roles from the database.
+ * Kept only so existing 501 admin/rider scaffolds continue to exercise a coarse gate.
+ */
 export function requireRole(allowedRoles: string[]) {
   const normalizedRoles = allowedRoles.map((role) => role.toLowerCase());
 

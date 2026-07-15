@@ -165,6 +165,10 @@ export function getLocalOrder(orderNumber: string, phone: string): StoredOrder |
   );
 }
 
+/**
+ * @deprecated Preview localStorage identity. Sprint 3 uses Supabase Auth.
+ * Kept only to clear leftover keys on logout and for emergency tooling.
+ */
 export function loadStoredUser(): StoredUser | null {
   try {
     const raw = localStorage.getItem(AUTH_KEY);
@@ -178,10 +182,12 @@ export function saveStoredUser(user: StoredUser) {
   localStorage.setItem(AUTH_KEY, JSON.stringify(user));
 }
 
+/** Clears legacy preview identity only — does not clear cart/orders keys. */
 export function clearStoredUser() {
   localStorage.removeItem(AUTH_KEY);
 }
 
+/** @deprecated Use Supabase Auth signUp via AuthContext. */
 export function registerStoredUser(input: {
   name: string;
   phone: string;
@@ -198,6 +204,7 @@ export function registerStoredUser(input: {
   return user;
 }
 
+/** @deprecated Use Supabase Auth signIn via AuthContext. */
 export function loginStoredUser(phone: string): StoredUser | null {
   const user = loadStoredUser();
   if (!user) return null;

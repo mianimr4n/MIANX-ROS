@@ -5,8 +5,9 @@ import { listNotifications, markNotificationsRead } from "@/lib/customer-store";
 import { Button } from "@/components/ui/button";
 
 export default function Notifications() {
-  const { user, isAuthenticated } = useAuth();
-  const notifications = user ? listNotifications(user.phone) : [];
+  const { profile, user, isAuthenticated } = useAuth();
+  const notificationKey = profile?.phone || user?.email || user?.id || "";
+  const notifications = notificationKey ? listNotifications(notificationKey) : [];
 
   if (!isAuthenticated || !user) {
     return (
@@ -23,7 +24,11 @@ export default function Notifications() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="brand-heading text-3xl">Notifications</h1>
           {notifications.length > 0 && (
-            <Button variant="outline" className="rounded-2xl" onClick={() => markNotificationsRead(user.phone)}>
+            <Button
+              variant="outline"
+              className="rounded-2xl"
+              onClick={() => markNotificationsRead(notificationKey)}
+            >
               Mark all read
             </Button>
           )}

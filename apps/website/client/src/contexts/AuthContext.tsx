@@ -1,60 +1,259 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import {
-  clearStoredUser,
-  loadStoredUser,
-  loginStoredUser,
-  registerStoredUser,
-  type StoredUser,
-} from "@/lib/customer-store";
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import type { Session, User } from "@supabase/supabase-js";
+
+import { fetchApiData, isApiConfigured } from "@/lib/api";
+import {
+  genericAuthErrorMessage,
+  mapSupabaseAuthError,
+  validateSignupInput,
+  type AuthMeResponse,
+} from "@/lib/auth-utils";
+import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
+import { clearStoredUser } from "@/lib/customer-store";
+
+export type CustomerProfile = {
+  id: string;
+  fullName: string;
+  phone: string | null;
+  email: string | null;
+};
+
+type SignUpResult =
+  | { ok: true; needsEmailConfirmation: boolean }
+  | { ok: false; message: string };
+
+type SignInResult = { ok: true } | { ok: false; message: string };
 
 interface AuthContextType {
-  user: StoredUser | null;
+  user: User | null;
+  session: Session | null;
+  profile: CustomerProfile | null;
+  roles: string[];
+  isLoading: boolean;
   isAuthenticated: boolean;
-  register: (input: { name: string; phone: string; email?: string }) => StoredUser;
-  login: (phone: string) => boolean;
-  logout: () => void;
+  signUp: (input: { email: string; password: string; fullName?: string }) => Promise<SignUpResult>;
+  signIn: (input: { email: string; password: string }) => Promise<SignInResult>;
+  signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<StoredUser | null>(null);
+async function loadAuthMe(accessToken: string): Promise<AuthMeResponse | null> {
+  if (!isApiConfigured) {
+    return null;
+  }
 
-  useEffect(() => {
-    setUser(loadStoredUser());
+  return fetchApiData<AuthMeResponse>("/auth/me", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<CustomerProfile | null>(null);
+  const [roles, setRoles] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const profileRequestId = useRef(0);
+
+  const applySession = useCallback(async (nextSession: Session | null) => {
+    setSession(nextSession);
+    setUser(nextSession?.user ?? null);
+
+    if (!nextSession?.access_token) {
+      setProfile(null);
+      setRoles([]);
+      return;
+    }
+
+    const requestId = ++profileRequestId.current;
+
+    try {
+      const me = await loadAuthMe(nextSession.access_token);
+      if (requestId !== profileRequestId.current) return;
+
+      if (!me) {
+        setProfile(
+          nextSession.user
+            ? {
+                id: nextSession.user.id,
+                fullName:
+                  (nextSession.user.user_metadata?.full_name as string | undefined)?.trim() ||
+                  nextSession.user.email?.split("@")[0] ||
+                  "Customer",
+                phone: null,
+                email: nextSession.user.email ?? null,
+              }
+            : null,
+        );
+        setRoles(["customer"]);
+        return;
+      }
+
+      setProfile(
+        me.profile
+          ? {
+              id: me.profile.id,
+              fullName: me.profile.fullName,
+              phone: me.profile.phone,
+              email: me.email,
+            }
+          : null,
+      );
+      setRoles(me.roles);
+    } catch {
+      if (requestId !== profileRequestId.current) return;
+      setProfile(null);
+      setRoles([]);
+    }
   }, []);
 
-  const register = (input: { name: string; phone: string; email?: string }) => {
-    const nextUser = registerStoredUser(input);
-    setUser(nextUser);
-    return nextUser;
-  };
+  useEffect(() => {
+    const supabase = getSupabaseClient();
 
-  const login = (phone: string) => {
-    const nextUser = loginStoredUser(phone);
-    if (!nextUser) return false;
-    setUser(nextUser);
-    return true;
-  };
+    if (!supabase) {
+      setIsLoading(false);
+      return;
+    }
 
-  const logout = () => {
-    clearStoredUser();
-    setUser(null);
-  };
+    let cancelled = false;
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: Boolean(user),
-        register,
-        login,
-        logout,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      void applySession(data.session).finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      void applySession(nextSession).finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [applySession]);
+
+  const signUp = useCallback(
+    async (input: { email: string; password: string; fullName?: string }): Promise<SignUpResult> => {
+      const validated = validateSignupInput(input);
+      if (!validated.ok) {
+        return { ok: false, message: validated.message };
+      }
+
+      const supabase = getSupabaseClient();
+      if (!supabase || !isSupabaseConfigured) {
+        return {
+          ok: false,
+          message: "Authentication is not configured. Please try again later.",
+        };
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email: validated.email,
+        password: validated.password,
+        options: {
+          data: validated.fullName ? { full_name: validated.fullName } : undefined,
+        },
+      });
+
+      if (error) {
+        return { ok: false, message: mapSupabaseAuthError(error.message) };
+      }
+
+      const needsEmailConfirmation = !data.session;
+      if (data.session) {
+        await applySession(data.session);
+      }
+
+      return { ok: true, needsEmailConfirmation };
+    },
+    [applySession],
   );
+
+  const signIn = useCallback(
+    async (input: { email: string; password: string }): Promise<SignInResult> => {
+      const email = input.email.trim().toLowerCase();
+      const password = input.password;
+
+      if (!email || !password) {
+        return { ok: false, message: genericAuthErrorMessage() };
+      }
+
+      const supabase = getSupabaseClient();
+      if (!supabase || !isSupabaseConfigured) {
+        return {
+          ok: false,
+          message: "Authentication is not configured. Please try again later.",
+        };
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error || !data.session) {
+        return { ok: false, message: mapSupabaseAuthError(error?.message) };
+      }
+
+      await applySession(data.session);
+      return { ok: true };
+    },
+    [applySession],
+  );
+
+  const signOut = useCallback(async () => {
+    const supabase = getSupabaseClient();
+    // Clear legacy preview identity keys only — do not touch cart storage.
+    clearStoredUser();
+    profileRequestId.current += 1;
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    setRoles([]);
+
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+  }, []);
+
+  const refreshProfile = useCallback(async () => {
+    if (!session?.access_token) return;
+    await applySession(session);
+  }, [applySession, session]);
+
+  const value = useMemo<AuthContextType>(
+    () => ({
+      user,
+      session,
+      profile,
+      roles,
+      isLoading,
+      isAuthenticated: Boolean(session?.user),
+      signUp,
+      signIn,
+      signOut,
+      refreshProfile,
+    }),
+    [user, session, profile, roles, isLoading, signUp, signIn, signOut, refreshProfile],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
