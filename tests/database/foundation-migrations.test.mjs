@@ -83,3 +83,19 @@ test("catalog sync migration adds broast and remaining verified menu slugs", () 
     assert.match(catalogSyncMigration, new RegExp(`'${menuSlug}'`, "i"));
   }
 });
+
+test("pizza toppings migration seeds shared catalog SKUs for BFR-012 Option B", () => {
+  const toppingsMigration = readFileSync(
+    join(workspaceRoot, "supabase", "migrations", "20260715120000_pizza_toppings_catalog.sql"),
+    "utf8",
+  );
+
+  assert.match(toppingsMigration, /'topping'/i);
+  assert.match(toppingsMigration, /'toppings'/i);
+  assert.match(toppingsMigration, /Option B/i);
+  assert.match(toppingsMigration, /NEVER a customer menu tab/i);
+  assert.match(toppingsMigration, /'extra-chicken'/i);
+  assert.match(toppingsMigration, /'extra-cheese'/i);
+  assert.match(toppingsMigration, /'extra-cheese-slice'/i);
+  assert.match(toppingsMigration, /behari-kabab-pizza/i);
+});
