@@ -5,14 +5,14 @@ services:
     dockerfilePath: ./backend/api/Dockerfile
     dockerContext: .
     plan: free
-    healthCheckPath: /healthz
+    healthCheckPath: /readyz
     envVars:
       - key: NODE_ENV
         value: production
       - key: API_PORT
         value: "4000"
       - key: API_CORS_ORIGIN
-        value: https://telepizza-rose.vercel.app
+        value: https://telepizza-website.vercel.app
       - key: API_JWT_SECRET
         generateValue: true
       - key: SUPABASE_URL
