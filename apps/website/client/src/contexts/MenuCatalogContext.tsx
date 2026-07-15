@@ -13,6 +13,7 @@ import {
   loadMenuCatalog,
   type MenuCatalogSource,
 } from "@/lib/menu-catalog";
+import { getCustomerBrowseCategories } from "@/lib/menu-visibility";
 import type { MenuCategory, MenuItem } from "@/lib/telepizza-types";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
@@ -82,16 +83,21 @@ export function MenuCatalogProvider({ children }: { children: ReactNode }) {
     void reloadCatalog();
   }, [reloadCatalog]);
 
-  const availableCategories = useMemo(
-    () => ["All", ...categories.map((category) => category.name)],
+  const browseCategories = useMemo(
+    () => getCustomerBrowseCategories(categories),
     [categories],
+  );
+
+  const availableCategories = useMemo(
+    () => ["All", ...browseCategories.map((category) => category.name)],
+    [browseCategories],
   );
 
   return (
     <MenuCatalogContext.Provider
       value={{
         items,
-        categories,
+        categories: browseCategories,
         availableCategories,
         isLoading,
         error,

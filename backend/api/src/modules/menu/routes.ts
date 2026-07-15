@@ -18,6 +18,7 @@ export function createMenuRouter(catalogDataSource: CatalogDataSource) {
           module: "menu",
           categoryCount: catalog.categories.length,
           itemCount: catalog.items.length,
+          toppingCount: catalog.toppings.length,
         },
       });
     } catch (error) {

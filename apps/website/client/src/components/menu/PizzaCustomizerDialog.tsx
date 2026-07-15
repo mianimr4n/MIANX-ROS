@@ -22,10 +22,13 @@ import { useCart, type CartExtra } from "@/contexts/CartContext";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 import type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
 import {
-  EXTRA_TOPPING_PRICES,
   PIZZA_ADDON_DRINK_IDS,
   PIZZA_ADDON_FRIES_IDS,
+  PIZZA_TOPPING_SLUGS,
+  TOPPING_PRICE_FALLBACK,
+  findCatalogItemBySlug,
   getToppingTierFromVariantLabel,
+  resolveCatalogToppingPrice,
 } from "@/data/cart-config";
 import { getDefaultVariant, getVariantId } from "@/lib/menu-utils";
 
@@ -62,6 +65,19 @@ export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: Pi
     [catalogItems],
   );
 
+  const chickenTopping = useMemo(
+    () => findCatalogItemBySlug(catalogItems, PIZZA_TOPPING_SLUGS.chicken),
+    [catalogItems],
+  );
+  const cheeseTopping = useMemo(
+    () => findCatalogItemBySlug(catalogItems, PIZZA_TOPPING_SLUGS.cheese),
+    [catalogItems],
+  );
+  const cheeseSliceTopping = useMemo(
+    () => findCatalogItemBySlug(catalogItems, PIZZA_TOPPING_SLUGS.cheeseSlice),
+    [catalogItems],
+  );
+
   useEffect(() => {
     if (!item) return;
     setSelectedVariantLabel(initialVariantLabel ?? getDefaultVariant(item)?.label ?? "");
@@ -83,22 +99,38 @@ export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: Pi
     ? getToppingTierFromVariantLabel(selectedVariant.label)
     : "small";
 
+  const chickenPrice = resolveCatalogToppingPrice(
+    chickenTopping,
+    toppingTier,
+    TOPPING_PRICE_FALLBACK.chicken[toppingTier],
+  );
+  const cheesePrice = resolveCatalogToppingPrice(
+    cheeseTopping,
+    toppingTier,
+    TOPPING_PRICE_FALLBACK.cheese[toppingTier],
+  );
+  const cheeseSlicePrice = resolveCatalogToppingPrice(
+    cheeseSliceTopping,
+    toppingTier,
+    TOPPING_PRICE_FALLBACK.cheeseSlice,
+  );
+
   const extras: CartExtra[] = [];
 
   if (extraChicken) {
     extras.push({
       label: `Extra Chicken (${selectedVariant?.label ?? "Small"})`,
-      price: EXTRA_TOPPING_PRICES.chicken[toppingTier],
+      price: chickenPrice,
     });
   }
   if (extraCheese) {
     extras.push({
       label: `Extra Cheese (${selectedVariant?.label ?? "Small"})`,
-      price: EXTRA_TOPPING_PRICES.cheese[toppingTier],
+      price: cheesePrice,
     });
   }
   if (extraCheeseSlice) {
-    extras.push({ label: "Extra Cheese Slice", price: EXTRA_TOPPING_PRICES.cheeseSlice });
+    extras.push({ label: "Extra Cheese Slice", price: cheeseSlicePrice });
   }
 
   const selectedDrink = drinkOptions.find((entry) => entry.id === drinkId);
@@ -148,7 +180,7 @@ export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: Pi
           </DialogTitle>
           <DialogDescription>
             Choose size and verified add-ons. Specialty crusts (Crown Crust, Stuffed Crust) are
-            separate menu items.
+            separate menu items. Topping prices come from the shared menu catalog.
           </DialogDescription>
         </DialogHeader>
 
@@ -183,7 +215,7 @@ export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: Pi
                 <span className="text-sm font-[var(--font-accent)]">Extra Chicken</span>
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-brand-red font-bold">
-                    +Rs {EXTRA_TOPPING_PRICES.chicken[toppingTier]}
+                    +Rs {chickenPrice.toLocaleString()}
                   </span>
                   <input
                     type="checkbox"
@@ -197,7 +229,7 @@ export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: Pi
                 <span className="text-sm font-[var(--font-accent)]">Extra Cheese</span>
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-brand-red font-bold">
-                    +Rs {EXTRA_TOPPING_PRICES.cheese[toppingTier]}
+                    +Rs {cheesePrice.toLocaleString()}
                   </span>
                   <input
                     type="checkbox"
@@ -211,7 +243,7 @@ export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: Pi
                 <span className="text-sm font-[var(--font-accent)]">Extra Cheese Slice</span>
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-brand-red font-bold">
-                    +Rs {EXTRA_TOPPING_PRICES.cheeseSlice}
+                    +Rs {cheeseSlicePrice.toLocaleString()}
                   </span>
                   <input
                     type="checkbox"

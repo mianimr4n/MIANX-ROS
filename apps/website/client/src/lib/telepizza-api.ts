@@ -11,6 +11,8 @@ import type {
 interface MenuCatalogResponse {
   categories: MenuCategory[];
   items: MenuItem[];
+  /** Internal topping SKUs — not customer browse categories. */
+  toppings?: MenuItem[];
 }
 
 export function fetchBranches() {

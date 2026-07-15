@@ -1,1 +1,16 @@
-{"projectId":"prj_WCCIzQ6HB0HST7DFNM5tja579Kof","orgId":"team_qtUfzYRTyRKGQ6uowlw4odpn","projectName":"telepizza-website"}
+{
+  "projectId": "prj_WCCIzQ6HB0HST7DFNM5tja579Kof",
+  "orgId": "team_qtUfzYRTyRKGQ6uowlw4odpn",
+  "projectName": "telepizza-website",
+  "settings": {
+    "createdAt": 1784018661352,
+    "framework": "vite",
+    "devCommand": null,
+    "installCommand": "pnpm install --frozen-lockfile",
+    "buildCommand": "pnpm build",
+    "outputDirectory": "dist/public",
+    "rootDirectory": "apps/website",
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}

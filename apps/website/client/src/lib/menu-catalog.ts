@@ -3,6 +3,7 @@ import {
   menuItems as fallbackMenuItems,
 } from "@/data/menu-data";
 import { getCategoryPlaceholderImage, resolveMenuItemImage } from "@/lib/menu-images";
+import { getCustomerBrowseCategories } from "@/lib/menu-visibility";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import type { MenuCategory, MenuItem, MenuVariant } from "@/lib/telepizza-types";
 
@@ -112,9 +113,16 @@ function mapMenuItemRow(row: SupabaseMenuItemRow): MenuItem {
 
 function buildStaticCatalog(): MenuCatalogResult {
   return {
-    categories: fallbackMenuCategories
-      .filter((category) => category !== "All")
-      .map((name, index) => ({ name, sortOrder: index + 1 })),
+    categories: getCustomerBrowseCategories(
+      fallbackMenuCategories
+        .filter((category) => category !== "All")
+        .map((name, index) => ({
+          name,
+          slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+          sortOrder: index + 1,
+        })),
+    ),
+    // Includes internal topping SKUs for Pizza Customizer lookups.
     items: fallbackMenuItems,
     source: "static",
   };
@@ -168,7 +176,10 @@ export async function fetchMenuCatalogFromSupabase(): Promise<MenuCatalogResult>
   }
 
   return {
+    // Keep full category rows from Supabase; MenuCatalogContext strips
+    // internal groupings (e.g. toppings) from customer browse chips.
     categories,
+    // Includes product_type=topping SKUs for Pizza Customizer.
     items,
     source: "supabase",
   };

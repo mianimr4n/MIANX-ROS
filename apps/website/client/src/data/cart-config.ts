@@ -1,13 +1,30 @@
 import type { MenuItem } from "@/lib/telepizza-types";
 
-/** Verified extra topping prices from REAL-MENU Link 3 (Small / Medium / Large). */
+/** Verified extra topping size tiers (maps pizza size → topping variant size_code). */
 export type ToppingSizeTier = "small" | "medium" | "large";
 
-export const EXTRA_TOPPING_PRICES = {
+/**
+ * Shared topping SKU slugs — must match Supabase `menu_items.slug`
+ * and static fallback entries in `menu-data.ts` (BFR-012 BOTH).
+ */
+export const PIZZA_TOPPING_SLUGS = {
+  chicken: "extra-chicken",
+  cheese: "extra-cheese",
+  cheeseSlice: "extra-cheese-slice",
+} as const;
+
+/**
+ * Offline / missing-catalog emergency fallback only.
+ * Source of truth is Supabase menu_items (+ variants) via the catalog.
+ */
+export const TOPPING_PRICE_FALLBACK = {
   chicken: { small: 50, medium: 100, large: 150 },
   cheese: { small: 50, medium: 100, large: 150 },
   cheeseSlice: 60,
 } as const;
+
+/** @deprecated Prefer catalog-driven resolveCatalogToppingPrice — kept for tests/compat. */
+export const EXTRA_TOPPING_PRICES = TOPPING_PRICE_FALLBACK;
 
 export const PIZZA_ADDON_DRINK_IDS = [
   "drink-345ml",
@@ -37,7 +54,55 @@ export function getToppingTierFromVariantLabel(label: string): ToppingSizeTier {
   return "small";
 }
 
+export function findCatalogItemBySlug(
+  catalogItems: MenuItem[],
+  slug: string,
+): MenuItem | undefined {
+  return catalogItems.find((entry) => entry.id === slug || entry.slug === slug);
+}
+
+/**
+ * Resolve topping price from shared catalog item (Admin Dashboard → Supabase → Website).
+ * Falls back to verified seed prices only when the catalog row is unavailable.
+ */
+export function resolveCatalogToppingPrice(
+  item: MenuItem | undefined,
+  tier: ToppingSizeTier,
+  fallback: number,
+): number {
+  if (!item) {
+    return fallback;
+  }
+
+  if (item.variants && item.variants.length > 0) {
+    const bySizeCode = item.variants.find((variant) => variant.sizeCode === tier);
+    if (bySizeCode) {
+      return bySizeCode.price;
+    }
+
+    const labelMatch = item.variants.find((variant) => {
+      const label = variant.label.toLowerCase();
+      if (tier === "large") return label.includes("large");
+      if (tier === "medium") return label.includes("medium");
+      return label.includes("small");
+    });
+    if (labelMatch) {
+      return labelMatch.price;
+    }
+  }
+
+  if (typeof item.price === "number") {
+    return item.price;
+  }
+
+  return fallback;
+}
+
 export function isPizzaItem(item: MenuItem): boolean {
+  if (item.category === "Toppings" || item.productType === "topping") {
+    return false;
+  }
+
   return item.category.includes("Pizza") && Boolean(item.variants?.length);
 }
 

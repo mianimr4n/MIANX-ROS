@@ -16,6 +16,19 @@ const classicVariants: MenuVariant[] = [
   { label: "12 inch Large", price: 1470 },
 ];
 
+const toppingChickenVariants: MenuVariant[] = [
+  { label: "Small", price: 50, sizeCode: "small", isDefault: true },
+  { label: "Medium", price: 100, sizeCode: "medium" },
+  { label: "Large", price: 150, sizeCode: "large" },
+];
+
+const toppingCheeseVariants: MenuVariant[] = [
+  { label: "Small", price: 50, sizeCode: "small", isDefault: true },
+  { label: "Medium", price: 100, sizeCode: "medium" },
+  { label: "Large", price: 150, sizeCode: "large" },
+];
+
+/** Customer browse categories only (13 + All). Toppings are internal catalog SKUs, not a menu tab. */
 export const menuCategories = [
   "All",
   "Signature Pizzas",
@@ -530,6 +543,40 @@ const baseMenuItems: MenuItem[] = [
     description: "3 Zinger burgers and 1 liter drink.",
     image: "/images/promos/knock-out-deal.jpg",
     price: 1440,
+  },
+  // Internal topping SKUs (product_type=topping) — used by Pizza Customizer / future Admin.
+  // Not listed in customer browse categories above.
+  {
+    id: "extra-chicken",
+    name: "Extra Chicken",
+    category: "Toppings",
+    categorySlug: "toppings",
+    description:
+      "Extra chicken topping for pizza. Size tier matches small / medium / large pizza.",
+    image: "/images/menu-pizza.jpg",
+    productType: "topping",
+    variants: toppingChickenVariants,
+  },
+  {
+    id: "extra-cheese",
+    name: "Extra Cheese",
+    category: "Toppings",
+    categorySlug: "toppings",
+    description:
+      "Extra cheese topping for pizza. Size tier matches small / medium / large pizza.",
+    image: "/images/menu-pizza.jpg",
+    productType: "topping",
+    variants: toppingCheeseVariants,
+  },
+  {
+    id: "extra-cheese-slice",
+    name: "Extra Cheese Slice",
+    category: "Toppings",
+    categorySlug: "toppings",
+    description: "Extra cheese slice topping for pizza (single verified price).",
+    image: "/images/menu-pizza.jpg",
+    productType: "topping",
+    price: 60,
   },
 ];
 
