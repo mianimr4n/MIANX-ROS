@@ -4,7 +4,7 @@ import type { User } from "@supabase/supabase-js";
 
 import { createApp } from "../src/app.js";
 import type { AuthTokenVerifier } from "../src/middleware/auth.js";
-import type { AuthProfileRepository } from "../src/services/auth/supabase.js";
+import type { AuthPrincipalRepository } from "../src/services/auth/supabase.js";
 import type { CatalogDataSource } from "../src/services/catalog/types.js";
 import type { OrdersDataSource } from "../src/services/orders/types.js";
 
@@ -53,7 +53,10 @@ describe("GET /api/v1/auth/me", () => {
         return { user: null };
       },
     };
-    const authProfileRepository: AuthProfileRepository = {
+    const authProfileRepository: AuthPrincipalRepository = {
+      async resolvePrincipal() {
+        throw new Error("should not load principal without auth");
+      },
       async getMe() {
         throw new Error("should not load profile without auth");
       },
@@ -79,7 +82,10 @@ describe("GET /api/v1/auth/me", () => {
         return { user: null, errorMessage: "invalid" };
       },
     };
-    const authProfileRepository: AuthProfileRepository = {
+    const authProfileRepository: AuthPrincipalRepository = {
+      async resolvePrincipal() {
+        throw new Error("should not load principal for invalid token");
+      },
       async getMe() {
         throw new Error("should not load profile for invalid token");
       },
@@ -100,7 +106,7 @@ describe("GET /api/v1/auth/me", () => {
     expect(response.body.error.code).toBe("UNAUTHORIZED");
   });
 
-  it("returns safe profile data for a valid controlled token", async () => {
+  it("returns enriched principal fields for a valid customer", async () => {
     const authTokenVerifier: AuthTokenVerifier = {
       async getUser(accessToken: string) {
         if (accessToken !== "valid-access-token") {
@@ -109,7 +115,10 @@ describe("GET /api/v1/auth/me", () => {
         return { user: mockUser("auth-user-1", "customer@example.com") };
       },
     };
-    const authProfileRepository: AuthProfileRepository = {
+    const authProfileRepository: AuthPrincipalRepository = {
+      async resolvePrincipal() {
+        throw new Error("unused");
+      },
       async getMe(authUserId, email) {
         return {
           authUserId,
@@ -120,6 +129,10 @@ describe("GET /api/v1/auth/me", () => {
             phone: null,
           },
           roles: ["customer"],
+          permissions: [],
+          branchIds: [],
+          isSuperAdmin: false,
+          status: "active",
           profileReady: true,
         };
       },
@@ -135,7 +148,8 @@ describe("GET /api/v1/auth/me", () => {
     const response = await request(app)
       .get("/api/v1/auth/me")
       .set("Authorization", "Bearer valid-access-token")
-      .set("x-telepizza-role", "super-admin");
+      .set("x-telepizza-role", "super-admin")
+      .set("x-telepizza-branch-id", "branch-hijack");
 
     expect(response.status).toBe(200);
     expect(response.body.ok).toBe(true);
@@ -148,11 +162,113 @@ describe("GET /api/v1/auth/me", () => {
         phone: null,
       },
       roles: ["customer"],
+      permissions: [],
+      branchIds: [],
+      isSuperAdmin: false,
     });
+    expect(response.body.meta.profileReady).toBe(true);
     expect(response.body.meta.deprecatedRoleHeaderIgnored).toBe(true);
-    expect(JSON.stringify(response.body)).not.toMatch(/password_hash|service_role|secret/i);
-    // Spoofed privileged header must not alter roles from repository
-    expect(response.body.data.roles).toEqual(["customer"]);
+    expect(JSON.stringify(response.body)).not.toMatch(/password_hash|service_role|secret|invite/i);
+    expect(response.body.data.permissions).not.toEqual(
+      expect.arrayContaining([
+        "menu.update",
+        "staff.create",
+        "staff.assign_role",
+        "reports.read",
+        "payment.manage",
+      ]),
+    );
+  });
+
+  it("returns branch-scoped staff principal fields", async () => {
+    const authTokenVerifier: AuthTokenVerifier = {
+      async getUser() {
+        return { user: mockUser("auth-staff", "manager@example.com") };
+      },
+    };
+    const authProfileRepository: AuthPrincipalRepository = {
+      async resolvePrincipal() {
+        throw new Error("unused");
+      },
+      async getMe(authUserId, email) {
+        return {
+          authUserId,
+          email,
+          profile: {
+            id: "staff-1",
+            fullName: "Branch Manager",
+            phone: null,
+          },
+          roles: ["branch-manager"],
+          permissions: ["menu.write", "order.manage"],
+          branchIds: ["branch-a"],
+          isSuperAdmin: false,
+          status: "active",
+          profileReady: true,
+        };
+      },
+    };
+
+    const { app } = createApp(readyEnv, {
+      catalogDataSource,
+      ordersDataSource,
+      authTokenVerifier,
+      authProfileRepository,
+    });
+
+    const response = await request(app)
+      .get("/api/v1/auth/me")
+      .set("Authorization", "Bearer staff-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.branchIds).toEqual(["branch-a"]);
+    expect(response.body.data.isSuperAdmin).toBe(false);
+    expect(response.body.data.permissions).toContain("menu.write");
+  });
+
+  it("returns super-admin principal fields", async () => {
+    const authTokenVerifier: AuthTokenVerifier = {
+      async getUser() {
+        return { user: mockUser("auth-sa", "admin@example.com") };
+      },
+    };
+    const authProfileRepository: AuthPrincipalRepository = {
+      async resolvePrincipal() {
+        throw new Error("unused");
+      },
+      async getMe(authUserId, email) {
+        return {
+          authUserId,
+          email,
+          profile: {
+            id: "sa-1",
+            fullName: "Super Admin",
+            phone: null,
+          },
+          roles: ["super-admin"],
+          permissions: ["admin.access", "menu.write"],
+          branchIds: [],
+          isSuperAdmin: true,
+          status: "active",
+          profileReady: true,
+        };
+      },
+    };
+
+    const { app } = createApp(readyEnv, {
+      catalogDataSource,
+      ordersDataSource,
+      authTokenVerifier,
+      authProfileRepository,
+    });
+
+    const response = await request(app)
+      .get("/api/v1/auth/me")
+      .set("Authorization", "Bearer sa-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.isSuperAdmin).toBe(true);
+    expect(response.body.data.roles).toEqual(["super-admin"]);
   });
 
   it("handles profile-not-ready safely", async () => {
@@ -161,13 +277,20 @@ describe("GET /api/v1/auth/me", () => {
         return { user: mockUser("auth-user-2", "pending@example.com") };
       },
     };
-    const authProfileRepository: AuthProfileRepository = {
+    const authProfileRepository: AuthPrincipalRepository = {
+      async resolvePrincipal() {
+        return null;
+      },
       async getMe(authUserId, email) {
         return {
           authUserId,
           email,
           profile: null,
           roles: [],
+          permissions: [],
+          branchIds: [],
+          isSuperAdmin: false,
+          status: null,
           profileReady: false,
         };
       },
@@ -188,7 +311,90 @@ describe("GET /api/v1/auth/me", () => {
     expect(response.body.data.authUserId).toBe("auth-user-2");
     expect(response.body.data.profile).toBeNull();
     expect(response.body.data.roles).toEqual([]);
+    expect(response.body.data.permissions).toEqual([]);
+    expect(response.body.data.branchIds).toEqual([]);
+    expect(response.body.data.isSuperAdmin).toBe(false);
     expect(response.body.meta.profileReady).toBe(false);
+  });
+
+  it("denies suspended users on /me with USER_ACCESS_DISABLED", async () => {
+    const authTokenVerifier: AuthTokenVerifier = {
+      async getUser() {
+        return { user: mockUser("auth-suspended", "suspended@example.com") };
+      },
+    };
+    const authProfileRepository: AuthPrincipalRepository = {
+      async resolvePrincipal() {
+        throw new Error("unused");
+      },
+      async getMe(authUserId, email) {
+        return {
+          authUserId,
+          email,
+          profile: { id: "p1", fullName: "Suspended", phone: null },
+          roles: ["customer"],
+          permissions: [],
+          branchIds: [],
+          isSuperAdmin: false,
+          status: "suspended",
+          profileReady: true,
+        };
+      },
+    };
+
+    const { app } = createApp(readyEnv, {
+      catalogDataSource,
+      ordersDataSource,
+      authTokenVerifier,
+      authProfileRepository,
+    });
+
+    const response = await request(app)
+      .get("/api/v1/auth/me")
+      .set("Authorization", "Bearer suspended-token");
+
+    expect(response.status).toBe(403);
+    expect(response.body.error.code).toBe("USER_ACCESS_DISABLED");
+  });
+
+  it("denies inactive users on /me with USER_ACCESS_DISABLED", async () => {
+    const authTokenVerifier: AuthTokenVerifier = {
+      async getUser() {
+        return { user: mockUser("auth-inactive", "inactive@example.com") };
+      },
+    };
+    const authProfileRepository: AuthPrincipalRepository = {
+      async resolvePrincipal() {
+        throw new Error("unused");
+      },
+      async getMe(authUserId, email) {
+        return {
+          authUserId,
+          email,
+          profile: { id: "p2", fullName: "Inactive", phone: null },
+          roles: ["customer"],
+          permissions: [],
+          branchIds: [],
+          isSuperAdmin: false,
+          status: "inactive",
+          profileReady: true,
+        };
+      },
+    };
+
+    const { app } = createApp(readyEnv, {
+      catalogDataSource,
+      ordersDataSource,
+      authTokenVerifier,
+      authProfileRepository,
+    });
+
+    const response = await request(app)
+      .get("/api/v1/auth/me")
+      .set("Authorization", "Bearer inactive-token");
+
+    expect(response.status).toBe(403);
+    expect(response.body.error.code).toBe("USER_ACCESS_DISABLED");
   });
 
   it("returns safe 503 when profile load throws a vendor-style error", async () => {
@@ -197,7 +403,10 @@ describe("GET /api/v1/auth/me", () => {
         return { user: mockUser("auth-user-3", "ready@example.com") };
       },
     };
-    const authProfileRepository: AuthProfileRepository = {
+    const authProfileRepository: AuthPrincipalRepository = {
+      async resolvePrincipal() {
+        throw new Error("unused");
+      },
       async getMe() {
         throw new Error('PostgREST PGRST116: relation "users" timeout / JWT secret leaked-should-not-appear');
       },
@@ -222,7 +431,6 @@ describe("GET /api/v1/auth/me", () => {
       "Your profile is temporarily unavailable. Please try again.",
     );
     expect(JSON.stringify(response.body)).not.toMatch(/PGRST|PostgREST|timeout|secret|JWT/i);
-    // Valid session is not downgraded to UNAUTHORIZED
     expect(response.body.error.code).not.toBe("UNAUTHORIZED");
   });
 

@@ -7,7 +7,8 @@ import {
   type AuthenticatedRequest,
   type AuthTokenVerifier,
 } from "../../middleware/auth.js";
-import type { AuthProfileRepository } from "../../services/auth/supabase.js";
+import { isAccountActive } from "../../services/auth/principal.js";
+import type { AuthPrincipalRepository } from "../../services/auth/supabase.js";
 
 const loginSchema = z.object({
   email: z.email(),
@@ -20,7 +21,7 @@ const refreshSchema = z.object({
 
 export interface AuthRouterDependencies {
   authTokenVerifier: AuthTokenVerifier;
-  authProfileRepository: AuthProfileRepository;
+  authProfileRepository: AuthPrincipalRepository;
 }
 
 function classifyProfileLoadFailure(error: unknown): string {
@@ -65,18 +66,24 @@ export function createAuthRouter(dependencies: AuthRouterDependencies) {
     try {
       const auth = (req as AuthenticatedRequest).auth!;
 
+      // Intentionally ignore x-telepizza-role / branch spoof headers for identity.
       let data;
       try {
         data = await dependencies.authProfileRepository.getMe(auth.authUserId, auth.email);
       } catch (error) {
-        // Prefer 503 over a fake profileReady:false success so clients can retry
-        // without treating a infrastructure outage as "profile missing".
-        // Never forward raw Supabase/PostgREST messages to the client.
         console.warn("[auth/me] profile load failed:", classifyProfileLoadFailure(error));
         throw new ApiError(
           503,
           "AUTH_PROFILE_TEMPORARILY_UNAVAILABLE",
           "Your profile is temporarily unavailable. Please try again.",
+        );
+      }
+
+      if (data.profileReady && data.status && !isAccountActive(data.status)) {
+        throw new ApiError(
+          403,
+          "USER_ACCESS_DISABLED",
+          "Access is disabled for this account.",
         );
       }
 
@@ -93,6 +100,9 @@ export function createAuthRouter(dependencies: AuthRouterDependencies) {
               }
             : null,
           roles: data.roles,
+          permissions: data.permissions,
+          branchIds: data.branchIds,
+          isSuperAdmin: data.isSuperAdmin,
         },
         meta: {
           profileReady: data.profileReady,

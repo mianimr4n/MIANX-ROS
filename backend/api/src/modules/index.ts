@@ -18,7 +18,7 @@ export const apiModules: ApiModuleDescriptor[] = [
   {
     name: "auth",
     basePath: "/api/v1/auth",
-    summary: "Supabase Auth session verification and customer /me profile.",
+    summary: "Supabase Auth session verification, /me principal, and authorization foundation.",
   },
   {
     name: "branches",

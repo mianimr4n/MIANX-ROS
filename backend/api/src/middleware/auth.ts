@@ -28,6 +28,11 @@ export function extractBearerToken(authorizationHeader: string | undefined): str
   return token || null;
 }
 
+/**
+ * Bearer JWT verification only (Supabase Auth getUser).
+ * Does not authorize roles/permissions — use authorization middleware for that.
+ * Never trusts x-telepizza-role, branch headers, body, query, JWT metadata, or frontend state.
+ */
 export function createRequireAuth(verifier: AuthTokenVerifier) {
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {
@@ -37,7 +42,7 @@ export function createRequireAuth(verifier: AuthTokenVerifier) {
         throw new ApiError(401, "UNAUTHORIZED", "Authentication required.");
       }
 
-      // Intentionally ignore x-telepizza-role and any client-supplied role claims.
+      // Intentionally ignore x-telepizza-role and any client-supplied role/branch claims.
       const result = await verifier.getUser(token);
 
       if (!result.user) {

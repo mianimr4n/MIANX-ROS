@@ -79,4 +79,7 @@ export type AuthMeResponse = {
     phone: string | null;
   } | null;
   roles: string[];
+  permissions: string[];
+  branchIds: string[];
+  isSuperAdmin: boolean;
 };

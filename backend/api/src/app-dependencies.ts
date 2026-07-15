@@ -3,7 +3,7 @@ import type { AuthTokenVerifier } from "./middleware/auth.js";
 import {
   createSupabaseAuthProfileRepository,
   createSupabaseAuthTokenVerifier,
-  type AuthProfileRepository,
+  type AuthPrincipalRepository,
 } from "./services/auth/supabase.js";
 import { createSupabaseCatalogDataSource } from "./services/catalog/supabase.js";
 import type { CatalogDataSource } from "./services/catalog/types.js";
@@ -14,7 +14,7 @@ export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
   ordersDataSource: OrdersDataSource;
   authTokenVerifier: AuthTokenVerifier;
-  authProfileRepository: AuthProfileRepository;
+  authProfileRepository: AuthPrincipalRepository;
 }
 
 export function createAppDependencies(envStatus: EnvironmentStatus): AppDependencies {
