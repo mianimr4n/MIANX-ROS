@@ -15,13 +15,9 @@ import { handleImageError } from "@/lib/image-fallback";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { getItemsByIds } from "@/lib/menu-utils";
+import { VERIFIED_DEAL_IDS } from "@/lib/brand";
 
-const HERO_DEAL_IDS = [
-  "family-deal",
-  "pizza-fest",
-  "pair-deal",
-  "knock-out-deal",
-] as const;
+const HERO_DEAL_IDS = VERIFIED_DEAL_IDS;
 
 export function HeroSlider() {
   const { items } = useMenuCatalog();

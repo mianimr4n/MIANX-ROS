@@ -337,7 +337,7 @@ const baseMenuItems: MenuItem[] = [
     category: "Broast",
     description:
       "1 Leg & 1 Thigh OR 1 Wing & 1 Chest, 1 Bun, Fries, (1 Dip) Garlic Dip OR Mustard Dip.",
-    image: "/images/sides-platter.jpg",
+    image: "/images/products/broast.jpg",
     price: 750,
     badge: "POPULAR",
   },
@@ -347,7 +347,7 @@ const baseMenuItems: MenuItem[] = [
     category: "Broast",
     description:
       "1 Leg, 1 Thigh, 1 wing, 1 chest, 1 Bun, Fries, (3 Dips) 1 Garlic Dip, 1 Mustard Dip & 1 Tangy Dip.",
-    image: "/images/sides-platter.jpg",
+    image: "/images/products/broast.jpg",
     price: 1390,
   },
   {
@@ -356,7 +356,7 @@ const baseMenuItems: MenuItem[] = [
     category: "Broast",
     description:
       "2 Legs, 2 Thighs, 2 wings, 2 chests, 2 Buns, Fries, (6 Dips) 2 Garlic Dips, 2 Mustard Dips & 2 Tangy Dips.",
-    image: "/images/sides-platter.jpg",
+    image: "/images/products/broast.jpg",
     price: 2590,
     badge: "BEST VALUE",
   },
@@ -495,7 +495,7 @@ const baseMenuItems: MenuItem[] = [
     name: "Mega Offer",
     category: "Deals",
     description: "2 large pizzas and 1.5 liter Coke.",
-    image: "/images/deals-section.jpg",
+    image: "/images/products/deal-combo.jpg",
     price: 3140,
   },
   {
@@ -512,7 +512,7 @@ const baseMenuItems: MenuItem[] = [
     name: "Family Festival",
     category: "Deals",
     description: "5 Zinger burgers and 1.5 liter drink.",
-    image: "/images/deals-section.jpg",
+    image: "/images/products/deal-combo.jpg",
     price: 2350,
   },
   {
@@ -520,7 +520,7 @@ const baseMenuItems: MenuItem[] = [
     name: "Deal for 2",
     category: "Deals",
     description: "2 Zinger burgers and 2 drinks of 345 ml.",
-    image: "/images/deals-section.jpg",
+    image: "/images/products/deal-combo.jpg",
     price: 999,
   },
   {

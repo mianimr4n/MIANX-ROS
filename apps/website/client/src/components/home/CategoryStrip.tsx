@@ -5,10 +5,16 @@ import { ChevronRight } from "lucide-react";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 import { getCategoryPlaceholderImage } from "@/lib/menu-catalog";
 import { handleImageError } from "@/lib/image-fallback";
+import { VERIFIED_BROAST_PRICES } from "@/lib/brand";
 
 const CURATED_CATEGORY_PREVIEWS = [
   { menuCategory: "Signature Pizzas", label: "Signature Pizzas", accent: "Pizza" },
-  { menuCategory: "Broast", label: "Broast", accent: "Broast" },
+  {
+    menuCategory: "Broast",
+    label: "Broast",
+    accent: "Broast",
+    priceHint: `From Rs ${VERIFIED_BROAST_PRICES.quarter.toLocaleString()}`,
+  },
   { menuCategory: "Burgers", label: "Burgers", accent: "Burgers" },
   { menuCategory: "Pasta", label: "Pasta", accent: "Pasta" },
   { menuCategory: "Fries", label: "Fries", accent: "Sides" },
@@ -27,6 +33,7 @@ export function CategoryStrip() {
         menuCategory: preview.menuCategory,
         image: getCategoryPlaceholderImage(preview.menuCategory),
         accent: preview.accent,
+        priceHint: "priceHint" in preview ? preview.priceHint : undefined,
       }),
     );
   }, [availableCategories]);
@@ -79,6 +86,11 @@ export function CategoryStrip() {
                   <h3 className="font-[var(--font-display)] font-bold text-white text-sm md:text-base leading-tight">
                     {category.name}
                   </h3>
+                  {category.priceHint && (
+                    <p className="text-white/80 text-[10px] font-[var(--font-accent)] font-semibold mt-1">
+                      {category.priceHint}
+                    </p>
+                  )}
                 </div>
               </div>
             </Link>
