@@ -70,6 +70,9 @@ const SLUG_IMAGE_OVERRIDES: Record<string, string> = {
   "mega-offer": PRODUCT_IMAGES.dealCombo,
   "family-festival": PRODUCT_IMAGES.dealCombo,
   "deal-for-two": PRODUCT_IMAGES.dealCombo,
+  "extra-chicken": PRODUCT_IMAGES.specialtyPizza,
+  "extra-cheese": PRODUCT_IMAGES.specialtyPizza,
+  "extra-cheese-slice": PRODUCT_IMAGES.specialtyPizza,
 };
 
 function getCategoryImage(categoryName: string): string {
@@ -121,6 +124,10 @@ function getCategoryImage(categoryName: string): string {
 
   if (normalized.includes("drink")) {
     return PRODUCT_IMAGES.drinks;
+  }
+
+  if (normalized.includes("topping")) {
+    return PRODUCT_IMAGES.specialtyPizza;
   }
 
   if (normalized.includes("deal")) {

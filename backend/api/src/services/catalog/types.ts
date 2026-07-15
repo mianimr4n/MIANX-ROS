@@ -45,8 +45,12 @@ export interface MenuCatalogItem {
 }
 
 export interface MenuCatalog {
+  /** Customer browse categories only (excludes internal groupings like Toppings). */
   categories: MenuCatalogCategory[];
+  /** Customer browse items only (excludes product_type topping / internal SKUs). */
   items: MenuCatalogItem[];
+  /** Shared topping SKUs for customizer / Admin / POS / Kitchen (not a browse category). */
+  toppings: MenuCatalogItem[];
 }
 
 export interface CatalogDataSource {

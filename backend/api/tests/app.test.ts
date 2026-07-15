@@ -52,6 +52,22 @@ const catalogDataSource: CatalogDataSource = {
           ],
         },
       ],
+      toppings: [
+        {
+          id: "topping-1",
+          slug: "extra-cheese",
+          name: "Extra Cheese",
+          category: "Toppings",
+          categorySlug: "toppings",
+          description: "Internal topping SKU.",
+          image: "/images/menu-pizza.jpg",
+          productType: "topping",
+          featured: false,
+          variants: [
+            { id: "tv-1", label: "Small", price: 50, sizeCode: "small", isDefault: true },
+          ],
+        },
+      ],
     };
   },
 };
@@ -157,6 +173,13 @@ describe("Telepizza API app", () => {
     expect(response.status).toBe(200);
     expect(response.body.data.categories[0].slug).toBe("signature-pizzas");
     expect(response.body.data.items[0].variants[0].price).toBe(499);
+    expect(response.body.data.toppings[0].slug).toBe("extra-cheese");
+    expect(response.body.meta.toppingCount).toBe(1);
+    expect(response.body.meta.variantCount).toBe(2);
+    expect(response.body.meta.dealCount).toBe(0);
+    expect(response.body.data.categories.some((category: { slug: string }) => category.slug === "toppings")).toBe(
+      false,
+    );
   });
 
   it("creates orders through the configured orders source", async () => {

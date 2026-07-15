@@ -38,6 +38,8 @@ import type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
 
 import { isPizzaItem } from "@/data/cart-config";
 
+import { formatMenuPriceLabel } from "@/lib/menu-utils";
+
 import { ProductBadge } from "@/components/menu/ProductBadge";
 
 
@@ -546,7 +548,7 @@ export default function Menu() {
 
                     <span className="font-[var(--font-accent)] font-bold text-xl text-brand-red">
 
-                      Rs {getItemPrice(item)?.toLocaleString() ?? "Unavailable"}
+                      {formatMenuPriceLabel(item, getItemPrice(item))}
 
                     </span>
 

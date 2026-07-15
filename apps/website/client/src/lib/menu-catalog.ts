@@ -3,14 +3,23 @@ import {
   menuItems as fallbackMenuItems,
 } from "@/data/menu-data";
 import { getCategoryPlaceholderImage, resolveMenuItemImage } from "@/lib/menu-images";
+import {
+  getCustomerBrowseCategories,
+  getCustomerBrowseItems,
+  isCustomerBrowseItem,
+} from "@/lib/menu-visibility";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import type { MenuCategory, MenuItem, MenuVariant } from "@/lib/telepizza-types";
 
 export type MenuCatalogSource = "supabase" | "static";
 
 export interface MenuCatalogResult {
+  /** Public customer categories only (13). */
   categories: MenuCategory[];
+  /** Public browseable products only. */
   items: MenuItem[];
+  /** Internal topping SKUs for Pizza Customizer / Admin / POS. */
+  toppings: MenuItem[];
   source: MenuCatalogSource;
 }
 
@@ -110,14 +119,31 @@ function mapMenuItemRow(row: SupabaseMenuItemRow): MenuItem {
   };
 }
 
-function buildStaticCatalog(): MenuCatalogResult {
+function splitCatalog(
+  categories: MenuCategory[],
+  allItems: MenuItem[],
+  source: MenuCatalogSource,
+): MenuCatalogResult {
   return {
-    categories: fallbackMenuCategories
-      .filter((category) => category !== "All")
-      .map((name, index) => ({ name, sortOrder: index + 1 })),
-    items: fallbackMenuItems,
-    source: "static",
+    categories: getCustomerBrowseCategories(categories),
+    items: getCustomerBrowseItems(allItems),
+    toppings: allItems.filter((item) => !isCustomerBrowseItem(item)),
+    source,
   };
+}
+
+function buildStaticCatalog(): MenuCatalogResult {
+  const categories = getCustomerBrowseCategories(
+    fallbackMenuCategories
+      .filter((category) => category !== "All")
+      .map((name, index) => ({
+        name,
+        slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+        sortOrder: index + 1,
+      })),
+  );
+
+  return splitCatalog(categories, fallbackMenuItems, "static");
 }
 
 export function getStaticMenuCatalog(): MenuCatalogResult {
@@ -167,11 +193,7 @@ export async function fetchMenuCatalogFromSupabase(): Promise<MenuCatalogResult>
     throw new Error("Supabase returned an empty menu catalog.");
   }
 
-  return {
-    categories,
-    items,
-    source: "supabase",
-  };
+  return splitCatalog(categories, items, "supabase");
 }
 
 export async function loadMenuCatalog(): Promise<MenuCatalogResult> {

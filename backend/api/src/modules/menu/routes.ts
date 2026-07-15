@@ -18,6 +18,12 @@ export function createMenuRouter(catalogDataSource: CatalogDataSource) {
           module: "menu",
           categoryCount: catalog.categories.length,
           itemCount: catalog.items.length,
+          toppingCount: catalog.toppings.length,
+          variantCount: [...catalog.items, ...catalog.toppings].reduce(
+            (sum, item) => sum + (item.variants?.length ?? 0),
+            0,
+          ),
+          dealCount: catalog.items.filter((item) => item.productType === "deal").length,
         },
       });
     } catch (error) {

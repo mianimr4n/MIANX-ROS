@@ -22,12 +22,15 @@ import { useCart, type CartExtra } from "@/contexts/CartContext";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 import type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
 import {
-  EXTRA_TOPPING_PRICES,
   PIZZA_ADDON_DRINK_IDS,
   PIZZA_ADDON_FRIES_IDS,
+  PIZZA_TOPPING_SLUGS,
+  findCatalogItemBySlug,
   getToppingTierFromVariantLabel,
+  resolveCatalogToppingPrice,
 } from "@/data/cart-config";
 import { getDefaultVariant, getVariantId } from "@/lib/menu-utils";
+import { toast } from "sonner";
 
 type PizzaCustomizerDialogProps = {
   item: MenuItem | null;
@@ -37,7 +40,7 @@ type PizzaCustomizerDialogProps = {
 
 export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: PizzaCustomizerDialogProps) {
   const { addItem } = useCart();
-  const { items: catalogItems } = useMenuCatalog();
+  const { items: catalogItems, toppings } = useMenuCatalog();
   const [selectedVariantLabel, setSelectedVariantLabel] = useState("");
   const [extraChicken, setExtraChicken] = useState(false);
   const [extraCheese, setExtraCheese] = useState(false);
@@ -62,6 +65,19 @@ export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: Pi
     [catalogItems],
   );
 
+  const chickenTopping = useMemo(
+    () => findCatalogItemBySlug(toppings, PIZZA_TOPPING_SLUGS.chicken),
+    [toppings],
+  );
+  const cheeseTopping = useMemo(
+    () => findCatalogItemBySlug(toppings, PIZZA_TOPPING_SLUGS.cheese),
+    [toppings],
+  );
+  const cheeseSliceTopping = useMemo(
+    () => findCatalogItemBySlug(toppings, PIZZA_TOPPING_SLUGS.cheeseSlice),
+    [toppings],
+  );
+
   useEffect(() => {
     if (!item) return;
     setSelectedVariantLabel(initialVariantLabel ?? getDefaultVariant(item)?.label ?? "");
@@ -83,22 +99,26 @@ export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: Pi
     ? getToppingTierFromVariantLabel(selectedVariant.label)
     : "small";
 
+  const chickenPrice = resolveCatalogToppingPrice(chickenTopping, toppingTier);
+  const cheesePrice = resolveCatalogToppingPrice(cheeseTopping, toppingTier);
+  const cheeseSlicePrice = resolveCatalogToppingPrice(cheeseSliceTopping, "small");
+
   const extras: CartExtra[] = [];
 
-  if (extraChicken) {
+  if (extraChicken && chickenPrice != null) {
     extras.push({
       label: `Extra Chicken (${selectedVariant?.label ?? "Small"})`,
-      price: EXTRA_TOPPING_PRICES.chicken[toppingTier],
+      price: chickenPrice,
     });
   }
-  if (extraCheese) {
+  if (extraCheese && cheesePrice != null) {
     extras.push({
       label: `Extra Cheese (${selectedVariant?.label ?? "Small"})`,
-      price: EXTRA_TOPPING_PRICES.cheese[toppingTier],
+      price: cheesePrice,
     });
   }
-  if (extraCheeseSlice) {
-    extras.push({ label: "Extra Cheese Slice", price: EXTRA_TOPPING_PRICES.cheeseSlice });
+  if (extraCheeseSlice && cheeseSlicePrice != null) {
+    extras.push({ label: "Extra Cheese Slice", price: cheeseSlicePrice });
   }
 
   const selectedDrink = drinkOptions.find((entry) => entry.id === drinkId);
@@ -117,6 +137,19 @@ export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: Pi
 
   const handleAdd = () => {
     if (!selectedVariant && item.price === undefined) return;
+
+    if (extraChicken && chickenPrice == null) {
+      toast.error("Extra Chicken price is unavailable for this size.");
+      return;
+    }
+    if (extraCheese && cheesePrice == null) {
+      toast.error("Extra Cheese price is unavailable for this size.");
+      return;
+    }
+    if (extraCheeseSlice && cheeseSlicePrice == null) {
+      toast.error("Extra Cheese Slice price is unavailable.");
+      return;
+    }
 
     const variant = selectedVariant as MenuVariant | undefined;
     const variantId = variant ? getVariantId(variant) : null;
@@ -148,7 +181,7 @@ export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: Pi
           </DialogTitle>
           <DialogDescription>
             Choose size and verified add-ons. Specialty crusts (Crown Crust, Stuffed Crust) are
-            separate menu items.
+            separate menu items. Topping prices come from the shared menu catalog.
           </DialogDescription>
         </DialogHeader>
 
@@ -179,48 +212,24 @@ export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: Pi
           <div className="space-y-2">
             <Label className="font-[var(--font-accent)] font-semibold">Extra toppings</Label>
             <div className="space-y-2">
-              <label className="flex items-center justify-between rounded-2xl border border-border p-3 cursor-pointer hover:border-brand-red/30">
-                <span className="text-sm font-[var(--font-accent)]">Extra Chicken</span>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-brand-red font-bold">
-                    +Rs {EXTRA_TOPPING_PRICES.chicken[toppingTier]}
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={extraChicken}
-                    onChange={(event) => setExtraChicken(event.target.checked)}
-                    className="h-4 w-4 accent-brand-red"
-                  />
-                </div>
-              </label>
-              <label className="flex items-center justify-between rounded-2xl border border-border p-3 cursor-pointer hover:border-brand-red/30">
-                <span className="text-sm font-[var(--font-accent)]">Extra Cheese</span>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-brand-red font-bold">
-                    +Rs {EXTRA_TOPPING_PRICES.cheese[toppingTier]}
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={extraCheese}
-                    onChange={(event) => setExtraCheese(event.target.checked)}
-                    className="h-4 w-4 accent-brand-red"
-                  />
-                </div>
-              </label>
-              <label className="flex items-center justify-between rounded-2xl border border-border p-3 cursor-pointer hover:border-brand-red/30">
-                <span className="text-sm font-[var(--font-accent)]">Extra Cheese Slice</span>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-brand-red font-bold">
-                    +Rs {EXTRA_TOPPING_PRICES.cheeseSlice}
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={extraCheeseSlice}
-                    onChange={(event) => setExtraCheeseSlice(event.target.checked)}
-                    className="h-4 w-4 accent-brand-red"
-                  />
-                </div>
-              </label>
+              <ToppingOption
+                label="Extra Chicken"
+                price={chickenPrice}
+                checked={extraChicken}
+                onCheckedChange={setExtraChicken}
+              />
+              <ToppingOption
+                label="Extra Cheese"
+                price={cheesePrice}
+                checked={extraCheese}
+                onCheckedChange={setExtraCheese}
+              />
+              <ToppingOption
+                label="Extra Cheese Slice"
+                price={cheeseSlicePrice}
+                checked={extraCheeseSlice}
+                onCheckedChange={setExtraCheeseSlice}
+              />
             </div>
           </div>
 
@@ -291,5 +300,41 @@ export function PizzaCustomizerDialog({ item, initialVariantLabel, onClose }: Pi
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ToppingOption({
+  label,
+  price,
+  checked,
+  onCheckedChange,
+}: {
+  label: string;
+  price: number | null;
+  checked: boolean;
+  onCheckedChange: (value: boolean) => void;
+}) {
+  const unavailable = price == null;
+
+  return (
+    <label
+      className={`flex items-center justify-between rounded-2xl border border-border p-3 ${
+        unavailable ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:border-brand-red/30"
+      }`}
+    >
+      <span className="text-sm font-[var(--font-accent)]">{label}</span>
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-brand-red font-bold">
+          {unavailable ? "Unavailable" : `+Rs ${price.toLocaleString()}`}
+        </span>
+        <input
+          type="checkbox"
+          checked={checked && !unavailable}
+          disabled={unavailable}
+          onChange={(event) => onCheckedChange(event.target.checked)}
+          className="h-4 w-4 accent-brand-red"
+        />
+      </div>
+    </label>
   );
 }

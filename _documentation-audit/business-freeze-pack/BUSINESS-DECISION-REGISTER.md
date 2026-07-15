@@ -41,9 +41,9 @@
 
 | ID | Decision | Options | Status | Approved value | Source | Date | Approver |
 |---|---|---|---|---|---|---|---|
-| **BFR-001** | V1 canonical baseline source | A) Structured menu-board images · B) GM Jul 2026 · C) Hybrid | `OPEN` | — | 4 structured board images (recommended) | — | — |
+| **BFR-001** | V1 canonical baseline source | A) Structured menu-board images · B) GM Jul 2026 · C) Hybrid | `APPROVED` | **C = HYBRID** — V1 base = current verified Website/DB; GM reference only; future price changes via Admin Dashboard | Owner 2026-07-15 | 2026-07-15 | Business owner |
 | **BFR-002** | Zinger Burger standalone SKU | _(see BFR-018)_ | `HOLD` | — | Superseded by BFR-018 | — | — |
-| **BFR-003** | Behari Kabab Pizza (`behari-kabab-pizza`) | A) Keep · B) Reprice · C) Remove | `NEEDS_OWNER_CONFIRMATION` | **KEEP** — price/variants pending | Marketing + site; not on GM food photos | 2026-07-14 | Partial |
+| **BFR-003** | Behari Kabab Pizza (`behari-kabab-pizza`) | A) Keep · B) Reprice · C) Remove | `APPROVED` | **REPRICE** — keep catalog SKU; current verified temporary price; Admin can update later; no invented price | Owner 2026-07-15 | 2026-07-15 | Business owner |
 | **BFR-004** | `jumbo-wrap` (649) vs GM Jumbo Wraps (950) | A) Rename/reprice to GM · B) Remove · C) Keep as separate legacy | `OPEN` | — | `REAL-MENU-EXTRACTION.md` §7 | — | — |
 | **BFR-005** | Pizza medium size label | A) 10" Medium (GM) · B) Keep 9" | `OPEN` | — | GM Link 3 | — | — |
 | **BFR-006** | Royal Orchard hours **10:00 AM – 2:30 AM** | A) Confirm · B) Correct to: ___ | `APPROVED` | **10:00 AM – 2:30 AM daily** | Business owner 2026-07-14 | 2026-07-14 | Business owner |
@@ -52,7 +52,7 @@
 | **BFR-009** | Tagline on website | A) "Love At First Bite" · B) Keep marketing copy · C) Both | `OPEN` | — | GM Link 1 | — | — |
 | **BFR-010** | Creamo vs Cremo wings spelling | A) Creamo · B) Cremo | `OPEN` | — | GM print vs Maps caption | — | — |
 | **BFR-011** | Burgers category structure | A) Single "Burgers" · B) Split Grill / Smash / Chicken | `OPEN` | — | GM has 3 sections | — | — |
-| **BFR-012** | Extra toppings UX model | A) Customizer only · B) Catalog SKUs · C) Both | `OPEN` | — | GM Extra Topping | — | — |
+| **BFR-012** | Extra toppings UX model | A) Customizer only · B) Catalog SKUs · C) Both | `APPROVED` | **BOTH (Option B)** — Pizza Customizer + internal Toppings catalog SKUs; **not** a public customer menu category | Owner 2026-07-15 (+ Stage 2 refinement) | 2026-07-15 | Business owner |
 | **BFR-013** | Official phone number | A) 0304-1110495 · B) 0304-1111795 · C) Other | `APPROVED` / **LOCKED** | **0304-1110495** · WhatsApp **923041110495** | Owner explicit 2026-07-14 | 2026-07-14 | Business owner |
 | **BFR-018** | Zinger Burger canonical price | Rs 450 board · Rs 440 poster · Rs 550 GM | `NEEDS_OWNER_CONFIRMATION` | **Standalone SKU = HOLD** | Multi-source conflict | 2026-07-14 | — |
 | **BFR-014** | Active vs seasonal deals (V1) | Owner ticks each deal ACTIVE/INACTIVE | `OPEN` | — | GM 7 deals vs social promos | — | — |
@@ -89,9 +89,9 @@
 
 | ID | Recommendation | Rationale | Date |
 |---|---|---|---|
-| BFR-001 | **Structured menu-board images** as V1 baseline | Aligns with current `menu-data.ts` seed; promos logged separately | 2026-07-14 |
-| BFR-003 | **KEEP** Behari Kabab Pizza | Marketing evidence; price TBD | 2026-07-14 |
-| BFR-012 | **CUSTOMIZER_ONLY** | POS/kitchen UX | 2026-07-14 |
+| BFR-001 | ~~Structured board~~ → **HYBRID APPROVED** | Current verified Website/DB = V1 baseline; GM reference only | 2026-07-15 |
+| BFR-003 | ~~KEEP only~~ → **REPRICE APPROVED** | Keep SKU; temporary current price; Admin updates later | 2026-07-15 |
+| BFR-012 | ~~CUSTOMIZER_ONLY~~ → **BOTH APPROVED (Option B)** | Customizer + internal Toppings SKUs; no public customer Toppings tab | 2026-07-15 |
 | BFR-013 | **LOCKED** — do not reopen | Owner explicit approval | 2026-07-14 |
 
 ## Approved decisions log
@@ -100,6 +100,9 @@
 
 | ID | Decision | Approved value | Source | Date | Approver | Propagated to |
 |---|---|---|---|---|---|---|
+| BFR-001 | V1 baseline source | **HYBRID** — current verified Website/DB; GM reference only; Admin for future price changes | Owner 2026-07-15 | 2026-07-15 | Business owner | Sprint 2 pizza cycle |
+| BFR-003 | Behari Kabab Pizza | **REPRICE** — keep SKU; temporary current price; Admin can update later | Owner 2026-07-15 | 2026-07-15 | Business owner | Sprint 2 / menu_items |
+| BFR-012 | Extra toppings UX | **BOTH (Option B)** — Customizer + internal Toppings SKUs; customer categories remain 13 | Owner 2026-07-15 | 2026-07-15 | Business owner | toppings migration + customizer + browse filter |
 | BFR-007 | Telebar V1 vs V2 scope | V2 module only; 43 SKUs `PLANNED_V2` | Owner proposal 2026-07-14 | 2026-07-14 | Business owner | PRODUCT-CATALOG, workbook §19 |
 | BFR-013 | Official order / phone / WhatsApp | **0304-1110495** · intl **923041110495** · **LOCKED** | Owner explicit 2026-07-14 | 2026-07-14 | Business owner | Constitution, all touchpoints |
 | BFR-018 | Zinger Burger price | Standalone **HOLD** — Rs 450/440/550 conflict | Reconciliation 2026-07-14 | 2026-07-14 | — | Workbook §8, deals dependency |

@@ -9,6 +9,7 @@ import type {
   MenuCatalogItem,
   MenuCatalogVariant,
 } from "./types.js";
+import { splitMenuCatalogForCustomer } from "./visibility.js";
 
 interface BranchRow {
   id: string;
@@ -154,6 +155,7 @@ function getFallbackImage(productType: string) {
     case "fries":
     case "wrap":
     case "side":
+    case "topping":
       return "/images/sides-platter_782cdd37.jpg";
     default:
       return "/images/menu-pizza_f729e710.jpg";
@@ -267,10 +269,10 @@ async function fetchMenuCatalog(client: SupabaseClient): Promise<MenuCatalog> {
       return leftSort - rightSort;
     });
 
-  return {
+  return splitMenuCatalogForCustomer({
     categories,
     items,
-  };
+  });
 }
 
 export function createSupabaseCatalogDataSource(envStatus: EnvironmentStatus): CatalogDataSource {

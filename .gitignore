@@ -17,6 +17,7 @@ apps/website/dist/
 apps/website/.manus-logs/
 apps/website/.env
 apps/website/.env.*
+apps/website/package-lock.json
 
 # Supabase CLI local state (not project source)
 supabase/.temp/
