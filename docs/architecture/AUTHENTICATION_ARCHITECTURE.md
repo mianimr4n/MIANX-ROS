@@ -1,8 +1,8 @@
 # Authentication & Authorization Architecture
 
-**Status:** Proposed canonical governance document
+**Status:** Canonical governance document
 **Audience:** Humans and AI agents (Cursor, Codex, Claude, Copilot, etc.)
-**Implementation baseline:** Sprint 3 Slice 1 merged in `main`; Slice 2A commit `f7fa2c4` pending Sprint 3.5 merge.
+**Implementation baseline:** Sprint 3 Slice 1 + Slice 2A + architecture SSOT merged in `main` (PR #25 / #26 / #27; Slice 2A `f7fa2c4`).
 **Catalog freeze:** Production menu/pricing/catalog/toppings remain locked at **v1.2.0** unless a separate release unlocks them.
 
 This document is the **single source of truth** for Telepizza authentication and authorization.
