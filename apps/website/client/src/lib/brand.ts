@@ -9,4 +9,24 @@ export const BRAND = {
   phone: "0304-1110495",
   hours: "10:00 AM – 2:30 AM",
   city: "Multan",
+  colors: {
+    red: "#E31E24",
+    redDark: "#B5121B",
+    cream: "#FFF7F3",
+  },
 } as const;
+
+/** Verified broast combo prices (GM baseline). */
+export const VERIFIED_BROAST_PRICES = {
+  quarter: 750,
+  half: 1390,
+  full: 2590,
+} as const;
+
+/** Homepage + hero deal slugs — verified baseline prices only. */
+export const VERIFIED_DEAL_IDS = [
+  "family-deal",
+  "pizza-fest",
+  "pair-deal",
+  "knock-out-deal",
+] as const;

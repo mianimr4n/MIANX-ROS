@@ -8,13 +8,13 @@ import { BRAND } from "@/lib/brand";
  */
 export const FALLBACK_FOOD_IMAGE = `data:image/svg+xml,${encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
-    <rect width="400" height="300" fill="#faf5ec"/>
-    <circle cx="200" cy="138" r="64" fill="#e63b2e"/>
-    <circle cx="200" cy="138" r="50" fill="#f7b32b"/>
-    <circle cx="182" cy="124" r="7" fill="#e63b2e"/>
-    <circle cx="214" cy="146" r="7" fill="#e63b2e"/>
-    <circle cx="196" cy="162" r="6" fill="#e63b2e"/>
-    <text x="200" y="242" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#2e2a26">Telepizza</text>
+    <rect width="400" height="300" fill="#FFF7F3"/>
+    <circle cx="200" cy="138" r="64" fill="#E31E24"/>
+    <circle cx="200" cy="138" r="50" fill="#F5B800"/>
+    <circle cx="182" cy="124" r="7" fill="#B5121B"/>
+    <circle cx="214" cy="146" r="7" fill="#B5121B"/>
+    <circle cx="196" cy="162" r="6" fill="#B5121B"/>
+    <text x="200" y="242" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#1F1F1F">Telepizza</text>
   </svg>`,
 )}`;
 

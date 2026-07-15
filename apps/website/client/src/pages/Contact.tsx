@@ -65,7 +65,7 @@ export default function Contact() {
       {/* Hero */}
       <section className="relative h-[40vh] min-h-[300px] overflow-hidden">
         <img
-          src="/images/deals-section.jpg"
+          src="/images/products/signature-pizza.jpg"
           alt="Contact"
           className="absolute inset-0 w-full h-full object-cover"
         />

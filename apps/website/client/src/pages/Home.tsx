@@ -24,8 +24,8 @@ import { ProductCard } from "@/components/menu/ProductCard";
 import { CategoryStrip } from "@/components/home/CategoryStrip";
 import { HeroSlider } from "@/components/home/HeroSlider";
 import { MenuSectionRow } from "@/components/home/MenuSectionRow";
+import { VERIFIED_BROAST_PRICES, VERIFIED_DEAL_IDS } from "@/lib/brand";
 
-const TODAYS_DEAL_IDS = ["family-deal", "pizza-fest", "pair-deal", "knock-out-deal"];
 const FEATURED_PIZZA_IDS = [
   "tele-special",
   "peri-peri",
@@ -43,7 +43,7 @@ export default function Home() {
   const { items } = useMenuCatalog();
   const { selectedBranch, allBranches } = useBranch();
 
-  const todaysDeals = useMemo(() => getItemsByIds(items, TODAYS_DEAL_IDS), [items]);
+  const todaysDeals = useMemo(() => getItemsByIds(items, [...VERIFIED_DEAL_IDS]), [items]);
   const customerFavorites = useMemo(
     () => getItemsByIds(items, CUSTOMER_FAVORITE_IDS),
     [items],
@@ -58,34 +58,9 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <HeroSlider />
 
-      {/* Quick branch strip */}
-      <section className="bg-white border-b border-border">
-        <div className="container py-5">
-          <div className="flex flex-wrap justify-center gap-8 md:gap-14">
-            {[
-              { value: selectedBranch.hours, label: "Opening Hours", icon: Clock },
-              { value: selectedBranch.phone, label: "Call to Order", icon: Phone },
-              { value: selectedBranch.city, label: "Serving", icon: MapPin },
-            ].map((stat) => (
-              <div key={stat.label} className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-brand-red/10 flex items-center justify-center">
-                  <stat.icon className="w-5 h-5 text-brand-red" />
-                </div>
-                <div>
-                  <div className="font-[var(--font-display)] font-bold text-base text-brand-charcoal">
-                    {stat.value}
-                  </div>
-                  <div className="text-muted-foreground text-xs">{stat.label}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <CategoryStrip />
 
-      {/* Today's Deals */}
+      {/* Today's Deals — verified baseline prices only */}
       <section className="brand-gradient-soft py-14 md:py-16">
         <div className="container">
           <div className="text-center mb-10">
@@ -93,7 +68,7 @@ export default function Home() {
               Today&apos;s <span className="text-brand-red">Deals</span>
             </h2>
             <p className="text-muted-foreground mt-3 font-[var(--font-body)] max-w-xl mx-auto">
-              Verified Telepizza meal combos — bright, bold, and ready to order
+              Verified Telepizza meal combos at official branch prices
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -115,7 +90,7 @@ export default function Home() {
       <MenuSectionRow
         title="Crispy"
         highlight="Broast"
-        subtitle="Quarter, half, and full broast combos with fries and dips"
+        subtitle={`Verified combos with fries & dips — Quarter Rs ${VERIFIED_BROAST_PRICES.quarter.toLocaleString()} · Half Rs ${VERIFIED_BROAST_PRICES.half.toLocaleString()} · Full Rs ${VERIFIED_BROAST_PRICES.full.toLocaleString()}`}
         itemIds={FEATURED_BROAST_IDS}
         viewAllCategory="Broast"
         dark

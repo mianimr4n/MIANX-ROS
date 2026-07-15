@@ -152,7 +152,7 @@ export default function Menu() {
 
         <img
 
-          src="/images/deals-section.jpg"
+          src="/images/products/signature-pizza.jpg"
 
           alt="Menu"
 
