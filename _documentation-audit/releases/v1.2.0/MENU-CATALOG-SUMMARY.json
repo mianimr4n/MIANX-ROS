@@ -1,0 +1,886 @@
+{
+  "exportedAt": "2026-07-15T09:48:14.637Z",
+  "release": "v1.2.0",
+  "gitSha": "697554a",
+  "sourceUrl": "https://telepizza-api.onrender.com/api/v1/menu/catalog",
+  "meta": {
+    "source": "supabase",
+    "module": "menu",
+    "categoryCount": 13,
+    "itemCount": 58,
+    "toppingCount": 3,
+    "variantCount": 40,
+    "dealCount": 7
+  },
+  "publicCategories": [
+    {
+      "slug": "signature-pizzas",
+      "name": "Signature Pizzas",
+      "sortOrder": 10
+    },
+    {
+      "slug": "classic-pizzas",
+      "name": "Classic Pizzas",
+      "sortOrder": 20
+    },
+    {
+      "slug": "specialty-pizzas",
+      "name": "Specialty Pizzas",
+      "sortOrder": 30
+    },
+    {
+      "slug": "burgers",
+      "name": "Burgers",
+      "sortOrder": 40
+    },
+    {
+      "slug": "broast",
+      "name": "Broast",
+      "sortOrder": 45
+    },
+    {
+      "slug": "sandwiches",
+      "name": "Sandwiches",
+      "sortOrder": 50
+    },
+    {
+      "slug": "wings",
+      "name": "Wings",
+      "sortOrder": 60
+    },
+    {
+      "slug": "fries",
+      "name": "Fries",
+      "sortOrder": 70
+    },
+    {
+      "slug": "wraps-rolls",
+      "name": "Wraps & Rolls",
+      "sortOrder": 80
+    },
+    {
+      "slug": "pasta",
+      "name": "Pasta",
+      "sortOrder": 90
+    },
+    {
+      "slug": "chicken-sides",
+      "name": "Chicken & Sides",
+      "sortOrder": 100
+    },
+    {
+      "slug": "drinks",
+      "name": "Drinks",
+      "sortOrder": 110
+    },
+    {
+      "slug": "deals",
+      "name": "Deals",
+      "sortOrder": 120
+    }
+  ],
+  "publicItems": [
+    {
+      "slug": "tele-special",
+      "name": "Tele Special",
+      "productType": "pizza",
+      "price": null,
+      "badge": "Signature",
+      "categorySlug": "signature-pizzas",
+      "variants": [
+        {
+          "label": "6 inch Small",
+          "price": 499,
+          "sizeCode": "small",
+          "isDefault": true
+        },
+        {
+          "label": "9 inch Medium",
+          "price": 950,
+          "sizeCode": "medium",
+          "isDefault": false
+        },
+        {
+          "label": "12 inch Large",
+          "price": 1570,
+          "sizeCode": "large",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "slug": "bihari-kabab",
+      "name": "Bihari Kabab",
+      "productType": "pizza",
+      "price": null,
+      "badge": "Hot",
+      "categorySlug": "signature-pizzas",
+      "variants": [
+        {
+          "label": "6 inch Small",
+          "price": 499,
+          "sizeCode": "small",
+          "isDefault": true
+        },
+        {
+          "label": "9 inch Medium",
+          "price": 950,
+          "sizeCode": "medium",
+          "isDefault": false
+        },
+        {
+          "label": "12 inch Large",
+          "price": 1570,
+          "sizeCode": "large",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "slug": "kababish",
+      "name": "Kababish",
+      "productType": "pizza",
+      "price": null,
+      "badge": null,
+      "categorySlug": "signature-pizzas",
+      "variants": [
+        {
+          "label": "6 inch Small",
+          "price": 499,
+          "sizeCode": "small",
+          "isDefault": true
+        },
+        {
+          "label": "9 inch Medium",
+          "price": 950,
+          "sizeCode": "medium",
+          "isDefault": false
+        },
+        {
+          "label": "12 inch Large",
+          "price": 1570,
+          "sizeCode": "large",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "slug": "peri-peri",
+      "name": "Peri Peri",
+      "productType": "pizza",
+      "price": null,
+      "badge": null,
+      "categorySlug": "signature-pizzas",
+      "variants": [
+        {
+          "label": "6 inch Small",
+          "price": 499,
+          "sizeCode": "small",
+          "isDefault": true
+        },
+        {
+          "label": "9 inch Medium",
+          "price": 950,
+          "sizeCode": "medium",
+          "isDefault": false
+        },
+        {
+          "label": "12 inch Large",
+          "price": 1570,
+          "sizeCode": "large",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "slug": "bonfire",
+      "name": "Bonfire",
+      "productType": "pizza",
+      "price": null,
+      "badge": null,
+      "categorySlug": "classic-pizzas",
+      "variants": [
+        {
+          "label": "6 inch Small",
+          "price": 470,
+          "sizeCode": "small",
+          "isDefault": true
+        },
+        {
+          "label": "9 inch Medium",
+          "price": 890,
+          "sizeCode": "medium",
+          "isDefault": false
+        },
+        {
+          "label": "12 inch Large",
+          "price": 1470,
+          "sizeCode": "large",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "slug": "cheese-lover",
+      "name": "Cheese Lover",
+      "productType": "pizza",
+      "price": null,
+      "badge": null,
+      "categorySlug": "classic-pizzas",
+      "variants": [
+        {
+          "label": "6 inch Small",
+          "price": 470,
+          "sizeCode": "small",
+          "isDefault": true
+        },
+        {
+          "label": "9 inch Medium",
+          "price": 890,
+          "sizeCode": "medium",
+          "isDefault": false
+        },
+        {
+          "label": "12 inch Large",
+          "price": 1470,
+          "sizeCode": "large",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "slug": "chicken-supreme",
+      "name": "Chicken Supreme",
+      "productType": "pizza",
+      "price": null,
+      "badge": null,
+      "categorySlug": "classic-pizzas",
+      "variants": [
+        {
+          "label": "6 inch Small",
+          "price": 470,
+          "sizeCode": "small",
+          "isDefault": true
+        },
+        {
+          "label": "9 inch Medium",
+          "price": 890,
+          "sizeCode": "medium",
+          "isDefault": false
+        },
+        {
+          "label": "12 inch Large",
+          "price": 1470,
+          "sizeCode": "large",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "slug": "mexicana",
+      "name": "Mexicana",
+      "productType": "pizza",
+      "price": null,
+      "badge": null,
+      "categorySlug": "classic-pizzas",
+      "variants": [
+        {
+          "label": "6 inch Small",
+          "price": 470,
+          "sizeCode": "small",
+          "isDefault": true
+        },
+        {
+          "label": "9 inch Medium",
+          "price": 890,
+          "sizeCode": "medium",
+          "isDefault": false
+        },
+        {
+          "label": "12 inch Large",
+          "price": 1470,
+          "sizeCode": "large",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "slug": "real-fajita",
+      "name": "Real Fajita",
+      "productType": "pizza",
+      "price": null,
+      "badge": null,
+      "categorySlug": "classic-pizzas",
+      "variants": [
+        {
+          "label": "6 inch Small",
+          "price": 470,
+          "sizeCode": "small",
+          "isDefault": true
+        },
+        {
+          "label": "9 inch Medium",
+          "price": 890,
+          "sizeCode": "medium",
+          "isDefault": false
+        },
+        {
+          "label": "12 inch Large",
+          "price": 1470,
+          "sizeCode": "large",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "slug": "tikka",
+      "name": "Tikka",
+      "productType": "pizza",
+      "price": null,
+      "badge": null,
+      "categorySlug": "classic-pizzas",
+      "variants": [
+        {
+          "label": "6 inch Small",
+          "price": 470,
+          "sizeCode": "small",
+          "isDefault": true
+        },
+        {
+          "label": "9 inch Medium",
+          "price": 890,
+          "sizeCode": "medium",
+          "isDefault": false
+        },
+        {
+          "label": "12 inch Large",
+          "price": 1470,
+          "sizeCode": "large",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "slug": "crown-crust",
+      "name": "Crown Crust",
+      "productType": "pizza",
+      "price": null,
+      "badge": null,
+      "categorySlug": "specialty-pizzas",
+      "variants": [
+        {
+          "label": "Medium",
+          "price": 1199,
+          "sizeCode": "medium",
+          "isDefault": true
+        },
+        {
+          "label": "Large",
+          "price": 1799,
+          "sizeCode": "large",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "slug": "sixteen-inch-incher",
+      "name": "16\" Incher",
+      "productType": "pizza",
+      "price": 2399,
+      "badge": null,
+      "categorySlug": "specialty-pizzas",
+      "variants": []
+    },
+    {
+      "slug": "behari-kabab-pizza",
+      "name": "Behari Kabab Pizza",
+      "productType": "pizza",
+      "price": 549,
+      "badge": "Starting Price",
+      "categorySlug": "specialty-pizzas",
+      "variants": []
+    },
+    {
+      "slug": "chicago-extreme",
+      "name": "Chicago Extreme",
+      "productType": "pizza",
+      "price": null,
+      "badge": null,
+      "categorySlug": "specialty-pizzas",
+      "variants": [
+        {
+          "label": "Medium",
+          "price": 1199,
+          "sizeCode": "medium",
+          "isDefault": true
+        },
+        {
+          "label": "Large",
+          "price": 1899,
+          "sizeCode": "large",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "slug": "stuffed-crust",
+      "name": "Stuffed Crust",
+      "productType": "pizza",
+      "price": 1749,
+      "badge": null,
+      "categorySlug": "specialty-pizzas",
+      "variants": []
+    },
+    {
+      "slug": "tele-extreme",
+      "name": "Tele Extreme Pizza",
+      "productType": "pizza",
+      "price": 1699,
+      "badge": null,
+      "categorySlug": "specialty-pizzas",
+      "variants": []
+    },
+    {
+      "slug": "patty-burger",
+      "name": "Patty Burger",
+      "productType": "burger",
+      "price": 299,
+      "badge": null,
+      "categorySlug": "burgers",
+      "variants": []
+    },
+    {
+      "slug": "quarter-broast",
+      "name": "Quarter Broast",
+      "productType": "side",
+      "price": 750,
+      "badge": "Hot",
+      "categorySlug": "broast",
+      "variants": []
+    },
+    {
+      "slug": "broast-garlic-dip",
+      "name": "Extra Garlic Dip",
+      "productType": "side",
+      "price": 60,
+      "badge": null,
+      "categorySlug": "broast",
+      "variants": []
+    },
+    {
+      "slug": "broast-mustard-dip",
+      "name": "Extra Mustard Dip",
+      "productType": "side",
+      "price": 60,
+      "badge": null,
+      "categorySlug": "broast",
+      "variants": []
+    },
+    {
+      "slug": "full-broast",
+      "name": "Full Broast",
+      "productType": "side",
+      "price": 2590,
+      "badge": null,
+      "categorySlug": "broast",
+      "variants": []
+    },
+    {
+      "slug": "half-broast",
+      "name": "Half Broast",
+      "productType": "side",
+      "price": 1390,
+      "badge": null,
+      "categorySlug": "broast",
+      "variants": []
+    },
+    {
+      "slug": "baked-smoked-sandwich",
+      "name": "Baked Smoked Sandwich",
+      "productType": "sandwich",
+      "price": 749,
+      "badge": null,
+      "categorySlug": "sandwiches",
+      "variants": []
+    },
+    {
+      "slug": "crunchy-sandwich",
+      "name": "Crunchy Sandwich",
+      "productType": "sandwich",
+      "price": 799,
+      "badge": null,
+      "categorySlug": "sandwiches",
+      "variants": []
+    },
+    {
+      "slug": "sizzling-sandwich",
+      "name": "Sizzling Sandwich",
+      "productType": "sandwich",
+      "price": 749,
+      "badge": null,
+      "categorySlug": "sandwiches",
+      "variants": []
+    },
+    {
+      "slug": "special-sandwich",
+      "name": "Special Sandwich",
+      "productType": "sandwich",
+      "price": 749,
+      "badge": null,
+      "categorySlug": "sandwiches",
+      "variants": []
+    },
+    {
+      "slug": "bbq-wings",
+      "name": "BBQ Wings",
+      "productType": "wings",
+      "price": 599,
+      "badge": null,
+      "categorySlug": "wings",
+      "variants": []
+    },
+    {
+      "slug": "creamo-wings",
+      "name": "Creamo Wings",
+      "productType": "wings",
+      "price": 599,
+      "badge": null,
+      "categorySlug": "wings",
+      "variants": []
+    },
+    {
+      "slug": "flaming-wings",
+      "name": "Flaming Wings",
+      "productType": "wings",
+      "price": 549,
+      "badge": null,
+      "categorySlug": "wings",
+      "variants": []
+    },
+    {
+      "slug": "fried-crispy-wings",
+      "name": "Fried & Crispy Wings",
+      "productType": "wings",
+      "price": 599,
+      "badge": null,
+      "categorySlug": "wings",
+      "variants": []
+    },
+    {
+      "slug": "oven-baked-wings",
+      "name": "Oven Baked Wings",
+      "productType": "wings",
+      "price": 549,
+      "badge": null,
+      "categorySlug": "wings",
+      "variants": []
+    },
+    {
+      "slug": "family-fries",
+      "name": "Family Fries",
+      "productType": "fries",
+      "price": 350,
+      "badge": null,
+      "categorySlug": "fries",
+      "variants": []
+    },
+    {
+      "slug": "french-fries",
+      "name": "French Fries",
+      "productType": "fries",
+      "price": 199,
+      "badge": null,
+      "categorySlug": "fries",
+      "variants": []
+    },
+    {
+      "slug": "loaded-fries",
+      "name": "Loaded Fries",
+      "productType": "fries",
+      "price": 650,
+      "badge": null,
+      "categorySlug": "fries",
+      "variants": []
+    },
+    {
+      "slug": "behari-roll",
+      "name": "Behari Roll",
+      "productType": "wrap",
+      "price": 799,
+      "badge": null,
+      "categorySlug": "wraps-rolls",
+      "variants": []
+    },
+    {
+      "slug": "crunchy-wrap",
+      "name": "Crunchy Wrap",
+      "productType": "wrap",
+      "price": 399,
+      "badge": null,
+      "categorySlug": "wraps-rolls",
+      "variants": []
+    },
+    {
+      "slug": "dynamite-wrap",
+      "name": "Dynamite Wrap",
+      "productType": "wrap",
+      "price": 399,
+      "badge": null,
+      "categorySlug": "wraps-rolls",
+      "variants": []
+    },
+    {
+      "slug": "jumbo-wrap",
+      "name": "Tele Pizza Special Jumbo Wrap",
+      "productType": "wrap",
+      "price": 649,
+      "badge": null,
+      "categorySlug": "wraps-rolls",
+      "variants": []
+    },
+    {
+      "slug": "crunchy-pasta",
+      "name": "Crunchy Pasta",
+      "productType": "pasta",
+      "price": 849,
+      "badge": null,
+      "categorySlug": "pasta",
+      "variants": []
+    },
+    {
+      "slug": "chicken-tender-strips",
+      "name": "Chicken Tender Strips",
+      "productType": "side",
+      "price": 590,
+      "badge": null,
+      "categorySlug": "chicken-sides",
+      "variants": []
+    },
+    {
+      "slug": "crispy-box",
+      "name": "Crispy Box",
+      "productType": "side",
+      "price": 670,
+      "badge": null,
+      "categorySlug": "chicken-sides",
+      "variants": []
+    },
+    {
+      "slug": "fried-chicken",
+      "name": "Fried Chicken",
+      "productType": "side",
+      "price": 220,
+      "badge": null,
+      "categorySlug": "chicken-sides",
+      "variants": []
+    },
+    {
+      "slug": "fried-chicken-chest",
+      "name": "Fried Chicken — Chest",
+      "productType": "side",
+      "price": 250,
+      "badge": null,
+      "categorySlug": "chicken-sides",
+      "variants": []
+    },
+    {
+      "slug": "hot-shots",
+      "name": "Hot Shots",
+      "productType": "side",
+      "price": 449,
+      "badge": null,
+      "categorySlug": "chicken-sides",
+      "variants": []
+    },
+    {
+      "slug": "nuggets",
+      "name": "Nuggets",
+      "productType": "side",
+      "price": 449,
+      "badge": null,
+      "categorySlug": "chicken-sides",
+      "variants": []
+    },
+    {
+      "slug": "drink-1l",
+      "name": "1 Liter Drink",
+      "productType": "drink",
+      "price": 170,
+      "badge": null,
+      "categorySlug": "drinks",
+      "variants": []
+    },
+    {
+      "slug": "drink-1-5l",
+      "name": "1.5 Liter Drink",
+      "productType": "drink",
+      "price": 210,
+      "badge": null,
+      "categorySlug": "drinks",
+      "variants": []
+    },
+    {
+      "slug": "drink-345ml",
+      "name": "345 ml Drink",
+      "productType": "drink",
+      "price": 70,
+      "badge": null,
+      "categorySlug": "drinks",
+      "variants": []
+    },
+    {
+      "slug": "drink-500ml",
+      "name": "500 ml Drink",
+      "productType": "drink",
+      "price": 110,
+      "badge": null,
+      "categorySlug": "drinks",
+      "variants": []
+    },
+    {
+      "slug": "large-water",
+      "name": "Large Water",
+      "productType": "drink",
+      "price": 99,
+      "badge": null,
+      "categorySlug": "drinks",
+      "variants": []
+    },
+    {
+      "slug": "small-water",
+      "name": "Small Water",
+      "productType": "drink",
+      "price": 50,
+      "badge": null,
+      "categorySlug": "drinks",
+      "variants": []
+    },
+    {
+      "slug": "family-deal",
+      "name": "Family Deal",
+      "productType": "deal",
+      "price": 2250,
+      "badge": null,
+      "categorySlug": "deals",
+      "variants": []
+    },
+    {
+      "slug": "pair-deal",
+      "name": "Pair Deal",
+      "productType": "deal",
+      "price": 1999,
+      "badge": "Hot",
+      "categorySlug": "deals",
+      "variants": []
+    },
+    {
+      "slug": "pizza-fest",
+      "name": "Pizza Fest",
+      "productType": "deal",
+      "price": 1680,
+      "badge": "Hot",
+      "categorySlug": "deals",
+      "variants": []
+    },
+    {
+      "slug": "deal-for-two",
+      "name": "Deal for 2",
+      "productType": "deal",
+      "price": 999,
+      "badge": null,
+      "categorySlug": "deals",
+      "variants": []
+    },
+    {
+      "slug": "family-festival",
+      "name": "Family Festival",
+      "productType": "deal",
+      "price": 2350,
+      "badge": null,
+      "categorySlug": "deals",
+      "variants": []
+    },
+    {
+      "slug": "knock-out-deal",
+      "name": "Knock Out Deal",
+      "productType": "deal",
+      "price": 1440,
+      "badge": null,
+      "categorySlug": "deals",
+      "variants": []
+    },
+    {
+      "slug": "mega-offer",
+      "name": "Mega Offer",
+      "productType": "deal",
+      "price": 3140,
+      "badge": null,
+      "categorySlug": "deals",
+      "variants": []
+    }
+  ],
+  "toppings": [
+    {
+      "slug": "extra-cheese",
+      "name": "Extra Cheese",
+      "productType": "topping",
+      "price": null,
+      "categorySlug": "toppings",
+      "variants": [
+        {
+          "label": "Small",
+          "price": 50,
+          "sizeCode": "small",
+          "isDefault": true
+        },
+        {
+          "label": "Medium",
+          "price": 100,
+          "sizeCode": "medium",
+          "isDefault": false
+        },
+        {
+          "label": "Large",
+          "price": 150,
+          "sizeCode": "large",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "slug": "extra-cheese-slice",
+      "name": "Extra Cheese Slice",
+      "productType": "topping",
+      "price": 60,
+      "categorySlug": "toppings",
+      "variants": []
+    },
+    {
+      "slug": "extra-chicken",
+      "name": "Extra Chicken",
+      "productType": "topping",
+      "price": null,
+      "categorySlug": "toppings",
+      "variants": [
+        {
+          "label": "Small",
+          "price": 50,
+          "sizeCode": "small",
+          "isDefault": true
+        },
+        {
+          "label": "Medium",
+          "price": 100,
+          "sizeCode": "medium",
+          "isDefault": false
+        },
+        {
+          "label": "Large",
+          "price": 150,
+          "sizeCode": "large",
+          "isDefault": false
+        }
+      ]
+    }
+  ]
+}
