@@ -15,9 +15,9 @@ export default function Checkout() {
   const [, navigate] = useLocation();
   const { state, subtotal, clearCart, setOrderDetails } = useCart();
   const { selectedBranch } = useBranch();
-  const { user } = useAuth();
-  const [contactName, setContactName] = useState(user?.name ?? "");
-  const [contactPhone, setContactPhone] = useState(user?.phone ?? "");
+  const { profile, user } = useAuth();
+  const [contactName, setContactName] = useState(profile?.fullName ?? "");
+  const [contactPhone, setContactPhone] = useState(profile?.phone ?? "");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [notes, setNotes] = useState(state.order.orderInstructions);
   const [couponCode, setCouponCode] = useState(state.order.couponCode);
@@ -31,9 +31,9 @@ export default function Checkout() {
   }, [state.items.length, navigate]);
 
   useEffect(() => {
-    setContactName(user?.name ?? "");
-    setContactPhone(user?.phone ?? "");
-  }, [user]);
+    setContactName(profile?.fullName ?? user?.email?.split("@")[0] ?? "");
+    setContactPhone(profile?.phone ?? "");
+  }, [profile, user]);
 
   const deliveryMode = state.order.deliveryMode;
 

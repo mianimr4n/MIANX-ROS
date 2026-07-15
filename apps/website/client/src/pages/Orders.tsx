@@ -4,8 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
 export default function Orders() {
-  const { user, isAuthenticated } = useAuth();
-  const orders = listLocalOrders(user?.phone);
+  const { profile, user, isAuthenticated } = useAuth();
+  const orderKey = profile?.phone || user?.email || user?.id;
+  const orders = listLocalOrders(orderKey);
 
   if (!isAuthenticated || !user) {
     return (

@@ -18,7 +18,7 @@ export const apiModules: ApiModuleDescriptor[] = [
   {
     name: "auth",
     basePath: "/api/v1/auth",
-    summary: "Authentication and session lifecycle.",
+    summary: "Supabase Auth session verification and customer /me profile.",
   },
   {
     name: "branches",
@@ -48,7 +48,13 @@ export const apiModules: ApiModuleDescriptor[] = [
 ];
 
 export function registerApiModules(app: Express, dependencies: AppDependencies) {
-  app.use("/api/v1/auth", createAuthRouter());
+  app.use(
+    "/api/v1/auth",
+    createAuthRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+    }),
+  );
   app.use("/api/v1/branches", createBranchesRouter(dependencies.catalogDataSource));
   app.use("/api/v1/menu", createMenuRouter(dependencies.catalogDataSource));
   app.use("/api/v1/orders", createOrdersRouter(dependencies.ordersDataSource));
