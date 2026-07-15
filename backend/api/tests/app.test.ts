@@ -175,6 +175,8 @@ describe("Telepizza API app", () => {
     expect(response.body.data.items[0].variants[0].price).toBe(499);
     expect(response.body.data.toppings[0].slug).toBe("extra-cheese");
     expect(response.body.meta.toppingCount).toBe(1);
+    expect(response.body.meta.variantCount).toBe(2);
+    expect(response.body.meta.dealCount).toBe(0);
     expect(response.body.data.categories.some((category: { slug: string }) => category.slug === "toppings")).toBe(
       false,
     );

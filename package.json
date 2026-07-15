@@ -7,7 +7,7 @@
     "build:website": "pnpm --filter telepizza-pakistan build",
     "check:website": "pnpm --filter telepizza-pakistan check",
     "check:backend": "pnpm --filter @telepizza/api check",
-    "test:db": "node --test tests/database/**/*.test.mjs",
+    "test:db": "node --test tests/database/**/*.test.mjs tests/menu/**/*.test.mjs",
     "test:backend": "pnpm --filter @telepizza/api test",
     "check": "pnpm check:website && pnpm check:backend",
     "test": "pnpm test:db && pnpm test:backend"

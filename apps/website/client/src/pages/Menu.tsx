@@ -38,7 +38,7 @@ import type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
 
 import { isPizzaItem } from "@/data/cart-config";
 
-import { isCustomerBrowseItem } from "@/lib/menu-visibility";
+import { formatMenuPriceLabel } from "@/lib/menu-utils";
 
 import { ProductBadge } from "@/components/menu/ProductBadge";
 
@@ -134,9 +134,7 @@ export default function Menu() {
 
 
 
-  const browseItems = items.filter(isCustomerBrowseItem);
-
-  const filteredItems = browseItems.filter((item) => {
+  const filteredItems = items.filter((item) => {
 
     const matchesCategory = activeCategory === "All" || item.category === activeCategory;
 
@@ -298,7 +296,7 @@ export default function Menu() {
 
             <p className="mt-3 text-xs text-brand-charcoal/70 font-[var(--font-accent)]">
 
-              Live menu loaded from Supabase ({browseItems.length} items)
+              Live menu loaded from Supabase ({items.length} items)
 
             </p>
 
@@ -550,7 +548,7 @@ export default function Menu() {
 
                     <span className="font-[var(--font-accent)] font-bold text-xl text-brand-red">
 
-                      Rs {getItemPrice(item)?.toLocaleString() ?? "Unavailable"}
+                      {formatMenuPriceLabel(item, getItemPrice(item))}
 
                     </span>
 

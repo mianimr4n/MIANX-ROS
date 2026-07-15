@@ -99,3 +99,17 @@ test("pizza toppings migration seeds shared catalog SKUs for BFR-012 Option B", 
   assert.match(toppingsMigration, /'extra-cheese-slice'/i);
   assert.match(toppingsMigration, /behari-kabab-pizza/i);
 });
+
+test("Option B repair migration is forward-only and idempotent", () => {
+  const repairMigration = readFileSync(
+    join(workspaceRoot, "supabase", "migrations", "20260715153000_option_b_toppings_catalog_repair.sql"),
+    "utf8",
+  );
+
+  assert.match(repairMigration, /forward-only/i);
+  assert.match(repairMigration, /on conflict \(slug\) do update/i);
+  assert.match(repairMigration, /NEVER applied to production/i);
+  assert.match(repairMigration, /'extra-chicken'/i);
+  assert.match(repairMigration, /'extra-cheese-slice'/i);
+  assert.match(repairMigration, /behari-kabab-pizza/i);
+});

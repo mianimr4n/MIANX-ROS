@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { handleImageError } from "@/lib/image-fallback";
 import { useAddMenuItem } from "@/hooks/useAddMenuItem";
 import { isPizzaItem } from "@/data/cart-config";
-import { getDefaultVariant, getDisplayPrice } from "@/lib/menu-utils";
+import { getDefaultVariant, getDisplayPrice, formatMenuPriceLabel } from "@/lib/menu-utils";
 import type { MenuItem } from "@/lib/telepizza-types";
 import { ProductBadge } from "./ProductBadge";
 
@@ -58,7 +58,7 @@ export function ProductCard({ item, index = 0, compact = false }: ProductCardPro
         <div className="mt-auto flex items-center justify-between gap-3">
           <div className="inline-flex items-center justify-center rounded-2xl bg-brand-red/10 px-3 py-2">
             <span className="font-[var(--font-accent)] font-extrabold text-lg text-brand-red">
-              Rs {displayPrice?.toLocaleString() ?? "—"}
+              {formatMenuPriceLabel(item, displayPrice)}
             </span>
           </div>
           <Button

@@ -13,12 +13,14 @@ import {
   loadMenuCatalog,
   type MenuCatalogSource,
 } from "@/lib/menu-catalog";
-import { getCustomerBrowseCategories } from "@/lib/menu-visibility";
 import type { MenuCategory, MenuItem } from "@/lib/telepizza-types";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 interface MenuCatalogContextValue {
+  /** Public browseable products only (no topping SKUs). */
   items: MenuItem[];
+  /** Internal topping SKUs for Pizza Customizer. */
+  toppings: MenuItem[];
   categories: MenuCategory[];
   availableCategories: string[];
   isLoading: boolean;
@@ -34,18 +36,32 @@ const staticCatalog = getStaticMenuCatalog();
 
 export function MenuCatalogProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<MenuItem[]>(staticCatalog.items);
+  const [toppings, setToppings] = useState<MenuItem[]>(staticCatalog.toppings);
   const [categories, setCategories] = useState<MenuCategory[]>(staticCatalog.categories);
   const [isLoading, setIsLoading] = useState(isSupabaseConfigured);
   const [error, setError] = useState<string | null>(null);
   const [source, setSource] = useState<MenuCatalogSource>("static");
   const [usingFallback, setUsingFallback] = useState(false);
 
+  const applyCatalog = useCallback(
+    (catalog: {
+      items: MenuItem[];
+      toppings: MenuItem[];
+      categories: MenuCategory[];
+      source: MenuCatalogSource;
+    }) => {
+      setItems(catalog.items);
+      setToppings(catalog.toppings);
+      setCategories(catalog.categories);
+      setSource(catalog.source);
+    },
+    [],
+  );
+
   const reloadCatalog = useCallback(async () => {
     if (!isSupabaseConfigured) {
       const fallback = getStaticMenuCatalog();
-      setItems(fallback.items);
-      setCategories(fallback.categories);
-      setSource("static");
+      applyCatalog(fallback);
       setUsingFallback(false);
       setError(null);
       setIsLoading(false);
@@ -56,18 +72,14 @@ export function MenuCatalogProvider({ children }: { children: ReactNode }) {
 
     try {
       const catalog = await loadMenuCatalog();
-      setItems(catalog.items);
-      setCategories(catalog.categories);
-      setSource(catalog.source);
+      applyCatalog(catalog);
       setUsingFallback(false);
       setError(null);
     } catch (loadError) {
       console.warn("Supabase menu unavailable; using verified static fallback.", loadError);
 
       const fallback = getStaticMenuCatalog();
-      setItems(fallback.items);
-      setCategories(fallback.categories);
-      setSource("static");
+      applyCatalog(fallback);
       setUsingFallback(true);
       setError(
         loadError instanceof Error
@@ -77,27 +89,23 @@ export function MenuCatalogProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [applyCatalog]);
 
   useEffect(() => {
     void reloadCatalog();
   }, [reloadCatalog]);
 
-  const browseCategories = useMemo(
-    () => getCustomerBrowseCategories(categories),
-    [categories],
-  );
-
   const availableCategories = useMemo(
-    () => ["All", ...browseCategories.map((category) => category.name)],
-    [browseCategories],
+    () => ["All", ...categories.map((category) => category.name)],
+    [categories],
   );
 
   return (
     <MenuCatalogContext.Provider
       value={{
         items,
-        categories: browseCategories,
+        toppings,
+        categories,
         availableCategories,
         isLoading,
         error,

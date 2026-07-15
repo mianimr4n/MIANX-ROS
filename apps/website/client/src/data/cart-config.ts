@@ -1,30 +1,18 @@
 import type { MenuItem } from "@/lib/telepizza-types";
+import { isCustomerBrowseItem } from "@/lib/menu-visibility";
 
 /** Verified extra topping size tiers (maps pizza size → topping variant size_code). */
 export type ToppingSizeTier = "small" | "medium" | "large";
 
 /**
  * Shared topping SKU slugs — must match Supabase `menu_items.slug`
- * and static fallback entries in `menu-data.ts` (BFR-012 BOTH).
+ * and static fallback entries in `menu-data.ts` (BFR-012 BOTH / Option B).
  */
 export const PIZZA_TOPPING_SLUGS = {
   chicken: "extra-chicken",
   cheese: "extra-cheese",
   cheeseSlice: "extra-cheese-slice",
 } as const;
-
-/**
- * Offline / missing-catalog emergency fallback only.
- * Source of truth is Supabase menu_items (+ variants) via the catalog.
- */
-export const TOPPING_PRICE_FALLBACK = {
-  chicken: { small: 50, medium: 100, large: 150 },
-  cheese: { small: 50, medium: 100, large: 150 },
-  cheeseSlice: 60,
-} as const;
-
-/** @deprecated Prefer catalog-driven resolveCatalogToppingPrice — kept for tests/compat. */
-export const EXTRA_TOPPING_PRICES = TOPPING_PRICE_FALLBACK;
 
 export const PIZZA_ADDON_DRINK_IDS = [
   "drink-345ml",
@@ -62,21 +50,21 @@ export function findCatalogItemBySlug(
 }
 
 /**
- * Resolve topping price from shared catalog item (Admin Dashboard → Supabase → Website).
- * Falls back to verified seed prices only when the catalog row is unavailable.
+ * Resolve topping price from shared catalog only.
+ * Returns null when the SKU is missing or the requested tier/price is unavailable —
+ * callers must disable the option (never invent a price in UI business logic).
  */
 export function resolveCatalogToppingPrice(
   item: MenuItem | undefined,
   tier: ToppingSizeTier,
-  fallback: number,
-): number {
+): number | null {
   if (!item) {
-    return fallback;
+    return null;
   }
 
   if (item.variants && item.variants.length > 0) {
     const bySizeCode = item.variants.find((variant) => variant.sizeCode === tier);
-    if (bySizeCode) {
+    if (bySizeCode && typeof bySizeCode.price === "number") {
       return bySizeCode.price;
     }
 
@@ -86,24 +74,33 @@ export function resolveCatalogToppingPrice(
       if (tier === "medium") return label.includes("medium");
       return label.includes("small");
     });
-    if (labelMatch) {
+    if (labelMatch && typeof labelMatch.price === "number") {
       return labelMatch.price;
     }
+
+    // Size-tier toppings must not fall back to an unrelated variant/base price.
+    return null;
   }
 
   if (typeof item.price === "number") {
     return item.price;
   }
 
-  return fallback;
+  return null;
 }
 
+/** Pizzas with size variants open the customizer. Flat / starting-price SKUs do not. */
 export function isPizzaItem(item: MenuItem): boolean {
-  if (item.category === "Toppings" || item.productType === "topping") {
+  if (!isCustomerBrowseItem(item)) {
     return false;
   }
 
   return item.category.includes("Pizza") && Boolean(item.variants?.length);
+}
+
+/** Internal topping SKUs are never standalone cart products. */
+export function isStandalonePurchasable(item: MenuItem): boolean {
+  return isCustomerBrowseItem(item);
 }
 
 export function getLineItemTotal(price: number, extras: { price: number }[] = [], quantity = 1): number {

@@ -8,6 +8,24 @@ export function getDisplayPrice(item: MenuItem): number | undefined {
   return getDefaultVariant(item)?.price ?? item.price;
 }
 
+/** BFR-003 temporary flat SKUs advertise a starting floor, not a full size matrix. */
+export function isStartingPriceItem(item: MenuItem): boolean {
+  if (item.badge?.toLowerCase().includes("starting")) {
+    return true;
+  }
+
+  return item.id === "behari-kabab-pizza" || item.slug === "behari-kabab-pizza";
+}
+
+export function formatMenuPriceLabel(item: MenuItem, price?: number): string {
+  if (price === undefined) {
+    return "Unavailable";
+  }
+
+  const formatted = `Rs ${price.toLocaleString()}`;
+  return isStartingPriceItem(item) ? `Starting from ${formatted}` : formatted;
+}
+
 export function getVariantId(variant: MenuVariant): string {
   return variant.label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
