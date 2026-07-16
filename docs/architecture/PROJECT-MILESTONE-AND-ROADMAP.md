@@ -1,8 +1,8 @@
 # Telepizza — Project Milestone & Parallel Roadmap
 
-**Date:** 2026-07-16  
-**Status:** Milestone confirmed by owner  
-**Baseline:** Catalog freeze v1.2.0 · Auth foundation (Slices 1–2B) · Slice 2C architecture approved  
+**Date:** 2026-07-16
+**Status:** Milestone confirmed by owner
+**Baseline:** Catalog freeze v1.2.0 · Auth foundation (Slices 1–2B) · Slice 2C architecture approved
 
 ---
 
@@ -16,9 +16,13 @@
 | Sprint 3 Slice 2A | ✅ Complete |
 | Sprint 3 Slice 2B | ✅ Complete |
 | Sprint 3.5 | ✅ Complete |
-| **Slice 2C** | 🟡 Architecture approved — waiting on WhatsApp Business / Twilio ops |
+| **Sprint 4.1** Orders foundation | ✅ PASS AND CLOSED (production) |
+| **Sprint 4.2** Quote contract | ✅ merged · production |
+| **Sprint 4.3** Website checkout | ✅ PASS AND CLOSED (production) |
+| **Sprint 4.3 Phase B** Guest read/cancel | ✅ PASS AND CLOSED (production) |
+| **Slice 2C** | 🟡 Architecture approved — **BLOCKED** on WhatsApp Business / Twilio ops |
 | Slice 2D | 🔒 Not started (RLS gate before POS unlock) |
-| Sprint 4 Orders | ▶ **4.1** in PR review — close before 4.2 (discipline workflow) |
+| Sprint 4.5+ Staff lifecycle | 🔒 After Slice 2D |
 
 The project is past prototype: release freeze, authentication, authorization model, and architecture docs form a solid base for the operational restaurant platform.
 
@@ -55,7 +59,7 @@ Remaining Slice 2C blocker is **operational** (dedicated sender, Meta, Twilio Ve
 
 Continue building the restaurant core (Sprint 4+), one closable slice at a time:
 
-- Orders Engine · Kitchen Workflow · Order State Machine · Rider Assignment · Payments · Notifications · Admin APIs  
+- Orders Engine · Kitchen Workflow · Order State Machine · Rider Assignment · Payments · Notifications · Admin APIs
 
 Every future touchpoint depends on this lifecycle: Website, WhatsApp ordering, POS, Kitchen Display, Rider App, Admin Dashboard, Reporting, AI automation.
 
@@ -63,13 +67,13 @@ Every future touchpoint depends on this lifecycle: Website, WhatsApp ordering, P
 
 Complete provider prerequisites (non-blocking for Team 1):
 
-- Meta Business verification · Twilio Verify · WhatsApp auth template · Dedicated auth number · CAPTCHA · Pilot setup  
+- Meta Business verification · Twilio Verify · WhatsApp auth template · Dedicated auth number · CAPTCHA · Pilot setup
 
 Track: `SLICE-2C0-OTP-OPERATIONS-READINESS.md` (**BLOCKED** / eng **PAUSED**)
 
 ### Team 3 — AI Platform (Mianx.ai)
 
-Continue: Agent Router · Memory Engine · Task Engine · Documentation automation · AI workforce  
+Continue: Agent Router · Memory Engine · Task Engine · Documentation automation · AI workforce
 
 Speeds Telepizza and future ERP products.
 
@@ -130,7 +134,7 @@ Sprint 7
 
 | Team | Action |
 |---|---|
-| **1 Engineering** | Close Sprint **4.1** (PR #34 → review → merge → smoke → close). Then architecture for **4.2** status machine. |
+| **1 Engineering** | **Await owner pick** — see `_documentation-audit/reports/SPRINT-04-NEXT-READINESS.md`. Recommended gate: **Slice 2D RLS** before POS/Kitchen; optional **4.4 My Orders** customer alignment. |
 | **2 Operations** | Meta / dedicated auth number / Twilio Verify / template / CAPTCHA / pilot (2C stays paused until READY). |
 | **3 AI Platform** | Continue Mianx.ai Agent Router / Memory / Task Engine / docs automation. |
 
@@ -143,4 +147,5 @@ Sprint 7
 | `AUTHENTICATION_ARCHITECTURE.md` | Authz SSOT |
 | `SLICE-2C0-OTP-OPERATIONS-READINESS.md` | OTP ops (paused) |
 | `SPRINT-04-ORDERS-BACKEND-PLANNING.md` | Orders Domain plan |
+| `_documentation-audit/reports/SPRINT-04-NEXT-READINESS.md` | Post–4.3 next slice options |
 | `CUSTOMER_PHONE_OTP_ARCHITECTURE.md` | OTP architecture freeze |

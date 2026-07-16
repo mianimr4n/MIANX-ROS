@@ -10,9 +10,17 @@
 
 ## Outcome
 
-Phase B backend hardening and website cancel hookup are complete on code. Production deploy remains owner-gated.
+Phase B backend hardening and website cancel hookup are **complete on production**. See `SPRINT-04-3B-PRODUCTION-CLOSE.md`.
 
 ---
+
+## Production
+
+| Item | Result |
+|---|---|
+| Render API (PR #43 on main) | ✅ guest read + cancel live |
+| Vercel website cancel UI | ✅ TrackOrder `/cancel` in bundle |
+| Production smoke + cleanup | ✅ `SPRINT-04-3B-PRODUCTION-CLOSE.md` |
 
 ## Delivered
 
@@ -75,4 +83,4 @@ Same safe projection as `/tracking` — architecture §7.3 canonical read.
 
 ---
 
-**SPRINT 4.3 PHASE B STATUS: PASS**
+**SPRINT 4.3 PHASE B STATUS: PASS AND CLOSED**
