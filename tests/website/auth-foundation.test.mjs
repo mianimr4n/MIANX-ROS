@@ -122,6 +122,16 @@ test("Google OAuth stays disabled for Slice 1", () => {
   assert.doesNotMatch(register, /signInWithOAuth/i);
 });
 
+test("Login page validates email, blocks double submit, and keeps OTP out of scope", () => {
+  const login = read("apps/website/client/src/pages/Login.tsx");
+  assert.match(login, /isValidEmail/);
+  assert.match(login, /if \(submitting\) return/);
+  assert.match(login, /showPassword/);
+  assert.match(login, /isLoading/);
+  assert.doesNotMatch(login, /otp|whatsapp.?otp|phone.?otp/i);
+  assert.match(login, /Browse the menu/);
+});
+
 test("AuthContext restores session, cleans listener, calls /auth/me with bearer, logout clears identity only", () => {
   const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
 

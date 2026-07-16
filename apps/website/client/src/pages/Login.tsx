@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,11 +9,16 @@ import { AuthPageShell } from "@/components/AuthPageShell";
 import { isGoogleOAuthConfigured } from "@/lib/auth-utils";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
 export default function Login() {
   const [, navigate] = useLocation();
   const { signIn, isAuthenticated, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -25,38 +30,70 @@ export default function Login() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (submitting) return;
+
     setError(null);
+
+    const trimmedEmail = email.trim();
+    if (!isValidEmail(trimmedEmail)) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    if (!password) {
+      setError("Enter your password.");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      const result = await signIn({ email, password });
+      const result = await signIn({ email: trimmedEmail, password });
       if (!result.ok) {
         setError(result.message);
         return;
       }
       navigate("/account");
+    } catch {
+      setError("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <AuthPageShell title="Login" description="Checking your session…">
+        <div className="rounded-3xl border border-border bg-white/90 p-10 flex justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-brand-red" />
+        </div>
+      </AuthPageShell>
+    );
+  }
+
+  const formDisabled = !isSupabaseConfigured || submitting;
+
   return (
     <AuthPageShell
-      title="Login"
-      description="Sign in with your email and password."
+      title="Welcome back"
+      description="Sign in with your email and password to manage orders and account details."
       note={
         isSupabaseConfigured
           ? undefined
           : "Customer login is temporarily unavailable until authentication is configured."
       }
     >
-      <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-white p-6 space-y-4">
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-4"
+        noValidate
+      >
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
             type="email"
             autoComplete="email"
+            inputMode="email"
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
@@ -64,24 +101,37 @@ export default function Login() {
             }}
             className="rounded-2xl"
             required
-            disabled={!isSupabaseConfigured || submitting}
+            disabled={formDisabled}
+            placeholder="you@example.com"
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setError(null);
-            }}
-            className="rounded-2xl"
-            required
-            disabled={!isSupabaseConfigured || submitting}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError(null);
+              }}
+              className="rounded-2xl pr-12"
+              required
+              disabled={formDisabled}
+              placeholder="Your password"
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 px-3 text-muted-foreground hover:text-brand-charcoal disabled:opacity-50"
+              onClick={() => setShowPassword((value) => !value)}
+              disabled={formDisabled}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
         {error ? (
           <p className="text-sm text-brand-red" role="alert">
@@ -91,21 +141,30 @@ export default function Login() {
         <Button
           type="submit"
           className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
-          disabled={!isSupabaseConfigured || submitting}
+          disabled={formDisabled}
         >
-          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Login"}
+          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign in"}
         </Button>
         {/* Google OAuth intentionally omitted — Slice 1 keeps it disabled. */}
         {isGoogleOAuthConfigured() ? (
           <p className="text-xs text-muted-foreground text-center">Google sign-in</p>
         ) : null}
       </form>
-      <p className="text-sm text-muted-foreground mt-4 text-center">
-        New here?{" "}
-        <Link href="/register" className="text-brand-red font-semibold hover:underline">
-          Create an account
-        </Link>
-      </p>
+
+      <div className="mt-5 space-y-3 text-center text-sm text-muted-foreground">
+        <p>
+          New here?{" "}
+          <Link href="/register" className="text-brand-red font-semibold hover:underline">
+            Create an account
+          </Link>
+        </p>
+        <p>
+          Prefer ordering without an account?{" "}
+          <Link href="/menu" className="text-brand-red font-semibold hover:underline">
+            Browse the menu
+          </Link>
+        </p>
+      </div>
     </AuthPageShell>
   );
 }

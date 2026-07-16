@@ -64,7 +64,7 @@ export default function Register() {
           : "Registration is temporarily unavailable until authentication is configured."
       }
     >
-      <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-white p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-4">
         <div className="space-y-2">
           <Label htmlFor="fullName">Full name (optional)</Label>
           <Input
