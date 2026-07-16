@@ -87,7 +87,7 @@ Any of the following requires **architecture approval** before merge:
 | **Sprint 3 Slice 1** | Email/password auth, AuthContext, `/auth/me`, customer bootstrap, JWT verify | ✅ Complete |
 | **Sprint 3 Slice 2A** | AuthPrincipal, permission/branch middleware, status gate, spoof protection, tests | ✅ Complete (`f7fa2c4`) |
 | **Sprint 3.5** | Merge + migration apply + regression/smoke | ✅ Closed |
-| **Slice 2B** | Staff invite / create / role+branch assign | 🚧 Implementation on `feature/sprint-3-staff-invites` |
+| **Slice 2B** | Staff invite / create / role+branch assign | ✅ Closed (`8527f28` / PR #31; migrations + production smoke PASS) |
 | **Slice 2C** | Customer phone + OTP | 🔒 Not started |
 | **Slice 2D** | Order/payment/delivery RLS by owner + branch | 🔒 Not started |
 

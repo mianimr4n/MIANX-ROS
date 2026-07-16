@@ -1,28 +1,27 @@
 # Sprint 3 — Slice 2B Staff Invite Architecture
 
-**Status:** Locked owner decisions approved · implementation on `feature/sprint-3-staff-invites`  
-**Type:** Complete blueprint + security review (implementation in progress)  
+**Status:** **CLOSED** — locked D1–D8 implemented, migrated, deployed, production smoke PASS (PR #31 / `8527f28`)  
+**Type:** Complete blueprint + security review (shipped)  
 **Audience:** Owner (business decisions) · Architects · AI implementation agents  
 **Depends on:** Canonical `docs/architecture/AUTHENTICATION_ARCHITECTURE.md`  
-**Baseline:** Sprint 3.5 **CLOSED** (Slice 1 + 2A production-verified)  
+**Baseline:** Sprint 3.5 **CLOSED**; Slice 2B **CLOSED** on production  
 **Catalog freeze:** v1.2.0 menu/pricing/catalog/toppings — **do not touch**
 
 ```text
 ✅ Sprint 3.5 Complete
         ↓
-✅ Slice 2B architecture + locked owner decisions (D1–D8)
+✅ Slice 2B locked decisions + implementation (PR #31 merged)
         ↓
-🚧 Implementation on feature/sprint-3-staff-invites (this PR)
+✅ Production migration 20260716103000
         ↓
-PR review → Merge → Migration → Smoke → CLOSE
+✅ Deploy + smoke → Slice 2B CLOSED
 ```
 
-Implementation branch:
+Implementation branch (merged):
 
 ```text
-feature/sprint-3-staff-invites
+feature/sprint-3-staff-invites → main @ 8527f28
 ```
-
 **Locked owner decisions (authoritative):**
 
 1. **D1** Only DB-derived `super-admin` may create/send/resend/revoke/list/inspect invites  
