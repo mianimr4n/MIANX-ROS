@@ -9,6 +9,7 @@ import {
 } from "../../middleware/auth.js";
 import { isAccountActive } from "../../services/auth/principal.js";
 import type { AuthPrincipalRepository } from "../../services/auth/supabase.js";
+import type { StaffInviteRepository } from "../../services/staff/invites.js";
 
 const loginSchema = z.object({
   email: z.email(),
@@ -19,9 +20,16 @@ const refreshSchema = z.object({
   refreshToken: z.string().min(10),
 });
 
+const acceptInviteSchema = z.object({
+  token: z.string().min(20).max(512),
+  password: z.string().min(8).max(128),
+  fullName: z.string().trim().min(1).max(150).optional(),
+});
+
 export interface AuthRouterDependencies {
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
+  staffInviteRepository: StaffInviteRepository;
 }
 
 function classifyProfileLoadFailure(error: unknown): string {
@@ -108,6 +116,34 @@ export function createAuthRouter(dependencies: AuthRouterDependencies) {
           profileReady: data.profileReady,
           // Client role headers are never trusted for identity.
           deprecatedRoleHeaderIgnored: true,
+        },
+      });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  /**
+   * Staff invite acceptance — authenticated by invite token only (not JWT privilege).
+   * Role/branch come solely from the invite row; body overrides are ignored by the repository.
+   */
+  router.post("/staff/invites/accept", validateBody(acceptInviteSchema), async (req, res, next) => {
+    try {
+      const result = await dependencies.staffInviteRepository.acceptInvite({
+        token: req.body.token,
+        password: req.body.password,
+        fullName: req.body.fullName,
+      });
+
+      return res.status(201).json({
+        ok: true,
+        data: {
+          authUserId: result.authUserId,
+          email: result.email,
+          profileReady: result.profileReady,
+        },
+        meta: {
+          next: "sign_in_with_email_password",
         },
       });
     } catch (error) {
