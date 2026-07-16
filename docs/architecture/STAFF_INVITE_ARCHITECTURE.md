@@ -1,7 +1,7 @@
 # Sprint 3 — Slice 2B Staff Invite Architecture
 
-**Status:** Proposed architecture freeze (plan-only — **no implementation yet**)  
-**Type:** Complete blueprint + security review for owner approval  
+**Status:** Locked owner decisions approved · implementation on `feature/sprint-3-staff-invites`  
+**Type:** Complete blueprint + security review (implementation in progress)  
 **Audience:** Owner (business decisions) · Architects · AI implementation agents  
 **Depends on:** Canonical `docs/architecture/AUTHENTICATION_ARCHITECTURE.md`  
 **Baseline:** Sprint 3.5 **CLOSED** (Slice 1 + 2A production-verified)  
@@ -10,19 +10,31 @@
 ```text
 ✅ Sprint 3.5 Complete
         ↓
-🎯 Sprint 3 Slice 2B — Architecture (THIS DOCUMENT)
+✅ Slice 2B architecture + locked owner decisions (D1–D8)
         ↓
-Implementation (only after owner approval)
+🚧 Implementation on feature/sprint-3-staff-invites (this PR)
         ↓
-Testing → PR → Merge → Migration → Production
+PR review → Merge → Migration → Smoke → CLOSE
 ```
 
-Implementation branch (reserved, **not created yet**):
+Implementation branch:
 
 ```text
 feature/sprint-3-staff-invites
 ```
 
+**Locked owner decisions (authoritative):**
+
+1. **D1** Only DB-derived `super-admin` may create/send/resend/revoke/list/inspect invites  
+2. **D2** Branch managers cannot invite in Slice 2B  
+3. **D3** Inviteable roles only: `branch-manager`, `cashier`, `kitchen`, `rider`, `customer-support` — **not** `customer` or `super-admin`  
+4. **D4** Exactly one operating `branch_id` on every invite; never trust accept-body branch  
+5. **D5** Default TTL 72h, max 168h (server-enforced)  
+6. **D6** Resend rotates token, invalidates prior, refreshes expiry, audits, max 3 send/resend per 24h per email; revoked cannot resend  
+7. **D7** Return `inviteUrl` once to super-admin; never persist/log/GET/audit raw token; SHA-256 hash only  
+8. **D8** Minimal `/staff/accept` with read-only email/name/role/branch + password fields  
+
+**CRITICAL:** Existing `auth.users` email → `INVITE_ACCOUNT_CONFLICT` (no silent convert / no staff attach).
 ---
 
 ## Executive summary
@@ -189,8 +201,8 @@ Source of truth = invite row.
 
 | Role code | `user_type` on accept | Invite in 2B? | Branch on invite |
 |---|---|---|---|
-| `super-admin` | `admin` | Yes (Super Admin inviter only) | **NULL** (global) |
-| `branch-manager` | `staff` | Yes | **Required** (exactly one) |
+| `super-admin` | `admin` | **Never** (manual/bootstrap only) | n/a |
+| `branch-manager` | `staff` | Yes | **Required** (exactly one operating) |
 | `cashier` | `staff` | Yes | Required |
 | `kitchen` | `staff` | Yes | Required |
 | `customer-support` | `support` | Yes | Required |
@@ -216,7 +228,7 @@ Grant mapping for 2B v1:
 | `branch-manager` | ✅ (existing) | ❌ until 2B.1 | ❌ until 2B.1 | ✅ existing seed — **not enough alone to open invite APIs** |
 | Others | ❌ | ❌ | ❌ | ❌ |
 
-New invite routes must check **`staff.create`** (and `staff.assign_role` when role is chosen), not legacy header roles.
+New invite routes must require **DB-derived `isSuperAdmin`** (`requireSuperAdmin`), not permission-only gates and never header roles.
 
 ### 2.3 Actor matrix (invite management)
 
@@ -642,18 +654,18 @@ Frontend hide ≠ security.
 
 ## 11. Owner decision card (blocking)
 
-| ID | Question | Recommendation | Owner |
+| ID | Question | Locked decision | Owner |
 |---|---|---|---|
-| D1 | May Branch Manager invite staff in 2B v1? | **No** (defer 2B.1) | ☐ |
-| D2 | Who is Owner? | **Same as Super Admin** | ☐ |
-| D3 | Multi-branch on one invite? | **No** (exactly one or global) | ☐ |
-| D4 | Invite TTL? | **72h** (max 168) | ☐ |
-| D5 | Rider flow? | **Same invite** + `rider` + branch | ☐ |
-| D6 | Invite another Super Admin? | **Yes**, audited | ☐ |
-| D7 | Accept UI in first PR? | **Yes** minimal `/staff/accept` | ☐ |
-| D8 | Email send in 2B? | **API inviteUrl only** first | ☐ |
+| D1 | Who may manage invites? | **DB-derived super-admin only** | ☑ |
+| D2 | May Branch Manager invite? | **No** (defer 2B.1) | ☑ |
+| D3 | Allowed invite roles? | BM / cashier / kitchen / rider / customer-support only — **no customer, no super-admin** | ☑ |
+| D4 | Branch on invite? | **Exactly one operating branch** always | ☑ |
+| D5 | Invite TTL? | **72h** (max 168) | ☑ |
+| D6 | Resend rules? | Rotate token, refresh expiry, audit, **max 3/24h**; revoked → new invite | ☑ |
+| D7 | Email delivery? | **`inviteUrl` once** to SA; hash-only at rest; never GET/log/audit raw token | ☑ |
+| D8 | Accept UI? | **Yes** `/staff/accept` with read-only identity fields | ☑ |
 
-Architecture is **frozen for implementation** only when D1–D8 are checked.
+Architecture decisions above are **locked** for this implementation PR.
 
 ---
 

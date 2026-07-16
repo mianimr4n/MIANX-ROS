@@ -26,6 +26,10 @@ const acceptInviteSchema = z.object({
   fullName: z.string().trim().min(1).max(150).optional(),
 });
 
+const previewInviteSchema = z.object({
+  token: z.string().min(20).max(512),
+});
+
 export interface AuthRouterDependencies {
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
@@ -124,16 +128,53 @@ export function createAuthRouter(dependencies: AuthRouterDependencies) {
   });
 
   /**
+   * Safe invite preview for accept UI — token only; never returns hash/url secrets.
+   * Role/branch come from the stored invite row.
+   */
+  router.get("/staff/invites/preview", async (req, res, next) => {
+    try {
+      const parsed = previewInviteSchema.safeParse({
+        token: typeof req.query.token === "string" ? req.query.token : "",
+      });
+      if (!parsed.success) {
+        throw new ApiError(410, "INVITE_NOT_ACCEPTABLE", "This invite cannot be accepted.");
+      }
+
+      const preview = await dependencies.staffInviteRepository.previewInvite(parsed.data.token);
+      return res.json({
+        ok: true,
+        data: {
+          email: preview.email,
+          fullName: preview.fullName,
+          roleCode: preview.roleCode,
+          branchId: preview.branchId,
+          branchName: preview.branchName,
+          status: preview.status,
+          expiresAt: preview.expiresAt,
+        },
+      });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  /**
    * Staff invite acceptance — authenticated by invite token only (not JWT privilege).
    * Role/branch come solely from the invite row; body overrides are ignored by the repository.
    */
   router.post("/staff/invites/accept", validateBody(acceptInviteSchema), async (req, res, next) => {
     try {
-      const result = await dependencies.staffInviteRepository.acceptInvite({
-        token: req.body.token,
-        password: req.body.password,
-        fullName: req.body.fullName,
-      });
+      const result = await dependencies.staffInviteRepository.acceptInvite(
+        {
+          token: req.body.token,
+          password: req.body.password,
+          fullName: req.body.fullName,
+        },
+        {
+          ip: typeof req.ip === "string" ? req.ip : null,
+          userAgent: typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"] : null,
+        },
+      );
 
       return res.status(201).json({
         ok: true,

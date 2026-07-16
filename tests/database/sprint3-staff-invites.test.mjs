@@ -18,6 +18,11 @@ const acceptMigration = readFileSync(
   "utf8",
 );
 
+const lockedDecisionsMigration = readFileSync(
+  join(workspaceRoot, "supabase", "migrations", "20260716103000_sprint3_slice2b_locked_decisions.sql"),
+  "utf8",
+);
+
 test("slice 2B permissions seed staff.create and staff.assign_role for super-admin only", () => {
   assert.match(permissionsMigration, /staff\.create/);
   assert.match(permissionsMigration, /staff\.assign_role/);
@@ -40,4 +45,13 @@ test("accept helper is security definer and provisions without metadata privileg
   assert.match(acceptMigration, /telepizza\.allow_staff_provision/);
   assert.match(acceptMigration, /code = 'customer'/);
   assert.doesNotMatch(acceptMigration, /raw_user_meta_data/);
+});
+
+test("locked decisions deny super-admin invites and require operating branch", () => {
+  assert.match(lockedDecisionsMigration, /auth_user_email_exists/);
+  assert.match(lockedDecisionsMigration, /role_code in \('customer', 'super-admin'\)/);
+  assert.match(lockedDecisionsMigration, /branch_id is required for every staff invite/);
+  assert.match(lockedDecisionsMigration, /branch must be operating/);
+  assert.match(lockedDecisionsMigration, /invite account conflict/);
+  assert.match(lockedDecisionsMigration, /'branch-manager',\s*'cashier',\s*'kitchen',\s*'rider',\s*'customer-support'/);
 });
