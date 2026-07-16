@@ -1,5 +1,9 @@
 export const AUTH_MIN_PASSWORD_LENGTH = 8;
 
+/** Matches production Supabase strength policy (letters + digit + symbol). */
+export const AUTH_PASSWORD_REQUIREMENTS_COPY =
+  "At least 8 characters, including uppercase, lowercase, a number, and a symbol.";
+
 export type SignupInput = {
   email: string;
   password: string;
@@ -9,6 +13,8 @@ export type SignupInput = {
 export type SignupValidationResult =
   | { ok: true; email: string; password: string; fullName?: string }
   | { ok: false; message: string };
+
+export type PasswordValidationResult = { ok: true } | { ok: false; message: string };
 
 /**
  * Google OAuth for customers (Gmail-first UX).
@@ -24,11 +30,29 @@ export function isGoogleOAuthConfigured(): boolean {
   return flag === "true" || flag === "1" || flag === "on" || flag === undefined || flag === "";
 }
 
-export function getGoogleOAuthRedirectTo(): string {
-  if (typeof window === "undefined") {
-    return "/account";
+export { getGoogleOAuthRedirectTo } from "@/lib/auth-redirect";
+
+export function validatePasswordStrength(password: string): PasswordValidationResult {
+  if (password.length < AUTH_MIN_PASSWORD_LENGTH) {
+    return {
+      ok: false,
+      message: `Password must be at least ${AUTH_MIN_PASSWORD_LENGTH} characters.`,
+    };
   }
-  return `${window.location.origin}/account`;
+
+  const hasLower = /[a-z]/.test(password);
+  const hasUpper = /[A-Z]/.test(password);
+  const hasDigit = /\d/.test(password);
+  const hasSymbol = /[^A-Za-z0-9]/.test(password);
+
+  if (!hasLower || !hasUpper || !hasDigit || !hasSymbol) {
+    return {
+      ok: false,
+      message: AUTH_PASSWORD_REQUIREMENTS_COPY,
+    };
+  }
+
+  return { ok: true };
 }
 
 export function validateSignupInput(input: SignupInput): SignupValidationResult {
@@ -40,11 +64,9 @@ export function validateSignupInput(input: SignupInput): SignupValidationResult 
     return { ok: false, message: "Enter a valid email address." };
   }
 
-  if (password.length < AUTH_MIN_PASSWORD_LENGTH) {
-    return {
-      ok: false,
-      message: `Password must be at least ${AUTH_MIN_PASSWORD_LENGTH} characters.`,
-    };
+  const passwordCheck = validatePasswordStrength(password);
+  if (!passwordCheck.ok) {
+    return passwordCheck;
   }
 
   return {
@@ -71,7 +93,7 @@ export function mapSupabaseAuthError(message: string | undefined): string {
     normalized.includes("unsupported provider") ||
     normalized.includes("validation_failed")
   ) {
-    return "Google sign-in is not available yet. Please use email and password, or try again later.";
+    return "Google sign-in is not available right now. Please use email and password, or try again later.";
   }
 
   if (
@@ -108,7 +130,7 @@ export function mapSupabaseAuthError(message: string | undefined): string {
         (normalized.includes("number") && normalized.includes("symbol")) ||
         normalized.includes("special character")))
   ) {
-    return "Password is too weak. Use a longer mix of letters, numbers, and symbols.";
+    return AUTH_PASSWORD_REQUIREMENTS_COPY;
   }
 
   // Length-only messages — do NOT map every error that merely contains "password".
@@ -124,7 +146,20 @@ export function mapSupabaseAuthError(message: string | undefined): string {
     return `Password must be at least ${AUTH_MIN_PASSWORD_LENGTH} characters.`;
   }
 
-  return message?.trim() || "Something went wrong. Please try again.";
+  // Never leak raw provider/Supabase internals to the UI.
+  if (!message?.trim()) {
+    return "Something went wrong. Please try again.";
+  }
+  if (
+    normalized.includes("supabase") ||
+    normalized.includes("jwt") ||
+    normalized.includes("postgres") ||
+    normalized.includes("stack")
+  ) {
+    return "Something went wrong. Please try again.";
+  }
+
+  return message.trim();
 }
 
 export type AuthMeResponse = {

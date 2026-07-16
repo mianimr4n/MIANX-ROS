@@ -11,6 +11,8 @@ type GoogleSignInButtonProps = {
   label?: string;
   /** Gmail-first: show Google above the email form with an "or" divider below. */
   placement?: "primary" | "secondary";
+  dividerLabel?: string;
+  next?: string | null;
 };
 
 export function GoogleSignInButton({
@@ -18,6 +20,8 @@ export function GoogleSignInButton({
   onError,
   label = "Continue with Google",
   placement = "primary",
+  dividerLabel = "or",
+  next,
 }: GoogleSignInButtonProps) {
   const { signInWithGoogle } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -30,7 +34,7 @@ export function GoogleSignInButton({
     if (loading || disabled) return;
     setLoading(true);
     try {
-      const result = await signInWithGoogle();
+      const result = await signInWithGoogle({ next });
       if (!result.ok) {
         onError?.(result.message);
         setLoading(false);
@@ -45,7 +49,7 @@ export function GoogleSignInButton({
   const divider = (
     <div className="flex items-center gap-3 text-xs text-muted-foreground">
       <div className="h-px flex-1 bg-border" />
-      <span>or</span>
+      <span>{dividerLabel}</span>
       <div className="h-px flex-1 bg-border" />
     </div>
   );

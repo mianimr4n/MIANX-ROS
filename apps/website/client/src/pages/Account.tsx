@@ -2,7 +2,16 @@ import { Link } from "wouter";
 import { Bell, Gift, LogOut, Package, UserCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { listNotifications } from "@/lib/customer-store";
+
+function providerLabel(user: { app_metadata?: { provider?: string; providers?: string[] } } | null): string | null {
+  if (!user) return null;
+  const providers = user.app_metadata?.providers;
+  if (Array.isArray(providers) && providers.includes("google")) return "Google";
+  if (user.app_metadata?.provider === "google") return "Google";
+  if (Array.isArray(providers) && providers.includes("email")) return "Email";
+  if (user.app_metadata?.provider === "email") return "Email";
+  return null;
+}
 
 export default function Account() {
   const { profile, user, isAuthenticated, isLoading, signOut } = useAuth();
@@ -40,8 +49,8 @@ export default function Account() {
   }
 
   const displayName = profile?.fullName || user.email?.split("@")[0] || "Customer";
-  const notificationKey = profile?.phone || user.email || user.id;
-  const unreadNotifications = listNotifications(notificationKey).filter((entry) => !entry.read).length;
+  const email = profile?.email || user.email || null;
+  const signedInWith = providerLabel(user);
 
   return (
     <div className="min-h-screen bg-background py-10">
@@ -49,13 +58,14 @@ export default function Account() {
         <div className="rounded-3xl border border-border bg-white p-6 flex items-start justify-between gap-4">
           <div>
             <h1 className="brand-heading text-3xl mb-1">{displayName}</h1>
+            {email ? <p className="text-sm text-muted-foreground">{email}</p> : null}
+            {signedInWith ? (
+              <p className="text-xs text-muted-foreground mt-1">Signed in with {signedInWith}</p>
+            ) : null}
             {profile?.phone ? (
-              <p className="text-muted-foreground">{profile.phone}</p>
+              <p className="text-muted-foreground mt-2">{profile.phone}</p>
             ) : (
-              <p className="text-sm text-muted-foreground">Phone can be added later at checkout.</p>
-            )}
-            {(profile?.email || user.email) && (
-              <p className="text-sm text-muted-foreground">{profile?.email || user.email}</p>
+              <p className="text-sm text-muted-foreground mt-2">Phone can be added at checkout</p>
             )}
           </div>
           <Button
@@ -78,20 +88,16 @@ export default function Account() {
               <div className="text-sm text-muted-foreground">View order history</div>
             </div>
           </Link>
-          <Link href="/loyalty">
-            <div className="rounded-3xl border border-border bg-white p-5 hover:border-brand-red/30 transition-colors">
-              <Gift className="w-6 h-6 text-brand-red mb-3" />
-              <div className="font-bold">Loyalty</div>
-              <div className="text-sm text-muted-foreground">Coming Soon</div>
-            </div>
-          </Link>
-          <Link href="/notifications">
-            <div className="rounded-3xl border border-border bg-white p-5 hover:border-brand-red/30 transition-colors">
-              <Bell className="w-6 h-6 text-brand-red mb-3" />
-              <div className="font-bold">Notifications</div>
-              <div className="text-sm text-muted-foreground">{unreadNotifications} unread</div>
-            </div>
-          </Link>
+          <div className="rounded-3xl border border-border bg-white/70 p-5 opacity-80">
+            <Gift className="w-6 h-6 text-brand-red mb-3" />
+            <div className="font-bold">Loyalty</div>
+            <div className="text-sm text-muted-foreground">Coming Soon</div>
+          </div>
+          <div className="rounded-3xl border border-border bg-white/70 p-5 opacity-80">
+            <Bell className="w-6 h-6 text-brand-red mb-3" />
+            <div className="font-bold">Notifications</div>
+            <div className="text-sm text-muted-foreground">Coming Soon</div>
+          </div>
         </div>
       </div>
     </div>

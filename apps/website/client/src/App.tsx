@@ -13,6 +13,7 @@ import OrderSuccess from "./pages/OrderSuccess";
 import TrackOrder from "./pages/TrackOrder";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import AuthCallback from "./pages/AuthCallback";
 import StaffAccept from "./pages/StaffAccept";
 import Account from "./pages/Account";
 import Orders from "./pages/Orders";
@@ -52,6 +53,7 @@ function Router() {
       <Route path="/track" component={TrackOrder} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/staff/accept" component={StaffAccept} />
       <Route path="/account" component={Account} />
       <Route path="/orders" component={Orders} />
