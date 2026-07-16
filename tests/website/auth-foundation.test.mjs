@@ -72,10 +72,6 @@ function mapSupabaseAuthError(message) {
   return message?.trim() || "Something went wrong. Please try again.";
 }
 
-function isGoogleOAuthConfigured() {
-  return false;
-}
-
 test("signup validation rejects bad email and short passwords", () => {
   assert.equal(validateSignupInput({ email: "bad", password: "password1" }).ok, false);
   assert.equal(validateSignupInput({ email: "a@b.com", password: "short" }).ok, false);
@@ -112,14 +108,31 @@ test("login errors stay generic for invalid credentials and confirm-email is exp
   assert.match(authUtils, /do NOT map every error that merely contains "password"/i);
 });
 
-test("Google OAuth stays disabled for Slice 1", () => {
-  assert.equal(isGoogleOAuthConfigured(), false);
+test("login and register wire Google OAuth with account redirect", () => {
   const login = read("apps/website/client/src/pages/Login.tsx");
   const register = read("apps/website/client/src/pages/Register.tsx");
-  assert.match(login, /Google OAuth intentionally omitted/i);
-  assert.match(register, /Google OAuth intentionally omitted/i);
-  assert.doesNotMatch(login, /signInWithOAuth/i);
-  assert.doesNotMatch(register, /signInWithOAuth/i);
+  const authUtils = read("apps/website/client/src/lib/auth-utils.ts");
+  const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
+  const googleButton = read("apps/website/client/src/components/GoogleSignInButton.tsx");
+  const supabase = read("apps/website/client/src/lib/supabase.ts");
+
+  assert.match(authUtils, /export function isGoogleOAuthConfigured\(\): boolean/);
+  assert.match(authUtils, /VITE_GOOGLE_OAUTH_ENABLED/);
+  assert.match(authUtils, /getGoogleOAuthRedirectTo[\s\S]*\/account/);
+  assert.match(
+    authContext,
+    /signInWithOAuth\(\{\s*provider:\s*["']google["']/,
+  );
+  assert.match(authContext, /redirectTo:\s*getGoogleOAuthRedirectTo\(\)/);
+  assert.match(supabase, /detectSessionInUrl:\s*true/);
+  assert.match(supabase, /flowType:\s*["']pkce["']/);
+  assert.match(login, /GoogleSignInButton/);
+  assert.match(register, /GoogleSignInButton/);
+  assert.match(login, /placement=["']primary["']/);
+  assert.match(register, /placement=["']primary["']/);
+  assert.match(googleButton, /Continue with Google/);
+  assert.doesNotMatch(login, /Google OAuth intentionally omitted/i);
+  assert.doesNotMatch(register, /Google OAuth intentionally omitted/i);
 });
 
 test("Login page validates email, blocks double submit, and keeps OTP out of scope", () => {

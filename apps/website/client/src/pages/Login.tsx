@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthPageShell } from "@/components/AuthPageShell";
-import { isGoogleOAuthConfigured } from "@/lib/auth-utils";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 function isValidEmail(value: string): boolean {
@@ -75,7 +75,7 @@ export default function Login() {
   return (
     <AuthPageShell
       title="Welcome back"
-      description="Sign in with your email and password to manage orders and account details."
+      description="Sign in with Google or email to manage orders and account details."
       note={
         isSupabaseConfigured
           ? undefined
@@ -87,6 +87,12 @@ export default function Login() {
         className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-4"
         noValidate
       >
+        <GoogleSignInButton
+          disabled={formDisabled}
+          onError={(message) => setError(message)}
+          label="Continue with Google"
+          placement="primary"
+        />
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -102,7 +108,7 @@ export default function Login() {
             className="rounded-2xl"
             required
             disabled={formDisabled}
-            placeholder="you@example.com"
+            placeholder="you@gmail.com"
           />
         </div>
         <div className="space-y-2">
@@ -143,12 +149,8 @@ export default function Login() {
           className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
           disabled={formDisabled}
         >
-          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign in"}
+          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign in with email"}
         </Button>
-        {/* Google OAuth intentionally omitted — Slice 1 keeps it disabled. */}
-        {isGoogleOAuthConfigured() ? (
-          <p className="text-xs text-muted-foreground text-center">Google sign-in</p>
-        ) : null}
       </form>
 
       <div className="mt-5 space-y-3 text-center text-sm text-muted-foreground">

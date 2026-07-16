@@ -10,9 +10,25 @@ export type SignupValidationResult =
   | { ok: true; email: string; password: string; fullName?: string }
   | { ok: false; message: string };
 
+/**
+ * Google OAuth for customers (Gmail-first UX).
+ * Enabled by default when Supabase is configured; set VITE_GOOGLE_OAUTH_ENABLED=false to hide.
+ * Provider credentials live in Supabase Auth (Google) — never in the frontend.
+ */
 export function isGoogleOAuthConfigured(): boolean {
-  // Slice 1: Google OAuth remains disabled regardless of miscellaneous env noise.
-  return false;
+  const flag = import.meta.env.VITE_GOOGLE_OAUTH_ENABLED?.trim().toLowerCase();
+  if (flag === "false" || flag === "0" || flag === "off") {
+    return false;
+  }
+  // Explicit enable, or default-on when flag unset.
+  return flag === "true" || flag === "1" || flag === "on" || flag === undefined || flag === "";
+}
+
+export function getGoogleOAuthRedirectTo(): string {
+  if (typeof window === "undefined") {
+    return "/account";
+  }
+  return `${window.location.origin}/account`;
 }
 
 export function validateSignupInput(input: SignupInput): SignupValidationResult {
@@ -48,6 +64,14 @@ export function mapSupabaseAuthError(message: string | undefined): string {
 
   if (normalized.includes("email not confirmed")) {
     return "Please confirm your email before signing in.";
+  }
+
+  if (
+    normalized.includes("provider is not enabled") ||
+    normalized.includes("unsupported provider") ||
+    normalized.includes("validation_failed")
+  ) {
+    return "Google sign-in is not available yet. Please use email and password, or try again later.";
   }
 
   if (
