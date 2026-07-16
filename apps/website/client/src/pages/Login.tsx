@@ -164,6 +164,10 @@ export default function Login() {
         >
           {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign in with email"}
         </Button>
+        <p className="text-xs text-muted-foreground text-center">
+          Created your account with Google? Continue with Google, or set a password from your Account
+          page.
+        </p>
       </form>
 
       <div className="mt-5 space-y-3 text-center text-sm text-muted-foreground">
