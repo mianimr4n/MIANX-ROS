@@ -5,7 +5,6 @@ import { ApiError } from "../../common/http.js";
 import {
   collectCatalogSlugs,
   hashIdempotencyPayload,
-  normalizePhoneDigits,
   normalizePhoneE164,
   parseNumber,
   priceOrderLines,
@@ -22,7 +21,14 @@ import {
   parseAndVerifyQuoteToken,
 } from "./quote-token.js";
 import { collectClientMoneyWarnings } from "./warnings.js";
+import { contactPhoneMatchesOrder } from "./phone-access.js";
+import {
+  assertCustomerCancelAllowed,
+  CustomerCancelNotAllowedError,
+} from "./cancel-rules.js";
 import type {
+  CancelOrderInput,
+  CancelOrderResult,
   CreateOrderInput,
   CreatedOrderSummary,
   OrderTrackingSummary,
@@ -491,17 +497,13 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         return null;
       }
 
-      const storedDigits = normalizePhoneDigits(
-        (order.contact_phone_e164 as string | null) || order.contact_phone,
-      );
-      const inputDigits = normalizePhoneDigits(contactPhone);
-      const phonesMatch =
-        storedDigits === inputDigits ||
-        storedDigits.endsWith(inputDigits) ||
-        inputDigits.endsWith(storedDigits.replace(/^92/, "")) ||
-        normalizePhoneDigits(order.contact_phone) === inputDigits;
-
-      if (!phonesMatch) {
+      if (
+        !contactPhoneMatchesOrder(
+          order.contact_phone,
+          order.contact_phone_e164 as string | null,
+          contactPhone,
+        )
+      ) {
         throw new ApiError(403, "ORDER_ACCESS_DENIED", "Phone number does not match this order.");
       }
 
@@ -538,6 +540,94 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         ),
       };
     },
+
+    async cancelOrder(input: CancelOrderInput): Promise<CancelOrderResult> {
+      const supabase = getClient();
+      const { data: order, error } = await supabase
+        .from("orders")
+        .select("id, order_number, status, contact_phone, contact_phone_e164, created_at")
+        .eq("order_number", input.orderNumber)
+        .maybeSingle();
+
+      if (error) {
+        throw new ApiError(500, "ORDER_LOOKUP_FAILED", error.message);
+      }
+      if (!order) {
+        throw new ApiError(404, "ORDER_NOT_FOUND", "Order not found.");
+      }
+
+      if (
+        !contactPhoneMatchesOrder(
+          order.contact_phone,
+          order.contact_phone_e164 as string | null,
+          input.contactPhone,
+        )
+      ) {
+        throw new ApiError(403, "ORDER_ACCESS_DENIED", "Phone number does not match this order.");
+      }
+
+      try {
+        assertCustomerCancelAllowed({
+          status: order.status,
+          createdAt: order.created_at,
+        });
+      } catch (cancelError) {
+        if (cancelError instanceof CustomerCancelNotAllowedError) {
+          throw new ApiError(409, cancelError.code, cancelError.message);
+        }
+        throw cancelError;
+      }
+
+      const cancelReasonCode = input.reasonCode?.trim() || "customer_cancelled";
+      const cancelNote = input.note?.trim() || null;
+      const cancelledAt = new Date().toISOString();
+
+      const { data: updated, error: updateError } = await supabase
+        .from("orders")
+        .update({
+          status: "cancelled",
+          cancel_reason_code: cancelReasonCode,
+          cancel_note: cancelNote,
+          updated_at: cancelledAt,
+        })
+        .eq("id", order.id)
+        .eq("status", "pending")
+        .select("order_number, status")
+        .maybeSingle();
+
+      if (updateError) {
+        throw new ApiError(500, "ORDER_CANCEL_FAILED", updateError.message);
+      }
+      if (!updated) {
+        throw new ApiError(
+          409,
+          "ORDER_INVALID_TRANSITION",
+          "Order status changed and can no longer be cancelled.",
+        );
+      }
+
+      await supabase.from("order_status_logs").insert({
+        order_id: order.id,
+        from_status: "pending",
+        to_status: "cancelled",
+        actor_type: "guest",
+        reason_code: cancelReasonCode,
+        note: cancelNote,
+      });
+
+      await supabase
+        .from("deliveries")
+        .update({ status: "cancelled", updated_at: cancelledAt })
+        .eq("order_id", order.id)
+        .neq("status", "delivered");
+
+      return {
+        orderNumber: updated.order_number,
+        status: "cancelled",
+        cancelledAt,
+        cancelReasonCode,
+      };
+    },
   };
 }
 
@@ -559,6 +649,9 @@ export function createUnavailableOrdersDataSource(): OrdersDataSource {
     },
     async getOrderTracking() {
       throw new ApiError(503, "ORDERS_UNAVAILABLE", "Order tracking API is not configured.");
+    },
+    async cancelOrder() {
+      throw new ApiError(503, "ORDERS_UNAVAILABLE", "Order cancellation API is not configured.");
     },
   };
 }

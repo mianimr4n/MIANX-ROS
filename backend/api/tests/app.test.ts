@@ -142,6 +142,20 @@ const ordersDataSource: OrdersDataSource = {
       ],
     };
   },
+  async cancelOrder(input) {
+    if (input.orderNumber !== "TP-TEST-1") {
+      throw Object.assign(new Error("Order not found."), {
+        statusCode: 404,
+        code: "ORDER_NOT_FOUND",
+      });
+    }
+    return {
+      orderNumber: input.orderNumber,
+      status: "cancelled" as const,
+      cancelledAt: new Date().toISOString(),
+      cancelReasonCode: input.reasonCode ?? "customer_cancelled",
+    };
+  },
 };
 
 describe("Telepizza API app", () => {
@@ -315,5 +329,26 @@ describe("Telepizza API app", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data.orderNumber).toBe("TP-TEST-1");
+  });
+
+  it("cancels guest orders through the configured orders source", async () => {
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
+    const response = await request(app)
+      .post("/api/v1/orders/TP-TEST-1/cancel")
+      .send({ contactPhone: "03041110495", note: "Changed plans" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.status).toBe("cancelled");
+    expect(response.body.data.orderNumber).toBe("TP-TEST-1");
+  });
+
+  it("validates cancel payloads", async () => {
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
+    const response = await request(app)
+      .post("/api/v1/orders/TP-TEST-1/cancel")
+      .send({ contactPhone: "" });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe("VALIDATION_ERROR");
   });
 });

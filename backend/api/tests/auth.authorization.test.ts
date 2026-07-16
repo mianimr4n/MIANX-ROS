@@ -45,6 +45,9 @@ const ordersDataSource: OrdersDataSource = {
   async getOrderTracking() {
     return null;
   },
+  async cancelOrder() {
+    throw new Error("not used");
+  },
 };
 
 function mockUser(id: string, email: string): User {

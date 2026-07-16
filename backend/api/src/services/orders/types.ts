@@ -115,8 +115,23 @@ export interface OrderTrackingSummary {
   }>;
 }
 
+export interface CancelOrderInput {
+  orderNumber: string;
+  contactPhone: string;
+  reasonCode?: string;
+  note?: string;
+}
+
+export interface CancelOrderResult {
+  orderNumber: string;
+  status: "cancelled";
+  cancelledAt: string;
+  cancelReasonCode: string;
+}
+
 export interface OrdersDataSource {
   quoteOrder(input: QuoteOrderInput): Promise<QuoteOrderResult>;
   createOrder(input: CreateOrderInput): Promise<CreatedOrderSummary>;
   getOrderTracking(orderNumber: string, contactPhone: string): Promise<OrderTrackingSummary | null>;
+  cancelOrder(input: CancelOrderInput): Promise<CancelOrderResult>;
 }
