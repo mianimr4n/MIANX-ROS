@@ -1,14 +1,14 @@
 # Sprint 4 — Orders Domain Architecture
 
-**Status:** ✅ **APPROVED / FROZEN** for implementation (O1–O12 locked)  
-**Type:** Complete blueprint for production Orders Backend  
-**Date:** 2026-07-16  
-**Owner decisions:** O1–O12 **APPROVED** with recommended defaults (do not silently change)  
-**Conflict resolutions:** R1–R4 approved — see `SPRINT-04-1-CONFLICT-REPORT.md`  
-**Baseline:** Sprint 1–2 CLOSED · Sprint 3.5 + Slice 2B CLOSED · Slice 2C OTP **BLOCKED** on provider ops  
-**Catalog freeze:** **13 categories / 58 items / 3 toppings / 40 variants / 7 deals** (v1.2.0)  
-**Ordering WhatsApp:** **0304-1110495** — must remain unchanged  
-**Authz SSOT:** DB-backed `AuthPrincipal` only  
+**Status:** ✅ **APPROVED / FROZEN** for implementation (O1–O12 locked)
+**Type:** Complete blueprint for production Orders Backend
+**Date:** 2026-07-16
+**Owner decisions:** O1–O12 **APPROVED** with recommended defaults (do not silently change)
+**Conflict resolutions:** R1–R4 approved — see `SPRINT-04-1-CONFLICT-REPORT.md`
+**Baseline:** Sprint 1–2 CLOSED · Sprint 3.5 + Slice 2B CLOSED · Slice 2C OTP **BLOCKED** on provider ops
+**Catalog freeze:** **13 categories / 58 items / 3 toppings / 40 variants / 7 deals** (v1.2.0)
+**Ordering WhatsApp:** **0304-1110495** — must remain unchanged
+**Authz SSOT:** DB-backed `AuthPrincipal` only
 
 ```text
 Website → Checkout → Order → Branch → Kitchen → Rider → Delivery → Admin/POS
@@ -16,10 +16,10 @@ Website → Checkout → Order → Branch → Kitchen → Rider → Delivery →
 
 **Hard constraints:**
 
-- Never trust frontend prices, totals, role, user id, or branch id for authorization  
-- Preserve anonymous cart + current WhatsApp ordering flow  
-- Staff lifecycle APIs locked until Slice 2D (O9/O10)  
-- No silent changes to O1–O12  
+- Never trust frontend prices, totals, role, user id, or branch id for authorization
+- Preserve anonymous cart + current WhatsApp ordering flow
+- Staff lifecycle APIs locked until Slice 2D (O9/O10)
+- No silent changes to O1–O12
 
 **Related:** `AUTHENTICATION_ARCHITECTURE.md`, `SLICE-2C0-OTP-OPERATIONS-READINESS.md`, `SPRINT-04-IMPLEMENTATION-BRIEF.md`, `SPRINT-04-1-CLOSE-AND-4-2-READINESS.md`
 
@@ -86,21 +86,21 @@ Website → Checkout → Order → Branch → Kitchen → Rider → Delivery →
 
 ### Reuse
 
-- Tables `orders` / `order_items` / `payments` / `deliveries` / `riders`  
-- Create + tracking endpoints as starting point  
-- Menu catalog as pricing source of truth  
-- `AuthPrincipal` + `requirePermission` / `requireBranchAccess` middleware (not yet on orders)  
-- WhatsApp handoff + anonymous cart UX  
-- Email/password sessions for optional customer attach later  
+- Tables `orders` / `order_items` / `payments` / `deliveries` / `riders`
+- Create + tracking endpoints as starting point
+- Menu catalog as pricing source of truth
+- `AuthPrincipal` + `requirePermission` / `requireBranchAccess` middleware (not yet on orders)
+- WhatsApp handoff + anonymous cart UX
+- Email/password sessions for optional customer attach later
 
 ### Stubbed / incomplete
 
-- Payments write path  
-- Status machine + history  
-- Staff/kitchen/rider APIs  
-- Server quote  
-- Guest→customer linking  
-- Delivery fee / tax / discount engines  
+- Payments write path
+- Status machine + history
+- Staff/kitchen/rider APIs
+- Server quote
+- Guest→customer linking
+- Delivery fee / tax / discount engines
 
 ### Unsafe / incomplete
 
@@ -116,9 +116,9 @@ Website → Checkout → Order → Branch → Kitchen → Rider → Delivery →
 
 ### Must wait for customer phone OTP (Slice 2C)
 
-- Phone-primary login UX  
-- Strong “my orders by phone identity” without email  
-- OTP-linked guest merge automation  
+- Phone-primary login UX
+- Strong “my orders by phone identity” without email
+- OTP-linked guest merge automation
 
 **Does not block:** guest checkout, server pricing, status machine schema, staff lifecycle design (implementation of staff APIs waits on **Slice 2D RLS** + owner lock).
 
@@ -186,14 +186,14 @@ Illegal transitions → `409 ORDER_INVALID_TRANSITION`.
 
 ### 3.5 Branch rejection
 
-- Transition to `cancelled` with reason `rejected_by_branch` + free-text note  
-- Actor: BM / cashier with `order.manage`  
+- Transition to `cancelled` with reason `rejected_by_branch` + free-text note
+- Actor: BM / cashier with `order.manage`
 
 ### 3.6 Kitchen / rider
 
-- Kitchen: `confirmed → preparing → ready`  
-- Rider: mutate **`deliveries`**: `pending → assigned → picked-up → delivered` (and mirror order `ready → dispatched → completed`)  
-- Never let rider change other branches’ orders  
+- Kitchen: `confirmed → preparing → ready`
+- Rider: mutate **`deliveries`**: `pending → assigned → picked-up → delivered` (and mirror order `ready → dispatched → completed`)
+- Never let rider change other branches’ orders
 
 ### 3.7 Payment vs delivery separation
 
@@ -209,8 +209,8 @@ COD Multan V1: create with `payment_status=pending`; mark `paid` when cashier co
 
 Append-only `order_status_logs`:
 
-- `order_id`, `from_status`, `to_status`, `actor_user_id` (nullable for system), `actor_type` (`customer|staff|system|guest`), `reason_code`, `note`, `created_at`  
-- No deletes; service-role or SECURITY DEFINER writer only  
+- `order_id`, `from_status`, `to_status`, `actor_user_id` (nullable for system), `actor_type` (`customer|staff|system|guest`), `reason_code`, `note`, `created_at`
+- No deletes; service-role or SECURITY DEFINER writer only
 
 ---
 
@@ -218,23 +218,23 @@ Append-only `order_status_logs`:
 
 ### 4.1 Rule
 
-**Server calculates all authoritative money fields from Postgres catalog.**  
+**Server calculates all authoritative money fields from Postgres catalog.**
 Frontend totals / `unitPrice` / `extras[].price` / `subtotal` / `total` are **display-only** and must be ignored for persistence (may be accepted only for mismatch detection / telemetry).
 
 ### 4.2 Quote + create validation pipeline
 
 For each line:
 
-1. Resolve `menu_item` by slug; must exist, `is_available`, not hidden topping-as-standalone abuse  
-2. Resolve variant by `variantLabel` / `size_code`; must be `is_available`  
-3. Resolve each topping by **SKU slug** (`extra-chicken` …); price from topping variant matching pizza size tier (`small|medium|large` via same rules as `cart-config.ts`)  
-4. Reject unknown / unavailable topping or missing size tier price  
-5. Quantity ∈ positive int with max cap (recommend ≤ 20 / line, ≤ 50 lines)  
-6. Branch by `branchCode` must be `operating`  
-7. Snapshot: store `product_name`, `variant_name`, **`unit_price` (food only)**, **`extras_snapshot` jsonb**, **`line_unit_price`**, `line_total` at order time  
-8. Subtotal = Σ line totals  
-9. Delivery fee / discount / tax from **server policy** (V1: all **0** unless O7 changes)  
-10. Grand total = subtotal − discount + tax + delivery_fee  
+1. Resolve `menu_item` by slug; must exist, `is_available`, not hidden topping-as-standalone abuse
+2. Resolve variant by `variantLabel` / `size_code`; must be `is_available`
+3. Resolve each topping by **SKU slug** (`extra-chicken` …); price from topping variant matching pizza size tier (`small|medium|large` via same rules as `cart-config.ts`)
+4. Reject unknown / unavailable topping or missing size tier price
+5. Quantity ∈ positive int with max cap (recommend ≤ 20 / line, ≤ 50 lines)
+6. Branch by `branchCode` must be `operating`
+7. Snapshot: store `product_name`, `variant_name`, **`unit_price` (food only)**, **`extras_snapshot` jsonb**, **`line_unit_price`**, `line_total` at order time
+8. Subtotal = Σ line totals
+9. Delivery fee / discount / tax from **server policy** (V1: all **0** unless O7 changes)
+10. Grand total = subtotal − discount + tax + delivery_fee
 
 ### 4.3 Immutable snapshots
 
@@ -277,8 +277,8 @@ Future menu price edits **must not** rewrite historical `order_items` prices.
 
 ### 5.3 Lookup
 
-- Guest: tracking by `order_number` + phone (existing) + rate limit  
-- Auth customer: list own orders via JWT → principal → customer/user link (after schema attach)  
+- Guest: tracking by `order_number` + phone (existing) + rate limit
+- Auth customer: list own orders via JWT → principal → customer/user link (after schema attach)
 
 ---
 
@@ -374,8 +374,8 @@ Canonical payload for hash **excludes** all client money fields (unitPrice, extr
 
 ### 7.8 Rate limiting
 
-- Quote/create: tight per IP; create also per normalized phone  
-- Tracking: per IP + order number  
+- Quote/create: tight per IP; create also per normalized phone
+- Tracking: per IP + order number
 
 ---
 
@@ -464,21 +464,24 @@ Forward-only migrations (after approval):
 
 ---
 
-## Stage 12 — Implementation slices (R1 locked)
+## Stage 12 — Implementation slices (updated 2026-07-16)
 
 | Slice | Scope | Status note |
 |---|---|---|
 | **4.0** | Architecture + O1–O12 freeze | ✅ APPROVED / FROZEN |
-| **4.1** | Schema foundation: status logs, snapshots columns, idempotency columns, phone_e164, cancel fields; create harden | ✅ Landed in **PR #35** |
-| **4.2** | Server **quote** + pricing engine + `quoteId` / `expiresAt` / `warnings` | 🟡 Partial early land in PR #35; finish remaining gaps as **4.2 only** |
-| **4.3** | Hardened create/read/cancel + guest tracking | After 4.2 close |
-| **4.4** | Website checkout uses quote/create; keep WhatsApp + local fallback | After 4.3 |
+| **4.1** | Schema foundation: status logs, snapshots, idempotency, phone_e164, cancel fields | ✅ PASS AND CLOSED (prod) |
+| **4.2** | Server quote + pricing + `quoteId` / `expiresAt` / `warnings` | ✅ merged · production |
+| **4.3** | Website checkout quote/create + guest tracking | ✅ PASS AND CLOSED (prod) |
+| **4.3B** | Guest cancel + canonical read + rate limits | ✅ PASS AND CLOSED (prod) |
+| **4.4** | **Order Lifecycle Architecture** (branch/kitchen/rider/cancel/audit/RLS) | ▶ plan-only — `SPRINT-04-4-ORDER-LIFECYCLE-ARCHITECTURE.md` |
+| **2D** | RLS for orders/payments/deliveries/logs | 🔒 Hard gate before staff UI |
 | **4.5** | Staff transition APIs + kitchen queue read | **Requires O9 + Slice 2D** |
 | **4.6** | Rider assign + delivery transitions | After 4.5 |
-| **4.7** | Production rollout, smoke, close | Gate next sprint UIs |
+| **4.7** | Lifecycle APIs production rollout / smoke / close | After 4.6 |
 
-**R1:** Quote / server pricing product work is **Sprint 4.2**, not 4.1.  
-**R4:** Canonical workstream was **PR #35** (merged). Do **not** create competing `feature/sprint-4-orders-pricing`.
+**Master sequence:** `TELEPIZZA-MASTER-ROADMAP.md` (Phases 0–15).
+**R1:** Quote / server pricing product work is **Sprint 4.2**, not 4.1.
+**Renumber note:** Website checkout shipped as **4.3**; lifecycle architecture is **4.4** (supersedes older “4.4 = website” label).
 
 ---
 

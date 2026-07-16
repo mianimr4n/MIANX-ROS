@@ -1,8 +1,10 @@
 # Telepizza — Project Milestone & Parallel Roadmap
 
 **Date:** 2026-07-16
-**Status:** Milestone confirmed by owner
-**Baseline:** Catalog freeze v1.2.0 · Auth foundation (Slices 1–2B) · Slice 2C architecture approved
+**Status:** Milestone confirmed · **Master sequence LOCKED**
+**Canonical master:** `TELEPIZZA-MASTER-ROADMAP.md` (Phases 0–15)
+**Baseline:** Catalog freeze v1.2.0 · Auth foundation (Slices 1–2B) · Orders Core 4.1–4.3 CLOSED
+**Lifecycle architecture:** `SPRINT-04-4-ORDER-LIFECYCLE-ARCHITECTURE.md` (plan-only)
 
 ---
 
@@ -10,23 +12,23 @@
 
 | Sprint / Slice | Status |
 |---|---|
-| Sprint 1 | ✅ Complete |
-| Sprint 2 | ✅ Complete |
-| Sprint 3 Slice 1 | ✅ Complete |
-| Sprint 3 Slice 2A | ✅ Complete |
-| Sprint 3 Slice 2B | ✅ Complete |
-| Sprint 3.5 | ✅ Complete |
-| **Sprint 4.1** Orders foundation | ✅ PASS AND CLOSED (production) |
-| **Sprint 4.2** Quote contract | ✅ merged · production |
-| **Sprint 4.3** Website checkout | ✅ PASS AND CLOSED (production) |
-| **Sprint 4.3 Phase B** Guest read/cancel | ✅ PASS AND CLOSED (production) |
-| **Slice 2C** | 🟡 Architecture approved — **BLOCKED** on WhatsApp Business / Twilio ops |
-| Slice 2D | 🔒 Not started (RLS gate before POS unlock) |
-| Sprint 4.5+ Staff lifecycle | 🔒 After Slice 2D |
+| Phase 0 Foundation & Governance | ✅ Complete |
+| Phase 1 Public Website & Catalog | ✅ Complete |
+| Phase 2 Auth & Authorization | ✅ Complete |
+| Phase 3 Phone/WhatsApp OTP | 🟡 Architecture complete · provider pending |
+| Phase 4 Orders Core (4.1–4.3 + 4.3B) | ✅ PASS AND CLOSED (production) |
+| **Sprint 4.4** Order Lifecycle Architecture | ▶ Plan-only — owner review |
+| Slice 2D RLS | 🔒 After 4.4 freeze · hard gate before staff UI |
+| Phase 5 Lifecycle implementation (4.5+) | 🔒 After 4.4 + 2D |
+| Phases 6–15 (Admin → Go-live) | 🔒 Sequenced in master roadmap |
 
-The project is past prototype: release freeze, authentication, authorization model, and architecture docs form a solid base for the operational restaurant platform.
+**Owner directive:** Protect quality over speed. No-miss gate on every phase:
 
-**Owner directive:** Protect quality over speed. Keep the Sprint 1–3 pattern — architecture → small slice → tests → PR → merge → deploy → smoke → close → next. Do not rush.
+```text
+Plan → Implement → Tests → PR Review → Merge → Migration/Deploy → Smoke → Close
+```
+
+Next phase only when previous is **PASS AND CLOSED**.
 
 ---
 
@@ -37,84 +39,35 @@ The project is past prototype: release freeze, authentication, authorization mod
 → 6 Production migration/deploy → 7 Smoke → 8 Close → 9 Next slice only
 ```
 
-Each Sprint 4 slice must be independently shippable with a clear Definition of Done (see `SPRINT-04-ORDERS-BACKEND-PLANNING.md`).
-
 ---
 
 ## 2. Parallel teams (owner strategy — confirmed)
 
-WhatsApp is part of the **product**, not just a notification channel.
-
-| Locked auth architecture | Rule |
+| Team | Focus |
 |---|---|
-| Customer auth | **WhatsApp OTP first** |
-| SMS | Fallback only |
-| Email/password | Temporary pilot fallback |
-| Staff auth | Email/password (until a future staff-specific enhancement) |
-| Ordering vs auth numbers | **0304-1110495** ordering/support only; dedicated **Telepizza Login** for OTP |
+| **1 Engineering** | Sprint 4.4 architecture freeze → Slice 2D → lifecycle APIs |
+| **2 Operations** | Meta / dedicated OTP number / Twilio Verify / CAPTCHA / pilot (2C paused) |
+| **3 AI Platform** | Mianx.ai Agent Router / Memory / Task Engine (parallel) |
 
-Remaining Slice 2C blocker is **operational** (dedicated sender, Meta, Twilio Verify, CAPTCHA, pilot) — not technical design.
-
-### Team 1 — Engineering (Telepizza backend)
-
-Continue building the restaurant core (Sprint 4+), one closable slice at a time:
-
-- Orders Engine · Kitchen Workflow · Order State Machine · Rider Assignment · Payments · Notifications · Admin APIs
-
-Every future touchpoint depends on this lifecycle: Website, WhatsApp ordering, POS, Kitchen Display, Rider App, Admin Dashboard, Reporting, AI automation.
-
-### Team 2 — Operations (External)
-
-Complete provider prerequisites (non-blocking for Team 1):
-
-- Meta Business verification · Twilio Verify · WhatsApp auth template · Dedicated auth number · CAPTCHA · Pilot setup
-
-Track: `SLICE-2C0-OTP-OPERATIONS-READINESS.md` (**BLOCKED** / eng **PAUSED**)
-
-### Team 3 — AI Platform (Mianx.ai)
-
-Continue: Agent Router · Memory Engine · Task Engine · Documentation automation · AI workforce
-
-Speeds Telepizza and future ERP products.
-
-### Reuse principle
-
-Auth, authorization, staff invites, and the order engine are being built as **reusable platform foundations**. The same spine can later serve Hospital ERP, School ERP, Logistics ERP, and broader Mianx.ai products with domain-specific changes only.
+| Locked auth rule | Value |
+|---|---|
+| Customer auth target | WhatsApp OTP first · SMS fallback · email temporary |
+| Staff auth | Email/password (+ invites) |
+| Ordering vs OTP numbers | **0304-1110495** ordering/support only; dedicated **Telepizza Login** for OTP |
+| Final numbers | Locked only at **Phase 15** go-live |
 
 ---
 
-## 3. Suggested multi-sprint roadmap
+## 3. Master phase map (summary)
+
+See full detail in `TELEPIZZA-MASTER-ROADMAP.md`.
 
 ```text
-Sprint 4
-├── Orders Engine
-├── Kitchen Workflow
-├── Order State Machine
-├── Rider Assignment
-├── Payment Flow
-└── Notifications
-        ↓
-Sprint 5
-├── Admin Dashboard
-├── POS
-├── Kitchen Display
-├── Branch Management
-└── Reporting
-        ↓
-Sprint 6
-├── Customer App
-├── Rider App
-├── Branch App
-└── Staff Portal
-        ↓
-Sprint 7
-├── AI Automation
-├── Forecasting
-├── Inventory Intelligence
-└── Mianx.ai integration
+0 Foundation ✅ → 1 Website ✅ → 2 Auth ✅ → 3 OTP (ops) → 4 Orders Core ✅
+→ 5 Order Lifecycle (4.4 arch ▶ → 2D → 4.5/4.6 APIs)
+→ 6 Admin/ERP → 7 POS → 8 Kitchen → 9 Rider → 10 Inventory → 11 Finance
+→ 12 Apps → 13 AI → 14 Full QA → 15 Final Production Launch → V1.0 LIVE
 ```
-
-**Near-term value:** Orders backend connects website, kitchen, riders, POS, and future mobile apps into one business workflow.
 
 ---
 
@@ -122,11 +75,13 @@ Sprint 7
 
 | Rule | Why |
 |---|---|
-| Keep WhatsApp ordering on **0304-1110495** | Core Multan intake |
-| OTP on dedicated **Telepizza Login** only | D11 |
-| Catalog freeze untouched | v1.2.0 |
-| Slice **2D RLS** before POS/Kitchen/Rider UI unlock | Prevent cross-branch leaks |
+| Master roadmap order | No skipped modules |
+| Current WA contact `0304-1110495` OK for pilot | Re-verify Phase 15 |
+| OTP never on ordering number | D11 |
+| Catalog freeze untouched until owner opens | v1.2.0 |
+| Slice **2D RLS** before POS/Kitchen/Rider UI | O9 / O10 |
 | Slice 2C eng paused until 2C.0 READY | External ops |
+| Final production numbers only at Phase 15 | Owner go-live sign-off |
 
 ---
 
@@ -134,9 +89,9 @@ Sprint 7
 
 | Team | Action |
 |---|---|
-| **1 Engineering** | **Await owner pick** — see `_documentation-audit/reports/SPRINT-04-NEXT-READINESS.md`. Recommended gate: **Slice 2D RLS** before POS/Kitchen; optional **4.4 My Orders** customer alignment. |
-| **2 Operations** | Meta / dedicated auth number / Twilio Verify / template / CAPTCHA / pilot (2C stays paused until READY). |
-| **3 AI Platform** | Continue Mianx.ai Agent Router / Memory / Task Engine / docs automation. |
+| **1 Engineering** | Complete owner review of **Sprint 4.4** lifecycle architecture → mark APPROVED/FROZEN → then Slice **2D** RLS |
+| **2 Operations** | Continue 2C.0 Meta/Twilio checklist (non-blocking for 4.4/2D) |
+| **3 AI Platform** | Continue Mianx.ai platform track |
 
 ---
 
@@ -144,8 +99,9 @@ Sprint 7
 
 | Doc | Role |
 |---|---|
+| `TELEPIZZA-MASTER-ROADMAP.md` | **Locked** Phases 0–15 |
+| `SPRINT-04-4-ORDER-LIFECYCLE-ARCHITECTURE.md` | Phase 5 architecture (plan-only) |
+| `ORDERS_ARCHITECTURE.md` | O1–O12 + state machine baseline |
 | `AUTHENTICATION_ARCHITECTURE.md` | Authz SSOT |
 | `SLICE-2C0-OTP-OPERATIONS-READINESS.md` | OTP ops (paused) |
-| `SPRINT-04-ORDERS-BACKEND-PLANNING.md` | Orders Domain plan |
-| `_documentation-audit/reports/SPRINT-04-NEXT-READINESS.md` | Post–4.3 next slice options |
-| `CUSTOMER_PHONE_OTP_ARCHITECTURE.md` | OTP architecture freeze |
+| `_documentation-audit/reports/SPRINT-04-NEXT-READINESS.md` | Pointer after 4.3 close |
