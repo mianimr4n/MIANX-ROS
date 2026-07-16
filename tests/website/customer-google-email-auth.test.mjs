@@ -140,11 +140,11 @@ test("Login/Register keep Google primary CTA and no OTP/staff public signup", ()
   assert.doesNotMatch(register, /staff invite|join the team|employee/i);
 });
 
-test("Account shows Coming Soon for loyalty/notifications and checkout phone message", () => {
+test("Account shows Coming Soon for loyalty/notifications and profile phone management", () => {
   const account = read("apps/website/client/src/pages/Account.tsx");
-  assert.match(account, /Phone can be added at checkout/);
+  assert.match(account, /Add a phone number below for faster checkout|WhatsApp OTP/);
   assert.match(account, /Coming Soon/);
-  assert.match(account, /Signed in with/);
+  assert.match(account, /Save profile|Sign-in methods/);
   assert.match(account, /My Orders/);
   assert.doesNotMatch(account, /unreadNotifications|listNotifications/);
 });
