@@ -182,6 +182,29 @@ describe("Telepizza API app", () => {
     );
   });
 
+  it("rejects delivery orders without an address", async () => {
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
+    const response = await request(app).post("/api/v1/orders").send({
+      branchCode: "royal-orchard",
+      orderType: "delivery",
+      orderSource: "website",
+      contactName: "Test User",
+      contactPhone: "03041110495",
+      items: [
+        {
+          menuItemSlug: "tele-special",
+          variantLabel: "6 inch Small",
+          quantity: 1,
+          unitPrice: 499,
+          productName: "Tele Special",
+        },
+      ],
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe("DELIVERY_ADDRESS_REQUIRED");
+  });
+
   it("creates orders through the configured orders source", async () => {
     const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
     const response = await request(app).post("/api/v1/orders").send({

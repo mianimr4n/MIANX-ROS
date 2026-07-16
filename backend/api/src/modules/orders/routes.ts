@@ -38,7 +38,16 @@ export function createOrdersRouter(ordersDataSource: OrdersDataSource) {
 
   router.post("/", validateBody(createOrderSchema), async (req, res, next) => {
     try {
-      const order = await ordersDataSource.createOrder(req.body);
+      const body = req.body as z.infer<typeof createOrderSchema>;
+      if (body.orderType === "delivery" && !body.deliveryAddress?.trim()) {
+        throw new ApiError(
+          400,
+          "DELIVERY_ADDRESS_REQUIRED",
+          "Delivery address is required for delivery orders.",
+        );
+      }
+
+      const order = await ordersDataSource.createOrder(body);
       return res.status(201).json({ ok: true, data: order });
     } catch (error) {
       return next(error);
