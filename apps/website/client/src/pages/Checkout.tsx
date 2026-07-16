@@ -43,9 +43,11 @@ export default function Checkout() {
     warnings: string[];
     quoteId: string;
   } | null>(null);
+  const [serverQuoteItems, setServerQuoteItems] = useState<QuoteOrderResponse["items"] | null>(null);
   const [idempotencyKey, setIdempotencyKey] = useState<string>(() => crypto.randomUUID());
   const quoteRequestSeq = useRef(0);
   const lastFingerprint = useRef<string>("");
+  const submitInFlight = useRef(false);
 
   const deliveryMode = state.order.deliveryMode;
 
@@ -146,6 +148,7 @@ export default function Checkout() {
       if (seq !== quoteRequestSeq.current) return null;
 
       setServerTotals(q.totals);
+      setServerQuoteItems(q.items);
       setQuoteStatus({
         expiresAt: q.expiresAt,
         warnings: q.warnings.map((w) => w.message),
@@ -195,6 +198,7 @@ export default function Checkout() {
   );
 
   const handleSubmit = async () => {
+    if (submitInFlight.current || isSubmitting) return;
     setError(null);
 
     if (!contactName.trim() || !contactPhone.trim()) {
@@ -229,6 +233,7 @@ export default function Checkout() {
     });
 
     setIsSubmitting(true);
+    submitInFlight.current = true;
 
     try {
       const result = await submitWebsiteOrder(
@@ -257,9 +262,13 @@ export default function Checkout() {
       }
 
       clearCart();
-      navigate(
-        `/order-success/${encodeURIComponent(result.orderNumber)}?phone=${encodeURIComponent(contactPhone.trim())}&source=${result.source}`,
-      );
+      const successParams = new URLSearchParams({
+        phone: contactPhone.trim(),
+        source: result.source,
+        status: result.status,
+        total: String(result.totalAmount),
+      });
+      navigate(`/order-success/${encodeURIComponent(result.orderNumber)}?${successParams.toString()}`);
     } catch (submitError) {
       if (submitError instanceof CheckoutSubmitError) {
         setError(submitError.message);
@@ -270,6 +279,7 @@ export default function Checkout() {
         setError(submitError instanceof Error ? submitError.message : "Could not place order.");
       }
     } finally {
+      submitInFlight.current = false;
       setIsSubmitting(false);
     }
   };
@@ -366,15 +376,24 @@ export default function Checkout() {
             <div className="rounded-3xl border border-border bg-white p-6 sticky top-24 space-y-4">
               <h2 className="font-[var(--font-display)] font-bold text-xl">Order summary</h2>
               <div className="space-y-3 max-h-72 overflow-y-auto">
-                {state.items.map((item) => (
+                {state.items.map((item, index) => {
+                  const serverLine = serverQuoteItems?.[index];
+                  const displayTotal = serverLine
+                    ? serverLine.lineTotal
+                    : getLineItemTotal(item.price, item.extras, item.quantity);
+                  return (
                   <div key={item.id} className="text-sm border-b border-border pb-3">
                     <div className="font-semibold">{item.name}</div>
                     {item.variant && <div className="text-muted-foreground text-xs">{item.variant}</div>}
                     <div className="text-brand-red font-bold">
-                      Rs {getLineItemTotal(item.price, item.extras, item.quantity).toLocaleString()}
+                      Rs {displayTotal.toLocaleString()}
+                      {serverLine ? (
+                        <span className="text-[10px] text-muted-foreground font-normal ml-1">(server)</span>
+                      ) : null}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               {serverTotals ? (
