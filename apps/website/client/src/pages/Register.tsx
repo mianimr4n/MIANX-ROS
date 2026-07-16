@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthPageShell } from "@/components/AuthPageShell";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
-import { AUTH_MIN_PASSWORD_LENGTH } from "@/lib/auth-utils";
+import {
+  AUTH_MIN_PASSWORD_LENGTH,
+  AUTH_PASSWORD_REQUIREMENTS_COPY,
+  validateSignupInput,
+} from "@/lib/auth-utils";
+import { DEFAULT_AUTH_DESTINATION } from "@/lib/auth-redirect";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 export default function Register() {
@@ -16,27 +21,41 @@ export default function Register() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate("/account");
+      navigate(DEFAULT_AUTH_DESTINATION);
     }
   }, [isAuthenticated, isLoading, navigate]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (submitting) return;
+
     setError(null);
     setInfo(null);
+
+    const validated = validateSignupInput({
+      email,
+      password,
+      fullName: fullName.trim() || undefined,
+    });
+    if (!validated.ok) {
+      setError(validated.message);
+      return;
+    }
+
     setSubmitting(true);
 
     try {
       const result = await signUp({
-        email,
-        password,
-        fullName: fullName.trim() || undefined,
+        email: validated.email,
+        password: validated.password,
+        fullName: validated.fullName,
       });
 
       if (!result.ok) {
@@ -49,31 +68,51 @@ export default function Register() {
         return;
       }
 
-      navigate("/account");
+      navigate(DEFAULT_AUTH_DESTINATION);
+    } catch {
+      setError("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <AuthPageShell title="Create Account" description="Checking your session…">
+        <div className="rounded-3xl border border-border bg-white/90 p-10 flex justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-brand-red" />
+        </div>
+      </AuthPageShell>
+    );
+  }
+
+  const formDisabled = !isSupabaseConfigured || submitting;
+
   return (
     <AuthPageShell
       title="Create Account"
-      description="Create your account with Google or email — most people use Gmail."
+      description="Continue with Google, or create an account with email."
       note={
         isSupabaseConfigured
           ? undefined
           : "Registration is temporarily unavailable until authentication is configured."
       }
     >
-      <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-4">
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-4"
+        noValidate
+      >
         <GoogleSignInButton
-          disabled={!isSupabaseConfigured || submitting}
+          disabled={formDisabled}
           onError={(message) => {
             setInfo(null);
             setError(message);
           }}
           label="Continue with Google"
           placement="primary"
+          dividerLabel="or continue with email"
+          next={DEFAULT_AUTH_DESTINATION}
         />
         <div className="space-y-2">
           <Label htmlFor="fullName">Full name (optional)</Label>
@@ -85,7 +124,8 @@ export default function Register() {
               setError(null);
             }}
             className="rounded-2xl"
-            disabled={!isSupabaseConfigured || submitting}
+            disabled={formDisabled}
+            autoComplete="name"
           />
         </div>
         <div className="space-y-2">
@@ -101,40 +141,49 @@ export default function Register() {
             }}
             className="rounded-2xl"
             required
-            disabled={!isSupabaseConfigured || submitting}
+            disabled={formDisabled}
             placeholder="you@gmail.com"
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setError(null);
-            }}
-            className="rounded-2xl"
-            required
-            minLength={AUTH_MIN_PASSWORD_LENGTH}
-            disabled={!isSupabaseConfigured || submitting}
-          />
-          <p className="text-xs text-muted-foreground">
-            At least {AUTH_MIN_PASSWORD_LENGTH} characters.
-          </p>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError(null);
+              }}
+              className="rounded-2xl pr-12"
+              required
+              minLength={AUTH_MIN_PASSWORD_LENGTH}
+              disabled={formDisabled}
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 px-3 text-muted-foreground hover:text-brand-charcoal disabled:opacity-50"
+              onClick={() => setShowPassword((value) => !value)}
+              disabled={formDisabled}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground">{AUTH_PASSWORD_REQUIREMENTS_COPY}</p>
         </div>
         {error ? (
           <p className="text-sm text-brand-red" role="alert">
             {error}
           </p>
         ) : null}
-        {info && <p className="text-sm text-emerald-700">{info}</p>}
+        {info ? <p className="text-sm text-emerald-700">{info}</p> : null}
         <Button
           type="submit"
           className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
-          disabled={!isSupabaseConfigured || submitting}
+          disabled={formDisabled}
         >
           {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create account with email"}
         </Button>

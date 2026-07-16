@@ -10,14 +10,14 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 
-import { fetchApiData, isApiConfigured } from "@/lib/api";
+import { ApiRequestError, fetchApiData, isApiConfigured } from "@/lib/api";
 import {
   genericAuthErrorMessage,
-  getGoogleOAuthRedirectTo,
   mapSupabaseAuthError,
   validateSignupInput,
   type AuthMeResponse,
 } from "@/lib/auth-utils";
+import { getGoogleOAuthRedirectTo, rememberAuthNextPath } from "@/lib/auth-redirect";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { clearStoredUser } from "@/lib/customer-store";
 
@@ -44,7 +44,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   signUp: (input: { email: string; password: string; fullName?: string }) => Promise<SignUpResult>;
   signIn: (input: { email: string; password: string }) => Promise<SignInResult>;
-  signInWithGoogle: () => Promise<GoogleSignInResult>;
+  signInWithGoogle: (options?: { next?: string | null }) => Promise<GoogleSignInResult>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -63,6 +63,13 @@ async function loadAuthMe(accessToken: string): Promise<AuthMeResponse | null> {
   });
 }
 
+function displayNameFromUser(user: User): string {
+  const metaName =
+    (user.user_metadata?.full_name as string | undefined)?.trim() ||
+    (user.user_metadata?.name as string | undefined)?.trim();
+  return metaName || user.email?.split("@")[0] || "Customer";
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -70,58 +77,94 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const profileRequestId = useRef(0);
+  const appliedAccessToken = useRef<string | null>(null);
+  const bootstrapped = useRef(false);
 
-  const applySession = useCallback(async (nextSession: Session | null) => {
-    setSession(nextSession);
-    setUser(nextSession?.user ?? null);
+  const clearLocalAuth = useCallback(() => {
+    profileRequestId.current += 1;
+    appliedAccessToken.current = null;
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    setRoles([]);
+  }, []);
 
-    if (!nextSession?.access_token) {
-      setProfile(null);
-      setRoles([]);
-      return;
-    }
+  const applySession = useCallback(
+    async (nextSession: Session | null, options?: { force?: boolean }) => {
+      const nextToken = nextSession?.access_token ?? null;
 
-    const requestId = ++profileRequestId.current;
-
-    try {
-      const me = await loadAuthMe(nextSession.access_token);
-      if (requestId !== profileRequestId.current) return;
-
-      if (!me) {
-        setProfile(
-          nextSession.user
-            ? {
-                id: nextSession.user.id,
-                fullName:
-                  (nextSession.user.user_metadata?.full_name as string | undefined)?.trim() ||
-                  nextSession.user.email?.split("@")[0] ||
-                  "Customer",
-                phone: null,
-                email: nextSession.user.email ?? null,
-              }
-            : null,
-        );
-        setRoles(["customer"]);
+      if (
+        !options?.force &&
+        nextToken &&
+        appliedAccessToken.current === nextToken &&
+        bootstrapped.current
+      ) {
+        // Same session already applied — avoid duplicate /auth/me work.
         return;
       }
 
-      setProfile(
-        me.profile
-          ? {
-              id: me.profile.id,
-              fullName: me.profile.fullName,
-              phone: me.profile.phone,
-              email: me.email,
-            }
-          : null,
-      );
-      setRoles(me.roles);
-    } catch {
-      if (requestId !== profileRequestId.current) return;
-      setProfile(null);
-      setRoles([]);
-    }
-  }, []);
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+      appliedAccessToken.current = nextToken;
+
+      if (!nextSession?.access_token) {
+        setProfile(null);
+        setRoles([]);
+        return;
+      }
+
+      const requestId = ++profileRequestId.current;
+
+      try {
+        const me = await loadAuthMe(nextSession.access_token);
+        if (requestId !== profileRequestId.current) return;
+
+        if (!me) {
+          // API optional — display-only fallback. Roles are never taken from Google metadata.
+          setProfile(
+            nextSession.user
+              ? {
+                  id: nextSession.user.id,
+                  fullName: displayNameFromUser(nextSession.user),
+                  phone: null,
+                  email: nextSession.user.email ?? null,
+                }
+              : null,
+          );
+          setRoles(["customer"]);
+          return;
+        }
+
+        setProfile(
+          me.profile
+            ? {
+                id: me.profile.id,
+                fullName: me.profile.fullName,
+                phone: me.profile.phone,
+                email: me.email,
+              }
+            : null,
+        );
+        // Roles / branches / permissions come only from the API principal (DB), never metadata.
+        setRoles(me.roles);
+      } catch (error) {
+        if (requestId !== profileRequestId.current) return;
+
+        if (error instanceof ApiRequestError && error.code === "USER_ACCESS_DISABLED") {
+          clearLocalAuth();
+          const supabase = getSupabaseClient();
+          if (supabase) {
+            await supabase.auth.signOut();
+          }
+          return;
+        }
+
+        setProfile(null);
+        setRoles([]);
+      }
+    },
+    [clearLocalAuth],
+  );
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -136,7 +179,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return;
       void applySession(data.session).finally(() => {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) {
+          bootstrapped.current = true;
+          setIsLoading(false);
+        }
       });
     });
 
@@ -144,7 +190,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       void applySession(nextSession).finally(() => {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) {
+          bootstrapped.current = true;
+          setIsLoading(false);
+        }
       });
     });
 
@@ -173,6 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: validated.email,
         password: validated.password,
         options: {
+          // Display name only — never role / user_type / branch.
           data: validated.fullName ? { full_name: validated.fullName } : undefined,
         },
       });
@@ -183,7 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const needsEmailConfirmation = !data.session;
       if (data.session) {
-        await applySession(data.session);
+        await applySession(data.session, { force: true });
       }
 
       return { ok: true, needsEmailConfirmation };
@@ -214,56 +264,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { ok: false, message: mapSupabaseAuthError(error?.message) };
       }
 
-      await applySession(data.session);
+      await applySession(data.session, { force: true });
       return { ok: true };
     },
     [applySession],
   );
 
-  const signInWithGoogle = useCallback(async (): Promise<GoogleSignInResult> => {
-    const supabase = getSupabaseClient();
-    if (!supabase || !isSupabaseConfigured) {
-      return {
-        ok: false,
-        message: "Authentication is not configured. Please try again later.",
-      };
-    }
+  const signInWithGoogle = useCallback(
+    async (options?: { next?: string | null }): Promise<GoogleSignInResult> => {
+      const supabase = getSupabaseClient();
+      if (!supabase || !isSupabaseConfigured) {
+        return {
+          ok: false,
+          message: "Authentication is not configured. Please try again later.",
+        };
+      }
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: getGoogleOAuthRedirectTo(),
-        queryParams: {
-          prompt: "select_account",
+      rememberAuthNextPath(options?.next);
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: getGoogleOAuthRedirectTo(),
+          queryParams: {
+            prompt: "select_account",
+          },
         },
-      },
-    });
+      });
 
-    if (error) {
-      return { ok: false, message: mapSupabaseAuthError(error.message) };
-    }
+      if (error) {
+        return { ok: false, message: mapSupabaseAuthError(error.message) };
+      }
 
-    return { ok: true };
-  }, []);
+      return { ok: true };
+    },
+    [],
+  );
 
   const signOut = useCallback(async () => {
     const supabase = getSupabaseClient();
     // Clear legacy preview identity keys only — do not touch cart storage.
     clearStoredUser();
-    profileRequestId.current += 1;
-    setUser(null);
-    setSession(null);
-    setProfile(null);
-    setRoles([]);
+    clearLocalAuth();
 
     if (supabase) {
       await supabase.auth.signOut();
     }
-  }, []);
+  }, [clearLocalAuth]);
 
   const refreshProfile = useCallback(async () => {
     if (!session?.access_token) return;
-    await applySession(session);
+    await applySession(session, { force: true });
   }, [applySession, session]);
 
   const value = useMemo<AuthContextType>(

@@ -12,6 +12,25 @@ function read(relativePath) {
 
 /** Mirrors apps/website/client/src/lib/auth-utils.ts for static coverage without a harness. */
 const AUTH_MIN_PASSWORD_LENGTH = 8;
+const AUTH_PASSWORD_REQUIREMENTS_COPY =
+  "At least 8 characters, including uppercase, lowercase, a number, and a symbol.";
+
+function validatePasswordStrength(password) {
+  if (password.length < AUTH_MIN_PASSWORD_LENGTH) {
+    return {
+      ok: false,
+      message: `Password must be at least ${AUTH_MIN_PASSWORD_LENGTH} characters.`,
+    };
+  }
+  const hasLower = /[a-z]/.test(password);
+  const hasUpper = /[A-Z]/.test(password);
+  const hasDigit = /\d/.test(password);
+  const hasSymbol = /[^A-Za-z0-9]/.test(password);
+  if (!hasLower || !hasUpper || !hasDigit || !hasSymbol) {
+    return { ok: false, message: AUTH_PASSWORD_REQUIREMENTS_COPY };
+  }
+  return { ok: true };
+}
 
 function validateSignupInput(input) {
   const email = input.email.trim().toLowerCase();
@@ -22,11 +41,9 @@ function validateSignupInput(input) {
     return { ok: false, message: "Enter a valid email address." };
   }
 
-  if (password.length < AUTH_MIN_PASSWORD_LENGTH) {
-    return {
-      ok: false,
-      message: `Password must be at least ${AUTH_MIN_PASSWORD_LENGTH} characters.`,
-    };
+  const passwordCheck = validatePasswordStrength(password);
+  if (!passwordCheck.ok) {
+    return passwordCheck;
   }
 
   return { ok: true, email, password, fullName: fullName || undefined };
@@ -60,7 +77,7 @@ function mapSupabaseAuthError(message) {
     (normalized.includes("password") &&
       (normalized.includes("strength") || normalized.includes("uppercase")))
   ) {
-    return "Password is too weak. Use a longer mix of letters, numbers, and symbols.";
+    return AUTH_PASSWORD_REQUIREMENTS_COPY;
   }
   if (
     normalized.includes("password should be at least") ||
@@ -72,10 +89,11 @@ function mapSupabaseAuthError(message) {
   return message?.trim() || "Something went wrong. Please try again.";
 }
 
-test("signup validation rejects bad email and short passwords", () => {
-  assert.equal(validateSignupInput({ email: "bad", password: "password1" }).ok, false);
+test("signup validation rejects bad email and weak passwords", () => {
+  assert.equal(validateSignupInput({ email: "bad", password: "Password1!" }).ok, false);
   assert.equal(validateSignupInput({ email: "a@b.com", password: "short" }).ok, false);
-  assert.equal(validateSignupInput({ email: "a@b.com", password: "password1" }).ok, true);
+  assert.equal(validateSignupInput({ email: "a@b.com", password: "password1" }).ok, false);
+  assert.equal(validateSignupInput({ email: "a@b.com", password: "Password1!" }).ok, true);
 });
 
 test("login errors stay generic for invalid credentials and confirm-email is explicit", () => {
@@ -96,7 +114,7 @@ test("login errors stay generic for invalid credentials and confirm-email is exp
   );
   assert.match(
     mapSupabaseAuthError("Password should contain at least one character of each: abcdefghijklmnopqrstuvwxyz, ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
-    /too weak/i,
+    /uppercase, lowercase, a number, and a symbol/i,
   );
   // Must NOT map every password-related error to the length message.
   assert.doesNotMatch(
@@ -108,17 +126,18 @@ test("login errors stay generic for invalid credentials and confirm-email is exp
   assert.match(authUtils, /do NOT map every error that merely contains "password"/i);
 });
 
-test("login and register wire Google OAuth with account redirect", () => {
+test("login and register wire Google OAuth through /auth/callback", () => {
   const login = read("apps/website/client/src/pages/Login.tsx");
   const register = read("apps/website/client/src/pages/Register.tsx");
   const authUtils = read("apps/website/client/src/lib/auth-utils.ts");
   const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
   const googleButton = read("apps/website/client/src/components/GoogleSignInButton.tsx");
   const supabase = read("apps/website/client/src/lib/supabase.ts");
+  const redirectLib = read("apps/website/client/src/lib/auth-redirect.ts");
 
   assert.match(authUtils, /export function isGoogleOAuthConfigured\(\): boolean/);
   assert.match(authUtils, /VITE_GOOGLE_OAUTH_ENABLED/);
-  assert.match(authUtils, /getGoogleOAuthRedirectTo[\s\S]*\/account/);
+  assert.match(redirectLib, /\/auth\/callback/);
   assert.match(
     authContext,
     /signInWithOAuth\(\{\s*provider:\s*["']google["']/,
@@ -131,8 +150,6 @@ test("login and register wire Google OAuth with account redirect", () => {
   assert.match(login, /placement=["']primary["']/);
   assert.match(register, /placement=["']primary["']/);
   assert.match(googleButton, /Continue with Google/);
-  assert.doesNotMatch(login, /Google OAuth intentionally omitted/i);
-  assert.doesNotMatch(register, /Google OAuth intentionally omitted/i);
 });
 
 test("Login page validates email, blocks double submit, and keeps OTP out of scope", () => {
@@ -164,4 +181,5 @@ test("menu and cart providers remain wired in App for anonymous browsing", () =>
   assert.match(app, /CartProvider/);
   assert.match(app, /MenuCatalogProvider/);
   assert.match(app, /AuthProvider/);
+  assert.match(app, /\/auth\/callback/);
 });

@@ -7,6 +7,11 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthPageShell } from "@/components/AuthPageShell";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import {
+  DEFAULT_AUTH_DESTINATION,
+  peekAuthNextFromLocationSearch,
+  sanitizeAuthNextPath,
+} from "@/lib/auth-redirect";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 function isValidEmail(value: string): boolean {
@@ -14,7 +19,7 @@ function isValidEmail(value: string): boolean {
 }
 
 export default function Login() {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { signIn, isAuthenticated, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,11 +27,17 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const search = typeof window !== "undefined" ? window.location.search : "";
+  const nextPath = sanitizeAuthNextPath(
+    peekAuthNextFromLocationSearch(search) ?? peekAuthNextFromLocationSearch(location),
+    DEFAULT_AUTH_DESTINATION,
+  );
+
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate("/account");
+      navigate(nextPath);
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate, nextPath]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -52,7 +63,7 @@ export default function Login() {
         setError(result.message);
         return;
       }
-      navigate("/account");
+      navigate(nextPath);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -92,6 +103,8 @@ export default function Login() {
           onError={(message) => setError(message)}
           label="Continue with Google"
           placement="primary"
+          dividerLabel="or sign in with email"
+          next={nextPath}
         />
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
