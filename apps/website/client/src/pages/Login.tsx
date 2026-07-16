@@ -58,7 +58,10 @@ export default function Login() {
             type="email"
             autoComplete="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError(null);
+            }}
             className="rounded-2xl"
             required
             disabled={!isSupabaseConfigured || submitting}
@@ -71,13 +74,20 @@ export default function Login() {
             type="password"
             autoComplete="current-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError(null);
+            }}
             className="rounded-2xl"
             required
             disabled={!isSupabaseConfigured || submitting}
           />
         </div>
-        {error && <p className="text-sm text-brand-red">{error}</p>}
+        {error ? (
+          <p className="text-sm text-brand-red" role="alert">
+            {error}
+          </p>
+        ) : null}
         <Button
           type="submit"
           className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
