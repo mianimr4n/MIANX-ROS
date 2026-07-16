@@ -49,6 +49,12 @@ const createOrderSchema = quoteOrderSchema.extend({
   quoteId: z.string().max(4096).optional(),
 });
 
+const cancelOrderSchema = z.object({
+  contactPhone: z.string().min(7).max(30),
+  reasonCode: z.string().max(50).optional(),
+  note: z.string().max(500).optional(),
+});
+
 function readIdempotencyKey(headerValue: string | string | string[] | undefined): string {
   const raw = Array.isArray(headerValue) ? headerValue[0] : headerValue;
   return typeof raw === "string" ? raw.trim() : "";
@@ -127,6 +133,25 @@ export function createOrdersRouter(ordersDataSource: OrdersDataSource) {
       return next(error);
     }
   });
+
+  router.post(
+    "/:orderNumber/cancel",
+    validateBody(cancelOrderSchema),
+    async (req, res, next) => {
+      try {
+        const body = req.body as z.infer<typeof cancelOrderSchema>;
+        const result = await ordersDataSource.cancelOrder({
+          orderNumber: req.params.orderNumber,
+          contactPhone: body.contactPhone,
+          reasonCode: body.reasonCode,
+          note: body.note,
+        });
+        return res.status(200).json({ ok: true, data: result });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
 
   return router;
 }
