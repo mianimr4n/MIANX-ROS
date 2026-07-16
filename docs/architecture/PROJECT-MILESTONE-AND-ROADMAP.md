@@ -37,45 +37,45 @@ Each Sprint 4 slice must be independently shippable with a clear Definition of D
 
 ---
 
-## 2. Parallel teams (owner strategy)
+## 2. Parallel teams (owner strategy — confirmed)
 
-### Team A — Operations (External)
+WhatsApp is part of the **product**, not just a notification channel.
 
-Depends on external approvals (can take 1–7+ days):
+| Locked auth architecture | Rule |
+|---|---|
+| Customer auth | **WhatsApp OTP first** |
+| SMS | Fallback only |
+| Email/password | Temporary pilot fallback |
+| Staff auth | Email/password (until a future staff-specific enhancement) |
+| Ordering vs auth numbers | **0304-1110495** ordering/support only; dedicated **Telepizza Login** for OTP |
 
-- Meta Business Verification  
-- WhatsApp Business API (dedicated **Telepizza Login** sender)  
-- Twilio Verify  
-- Authentication templates  
-- Production sender setup  
+Remaining Slice 2C blocker is **operational** (dedicated sender, Meta, Twilio Verify, CAPTCHA, pilot) — not technical design.
 
-**Never** use **0304-1110495** for OTP (orders / support / branch / marketing only).  
-Track: `docs/architecture/SLICE-2C0-OTP-OPERATIONS-READINESS.md` (**BLOCKED** / eng **PAUSED**)
+### Team 1 — Engineering (Telepizza backend)
 
-### Team B — Backend (Development)
+Continue building the restaurant core (Sprint 4+), one closable slice at a time:
 
-**Start Orders Domain (Sprint 4)** — restaurant core engine:
+- Orders Engine · Kitchen Workflow · Order State Machine · Rider Assignment · Payments · Notifications · Admin APIs  
 
-```text
-Customer → Cart → Checkout → Order → Kitchen → Ready → Rider → Delivered
-```
+Every future touchpoint depends on this lifecycle: Website, WhatsApp ordering, POS, Kitchen Display, Rider App, Admin Dashboard, Reporting, AI automation.
 
-Build while WhatsApp provider is being approved.  
-Plan: `docs/architecture/SPRINT-04-ORDERS-BACKEND-PLANNING.md`
+### Team 2 — Operations (External)
 
-### Team C — AI Platform (Mianx.ai)
+Complete provider prerequisites (non-blocking for Team 1):
 
-Continue platform investment (speeds all future sprints / ERP projects):
+- Meta Business verification · Twilio Verify · WhatsApp auth template · Dedicated auth number · CAPTCHA · Pilot setup  
 
-- Agent Router  
-- Memory Engine  
-- Prompt OS  
-- Task Engine  
-- AI Workforce  
-- Documentation standards  
-- Autonomous development workflow  
+Track: `SLICE-2C0-OTP-OPERATIONS-READINESS.md` (**BLOCKED** / eng **PAUSED**)
 
-*(Primarily outside Telepizza app code; Telepizza consumes later in Sprint 7.)*
+### Team 3 — AI Platform (Mianx.ai)
+
+Continue: Agent Router · Memory Engine · Task Engine · Documentation automation · AI workforce  
+
+Speeds Telepizza and future ERP products.
+
+### Reuse principle
+
+Auth, authorization, staff invites, and the order engine are being built as **reusable platform foundations**. The same spine can later serve Hospital ERP, School ERP, Logistics ERP, and broader Mianx.ai products with domain-specific changes only.
 
 ---
 
