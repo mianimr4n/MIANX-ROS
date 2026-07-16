@@ -2,6 +2,12 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { EnvironmentStatus } from "../../config/env.js";
 import { ApiError } from "../../common/http.js";
+import {
+  buildOrderNotes,
+  formatExtrasInstructions,
+  normalizeContactPhone,
+  requireDeliveryAddress,
+} from "./create-helpers.js";
 import type {
   CreateOrderInput,
   CreatedOrderSummary,
@@ -32,10 +38,6 @@ function parseNumber(value: number | string | null | undefined) {
   if (typeof value === "number") return value;
   if (typeof value === "string" && value.trim()) return Number(value);
   return 0;
-}
-
-function normalizePhone(phone: string) {
-  return phone.replace(/\D/g, "");
 }
 
 function generateOrderNumber() {
@@ -73,6 +75,20 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
   return {
     async createOrder(input: CreateOrderInput): Promise<CreatedOrderSummary> {
       const supabase = getClient();
+
+      const deliveryAddress = requireDeliveryAddress(input.orderType, input.deliveryAddress);
+      if (input.orderType === "delivery" && !deliveryAddress) {
+        throw new ApiError(
+          400,
+          "DELIVERY_ADDRESS_REQUIRED",
+          "Delivery address is required for delivery orders.",
+        );
+      }
+
+      const contactPhone = input.contactPhone.trim();
+      if (normalizeContactPhone(contactPhone).length < 7) {
+        throw new ApiError(400, "INVALID_CONTACT_PHONE", "Contact phone is invalid.");
+      }
 
       const { data: branch, error: branchError } = await supabase
         .from("branches")
@@ -122,9 +138,22 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
             : menuItem.variants?.[0];
 
           if (variant) {
+            if (!variant.is_available) {
+              throw new ApiError(
+                400,
+                "VARIANT_UNAVAILABLE",
+                `Variant '${variant.label}' for '${item.menuItemSlug}' is not available.`,
+              );
+            }
             variantId = variant.id;
             variantName = variant.label;
             unitPrice = parseNumber(variant.price);
+          } else if (item.variantLabel) {
+            throw new ApiError(
+              400,
+              "VARIANT_NOT_FOUND",
+              `Variant '${item.variantLabel}' for '${item.menuItemSlug}' was not found.`,
+            );
           } else if (menuItem.base_price !== null) {
             unitPrice = parseNumber(menuItem.base_price);
           }
@@ -151,14 +180,12 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
           quantity: item.quantity,
           unit_price: lineUnitTotal,
           total_price: totalPrice,
-          instructions: item.instructions ?? null,
+          instructions: formatExtrasInstructions(item.instructions, item.extras),
         };
       });
 
       const orderNumber = generateOrderNumber();
-      const notes = [input.notes, input.couponCode ? `Promo code: ${input.couponCode}` : null]
-        .filter(Boolean)
-        .join("\n");
+      const notes = buildOrderNotes(input.notes, input.couponCode);
 
       const { data: order, error: orderError } = await supabase
         .from("orders")
@@ -175,10 +202,10 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
           delivery_fee: 0,
           total_amount: subtotal,
           payment_status: "pending",
-          contact_name: input.contactName,
-          contact_phone: input.contactPhone,
-          delivery_address: input.deliveryAddress ?? null,
-          notes: notes || null,
+          contact_name: input.contactName.trim(),
+          contact_phone: contactPhone,
+          delivery_address: deliveryAddress ?? null,
+          notes,
         })
         .select("id, order_number, status, subtotal, total_amount, created_at")
         .single();
@@ -195,16 +222,22 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
       );
 
       if (itemsError) {
+        await supabase.from("orders").delete().eq("id", order.id);
         throw new ApiError(500, "ORDER_ITEMS_CREATE_FAILED", itemsError.message);
       }
 
-      if (input.orderType === "delivery" && input.deliveryAddress) {
-        await supabase.from("deliveries").insert({
+      if (input.orderType === "delivery" && deliveryAddress) {
+        const { error: deliveryError } = await supabase.from("deliveries").insert({
           order_id: order.id,
           branch_id: branch.id,
-          delivery_address: input.deliveryAddress,
+          delivery_address: deliveryAddress,
           status: "pending",
         });
+
+        if (deliveryError) {
+          await supabase.from("orders").delete().eq("id", order.id);
+          throw new ApiError(500, "DELIVERY_CREATE_FAILED", deliveryError.message);
+        }
       }
 
       return {
@@ -219,7 +252,7 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
 
     async getOrderTracking(orderNumber: string, contactPhone: string): Promise<OrderTrackingSummary | null> {
       const supabase = getClient();
-      const normalizedInputPhone = normalizePhone(contactPhone);
+      const normalizedInputPhone = normalizeContactPhone(contactPhone);
 
       const { data: order, error } = await supabase
         .from("orders")
@@ -257,7 +290,7 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         return null;
       }
 
-      if (normalizePhone(order.contact_phone) !== normalizedInputPhone) {
+      if (normalizeContactPhone(order.contact_phone) !== normalizedInputPhone) {
         throw new ApiError(403, "ORDER_ACCESS_DENIED", "Phone number does not match this order.");
       }
 

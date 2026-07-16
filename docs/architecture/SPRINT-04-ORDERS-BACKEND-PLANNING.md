@@ -1,19 +1,25 @@
 # Sprint 4 — Orders Backend Planning
 
-**Status:** PLAN-ONLY · **Authorized parallel track** while Slice 2C.0 OTP waits on Meta/Twilio  
+**Status:** PLAN + **Team B kickoff authorized** · Parallel with Slice 2C.0 OTP ops wait  
 **Date:** 2026-07-16  
 **Baseline:** Slice 2B CLOSED (`8527f28`); catalog freeze **v1.2.0** (58 / 13 / 2)  
-**Trigger:** Owner final lock of Slice 2C D11 + recommendation to pause OTP engineering and start Orders Backend planning  
-**Related:** `SLICE-2C0-OTP-OPERATIONS-READINESS.md` (OTP **PAUSED / BLOCKED** on ops)
+**Milestone:** `docs/architecture/PROJECT-MILESTONE-AND-ROADMAP.md`  
+**Trigger:** Owner milestone + parallel Team A (ops) / Team B (Orders) / Team C (Mianx.ai)  
+**Related:** `SLICE-2C0-OTP-OPERATIONS-READINESS.md` (OTP **PAUSED / BLOCKED** on Meta/Twilio)
 
 ```text
-OTP Operations (waiting on Meta/Twilio)     ← PAUSED engineering
-            │
-            ├──────────────┐
-            │              │
-            ▼              ▼
-     Sprint 4 Planning   Orders Backend design
+Team A — OTP ops (Meta/Twilio)     ← external wait
+Team B — Orders Domain Sprint 4    ← ACTIVE
+Team C — Mianx.ai platform         ← parallel investment
 ```
+
+### Owner-expanded Sprint 4 theme
+
+```text
+Customer → Cart → Checkout → Order → Kitchen → Ready → Rider → Delivered
+```
+
+Sprint 4 deliverables (owner roadmap): Orders Engine · Kitchen Workflow · Order State Machine · Rider Assignment · Payment Flow · Notifications — sequenced as slices below; **UI unlock after Slice 2D**.
 
 **Hard constraints for this planning phase:**
 
@@ -139,14 +145,16 @@ Make **server-side orders** the durable source of truth for Multan operations, w
 
 ## 4. Proposed order lifecycle (V1 backend)
 
+Aligned with foundation schema check constraint:
+
 ```text
 pending
-  → confirmed        (branch accepted — WhatsApp or staff)
-  → preparing        (kitchen)
-  → ready            (pickup / rider assignable)
-  → out_for_delivery (delivery only)
+  → confirmed
+  → preparing
+  → ready
+  → dispatched          (delivery in transit; schema name — not out_for_delivery)
   → completed
-  → cancelled        (terminal; rules TBD)
+  → cancelled           (terminal; rules per OB6)
 ```
 
 | Transition | Who (later) | Permission (seeded names) |
@@ -166,7 +174,7 @@ Exact role matrix is an **owner decision** (see §8).
 | Slice | Deliverable | Stop line |
 |---|---|---|
 | **4.0** | This plan + owner decision card (OB*) | No code |
-| **4.1** | Create-path hardening: atomic order+items, server prices, extras persistence strategy, reject closed branch | No status UI |
+| **4.1** | Create-path hardening: delivery address required, unavailable variant reject, extras folded into instructions, rollback orphan order/delivery on child insert failure | No status UI |
 | **4.2** | Status machine + `order_status_logs` + safe transition API | No POS UI |
 | **4.3** | Staff list/detail by branch + `requirePermission` | No cross-branch without 2D |
 | **4.4** | Website: authenticated/guest create policy; reduce localStorage-only “My Orders” drift | Keep WA handoff |
@@ -211,16 +219,16 @@ Telepizza Login (new) = Auth OTP only (Slice 2C — paused)
 
 | ID | Question | Recommendation | Owner |
 |---|---|---|---|
-| **OB1** | Start Orders Backend planning/implementation **in parallel** with OTP ops wait? | **Yes** (this doc) | ☐ |
-| **OB2** | Website `POST /orders` auth for Multan V1? | Keep **guest create** + CAPTCHA later; attach `customerId` when logged in | ☐ |
-| **OB3** | Replace WhatsApp checkout with API-only? | **No** — keep WhatsApp handoff; API additive | ☐ |
-| **OB4** | Persist toppings/extras as separate `order_items` lines vs folded price? | **Separate lines** (auditability) | ☐ |
-| **OB5** | V1 status set? | `pending → confirmed → preparing → ready → out_for_delivery → completed` + `cancelled` | ☐ |
-| **OB6** | Who can cancel? | Branch manager + super-admin (+ support?) | ☐ |
-| **OB7** | Delivery fee / tax on API create? | **0 + note** until fee engine; WhatsApp confirms | ☐ |
-| **OB8** | Slice 2D before any POS/Kitchen UI? | **Yes** (hard gate) | ☐ |
-| **OB9** | Permission names | Keep seeded `order.*` (not `orders.*`) | ☐ |
-| **OB10** | First code slice after plan approval? | **4.1 create hardening** | ☐ |
+| **OB1** | Start Orders Backend **in parallel** with OTP ops wait? | **Yes** | ✅ Authorized |
+| **OB2** | Website `POST /orders` auth for Multan V1? | Keep **guest create**; attach `customerId` when logged in; CAPTCHA later | ✅ Default adopted |
+| **OB3** | Replace WhatsApp checkout with API-only? | **No** — keep WhatsApp handoff; API additive | ✅ Default adopted |
+| **OB4** | Persist toppings/extras as separate lines vs folded price? | Fold price + append labels into `instructions` until extras table (4.1); separate lines in later slice | ✅ Provisional |
+| **OB5** | V1 status set? | Schema: `pending → confirmed → preparing → ready → dispatched → completed` + `cancelled` | ✅ Default adopted |
+| **OB6** | Who can cancel? | Branch manager + super-admin (+ support later) | ✅ Default adopted |
+| **OB7** | Delivery fee / tax on API create? | **0 + note** until fee engine; WhatsApp confirms | ✅ Default adopted |
+| **OB8** | Slice 2D before any POS/Kitchen UI? | **Yes** (hard gate) | ✅ Default adopted |
+| **OB9** | Permission names | Keep seeded `order.*` | ✅ Default adopted |
+| **OB10** | First code slice after plan? | **4.1 create hardening** | ✅ Authorized |
 
 ---
 
@@ -252,15 +260,17 @@ Telepizza Login (new) = Auth OTP only (Slice 2C — paused)
 
 ## 11. Agent stop line (this document)
 
-Until owner approves **OB1–OB10** (or explicitly authorizes defaults):
+Team B is authorized to execute **slice 4.1** (create hardening) under adopted OB defaults.
 
-- Do **not** open Orders Backend implementation PRs  
-- Do **not** unlock POS/Kitchen/Rider  
-- Do **not** change catalog freeze  
-- Do **not** resume Slice 2C.1 OTP code  
+Still forbidden without new owner authorization:
+
+- POS / Kitchen / Rider **UI unlock** (needs Slice 2D)  
+- Catalog / pricing mutations  
+- Slice 2C.1 OTP code (until 2C.0 READY)  
+- Migrating **0304-1110495** onto Cloud API  
 
 **OTP remains PAUSED on provider ops.**  
-**This file is the Sprint 4 planning entry point — stop for owner OB card review.**
+**Orders Domain 4.1 is the active engineering track.**
 
 ---
 

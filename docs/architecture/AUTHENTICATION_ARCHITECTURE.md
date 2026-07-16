@@ -451,6 +451,7 @@ Sprint 3.5 and Slice 2B are closed. Slice 2C engineering is **paused** pending M
 | `_documentation-audit/reports/SPRINT-03.5-CLOSE.md` | Sprint 3.5 production validation close |
 | `docs/04-engineering/09-security/04-api-security/AUTHENTICATION_SECURITY.md` | Broader API auth security notes |
 | `docs/04-engineering/09-security/04-api-security/AUTHORIZATION_SECURITY.md` | Broader API authz security notes |
+| `docs/architecture/PROJECT-MILESTONE-AND-ROADMAP.md` | Milestone + Team A/B/C + Sprint 4–7 |
 | `docs/architecture/SLICE-2C0-OTP-OPERATIONS-READINESS.md` | Slice 2C.0 OTP ops (paused / blocked on provider) |
 | `docs/architecture/SPRINT-04-ORDERS-BACKEND-PLANNING.md` | Parallel Orders Backend planning |
 
