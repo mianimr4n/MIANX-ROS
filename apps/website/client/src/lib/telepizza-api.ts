@@ -31,11 +31,16 @@ export function createOrder(payload: CreateOrderPayload) {
   });
 }
 
-export function createOrderWithIdempotency(payload: CreateOrderPayload, idempotencyKey: string) {
+export function createOrderWithIdempotency(
+  payload: CreateOrderPayload,
+  idempotencyKey: string,
+  accessToken?: string,
+) {
   return fetchApiData<CreatedOrderResponse>("/orders", {
     method: "POST",
     headers: {
       "Idempotency-Key": idempotencyKey,
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     },
     body: JSON.stringify(payload),
   });
