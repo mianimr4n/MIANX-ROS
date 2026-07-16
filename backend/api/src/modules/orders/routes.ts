@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ApiError, validateBody } from "../../common/http.js";
 import type { OrdersDataSource } from "../../services/orders/types.js";
 import { quoteRateLimitMiddleware } from "../../services/orders/quote-rate-limit.js";
+import { guestOrderAccessRateLimitMiddleware } from "../../services/orders/guest-access-rate-limit.js";
 
 const toppingSlugSchema = z.object({
   slug: z.string().min(1).max(100),
@@ -107,7 +108,38 @@ export function createOrdersRouter(ordersDataSource: OrdersDataSource) {
     }
   });
 
-  router.get("/:orderNumber/tracking", async (req, res, next) => {
+  router.get(
+    "/:orderNumber",
+    guestOrderAccessRateLimitMiddleware("track"),
+    async (req, res, next) => {
+      try {
+        const contactPhone = req.query.phone;
+
+        if (typeof contactPhone !== "string" || contactPhone.trim().length < 7) {
+          throw new ApiError(
+            400,
+            "VALIDATION_ERROR",
+            "Query parameter 'phone' is required for order lookup.",
+          );
+        }
+
+        const order = await ordersDataSource.getOrder(req.params.orderNumber, contactPhone);
+
+        if (!order) {
+          throw new ApiError(404, "ORDER_NOT_FOUND", "Order not found.");
+        }
+
+        return res.json({ ok: true, data: order });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.get(
+    "/:orderNumber/tracking",
+    guestOrderAccessRateLimitMiddleware("track"),
+    async (req, res, next) => {
     try {
       const contactPhone = req.query.phone;
 
@@ -136,6 +168,7 @@ export function createOrdersRouter(ordersDataSource: OrdersDataSource) {
 
   router.post(
     "/:orderNumber/cancel",
+    guestOrderAccessRateLimitMiddleware("cancel"),
     validateBody(cancelOrderSchema),
     async (req, res, next) => {
       try {

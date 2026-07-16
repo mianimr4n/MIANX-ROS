@@ -1,60 +1,78 @@
-# Sprint 4.3 Phase B — Orders Hardening (Guest Cancel)
+# Sprint 4.3 Phase B — Orders Hardening
 
-**Date:** 2026-07-16  
-**Scope:** Backend guest cancel + shared phone-access helpers (start)  
-**Architecture:** O1–O12 APPROVED / FROZEN · O5 customer cancel window locked (pending, 15 min)  
-**Branch:** `cursor/sprint-4-3b-orders-hardening-bf31`  
-**Base:** `main`
+**Date:** 2026-07-16
+**Scope:** Guest cancel + canonical read + rate limits + website cancel UI
+**Architecture:** O1–O12 APPROVED / FROZEN · O5 customer cancel window locked (pending, 15 min)
+**Branch:** `cursor/sprint-4-3b-orders-hardening-continue-bf31`
+**Base:** `main` (includes merged PR #41 website checkout + PR #42 guest cancel)
 
 ---
 
-## Started in this turn
+## Outcome
 
-| Item | Status |
+Phase B backend hardening and website cancel hookup are complete on code. Production deploy remains owner-gated.
+
+---
+
+## Delivered
+
+| Item | Result |
 |---|---|
-| `POST /api/v1/orders/:orderNumber/cancel` (guest phone proof) | ✅ implemented |
-| Shared `contactPhoneMatchesOrder` for tracking + cancel | ✅ |
+| `POST /api/v1/orders/:orderNumber/cancel` (guest phone proof) | ✅ merged PR #42 |
+| `GET /api/v1/orders/:orderNumber?phone=` canonical guest read | ✅ |
+| `GET /api/v1/orders/:orderNumber/tracking` kept as alias | ✅ |
+| Shared `contactPhoneMatchesOrder` | ✅ |
 | Customer cancel rules (`pending` only, 15-minute window) | ✅ |
+| Guest access rate limits (track + cancel, per IP + order) | ✅ |
 | Status log append on cancel | ✅ |
-| Delivery row marked `cancelled` when present | ✅ |
-| Unit + route tests | ✅ |
+| Website `TrackOrder` cancel button (API orders only) | ✅ |
+| Unit + route + static website tests | ✅ |
 
 ---
 
 ## API contract
+
+### `GET /api/v1/orders/:orderNumber?phone=`
+
+Same safe projection as `/tracking` — architecture §7.3 canonical read.
 
 ### `POST /api/v1/orders/:orderNumber/cancel`
 
 | Field | Rule |
 |---|---|
 | Body `contactPhone` | Required — must match order phone |
-| Body `reasonCode` | Optional — default `customer_cancelled` |
-| Body `note` | Optional free text |
 | Allowed status | `pending` only |
 | Window | 15 minutes from `created_at` (O5) |
-| Effect | `orders.status → cancelled`, `cancel_reason_code`, `order_status_logs` row |
 
-### Errors
+### Rate limits (process-local)
 
-| Code | HTTP |
+| Action | Limit |
 |---|---|
-| `ORDER_NOT_FOUND` | 404 |
-| `ORDER_ACCESS_DENIED` | 403 |
-| `ORDER_CANCEL_NOT_ALLOWED` | 409 |
-| `ORDER_CANCEL_WINDOW_EXPIRED` | 409 |
-| `ORDER_INVALID_TRANSITION` | 409 (race) |
+| Track / read | 30 req/min per IP per order number |
+| Cancel | 10 req/min per IP per order number |
 
 ---
 
-## Still pending (Phase B continuation)
+## Validation
 
-| Item | Notes |
+| Command | Result |
 |---|---|
-| `GET /api/v1/orders/:idOrNumber` unified read | Architecture §7.3 |
-| Rate limits on cancel/tracking | Architecture §7.8 |
-| Website cancel UI hookup | After backend close |
-| Production deploy / smoke | Owner gate |
+| `pnpm check` | ✅ |
+| `pnpm test:db` | ✅ |
+| `pnpm test:backend` | ✅ |
+| `pnpm build:website` | ✅ |
 
 ---
 
-**SPRINT 4.3 PHASE B STATUS: IN PROGRESS**
+## Explicitly out of scope
+
+| Item | Status |
+|---|---|
+| Production API / Vercel deploy | Owner gate |
+| Staff transition APIs | Blocked on Slice 2D |
+| Slice 2C OTP | Not authorized |
+| Authenticated customer order list API drift fix | Future slice |
+
+---
+
+**SPRINT 4.3 PHASE B STATUS: PASS**

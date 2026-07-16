@@ -163,6 +163,94 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
     return client;
   };
 
+  async function fetchGuestOrder(
+    orderNumber: string,
+    contactPhone: string,
+  ): Promise<OrderTrackingSummary | null> {
+    const supabase = getClient();
+
+    const { data: order, error } = await supabase
+      .from("orders")
+      .select(
+        `
+          order_number,
+          status,
+          order_type,
+          contact_name,
+          contact_phone,
+          contact_phone_e164,
+          subtotal,
+          total_amount,
+          delivery_address,
+          notes,
+          created_at,
+          updated_at,
+          items:order_items(
+            product_name,
+            variant_name,
+            quantity,
+            unit_price,
+            total_price,
+            instructions,
+            extras_snapshot
+          )
+        `,
+      )
+      .eq("order_number", orderNumber)
+      .maybeSingle();
+
+    if (error) {
+      throw new ApiError(500, "ORDER_TRACKING_FAILED", error.message);
+    }
+
+    if (!order) {
+      return null;
+    }
+
+    if (
+      !contactPhoneMatchesOrder(
+        order.contact_phone,
+        order.contact_phone_e164 as string | null,
+        contactPhone,
+      )
+    ) {
+      throw new ApiError(403, "ORDER_ACCESS_DENIED", "Phone number does not match this order.");
+    }
+
+    return {
+      orderNumber: order.order_number,
+      status: order.status,
+      orderType: order.order_type,
+      contactName: order.contact_name,
+      contactPhone: order.contact_phone,
+      subtotal: parseNumber(order.subtotal),
+      totalAmount: parseNumber(order.total_amount),
+      deliveryAddress: order.delivery_address,
+      notes: order.notes,
+      createdAt: order.created_at,
+      updatedAt: order.updated_at,
+      items: (order.items ?? []).map(
+        (item: {
+          product_name: string;
+          variant_name: string | null;
+          quantity: number;
+          unit_price: number | string;
+          total_price: number | string;
+          instructions: string | null;
+          extras_snapshot?: Array<{ slug: string; label: string; price: number }> | null;
+        }) => ({
+          productName: item.product_name,
+          variantName: item.variant_name,
+          quantity: item.quantity,
+          unitPrice: parseNumber(item.unit_price),
+          totalPrice: parseNumber(item.total_price),
+          instructions: item.instructions,
+          extras: item.extras_snapshot ?? [],
+        }),
+      ),
+    };
+  }
+
   return {
     async quoteOrder(input: QuoteOrderInput): Promise<QuoteOrderResult> {
       const supabase = getClient();
@@ -456,89 +544,12 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
       };
     },
 
+    async getOrder(orderNumber: string, contactPhone: string): Promise<OrderTrackingSummary | null> {
+      return fetchGuestOrder(orderNumber, contactPhone);
+    },
+
     async getOrderTracking(orderNumber: string, contactPhone: string): Promise<OrderTrackingSummary | null> {
-      const supabase = getClient();
-
-      const { data: order, error } = await supabase
-        .from("orders")
-        .select(
-          `
-          order_number,
-          status,
-          order_type,
-          contact_name,
-          contact_phone,
-          contact_phone_e164,
-          subtotal,
-          total_amount,
-          delivery_address,
-          notes,
-          created_at,
-          updated_at,
-          items:order_items(
-            product_name,
-            variant_name,
-            quantity,
-            unit_price,
-            total_price,
-            instructions,
-            extras_snapshot
-          )
-        `,
-        )
-        .eq("order_number", orderNumber)
-        .maybeSingle();
-
-      if (error) {
-        throw new ApiError(500, "ORDER_TRACKING_FAILED", error.message);
-      }
-
-      if (!order) {
-        return null;
-      }
-
-      if (
-        !contactPhoneMatchesOrder(
-          order.contact_phone,
-          order.contact_phone_e164 as string | null,
-          contactPhone,
-        )
-      ) {
-        throw new ApiError(403, "ORDER_ACCESS_DENIED", "Phone number does not match this order.");
-      }
-
-      return {
-        orderNumber: order.order_number,
-        status: order.status,
-        orderType: order.order_type,
-        contactName: order.contact_name,
-        contactPhone: order.contact_phone,
-        subtotal: parseNumber(order.subtotal),
-        totalAmount: parseNumber(order.total_amount),
-        deliveryAddress: order.delivery_address,
-        notes: order.notes,
-        createdAt: order.created_at,
-        updatedAt: order.updated_at,
-        items: (order.items ?? []).map(
-          (item: {
-            product_name: string;
-            variant_name: string | null;
-            quantity: number;
-            unit_price: number | string;
-            total_price: number | string;
-            instructions: string | null;
-            extras_snapshot?: Array<{ slug: string; label: string; price: number }> | null;
-          }) => ({
-            productName: item.product_name,
-            variantName: item.variant_name,
-            quantity: item.quantity,
-            unitPrice: parseNumber(item.unit_price),
-            totalPrice: parseNumber(item.total_price),
-            instructions: item.instructions,
-            extras: item.extras_snapshot ?? [],
-          }),
-        ),
-      };
+      return fetchGuestOrder(orderNumber, contactPhone);
     },
 
     async cancelOrder(input: CancelOrderInput): Promise<CancelOrderResult> {
@@ -649,6 +660,9 @@ export function createUnavailableOrdersDataSource(): OrdersDataSource {
     },
     async getOrderTracking() {
       throw new ApiError(503, "ORDERS_UNAVAILABLE", "Order tracking API is not configured.");
+    },
+    async getOrder() {
+      throw new ApiError(503, "ORDERS_UNAVAILABLE", "Order read API is not configured.");
     },
     async cancelOrder() {
       throw new ApiError(503, "ORDERS_UNAVAILABLE", "Order cancellation API is not configured.");

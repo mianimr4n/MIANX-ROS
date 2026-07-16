@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useRoute } from "wouter";
-import { Loader2, PackageSearch } from "lucide-react";
-import { isApiConfigured } from "@/lib/api";
-import { fetchOrderTracking } from "@/lib/telepizza-api";
+import { Loader2, PackageSearch, XCircle } from "lucide-react";
+import { ApiRequestError, isApiConfigured } from "@/lib/api";
+import { cancelOrder, fetchOrderTracking } from "@/lib/telepizza-api";
 import { getLocalOrder } from "@/lib/customer-store";
+import { canGuestCancelOrder, mapCancelApiError } from "@/lib/order-access";
 import type { OrderTrackingResponse } from "@/lib/telepizza-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,19 @@ export default function TrackOrder() {
   const [phone, setPhone] = useState(initialPhone);
   const [tracking, setTracking] = useState<OrderTrackingResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const canCancelOnline = useMemo(
+    () =>
+      Boolean(
+        tracking &&
+          isApiConfigured &&
+          !orderNumber.startsWith("LOC-") &&
+          canGuestCancelOrder(tracking.status, tracking.createdAt),
+      ),
+    [tracking, orderNumber],
+  );
 
   const loadTracking = async (nextOrderNumber = orderNumber, nextPhone = phone) => {
     setLoading(true);
@@ -65,6 +78,33 @@ export default function TrackOrder() {
       setError(loadError instanceof Error ? loadError.message : "Could not load tracking.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!tracking || !canCancelOnline) return;
+
+    setCancelling(true);
+    setError(null);
+
+    try {
+      const result = await cancelOrder(tracking.orderNumber, phone.trim());
+      setTracking({
+        ...tracking,
+        status: result.status,
+        updatedAt: result.cancelledAt,
+      });
+    } catch (cancelError) {
+      const code =
+        cancelError instanceof ApiRequestError ? cancelError.code : undefined;
+      const message =
+        cancelError instanceof Error ? cancelError.message : "Could not cancel order.";
+      setError(mapCancelApiError(code, message));
+      if (code === "ORDER_CANCEL_WINDOW_EXPIRED" || code === "ORDER_CANCEL_NOT_ALLOWED") {
+        void loadTracking();
+      }
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -146,6 +186,30 @@ export default function TrackOrder() {
               <span>Total</span>
               <span className="text-brand-red">Rs {tracking.totalAmount.toLocaleString()}</span>
             </div>
+
+            {canCancelOnline && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+                <p className="text-sm text-amber-900">
+                  You can cancel this order online while it is still pending (within 15 minutes of placing it).
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-2xl border-brand-red text-brand-red hover:bg-brand-red/5"
+                  disabled={cancelling}
+                  onClick={() => void handleCancel()}
+                >
+                  {cancelling ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Cancel order
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
 
             <Link href="/orders">
               <Button variant="outline" className="rounded-2xl">View order history</Button>

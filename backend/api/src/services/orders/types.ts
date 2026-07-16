@@ -132,6 +132,9 @@ export interface CancelOrderResult {
 export interface OrdersDataSource {
   quoteOrder(input: QuoteOrderInput): Promise<QuoteOrderResult>;
   createOrder(input: CreateOrderInput): Promise<CreatedOrderSummary>;
+  /** Guest read by order number + phone proof (canonical §7.3). */
+  getOrder(orderNumber: string, contactPhone: string): Promise<OrderTrackingSummary | null>;
+  /** Back-compat alias — same projection as {@link getOrder}. */
   getOrderTracking(orderNumber: string, contactPhone: string): Promise<OrderTrackingSummary | null>;
   cancelOrder(input: CancelOrderInput): Promise<CancelOrderResult>;
 }
