@@ -130,9 +130,9 @@ Sprint 7
 
 | Team | Action |
 |---|---|
-| A | Meta / WABA / Twilio / template / Turnstile (external; non-blocking) |
-| B | **Finish 4.1 close cycle** (PR #34 → merge → smoke → close). **Do not start 4.2 yet.** |
-| C | Continue Mianx.ai platform work as scheduled |
+| **1 Engineering** | Close Sprint **4.1** (PR #34 → review → merge → smoke → close). Then architecture for **4.2** status machine. |
+| **2 Operations** | Meta / dedicated auth number / Twilio Verify / template / CAPTCHA / pilot (2C stays paused until READY). |
+| **3 AI Platform** | Continue Mianx.ai Agent Router / Memory / Task Engine / docs automation. |
 
 ---
 

@@ -8,9 +8,9 @@
 **Related:** `SLICE-2C0-OTP-OPERATIONS-READINESS.md` (OTP **PAUSED / BLOCKED** on Meta/Twilio)
 
 ```text
-Team A — OTP ops (Meta/Twilio)     ← external wait (non-blocking)
-Team B — Orders Domain Sprint 4    ← ACTIVE (one slice at a time)
-Team C — Mianx.ai platform         ← parallel investment
+Team 1 — Engineering (Orders/Kitchen/Riders/Payments/APIs)  ← ACTIVE (4.1 close)
+Team 2 — Operations (Meta/Twilio/WABA/CAPTCHA/pilot)         ← external wait
+Team 3 — AI Platform (Mianx.ai)                             ← parallel
 ```
 
 ### Owner-expanded Sprint 4 theme (central business engine)
