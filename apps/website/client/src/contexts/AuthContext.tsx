@@ -14,10 +14,12 @@ import { ApiRequestError, fetchApiData, isApiConfigured } from "@/lib/api";
 import {
   genericAuthErrorMessage,
   mapSupabaseAuthError,
+  validatePasswordStrength,
   validateSignupInput,
   type AuthMeResponse,
 } from "@/lib/auth-utils";
 import { getGoogleOAuthRedirectTo, rememberAuthNextPath } from "@/lib/auth-redirect";
+import { normalizePakistaniMobileE164 } from "@/lib/phone";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { clearStoredUser } from "@/lib/customer-store";
 
@@ -34,6 +36,7 @@ type SignUpResult =
 
 type SignInResult = { ok: true } | { ok: false; message: string };
 type GoogleSignInResult = { ok: true } | { ok: false; message: string };
+type ActionResult = { ok: true } | { ok: false; message: string };
 
 interface AuthContextType {
   user: User | null;
@@ -45,6 +48,9 @@ interface AuthContextType {
   signUp: (input: { email: string; password: string; fullName?: string }) => Promise<SignUpResult>;
   signIn: (input: { email: string; password: string }) => Promise<SignInResult>;
   signInWithGoogle: (options?: { next?: string | null }) => Promise<GoogleSignInResult>;
+  /** Attach email/password to the currently authenticated Supabase user (no second auth user). */
+  setPassword: (input: { password: string; confirmPassword: string }) => Promise<ActionResult>;
+  updateProfile: (input: { fullName?: string; phone?: string | null }) => Promise<ActionResult>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -301,6 +307,109 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const setPassword = useCallback(
+    async (input: { password: string; confirmPassword: string }): Promise<ActionResult> => {
+      const supabase = getSupabaseClient();
+      if (!supabase || !isSupabaseConfigured || !session?.user) {
+        return { ok: false, message: "Sign in again to set a password." };
+      }
+
+      const email = session.user.email?.trim();
+      if (!email) {
+        return { ok: false, message: "A verified email is required before setting a password." };
+      }
+
+      if (input.password !== input.confirmPassword) {
+        return { ok: false, message: "Passwords do not match." };
+      }
+
+      const strength = validatePasswordStrength(input.password);
+      if (!strength.ok) {
+        return strength;
+      }
+
+      // Password stays in Supabase Auth only — never sent to Telepizza API / public.users.
+      const { error } = await supabase.auth.updateUser({ password: input.password });
+      if (error) {
+        return { ok: false, message: mapSupabaseAuthError(error.message) };
+      }
+
+      return { ok: true };
+    },
+    [session],
+  );
+
+  const updateProfile = useCallback(
+    async (input: { fullName?: string; phone?: string | null }): Promise<ActionResult> => {
+      if (!session?.access_token) {
+        return { ok: false, message: "Sign in again to update your profile." };
+      }
+
+      if (!isApiConfigured) {
+        return { ok: false, message: "Profile updates are temporarily unavailable." };
+      }
+
+      const payload: { fullName?: string; phone?: string | null } = {};
+      if (input.fullName !== undefined) {
+        const trimmed = input.fullName.trim();
+        if (!trimmed) {
+          return { ok: false, message: "Full name cannot be empty." };
+        }
+        payload.fullName = trimmed;
+      }
+
+      if (input.phone !== undefined) {
+        if (input.phone === null || input.phone.trim() === "") {
+          payload.phone = null;
+        } else {
+          const normalized = normalizePakistaniMobileE164(input.phone);
+          if (!normalized.ok) {
+            return { ok: false, message: normalized.message };
+          }
+          payload.phone = normalized.e164;
+        }
+      }
+
+      try {
+        const updated = await fetchApiData<{
+          id: string;
+          fullName: string;
+          phone: string | null;
+          email: string | null;
+        }>("/auth/me/profile", {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        setProfile({
+          id: updated.id,
+          fullName: updated.fullName,
+          phone: updated.phone,
+          email: updated.email ?? session.user?.email ?? null,
+        });
+        return { ok: true };
+      } catch (error) {
+        if (error instanceof ApiRequestError) {
+          if (error.code === "PHONE_ALREADY_IN_USE") {
+            return {
+              ok: false,
+              message: "This phone number cannot be used. Try a different number.",
+            };
+          }
+          if (error.code === "USER_ACCESS_DISABLED") {
+            return { ok: false, message: "Access is disabled for this account." };
+          }
+          return { ok: false, message: error.message || "Could not update profile." };
+        }
+        return { ok: false, message: "Could not update profile. Please try again." };
+      }
+    },
+    [session],
+  );
+
   const signOut = useCallback(async () => {
     const supabase = getSupabaseClient();
     // Clear legacy preview identity keys only — do not touch cart storage.
@@ -328,6 +437,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signIn,
       signInWithGoogle,
+      setPassword,
+      updateProfile,
       signOut,
       refreshProfile,
     }),
@@ -340,6 +451,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signIn,
       signInWithGoogle,
+      setPassword,
+      updateProfile,
       signOut,
       refreshProfile,
     ],

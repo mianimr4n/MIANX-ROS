@@ -30,6 +30,17 @@ const previewInviteSchema = z.object({
   token: z.string().min(20).max(512),
 });
 
+/** Only mutable customer profile fields. Privilege fields are stripped/rejected. */
+const updateProfileSchema = z
+  .object({
+    fullName: z.string().trim().min(1).max(150).optional(),
+    phone: z.union([z.string().trim().min(7).max(30), z.null()]).optional(),
+  })
+  .strict()
+  .refine((value) => value.fullName !== undefined || value.phone !== undefined, {
+    message: "Provide fullName and/or phone to update.",
+  });
+
 export interface AuthRouterDependencies {
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
@@ -120,6 +131,48 @@ export function createAuthRouter(dependencies: AuthRouterDependencies) {
           profileReady: data.profileReady,
           // Client role headers are never trusted for identity.
           deprecatedRoleHeaderIgnored: true,
+        },
+      });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  /**
+   * Customer self-service profile update.
+   * Bearer-derived identity only — body userId/role/status/branch are rejected by .strict().
+   */
+  router.patch("/me/profile", requireAuth, validateBody(updateProfileSchema), async (req, res, next) => {
+    try {
+      const auth = (req as AuthenticatedRequest).auth!;
+      const body = req.body as z.infer<typeof updateProfileSchema>;
+
+      const updateOwnProfile = dependencies.authProfileRepository.updateOwnProfile;
+      if (!updateOwnProfile) {
+        throw new ApiError(501, "NOT_IMPLEMENTED", "Profile updates are not available.");
+      }
+
+      const profile = await updateOwnProfile.call(
+        dependencies.authProfileRepository,
+        auth.authUserId,
+        auth.email,
+        {
+          fullName: body.fullName,
+          phone: body.phone,
+        },
+      );
+
+      return res.json({
+        ok: true,
+        data: {
+          id: profile.id,
+          fullName: profile.fullName,
+          phone: profile.phone,
+          email: auth.email,
+        },
+        meta: {
+          phoneVerified: false,
+          phoneNote: "Phone added — verification will be enabled with WhatsApp OTP.",
         },
       });
     } catch (error) {

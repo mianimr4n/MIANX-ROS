@@ -1,20 +1,60 @@
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { Bell, Gift, LogOut, Package, UserCircle2 } from "lucide-react";
+import { Bell, Eye, EyeOff, Gift, Loader2, LogOut, Package, UserCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { AUTH_PASSWORD_REQUIREMENTS_COPY } from "@/lib/auth-utils";
 
-function providerLabel(user: { app_metadata?: { provider?: string; providers?: string[] } } | null): string | null {
-  if (!user) return null;
+function hasGoogleIdentity(user: {
+  app_metadata?: { provider?: string; providers?: string[] };
+  identities?: Array<{ provider?: string }>;
+} | null): boolean {
+  if (!user) return false;
   const providers = user.app_metadata?.providers;
-  if (Array.isArray(providers) && providers.includes("google")) return "Google";
-  if (user.app_metadata?.provider === "google") return "Google";
-  if (Array.isArray(providers) && providers.includes("email")) return "Email";
-  if (user.app_metadata?.provider === "email") return "Email";
-  return null;
+  if (Array.isArray(providers) && providers.includes("google")) return true;
+  if (user.app_metadata?.provider === "google") return true;
+  if (Array.isArray(user.identities) && user.identities.some((entry) => entry.provider === "google")) {
+    return true;
+  }
+  return false;
+}
+
+function hasEmailIdentity(user: {
+  app_metadata?: { provider?: string; providers?: string[] };
+  identities?: Array<{ provider?: string }>;
+} | null): boolean {
+  if (!user) return false;
+  const providers = user.app_metadata?.providers;
+  if (Array.isArray(providers) && providers.includes("email")) return true;
+  if (user.app_metadata?.provider === "email") return true;
+  if (Array.isArray(user.identities) && user.identities.some((entry) => entry.provider === "email")) {
+    return true;
+  }
+  return false;
 }
 
 export default function Account() {
-  const { profile, user, isAuthenticated, isLoading, signOut } = useAuth();
+  const { profile, user, isAuthenticated, isLoading, signOut, updateProfile, setPassword } = useAuth();
+
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileNotice, setProfileNotice] = useState<string | null>(null);
+  const [profileBusy, setProfileBusy] = useState(false);
+
+  const [password, setPasswordValue] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordNotice, setPasswordNotice] = useState<string | null>(null);
+  const [passwordBusy, setPasswordBusy] = useState(false);
+
+  useEffect(() => {
+    setFullName(profile?.fullName ?? "");
+    setPhone(profile?.phone ?? "");
+  }, [profile]);
 
   if (isLoading) {
     return (
@@ -48,24 +88,67 @@ export default function Account() {
     );
   }
 
-  const displayName = profile?.fullName || user.email?.split("@")[0] || "Customer";
   const email = profile?.email || user.email || null;
-  const signedInWith = providerLabel(user);
+  const googleConnected = hasGoogleIdentity(user);
+  const emailPasswordAvailable = hasEmailIdentity(user);
+  const canSetPassword = Boolean(email);
+
+  async function handleSaveProfile(event: React.FormEvent) {
+    event.preventDefault();
+    if (profileBusy) return;
+    setProfileError(null);
+    setProfileNotice(null);
+    setProfileBusy(true);
+    try {
+      const result = await updateProfile({
+        fullName,
+        phone: phone.trim() ? phone : null,
+      });
+      if (!result.ok) {
+        setProfileError(result.message);
+        return;
+      }
+      setProfileNotice(
+        phone.trim()
+          ? "Profile saved. Phone added — verification will be enabled with WhatsApp OTP."
+          : "Profile saved.",
+      );
+    } finally {
+      setProfileBusy(false);
+    }
+  }
+
+  async function handleSetPassword(event: React.FormEvent) {
+    event.preventDefault();
+    if (passwordBusy) return;
+    setPasswordError(null);
+    setPasswordNotice(null);
+    setPasswordBusy(true);
+    try {
+      const result = await setPassword({ password, confirmPassword });
+      if (!result.ok) {
+        setPasswordError(result.message);
+        return;
+      }
+      setPasswordValue("");
+      setConfirmPassword("");
+      setPasswordNotice("You can now sign in using Google or email and password.");
+    } finally {
+      setPasswordBusy(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background py-10">
       <div className="container max-w-3xl space-y-6">
         <div className="rounded-3xl border border-border bg-white p-6 flex items-start justify-between gap-4">
           <div>
-            <h1 className="brand-heading text-3xl mb-1">{displayName}</h1>
+            <h1 className="brand-heading text-3xl mb-1">{fullName || email?.split("@")[0] || "Customer"}</h1>
             {email ? <p className="text-sm text-muted-foreground">{email}</p> : null}
-            {signedInWith ? (
-              <p className="text-xs text-muted-foreground mt-1">Signed in with {signedInWith}</p>
-            ) : null}
             {profile?.phone ? (
-              <p className="text-muted-foreground mt-2">{profile.phone}</p>
+              <p className="text-sm text-muted-foreground mt-1">{profile.phone}</p>
             ) : (
-              <p className="text-sm text-muted-foreground mt-2">Phone can be added at checkout</p>
+              <p className="text-sm text-muted-foreground mt-1">Add a phone number below for faster checkout.</p>
             )}
           </div>
           <Button
@@ -78,6 +161,162 @@ export default function Account() {
             <LogOut className="w-4 h-4 mr-2" />
             Logout
           </Button>
+        </div>
+
+        <form
+          onSubmit={(event) => void handleSaveProfile(event)}
+          className="rounded-3xl border border-border bg-white p-6 space-y-4"
+          noValidate
+        >
+          <h2 className="font-bold text-lg">Profile</h2>
+          <div className="space-y-2">
+            <Label htmlFor="fullName">Full name</Label>
+            <Input
+              id="fullName"
+              value={fullName}
+              onChange={(e) => {
+                setFullName(e.target.value);
+                setProfileError(null);
+              }}
+              className="rounded-2xl"
+              disabled={profileBusy}
+              autoComplete="name"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              value={email ?? ""}
+              readOnly
+              disabled
+              className="rounded-2xl bg-muted/40"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone number</Label>
+            <Input
+              id="phone"
+              value={phone}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                setProfileError(null);
+              }}
+              className="rounded-2xl"
+              disabled={profileBusy}
+              inputMode="tel"
+              placeholder="03XXXXXXXXX or +923XXXXXXXXX"
+              autoComplete="tel"
+            />
+            <p className="text-xs text-muted-foreground">
+              Saved as a Pakistani mobile (+92…). Verification comes later with WhatsApp OTP.
+            </p>
+          </div>
+          {profileError ? (
+            <p className="text-sm text-brand-red" role="alert">
+              {profileError}
+            </p>
+          ) : null}
+          {profileNotice ? <p className="text-sm text-emerald-700">{profileNotice}</p> : null}
+          <Button
+            type="submit"
+            className="rounded-2xl brand-gradient text-white font-bold"
+            disabled={profileBusy}
+          >
+            {profileBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save profile"}
+          </Button>
+        </form>
+
+        <div className="rounded-3xl border border-border bg-white p-6 space-y-4">
+          <h2 className="font-bold text-lg">Sign-in methods</h2>
+          <ul className="space-y-2 text-sm">
+            <li>
+              <span className="font-semibold">Google:</span>{" "}
+              {googleConnected ? "Connected" : "Not connected"}
+            </li>
+            <li>
+              <span className="font-semibold">Email/password:</span>{" "}
+              {emailPasswordAvailable ? "Available" : "Not set yet"}
+            </li>
+            <li>
+              <span className="font-semibold">Phone/WhatsApp OTP:</span> Coming Soon
+            </li>
+          </ul>
+
+          {canSetPassword ? (
+            <form
+              onSubmit={(event) => void handleSetPassword(event)}
+              className="space-y-4 border-t border-border pt-4"
+              noValidate
+            >
+              <h3 className="font-semibold">
+                {emailPasswordAvailable ? "Update password" : "Set password / Add email-password login"}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Attaches a password to this same account — does not create a second login.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => {
+                      setPasswordValue(e.target.value);
+                      setPasswordError(null);
+                    }}
+                    className="rounded-2xl pr-12"
+                    disabled={passwordBusy}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 px-3 text-muted-foreground"
+                    onClick={() => setShowPassword((value) => !value)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    disabled={passwordBusy}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm password</Label>
+                <Input
+                  id="confirmPassword"
+                  type={showPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    setPasswordError(null);
+                  }}
+                  className="rounded-2xl"
+                  disabled={passwordBusy}
+                  autoComplete="new-password"
+                />
+                <p className="text-xs text-muted-foreground">{AUTH_PASSWORD_REQUIREMENTS_COPY}</p>
+              </div>
+              {passwordError ? (
+                <p className="text-sm text-brand-red" role="alert">
+                  {passwordError}
+                </p>
+              ) : null}
+              {passwordNotice ? <p className="text-sm text-emerald-700">{passwordNotice}</p> : null}
+              <Button
+                type="submit"
+                variant="outline"
+                className="rounded-2xl font-semibold"
+                disabled={passwordBusy}
+              >
+                {passwordBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save password"}
+              </Button>
+            </form>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              A verified email is required before setting a password.
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -97,6 +97,15 @@ export function mapSupabaseAuthError(message: string | undefined): string {
   }
 
   if (
+    normalized.includes("reauthentication") ||
+    normalized.includes("reauth") ||
+    normalized.includes("session is not recent") ||
+    normalized.includes("fresh authentication")
+  ) {
+    return "For security, sign out and sign back in with Google, then set your password again.";
+  }
+
+  if (
     normalized.includes("invalid login") ||
     normalized.includes("invalid credentials") ||
     normalized.includes("user not found") ||
