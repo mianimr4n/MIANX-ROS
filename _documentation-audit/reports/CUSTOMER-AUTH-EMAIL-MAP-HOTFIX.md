@@ -106,5 +106,5 @@ Coverage includes Google identity, OAuth privilege isolation, Telepizza password
 ## Delivery
 
 - Commits: auth → contact → tests → docs (as planned)
-- One PR — **do not merge / do not deploy** without owner approval
+- PR: https://github.com/mianimr4n/telepizza/pull/54 — **do not merge / do not deploy** without owner approval
 - PR #53 untouched
