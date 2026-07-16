@@ -1,68 +1,27 @@
 /* Flame & Crust Design: Bold street-food energy with Telepizza Red accent.
-   Contact page updated with multi-branch support and both locations on map. */
-import { useRef, useEffect, useState } from "react";
+   Contact page — active branch is source of truth for map + directions. */
 import { motion } from "framer-motion";
-import { MapPin, Phone, Clock, Instagram, Facebook, MessageCircle, Navigation, Construction } from "lucide-react";
-import { MapView } from "@/components/Map";
+import { MapPin, Clock, Instagram, Facebook, MessageCircle, Navigation, Construction } from "lucide-react";
+import { BranchMapEmbed } from "@/components/BranchMapEmbed";
 import { Button } from "@/components/ui/button";
 import { useBranch } from "@/contexts/BranchContext";
+import { getBranchDirectionsUrl } from "@/lib/branch-locations";
 
 export default function Contact() {
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const [isMapReady, setIsMapReady] = useState(false);
   const { selectedBranch, allBranches } = useBranch();
 
-  useEffect(() => {
-    if (!isMapReady || !mapRef.current || !window.google?.maps?.marker) {
-      return;
-    }
+  const operatingBranches = allBranches.filter((branch) => branch.status === "operating");
+  const comingSoonBranches = allBranches.filter((branch) => branch.status === "coming-soon");
 
-    const markers: google.maps.marker.AdvancedMarkerElement[] = [];
-    const infoWindows: google.maps.InfoWindow[] = [];
+  const mapBranch =
+    selectedBranch.status === "operating"
+      ? selectedBranch
+      : operatingBranches[0] ?? selectedBranch;
 
-    allBranches.forEach((branch) => {
-      const marker = new google.maps.marker.AdvancedMarkerElement({
-        map: mapRef.current,
-        position: branch.coordinates,
-        title: `${branch.name} - ${branch.phone}`,
-      });
-
-      const infoWindow = new google.maps.InfoWindow({
-        content: `
-            <div style="padding: 8px; font-family: 'Poppins', sans-serif;">
-              <h3 style="font-weight: 700; margin: 0 0 4px 0; color: #D22630;">${branch.name}</h3>
-              <p style="margin: 0; font-size: 13px; color: #333;">${branch.address}</p>
-              <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">${branch.phone}</p>
-              <a href="https://www.google.com/maps/dir/?api=1&destination=${branch.coordinates.lat},${branch.coordinates.lng}" target="_blank" style="color: #D22630; font-size: 12px; font-weight: 600; display: inline-block; margin-top: 4px;">Get Directions</a>
-            </div>
-          `,
-      });
-
-      marker.addListener("gmp-click", () => {
-        infoWindow.open({
-          map: mapRef.current,
-          anchor: marker,
-        });
-      });
-
-      markers.push(marker);
-      infoWindows.push(infoWindow);
-    });
-
-    return () => {
-      for (const marker of markers) {
-        marker.map = null;
-      }
-
-      for (const infoWindow of infoWindows) {
-        infoWindow.close();
-      }
-    };
-  }, [allBranches, isMapReady]);
+  const directionsUrl = getBranchDirectionsUrl(mapBranch);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero */}
       <section className="relative h-[40vh] min-h-[300px] overflow-hidden">
         <img
           src="/images/products/signature-pizza.jpg"
@@ -90,33 +49,33 @@ export default function Contact() {
         </div>
       </section>
 
-      {/* Contact Info */}
       <section className="container py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {/* Operating branches */}
-          {allBranches.filter((branch) => branch.status === "operating").map((branch, i) => (
+          {operatingBranches.map((branch, i) => (
             <motion.div
               key={branch.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
               className={`bg-white p-6 rounded-2xl border-2 text-center hover:shadow-xl transition-all duration-300 ${
-                selectedBranch.id === branch.id
+                mapBranch.id === branch.id
                   ? "border-brand-red shadow-xl shadow-brand-red/10"
                   : "border-border hover:border-brand-red/30"
               }`}
             >
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
-                selectedBranch.id === branch.id ? "bg-brand-red" : "bg-brand-red/10"
-              }`}>
-                <MapPin className={`w-7 h-7 ${selectedBranch.id === branch.id ? "text-white" : "text-brand-red"}`} />
+              <div
+                className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
+                  mapBranch.id === branch.id ? "bg-brand-red" : "bg-brand-red/10"
+                }`}
+              >
+                <MapPin
+                  className={`w-7 h-7 ${mapBranch.id === branch.id ? "text-white" : "text-brand-red"}`}
+                />
               </div>
               <h3 className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal mb-2">
                 {branch.name}
               </h3>
-              <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                {branch.address}
-              </p>
+              <p className="text-muted-foreground text-sm leading-relaxed mb-4">{branch.address}</p>
               <a
                 href={`tel:+92${branch.phone.replace(/-/g, "").replace(/^0/, "")}`}
                 className="text-brand-red font-[var(--font-accent)] font-bold text-base hover:underline"
@@ -124,15 +83,14 @@ export default function Contact() {
                 {branch.phone}
               </a>
               <p className="text-muted-foreground text-xs mt-2">{branch.hours}</p>
-              {selectedBranch.id === branch.id && (
+              {mapBranch.id === branch.id ? (
                 <div className="mt-3 text-brand-red text-xs font-[var(--font-accent)] font-semibold">
                   Your selected branch
                 </div>
-              )}
+              ) : null}
             </motion.div>
           ))}
 
-          {/* Hours Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -146,7 +104,8 @@ export default function Contact() {
               Opening Hours
             </h3>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Monday – Sunday<br />
+              Monday – Sunday
+              <br />
               <span className="font-[var(--font-accent)] font-bold text-brand-charcoal">
                 10:00 AM – 2:30 AM
               </span>
@@ -157,67 +116,75 @@ export default function Contact() {
           </motion.div>
         </div>
 
-        {/* Google Maps */}
+        {comingSoonBranches.length > 0 ? (
+          <div className="mt-8 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+            {comingSoonBranches.map((branch) => (
+              <div
+                key={branch.id}
+                className="bg-muted/40 p-6 rounded-2xl border border-dashed border-border text-center md:col-span-1"
+              >
+                <Construction className="w-7 h-7 text-muted-foreground mx-auto mb-3" />
+                <h3 className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal mb-1">
+                  {branch.name}
+                </h3>
+                <p className="text-muted-foreground text-sm">{branch.address}</p>
+                <p className="text-brand-red text-xs mt-3 font-[var(--font-accent)] font-semibold">
+                  Coming Soon
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
           className="mt-12"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h3 className="font-[var(--font-display)] font-bold text-2xl text-brand-charcoal">
                 Find Us on the Map
               </h3>
               <p className="text-muted-foreground text-sm mt-1">
-                Both our Multan branches — click a marker for directions
+                {mapBranch.name} — map and directions match this branch
               </p>
             </div>
-            <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${selectedBranch.coordinates.lat},${selectedBranch.coordinates.lng}&travelmode=driving`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button className="bg-brand-red hover:bg-brand-red-light text-white font-[var(--font-accent)] font-semibold shadow-md shadow-brand-red/20 transition-all active:scale-95">
-                <Navigation className="w-4 h-4 mr-2" />
-                Get Directions
-              </Button>
-            </a>
+            {directionsUrl ? (
+              <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
+                <Button className="bg-brand-red hover:bg-brand-red-light text-white font-[var(--font-accent)] font-semibold shadow-md shadow-brand-red/20 transition-all active:scale-95 w-full sm:w-auto">
+                  <Navigation className="w-4 h-4 mr-2" />
+                  Get Directions
+                </Button>
+              </a>
+            ) : null}
           </div>
 
-          {/* Map Container */}
           <div className="relative rounded-2xl overflow-hidden border border-border shadow-xl shadow-brand-red/5">
-            <MapView
-              initialCenter={{ lat: 30.1854, lng: 71.4810 }}
-              initialZoom={13}
-              onMapReady={(map) => {
-                mapRef.current = map;
-                setIsMapReady(true);
-              }}
-            />
+            <BranchMapEmbed branch={mapBranch} />
 
-            {/* Overlay with selected branch info */}
-            <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg max-w-xs border border-border">
+            <div className="absolute bottom-4 left-4 right-4 sm:right-auto bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg sm:max-w-xs border border-border">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-brand-red rounded-lg flex items-center justify-center shrink-0">
                   <MapPin className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <h4 className="font-[var(--font-accent)] font-bold text-sm text-brand-charcoal">
-                    {selectedBranch.name}
+                    {mapBranch.name}
                   </h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {selectedBranch.address}
-                  </p>
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${selectedBranch.coordinates.lat},${selectedBranch.coordinates.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-brand-red text-xs font-[var(--font-accent)] font-semibold mt-1 inline-flex items-center hover:underline"
-                  >
-                    Get Directions
-                    <Navigation className="w-3 h-3 ml-1" />
-                  </a>
+                  <p className="text-xs text-muted-foreground mt-0.5">{mapBranch.address}</p>
+                  {directionsUrl ? (
+                    <a
+                      href={directionsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-red text-xs font-[var(--font-accent)] font-semibold mt-1 inline-flex items-center hover:underline"
+                    >
+                      Get Directions
+                      <Navigation className="w-3 h-3 ml-1" />
+                    </a>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -225,7 +192,6 @@ export default function Contact() {
         </motion.div>
       </section>
 
-      {/* Social & CTA */}
       <section className="bg-brand-charcoal py-16">
         <div className="container text-center">
           <h2 className="font-[var(--font-display)] font-bold text-2xl text-white mb-4">
