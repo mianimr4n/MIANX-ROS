@@ -245,7 +245,7 @@ async function assertNoConflict(admin: SupabaseClient, email: string) {
     .ilike("email", normalized)
     .maybeSingle();
 
-  if (pendingError) throw pendingError;
+  if (pendingError) rethrowSafe(pendingError);
   if (pending) {
     throw new ApiError(409, "INVITE_CONFLICT", "A pending invite already exists for this email.");
   }
@@ -256,7 +256,7 @@ async function assertNoConflict(admin: SupabaseClient, email: string) {
     .ilike("email", normalized)
     .maybeSingle();
 
-  if (userError) throw userError;
+  if (userError) rethrowSafe(userError);
   if (existingUser) {
     throw new ApiError(
       409,
@@ -269,7 +269,7 @@ async function assertNoConflict(admin: SupabaseClient, email: string) {
     p_email: normalized,
   });
 
-  if (authExistsError) throw authExistsError;
+  if (authExistsError) rethrowSafe(authExistsError);
   if (authExists === true) {
     throw new ApiError(
       409,
@@ -288,7 +288,7 @@ async function resolveRole(
   }
 
   const { data, error } = await admin.from("roles").select("id, code").eq("code", roleCode).maybeSingle();
-  if (error) throw error;
+  if (error) rethrowSafe(error);
   if (!data) {
     throw new ApiError(422, "VALIDATION_ERROR", "roleCode does not exist.");
   }
@@ -306,7 +306,7 @@ async function assertOperatingBranch(admin: SupabaseClient, branchId: string): P
     .eq("id", branchId)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) rethrowSafe(error);
   if (!data) {
     throw new ApiError(422, "VALIDATION_ERROR", "branchId does not exist.");
   }
@@ -326,7 +326,7 @@ async function assertSendRateLimit(admin: SupabaseClient, email: string) {
     .select("id")
     .ilike("email", normalized);
 
-  if (inviteError) throw inviteError;
+  if (inviteError) rethrowSafe(inviteError);
   const inviteIds = ((invites ?? []) as { id: string }[]).map((row) => row.id);
   if (inviteIds.length === 0) return;
 
@@ -337,7 +337,7 @@ async function assertSendRateLimit(admin: SupabaseClient, email: string) {
     .in("event_type", ["sent", "resent"])
     .gte("created_at", since);
 
-  if (eventError) throw eventError;
+  if (eventError) rethrowSafe(eventError);
   if ((events ?? []).length >= MAX_SENDS_PER_24H) {
     throw new ApiError(
       429,
@@ -367,6 +367,13 @@ function tokensEqual(a: string, b: string): boolean {
 
 function genericNotAcceptable(): never {
   throw new ApiError(410, "INVITE_NOT_ACCEPTABLE", "This invite cannot be accepted.");
+}
+
+function rethrowSafe(error: unknown, fallbackMessage = "Unable to process staff invite."): never {
+  if (error instanceof ApiError) {
+    throw error;
+  }
+  throw new ApiError(503, "SERVICE_UNAVAILABLE", fallbackMessage);
 }
 
 export function createSupabaseStaffInviteRepository(
@@ -429,7 +436,7 @@ export function createSupabaseStaffInviteRepository(
         .single();
 
       if (error || !data) {
-        throw error ?? new Error("invite create failed");
+        rethrowSafe(error ?? new Error("invite create failed"));
       }
 
       const invite = mapInvite(data as InviteRow);
@@ -460,7 +467,7 @@ export function createSupabaseStaffInviteRepository(
         query = query.eq("status", filters.status);
       }
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) rethrowSafe(error);
       return ((data ?? []) as InviteRow[]).map(mapInvite);
     },
 
@@ -471,7 +478,7 @@ export function createSupabaseStaffInviteRepository(
         .select(INVITE_SELECT)
         .eq("id", id)
         .maybeSingle();
-      if (error) throw error;
+      if (error) rethrowSafe(error);
       return data ? mapInvite(data as InviteRow) : null;
     },
 
@@ -506,7 +513,7 @@ export function createSupabaseStaffInviteRepository(
         .select(INVITE_SELECT)
         .single();
 
-      if (error || !data) throw error ?? new Error("send failed");
+      if (error || !data) rethrowSafe(error ?? new Error("send failed"));
       await recordEvent(admin, id, "sent", actor.userId, {}, audit);
       return {
         invite: mapInvite(data as InviteRow),
@@ -550,7 +557,7 @@ export function createSupabaseStaffInviteRepository(
         .select(INVITE_SELECT)
         .single();
 
-      if (error || !data) throw error ?? new Error("resend failed");
+      if (error || !data) rethrowSafe(error ?? new Error("resend failed"));
       await recordEvent(admin, id, "resent", actor.userId, {}, audit);
       return {
         invite: mapInvite(data as InviteRow),
@@ -580,7 +587,7 @@ export function createSupabaseStaffInviteRepository(
         .select(INVITE_SELECT)
         .single();
 
-      if (error || !data) throw error ?? new Error("revoke failed");
+      if (error || !data) rethrowSafe(error ?? new Error("revoke failed"));
       await recordEvent(admin, id, "revoked", actor.userId, {}, audit);
       return mapInvite(data as InviteRow);
     },
@@ -594,7 +601,7 @@ export function createSupabaseStaffInviteRepository(
         .eq("token_hash", tokenHash)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) rethrowSafe(error);
       if (!inviteRow) genericNotAcceptable();
 
       const invite = mapInvite(inviteRow as InviteRow);
@@ -642,7 +649,7 @@ export function createSupabaseStaffInviteRepository(
         .eq("token_hash", tokenHash)
         .maybeSingle();
 
-      if (inviteError) throw inviteError;
+      if (inviteError) rethrowSafe(inviteError);
       if (!inviteRow) genericNotAcceptable();
 
       const invite = mapInvite(inviteRow as InviteRow);
@@ -668,7 +675,7 @@ export function createSupabaseStaffInviteRepository(
       const { data: authExists, error: authExistsError } = await admin.rpc("auth_user_email_exists", {
         p_email: invite.email,
       });
-      if (authExistsError) throw authExistsError;
+      if (authExistsError) rethrowSafe(authExistsError);
       if (authExists === true) {
         await recordEvent(
           admin,
