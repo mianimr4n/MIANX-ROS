@@ -70,7 +70,10 @@ export default function Register() {
           <Input
             id="fullName"
             value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            onChange={(e) => {
+              setFullName(e.target.value);
+              setError(null);
+            }}
             className="rounded-2xl"
             disabled={!isSupabaseConfigured || submitting}
           />
@@ -82,7 +85,10 @@ export default function Register() {
             type="email"
             autoComplete="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError(null);
+            }}
             className="rounded-2xl"
             required
             disabled={!isSupabaseConfigured || submitting}
@@ -95,7 +101,10 @@ export default function Register() {
             type="password"
             autoComplete="new-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError(null);
+            }}
             className="rounded-2xl"
             required
             minLength={AUTH_MIN_PASSWORD_LENGTH}
@@ -105,7 +114,11 @@ export default function Register() {
             At least {AUTH_MIN_PASSWORD_LENGTH} characters.
           </p>
         </div>
-        {error && <p className="text-sm text-brand-red">{error}</p>}
+        {error ? (
+          <p className="text-sm text-brand-red" role="alert">
+            {error}
+          </p>
+        ) : null}
         {info && <p className="text-sm text-emerald-700">{info}</p>}
         <Button
           type="submit"

@@ -63,7 +63,40 @@ export function mapSupabaseAuthError(message: string | undefined): string {
     return "Unable to create account. Please try again or sign in.";
   }
 
-  if (normalized.includes("password")) {
+  // Strength / composition before length — Supabase says "at least one character of each…".
+  if (
+    normalized.includes("pwned") ||
+    normalized.includes("data breach") ||
+    normalized.includes("have i been pwned") ||
+    (normalized.includes("password") && normalized.includes("breach"))
+  ) {
+    return "This password is too common or appeared in a data breach. Choose a different password.";
+  }
+
+  if (
+    normalized.includes("weak") ||
+    normalized.includes("easy to guess") ||
+    normalized.includes("character of each") ||
+    (normalized.includes("password") &&
+      (normalized.includes("strength") ||
+        normalized.includes("uppercase") ||
+        normalized.includes("lowercase") ||
+        (normalized.includes("number") && normalized.includes("symbol")) ||
+        normalized.includes("special character")))
+  ) {
+    return "Password is too weak. Use a longer mix of letters, numbers, and symbols.";
+  }
+
+  // Length-only messages — do NOT map every error that merely contains "password".
+  if (
+    normalized.includes("password should be at least") ||
+    normalized.includes("password is too short") ||
+    (normalized.includes("password") &&
+      normalized.includes("minimum") &&
+      normalized.includes("character")) ||
+    (normalized.includes("password") &&
+      /at least \d+ characters?/.test(normalized))
+  ) {
     return `Password must be at least ${AUTH_MIN_PASSWORD_LENGTH} characters.`;
   }
 

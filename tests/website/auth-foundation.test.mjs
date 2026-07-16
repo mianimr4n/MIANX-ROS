@@ -47,6 +47,28 @@ function mapSupabaseAuthError(message) {
   if (normalized.includes("already registered") || normalized.includes("user already")) {
     return "Unable to create account. Please try again or sign in.";
   }
+  if (
+    normalized.includes("pwned") ||
+    normalized.includes("data breach") ||
+    (normalized.includes("password") && normalized.includes("breach"))
+  ) {
+    return "This password is too common or appeared in a data breach. Choose a different password.";
+  }
+  if (
+    normalized.includes("weak") ||
+    normalized.includes("character of each") ||
+    (normalized.includes("password") &&
+      (normalized.includes("strength") || normalized.includes("uppercase")))
+  ) {
+    return "Password is too weak. Use a longer mix of letters, numbers, and symbols.";
+  }
+  if (
+    normalized.includes("password should be at least") ||
+    normalized.includes("password is too short") ||
+    (normalized.includes("password") && /at least \d+ characters?/.test(normalized))
+  ) {
+    return `Password must be at least ${AUTH_MIN_PASSWORD_LENGTH} characters.`;
+  }
   return message?.trim() || "Something went wrong. Please try again.";
 }
 
@@ -68,8 +90,26 @@ test("login errors stay generic for invalid credentials and confirm-email is exp
     mapSupabaseAuthError("User already registered"),
     "Unable to create account. Please try again or sign in.",
   );
+  assert.match(
+    mapSupabaseAuthError("Password should be at least 6 characters"),
+    /at least 8 characters/i,
+  );
+  assert.match(
+    mapSupabaseAuthError("Password has previously appeared in a data breach"),
+    /data breach/i,
+  );
+  assert.match(
+    mapSupabaseAuthError("Password should contain at least one character of each: abcdefghijklmnopqrstuvwxyz, ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+    /too weak/i,
+  );
+  // Must NOT map every password-related error to the length message.
+  assert.doesNotMatch(
+    mapSupabaseAuthError("Unable to validate password strength policy"),
+    /^Password must be at least 8 characters\.$/,
+  );
   const authUtils = read("apps/website/client/src/lib/auth-utils.ts");
   assert.match(authUtils, /Unable to create account\. Please try again or sign in\./);
+  assert.match(authUtils, /do NOT map every error that merely contains "password"/i);
 });
 
 test("Google OAuth stays disabled for Slice 1", () => {
