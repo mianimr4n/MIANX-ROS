@@ -73,14 +73,41 @@ const catalogDataSource: CatalogDataSource = {
 };
 
 const ordersDataSource: OrdersDataSource = {
+  async quoteOrder(input) {
+    return {
+      currency: "PKR" as const,
+      branchCode: input.branchCode,
+      orderType: input.orderType,
+      lines: input.items.map((item) => ({
+        menuItemSlug: item.menuItemSlug,
+        productName: item.productName ?? item.menuItemSlug,
+        variantName: item.variantLabel ?? null,
+        quantity: item.quantity,
+        foodUnitPrice: 499,
+        extras: [],
+        lineUnitPrice: 499,
+        lineTotal: 499 * item.quantity,
+      })),
+      subtotal: input.items.reduce((sum, item) => sum + 499 * item.quantity, 0),
+      discountAmount: 0,
+      taxAmount: 0,
+      deliveryFee: 0,
+      totalAmount: input.items.reduce((sum, item) => sum + 499 * item.quantity, 0),
+      pricedAt: new Date().toISOString(),
+    };
+  },
   async createOrder(input) {
     return {
       id: "order-1",
       orderNumber: "TP-TEST-1",
       status: "pending",
-      subtotal: input.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
-      totalAmount: input.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+      subtotal: 499,
+      discountAmount: 0,
+      taxAmount: 0,
+      deliveryFee: 0,
+      totalAmount: 499,
       createdAt: new Date().toISOString(),
+      idempotentReplay: input.idempotencyKey === "replay-key",
     };
   },
   async getOrderTracking(orderNumber, contactPhone) {
@@ -182,30 +209,7 @@ describe("Telepizza API app", () => {
     );
   });
 
-  it("rejects delivery orders without an address", async () => {
-    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
-    const response = await request(app).post("/api/v1/orders").send({
-      branchCode: "royal-orchard",
-      orderType: "delivery",
-      orderSource: "website",
-      contactName: "Test User",
-      contactPhone: "03041110495",
-      items: [
-        {
-          menuItemSlug: "tele-special",
-          variantLabel: "6 inch Small",
-          quantity: 1,
-          unitPrice: 499,
-          productName: "Tele Special",
-        },
-      ],
-    });
-
-    expect(response.status).toBe(400);
-    expect(response.body.error.code).toBe("DELIVERY_ADDRESS_REQUIRED");
-  });
-
-  it("creates orders through the configured orders source", async () => {
+  it("requires Idempotency-Key for order creation", async () => {
     const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
     const response = await request(app).post("/api/v1/orders").send({
       branchCode: "royal-orchard",
@@ -214,20 +218,87 @@ describe("Telepizza API app", () => {
       contactName: "Test User",
       contactPhone: "03041110495",
       deliveryAddress: "Multan",
-      items: [
-        {
-          menuItemSlug: "tele-special",
-          variantLabel: "6 inch Small",
-          quantity: 1,
-          unitPrice: 499,
-          productName: "Tele Special",
-          variantName: "6 inch Small",
-        },
-      ],
+      items: [{ menuItemSlug: "tele-special", quantity: 1 }],
     });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe("IDEMPOTENCY_KEY_REQUIRED");
+  });
+
+  it("rejects delivery orders without an address", async () => {
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
+    const response = await request(app)
+      .post("/api/v1/orders")
+      .set("Idempotency-Key", "test-key-1")
+      .send({
+        branchCode: "royal-orchard",
+        orderType: "delivery",
+        orderSource: "website",
+        contactName: "Test User",
+        contactPhone: "03041110495",
+        items: [{ menuItemSlug: "tele-special", quantity: 1 }],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe("DELIVERY_ADDRESS_REQUIRED");
+  });
+
+  it("quotes orders through the configured orders source", async () => {
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
+    const response = await request(app).post("/api/v1/orders/quote").send({
+      branchCode: "royal-orchard",
+      orderType: "pickup",
+      items: [{ menuItemSlug: "tele-special", variantLabel: "6 inch Small", quantity: 1 }],
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.currency).toBe("PKR");
+    expect(response.body.data.totalAmount).toBe(499);
+  });
+
+  it("creates orders through the configured orders source", async () => {
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
+    const response = await request(app)
+      .post("/api/v1/orders")
+      .set("Idempotency-Key", "test-key-create")
+      .send({
+        branchCode: "royal-orchard",
+        orderType: "delivery",
+        orderSource: "website",
+        contactName: "Test User",
+        contactPhone: "03041110495",
+        deliveryAddress: "Multan",
+        items: [
+          {
+            menuItemSlug: "tele-special",
+            variantLabel: "6 inch Small",
+            quantity: 1,
+            unitPrice: 1,
+            productName: "HACKED",
+          },
+        ],
+      });
 
     expect(response.status).toBe(201);
     expect(response.body.data.orderNumber).toBe("TP-TEST-1");
+  });
+
+  it("replays idempotent creates with 200", async () => {
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
+    const response = await request(app)
+      .post("/api/v1/orders")
+      .set("Idempotency-Key", "replay-key")
+      .send({
+        branchCode: "royal-orchard",
+        orderType: "pickup",
+        orderSource: "website",
+        contactName: "Test User",
+        contactPhone: "03041110495",
+        items: [{ menuItemSlug: "tele-special", quantity: 1 }],
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.idempotentReplay).toBe(true);
   });
 
   it("returns order tracking through the configured orders source", async () => {
