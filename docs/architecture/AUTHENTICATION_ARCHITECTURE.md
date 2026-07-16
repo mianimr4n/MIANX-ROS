@@ -88,8 +88,9 @@ Any of the following requires **architecture approval** before merge:
 | **Sprint 3 Slice 2A** | AuthPrincipal, permission/branch middleware, status gate, spoof protection, tests | ✅ Complete (`f7fa2c4`) |
 | **Sprint 3.5** | Merge + migration apply + regression/smoke | ✅ Closed |
 | **Slice 2B** | Staff invite / create / role+branch assign | ✅ Closed (`8527f28` / PR #31; migrations + production smoke PASS) |
-| **Slice 2C** | Customer phone + OTP | 🔒 Not started |
-| **Slice 2D** | Order/payment/delivery RLS by owner + branch | 🔒 Not started |
+| **Slice 2C** | Customer phone + OTP (WhatsApp-first) | ⏸ **PAUSED** — architecture complete; 2C.0 **BLOCKED** on Meta/Twilio/WABA/CAPTCHA/pilot (`SLICE-2C0-OTP-OPERATIONS-READINESS.md`) |
+| **Slice 2D** | Order/payment/delivery RLS by owner + branch | 🔒 Not started (hard gate before POS unlock) |
+| **Sprint 4 planning** | Orders Backend plan (parallel with 2C ops wait) | ▶ `SPRINT-04-ORDERS-BACKEND-PLANNING.md` |
 
 ---
 
@@ -413,18 +414,22 @@ RLS must use `auth.uid()` + DB RBAC, never client role claims.
 ## 16. Long-term sequence
 
 ```text
-Sprint 3.5 — Merge & production validation
+Sprint 3.5 — Merge & production validation          ✅
     ↓
-Slice 2B — Staff invite system
+Slice 2B — Staff invite system                      ✅
     ↓
-Slice 2C — Customer phone OTP
-    ↓
-Slice 2D — Branch / owner RLS
-    ↓
-Sprint 4 — POS + Kitchen + Delivery (uses this authz spine)
+Slice 2C.0 — OTP ops (WhatsApp-first, D11 locked)   ⏸ PAUSED eng / BLOCKED on provider
+    │
+    ├──────────────────────────────────────────────┐
+    ▼                                              ▼
+Slice 2C.1+ OTP code (only when 2C.0 READY)   Sprint 4 Orders Backend planning ▶
+                                                   ↓
+                                            Orders API slices → Slice 2D RLS
+                                                   ↓
+                                            Sprint 4 POS + Kitchen + Delivery apps
 ```
 
-Sprint 3.5 is closed. **Slice 2B is closed** (PR #31 / `8527f28`; locked decisions production-verified). Slice 2C waits on owner authorization.
+Sprint 3.5 and Slice 2B are closed. Slice 2C engineering is **paused** pending Meta/Twilio dedicated **Telepizza Login** sender (ordering number **0304-1110495** never used for OTP). Orders Backend planning proceeds in parallel per owner recommendation.
 
 ### Sprint 3.5 checklist (gate) — completed
 
@@ -446,7 +451,8 @@ Sprint 3.5 is closed. **Slice 2B is closed** (PR #31 / `8527f28`; locked decisio
 | `_documentation-audit/reports/SPRINT-03.5-CLOSE.md` | Sprint 3.5 production validation close |
 | `docs/04-engineering/09-security/04-api-security/AUTHENTICATION_SECURITY.md` | Broader API auth security notes |
 | `docs/04-engineering/09-security/04-api-security/AUTHORIZATION_SECURITY.md` | Broader API authz security notes |
-| `AGENTS.md` | Repo agent bootstrap / runtime ops |
+| `docs/architecture/SLICE-2C0-OTP-OPERATIONS-READINESS.md` | Slice 2C.0 OTP ops (paused / blocked on provider) |
+| `docs/architecture/SPRINT-04-ORDERS-BACKEND-PLANNING.md` | Parallel Orders Backend planning |
 
 If related docs conflict with **this** file on auth identity/privilege rules, **this file wins** until deliberately revised.
 
