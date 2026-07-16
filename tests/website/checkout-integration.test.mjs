@@ -255,3 +255,89 @@ test("Login and Register pages remain untouched by Sprint 4.3 checkout", () => {
   assert.doesNotMatch(login, /quoteOrder|checkoutAttemptFingerprint/);
   assert.doesNotMatch(register, /quoteOrder|checkoutAttemptFingerprint/);
 });
+
+// --- Sprint 4.3 Phase 11 extended coverage ---
+
+test("checkout displays server totals and ignores client subtotal when quote is ready", () => {
+  const checkout = read("apps/website/client/src/pages/Checkout.tsx");
+  assert.match(checkout, /serverTotals\.subtotal/);
+  assert.match(checkout, /serverTotals\.totalAmount/);
+  assert.match(checkout, /Subtotal \(estimate\)/);
+  assert.match(checkout, /serverQuoteItems/);
+});
+
+test("fingerprint changes when branch or order type changes", () => {
+  const base = {
+    branchCode: "royal-orchard",
+    orderType: "pickup",
+    contactName: "Ali",
+    contactPhone: "03041110495",
+    items: [{ menuItemSlug: "tele-special", quantity: 1 }],
+  };
+  const branchChanged = checkoutAttemptFingerprint({
+    ...base,
+    branchCode: "other-branch",
+  });
+  const typeChanged = checkoutAttemptFingerprint({
+    ...base,
+    orderType: "delivery",
+    deliveryAddress: "Multan",
+  });
+  assert.notEqual(checkoutAttemptFingerprint(base), branchChanged);
+  assert.notEqual(checkoutAttemptFingerprint(base), typeChanged);
+});
+
+test("Checkout ignores stale quote responses via sequence guard", () => {
+  const checkout = read("apps/website/client/src/pages/Checkout.tsx");
+  assert.match(checkout, /quoteRequestSeq\.current/);
+  assert.match(checkout, /if \(seq !== quoteRequestSeq\.current\) return null/);
+});
+
+test("idempotency key stays stable until fingerprint changes", () => {
+  const checkout = read("apps/website/client/src/pages/Checkout.tsx");
+  assert.match(checkout, /idempotencyKey/);
+  assert.match(checkout, /lastFingerprint\.current !== attemptFingerprint/);
+});
+
+test("double submit is blocked while request is in flight", () => {
+  const checkout = read("apps/website/client/src/pages/Checkout.tsx");
+  assert.match(checkout, /submitInFlight/);
+  assert.match(checkout, /if \(submitInFlight\.current \|\| isSubmitting\) return/);
+});
+
+test("guest checkout requires name and phone without login", () => {
+  const checkout = read("apps/website/client/src/pages/Checkout.tsx");
+  assert.match(checkout, /Name and phone are required/);
+  assert.doesNotMatch(checkout, /must be logged in|login required/i);
+});
+
+test("delivery requires address; pickup does not gate address field on delivery mode only", () => {
+  const checkout = read("apps/website/client/src/pages/Checkout.tsx");
+  assert.match(checkout, /Delivery address is required/);
+  assert.match(checkout, /deliveryMode === "delivery"/);
+});
+
+test("cart is preserved on API failure and local fallback", () => {
+  const checkout = read("apps/website/client/src/pages/Checkout.tsx");
+  assert.match(checkout, /result\.source !== "api"/);
+  assert.match(checkout, /Cart was not cleared/);
+  const submitOrder = read("apps/website/client/src/lib/submit-order.ts");
+  assert.match(submitOrder, /requireApiSuccess/);
+});
+
+test("OrderSuccess distinguishes confirmed API orders from LOC/local fallback", () => {
+  const success = read("apps/website/client/src/pages/OrderSuccess.tsx");
+  assert.match(success, /LOC-/);
+  assert.match(success, /isConfirmedApiOrder/);
+  assert.match(success, /isLocalFallback/);
+  assert.match(success, /not a confirmed branch order/i);
+  assert.match(success, /Server total/);
+});
+
+test("catalog and auth regression guards remain intact", () => {
+  const menuData = read("apps/website/client/src/data/menu-data.ts");
+  assert.match(menuData, /tele-special/);
+  const staffAccept = read("apps/website/client/src/pages/StaffAccept.tsx");
+  assert.match(staffAccept, /\/auth\/staff\/invites/);
+  assert.doesNotMatch(staffAccept, /quoteOrder/);
+});
