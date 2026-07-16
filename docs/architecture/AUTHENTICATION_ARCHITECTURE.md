@@ -424,7 +424,7 @@ Slice 2D — Branch / owner RLS
 Sprint 4 — POS + Kitchen + Delivery (uses this authz spine)
 ```
 
-Sprint 3.5 is closed. Slice 2B implementation waits on owner approval of `STAFF_INVITE_ARCHITECTURE.md`.
+Sprint 3.5 is closed. **Slice 2B is closed** (PR #31 / `8527f28`; locked decisions production-verified). Slice 2C waits on owner authorization.
 
 ### Sprint 3.5 checklist (gate) — completed
 
