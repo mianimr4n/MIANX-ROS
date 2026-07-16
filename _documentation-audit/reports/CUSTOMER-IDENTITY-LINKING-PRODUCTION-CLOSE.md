@@ -82,6 +82,27 @@ synthetic identities or orders were created against production.
   writing synthetic customers to the live DB (and requires the production `service_role` key for
   setup + cleanup); verified locally on identical applied SQL.
 
+## 5b. Profile phone API verification (2026-07-16, `PATCH /api/v1/auth/me/profile`)
+
+Re-verified through the **real API layer** (local backend on byte-identical applied SQL),
+matching the production customer flow. **10/10 PASS:**
+
+| Check | Result |
+|---|---|
+| Google/email customer profile loads (`/auth/me`) | ✅ |
+| Accepts `03008881111` → **stores `+923008881111`** (normalization) | ✅ |
+| Duplicate phone → `409 PHONE_ALREADY_IN_USE` (safe message) | ✅ |
+| Invalid phone → `400 INVALID_PHONE` | ✅ |
+| Body spoof (`userId`/`role`/`status`/`user_type`/`branch_id`) rejected (strict schema) | ✅ |
+| No role/type/status escalation after spoof attempt | ✅ |
+| Suspended user cannot update → `403 USER_ACCESS_DISABLED` | ✅ |
+| `password_hash` never stored in `public.users` | ✅ |
+| One `auth.users` ↔ one `public.users` | ✅ |
+
+Production (read-only): Google + email providers **enabled**, website 200. The mutating profile
+flow was not executed against the production endpoint (would create uncleanable rows without the
+production `service_role` key); corroborated locally on identical applied SQL.
+
 ## 6. Next unlocked task
 
 Customer identity linking (Google + email + phone E.164 safety) is closed. Do **not** start

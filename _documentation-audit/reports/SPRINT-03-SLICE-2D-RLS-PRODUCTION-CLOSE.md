@@ -268,9 +268,71 @@ to the live DB, and because it requires the production `service_role` key for se
 If desired, it can be run using the local scripts pointed at production (personas via GoTrue
 admin, real user tokens, tagged cleanup by `@rls.test` / `RLS-SMOKE-`).
 
+## 14. Final production verification — 6-phase (2026-07-16 16:xx UTC)
+
+Re-run after the owner confirmed production apply. **Production state advanced since §13**:
+anon now returns hard **`401 / 42501` permission-denied** on all five order tables (the
+`revoke ... from anon` is fully effective — stronger than the earlier `200 []`).
+
+**Method:** production checks are **read-only** against the live deployment
+(`telepizza-api.onrender.com`, `pyeowxvacgypohrbvgee.supabase.co` via the public publishable
+anon key, GoTrue settings) — **no synthetic rows written to production**. Authenticated-persona
+and mutating flows are corroborated on a **local Supabase running byte-identical applied SQL**
+(deliberately not injecting synthetic customers/orders into the live ordering DB, which also
+cannot be cleaned up without the production `service_role` key).
+
+**Phase 1 — Migration verification**
+- Both migrations applied (owner-confirmed) and confirmed via **schema effects in production**:
+  anon revoked (401), RLS-gated reads, identity/phone behavior. Direct read of
+  `supabase_migrations` history requires linked/service access (not available here).
+- RLS on `orders`/`order_items`/`order_status_logs`/`deliveries`: PROD anon `401` on all;
+  LOCAL `relrowsecurity=true` on all five (incl. `payments`). ✅
+- Helper functions + pinned `search_path=public` (6 fns, SECURITY DEFINER): LOCAL ✅
+  (production behaviour depends on them and passes on identical SQL).
+- Authenticated direct writes blocked: LOCAL ✅ (PATCH denied; no INSERT/UPDATE/DELETE grant).
+- anon has no direct order-table access: **PROD ✅** (`401` on all 5).
+- `users.phone` E.164 check + partial unique index: LOCAL ✅ present + enforced.
+- No unintended catalog/menu changes: **PROD ✅** catalog `13/58/3/40/7` (owner menu-board
+  content: Dips present / Broast retired — counts frozen).
+
+**Phase 2 — Live RLS persona smoke** — LOCAL **30/30** (customer A/B isolation, RO/NB staff
+branch isolation, spoofed `x-telepizza-role`/`x-telepizza-branch-id` ineffective, super-admin
+both branches, suspended customer/staff none, rider none, customer UPDATE blocked, payments
+denied). PROD anon isolation ✅. Authenticated-persona rows not created in production (no
+`service_role` for setup+cleanup).
+
+**Phase 3 — Customer identity / phone smoke** — LOCAL profile-API **10/10** via
+`PATCH /api/v1/auth/me/profile`: `/auth/me` loads; `03008881111` → stored `+923008881111`;
+duplicate → `409 PHONE_ALREADY_IN_USE`; invalid → `400 INVALID_PHONE`; body spoof
+(`user_type`/`role`/`status`/`branch`/`userId`) rejected with no escalation; suspended → `403`;
+`password_hash` never stored in `public.users`; one `auth.users` ↔ one `public.users`. PROD:
+Google+email providers enabled ✅, website 200 ✅.
+
+**Phase 4 — API regression** — PROD read-only: `/healthz` 200, `/readyz` 200, guest quote ✅,
+catalog `13/58/3/40/7` ✅, branches `2` ✅, **WhatsApp `0304-1110495`** (royal-orchard) ✅.
+LOCAL: `/auth/me`, guest create/track, authenticated create sets `auth_user_id`, idempotency
+replay(200)/conflict(409) — **14/14** ✅. Staff-invite flow + website checkout: covered by
+`pnpm test:backend` (87 passed) + `pnpm build:website` + production website 200. ✅
+
+**Phase 5 — Cleanup** — LOCAL baseline restored (orders/items/status-logs/deliveries/payments
+= 0; test users/customers = 0). **No synthetic rows were created in production**, so
+pre-existing production rows are untouched. ✅
+
+**Known limitations / residual**
+- Authenticated-persona + profile-mutation smoke executed on LOCAL (identical applied SQL), not
+  the production endpoint — running it against production requires the production `service_role`
+  key (for setup + guaranteed cleanup). The local scripts can be pointed at production if that
+  key is provided.
+- `order_status_logs.note` remains readable by the owning customer (Slice 2D deferral, §10.1).
+- Defense-in-depth grant tidy-up (`TRUNCATE/REFERENCES/TRIGGER`) still recommended (§10.2).
+
+**Next unlocked task:** Sprint 4.5 Branch Order APIs (do not start — per instruction, stop
+after reports).
+
 ---
 
 SPRINT 3 SLICE 2D — ORDER BRANCH RLS: PASS AND CLOSED
-(Production migration applied + verified; RLS security gate confirmed — production anon
-isolation + read surfaces, and full authenticated-persona/API matrix on byte-identical
-applied SQL. Verification method + residual documented in §13.)
+(Production migration applied + verified: production anon isolation = `401` on all five order
+tables, catalog/branches/WhatsApp/providers/health confirmed read-only on production, and the
+full authenticated-persona + API matrix verified on byte-identical applied SQL. Method +
+residual in §14.)
