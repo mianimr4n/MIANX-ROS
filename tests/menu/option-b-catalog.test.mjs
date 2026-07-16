@@ -53,24 +53,34 @@ test("static public categories remain 13 without Toppings chip", () => {
 
   assert.equal(names.length, 13);
   assert.equal(names.includes("Toppings"), false);
+  assert.equal(names.includes("Broast"), false);
+  assert.equal(names.includes("Dips"), true);
 });
 
-test("static fallback includes topping SKUs and Behari without invented variants", () => {
+test("static fallback matches owner board: dips + zinger + pasta, no broast / specialty behari", () => {
   const menuData = read("apps/website/client/src/data/menu-data.ts");
 
   assert.match(menuData, /id: "extra-chicken"/);
   assert.match(menuData, /id: "extra-cheese"/);
   assert.match(menuData, /id: "extra-cheese-slice"/);
   assert.match(menuData, /productType: "topping"/);
-  assert.match(menuData, /id: "behari-kabab-pizza"/);
-  assert.match(menuData, /price: 549/);
-  assert.match(menuData, /badge: "Starting Price"/);
+  assert.match(menuData, /id: "zinger-burger"/);
+  assert.match(menuData, /id: "special-pasta"/);
+  assert.match(menuData, /id: "special-sauce-dip"/);
+  assert.match(menuData, /id: "bone-fire-dip"/);
+  assert.match(menuData, /id: "dip-sauce"/);
+  assert.match(menuData, /id: "garlic-ranch-dip"/);
+  assert.match(menuData, /id: "bihari-kabab"/);
 
-  const behariBlock = menuData.slice(
-    menuData.indexOf('id: "behari-kabab-pizza"'),
-    menuData.indexOf('id: "crown-crust"'),
+  assert.equal(/id: "behari-kabab-pizza"/.test(menuData), false);
+  assert.equal(/id: "quarter-broast"/.test(menuData), false);
+  assert.equal(/category: "Broast"/.test(menuData), false);
+
+  const itemIds = [...menuData.matchAll(/id: "([^"]+)"/g)].map((match) => match[1]);
+  const browseIds = itemIds.filter(
+    (id) => !["extra-chicken", "extra-cheese", "extra-cheese-slice"].includes(id),
   );
-  assert.equal(/variants:/.test(behariBlock), false);
+  assert.equal(browseIds.length, 58);
 });
 
 test("customizer price resolver maps S/M/L and cheese slice without inventing", () => {
@@ -107,4 +117,21 @@ test("cart line identity keeps topping selections distinct", () => {
   assert.notEqual(plain, withCheese);
   assert.notEqual(withCheese, withBoth);
   assert.equal(withCheese, buildCartId("tele-special", "6-inch-small", [{ label: "Extra Cheese (6 inch Small)" }]));
+});
+
+test("owner menu sync migration retires broast and seeds dips/zinger/pasta", () => {
+  const migration = read("supabase/migrations/20260716160000_sync_owner_menu_catalog.sql");
+
+  assert.match(migration, /'dips'/i);
+  assert.match(migration, /'zinger-burger'/i);
+  assert.match(migration, /'special-pasta'/i);
+  assert.match(migration, /'special-sauce-dip'/i);
+  assert.match(migration, /'garlic-ranch-dip'/i);
+  assert.match(migration, /slug = 'broast'/i);
+  assert.match(migration, /is_active = false/i);
+  assert.match(migration, /'behari-kabab-pizza'/i);
+  assert.match(migration, /is_available = false/i);
+  assert.match(migration, /on conflict \(slug\) do update/i);
+  assert.match(migration, /begin;/i);
+  assert.match(migration, /commit;/i);
 });

@@ -24,7 +24,7 @@ import { ProductCard } from "@/components/menu/ProductCard";
 import { CategoryStrip } from "@/components/home/CategoryStrip";
 import { HeroSlider } from "@/components/home/HeroSlider";
 import { MenuSectionRow } from "@/components/home/MenuSectionRow";
-import { VERIFIED_BROAST_PRICES, VERIFIED_DEAL_IDS } from "@/lib/brand";
+import { VERIFIED_DEAL_IDS } from "@/lib/brand";
 
 const FEATURED_PIZZA_IDS = [
   "tele-special",
@@ -34,10 +34,20 @@ const FEATURED_PIZZA_IDS = [
   "chicago-extreme",
   "kababish",
 ];
-const FEATURED_BURGER_SANDWICH_IDS = ["patty-burger", "special-sandwich", "crunchy-sandwich"];
-const FEATURED_BROAST_IDS = ["quarter-broast", "half-broast", "full-broast"];
-const FEATURED_PASTA_SIDES_IDS = ["crunchy-pasta", "loaded-fries", "chicken-tender-strips", "nuggets"];
-const CUSTOMER_FAVORITE_IDS = ["tele-special", "patty-burger", "behari-roll"];
+const FEATURED_BURGER_SANDWICH_IDS = [
+  "zinger-burger",
+  "patty-burger",
+  "special-sandwich",
+  "crunchy-sandwich",
+];
+const FEATURED_WINGS_IDS = ["fried-crispy-wings", "bbq-wings", "creamo-wings"];
+const FEATURED_PASTA_SIDES_IDS = [
+  "crunchy-pasta",
+  "special-pasta",
+  "loaded-fries",
+  "chicken-tender-strips",
+];
+const CUSTOMER_FAVORITE_IDS = ["tele-special", "zinger-burger", "behari-roll"];
 
 export default function Home() {
   const { items } = useMenuCatalog();
@@ -89,17 +99,17 @@ export default function Home() {
 
       <MenuSectionRow
         title="Crispy"
-        highlight="Broast"
-        subtitle={`Verified combos with fries & dips — Quarter Rs ${VERIFIED_BROAST_PRICES.quarter.toLocaleString()} · Half Rs ${VERIFIED_BROAST_PRICES.half.toLocaleString()} · Full Rs ${VERIFIED_BROAST_PRICES.full.toLocaleString()}`}
-        itemIds={FEATURED_BROAST_IDS}
-        viewAllCategory="Broast"
+        highlight="Wings"
+        subtitle="Fried & crispy, BBQ, Creamo, oven baked, and flaming wings"
+        itemIds={FEATURED_WINGS_IDS}
+        viewAllCategory="Wings"
         dark
       />
 
       <MenuSectionRow
         title="Burgers &"
         highlight="Sandwiches"
-        subtitle="Patty burgers and loaded sandwiches from our verified menu"
+        subtitle="Zinger, patty burgers, and loaded sandwiches from our verified menu"
         itemIds={FEATURED_BURGER_SANDWICH_IDS}
         viewAllCategory="Burgers"
       />
@@ -107,7 +117,7 @@ export default function Home() {
       <MenuSectionRow
         title="Pasta &"
         highlight="Sides"
-        subtitle="Crunchy pasta, loaded fries, tenders, and more"
+        subtitle="Crunchy pasta, flaming pasta, loaded fries, tenders, and more"
         itemIds={FEATURED_PASTA_SIDES_IDS}
         viewAllCategory="Pasta"
         dark
@@ -158,7 +168,7 @@ export default function Home() {
             {
               icon: Flame,
               title: "Bold Telepizza Flavors",
-              desc: "Tele Special, Behari Roll, Crown Crust, Broast, and more from our verified menu.",
+              desc: "Tele Special, Zinger Burger, Crown Crust, Behari Roll, and more from our verified menu.",
             },
             {
               icon: Shield,

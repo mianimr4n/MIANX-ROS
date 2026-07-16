@@ -84,6 +84,24 @@ test("catalog sync migration adds broast and remaining verified menu slugs", () 
   }
 });
 
+test("owner menu sync migration replaces broast with dips and adds missing board SKUs", () => {
+  const ownerSyncMigration = readFileSync(
+    join(workspaceRoot, "supabase", "migrations", "20260716160000_sync_owner_menu_catalog.sql"),
+    "utf8",
+  );
+
+  assert.match(ownerSyncMigration, /'dips'/i);
+  assert.match(ownerSyncMigration, /'zinger-burger'/i);
+  assert.match(ownerSyncMigration, /'special-pasta'/i);
+  assert.match(ownerSyncMigration, /is_active = false/i);
+  assert.match(ownerSyncMigration, /'quarter-broast'/i);
+  assert.match(ownerSyncMigration, /'behari-kabab-pizza'/i);
+
+  for (const menuSlug of ["special-sauce-dip", "bone-fire-dip", "dip-sauce", "garlic-ranch-dip"]) {
+    assert.match(ownerSyncMigration, new RegExp(`'${menuSlug}'`, "i"));
+  }
+});
+
 test("pizza toppings migration seeds shared catalog SKUs for BFR-012 Option B", () => {
   const toppingsMigration = readFileSync(
     join(workspaceRoot, "supabase", "migrations", "20260715120000_pizza_toppings_catalog.sql"),

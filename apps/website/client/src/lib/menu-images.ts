@@ -3,7 +3,7 @@ const PRODUCT_IMAGES = {
   periPeriPizza: "/images/products/peri-peri-pizza.jpg",
   classicPizza: "/images/products/classic-pizza.jpg",
   specialtyPizza: "/images/products/specialty-pizza.jpg",
-  broast: "/images/products/broast.jpg",
+  chicken: "/images/products/broast.jpg",
   burger: "/images/products/burger.jpg",
   sandwich: "/images/products/sandwich.jpg",
   wings: "/images/products/wings.jpg",
@@ -14,6 +14,7 @@ const PRODUCT_IMAGES = {
   nuggets: "/images/products/nuggets.jpg",
   drinks: "/images/products/drinks.jpg",
   dealCombo: "/images/products/deal-combo.jpg",
+  dip: "/images/sides-platter.jpg",
 } as const;
 
 const SLUG_IMAGE_OVERRIDES: Record<string, string> = {
@@ -21,12 +22,12 @@ const SLUG_IMAGE_OVERRIDES: Record<string, string> = {
   "peri-peri": PRODUCT_IMAGES.periPeriPizza,
   "bihari-kabab": PRODUCT_IMAGES.signaturePizza,
   kababish: PRODUCT_IMAGES.signaturePizza,
-  "behari-kabab-pizza": PRODUCT_IMAGES.specialtyPizza,
   "crown-crust": PRODUCT_IMAGES.specialtyPizza,
   "chicago-extreme": PRODUCT_IMAGES.specialtyPizza,
   "stuffed-crust": PRODUCT_IMAGES.specialtyPizza,
   "tele-extreme": PRODUCT_IMAGES.specialtyPizza,
   "sixteen-inch-incher": PRODUCT_IMAGES.specialtyPizza,
+  "zinger-burger": PRODUCT_IMAGES.burger,
   "patty-burger": PRODUCT_IMAGES.burger,
   "crunchy-sandwich": PRODUCT_IMAGES.sandwich,
   "special-sandwich": PRODUCT_IMAGES.sandwich,
@@ -45,17 +46,17 @@ const SLUG_IMAGE_OVERRIDES: Record<string, string> = {
   "dynamite-wrap": PRODUCT_IMAGES.wrap,
   "behari-roll": PRODUCT_IMAGES.roll,
   "crunchy-pasta": PRODUCT_IMAGES.pasta,
-  "quarter-broast": PRODUCT_IMAGES.broast,
-  "half-broast": PRODUCT_IMAGES.broast,
-  "full-broast": PRODUCT_IMAGES.broast,
+  "special-pasta": PRODUCT_IMAGES.pasta,
   "chicken-tender-strips": PRODUCT_IMAGES.nuggets,
   "crispy-box": PRODUCT_IMAGES.nuggets,
   nuggets: PRODUCT_IMAGES.nuggets,
   "hot-shots": PRODUCT_IMAGES.nuggets,
-  "broast-garlic-dip": PRODUCT_IMAGES.broast,
-  "broast-mustard-dip": PRODUCT_IMAGES.broast,
-  "fried-chicken-chest": PRODUCT_IMAGES.broast,
-  "fried-chicken": PRODUCT_IMAGES.broast,
+  "fried-chicken-chest": PRODUCT_IMAGES.chicken,
+  "fried-chicken": PRODUCT_IMAGES.chicken,
+  "special-sauce-dip": PRODUCT_IMAGES.dip,
+  "bone-fire-dip": PRODUCT_IMAGES.dip,
+  "dip-sauce": PRODUCT_IMAGES.dip,
+  "garlic-ranch-dip": PRODUCT_IMAGES.dip,
   tikka: PRODUCT_IMAGES.classicPizza,
   "drink-1-5l": PRODUCT_IMAGES.drinks,
   "drink-1l": PRODUCT_IMAGES.drinks,
@@ -94,8 +95,8 @@ function getCategoryImage(categoryName: string): string {
     return PRODUCT_IMAGES.classicPizza;
   }
 
-  if (normalized.includes("broast")) {
-    return PRODUCT_IMAGES.broast;
+  if (normalized.includes("dip")) {
+    return PRODUCT_IMAGES.dip;
   }
 
   if (normalized.includes("burger")) {
