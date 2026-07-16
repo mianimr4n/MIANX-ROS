@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthPageShell } from "@/components/AuthPageShell";
-import { AUTH_MIN_PASSWORD_LENGTH, isGoogleOAuthConfigured } from "@/lib/auth-utils";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { AUTH_MIN_PASSWORD_LENGTH } from "@/lib/auth-utils";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 export default function Register() {
@@ -57,14 +58,23 @@ export default function Register() {
   return (
     <AuthPageShell
       title="Create Account"
-      description="Register with email and password for a secure customer account."
+      description="Create your account with Google or email — most people use Gmail."
       note={
         isSupabaseConfigured
           ? undefined
           : "Registration is temporarily unavailable until authentication is configured."
       }
     >
-      <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-white p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-4">
+        <GoogleSignInButton
+          disabled={!isSupabaseConfigured || submitting}
+          onError={(message) => {
+            setInfo(null);
+            setError(message);
+          }}
+          label="Continue with Google"
+          placement="primary"
+        />
         <div className="space-y-2">
           <Label htmlFor="fullName">Full name (optional)</Label>
           <Input
@@ -92,6 +102,7 @@ export default function Register() {
             className="rounded-2xl"
             required
             disabled={!isSupabaseConfigured || submitting}
+            placeholder="you@gmail.com"
           />
         </div>
         <div className="space-y-2">
@@ -125,12 +136,8 @@ export default function Register() {
           className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
           disabled={!isSupabaseConfigured || submitting}
         >
-          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Register"}
+          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create account with email"}
         </Button>
-        {/* Google OAuth intentionally omitted — Slice 1 keeps it disabled. */}
-        {isGoogleOAuthConfigured() ? (
-          <p className="text-xs text-muted-foreground text-center">Google sign-in</p>
-        ) : null}
       </form>
       <p className="text-sm text-muted-foreground mt-4 text-center">
         Already registered?{" "}

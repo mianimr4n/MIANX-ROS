@@ -13,6 +13,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { fetchApiData, isApiConfigured } from "@/lib/api";
 import {
   genericAuthErrorMessage,
+  getGoogleOAuthRedirectTo,
   mapSupabaseAuthError,
   validateSignupInput,
   type AuthMeResponse,
@@ -32,6 +33,7 @@ type SignUpResult =
   | { ok: false; message: string };
 
 type SignInResult = { ok: true } | { ok: false; message: string };
+type GoogleSignInResult = { ok: true } | { ok: false; message: string };
 
 interface AuthContextType {
   user: User | null;
@@ -42,6 +44,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   signUp: (input: { email: string; password: string; fullName?: string }) => Promise<SignUpResult>;
   signIn: (input: { email: string; password: string }) => Promise<SignInResult>;
+  signInWithGoogle: () => Promise<GoogleSignInResult>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -217,6 +220,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [applySession],
   );
 
+  const signInWithGoogle = useCallback(async (): Promise<GoogleSignInResult> => {
+    const supabase = getSupabaseClient();
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        ok: false,
+        message: "Authentication is not configured. Please try again later.",
+      };
+    }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: getGoogleOAuthRedirectTo(),
+        queryParams: {
+          prompt: "select_account",
+        },
+      },
+    });
+
+    if (error) {
+      return { ok: false, message: mapSupabaseAuthError(error.message) };
+    }
+
+    return { ok: true };
+  }, []);
+
   const signOut = useCallback(async () => {
     const supabase = getSupabaseClient();
     // Clear legacy preview identity keys only — do not touch cart storage.
@@ -247,10 +276,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: Boolean(session?.user),
       signUp,
       signIn,
+      signInWithGoogle,
       signOut,
       refreshProfile,
     }),
-    [user, session, profile, roles, isLoading, signUp, signIn, signOut, refreshProfile],
+    [
+      user,
+      session,
+      profile,
+      roles,
+      isLoading,
+      signUp,
+      signIn,
+      signInWithGoogle,
+      signOut,
+      refreshProfile,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
