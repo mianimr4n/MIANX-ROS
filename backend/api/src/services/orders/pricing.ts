@@ -77,7 +77,7 @@ export interface OrderPricingResult {
   deliveryFee: number;
   totalAmount: number;
   pricingSnapshot: {
-    engine: "sprint4.1";
+    engine: "sprint4.2";
     discountAmount: number;
     taxAmount: number;
     deliveryFee: number;
@@ -263,7 +263,7 @@ export function priceOrderLines(input: {
     if (menuItem.is_available === false) {
       throw new ApiError(
         400,
-        "MENU_ITEM_UNAVAILABLE",
+        "CATALOG_ITEM_UNAVAILABLE",
         `Menu item '${line.menuItemSlug}' is currently unavailable.`,
       );
     }
@@ -279,7 +279,7 @@ export function priceOrderLines(input: {
     if (variant && !variant.is_available) {
       throw new ApiError(
         400,
-        "VARIANT_UNAVAILABLE",
+        "CATALOG_ITEM_UNAVAILABLE",
         `Variant '${variant.label}' for '${line.menuItemSlug}' is not available.`,
       );
     }
@@ -329,7 +329,7 @@ export function priceOrderLines(input: {
       if (catalogItem.is_available === false) {
         throw new ApiError(
           400,
-          "TOPPING_UNAVAILABLE",
+          "CATALOG_ITEM_UNAVAILABLE",
           `Topping/addon '${catalogItem.slug}' is currently unavailable.`,
         );
       }
@@ -397,7 +397,7 @@ export function priceOrderLines(input: {
     deliveryFee,
     totalAmount,
     pricingSnapshot: {
-      engine: "sprint4.1",
+      engine: "sprint4.2",
       discountAmount,
       taxAmount,
       deliveryFee,

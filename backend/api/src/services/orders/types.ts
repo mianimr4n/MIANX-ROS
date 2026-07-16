@@ -24,13 +24,23 @@ export interface QuoteOrderInput {
   orderType: "delivery" | "pickup" | "dine-in";
   items: CreateOrderItemInput[];
   couponCode?: string;
+  /** Optional — when present, quote is bound to this phone (E.164). */
+  contactPhone?: string;
+}
+
+export interface QuoteWarningView {
+  code: string;
+  message: string;
 }
 
 export interface QuoteOrderResult {
-  currency: "PKR";
-  branchCode: string;
-  orderType: string;
-  lines: Array<{
+  quoteId: string;
+  expiresAt: string;
+  branch: {
+    code: string;
+    orderType: string;
+  };
+  items: Array<{
     menuItemSlug: string;
     productName: string;
     variantName: string | null;
@@ -40,11 +50,16 @@ export interface QuoteOrderResult {
     lineUnitPrice: number;
     lineTotal: number;
   }>;
-  subtotal: number;
-  discountAmount: number;
-  taxAmount: number;
-  deliveryFee: number;
-  totalAmount: number;
+  totals: {
+    currency: "PKR";
+    subtotal: number;
+    discountAmount: number;
+    taxAmount: number;
+    deliveryFee: number;
+    totalAmount: number;
+  };
+  warnings: QuoteWarningView[];
+  /** ISO timestamp when server priced this quote (audit). */
   pricedAt: string;
 }
 
@@ -60,6 +75,8 @@ export interface CreateOrderInput {
   couponCode?: string;
   items: CreateOrderItemInput[];
   idempotencyKey: string;
+  /** Optional Sprint 4.2 signed quote — never bypasses Idempotency-Key. */
+  quoteId?: string;
 }
 
 export interface CreatedOrderSummary {

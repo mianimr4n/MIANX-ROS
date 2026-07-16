@@ -5,14 +5,27 @@ import {
   saveLocalOrder,
   pushNotification,
 } from "@/lib/customer-store";
-import { createOrder } from "@/lib/telepizza-api";
+import { createOrderWithIdempotency, quoteOrder } from "@/lib/telepizza-api";
 
 export async function submitWebsiteOrder(
   payload: CreateWebsiteOrderPayload,
 ): Promise<CreatedOrderResult> {
   if (isApiConfigured) {
     try {
-      const apiOrder = await createOrder({
+      // 1) Request a server quote (bind cart/branch/type/phone)
+      const quote = await quoteOrder({
+        branchCode: payload.branchCode,
+        orderType: payload.orderType,
+        couponCode: payload.couponCode,
+        contactPhone: payload.contactPhone,
+        items: payload.items,
+      });
+
+      // 2) Generate an idempotency key for this attempt
+      const idempotencyKey = crypto.randomUUID();
+
+      // 3) Create order with quoteId + Idempotency-Key
+      const apiOrder = await createOrderWithIdempotency({
         branchCode: payload.branchCode,
         orderType: payload.orderType,
         orderSource: "website",
@@ -22,7 +35,8 @@ export async function submitWebsiteOrder(
         notes: payload.notes,
         couponCode: payload.couponCode,
         items: payload.items,
-      });
+        quoteId: quote.quoteId,
+      }, idempotencyKey);
 
       const result: CreatedOrderResult = {
         orderNumber: apiOrder.orderNumber,

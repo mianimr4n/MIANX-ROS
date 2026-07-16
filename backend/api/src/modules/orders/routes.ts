@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { ApiError, validateBody } from "../../common/http.js";
 import type { OrdersDataSource } from "../../services/orders/types.js";
+import { quoteRateLimitMiddleware } from "../../services/orders/quote-rate-limit.js";
 
 const toppingSlugSchema = z.object({
   slug: z.string().min(1).max(100),
@@ -33,6 +34,7 @@ const quoteOrderSchema = z.object({
   branchCode: z.string().min(2).max(100),
   orderType: z.enum(["delivery", "pickup", "dine-in"]),
   couponCode: z.string().max(50).optional(),
+  contactPhone: z.string().min(7).max(30).optional(),
   items: z.array(orderItemSchema).min(1).max(50),
 });
 
@@ -43,6 +45,8 @@ const createOrderSchema = quoteOrderSchema.extend({
   contactPhone: z.string().min(7).max(30),
   deliveryAddress: z.string().max(300).optional(),
   notes: z.string().max(500).optional(),
+  /** Optional Sprint 4.2 signed quote — never bypasses Idempotency-Key. */
+  quoteId: z.string().max(4096).optional(),
 });
 
 function readIdempotencyKey(headerValue: string | string | string[] | undefined): string {
@@ -53,7 +57,7 @@ function readIdempotencyKey(headerValue: string | string | string[] | undefined)
 export function createOrdersRouter(ordersDataSource: OrdersDataSource) {
   const router = Router();
 
-  router.post("/quote", validateBody(quoteOrderSchema), async (req, res, next) => {
+  router.post("/quote", quoteRateLimitMiddleware, validateBody(quoteOrderSchema), async (req, res, next) => {
     try {
       const quote = await ordersDataSource.quoteOrder(req.body);
       return res.status(200).json({ ok: true, data: quote });
