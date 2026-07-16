@@ -3,11 +3,14 @@ import { createClient, type SupabaseClient, type User } from "@supabase/supabase
 import { ApiError } from "../../common/http.js";
 import type { EnvironmentStatus } from "../../config/env.js";
 import type { AuthTokenVerifier } from "../../middleware/auth.js";
+import { normalizePakistaniMobileE164 } from "./phone.js";
 import {
   buildAuthPrincipal,
+  isAccountActive,
   toSafeAuthMeData,
   type AuthPrincipal,
   type SafeAuthMeData,
+  type SafeAuthProfile,
 } from "./principal.js";
 
 export type {
@@ -16,9 +19,20 @@ export type {
   SafeAuthProfile,
 } from "./principal.js";
 
+export type UpdateOwnProfileInput = {
+  fullName?: string;
+  phone?: string | null;
+};
+
 export interface AuthPrincipalRepository {
   resolvePrincipal(authUserId: string, email: string | null): Promise<AuthPrincipal | null>;
   getMe(authUserId: string, email: string | null): Promise<SafeAuthMeData>;
+  /** Customer self-service profile update (fullName/phone only). */
+  updateOwnProfile?(
+    authUserId: string,
+    email: string | null,
+    input: UpdateOwnProfileInput,
+  ): Promise<SafeAuthProfile>;
 }
 
 /** @deprecated Prefer AuthPrincipalRepository — kept as alias for existing imports. */
@@ -237,6 +251,90 @@ export function createSupabaseAuthProfileRepository(
         return toSafeAuthMeData(authUserId, email, null, null);
       }
       return toSafeAuthMeData(authUserId, email, loaded.principal, loaded.profile);
+    },
+
+    async updateOwnProfile(authUserId, email, input) {
+      const admin = createServiceClient(envStatus);
+      const loaded = await loadPrincipalFromDb(admin, authUserId, email);
+
+      if (!loaded) {
+        throw new ApiError(404, "PROFILE_NOT_FOUND", "Profile was not found for this account.");
+      }
+
+      if (!isAccountActive(loaded.principal.status)) {
+        throw new ApiError(403, "USER_ACCESS_DISABLED", "Access is disabled for this account.");
+      }
+
+      // Staff profiles must not be rewritten through the customer profile path.
+      if (loaded.principal.userType !== "customer") {
+        throw new ApiError(
+          403,
+          "PROFILE_UPDATE_FORBIDDEN",
+          "This account cannot update a customer profile here.",
+        );
+      }
+
+      const patch: { full_name?: string; phone?: string | null } = {};
+
+      if (input.fullName !== undefined) {
+        const trimmed = input.fullName.trim();
+        if (!trimmed) {
+          throw new ApiError(400, "INVALID_FULL_NAME", "Full name cannot be empty.");
+        }
+        if (trimmed.length > 150) {
+          throw new ApiError(400, "INVALID_FULL_NAME", "Full name is too long.");
+        }
+        patch.full_name = trimmed;
+      }
+
+      if (input.phone !== undefined) {
+        if (input.phone === null || input.phone.trim() === "") {
+          patch.phone = null;
+        } else {
+          patch.phone = normalizePakistaniMobileE164(input.phone);
+        }
+      }
+
+      if (Object.keys(patch).length === 0) {
+        return loaded.profile;
+      }
+
+      // Never accept/mutate role, user_type, status, auth_user_id, branch, permissions.
+      const { data: updated, error } = await admin
+        .from("users")
+        .update(patch)
+        .eq("auth_user_id", authUserId)
+        .eq("user_type", "customer")
+        .select("id, full_name, phone")
+        .maybeSingle();
+
+      if (error) {
+        if (error.code === "23505") {
+          throw new ApiError(
+            409,
+            "PHONE_ALREADY_IN_USE",
+            "This phone number cannot be used. Try a different number.",
+          );
+        }
+        if (error.code === "23514") {
+          throw new ApiError(
+            400,
+            "INVALID_PHONE",
+            "Enter a valid Pakistani mobile number (03XXXXXXXXX or +923XXXXXXXXX).",
+          );
+        }
+        throw error;
+      }
+
+      if (!updated) {
+        throw new ApiError(404, "PROFILE_NOT_FOUND", "Profile was not found for this account.");
+      }
+
+      return {
+        id: updated.id as string,
+        fullName: updated.full_name as string,
+        phone: (updated.phone as string | null) ?? null,
+      };
     },
   };
 }
