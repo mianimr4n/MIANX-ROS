@@ -2,7 +2,7 @@
 
 **Status:** Canonical governance document
 **Audience:** Humans and AI agents (Cursor, Codex, Claude, Copilot, etc.)
-**Implementation baseline:** Sprint 3 Slice 1 + Slice 2A + Slice 2B code merged in `main` (PR #25 / #26 / #27 / #29; Slice 2B merge `0a5a730`). Production DB migrations for Slice 2B remain a **human gate**.
+**Implementation baseline:** Sprint 3 Slice 1 + Slice 2A + Slice 2B merged in `main` (PR #25 / #26 / #27 / #29; Slice 2B merge `0a5a730`). Slice 2B production migrations applied; smoke/close remaining.
 **Catalog freeze:** Production menu/pricing/catalog/toppings remain locked at **v1.2.0** unless a separate release unlocks them.
 
 This document is the **single source of truth** for Telepizza authentication and authorization.
@@ -87,7 +87,7 @@ Any of the following requires **architecture approval** before merge:
 | **Sprint 3 Slice 1** | Email/password auth, AuthContext, `/auth/me`, customer bootstrap, JWT verify | ✅ Complete |
 | **Sprint 3 Slice 2A** | AuthPrincipal, permission/branch middleware, status gate, spoof protection, tests | ✅ Complete (`f7fa2c4`) |
 | **Sprint 3.5** | Merge + migration apply + regression/smoke | ✅ Closed |
-| **Slice 2B** | Staff invite / create / role+branch assign | ✅ Code merged (`0a5a730` / PR #29); ⏳ production migrations pending human gate |
+| **Slice 2B** | Staff invite / create / role+branch assign | ✅ Code merged (`0a5a730` / PR #29); ✅ production migrations applied; ⏳ smoke → CLOSE |
 | **Slice 2C** | Customer phone + OTP | 🔒 Not started |
 | **Slice 2D** | Order/payment/delivery RLS by owner + branch | 🔒 Not started |
 
@@ -440,7 +440,7 @@ Sprint 3.5 is closed. Slice 2B code is merged to `main` (PR #29). **Close Slice 
 - [x] Production API serves invite admin + accept routes (Render auto-deploy)
 - [x] Website serves `/staff/accept` (Vercel)
 - [x] Catalog regression PASS (58 items / 13 categories)
-- [ ] Apply Slice 2B migrations to production Supabase (human gate):
+- [x] Apply Slice 2B migrations to production Supabase:
   - `20260716100000_sprint3_slice2b_staff_permissions.sql`
   - `20260716101000_sprint3_slice2b_staff_invites.sql`
   - `20260716102000_sprint3_slice2b_accept_helper.sql`
