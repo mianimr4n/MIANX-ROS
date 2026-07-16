@@ -1,8 +1,10 @@
 # Sprint 4 — Orders Domain Architecture
 
-**Status:** PLAN-ONLY architecture freeze — **awaiting owner decision card O1–O12**  
+**Status:** ✅ **APPROVED / FROZEN** for implementation (O1–O12 locked)  
 **Type:** Complete blueprint for production Orders Backend  
 **Date:** 2026-07-16  
+**Owner decisions:** O1–O12 **APPROVED** with recommended defaults (do not silently change)  
+**Conflict resolutions:** R1–R4 approved — see `SPRINT-04-1-CONFLICT-REPORT.md`  
 **Baseline:** Sprint 1–2 CLOSED · Sprint 3.5 + Slice 2B CLOSED · Slice 2C OTP **BLOCKED** on provider ops  
 **Catalog freeze:** **13 categories / 58 items / 3 toppings / 40 variants / 7 deals** (v1.2.0)  
 **Ordering WhatsApp:** **0304-1110495** — must remain unchanged  
@@ -12,16 +14,14 @@
 Website → Checkout → Order → Branch → Kitchen → Rider → Delivery → Admin/POS
 ```
 
-**Hard constraints for this document phase:**
+**Hard constraints:**
 
-- No feature branch · no feature code · no migrations · no commit/push/deploy  
-- No menu/price/catalog/branch data changes  
-- No customer/staff auth changes · no OTP implementation  
-- No POS / Admin / Kitchen UI / Rider app  
 - Never trust frontend prices, totals, role, user id, or branch id for authorization  
 - Preserve anonymous cart + current WhatsApp ordering flow  
+- Staff lifecycle APIs locked until Slice 2D (O9/O10)  
+- No silent changes to O1–O12  
 
-**Related:** `AUTHENTICATION_ARCHITECTURE.md`, `SLICE-2C0-OTP-OPERATIONS-READINESS.md`, `SPRINT-04-IMPLEMENTATION-BRIEF.md`
+**Related:** `AUTHENTICATION_ARCHITECTURE.md`, `SLICE-2C0-OTP-OPERATIONS-READINESS.md`, `SPRINT-04-IMPLEMENTATION-BRIEF.md`, `SPRINT-04-1-CLOSE-AND-4-2-READINESS.md`
 
 ---
 
@@ -41,7 +41,7 @@ Website → Checkout → Order → Branch → Kitchen → Rider → Delivery →
 | `menu_items` / `menu_item_variants` | ✅ | Toppings = `product_type='topping'` SKUs (`extra-chicken`, `extra-cheese`, `extra-cheese-slice`) |
 | `order_status_logs` | ❌ | Missing |
 | Customer `addresses` | ❌ | Missing |
-| Idempotency keys | ❌ | Missing |
+| Idempotency keys | ✅ (PR #35 migration) | `orders.idempotency_key` unique partial index + request hash |
 | Order audit / cancel reason columns | ❌ | Missing (`notes` only) |
 
 **RLS:** Enabled on `orders`, `order_items`, `payments`, `deliveries` — **zero SELECT/INSERT/UPDATE policies** on those tables. API uses **service role** (bypasses RLS).
@@ -250,7 +250,7 @@ Future menu price edits **must not** rewrite historical `order_items` prices.
 
 ### 4.4 Quote endpoint purpose
 
-`POST /orders/quote` returns server totals **without** persisting. Create may require `Idempotency-Key` and optionally `quoteId` (short TTL) — decision O8.
+`POST /orders/quote` returns server totals **without** persisting an order. Response must include **`quoteId`**, **`expiresAt`**, and **`warnings`** (Sprint **4.2**). Create always re-prices server-side and requires **`Idempotency-Key`** (O3 / R3).
 
 ---
 
@@ -307,7 +307,9 @@ Staff lifecycle endpoints are **designed but LOCKED** until Slice 2D RLS + owner
 | Auth | Optional Bearer |
 | Body | branchCode, orderType, items[{menuItemSlug, variantLabel?, quantity, toppings?:[{slug}]}], couponCode? |
 | **Ignore** | client unitPrice / extras.price / totals |
-| Response | currency PKR, lines with snapshots, subtotal, discount, tax, deliveryFee, total, quoteId?, expiresAt? |
+| Response | currency PKR, lines with snapshots, subtotal, discount, tax, deliveryFee, total, **`quoteId`**, **`expiresAt`**, **`warnings[]`** |
+| Persist order? | **No** |
+| Idempotency | Not required on quote (non-creating) |
 | Errors | `BRANCH_UNAVAILABLE`, `MENU_ITEM_NOT_FOUND`, `VARIANT_*`, `TOPPING_*`, `VALIDATION_ERROR` |
 | Rate limit | Per IP (+ phone if present) |
 
@@ -316,7 +318,7 @@ Staff lifecycle endpoints are **designed but LOCKED** until Slice 2D RLS + owner
 | | |
 |---|---|
 | Auth | Optional Bearer (attach customer if present) |
-| Headers | **`Idempotency-Key` required** (O8) |
+| Headers | **`Idempotency-Key` required** (O3 / R3-A) |
 | Body | quote fields + contactName, contactPhone, deliveryAddress?, notes?, orderSource, optional quoteId |
 | Behavior | Re-price server-side (do not trust prior quote blindly if expired); insert order+items(+delivery); log status `pending` |
 | Response | id, orderNumber, status, totals, createdAt |
@@ -357,11 +359,18 @@ POST /api/v1/staff/deliveries/:id/transition
 
 Require `AuthPrincipal` + `order.manage` / `delivery.*` + branch access. **No implementation until O10 + Slice 2D.**
 
-### 7.7 Idempotency
+### 7.7 Idempotency (approved contract — R3-A)
 
-- Key scoped to phone or auth user + day  
-- Replay returns original `201` body  
-- Different body same key → `409 IDEMPOTENCY_CONFLICT`  
+| Rule | Behavior |
+|---|---|
+| Required on | **`POST /api/v1/orders` only** |
+| Missing key | `400 IDEMPOTENCY_KEY_REQUIRED` |
+| Same key + same canonical payload | Return **original** create result (`200` replay / equivalent) — **no duplicate order** |
+| Same key + different canonical payload | `409 IDEMPOTENCY_CONFLICT` |
+| Quote | Non-creating; **no** mandatory Idempotency-Key; return `quoteId` + `expiresAt` for later create |
+| Shared foundation | Hash canonical payload; store on `orders.idempotency_key` + `idempotency_request_hash` |
+
+Canonical payload for hash **excludes** all client money fields (unitPrice, extras.price, totals).
 
 ### 7.8 Rate limiting
 
@@ -455,41 +464,42 @@ Forward-only migrations (after approval):
 
 ---
 
-## Stage 12 — Implementation slices (adjusted after inspection)
+## Stage 12 — Implementation slices (R1 locked)
 
-Prefer **pricing engine before broaden schema**, and **lock staff APIs until RLS**:
-
-| Slice | Scope | Stop line |
+| Slice | Scope | Status note |
 |---|---|---|
-| **4.0** | This architecture + O1–O12 freeze | No code |
-| **4.1** | Migrations: status logs, snapshots, idempotency, phone_e164, cancel fields | No public API behavior change required yet |
-| **4.2** | Server **quote** + pricing engine (topping SKUs, ignore client money) | No website mandatory switch |
-| **4.3** | Hardened **create/read/cancel** + idempotency + guest tracking | Staff lifecycle still locked |
-| **4.4** | Website checkout uses quote/create; keep WhatsApp + local fallback | No POS UI |
-| **4.5** | Staff transition APIs + kitchen queue read | **Requires O10 / Slice 2D** |
+| **4.0** | Architecture + O1–O12 freeze | ✅ APPROVED / FROZEN |
+| **4.1** | Schema foundation: status logs, snapshots columns, idempotency columns, phone_e164, cancel fields; create harden | ✅ Landed in **PR #35** |
+| **4.2** | Server **quote** + pricing engine + `quoteId` / `expiresAt` / `warnings` | 🟡 Partial early land in PR #35; finish remaining gaps as **4.2 only** |
+| **4.3** | Hardened create/read/cancel + guest tracking | After 4.2 close |
+| **4.4** | Website checkout uses quote/create; keep WhatsApp + local fallback | After 4.3 |
+| **4.5** | Staff transition APIs + kitchen queue read | **Requires O9 + Slice 2D** |
 | **4.6** | Rider assign + delivery transitions | After 4.5 |
 | **4.7** | Production rollout, smoke, close | Gate next sprint UIs |
 
-*Note: An earlier exploratory harden of create/rollback may exist on a side branch; **this freeze re-sequences** work under 4.0→4.7. Do not merge ad-hoc order code without mapping to an approved slice.*
+**R1:** Quote / server pricing product work is **Sprint 4.2**, not 4.1.  
+**R4:** Canonical workstream was **PR #35** (merged). Do **not** create competing `feature/sprint-4-orders-pricing`.
 
 ---
 
-## Owner decision card (O1–O12)
+## Owner decision card (O1–O12) — APPROVED
 
-| ID | Question | Recommendation | Owner |
+| ID | Question | Decision (locked) | Owner |
 |---|---|---|---|
-| **O1** | Keep DB order statuses as-is (`dispatched`/`completed`) vs rename to `out_for_delivery`/`delivered`? | **Keep as-is** + product aliases | ☐ |
-| **O2** | Guest checkout in V1? | **Yes** | ☐ |
-| **O3** | Require `Idempotency-Key` on create? | **Yes** | ☐ |
-| **O4** | Server must ignore all client money fields? | **Yes** | ☐ |
-| **O5** | Customer cancel window? | **pending only, 15 min** | ☐ |
-| **O6** | Delivery fee / tax / discount V1? | **All 0** until fee engine | ☐ |
-| **O7** | Branch selection model? | **Customer-selected**; geo later | ☐ |
-| **O8** | Quote required before create? | **Quote recommended; create re-prices always** | ☐ |
-| **O9** | When unlock staff lifecycle APIs? | **After Slice 2D RLS PASS** | ☐ |
-| **O10** | RLS timing vs Orders API? | Middleware first for staff; **RLS before POS/Kitchen UI** | ☐ |
-| **O11** | Payments in Sprint 4? | **Schema + COD status only**; no gateway | ☐ |
-| **O12** | WhatsApp `0304-1110495` flow? | **Preserve forever in V1** | ☐ |
+| **O1** | Keep DB order statuses as-is (`dispatched`/`completed`)? | **Yes** — keep + product aliases | ✅ |
+| **O2** | Guest checkout in V1? | **Yes** | ✅ |
+| **O3** | Require `Idempotency-Key` on create? | **Yes** (enforce — R3-A) | ✅ |
+| **O4** | Server must ignore all client money fields? | **Yes** | ✅ |
+| **O5** | Customer cancel window? | **pending only, 15 min** | ✅ |
+| **O6** | Delivery fee / tax / discount V1? | **All 0** until fee engine | ✅ |
+| **O7** | Branch selection model? | **Customer-selected**; geo later | ✅ |
+| **O8** | Quote before create? | **Quote recommended; create always re-prices** | ✅ |
+| **O9** | When unlock staff lifecycle APIs? | **After Slice 2D RLS PASS** | ✅ |
+| **O10** | RLS vs middleware? | Middleware for staff ASAP; **RLS before POS/Kitchen UI** | ✅ |
+| **O11** | Payments in Sprint 4? | **Schema + COD status only**; no gateway | ✅ |
+| **O12** | WhatsApp `0304-1110495` flow? | **Preserve** | ✅ |
+
+Do **not** silently change any O1–O12 decision.
 
 ---
 
@@ -497,17 +507,15 @@ Prefer **pricing engine before broaden schema**, and **lock staff APIs until RLS
 
 | Blocker | Type |
 |---|---|
-| O1–O12 owner decisions | **Owner** |
-| Slice 2C OTP provider | **Ops** — does not block 4.0–4.4 |
-| Slice 2D RLS | **Engineering after O9/O10** — blocks 4.5+ UIs |
-| Production staff UI | Blocked on 2D |
+| O1–O12 | ✅ Resolved |
+| Slice 2C OTP provider | **Ops** — does not block Orders 4.1–4.4 |
+| Slice 2D RLS | Blocks staff lifecycle **4.5+** and UI unlock |
+| Production apply of `20260716120000_…` | **Owner approval** required |
 
 ---
 
 ## Final status
 
-**SPRINT 4 STATUS: READY FOR OWNER REVIEW**
+**SPRINT 4 ARCHITECTURE: APPROVED / FROZEN**
 
-Architecture inspected against live schema/API/website. Canonical design recommends **smallest safe state machine** aligned to existing CHECKs, **server-side pricing**, **guest-preserving checkout**, and **staff APIs locked until RLS**.  
-
-**Stop for owner review of O1–O12.** No code · no migrations · no branch · no commit · no push · no deploy.
+See `SPRINT-04-1-CLOSE-AND-4-2-READINESS.md` for PR #35 inventory and remaining Sprint 4.2 gaps.
