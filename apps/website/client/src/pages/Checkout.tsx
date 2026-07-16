@@ -12,6 +12,7 @@ import { getLineItemTotal } from "@/data/cart-config";
 import { submitWebsiteOrder } from "@/lib/submit-order";
 import { isApiConfigured } from "@/lib/api";
 import { quoteOrder } from "@/lib/telepizza-api";
+import { normalizePhoneE164 } from "@/lib/phone";
 
 export default function Checkout() {
   const [, navigate] = useLocation();
@@ -32,7 +33,10 @@ export default function Checkout() {
     deliveryFee: number;
     totalAmount: number;
   } | null>(null);
-  const [quoteStatus, setQuoteStatus] = useState<{ expiresAt: string; warnings: string[] } | null>(null);
+  const [quoteStatus, setQuoteStatus] = useState<{ expiresAt: string; warnings: string[]; quoteId: string } | null>(
+    null,
+  );
+  const [idempotencyKey, setIdempotencyKey] = useState<string>(() => crypto.randomUUID());
 
   useEffect(() => {
     if (state.items.length === 0) {
@@ -43,6 +47,7 @@ export default function Checkout() {
   // Load server quote on entry (best-effort; UI still works offline)
   useEffect(() => {
     let active = true;
+    const requestId = crypto.randomUUID();
     async function loadQuote() {
       if (!isApiConfigured || !selectedBranch) return;
       setError(null);
@@ -51,7 +56,7 @@ export default function Checkout() {
           branchCode: selectedBranch.code ?? selectedBranch.id,
           orderType: state.order.deliveryMode,
           couponCode,
-          contactPhone,
+          contactPhone: normalizePhoneE164(contactPhone),
           items: state.items.map((item) => ({
             menuItemSlug: item.menuSlug,
             variantLabel: item.variant,
@@ -68,6 +73,7 @@ export default function Checkout() {
         setQuoteStatus({
           expiresAt: q.expiresAt,
           warnings: q.warnings.map((w) => w.message),
+          quoteId: q.quoteId,
         });
       } catch (e) {
         // Non-fatal — fall back to local subtotal display
@@ -99,6 +105,34 @@ export default function Checkout() {
     if (deliveryMode === "delivery" && !deliveryAddress.trim()) {
       setError("Delivery address is required.");
       return;
+    }
+
+    // Require fresh quote (<5m); refresh if expired
+    const now = Date.now();
+    if (quoteStatus?.expiresAt && now >= Date.parse(quoteStatus.expiresAt)) {
+      try {
+        const q = await quoteOrder({
+          branchCode: selectedBranch.code ?? selectedBranch.id,
+          orderType: state.order.deliveryMode,
+          couponCode,
+          contactPhone: normalizePhoneE164(contactPhone),
+          items: state.items.map((item) => ({
+            menuItemSlug: item.menuSlug,
+            variantLabel: item.variant,
+            quantity: item.quantity,
+            unitPrice: item.price,
+            productName: item.name,
+            variantName: item.variant,
+            instructions: item.instructions,
+            extras: item.extras,
+          })),
+        });
+        setServerTotals(q.totals);
+        setQuoteStatus({ expiresAt: q.expiresAt, warnings: q.warnings.map((w) => w.message), quoteId: q.quoteId });
+      } catch {
+        setError("Quote expired. Please try again.");
+        return;
+      }
     }
 
     setOrderDetails({

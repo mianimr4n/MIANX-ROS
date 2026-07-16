@@ -6,6 +6,8 @@ import {
   pushNotification,
 } from "@/lib/customer-store";
 import { createOrderWithIdempotency, quoteOrder } from "@/lib/telepizza-api";
+import { getSupabaseClient } from "@/lib/supabase";
+import { normalizePhoneE164 } from "@/lib/phone";
 
 export async function submitWebsiteOrder(
   payload: CreateWebsiteOrderPayload,
@@ -13,16 +15,23 @@ export async function submitWebsiteOrder(
   if (isApiConfigured) {
     try {
       // 1) Request a server quote (bind cart/branch/type/phone)
+      const normalizedPhone = normalizePhoneE164(payload.contactPhone);
       const quote = await quoteOrder({
         branchCode: payload.branchCode,
         orderType: payload.orderType,
         couponCode: payload.couponCode,
-        contactPhone: payload.contactPhone,
+        contactPhone: normalizedPhone,
         items: payload.items,
       });
 
-      // 2) Generate an idempotency key for this attempt
-      const idempotencyKey = crypto.randomUUID();
+      // 2) Use (or generate) an idempotency key for this attempt (callers should persist across retries)
+      const idempotencyKey =
+        (globalThis as any).__telepizza_idk__ || ((globalThis as any).__telepizza_idk__ = crypto.randomUUID());
+
+      // 2.a) Resolve optional bearer token
+      const supabase = getSupabaseClient();
+      const { data } = (await supabase?.auth.getSession()) ?? { data: { session: null } };
+      const accessToken = data?.session?.access_token;
 
       // 3) Create order with quoteId + Idempotency-Key
       const apiOrder = await createOrderWithIdempotency({
@@ -30,13 +39,13 @@ export async function submitWebsiteOrder(
         orderType: payload.orderType,
         orderSource: "website",
         contactName: payload.contactName,
-        contactPhone: payload.contactPhone,
+        contactPhone: normalizedPhone,
         deliveryAddress: payload.deliveryAddress,
         notes: payload.notes,
         couponCode: payload.couponCode,
         items: payload.items,
         quoteId: quote.quoteId,
-      }, idempotencyKey);
+      }, idempotencyKey, accessToken);
 
       const result: CreatedOrderResult = {
         orderNumber: apiOrder.orderNumber,
@@ -67,7 +76,7 @@ export async function submitWebsiteOrder(
 
   const local = saveLocalOrder(payload);
   pushNotification(
-    payload.contactPhone,
+    normalizePhoneE164(payload.contactPhone),
     "Order saved locally",
     `Your order ${local.orderNumber} is ready to confirm on WhatsApp.`,
   );
