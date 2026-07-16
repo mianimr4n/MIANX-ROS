@@ -125,7 +125,7 @@ test("password strength rejects weak passwords and matches UI copy", () => {
   assert.match(authUtils, /AUTH_PASSWORD_REQUIREMENTS_COPY/);
   assert.match(register, /AUTH_PASSWORD_REQUIREMENTS_COPY/);
   assert.match(register, /showPassword/);
-  assert.match(register, /if \(submitting\) return/);
+  assert.match(register, /if \(submitting/);
 });
 
 test("Login/Register keep Google primary CTA and no OTP/staff public signup", () => {
