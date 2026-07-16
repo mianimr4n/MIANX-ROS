@@ -11,6 +11,17 @@ import {
   priceOrderLines,
   type CatalogMenuItem,
 } from "./pricing.js";
+import {
+  assertQuoteMatchesCreate,
+  assertQuoteNotExpired,
+  assertQuotePricesStillValid,
+  buildQuoteCartCanon,
+  hashPricedTotals,
+  hashQuoteCart,
+  issueQuoteToken,
+  parseAndVerifyQuoteToken,
+} from "./quote-token.js";
+import { collectClientMoneyWarnings } from "./warnings.js";
 import type {
   CreateOrderInput,
   CreatedOrderSummary,
@@ -48,7 +59,11 @@ function createSupabaseAdminClient(envStatus: EnvironmentStatus): SupabaseClient
   });
 }
 
-async function loadOperatingBranch(supabase: SupabaseClient, branchCode: string): Promise<BranchRow> {
+async function loadOperatingBranch(
+  supabase: SupabaseClient,
+  branchCode: string,
+  options: { quoteContext?: boolean } = {},
+): Promise<BranchRow> {
   const { data: branch, error: branchError } = await supabase
     .from("branches")
     .select("id, branch_code, status")
@@ -62,7 +77,11 @@ async function loadOperatingBranch(supabase: SupabaseClient, branchCode: string)
     throw new ApiError(404, "BRANCH_NOT_FOUND", `Branch '${branchCode}' was not found.`);
   }
   if (branch.status !== "operating") {
-    throw new ApiError(400, "BRANCH_UNAVAILABLE", "Selected branch is not accepting orders.");
+    throw new ApiError(
+      400,
+      options.quoteContext ? "QUOTE_BRANCH_UNAVAILABLE" : "BRANCH_UNAVAILABLE",
+      "Selected branch is not accepting orders.",
+    );
   }
   return branch;
 }
@@ -141,15 +160,58 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
   return {
     async quoteOrder(input: QuoteOrderInput): Promise<QuoteOrderResult> {
       const supabase = getClient();
+      const signingSecret = envStatus.config.jwtSecret;
       const branch = await loadOperatingBranch(supabase, input.branchCode);
       const menuBySlug = await loadCatalogMap(supabase, input.items);
       const priced = priceOrderLines({ lines: input.items, menuBySlug });
 
-      return {
-        currency: "PKR",
+      const cartCanon = buildQuoteCartCanon(input.items);
+      const cartHash = hashQuoteCart(cartCanon);
+      const pricedHash = hashPricedTotals({
+        subtotal: priced.subtotal,
+        discountAmount: priced.discountAmount,
+        taxAmount: priced.taxAmount,
+        deliveryFee: priced.deliveryFee,
+        totalAmount: priced.totalAmount,
+        lines: priced.lines.map((line, index) => ({
+          menuItemSlug: input.items[index]?.menuItemSlug ?? "",
+          foodUnitPrice: line.foodUnitPrice,
+          lineUnitPrice: line.lineUnitPrice,
+          lineTotal: line.lineTotal,
+          quantity: line.quantity,
+          extras: line.extras.map((extra) => ({ slug: extra.slug, price: extra.price })),
+        })),
+      });
+
+      let contactPhoneE164: string | null = null;
+      if (input.contactPhone?.trim()) {
+        contactPhoneE164 = normalizePhoneE164(input.contactPhone);
+      }
+
+      const token = issueQuoteToken({
+        signingSecret,
         branchCode: branch.branch_code,
         orderType: input.orderType,
-        lines: priced.lines.map((line, index) => ({
+        cartHash,
+        pricedHash,
+        subtotal: priced.subtotal,
+        totalAmount: priced.totalAmount,
+        contactPhoneE164,
+      });
+
+      const warnings = collectClientMoneyWarnings({
+        items: input.items,
+        couponCode: input.couponCode,
+      });
+
+      return {
+        quoteId: token.quoteId,
+        expiresAt: token.expiresAt,
+        branch: {
+          code: branch.branch_code,
+          orderType: input.orderType,
+        },
+        items: priced.lines.map((line, index) => ({
           menuItemSlug: input.items[index]?.menuItemSlug ?? "",
           productName: line.productName,
           variantName: line.variantName,
@@ -159,11 +221,15 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
           lineUnitPrice: line.lineUnitPrice,
           lineTotal: line.lineTotal,
         })),
-        subtotal: priced.subtotal,
-        discountAmount: priced.discountAmount,
-        taxAmount: priced.taxAmount,
-        deliveryFee: priced.deliveryFee,
-        totalAmount: priced.totalAmount,
+        totals: {
+          currency: "PKR",
+          subtotal: priced.subtotal,
+          discountAmount: priced.discountAmount,
+          taxAmount: priced.taxAmount,
+          deliveryFee: priced.deliveryFee,
+          totalAmount: priced.totalAmount,
+        },
+        warnings,
         pricedAt: priced.pricingSnapshot.pricedAt,
       };
     },
@@ -185,6 +251,23 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
       }
 
       const contactPhoneE164 = normalizePhoneE164(input.contactPhone);
+      const cartCanon = buildQuoteCartCanon(input.items);
+      const cartHash = hashQuoteCart(cartCanon);
+
+      // Optional quoteId — never bypasses Idempotency-Key. Verified against server clock + cart bind.
+      let verifiedQuote: ReturnType<typeof parseAndVerifyQuoteToken> | null = null;
+      if (input.quoteId?.trim()) {
+        verifiedQuote = parseAndVerifyQuoteToken(input.quoteId.trim(), envStatus.config.jwtSecret);
+        assertQuoteNotExpired(verifiedQuote);
+        assertQuoteMatchesCreate({
+          payload: verifiedQuote,
+          branchCode: input.branchCode,
+          orderType: input.orderType,
+          cartHash,
+          contactPhoneE164,
+        });
+      }
+
       const requestHash = hashIdempotencyPayload({
         branchCode: input.branchCode,
         orderType: input.orderType,
@@ -194,6 +277,7 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         deliveryAddress: deliveryAddress ?? null,
         notes: input.notes?.trim() ?? null,
         couponCode: input.couponCode?.trim() ?? null,
+        quoteId: input.quoteId?.trim() || null,
         items: input.items.map((item) => ({
           menuItemSlug: item.menuItemSlug,
           variantLabel: item.variantLabel ?? null,

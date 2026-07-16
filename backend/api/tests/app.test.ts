@@ -74,11 +74,13 @@ const catalogDataSource: CatalogDataSource = {
 
 const ordersDataSource: OrdersDataSource = {
   async quoteOrder(input) {
+    const subtotal = input.items.reduce((sum, item) => sum + 499 * item.quantity, 0);
+    const totalAmount = subtotal;
     return {
-      currency: "PKR" as const,
-      branchCode: input.branchCode,
-      orderType: input.orderType,
-      lines: input.items.map((item) => ({
+      quoteId: "tpq1.body.sig",
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      branch: { code: input.branchCode, orderType: input.orderType },
+      items: input.items.map((item) => ({
         menuItemSlug: item.menuItemSlug,
         productName: item.productName ?? item.menuItemSlug,
         variantName: item.variantLabel ?? null,
@@ -88,13 +90,17 @@ const ordersDataSource: OrdersDataSource = {
         lineUnitPrice: 499,
         lineTotal: 499 * item.quantity,
       })),
-      subtotal: input.items.reduce((sum, item) => sum + 499 * item.quantity, 0),
-      discountAmount: 0,
-      taxAmount: 0,
-      deliveryFee: 0,
-      totalAmount: input.items.reduce((sum, item) => sum + 499 * item.quantity, 0),
+      totals: {
+        currency: "PKR" as const,
+        subtotal,
+        discountAmount: 0,
+        taxAmount: 0,
+        deliveryFee: 0,
+        totalAmount,
+      },
+      warnings: [],
       pricedAt: new Date().toISOString(),
-    };
+    } as const;
   },
   async createOrder(input) {
     return {
@@ -252,8 +258,8 @@ describe("Telepizza API app", () => {
     });
 
     expect(response.status).toBe(200);
-    expect(response.body.data.currency).toBe("PKR");
-    expect(response.body.data.totalAmount).toBe(499);
+    expect(response.body.data.totals.currency).toBe("PKR");
+    expect(response.body.data.totals.totalAmount).toBe(499);
   });
 
   it("creates orders through the configured orders source", async () => {
