@@ -1,14 +1,13 @@
 # Sprint 3 Slice 2B — Pre-Implementation Brief
 
-**Status:** Approved for implementation · Slice 2B in progress on `feature/sprint-3-staff-invites`  
+**Status:** Implementation merged (PR #29) · production migration gate open  
 **Date:** 2026-07-16  
-**Baseline:** `main` @ Sprint 3.5 CLOSED (auth foundation production-verified)  
+**Baseline:** `main` @ `0a5a730` (Slice 2B merge)  
 **Canonical SSOT:** `docs/architecture/AUTHENTICATION_ARCHITECTURE.md`  
 **Full freeze doc:** `docs/architecture/STAFF_INVITE_ARCHITECTURE.md`  
-**Implementation branch (after approval only):** `feature/sprint-3-staff-invites`
+**Implementation branch:** `feature/sprint-3-staff-invites` (merged)
 
-This brief is the gate required by the Slice 2B implementation prompt.  
-**Do not create the feature branch, migrations, APIs, or PR until this document is approved.**
+This brief was the gate required before Slice 2B coding. Coding is complete; remaining work is the production migration + smoke close.
 
 ---
 
@@ -19,10 +18,11 @@ This brief is the gate required by the Slice 2B implementation prompt.
 | Sprint 3.5 closed | ✅ |
 | DB-backed `AuthPrincipal` | ✅ |
 | Header spoof blocked | ✅ |
-| Production auth migrations applied | ✅ |
+| Production auth migrations applied (1 + 2A) | ✅ |
 | Canonical auth architecture on `main` | ✅ |
 | `main` is source of truth | ✅ |
-| Slice 2B code started | ❌ Not started (correct) |
+| Slice 2B code merged | ✅ PR #29 / `0a5a730` |
+| Slice 2B production migrations | ⏳ Human gate |
 
 ---
 

@@ -1,26 +1,26 @@
 # Sprint 3 — Slice 2B Staff Invite Architecture
 
-**Status:** Proposed architecture freeze (plan-only — **no implementation yet**)  
-**Type:** Complete blueprint + security review for owner approval  
+**Status:** Architecture freeze + **implementation merged** (PR #29 / `0a5a730`) — production migrations pending human gate  
+**Type:** Complete blueprint + security review (implemented)  
 **Audience:** Owner (business decisions) · Architects · AI implementation agents  
 **Depends on:** Canonical `docs/architecture/AUTHENTICATION_ARCHITECTURE.md`  
-**Baseline:** Sprint 3.5 **CLOSED** (Slice 1 + 2A production-verified)  
+**Baseline:** Sprint 3.5 **CLOSED**; Slice 2B code on `main`  
 **Catalog freeze:** v1.2.0 menu/pricing/catalog/toppings — **do not touch**
 
 ```text
 ✅ Sprint 3.5 Complete
         ↓
-🎯 Sprint 3 Slice 2B — Architecture (THIS DOCUMENT)
+✅ Slice 2B architecture + implementation (PR #29 merged)
         ↓
-Implementation (only after owner approval)
+⏳ Apply production migrations (human gate)
         ↓
-Testing → PR → Merge → Migration → Production
+Production smoke → Slice 2B CLOSE
 ```
 
-Implementation branch (reserved, **not created yet**):
+Implementation branch (merged):
 
 ```text
-feature/sprint-3-staff-invites
+feature/sprint-3-staff-invites → main @ 0a5a730
 ```
 
 ---

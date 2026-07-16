@@ -2,7 +2,7 @@
 
 **Status:** Canonical governance document
 **Audience:** Humans and AI agents (Cursor, Codex, Claude, Copilot, etc.)
-**Implementation baseline:** Sprint 3 Slice 1 + Slice 2A + architecture SSOT merged in `main` (PR #25 / #26 / #27; Slice 2A `f7fa2c4`).
+**Implementation baseline:** Sprint 3 Slice 1 + Slice 2A + Slice 2B code merged in `main` (PR #25 / #26 / #27 / #29; Slice 2B merge `0a5a730`). Production DB migrations for Slice 2B remain a **human gate**.
 **Catalog freeze:** Production menu/pricing/catalog/toppings remain locked at **v1.2.0** unless a separate release unlocks them.
 
 This document is the **single source of truth** for Telepizza authentication and authorization.
@@ -87,7 +87,7 @@ Any of the following requires **architecture approval** before merge:
 | **Sprint 3 Slice 1** | Email/password auth, AuthContext, `/auth/me`, customer bootstrap, JWT verify | ✅ Complete |
 | **Sprint 3 Slice 2A** | AuthPrincipal, permission/branch middleware, status gate, spoof protection, tests | ✅ Complete (`f7fa2c4`) |
 | **Sprint 3.5** | Merge + migration apply + regression/smoke | ✅ Closed |
-| **Slice 2B** | Staff invite / create / role+branch assign | 🚧 Implementation on `feature/sprint-3-staff-invites` |
+| **Slice 2B** | Staff invite / create / role+branch assign | ✅ Code merged (`0a5a730` / PR #29); ⏳ production migrations pending human gate |
 | **Slice 2C** | Customer phone + OTP | 🔒 Not started |
 | **Slice 2D** | Order/payment/delivery RLS by owner + branch | 🔒 Not started |
 
@@ -424,7 +424,7 @@ Slice 2D — Branch / owner RLS
 Sprint 4 — POS + Kitchen + Delivery (uses this authz spine)
 ```
 
-Sprint 3.5 is closed. Slice 2B implementation waits on owner approval of `STAFF_INVITE_ARCHITECTURE.md`.
+Sprint 3.5 is closed. Slice 2B code is merged to `main` (PR #29). **Close Slice 2B only after** production migrations + invite→accept→`/auth/me` smoke.
 
 ### Sprint 3.5 checklist (gate) — completed
 
@@ -434,16 +434,31 @@ Sprint 3.5 is closed. Slice 2B implementation waits on owner approval of `STAFF_
 - [x] Full regression: `pnpm check`, `pnpm test:db`, `pnpm test:backend`, `pnpm build:website`
 - [x] Smoke: customer login, staff login, `/auth/me`, protected middleware behavior, website Menu/Cart/Checkout unbroken
 
+### Slice 2B checklist (post-merge gate) — in progress
+
+- [x] PR #29 review + merge (`0a5a730`)
+- [x] Production API serves invite admin + accept routes (Render auto-deploy)
+- [x] Website serves `/staff/accept` (Vercel)
+- [x] Catalog regression PASS (58 items / 13 categories)
+- [ ] Apply Slice 2B migrations to production Supabase (human gate):
+  - `20260716100000_sprint3_slice2b_staff_permissions.sql`
+  - `20260716101000_sprint3_slice2b_staff_invites.sql`
+  - `20260716102000_sprint3_slice2b_accept_helper.sql`
+- [ ] Production smoke: create invite → accept → staff `/auth/me`; spoof headers still ineffective
+- [ ] Write `SPRINT-03-SLICE-2B-CLOSE.md` after smoke PASS
+
 ---
 
 ## 17. Related documents
 
 | Document | Role |
 |---|---|
-| `docs/architecture/STAFF_INVITE_ARCHITECTURE.md` | Slice 2B staff invite architecture freeze (proposed) |
+| `docs/architecture/STAFF_INVITE_ARCHITECTURE.md` | Slice 2B staff invite architecture freeze |
+| `docs/architecture/SLICE-2B-IMPLEMENTATION-BRIEF.md` | Pre-implementation gate brief |
 | `_documentation-audit/reports/SPRINT-03-CUSTOMER-STAFF-AUTH-ARCHITECTURE.md` | Historical planning memo (pre-implementation) |
 | `_documentation-audit/reports/SPRINT-03-PR-REVIEW.md` | Slice 1 PR review artifact |
 | `_documentation-audit/reports/SPRINT-03.5-CLOSE.md` | Sprint 3.5 production validation close |
+| `_documentation-audit/reports/SPRINT-03-SLICE-2B-GATE.md` | Slice 2B post-merge gate / migration handoff |
 | `docs/04-engineering/09-security/04-api-security/AUTHENTICATION_SECURITY.md` | Broader API auth security notes |
 | `docs/04-engineering/09-security/04-api-security/AUTHORIZATION_SECURITY.md` | Broader API authz security notes |
 | `AGENTS.md` | Repo agent bootstrap / runtime ops |
