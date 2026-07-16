@@ -1,14 +1,15 @@
 # Sprint 4 — Orders Domain Implementation Brief
 
-**Status:** Architecture ✅ **APPROVED / FROZEN** · O1–O12 locked  
-**Date:** 2026-07-16  
-**Canonical architecture:** `docs/architecture/ORDERS_ARCHITECTURE.md`  
-**Authz SSOT:** `docs/architecture/AUTHENTICATION_ARCHITECTURE.md`  
-**OTP ops (paused):** `docs/architecture/SLICE-2C0-OTP-OPERATIONS-READINESS.md`  
-**Conflict resolutions:** R1–R4 approved — `SPRINT-04-1-CONFLICT-REPORT.md`  
-**Close / next:** `SPRINT-04-1-CLOSE-AND-4-2-READINESS.md`  
-**Catalog freeze:** 13 / 58 / 3 / 40 / 7  
-**Ordering WhatsApp:** 0304-1110495 (unchanged)
+**Status:** Architecture ✅ **APPROVED / FROZEN** · O1–O12 locked · Orders Core 4.1–4.3 **CLOSED**
+**Date:** 2026-07-16
+**Master sequence:** `TELEPIZZA-MASTER-ROADMAP.md` (Phases 0–15 **LOCKED**)
+**Canonical architecture:** `docs/architecture/ORDERS_ARCHITECTURE.md`
+**Lifecycle (next):** `SPRINT-04-4-ORDER-LIFECYCLE-ARCHITECTURE.md` (**plan-only**)
+**Authz SSOT:** `docs/architecture/AUTHENTICATION_ARCHITECTURE.md`
+**OTP ops (paused):** `docs/architecture/SLICE-2C0-OTP-OPERATIONS-READINESS.md`
+**Conflict resolutions:** R1–R4 approved — `SPRINT-04-1-CONFLICT-REPORT.md`
+**Catalog freeze:** 13 / 58 / 3 / 40 / 7
+**Verified business contact (current):** 0304-1110495 (re-verify Phase 15)
 
 ---
 
@@ -62,8 +63,9 @@ Do not silently change these decisions.
 
 ## Agent stop line
 
-- No production migration without owner approval  
-- No mixing new 4.2 scope into closed 4.1 docs without a dedicated 4.2 slice  
-- Stop and report on any new architecture conflict  
+- No production migration without owner approval
+- No lifecycle API / Kitchen / Rider / POS code until Sprint 4.4 is **APPROVED / FROZEN** and Slice 2D gates staff UI
+- No final production number lock before Phase 15
+- Stop and report on any new architecture conflict
 
-**SPRINT 4 ARCHITECTURE: APPROVED / FROZEN**
+**SPRINT 4 CORE: CLOSED · 4.4 LIFECYCLE ARCHITECTURE: OWNER REVIEW**
