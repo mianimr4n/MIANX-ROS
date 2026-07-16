@@ -86,8 +86,8 @@ Any of the following requires **architecture approval** before merge:
 |---|---|---|
 | **Sprint 3 Slice 1** | Email/password auth, AuthContext, `/auth/me`, customer bootstrap, JWT verify | ✅ Complete |
 | **Sprint 3 Slice 2A** | AuthPrincipal, permission/branch middleware, status gate, spoof protection, tests | ✅ Complete (`f7fa2c4`) |
-| **Sprint 3.5** | Merge + migration apply + regression/smoke | ⏳ Next milestone |
-| **Slice 2B** | Staff invite / create / role+branch assign | 🔒 Not started |
+| **Sprint 3.5** | Merge + migration apply + regression/smoke | ✅ Closed |
+| **Slice 2B** | Staff invite / create / role+branch assign | 🚧 Implementation on `feature/sprint-3-staff-invites` |
 | **Slice 2C** | Customer phone + OTP | 🔒 Not started |
 | **Slice 2D** | Order/payment/delivery RLS by owner + branch | 🔒 Not started |
 
@@ -424,15 +424,15 @@ Slice 2D — Branch / owner RLS
 Sprint 4 — POS + Kitchen + Delivery (uses this authz spine)
 ```
 
-**Do not jump to Slice 2B** until Sprint 3.5 validation establishes a stable merged baseline.
+Sprint 3.5 is closed. Slice 2B implementation waits on owner approval of `STAFF_INVITE_ARCHITECTURE.md`.
 
-### Sprint 3.5 checklist (gate)
+### Sprint 3.5 checklist (gate) — completed
 
-- [ ] PR review for Slice 1 + 2A
-- [ ] Merge to `main`
-- [ ] Apply auth migrations to the appropriate non-prod/prod sequence per release process
-- [ ] Full regression: `pnpm check`, `pnpm test:db`, `pnpm test:backend`, `pnpm build:website`
-- [ ] Smoke: customer login, staff login, `/auth/me`, protected middleware behavior, website Menu/Cart/Checkout unbroken
+- [x] PR review for Slice 1 + 2A
+- [x] Merge to `main`
+- [x] Apply auth migrations to the appropriate non-prod/prod sequence per release process
+- [x] Full regression: `pnpm check`, `pnpm test:db`, `pnpm test:backend`, `pnpm build:website`
+- [x] Smoke: customer login, staff login, `/auth/me`, protected middleware behavior, website Menu/Cart/Checkout unbroken
 
 ---
 
@@ -440,8 +440,10 @@ Sprint 4 — POS + Kitchen + Delivery (uses this authz spine)
 
 | Document | Role |
 |---|---|
+| `docs/architecture/STAFF_INVITE_ARCHITECTURE.md` | Slice 2B staff invite architecture freeze (proposed) |
 | `_documentation-audit/reports/SPRINT-03-CUSTOMER-STAFF-AUTH-ARCHITECTURE.md` | Historical planning memo (pre-implementation) |
 | `_documentation-audit/reports/SPRINT-03-PR-REVIEW.md` | Slice 1 PR review artifact |
+| `_documentation-audit/reports/SPRINT-03.5-CLOSE.md` | Sprint 3.5 production validation close |
 | `docs/04-engineering/09-security/04-api-security/AUTHENTICATION_SECURITY.md` | Broader API auth security notes |
 | `docs/04-engineering/09-security/04-api-security/AUTHORIZATION_SECURITY.md` | Broader API authz security notes |
 | `AGENTS.md` | Repo agent bootstrap / runtime ops |

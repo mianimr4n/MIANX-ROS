@@ -18,7 +18,7 @@ export const apiModules: ApiModuleDescriptor[] = [
   {
     name: "auth",
     basePath: "/api/v1/auth",
-    summary: "Supabase Auth session verification, /me principal, and authorization foundation.",
+    summary: "Supabase Auth session verification, /me principal, staff invite accept, and authorization foundation.",
   },
   {
     name: "branches",
@@ -43,7 +43,7 @@ export const apiModules: ApiModuleDescriptor[] = [
   {
     name: "admin",
     basePath: "/api/v1/admin",
-    summary: "Administrative controls and dashboards.",
+    summary: "Administrative controls, staff invites, and dashboards.",
   },
 ];
 
@@ -53,11 +53,20 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
     createAuthRouter({
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
+      staffInviteRepository: dependencies.staffInviteRepository,
     }),
   );
   app.use("/api/v1/branches", createBranchesRouter(dependencies.catalogDataSource));
   app.use("/api/v1/menu", createMenuRouter(dependencies.catalogDataSource));
   app.use("/api/v1/orders", createOrdersRouter(dependencies.ordersDataSource));
   app.use("/api/v1/riders", createRidersRouter());
-  app.use("/api/v1/admin", createAdminRouter());
+  app.use(
+    "/api/v1/admin",
+    createAdminRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      staffInviteRepository: dependencies.staffInviteRepository,
+      inviteAppOrigin: dependencies.inviteAppOrigin,
+    }),
+  );
 }

@@ -13,6 +13,7 @@ import OrderSuccess from "./pages/OrderSuccess";
 import TrackOrder from "./pages/TrackOrder";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import StaffAccept from "./pages/StaffAccept";
 import Account from "./pages/Account";
 import Orders from "./pages/Orders";
 import Branches from "./pages/Branches";
@@ -51,6 +52,7 @@ function Router() {
       <Route path="/track" component={TrackOrder} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/staff/accept" component={StaffAccept} />
       <Route path="/account" component={Account} />
       <Route path="/orders" component={Orders} />
       <Route path="/loyalty" component={Loyalty} />
