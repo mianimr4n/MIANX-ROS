@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 import { Loader2 } from "lucide-react";
 
@@ -14,24 +14,79 @@ type AcceptResponse = {
   profileReady: boolean;
 };
 
+type InvitePreview = {
+  email: string;
+  fullName: string;
+  roleCode: string;
+  branchId: string;
+  branchName: string | null;
+  status: string;
+  expiresAt: string | null;
+};
+
 export default function StaffAccept() {
   const [, navigate] = useLocation();
   const search = useSearch();
   const token = useMemo(() => new URLSearchParams(search).get("token")?.trim() || "", [search]);
 
-  const [fullName, setFullName] = useState("");
+  const [preview, setPreview] = useState<InvitePreview | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(Boolean(token));
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [acceptedEmail, setAcceptedEmail] = useState<string | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPreview() {
+      if (!token) {
+        setPreviewError("This invite link is missing a token.");
+        setPreviewLoading(false);
+        return;
+      }
+      if (!isApiConfigured) {
+        setPreviewError("Staff activation is temporarily unavailable.");
+        setPreviewLoading(false);
+        return;
+      }
+
+      setPreviewLoading(true);
+      setPreviewError(null);
+      try {
+        const data = await fetchApiData<InvitePreview>(
+          `/auth/staff/invites/preview?token=${encodeURIComponent(token)}`,
+        );
+        if (!cancelled) {
+          setPreview(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          if (err instanceof ApiRequestError) {
+            setPreviewError(err.message);
+          } else {
+            setPreviewError("This invite cannot be accepted.");
+          }
+        }
+      } finally {
+        if (!cancelled) setPreviewLoading(false);
+      }
+    }
+
+    void loadPreview();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
 
-    if (!token) {
-      setError("This invite link is missing a token.");
+    if (!token || !preview) {
+      setError("This invite cannot be accepted.");
       return;
     }
     if (!isApiConfigured) {
@@ -54,7 +109,8 @@ export default function StaffAccept() {
         body: JSON.stringify({
           token,
           password,
-          fullName: fullName.trim() || undefined,
+          // fullName is display-only from invite; do not allow role/branch/email overrides
+          fullName: preview.fullName,
         }),
       });
       setAcceptedEmail(data.email);
@@ -83,6 +139,27 @@ export default function StaffAccept() {
     );
   }
 
+  if (previewLoading) {
+    return (
+      <AuthPageShell title="Accept staff invite" description="Loading invite details…">
+        <div className="flex justify-center py-6">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </AuthPageShell>
+    );
+  }
+
+  if (previewError || !preview) {
+    return (
+      <AuthPageShell title="Accept staff invite" description="This invite cannot be used.">
+        <p className="text-sm text-destructive mb-4">{previewError ?? "This invite cannot be accepted."}</p>
+        <p className="text-center text-sm text-muted-foreground">
+          Already activated? <Link href="/login">Sign in</Link>
+        </p>
+      </AuthPageShell>
+    );
+  }
+
   return (
     <AuthPageShell
       title="Accept staff invite"
@@ -90,12 +167,24 @@ export default function StaffAccept() {
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" value={preview.email} readOnly disabled />
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="fullName">Full name</Label>
+          <Input id="fullName" value={preview.fullName} readOnly disabled />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="roleCode">Role</Label>
+          <Input id="roleCode" value={preview.roleCode} readOnly disabled />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="branch">Branch</Label>
           <Input
-            id="fullName"
-            value={fullName}
-            onChange={(event) => setFullName(event.target.value)}
-            autoComplete="name"
+            id="branch"
+            value={preview.branchName ?? preview.branchId}
+            readOnly
+            disabled
           />
         </div>
         <div className="space-y-2">
