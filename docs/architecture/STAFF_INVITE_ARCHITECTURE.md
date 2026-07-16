@@ -216,7 +216,7 @@ Grant mapping for 2B v1:
 | `branch-manager` | ✅ (existing) | ❌ until 2B.1 | ❌ until 2B.1 | ✅ existing seed — **not enough alone to open invite APIs** |
 | Others | ❌ | ❌ | ❌ | ❌ |
 
-New invite routes must check **`staff.create`** (and `staff.assign_role` when role is chosen), not legacy header roles.
+New invite routes must require **DB-derived `isSuperAdmin`** (`requireSuperAdmin`), not permission-only gates and never header roles.
 
 ### 2.3 Actor matrix (invite management)
 
