@@ -58,7 +58,10 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
   );
   app.use("/api/v1/branches", createBranchesRouter(dependencies.catalogDataSource));
   app.use("/api/v1/menu", createMenuRouter(dependencies.catalogDataSource));
-  app.use("/api/v1/orders", createOrdersRouter(dependencies.ordersDataSource));
+  app.use(
+    "/api/v1/orders",
+    createOrdersRouter(dependencies.ordersDataSource, dependencies.authTokenVerifier),
+  );
   app.use("/api/v1/riders", createRidersRouter());
   app.use(
     "/api/v1/admin",

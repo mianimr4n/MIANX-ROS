@@ -431,6 +431,8 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         .insert({
           order_number: orderNumber,
           customer_id: input.customerId ?? null,
+          // Slice 2D ownership link — null for guests; never from client role claims.
+          auth_user_id: input.authUserId?.trim() || null,
           branch_id: branch.id,
           order_type: input.orderType,
           order_source: input.orderSource,

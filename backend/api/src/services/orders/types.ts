@@ -66,6 +66,12 @@ export interface QuoteOrderResult {
 export interface CreateOrderInput {
   branchCode: string;
   customerId?: string;
+  /**
+   * Optional Supabase Auth user id when Bearer is present.
+   * Used only to populate orders.auth_user_id for Slice 2D customer RLS.
+   * Never taken from body/headers as a privilege claim.
+   */
+  authUserId?: string;
   orderType: "delivery" | "pickup" | "dine-in";
   orderSource: "website" | "whatsapp" | "mobile" | "pos" | "admin";
   contactName: string;
