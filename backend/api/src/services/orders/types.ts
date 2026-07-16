@@ -1,17 +1,51 @@
 export interface OrderLineExtra {
-  label: string;
-  price: number;
+  label?: string;
+  slug?: string;
+  /** Ignored by server — never trusted for pricing. */
+  price?: number;
 }
 
 export interface CreateOrderItemInput {
   menuItemSlug: string;
   variantLabel?: string;
   quantity: number;
-  unitPrice: number;
-  productName: string;
+  /** Ignored by server. */
+  unitPrice?: number;
+  /** Ignored by server. */
+  productName?: string;
   variantName?: string;
   instructions?: string;
+  toppings?: Array<{ slug: string }>;
   extras?: OrderLineExtra[];
+}
+
+export interface QuoteOrderInput {
+  branchCode: string;
+  orderType: "delivery" | "pickup" | "dine-in";
+  items: CreateOrderItemInput[];
+  couponCode?: string;
+}
+
+export interface QuoteOrderResult {
+  currency: "PKR";
+  branchCode: string;
+  orderType: string;
+  lines: Array<{
+    menuItemSlug: string;
+    productName: string;
+    variantName: string | null;
+    quantity: number;
+    foodUnitPrice: number;
+    extras: Array<{ slug: string; label: string; price: number; kind: string }>;
+    lineUnitPrice: number;
+    lineTotal: number;
+  }>;
+  subtotal: number;
+  discountAmount: number;
+  taxAmount: number;
+  deliveryFee: number;
+  totalAmount: number;
+  pricedAt: string;
 }
 
 export interface CreateOrderInput {
@@ -25,6 +59,7 @@ export interface CreateOrderInput {
   notes?: string;
   couponCode?: string;
   items: CreateOrderItemInput[];
+  idempotencyKey: string;
 }
 
 export interface CreatedOrderSummary {
@@ -32,8 +67,12 @@ export interface CreatedOrderSummary {
   orderNumber: string;
   status: string;
   subtotal: number;
+  discountAmount: number;
+  taxAmount: number;
+  deliveryFee: number;
   totalAmount: number;
   createdAt: string;
+  idempotentReplay?: boolean;
 }
 
 export interface OrderTrackingSummary {
@@ -55,10 +94,12 @@ export interface OrderTrackingSummary {
     unitPrice: number;
     totalPrice: number;
     instructions?: string | null;
+    extras?: Array<{ slug: string; label: string; price: number }>;
   }>;
 }
 
 export interface OrdersDataSource {
+  quoteOrder(input: QuoteOrderInput): Promise<QuoteOrderResult>;
   createOrder(input: CreateOrderInput): Promise<CreatedOrderSummary>;
   getOrderTracking(orderNumber: string, contactPhone: string): Promise<OrderTrackingSummary | null>;
 }

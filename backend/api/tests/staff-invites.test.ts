@@ -40,6 +40,9 @@ const catalogDataSource: CatalogDataSource = {
 };
 
 const ordersDataSource: OrdersDataSource = {
+  async quoteOrder() {
+    throw new Error("not used");
+  },
   async createOrder() {
     throw new Error("not used");
   },
