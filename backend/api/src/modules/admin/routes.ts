@@ -8,6 +8,8 @@ import {
 } from "../../middleware/authorization.js";
 import type { AuthTokenVerifier } from "../../middleware/auth.js";
 import type { AuthPrincipalRepository } from "../../services/auth/supabase.js";
+import type { BranchOrderManagementDataSource } from "../../services/orders/management.js";
+import { createAdminOrdersRouter } from "./orders.js";
 import {
   assertCanReadInvites,
   type InviteAuditContext,
@@ -29,6 +31,7 @@ export interface AdminRouterDependencies {
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
   staffInviteRepository: StaffInviteRepository;
+  branchOrderManagement: BranchOrderManagementDataSource;
   inviteAppOrigin: string;
 }
 
@@ -82,6 +85,16 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   // Legacy stub — still header-gated 501; must not unlock real admin features.
   router.get("/controls", requireRole(["admin", "super-admin"]), (_req, res) =>
     sendNotImplemented(res, "Admin controls", ["admin.access"]),
+  );
+
+  // Sprint 4.5 — branch-scoped order management (Bearer + AuthPrincipal gated).
+  router.use(
+    "/orders",
+    createAdminOrdersRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      branchOrderManagement: dependencies.branchOrderManagement,
+    }),
   );
 
   router.post(
