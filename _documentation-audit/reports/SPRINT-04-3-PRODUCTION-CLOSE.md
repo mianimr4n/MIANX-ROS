@@ -140,6 +140,7 @@ Catalog static regression: **13 categories / 58 items / 3 toppings / 40 variants
 Smoke orders deleted from production (`orders`, `order_items`, `order_status_logs`, `deliveries`):
 
 - `TP-MRNB4ESW-4833`, `TP-MRNB4IX1-2274`, `TP-MRNB5IAR-9372`, `TP-MRNB6NMB-2198`, `TP-MRNB683P-3647`
+- `TP-MRNBJ269-6392`, `TP-MRNBJ64C-9747` (final verification pass)
 
 **Post-cleanup order count:** **1** (pre-existing only)
 
