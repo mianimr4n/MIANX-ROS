@@ -1,6 +1,6 @@
 # Sprint 4 — Orders Backend Planning
 
-**Status:** PLAN + **Team B kickoff authorized** · Parallel with Slice 2C.0 OTP ops wait  
+**Status:** ACTIVE — **quality over speed** · Slice **4.1** in PR review (do not start 4.2 until 4.1 CLOSED)  
 **Date:** 2026-07-16  
 **Baseline:** Slice 2B CLOSED (`8527f28`); catalog freeze **v1.2.0** (58 / 13 / 2)  
 **Milestone:** `docs/architecture/PROJECT-MILESTONE-AND-ROADMAP.md`  
@@ -8,27 +8,76 @@
 **Related:** `SLICE-2C0-OTP-OPERATIONS-READINESS.md` (OTP **PAUSED / BLOCKED** on Meta/Twilio)
 
 ```text
-Team A — OTP ops (Meta/Twilio)     ← external wait
-Team B — Orders Domain Sprint 4    ← ACTIVE
+Team A — OTP ops (Meta/Twilio)     ← external wait (non-blocking)
+Team B — Orders Domain Sprint 4    ← ACTIVE (one slice at a time)
 Team C — Mianx.ai platform         ← parallel investment
 ```
 
-### Owner-expanded Sprint 4 theme
+### Owner-expanded Sprint 4 theme (central business engine)
 
 ```text
-Customer → Cart → Checkout → Order → Kitchen → Ready → Rider → Delivered
+Customer
+   ↓
+Cart
+   ↓
+Checkout
+   ↓
+Order Created
+   ↓
+Branch
+   ↓
+Kitchen
+   ↓
+Ready
+   ↓
+Rider
+   ↓
+Delivered / Cancelled
 ```
 
-Sprint 4 deliverables (owner roadmap): Orders Engine · Kitchen Workflow · Order State Machine · Rider Assignment · Payment Flow · Notifications — sequenced as slices below; **UI unlock after Slice 2D**.
+Everything else (POS, Kitchen Display, Rider App, Admin, Notifications, AI) connects to this lifecycle.  
+**Protect quality over speed.** Each slice must be independently shippable.
 
-**Hard constraints for this planning phase:**
+---
 
-- Do **not** wait idle for WhatsApp OTP provider onboarding  
+## Discipline workflow (mandatory — same as Sprint 1–3)
+
+```text
+1. Architecture first (clear design + decisions)
+2. Small implementation slice
+3. Tests pass
+4. PR review
+5. Merge
+6. Production migration / deploy (if any)
+7. Smoke test
+8. Close the slice
+9. Only then → next slice
+```
+
+**Do not skip steps. Do not start the next Orders slice until the current slice is CLOSED.**
+
+### Definition of Done (every Sprint 4 slice)
+
+| # | Gate | Required |
+|---|---|---|
+| 1 | Architecture / decisions recorded | Yes |
+| 2 | Scope limited to one slice stop-line | Yes |
+| 3 | `pnpm check` + relevant tests green | Yes |
+| 4 | PR reviewed (security/regressions) | Yes |
+| 5 | Merged to `main` | Yes |
+| 6 | Migrations applied if the slice ships SQL | If any |
+| 7 | Production/smoke: create+track, WhatsApp `0304-1110495`, staff auth, catalog 58/13/2 | Yes |
+| 8 | Close note / status update | Yes |
+| 9 | Next slice authorized only after close | Yes |
+
+**Hard constraints:**
+
+- Do **not** rush features ahead of DoD  
 - Do **not** break WhatsApp ordering on **0304-1110495** (`wa.me`)  
 - Do **not** mutate menu / pricing / catalog / toppings (v1.2.0 freeze)  
 - Do **not** implement Slice 2C OTP code here  
-- Do **not** unlock POS / Kitchen / Rider UIs until authz + RLS gates are defined  
-- Prefer **plan → owner decisions → then code slices**  
+- Do **not** unlock POS / Kitchen / Rider UIs until Slice **2D** RLS  
+- Parallel Team A/C work must not skip Team B slice close discipline  
 
 ---
 
@@ -37,9 +86,9 @@ Sprint 4 deliverables (owner roadmap): Orders Engine · Kitchen Workflow · Orde
 | Fact | Implication |
 |---|---|
 | Slice 2C technical architecture is complete | Engineering cannot unblock Meta/Twilio/WABA |
-| Provider onboarding can take **1–7+ days** | Developers should not idle |
+| Provider onboarding can take **1–7+ days** | Team A prepares externally; Team B does not idle |
 | Orders are the restaurant **core business engine** | Highest value parallel work |
-| Current API already has thin create + track | Clear foundation to harden |
+| Current API already has thin create + track | Clear foundation to harden **one slice at a time** |
 
 ---
 
@@ -54,9 +103,11 @@ Sprint 4 deliverables (owner roadmap): Orders Engine · Kitchen Workflow · Orde
 
 **Implemented when Supabase ready:** branch must be `operating`; server resolves menu prices; inserts `orders` + `order_items`; optional `deliveries` row; status starts `pending`; discount/tax/delivery_fee = `0`.
 
-**Not implemented:** status machine, cancel, list-by-branch, kitchen queue, payments write, coupon engine, idempotency, JWT/`requirePermission`, extras as separate lines, transactional guarantee if item insert fails.
+**Not implemented yet (later slices):** status machine, cancel API, list-by-branch, kitchen queue, payments write, coupon engine, idempotency keys, JWT/`requirePermission` on create, extras as separate DB lines.
 
-**Files:** `backend/api/src/modules/orders/routes.ts`, `services/orders/supabase.ts`, `services/orders/types.ts`
+**4.1 in flight (PR #34):** delivery address required; unavailable variant reject; extras folded into instructions; rollback orphan order if items/delivery insert fails.
+
+**Files:** `backend/api/src/modules/orders/routes.ts`, `services/orders/supabase.ts`, `services/orders/types.ts`, `services/orders/create-helpers.ts`
 
 ### 1.2 Website
 
@@ -171,17 +222,15 @@ Exact role matrix is an **owner decision** (see §8).
 
 ## 5. Proposed implementation slices (after owner decisions)
 
-| Slice | Deliverable | Stop line |
-|---|---|---|
-| **4.0** | This plan + owner decision card (OB*) | No code |
-| **4.1** | Create-path hardening: delivery address required, unavailable variant reject, extras folded into instructions, rollback orphan order/delivery on child insert failure | No status UI |
-| **4.2** | Status machine + `order_status_logs` + safe transition API | No POS UI |
-| **4.3** | Staff list/detail by branch + `requirePermission` | No cross-branch without 2D |
-| **4.4** | Website: authenticated/guest create policy; reduce localStorage-only “My Orders” drift | Keep WA handoff |
-| **4.5** | Slice **2D** RLS for orders/payments/deliveries | Gate before POS unlock |
-| **4.6** | POS / Kitchen / Rider consume APIs | After 2D PASS |
-
-**Do not start 4.1 code until OB decisions in §8 are approved** (or owner explicitly authorizes “plan defaults”).
+| Slice | Deliverable | Status | Stop line |
+|---|---|---|---|
+| **4.0** | Plan + OB defaults + discipline/DoD | ✅ Done (this doc) | — |
+| **4.1** | Create-path hardening | 🟡 **PR review** (#34) — close before 4.2 | No status UI |
+| **4.2** | Status machine + `order_status_logs` + safe transition API | 🔒 Blocked until 4.1 CLOSED | No POS UI |
+| **4.3** | Staff list/detail by branch + `requirePermission` | 🔒 After 4.2 | No cross-branch without 2D |
+| **4.4** | Website: attach session customer when present; reduce My Orders drift | 🔒 After 4.3 | Keep WA handoff |
+| **4.5** | Slice **2D** RLS for orders/payments/deliveries | 🔒 Hard gate | Before POS unlock |
+| **4.6+** | Kitchen / rider / payment / notification APIs → then apps | 🔒 After 2D PASS | Apps in Sprint 5+ |
 
 ---
 
@@ -260,17 +309,25 @@ Telepizza Login (new) = Auth OTP only (Slice 2C — paused)
 
 ## 11. Agent stop line (this document)
 
-Team B is authorized to execute **slice 4.1** (create hardening) under adopted OB defaults.
+**Now:** Complete the Sprint 1–3 discipline cycle for **slice 4.1** only:
+
+1. PR review on #34  
+2. Merge  
+3. Deploy (API auto) — no OTP migrations  
+4. Smoke: `POST /orders`, tracking, `wa.me` **0304-1110495**, staff login, catalog 58/13/2  
+5. Close 4.1  
+6. **Only then** architecture + implement **4.2** (status machine)
 
 Still forbidden without new owner authorization:
 
+- Skipping DoD / starting 4.2 before 4.1 CLOSED  
 - POS / Kitchen / Rider **UI unlock** (needs Slice 2D)  
 - Catalog / pricing mutations  
 - Slice 2C.1 OTP code (until 2C.0 READY)  
 - Migrating **0304-1110495** onto Cloud API  
 
 **OTP remains PAUSED on provider ops.**  
-**Orders Domain 4.1 is the active engineering track.**
+**Quality over speed — one closable Orders slice at a time.**
 
 ---
 

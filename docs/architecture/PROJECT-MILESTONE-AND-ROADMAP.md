@@ -18,9 +18,22 @@
 | Sprint 3.5 | ✅ Complete |
 | **Slice 2C** | 🟡 Architecture approved — waiting on WhatsApp Business / Twilio ops |
 | Slice 2D | 🔒 Not started (RLS gate before POS unlock) |
-| Sprint 4 Orders | ▶ Planning started → Domain build authorized in parallel |
+| Sprint 4 Orders | ▶ **4.1** in PR review — close before 4.2 (discipline workflow) |
 
 The project is past prototype: release freeze, authentication, authorization model, and architecture docs form a solid base for the operational restaurant platform.
+
+**Owner directive:** Protect quality over speed. Keep the Sprint 1–3 pattern — architecture → small slice → tests → PR → merge → deploy → smoke → close → next. Do not rush.
+
+---
+
+## 1b. Slice discipline (mandatory)
+
+```text
+1 Architecture → 2 Small slice → 3 Tests → 4 PR review → 5 Merge
+→ 6 Production migration/deploy → 7 Smoke → 8 Close → 9 Next slice only
+```
+
+Each Sprint 4 slice must be independently shippable with a clear Definition of Done (see `SPRINT-04-ORDERS-BACKEND-PLANNING.md`).
 
 ---
 
@@ -117,9 +130,9 @@ Sprint 7
 
 | Team | Action |
 |---|---|
-| A | Execute Meta / WABA / Twilio / template / Turnstile checklist |
-| B | Execute Sprint 4 Orders Domain slices (start **4.1** create hardening) |
-| C | Continue Mianx.ai platform work outside this repo as scheduled |
+| A | Meta / WABA / Twilio / template / Turnstile (external; non-blocking) |
+| B | **Finish 4.1 close cycle** (PR #34 → merge → smoke → close). **Do not start 4.2 yet.** |
+| C | Continue Mianx.ai platform work as scheduled |
 
 ---
 
