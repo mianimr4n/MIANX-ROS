@@ -110,7 +110,7 @@ export default function Account() {
       }
       setProfileNotice(
         phone.trim()
-          ? "Profile saved. Phone added — verification will be enabled with WhatsApp OTP."
+          ? "Profile saved. Phone status: Unverified until WhatsApp OTP is enabled."
           : "Profile saved.",
       );
     } finally {
@@ -209,7 +209,16 @@ export default function Account() {
               autoComplete="tel"
             />
             <p className="text-xs text-muted-foreground">
-              Saved as a Pakistani mobile (+92…). Verification comes later with WhatsApp OTP.
+              Pakistani mobiles normalize as 03XXXXXXXXX → +923XXXXXXXXX. Checkout still collects phone
+              when placing an order.
+            </p>
+            <p className="text-xs font-[var(--font-accent)] font-semibold text-brand-charcoal">
+              Phone status:{" "}
+              {profile?.phone
+                ? profile.phoneVerified
+                  ? "Verified"
+                  : "Unverified"
+                : "Not set"}
             </p>
           </div>
           {profileError ? (
@@ -250,10 +259,15 @@ export default function Account() {
               noValidate
             >
               <h3 className="font-semibold">
-                {emailPasswordAvailable ? "Update password" : "Set password / Add email-password login"}
+                {googleConnected && !emailPasswordAvailable
+                  ? "Set a Telepizza password"
+                  : emailPasswordAvailable
+                    ? "Update Telepizza password"
+                    : "Set a Telepizza password"}
               </h3>
               <p className="text-xs text-muted-foreground">
-                Attaches a password to this same account — does not create a second login.
+                Attaches a Telepizza password to this same account via Supabase Auth — never asks for your
+                Google password and does not create a second login.
               </p>
               <div className="space-y-2">
                 <Label htmlFor="newPassword">Password</Label>

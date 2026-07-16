@@ -89,6 +89,24 @@ export function mapSupabaseAuthError(message: string | undefined): string {
   }
 
   if (
+    normalized.includes("rate limit") ||
+    normalized.includes("email rate limit") ||
+    normalized.includes("over_email_send_rate_limit") ||
+    normalized.includes("429")
+  ) {
+    return "Too many email requests. Please wait a few minutes and try again.";
+  }
+
+  if (
+    normalized.includes("error sending confirmation") ||
+    normalized.includes("error sending magic link") ||
+    normalized.includes("unable to send") ||
+    normalized.includes("smtp")
+  ) {
+    return "We could not send the confirmation email right now. Check spam later or try Resend.";
+  }
+
+  if (
     normalized.includes("provider is not enabled") ||
     normalized.includes("unsupported provider") ||
     normalized.includes("validation_failed")

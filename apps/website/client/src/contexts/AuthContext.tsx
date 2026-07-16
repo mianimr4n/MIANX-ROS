@@ -18,7 +18,11 @@ import {
   validateSignupInput,
   type AuthMeResponse,
 } from "@/lib/auth-utils";
-import { getGoogleOAuthRedirectTo, rememberAuthNextPath } from "@/lib/auth-redirect";
+import {
+  getEmailConfirmationRedirectTo,
+  getGoogleOAuthRedirectTo,
+  rememberAuthNextPath,
+} from "@/lib/auth-redirect";
 import { normalizePakistaniMobileE164 } from "@/lib/phone";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { clearStoredUser } from "@/lib/customer-store";
@@ -28,6 +32,8 @@ export type CustomerProfile = {
   fullName: string;
   phone: string | null;
   email: string | null;
+  /** Always false until WhatsApp OTP (Slice 2C). */
+  phoneVerified: boolean;
 };
 
 type SignUpResult =
@@ -48,6 +54,8 @@ interface AuthContextType {
   signUp: (input: { email: string; password: string; fullName?: string }) => Promise<SignUpResult>;
   signIn: (input: { email: string; password: string }) => Promise<SignInResult>;
   signInWithGoogle: (options?: { next?: string | null }) => Promise<GoogleSignInResult>;
+  /** Rate-limited resend of signup confirmation email (never enumerates accounts). */
+  resendConfirmationEmail: (email: string) => Promise<ActionResult>;
   /** Attach email/password to the currently authenticated Supabase user (no second auth user). */
   setPassword: (input: { password: string; confirmPassword: string }) => Promise<ActionResult>;
   updateProfile: (input: { fullName?: string; phone?: string | null }) => Promise<ActionResult>;
@@ -134,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   fullName: displayNameFromUser(nextSession.user),
                   phone: null,
                   email: nextSession.user.email ?? null,
+                  phoneVerified: false,
                 }
               : null,
           );
@@ -148,6 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 fullName: me.profile.fullName,
                 phone: me.profile.phone,
                 email: me.email,
+                phoneVerified: false,
               }
             : null,
         );
@@ -228,6 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: validated.email,
         password: validated.password,
         options: {
+          emailRedirectTo: getEmailConfirmationRedirectTo(),
           // Display name only — never role / user_type / branch.
           data: validated.fullName ? { full_name: validated.fullName } : undefined,
         },
@@ -237,6 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { ok: false, message: mapSupabaseAuthError(error.message) };
       }
 
+      // When confirmation is required, Supabase returns no session — do not treat as logged in.
       const needsEmailConfirmation = !data.session;
       if (data.session) {
         await applySession(data.session, { force: true });
@@ -246,6 +258,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     [applySession],
   );
+
+  const resendConfirmationEmail = useCallback(async (email: string): Promise<ActionResult> => {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+      return { ok: false, message: "Enter a valid email address." };
+    }
+
+    const supabase = getSupabaseClient();
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        ok: false,
+        message: "Authentication is not configured. Please try again later.",
+      };
+    }
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: normalized,
+      options: {
+        emailRedirectTo: getEmailConfirmationRedirectTo(),
+      },
+    });
+
+    if (error) {
+      return { ok: false, message: mapSupabaseAuthError(error.message) };
+    }
+
+    // Always generic — never reveal whether the email exists or is already confirmed.
+    return { ok: true };
+  }, []);
 
   const signIn = useCallback(
     async (input: { email: string; password: string }): Promise<SignInResult> => {
@@ -389,6 +431,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           fullName: updated.fullName,
           phone: updated.phone,
           email: updated.email ?? session.user?.email ?? null,
+          phoneVerified: false,
         });
         return { ok: true };
       } catch (error) {
@@ -437,6 +480,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signIn,
       signInWithGoogle,
+      resendConfirmationEmail,
       setPassword,
       updateProfile,
       signOut,
@@ -451,6 +495,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signIn,
       signInWithGoogle,
+      resendConfirmationEmail,
       setPassword,
       updateProfile,
       signOut,
