@@ -36,6 +36,9 @@ const ordersDataSource: OrdersDataSource = {
   async getOrderTracking() {
     return null;
   },
+  async getOrder() {
+    return null;
+  },
   async cancelOrder() {
     throw new Error("not used");
   },

@@ -142,6 +142,9 @@ const ordersDataSource: OrdersDataSource = {
       ],
     };
   },
+  async getOrder(orderNumber, contactPhone) {
+    return ordersDataSource.getOrderTracking(orderNumber, contactPhone);
+  },
   async cancelOrder(input) {
     if (input.orderNumber !== "TP-TEST-1") {
       throw Object.assign(new Error("Order not found."), {
@@ -329,6 +332,25 @@ describe("Telepizza API app", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data.orderNumber).toBe("TP-TEST-1");
+  });
+
+  it("returns guest order read through canonical GET /orders/:orderNumber", async () => {
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
+    const response = await request(app)
+      .get("/api/v1/orders/TP-TEST-1")
+      .query({ phone: "03041110495" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.orderNumber).toBe("TP-TEST-1");
+    expect(response.body.data.status).toBe("pending");
+  });
+
+  it("requires phone for canonical order read", async () => {
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource });
+    const response = await request(app).get("/api/v1/orders/TP-TEST-1");
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe("VALIDATION_ERROR");
   });
 
   it("cancels guest orders through the configured orders source", async () => {

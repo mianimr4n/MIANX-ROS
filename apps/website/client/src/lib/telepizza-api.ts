@@ -1,6 +1,7 @@
 import { fetchApiData } from "@/lib/api";
 import type {
   Branch,
+  CancelOrderResponse,
   CreateOrderPayload,
   CreatedOrderResponse,
   QuoteOrderResponse,
@@ -73,4 +74,21 @@ export function fetchOrderTracking(orderNumber: string, phone: string) {
   return fetchApiData<OrderTrackingResponse>(
     `/orders/${encodeURIComponent(orderNumber)}/tracking?${params.toString()}`,
   );
+}
+
+export function fetchOrder(orderNumber: string, phone: string) {
+  const params = new URLSearchParams({ phone });
+  return fetchApiData<OrderTrackingResponse>(
+    `/orders/${encodeURIComponent(orderNumber)}?${params.toString()}`,
+  );
+}
+
+export function cancelOrder(orderNumber: string, contactPhone: string, note?: string) {
+  return fetchApiData<CancelOrderResponse>(`/orders/${encodeURIComponent(orderNumber)}/cancel`, {
+    method: "POST",
+    body: JSON.stringify({
+      contactPhone,
+      note: note?.trim() || undefined,
+    }),
+  });
 }

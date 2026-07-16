@@ -130,3 +130,10 @@ export interface OrderTrackingResponse {
     instructions?: string | null;
   }>;
 }
+
+export interface CancelOrderResponse {
+  orderNumber: string;
+  status: "cancelled";
+  cancelledAt: string;
+  cancelReasonCode: string;
+}
