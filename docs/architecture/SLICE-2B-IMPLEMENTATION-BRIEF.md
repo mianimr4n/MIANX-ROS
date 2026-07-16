@@ -1,13 +1,13 @@
 # Sprint 3 Slice 2B — Pre-Implementation Brief
 
-**Status:** Implementation merged (PR #29) · production migrations applied · smoke remaining  
+**Status:** Slice 2B CLOSED (PR #29 · migrations · production smoke)  
 **Date:** 2026-07-16  
 **Baseline:** `main` @ `0a5a730` (Slice 2B merge)  
 **Canonical SSOT:** `docs/architecture/AUTHENTICATION_ARCHITECTURE.md`  
 **Full freeze doc:** `docs/architecture/STAFF_INVITE_ARCHITECTURE.md`  
 **Implementation branch:** `feature/sprint-3-staff-invites` (merged)
 
-This brief was the gate required before Slice 2B coding. Coding + production migrations are complete; remaining work is smoke + close.
+This brief was the gate required before Slice 2B coding. Coding, production migrations, and smoke are complete.
 
 ---
 
@@ -23,6 +23,8 @@ This brief was the gate required before Slice 2B coding. Coding + production mig
 | `main` is source of truth | ✅ |
 | Slice 2B code merged | ✅ PR #29 / `0a5a730` |
 | Slice 2B production migrations | ✅ Applied |
+| Slice 2B production smoke | ✅ PASS |
+| Slice 2B CLOSE | ✅ |
 
 ---
 

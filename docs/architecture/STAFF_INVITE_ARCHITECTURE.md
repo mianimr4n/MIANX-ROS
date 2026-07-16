@@ -1,10 +1,10 @@
 # Sprint 3 — Slice 2B Staff Invite Architecture
 
-**Status:** Architecture freeze + **implementation merged** (PR #29 / `0a5a730`) — production migrations ✅; smoke → CLOSE remaining  
+**Status:** Architecture freeze + **implementation CLOSED** (PR #29 / `0a5a730`; migrations + production smoke PASS)  
 **Type:** Complete blueprint + security review (implemented)  
 **Audience:** Owner (business decisions) · Architects · AI implementation agents  
 **Depends on:** Canonical `docs/architecture/AUTHENTICATION_ARCHITECTURE.md`  
-**Baseline:** Sprint 3.5 **CLOSED**; Slice 2B code + migrations on production  
+**Baseline:** Sprint 3.5 **CLOSED**; Slice 2B **CLOSED** on production  
 **Catalog freeze:** v1.2.0 menu/pricing/catalog/toppings — **do not touch**
 
 ```text
@@ -14,7 +14,7 @@
         ↓
 ✅ Production migrations applied
         ↓
-⏳ Production smoke → Slice 2B CLOSE
+✅ Production smoke → Slice 2B CLOSED
 ```
 
 Implementation branch (merged):
