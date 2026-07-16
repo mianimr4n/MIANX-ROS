@@ -91,6 +91,14 @@ export function getGoogleOAuthRedirectTo(): string {
   return `${window.location.origin}${AUTH_CALLBACK_PATH}`;
 }
 
+/**
+ * Email confirmation + resend redirect — same callback as Google OAuth.
+ * Must be listed under Supabase Auth → Redirect URLs.
+ */
+export function getEmailConfirmationRedirectTo(): string {
+  return getGoogleOAuthRedirectTo();
+}
+
 export function mapOAuthCallbackError(raw: string | null | undefined): string {
   const normalized = (raw ?? "").toLowerCase();
   if (!normalized) {

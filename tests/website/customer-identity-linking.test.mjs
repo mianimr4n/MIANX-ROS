@@ -33,7 +33,7 @@ test("Google password attach uses updateUser on current session only", () => {
   assert.match(authContext, /supabase\.auth\.updateUser\(\{\s*password:/);
   assert.match(authContext, /never sent to Telepizza API/i);
   assert.match(authContext, /setPassword/);
-  assert.match(account, /Set password|Add email-password login/);
+  assert.match(account, /Set a Telepizza password|Update Telepizza password/);
   assert.match(account, /You can now sign in using Google or email and password/);
   assert.match(account, /showPassword/);
   assert.match(account, /if \(passwordBusy\) return/);
@@ -56,7 +56,8 @@ test("Account profile + sign-in methods UI and Coming Soon cards", () => {
   assert.match(account, /Coming Soon/);
   assert.match(account, /My Orders/);
   assert.doesNotMatch(account, /listNotifications|unreadNotifications/);
-  assert.match(account, /verification will be enabled with WhatsApp OTP/);
+  assert.match(account, /Phone status:/);
+  assert.match(account, /Unverified/);
 });
 
 test("profile PATCH path is Bearer-only and strips privilege fields", () => {

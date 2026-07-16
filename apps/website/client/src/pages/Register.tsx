@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,9 +15,14 @@ import {
 import { DEFAULT_AUTH_DESTINATION } from "@/lib/auth-redirect";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
+const CONFIRMATION_SUCCESS_COPY =
+  "Account created. Check your inbox and spam folder to confirm your email.";
+
+const RESEND_COOLDOWN_SECONDS = 60;
+
 export default function Register() {
   const [, navigate] = useLocation();
-  const { signUp, isAuthenticated, isLoading } = useAuth();
+  const { signUp, resendConfirmationEmail, isAuthenticated, isLoading } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,16 +30,26 @@ export default function Register() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
+  const [resendBusy, setResendBusy] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const signupCompletedRef = useRef(false);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (!isLoading && isAuthenticated && !awaitingConfirmation) {
       navigate(DEFAULT_AUTH_DESTINATION);
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, navigate, awaitingConfirmation]);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = window.setTimeout(() => setResendCooldown((value) => value - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendCooldown]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (submitting) return;
+    if (submitting || signupCompletedRef.current || awaitingConfirmation) return;
 
     setError(null);
     setInfo(null);
@@ -63,8 +78,13 @@ export default function Register() {
         return;
       }
 
+      signupCompletedRef.current = true;
+
       if (result.needsEmailConfirmation) {
-        setInfo("Account created. Please confirm your email, then sign in.");
+        setAwaitingConfirmation(true);
+        setEmail(validated.email);
+        setInfo(CONFIRMATION_SUCCESS_COPY);
+        setResendCooldown(RESEND_COOLDOWN_SECONDS);
         return;
       }
 
@@ -73,6 +93,25 @@ export default function Register() {
       setError("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendBusy || resendCooldown > 0 || !email.trim()) return;
+    setError(null);
+    setResendBusy(true);
+    try {
+      const result = await resendConfirmationEmail(email);
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+      setInfo("If that address still needs confirmation, another email is on the way. Check inbox and spam.");
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
+    } catch {
+      setError("We could not send the confirmation email right now. Please try again later.");
+    } finally {
+      setResendBusy(false);
     }
   };
 
@@ -86,7 +125,7 @@ export default function Register() {
     );
   }
 
-  const formDisabled = !isSupabaseConfigured || submitting;
+  const formDisabled = !isSupabaseConfigured || submitting || awaitingConfirmation;
 
   return (
     <AuthPageShell
@@ -103,17 +142,19 @@ export default function Register() {
         className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-4"
         noValidate
       >
-        <GoogleSignInButton
-          disabled={formDisabled}
-          onError={(message) => {
-            setInfo(null);
-            setError(message);
-          }}
-          label="Continue with Google"
-          placement="primary"
-          dividerLabel="or continue with email"
-          next={DEFAULT_AUTH_DESTINATION}
-        />
+        {!awaitingConfirmation ? (
+          <GoogleSignInButton
+            disabled={formDisabled}
+            onError={(message) => {
+              setInfo(null);
+              setError(message);
+            }}
+            label="Continue with Google"
+            placement="primary"
+            dividerLabel="or continue with email"
+            next={DEFAULT_AUTH_DESTINATION}
+          />
+        ) : null}
         <div className="space-y-2">
           <Label htmlFor="fullName">Full name (optional)</Label>
           <Input
@@ -145,55 +186,86 @@ export default function Register() {
             placeholder="you@gmail.com"
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError(null);
-              }}
-              className="rounded-2xl pr-12"
-              required
-              minLength={AUTH_MIN_PASSWORD_LENGTH}
-              disabled={formDisabled}
-            />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 px-3 text-muted-foreground hover:text-brand-charcoal disabled:opacity-50"
-              onClick={() => setShowPassword((value) => !value)}
-              disabled={formDisabled}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
+        {!awaitingConfirmation ? (
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError(null);
+                }}
+                className="rounded-2xl pr-12"
+                required
+                minLength={AUTH_MIN_PASSWORD_LENGTH}
+                disabled={formDisabled}
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 px-3 text-muted-foreground hover:text-brand-charcoal disabled:opacity-50"
+                onClick={() => setShowPassword((value) => !value)}
+                disabled={formDisabled}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">{AUTH_PASSWORD_REQUIREMENTS_COPY}</p>
           </div>
-          <p className="text-xs text-muted-foreground">{AUTH_PASSWORD_REQUIREMENTS_COPY}</p>
-        </div>
+        ) : null}
         {error ? (
           <p className="text-sm text-brand-red" role="alert">
             {error}
           </p>
         ) : null}
         {info ? <p className="text-sm text-emerald-700">{info}</p> : null}
-        <Button
-          type="submit"
-          className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
-          disabled={formDisabled}
-        >
-          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create account with email"}
-        </Button>
+        {awaitingConfirmation ? (
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              After confirming, return here to sign in. We never report a successful login before email
+              confirmation when confirmation is required.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full rounded-2xl font-semibold"
+              disabled={resendBusy || resendCooldown > 0 || !isSupabaseConfigured}
+              onClick={() => void handleResend()}
+            >
+              {resendBusy ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : resendCooldown > 0 ? (
+                `Resend confirmation email (${resendCooldown}s)`
+              ) : (
+                "Resend confirmation email"
+              )}
+            </Button>
+            <Link href="/login" className="block text-center text-sm text-brand-red font-semibold hover:underline">
+              Go to login
+            </Link>
+          </div>
+        ) : (
+          <Button
+            type="submit"
+            className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
+            disabled={formDisabled}
+          >
+            {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create account with email"}
+          </Button>
+        )}
       </form>
-      <p className="text-sm text-muted-foreground mt-4 text-center">
-        Already registered?{" "}
-        <Link href="/login" className="text-brand-red font-semibold hover:underline">
-          Login
-        </Link>
-      </p>
+      {!awaitingConfirmation ? (
+        <p className="text-sm text-muted-foreground mt-4 text-center">
+          Already registered?{" "}
+          <Link href="/login" className="text-brand-red font-semibold hover:underline">
+            Login
+          </Link>
+        </p>
+      ) : null}
     </AuthPageShell>
   );
 }
