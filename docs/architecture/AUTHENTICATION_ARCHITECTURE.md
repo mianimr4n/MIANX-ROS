@@ -89,7 +89,7 @@ Any of the following requires **architecture approval** before merge:
 | **Sprint 3.5** | Merge + migration apply + regression/smoke | ✅ Closed |
 | **Slice 2B** | Staff invite / create / role+branch assign | ✅ Closed (`8527f28` / PR #31; migrations + production smoke PASS) |
 | **Slice 2C** | Customer phone + OTP (WhatsApp-first) | ⏸ **PAUSED** — architecture complete; 2C.0 **BLOCKED** on Meta/Twilio/WABA/CAPTCHA/pilot (`SLICE-2C0-OTP-OPERATIONS-READINESS.md`) |
-| **Slice 2D** | Order/payment/delivery RLS by owner + branch | 🔒 Not started (hard gate before POS unlock) |
+| **Slice 2D** | Order/payment/delivery RLS by owner + branch | ▶ Implemented in migration `20260716140000_sprint3_slice2d_order_branch_rls.sql` — await owner review / prod apply (hard gate before POS unlock) |
 | **Sprint 4 planning** | Orders Backend plan (parallel with 2C ops wait) | ▶ `SPRINT-04-ORDERS-BACKEND-PLANNING.md` |
 
 ---
@@ -364,16 +364,19 @@ Approved direction only—**do not implement until Slice 2C is authorized**.
 
 ---
 
-## 13. Future RLS (Slice 2D — planned)
+## 13. Order / branch RLS (Slice 2D)
 
 ```text
-Customer  → own orders / addresses only
-Staff     → assigned branch operational rows only
-Super Admin → everything
+Customer  → SELECT own orders / items / status logs / deliveries (via auth_user_id or customer link)
+Staff     → SELECT assigned-branch operational rows only
+Super Admin → SELECT all branches (DB-derived)
+Payments  → service-role only in this slice (summary via orders.payment_status)
+Guest/anon → no direct table SELECT; API phone-proof tracking only
 ```
 
-Helpers (planned): `current_app_user_id()`, `has_permission(code)`, `can_access_branch(branch_id)` — `SECURITY DEFINER` with pinned `search_path`.
+Helpers (implemented): `current_app_user_id()`, `current_user_is_active()`, `current_user_is_super_admin()`, `current_user_branch_ids()`, `current_user_has_branch_access(branch_id)`, `current_customer_owns_order(order_id)` — `SECURITY DEFINER` with pinned `search_path`.
 RLS must use `auth.uid()` + DB RBAC, never client role claims.
+See `_documentation-audit/reports/SPRINT-03-SLICE-2D-RLS-IMPLEMENTATION.md`.
 
 ---
 

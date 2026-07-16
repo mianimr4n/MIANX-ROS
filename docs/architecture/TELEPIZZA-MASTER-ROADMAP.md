@@ -100,7 +100,7 @@ Do **not** treat current Multan pilot numbers as permanently locked forever. Fin
 | Branch confirm/reject · Kitchen preparing/ready | 🔒 After 4.4 + Slice 2D |
 | Rider assignment · Dispatch · Delivered | 🔒 After staff transition APIs |
 | Cancellation matrix · Order history/audit · Notifications | 🔒 Implementation slices after architecture close |
-| Branch/RLS enforcement (Slice 2D) | 🔒 Hard gate before POS/Kitchen/Rider UI |
+| Branch/RLS enforcement (Slice 2D) | ▶ PR ready — await owner review / prod migration apply (hard gate before POS/Kitchen/Rider UI) |
 
 ---
 
