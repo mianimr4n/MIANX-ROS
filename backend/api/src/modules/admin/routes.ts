@@ -10,6 +10,7 @@ import type { AuthTokenVerifier } from "../../middleware/auth.js";
 import type { AuthPrincipalRepository } from "../../services/auth/supabase.js";
 import {
   assertCanReadInvites,
+  type InviteAuditContext,
   type StaffInviteRepository,
   type StaffInviteStatus,
 } from "../../services/staff/invites.js";
@@ -19,7 +20,7 @@ const createInviteSchema = z.object({
   fullName: z.string().trim().min(1).max(150),
   phone: z.string().trim().max(30).optional().nullable(),
   roleCode: z.string().trim().min(1).max(100),
-  branchId: z.string().uuid().optional().nullable(),
+  branchId: z.string().uuid(),
   sendNow: z.boolean().optional(),
   expiresInHours: z.number().int().optional(),
 });
@@ -37,7 +38,7 @@ function toSafeInvite(invite: {
   fullName: string;
   phone: string | null;
   roleCode: string;
-  branchId: string | null;
+  branchId: string;
   status: string;
   expiresAt: string | null;
   invitedBy: string | null;
@@ -63,9 +64,17 @@ function toSafeInvite(invite: {
   };
 }
 
+function auditFromRequest(req: { ip?: string; headers: Record<string, unknown> }): InviteAuditContext {
+  const ua = req.headers["user-agent"];
+  return {
+    ip: typeof req.ip === "string" ? req.ip : null,
+    userAgent: typeof ua === "string" ? ua : null,
+  };
+}
+
 export function createAdminRouter(dependencies: AdminRouterDependencies) {
   const router = Router();
-  const { requireAuthenticatedUser, requirePermission } = createAuthorizationHelpers(
+  const { requireAuthenticatedUser, requireSuperAdmin } = createAuthorizationHelpers(
     dependencies.authTokenVerifier,
     dependencies.authProfileRepository,
   );
@@ -78,19 +87,16 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   router.post(
     "/staff/invites",
     requireAuthenticatedUser,
-    requirePermission("staff.create"),
+    requireSuperAdmin,
     validateBody(createInviteSchema),
     async (req, res, next) => {
       try {
         const principal = (req as AuthorizedRequest).principal!;
-        if (!principal.isSuperAdmin && !principal.permissions.includes("staff.assign_role")) {
-          throw new ApiError(403, "FORBIDDEN", "staff.assign_role is required to choose a role.");
-        }
-
         const result = await dependencies.staffInviteRepository.createInvite(
           req.body,
           principal,
           dependencies.inviteAppOrigin,
+          auditFromRequest(req),
         );
 
         return res.status(201).json({
@@ -98,8 +104,6 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
           data: {
             ...toSafeInvite(result.invite),
             inviteUrl: result.inviteUrl,
-            // raw token only on create/send/resend — never persisted in responses later
-            token: result.rawToken,
           },
         });
       } catch (error) {
@@ -111,12 +115,13 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   router.get(
     "/staff/invites",
     requireAuthenticatedUser,
-    requirePermission("staff.read"),
+    requireSuperAdmin,
     async (req, res, next) => {
       try {
         const principal = (req as AuthorizedRequest).principal!;
         assertCanReadInvites(principal);
-        const status = typeof req.query.status === "string" ? (req.query.status as StaffInviteStatus) : undefined;
+        const status =
+          typeof req.query.status === "string" ? (req.query.status as StaffInviteStatus) : undefined;
         const invites = await dependencies.staffInviteRepository.listInvites(
           status ? { status } : undefined,
         );
@@ -133,7 +138,7 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   router.get(
     "/staff/invites/:id",
     requireAuthenticatedUser,
-    requirePermission("staff.read"),
+    requireSuperAdmin,
     async (req, res, next) => {
       try {
         const invite = await dependencies.staffInviteRepository.getInvite(req.params.id);
@@ -150,7 +155,7 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   router.post(
     "/staff/invites/:id/send",
     requireAuthenticatedUser,
-    requirePermission("staff.create"),
+    requireSuperAdmin,
     async (req, res, next) => {
       try {
         const principal = (req as AuthorizedRequest).principal!;
@@ -158,13 +163,13 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
           req.params.id,
           principal,
           dependencies.inviteAppOrigin,
+          auditFromRequest(req),
         );
         return res.json({
           ok: true,
           data: {
             ...toSafeInvite(result.invite),
             inviteUrl: result.inviteUrl,
-            token: result.rawToken,
           },
         });
       } catch (error) {
@@ -176,7 +181,7 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   router.post(
     "/staff/invites/:id/resend",
     requireAuthenticatedUser,
-    requirePermission("staff.create"),
+    requireSuperAdmin,
     async (req, res, next) => {
       try {
         const principal = (req as AuthorizedRequest).principal!;
@@ -184,13 +189,13 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
           req.params.id,
           principal,
           dependencies.inviteAppOrigin,
+          auditFromRequest(req),
         );
         return res.json({
           ok: true,
           data: {
             ...toSafeInvite(result.invite),
             inviteUrl: result.inviteUrl,
-            token: result.rawToken,
           },
         });
       } catch (error) {
@@ -202,13 +207,14 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   router.post(
     "/staff/invites/:id/revoke",
     requireAuthenticatedUser,
-    requirePermission("staff.create"),
+    requireSuperAdmin,
     async (req, res, next) => {
       try {
         const principal = (req as AuthorizedRequest).principal!;
         const invite = await dependencies.staffInviteRepository.revokeInvite(
           req.params.id,
           principal,
+          auditFromRequest(req),
         );
         return res.json({ ok: true, data: toSafeInvite(invite) });
       } catch (error) {
