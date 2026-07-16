@@ -16,13 +16,6 @@ export const BRAND = {
   },
 } as const;
 
-/** Verified broast combo prices (GM baseline). */
-export const VERIFIED_BROAST_PRICES = {
-  quarter: 750,
-  half: 1390,
-  full: 2590,
-} as const;
-
 /** Homepage + hero deal slugs — verified baseline prices only. */
 export const VERIFIED_DEAL_IDS = [
   "family-deal",

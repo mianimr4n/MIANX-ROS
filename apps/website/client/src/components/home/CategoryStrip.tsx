@@ -5,15 +5,14 @@ import { ChevronRight } from "lucide-react";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 import { getCategoryPlaceholderImage } from "@/lib/menu-catalog";
 import { handleImageError } from "@/lib/image-fallback";
-import { VERIFIED_BROAST_PRICES } from "@/lib/brand";
 
 const CURATED_CATEGORY_PREVIEWS = [
   { menuCategory: "Signature Pizzas", label: "Signature Pizzas", accent: "Pizza" },
   {
-    menuCategory: "Broast",
-    label: "Broast",
-    accent: "Broast",
-    priceHint: `From Rs ${VERIFIED_BROAST_PRICES.quarter.toLocaleString()}`,
+    menuCategory: "Wings",
+    label: "Wings",
+    accent: "Wings",
+    priceHint: "From Rs 549",
   },
   { menuCategory: "Burgers", label: "Burgers", accent: "Burgers" },
   { menuCategory: "Pasta", label: "Pasta", accent: "Pasta" },

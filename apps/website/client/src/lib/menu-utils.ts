@@ -8,13 +8,9 @@ export function getDisplayPrice(item: MenuItem): number | undefined {
   return getDefaultVariant(item)?.price ?? item.price;
 }
 
-/** BFR-003 temporary flat SKUs advertise a starting floor, not a full size matrix. */
+/** Flat SKUs with a "Starting Price" badge advertise a floor, not a full size matrix. */
 export function isStartingPriceItem(item: MenuItem): boolean {
-  if (item.badge?.toLowerCase().includes("starting")) {
-    return true;
-  }
-
-  return item.id === "behari-kabab-pizza" || item.slug === "behari-kabab-pizza";
+  return Boolean(item.badge?.toLowerCase().includes("starting"));
 }
 
 export function formatMenuPriceLabel(item: MenuItem, price?: number): string {
