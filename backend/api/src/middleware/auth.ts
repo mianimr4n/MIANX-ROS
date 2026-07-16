@@ -62,3 +62,34 @@ export function createRequireAuth(verifier: AuthTokenVerifier) {
     }
   };
 }
+
+/**
+ * Optional Bearer attach for guest-compatible routes (e.g. order create).
+ * Missing/invalid tokens do not fail the request — guest checkout stays open.
+ * Never trusts role/branch headers or JWT metadata for privilege.
+ */
+export function createOptionalAuth(verifier: AuthTokenVerifier) {
+  return async (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      const token = extractBearerToken(req.header("authorization") ?? undefined);
+      if (!token) {
+        return next();
+      }
+
+      const result = await verifier.getUser(token);
+      if (result.user) {
+        (req as AuthenticatedRequest).auth = {
+          authUserId: result.user.id,
+          email: result.user.email ?? null,
+          accessToken: token,
+          supabaseUser: result.user,
+        };
+      }
+
+      return next();
+    } catch {
+      // Optional path — ignore verifier failures and continue as guest.
+      return next();
+    }
+  };
+}

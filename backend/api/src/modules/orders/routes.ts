@@ -2,6 +2,11 @@ import { Router } from "express";
 import { z } from "zod";
 
 import { ApiError, validateBody } from "../../common/http.js";
+import {
+  createOptionalAuth,
+  type AuthenticatedRequest,
+  type AuthTokenVerifier,
+} from "../../middleware/auth.js";
 import type { OrdersDataSource } from "../../services/orders/types.js";
 import { quoteRateLimitMiddleware } from "../../services/orders/quote-rate-limit.js";
 import { guestOrderAccessRateLimitMiddleware } from "../../services/orders/guest-access-rate-limit.js";
@@ -61,8 +66,49 @@ function readIdempotencyKey(headerValue: string | string | string[] | undefined)
   return typeof raw === "string" ? raw.trim() : "";
 }
 
-export function createOrdersRouter(ordersDataSource: OrdersDataSource) {
+async function handleCreateOrder(
+  req: AuthenticatedRequest,
+  res: import("express").Response,
+  ordersDataSource: OrdersDataSource,
+) {
+  const body = req.body as z.infer<typeof createOrderSchema>;
+  if (body.orderType === "delivery" && !body.deliveryAddress?.trim()) {
+    throw new ApiError(
+      400,
+      "DELIVERY_ADDRESS_REQUIRED",
+      "Delivery address is required for delivery orders.",
+    );
+  }
+
+  const idempotencyKey = readIdempotencyKey(req.header("idempotency-key"));
+  if (!idempotencyKey) {
+    throw new ApiError(
+      400,
+      "IDEMPOTENCY_KEY_REQUIRED",
+      "Idempotency-Key header is required for order creation.",
+    );
+  }
+  if (idempotencyKey.length > 100) {
+    throw new ApiError(400, "VALIDATION_ERROR", "Idempotency-Key is too long.");
+  }
+
+  // authUserId only from verified Bearer — never from body/headers as privilege.
+  const order = await ordersDataSource.createOrder({
+    ...body,
+    idempotencyKey,
+    authUserId: req.auth?.authUserId,
+  });
+
+  const status = order.idempotentReplay ? 200 : 201;
+  return res.status(status).json({ ok: true, data: order });
+}
+
+export function createOrdersRouter(
+  ordersDataSource: OrdersDataSource,
+  authTokenVerifier?: AuthTokenVerifier,
+) {
   const router = Router();
+  const optionalAuth = authTokenVerifier ? createOptionalAuth(authTokenVerifier) : null;
 
   router.post("/quote", quoteRateLimitMiddleware, validateBody(quoteOrderSchema), async (req, res, next) => {
     try {
@@ -73,40 +119,23 @@ export function createOrdersRouter(ordersDataSource: OrdersDataSource) {
     }
   });
 
-  router.post("/", validateBody(createOrderSchema), async (req, res, next) => {
-    try {
-      const body = req.body as z.infer<typeof createOrderSchema>;
-      if (body.orderType === "delivery" && !body.deliveryAddress?.trim()) {
-        throw new ApiError(
-          400,
-          "DELIVERY_ADDRESS_REQUIRED",
-          "Delivery address is required for delivery orders.",
-        );
+  if (optionalAuth) {
+    router.post("/", optionalAuth, validateBody(createOrderSchema), async (req, res, next) => {
+      try {
+        await handleCreateOrder(req as AuthenticatedRequest, res, ordersDataSource);
+      } catch (error) {
+        return next(error);
       }
-
-      const idempotencyKey = readIdempotencyKey(req.header("idempotency-key"));
-      if (!idempotencyKey) {
-        throw new ApiError(
-          400,
-          "IDEMPOTENCY_KEY_REQUIRED",
-          "Idempotency-Key header is required for order creation.",
-        );
+    });
+  } else {
+    router.post("/", validateBody(createOrderSchema), async (req, res, next) => {
+      try {
+        await handleCreateOrder(req as AuthenticatedRequest, res, ordersDataSource);
+      } catch (error) {
+        return next(error);
       }
-      if (idempotencyKey.length > 100) {
-        throw new ApiError(400, "VALIDATION_ERROR", "Idempotency-Key is too long.");
-      }
-
-      const order = await ordersDataSource.createOrder({
-        ...body,
-        idempotencyKey,
-      });
-
-      const status = order.idempotentReplay ? 200 : 201;
-      return res.status(status).json({ ok: true, data: order });
-    } catch (error) {
-      return next(error);
-    }
-  });
+    });
+  }
 
   router.get(
     "/:orderNumber",
