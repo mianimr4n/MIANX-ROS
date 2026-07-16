@@ -1,95 +1,167 @@
-# Sprint 4.3 — Website Checkout Integration
+# Sprint 4.3 — Website Checkout Integration (Final)
 
-**Date:** 2026-07-16  
-**Scope:** Website checkout quote/create integration only  
-**Architecture:** O1–O12 APPROVED / FROZEN  
-**Catalog freeze:** v1.2.0 unchanged (13 categories / 58 items / 3 toppings / 40 variants / 7 deals / 2 branches)  
+**Date:** 2026-07-16
+**Branch:** `feature/sprint-4-3-website-checkout`
+**Base:** `main` (Sprint 4.2 quote contract merged)
+**Architecture:** O1–O12 APPROVED / FROZEN
+**Catalog freeze:** v1.2.0 unchanged
 **Ordering WhatsApp:** 0304-1110495 (unchanged)
 
 ---
 
-## Outcome
+## Phase 1 — Checkout audit (pre-implementation baseline)
 
-Website checkout now uses the Sprint 4.2 quote contract end-to-end: server totals on load, signed `quoteId` on create, stable `Idempotency-Key` per attempt, guest checkout preserved, Bearer token when authenticated, WhatsApp fallback retained, and cart clears only on confirmed API success.
+### Current flow (before Sprint 4.3)
+
+| Step | Behavior |
+|---|---|
+| Cart | `CartContext` + `CartDrawer` — client subtotal, WhatsApp deep link |
+| Checkout | Form collect name/phone/address → `submitWebsiteOrder` |
+| API off | `LOC-*` localStorage order, WhatsApp confirm |
+| API on (pre-4.3) | Partial quote wiring; unstable idempotency; cart could clear on failure |
+
+### Reusable code
+
+| Asset | Location |
+|---|---|
+| Cart state | `contexts/CartContext.tsx` |
+| Branch selection | `contexts/BranchContext.tsx` |
+| Auth session | `contexts/AuthContext.tsx` |
+| API client | `lib/api.ts`, `lib/telepizza-api.ts` |
+| Local orders | `lib/customer-store.ts` |
+| WhatsApp builder | `CartDrawer`, later `checkout-order.ts` |
+
+### Unsafe behavior (fixed in Sprint 4.3)
+
+| Issue | Fix |
+|---|---|
+| Client totals trusted | Server quote totals displayed |
+| No quote expiry | 5-min `expiresAt` lifecycle + requote |
+| Stale quote races | `quoteRequestSeq` guard |
+| Unstable idempotency | Fingerprint-rotated `Idempotency-Key` |
+| Fake API success via LOC-* | `requireApiSuccess: true` when API configured |
+| Cart cleared on failure | Clear only after `source === "api"` |
+| LOC shown as confirmed | OrderSuccess labels local vs API |
+
+### Files changed (Sprint 4.3)
+
+| File | Role |
+|---|---|
+| `lib/phone.ts` | E.164 normalization |
+| `lib/checkout-order.ts` | Quote payload, fingerprint, expiry, errors, WA URL |
+| `lib/submit-order.ts` | Quote/create with idempotency + bearer |
+| `lib/api.ts` | Error `code` propagation |
+| `lib/telepizza-api.ts` | `quoteOrder`, `createOrderWithIdempotency` |
+| `lib/telepizza-types.ts` | Quote/create types |
+| `pages/Checkout.tsx` | Quote lifecycle, server totals, submit |
+| `pages/OrderSuccess.tsx` | Receipt with server total/status vs LOC label |
+| `tests/website/checkout-integration.test.mjs` | Phase 11 coverage |
+
+### Files not touched
+
+Login, Register, StaffAccept, Menu, Home, catalog data/migrations, auth architecture, staff invites, OTP, Kitchen/Rider/POS, payment gateway, production config.
 
 ---
 
-## PR and branch
+## Quote lifecycle
 
-| Item | Value |
-|---|---|
-| PR | [#40](https://github.com/mianimr4n/telepizza/pull/40) (draft) |
-| Branch | `cursor/feature-sprint-4-3-website-checkout-bf31` |
-| Base | `main` (includes PR #39 Sprint 4.2 merge `bd2d0f4`) |
+```
+Cart change / checkout load
+  → buildQuoteRequest(cart, branch, orderType, phone)
+  → POST /api/v1/orders/quote
+  → store quoteId, expiresAt, server items, server totals, warnings
+  → UI: loading → ready | expiring | expired | error
+  → stale responses discarded (seq guard)
+  → on submit: requote if expired
+  → POST /api/v1/orders + quoteId + Idempotency-Key [+ Bearer]
+```
 
----
-
-## Requirements checklist
-
-| Requirement | Result |
-|---|---|
-| Quote on checkout load (`POST /api/v1/orders/quote`) | ✅ |
-| Server totals only in summary (not client subtotal when quote ready) | ✅ |
-| Quote expiry UI + refresh before submit | ✅ |
-| Stale quote responses ignored (`quoteRequestSeq` guard) | ✅ |
-| `Idempotency-Key` stable per attempt; rotates on fingerprint change | ✅ |
-| Guest checkout preserved | ✅ |
-| Bearer token on create when `session.access_token` present | ✅ |
-| `quoteId` passed on create | ✅ |
-| Error mapping (`QUOTE_*`, `IDEMPOTENCY_*`, `VALIDATION_ERROR`, etc.) | ✅ |
-| Cart **not** cleared on API failure or LOC-* fallback | ✅ |
-| WhatsApp fallback `wa.me/923041110495` | ✅ |
-| LOC-* only when API unavailable; no fake success when API configured | ✅ |
-| Login / Register pages untouched | ✅ |
-| Slice 2C OTP code untouched | ✅ |
-| Menu / catalog business data untouched | ✅ |
+Server `expiresAt` is authoritative (5 minutes). Client clock used only for display countdown.
 
 ---
 
-## Files changed
+## Idempotency behavior
 
-| File | Purpose |
+| Rule | Implementation |
 |---|---|
-| `apps/website/client/src/lib/phone.ts` | Pakistan E.164 normalization (`+923…`) |
-| `apps/website/client/src/lib/checkout-order.ts` | Quote payload builder, fingerprint, expiry helpers, error map, WhatsApp URL |
-| `apps/website/client/src/lib/submit-order.ts` | `quoteId` + idempotency + bearer; `CheckoutSubmitError`; `requireApiSuccess` |
-| `apps/website/client/src/lib/api.ts` | `ApiRequestError.code` from API envelope |
-| `apps/website/client/src/lib/telepizza-api.ts` | `quoteOrder()`, `createOrderWithIdempotency()` |
-| `apps/website/client/src/lib/telepizza-types.ts` | `QuoteOrderResponse`, `quoteId` on create payload |
-| `apps/website/client/src/pages/Checkout.tsx` | Quote lifecycle UI, server totals, refresh, submit gate |
-| `tests/website/checkout-integration.test.mjs` | Static + mirrored logic coverage |
+| One key per checkout attempt | `crypto.randomUUID()` on mount |
+| Reuse on retry / double-click | Same key until fingerprint changes |
+| Rotate on material change | `checkoutAttemptFingerprint` effect |
+| Double-submit guard | `submitInFlight` ref + `isSubmitting` |
+| Conflict surfaced | `IDEMPOTENCY_CONFLICT` → user message |
 
 ---
 
-## Validation
+## Guest checkout
 
-| Command | Result |
+- Name + Pakistani phone required (no login)
+- Phone normalized `03XXXXXXXXX` → `+923XXXXXXXXX`
+- Delivery address required only for delivery
+- No `customerId` sent from frontend
+
+---
+
+## Authenticated checkout
+
+- `Authorization: Bearer {session.access_token}` when session exists
+- Backend resolves identity; no role/branch headers from client
+- Guest flow unchanged when logged out
+
+---
+
+## WhatsApp fallback
+
+- Number locked: **0304-1110495** (`wa.me/923041110495`)
+- Manual `wa.me` — no auto-send
+- Available on Checkout + OrderSuccess + CartDrawer
+- Not labeled as confirmed API order
+
+---
+
+## LOC-* fallback (retained V1)
+
+| Rule | Behavior |
 |---|---|
-| `pnpm install --frozen-lockfile` | ✅ (preinstalled) |
+| When | API not configured, or `requireApiSuccess` false |
+| Label | `LOC-*` / local — pending, not branch-confirmed |
+| Cart | Not cleared when API configured but submit fails |
+| Auto-resubmit | None — explicit user action only |
+| OrderSuccess | Warns "not confirmed by branch" |
+
+---
+
+## Test results
+
+| Suite | Result |
+|---|---|
 | `pnpm check` | ✅ |
-| `pnpm test:db` | ✅ 43 tests |
-| `pnpm test:backend` | ✅ 66 tests |
+| `pnpm test:db` | ✅ (47 website + db tests) |
+| `pnpm test:backend` | ✅ (78) |
 | `pnpm build:website` | ✅ |
 | `git diff --check` | ✅ |
 
+Phase 11 cases covered in `tests/website/checkout-integration.test.mjs` (cart→quote, server totals, expiry, fingerprint, stale guard, idempotency, double-submit, guest, bearer, phone, address rules, cart retention, LOC labeling, regressions).
+
 ---
 
-## Explicitly out of scope (this slice)
+## Blockers
 
-| Item | Status |
+| Blocker | Status |
 |---|---|
-| Production Vercel deploy | ❌ not in this turn |
-| Backend cancel / hardened read APIs (architecture 4.3) | → **Phase B** |
-| Slice 2C OTP UI / endpoints | ❌ not authorized |
-| Staff lifecycle APIs | ❌ blocked on Slice 2D |
-| Menu / catalog mutations | ❌ frozen |
+| Production Vercel deploy | Owner gate — not in this PR |
+| Slice 2C OTP | Not authorized |
+| Staff/Kitchen/Rider APIs | Out of scope |
 
 ---
 
-## Phase B — next authorized work
+## Production rollout plan (owner)
 
-Per `ORDERS_ARCHITECTURE.md` Stage 12, after website quote/create integration the next backend slice is **hardened create/read/cancel + guest tracking** (`POST /api/v1/orders/:id/cancel`, customer cancel window O5, status logs). Phase B started on branch `cursor/sprint-4-3b-orders-hardening-bf31`.
+1. Merge PR to `main`
+2. Set `VITE_API_BASE_URL` on Vercel to `https://telepizza-api.onrender.com/api/v1`
+3. Smoke: menu → cart → checkout quote → create → track
+4. Verify WhatsApp `0304-1110495` regression
+5. No new Supabase migrations required for website-only slice
 
 ---
 
-**SPRINT 4.3 WEBSITE CHECKOUT STATUS: PASS**
+**SPRINT 4.3 WEBSITE CHECKOUT: PASS**
