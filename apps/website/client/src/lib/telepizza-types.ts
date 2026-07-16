@@ -65,6 +65,8 @@ export interface CreateOrderPayload {
   notes?: string;
   couponCode?: string;
   items: CreateOrderItemPayload[];
+  /** Optional Sprint 4.2 signed quote id. */
+  quoteId?: string;
 }
 
 export interface CreatedOrderResponse {
@@ -74,6 +76,37 @@ export interface CreatedOrderResponse {
   subtotal: number;
   totalAmount: number;
   createdAt: string;
+}
+
+export interface QuoteWarning {
+  code: string;
+  message: string;
+}
+
+export interface QuoteOrderResponse {
+  quoteId: string;
+  expiresAt: string;
+  branch: { code: string; orderType: string };
+  items: Array<{
+    menuItemSlug: string;
+    productName: string;
+    variantName: string | null;
+    quantity: number;
+    foodUnitPrice: number;
+    extras: Array<{ slug: string; label: string; price: number; kind: string }>;
+    lineUnitPrice: number;
+    lineTotal: number;
+  }>;
+  totals: {
+    currency: "PKR";
+    subtotal: number;
+    discountAmount: number;
+    taxAmount: number;
+    deliveryFee: number;
+    totalAmount: number;
+  };
+  warnings: QuoteWarning[];
+  pricedAt: string;
 }
 
 export interface OrderTrackingResponse {

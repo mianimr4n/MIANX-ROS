@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getLineItemTotal } from "@/data/cart-config";
 import { submitWebsiteOrder } from "@/lib/submit-order";
+import { isApiConfigured } from "@/lib/api";
+import { quoteOrder } from "@/lib/telepizza-api";
 
 export default function Checkout() {
   const [, navigate] = useLocation();
@@ -23,12 +25,61 @@ export default function Checkout() {
   const [couponCode, setCouponCode] = useState(state.order.couponCode);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [serverTotals, setServerTotals] = useState<{
+    subtotal: number;
+    discountAmount: number;
+    taxAmount: number;
+    deliveryFee: number;
+    totalAmount: number;
+  } | null>(null);
+  const [quoteStatus, setQuoteStatus] = useState<{ expiresAt: string; warnings: string[] } | null>(null);
 
   useEffect(() => {
     if (state.items.length === 0) {
       navigate("/menu");
     }
   }, [state.items.length, navigate]);
+
+  // Load server quote on entry (best-effort; UI still works offline)
+  useEffect(() => {
+    let active = true;
+    async function loadQuote() {
+      if (!isApiConfigured || !selectedBranch) return;
+      setError(null);
+      try {
+        const q = await quoteOrder({
+          branchCode: selectedBranch.code ?? selectedBranch.id,
+          orderType: state.order.deliveryMode,
+          couponCode,
+          contactPhone,
+          items: state.items.map((item) => ({
+            menuItemSlug: item.menuSlug,
+            variantLabel: item.variant,
+            quantity: item.quantity,
+            unitPrice: item.price,
+            productName: item.name,
+            variantName: item.variant,
+            instructions: item.instructions,
+            extras: item.extras,
+          })),
+        });
+        if (!active) return;
+        setServerTotals(q.totals);
+        setQuoteStatus({
+          expiresAt: q.expiresAt,
+          warnings: q.warnings.map((w) => w.message),
+        });
+      } catch (e) {
+        // Non-fatal — fall back to local subtotal display
+        console.warn("Quote load failed", e);
+      }
+    }
+    loadQuote();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(state.items), selectedBranch?.id, state.order.deliveryMode, couponCode, contactPhone]);
 
   useEffect(() => {
     setContactName(profile?.fullName ?? user?.email?.split("@")[0] ?? "");
@@ -164,13 +215,52 @@ export default function Checkout() {
                   </div>
                 ))}
               </div>
-              <div className="flex items-center justify-between font-bold text-lg">
-                <span>Subtotal</span>
-                <span className="text-brand-red">Rs {subtotal.toLocaleString()}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Delivery charges and taxes confirmed by branch on WhatsApp.
-              </p>
+              {serverTotals ? (
+                <div className="space-y-1 text-sm">
+                  <div className="flex items-center justify-between font-bold text-lg">
+                    <span>Subtotal</span>
+                    <span className="text-brand-red">Rs {serverTotals.subtotal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Discount</span>
+                    <span>Rs {serverTotals.discountAmount.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Delivery fee</span>
+                    <span>Rs {serverTotals.deliveryFee.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Tax</span>
+                    <span>Rs {serverTotals.taxAmount.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between font-bold text-lg">
+                    <span>Total</span>
+                    <span className="text-brand-red">Rs {serverTotals.totalAmount.toLocaleString()}</span>
+                  </div>
+                  {quoteStatus && (
+                    <div className="text-xs text-muted-foreground">
+                      Quote expires at {new Date(quoteStatus.expiresAt).toLocaleTimeString()}.
+                    </div>
+                  )}
+                  {quoteStatus?.warnings?.length ? (
+                    <ul className="text-xs text-amber-600 list-disc pl-5">
+                      {quoteStatus.warnings.map((w, idx) => (
+                        <li key={idx}>{w}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between font-bold text-lg">
+                    <span>Subtotal</span>
+                    <span className="text-brand-red">Rs {subtotal.toLocaleString()}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Delivery charges and taxes confirmed by branch on WhatsApp.
+                  </p>
+                </>
+              )}
               {error && <p className="text-sm text-brand-red">{error}</p>}
               <Button
                 onClick={handleSubmit}
