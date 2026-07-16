@@ -17,11 +17,13 @@ function resolveApiUrl(path: string) {
 
 export class ApiRequestError extends Error {
   statusCode: number;
+  code?: string;
 
-  constructor(message: string, statusCode: number) {
+  constructor(message: string, statusCode: number, code?: string) {
     super(message);
     this.name = "ApiRequestError";
     this.statusCode = statusCode;
+    this.code = code;
   }
 }
 
@@ -59,11 +61,12 @@ export async function fetchApiData<T>(path: string, init?: RequestInit): Promise
     !(payload as { ok: boolean }).ok
   ) {
     const apiPayload = isApiPayload
-      ? (payload as { error?: { message?: string } })
+      ? (payload as { error?: { message?: string; code?: string } })
       : undefined;
     const message = apiPayload?.error?.message ?? "The API request failed.";
+    const code = apiPayload?.error?.code;
 
-    throw new ApiRequestError(message, response.status);
+    throw new ApiRequestError(message, response.status, code);
   }
 
   return (payload as unknown as { data: T }).data;
