@@ -67,3 +67,53 @@ test("profile shows honest phone Unverified and email verification status", () =
   assert.match(account, /phoneVerified\s*\?\s*"Verified"/);
   assert.match(account, /: "Unverified"/);
 });
+
+test("Account Center supports complete address book and checkout selection", () => {
+  const account = read("apps/website/client/src/pages/Account.tsx");
+  const addresses = read("apps/website/client/src/lib/customer-addresses.ts");
+  const checkout = read("apps/website/client/src/pages/Checkout.tsx");
+
+  assert.match(addresses, /type AddressLabel = "Home" \| "Office" \| "Other"/);
+  assert.match(addresses, /updateSavedAddress/);
+  assert.match(addresses, /setDefaultSavedAddress/);
+  assert.match(addresses, /isDefault/);
+  assert.match(account, /Make default/);
+  assert.match(account, /\bEdit\b/);
+  assert.match(account, /\bDelete\b/);
+  assert.match(checkout, /listSavedAddresses/);
+  assert.match(checkout, /saved-delivery-address/);
+  assert.match(checkout, /formatSavedAddress/);
+  assert.doesNotMatch(addresses, /gps|geolocation|api[_-]?key|secret/i);
+});
+
+test("orders expose status, honest operational gaps, and feasible reorder", () => {
+  const orders = read("apps/website/client/src/pages/Orders.tsx");
+  const store = read("apps/website/client/src/lib/customer-store.ts");
+
+  assert.match(orders, /STATUS_STEPS/);
+  assert.match(orders, /Payment:<\/span> Not provided/);
+  assert.match(orders, /ETA:<\/span> Not available/);
+  assert.match(orders, /Reorder/);
+  assert.match(orders, /menuItemSlug/);
+  assert.match(store, /menuItemSlug\?: string/);
+  assert.doesNotMatch(orders, /driver|invoice/i);
+});
+
+test("security, loyalty, notifications, and overview expose requested production states", () => {
+  const account = read("apps/website/client/src/pages/Account.tsx");
+
+  assert.match(account, /email_confirmed_at/);
+  assert.match(account, /last_sign_in_at/);
+  assert.match(account, /Active sessions/);
+  assert.match(account, /current browser session/);
+  assert.match(account, /Forgot password\?/);
+  assert.match(account, /Current points/);
+  assert.match(account, /Points history/);
+  assert.match(account, /Order Updates/);
+  assert.match(account, /Promotions/);
+  assert.match(account, /SMS/);
+  assert.match(account, /WhatsApp/);
+  assert.match(account, /Active Orders/);
+  assert.match(account, /Favorite Items/);
+  assert.match(account, /Last Order/);
+});

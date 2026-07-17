@@ -55,9 +55,12 @@
 - Phone Verified/Unverified honest (Unverified until OTP)
 
 ### Account Center (Phase 6)
-- Dashboard, Profile, Security (incl. Login Methods + email change), Orders, Addresses
-- Notifications (Coming Soon), Loyalty (Coming Soon), Logout
-- Device-local saved addresses; order tabs Active/Completed/Cancelled
+- Dashboard cards for active/recent/last orders, saved addresses, reward points, and favorite-item future state
+- Profile with honest Email Verified / Phone Unverified states and disabled-future phone verification copy
+- Security with linked methods, verification badges, last login, current-device session visibility, password recovery, and email change
+- Device-local address book with Home / Office / Other labels, default address, edit/delete, and checkout selection/prefill
+- Orders with Active/Completed/Cancelled tabs, status timeline, branch, honest Payment/ETA gaps, item detail, tracking, and reorder for newly stored orders
+- Disabled-future notification switches and a populated loyalty preview dashboard
 
 ### Security (Phase 7)
 - No frontend role assignment from Google
@@ -94,7 +97,7 @@
 ```
 pnpm install --frozen-lockfile   # pass
 pnpm check                       # pass
-pnpm test:db                     # pass (116)
+pnpm test:db                     # pass (119)
 pnpm test:backend                # pass (127)
 pnpm build:website               # pass
 git diff --check                 # pass
@@ -119,16 +122,23 @@ Catalog freeze 13/58/3/40/7, branches 2, WhatsApp `0304-1110495` unchanged (guar
 | Account Profile | `/account#profile` | Name, email+status, phone Unverified |
 | Expired link | `/auth/callback?error=…` | Safe expired/invalid copy + links |
 
+### Password-flow result
+
+- Static and integration coverage passes for Google-only first-time set-password (no current password), email-user password change (current Telepizza password required), logout/session cleanup, email login wiring, Google OAuth wiring, forgot password, recovery callback, and reset password.
+- A live end-to-end run of `Google Login → Set Password → Logout → Email Login → Google Login → Forgot Password → Reset Password` was **not possible in this session** because the Cursor browser tab could not attach and production email delivery depends on owner SMTP. This remains an owner smoke-test action; it is not represented as passed.
+
 ---
 
 ## Known limitations
 
 1. **Owner must configure custom SMTP + SPF/DKIM/DMARC** or confirmation/recovery emails will fail or spam-folder.
 2. Phone OTP / WhatsApp sign-in deferred (honest Unverified).
-3. Addresses are device-local (not server-synced).
+3. Addresses are device-local (not server-synced); architecture is isolated in `lib/customer-addresses.ts` for later server replacement.
 4. `public.users.email` may drift until email-change confirmation completes; display uses auth email.
 5. Orphan auth user if email UNIQUE blocks bootstrap — rare; no automatic heal in this PR.
-6. Loyalty / Notifications remain Coming Soon by design.
+6. Loyalty is a non-transactional preview and notification switches are disabled until backend services and consent storage exist.
+7. Reorder is available for orders stored after this update; older device-local orders lack menu slugs and show a disabled action.
+8. Supabase exposes only the current browser session to the client, not a cross-device active-session inventory.
 
 ---
 
@@ -140,6 +150,15 @@ Catalog freeze 13/58/3/40/7, branches 2, WhatsApp `0304-1110495` unchanged (guar
 4. Owner: enable Secure password change + Secure email change in Supabase Auth settings.
 5. Smoke: Google signup → set Telepizza password → email login; email signup → confirm → forgot/reset; email change confirmation.
 6. Deploy website only after smoke passes (this PR does **not** deploy).
+
+---
+
+## Owner feedback closure (PR #58)
+
+- Rebasing `fix/customer-auth-production` onto `origin/main` completed without unresolved conflicts. Git dropped the already-upstream Sprint 4.5A port commit and replayed the remaining auth-production commits.
+- Required Account Center additions are implemented without changing catalog data, branches, or WhatsApp ordering number.
+- Browser automation remained unavailable, so responsive behavior was reviewed from the Tailwind breakpoints and verified by type-check/build; owner should complete mobile and authenticated flow smoke tests before merge.
+- No merge or deployment was performed.
 
 ---
 
