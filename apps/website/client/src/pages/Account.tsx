@@ -803,6 +803,7 @@ export default function Account() {
                   Supabase exposes the current browser session here, but not a cross-device session
                   list. Signing out ends this device session.
                 </p>
+                <h3 className="font-semibold">Linked accounts</h3>
                 <ul className="space-y-3 text-sm">
                   <li className="rounded-2xl border border-border p-4 flex items-start justify-between gap-3">
                     <div>

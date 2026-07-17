@@ -105,6 +105,7 @@ test("security, loyalty, notifications, and overview expose requested production
   assert.match(account, /email_confirmed_at/);
   assert.match(account, /last_sign_in_at/);
   assert.match(account, /Active sessions/);
+  assert.match(account, /Linked accounts/);
   assert.match(account, /current browser session/);
   assert.match(account, /Forgot password\?/);
   assert.match(account, /Current points/);
