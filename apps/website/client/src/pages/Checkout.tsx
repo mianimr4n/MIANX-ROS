@@ -21,6 +21,11 @@ import {
   mapCheckoutApiError,
 } from "@/lib/checkout-order";
 import type { QuoteOrderResponse } from "@/lib/telepizza-types";
+import {
+  formatSavedAddress,
+  listSavedAddresses,
+  type SavedCustomerAddress,
+} from "@/lib/customer-addresses";
 
 type QuotePhase = "idle" | "loading" | "ready" | "expiring" | "expired" | "error";
 
@@ -31,7 +36,9 @@ export default function Checkout() {
   const { profile, user, session } = useAuth();
   const [contactName, setContactName] = useState(profile?.fullName ?? "");
   const [contactPhone, setContactPhone] = useState(profile?.phone ?? "");
-  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState(state.order.deliveryAddress);
+  const [savedAddresses, setSavedAddresses] = useState<SavedCustomerAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
   const [notes, setNotes] = useState(state.order.orderInstructions);
   const [couponCode, setCouponCode] = useState(state.order.couponCode);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,6 +120,22 @@ export default function Checkout() {
     setContactName(profile?.fullName ?? user?.email?.split("@")[0] ?? "");
     setContactPhone(profile?.phone ?? "");
   }, [profile, user]);
+
+  useEffect(() => {
+    const ownerKey = user?.id || profile?.email || user?.email || "";
+    if (!ownerKey) {
+      setSavedAddresses([]);
+      setSelectedAddressId("");
+      return;
+    }
+    const next = listSavedAddresses(ownerKey);
+    setSavedAddresses(next);
+    if (!deliveryAddress.trim() && next.length > 0) {
+      const selected = next.find((address) => address.isDefault) ?? next[0];
+      setSelectedAddressId(selected.id);
+      setDeliveryAddress(formatSavedAddress(selected));
+    }
+  }, [profile?.email, user?.email, user?.id]);
 
   // Rotate idempotency key when material checkout data changes
   useEffect(() => {
@@ -346,9 +369,53 @@ export default function Checkout() {
             {deliveryMode === "delivery" && (
               <section className="rounded-3xl border border-border bg-white p-6 space-y-3">
                 <h2 className="font-[var(--font-display)] font-bold text-xl">Delivery address</h2>
+                {savedAddresses.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {savedAddresses.map((address) => (
+                      <label
+                        key={address.id}
+                        className={`cursor-pointer rounded-2xl border p-3 text-sm ${
+                          selectedAddressId === address.id
+                            ? "border-brand-red bg-brand-red/5"
+                            : "border-border"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2 font-semibold">
+                          <input
+                            type="radio"
+                            name="saved-delivery-address"
+                            checked={selectedAddressId === address.id}
+                            onChange={() => {
+                              setSelectedAddressId(address.id);
+                              setDeliveryAddress(formatSavedAddress(address));
+                            }}
+                          />
+                          {address.label}
+                          {address.isDefault ? (
+                            <span className="text-xs text-brand-red">Default</span>
+                          ) : null}
+                        </span>
+                        <span className="mt-1 block text-muted-foreground">
+                          {formatSavedAddress(address)}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                ) : user ? (
+                  <p className="text-sm text-muted-foreground">
+                    No saved addresses.{" "}
+                    <Link href="/account#addresses" className="font-semibold text-brand-red">
+                      Add one in Account Center
+                    </Link>
+                    , or enter an address below.
+                  </p>
+                ) : null}
                 <Textarea
                   value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  onChange={(e) => {
+                    setDeliveryAddress(e.target.value);
+                    setSelectedAddressId("");
+                  }}
                   placeholder="House #, street, area, Multan"
                   className="rounded-2xl min-h-[90px]"
                 />

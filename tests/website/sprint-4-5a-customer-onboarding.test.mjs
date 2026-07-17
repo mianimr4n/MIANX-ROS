@@ -167,13 +167,13 @@ test("catalog freeze and branches regression guards remain intact", () => {
   assert.match(branches, /northern-bypass/);
 });
 
-test("Account Center IA: Overview, Profile, Addresses, Security, Orders, Loyalty, Notifications", () => {
+test("Account Center IA: Dashboard, Profile, Addresses, Security, Orders, Loyalty, Notifications", () => {
   const account = read("apps/website/client/src/pages/Account.tsx");
   const addresses = read("apps/website/client/src/lib/customer-addresses.ts");
   const orders = read("apps/website/client/src/pages/Orders.tsx");
 
   assert.match(account, /Account Center/);
-  assert.match(account, /Overview/);
+  assert.match(account, /Dashboard/);
   assert.match(account, /Addresses/);
   assert.match(account, /Security & login methods/);
   assert.match(account, /Loyalty/);

@@ -47,7 +47,8 @@ test("Login keeps Google primary and safe Google-account hint without enumeratio
   assert.match(login, /Created your account with Google\?/);
   assert.match(login, /set a Telepizza password from/);
   assert.match(login, /Account → Security|Account/);
-  assert.doesNotMatch(login, /resetPasswordForEmail|forgot password/i);
+  assert.match(login, /Forgot password\?/);
+  assert.match(login, /href=["']\/forgot-password["']/);
   assert.doesNotMatch(login, /this email is registered|account exists/i);
 });
 

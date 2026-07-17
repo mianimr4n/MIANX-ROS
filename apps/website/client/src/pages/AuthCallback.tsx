@@ -4,24 +4,27 @@ import { Loader2 } from "lucide-react";
 import { AuthPageShell } from "@/components/AuthPageShell";
 import { useAuth } from "@/contexts/AuthContext";
 import {
+  consumeAuthEmailFlow,
   consumeAuthNextPath,
   DEFAULT_AUTH_DESTINATION,
   mapOAuthCallbackError,
+  peekAuthEmailFlowFromLocation,
   peekAuthNextFromLocationSearch,
   sanitizeAuthNextPath,
 } from "@/lib/auth-redirect";
 import { Button } from "@/components/ui/button";
 
 /**
- * Dedicated OAuth callback landing page.
+ * Dedicated OAuth / email-link callback landing page.
  * Supabase PKCE restores the session via detectSessionInUrl; we then route
- * to a safe internal destination only.
+ * to a safe internal destination only (including recovery → reset password).
  */
 export default function AuthCallback() {
   const [, navigate] = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const redirected = useRef(false);
+  const flowHint = useRef(peekAuthEmailFlowFromLocation() ?? consumeAuthEmailFlow());
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -31,7 +34,9 @@ export default function AuthCallback() {
     const oauthError =
       params.get("error") ||
       params.get("error_code") ||
+      params.get("error_description") ||
       hashParams.get("error") ||
+      hashParams.get("error_code") ||
       hashParams.get("error_description");
 
     if (oauthError) {
@@ -60,10 +65,20 @@ export default function AuthCallback() {
     const fromQuery = peekAuthNextFromLocationSearch(
       typeof window !== "undefined" ? window.location.search : "",
     );
-    const destination = sanitizeAuthNextPath(
-      fromQuery ?? consumeAuthNextPath(DEFAULT_AUTH_DESTINATION),
-      DEFAULT_AUTH_DESTINATION,
-    );
+    const storedNext = consumeAuthNextPath("");
+    const flow = flowHint.current;
+
+    let destination = DEFAULT_AUTH_DESTINATION;
+    if (flow === "recovery" || storedNext === "/reset-password") {
+      destination = "/reset-password";
+    } else if (flow === "email_change") {
+      destination = sanitizeAuthNextPath(storedNext || "/account#security", "/account#security");
+    } else {
+      destination = sanitizeAuthNextPath(
+        fromQuery ?? (storedNext || DEFAULT_AUTH_DESTINATION),
+        DEFAULT_AUTH_DESTINATION,
+      );
+    }
 
     if (typeof window !== "undefined") {
       window.history.replaceState({}, document.title, destination);
@@ -72,8 +87,12 @@ export default function AuthCallback() {
   }, [error, isAuthenticated, isLoading, navigate]);
 
   if (error) {
+    const isExpired = /expired|invalid or was already used/i.test(error);
     return (
-      <AuthPageShell title="Sign-in interrupted" description="You can try Google again or use email.">
+      <AuthPageShell
+        title={isExpired ? "Link expired" : "Sign-in interrupted"}
+        description="You can try again from login, or request a new email link."
+      >
         <div className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-4 text-center">
           <p className="text-sm text-brand-red" role="alert">
             {error}
@@ -82,6 +101,11 @@ export default function AuthCallback() {
             <Link href="/login">
               <Button className="w-full rounded-2xl brand-gradient text-white font-bold py-6">
                 Back to login
+              </Button>
+            </Link>
+            <Link href="/forgot-password">
+              <Button variant="outline" className="w-full rounded-2xl py-6">
+                Forgot password
               </Button>
             </Link>
             <Link href="/menu">

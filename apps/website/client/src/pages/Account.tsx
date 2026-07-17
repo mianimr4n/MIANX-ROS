@@ -29,6 +29,9 @@ import {
   formatSavedAddress,
   listSavedAddresses,
   removeSavedAddress,
+  setDefaultSavedAddress,
+  updateSavedAddress,
+  type AddressLabel,
   type SavedCustomerAddress,
 } from "@/lib/customer-addresses";
 import { listLocalOrders } from "@/lib/customer-store";
@@ -43,7 +46,7 @@ type AccountSection =
   | "notifications";
 
 const NAV_ITEMS: Array<{ id: AccountSection; label: string; icon: typeof LayoutDashboard }> = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "overview", label: "Dashboard", icon: LayoutDashboard },
   { id: "profile", label: "Profile", icon: UserRound },
   { id: "addresses", label: "Addresses", icon: MapPin },
   { id: "security", label: "Security", icon: Shield },
@@ -60,7 +63,17 @@ function sectionFromHash(): AccountSection {
 }
 
 export default function Account() {
-  const { profile, user, isAuthenticated, isLoading, signOut, updateProfile, setPassword } = useAuth();
+  const {
+    profile,
+    user,
+    session,
+    isAuthenticated,
+    isLoading,
+    signOut,
+    updateProfile,
+    setPassword,
+    requestEmailChange,
+  } = useAuth();
 
   const [section, setSection] = useState<AccountSection>(sectionFromHash);
 
@@ -78,8 +91,14 @@ export default function Account() {
   const [passwordNotice, setPasswordNotice] = useState<string | null>(null);
   const [passwordBusy, setPasswordBusy] = useState(false);
 
+  const [newEmail, setNewEmail] = useState("");
+  const [emailChangePassword, setEmailChangePassword] = useState("");
+  const [emailChangeError, setEmailChangeError] = useState<string | null>(null);
+  const [emailChangeNotice, setEmailChangeNotice] = useState<string | null>(null);
+  const [emailChangeBusy, setEmailChangeBusy] = useState(false);
+
   const [addresses, setAddresses] = useState<SavedCustomerAddress[]>([]);
-  const [addressLabel, setAddressLabel] = useState("Home");
+  const [addressLabel, setAddressLabel] = useState<AddressLabel>("Home");
   const [addressLine1, setAddressLine1] = useState("");
   const [addressArea, setAddressArea] = useState("");
   const [addressCity, setAddressCity] = useState("Multan");
@@ -87,6 +106,8 @@ export default function Account() {
   const [addressError, setAddressError] = useState<string | null>(null);
   const [addressNotice, setAddressNotice] = useState<string | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const [addressIsDefault, setAddressIsDefault] = useState(false);
 
   useEffect(() => {
     setFullName(profile?.fullName ?? "");
@@ -109,8 +130,15 @@ export default function Account() {
     setAddresses(listSavedAddresses(ownerKey));
   }, [ownerKey]);
 
-  const orderKey = profile?.phone || user?.email || user?.id;
-  const localOrders = useMemo(() => listLocalOrders(orderKey), [orderKey]);
+  const orderKey = profile?.phone ?? undefined;
+  const localOrders = useMemo(
+    () => (orderKey ? listLocalOrders(orderKey) : []),
+    [orderKey],
+  );
+  const activeOrders = localOrders.filter(
+    (order) => !["completed", "delivered", "cancelled", "canceled"].includes(order.status.toLowerCase()),
+  );
+  const lastOrder = localOrders[0];
 
   function goTo(next: AccountSection) {
     setSection(next);
@@ -217,35 +245,93 @@ export default function Account() {
     }
   }
 
-  function handleAddAddress(event: React.FormEvent) {
+  async function handleEmailChange(event: React.FormEvent) {
     event.preventDefault();
-    setAddressError(null);
-    setAddressNotice(null);
-    const result = addSavedAddress(ownerKey, {
-      label: addressLabel,
-      line1: addressLine1,
-      area: addressArea,
-      city: addressCity,
-      notes: addressNotes,
-    });
-    if (!result.ok) {
-      setAddressError(result.message);
-      return;
+    if (emailChangeBusy) return;
+    setEmailChangeError(null);
+    setEmailChangeNotice(null);
+    setEmailChangeBusy(true);
+    try {
+      const result = await requestEmailChange({
+        newEmail,
+        currentPassword: emailPasswordAvailable ? emailChangePassword : undefined,
+      });
+      if (!result.ok) {
+        setEmailChangeError(result.message);
+        return;
+      }
+      setEmailChangePassword("");
+      setEmailChangeNotice(
+        "Check your inbox (and spam) to confirm the new email. Until confirmed, keep using your current address to sign in.",
+      );
+    } finally {
+      setEmailChangeBusy(false);
     }
-    setAddresses(listSavedAddresses(ownerKey));
+  }
+
+  function resetAddressForm() {
     setAddressLine1("");
     setAddressArea("");
     setAddressNotes("");
     setAddressLabel("Home");
     setAddressCity("Multan");
+    setAddressIsDefault(false);
+    setEditingAddressId(null);
     setShowAddressForm(false);
-    setAddressNotice("Address saved on this device for faster checkout later.");
+  }
+
+  function handleSaveAddress(event: React.FormEvent) {
+    event.preventDefault();
+    setAddressError(null);
+    setAddressNotice(null);
+    const input = {
+      label: addressLabel,
+      line1: addressLine1,
+      area: addressArea,
+      city: addressCity,
+      notes: addressNotes,
+      isDefault: addressIsDefault,
+    };
+    const result = editingAddressId
+      ? updateSavedAddress(ownerKey, editingAddressId, input)
+      : addSavedAddress(ownerKey, input);
+    if (!result.ok) {
+      setAddressError(result.message);
+      return;
+    }
+    setAddresses(listSavedAddresses(ownerKey));
+    resetAddressForm();
+    setAddressNotice(
+      editingAddressId
+        ? "Address updated on this device."
+        : "Address saved on this device for faster checkout.",
+    );
   }
 
   function handleRemoveAddress(addressId: string) {
+    if (!window.confirm("Delete this saved address from this device?")) return;
     removeSavedAddress(ownerKey, addressId);
     setAddresses(listSavedAddresses(ownerKey));
     setAddressNotice("Address removed.");
+  }
+
+  function handleEditAddress(address: SavedCustomerAddress) {
+    setEditingAddressId(address.id);
+    setAddressLabel(address.label);
+    setAddressLine1(address.line1);
+    setAddressArea(address.area);
+    setAddressCity(address.city);
+    setAddressNotes(address.notes);
+    setAddressIsDefault(address.isDefault);
+    setAddressError(null);
+    setAddressNotice(null);
+    setShowAddressForm(true);
+  }
+
+  function handleSetDefaultAddress(addressId: string) {
+    setDefaultSavedAddress(ownerKey, addressId);
+    setAddresses(listSavedAddresses(ownerKey));
+    setAddressNotice("Default delivery address updated.");
   }
 
   return (
@@ -294,7 +380,7 @@ export default function Account() {
                     <button
                       type="button"
                       onClick={() => goTo(item.id)}
-                      className={`w-full flex items-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+                      className={`w-full flex items-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
                         active
                           ? "bg-brand-red/10 text-brand-red"
                           : "text-brand-charcoal hover:bg-muted/60"
@@ -314,46 +400,29 @@ export default function Account() {
             {section === "overview" ? (
               <section className="rounded-3xl border border-border bg-white p-6 space-y-5">
                 <div>
-                  <h2 className="font-bold text-lg">Overview</h2>
+                  <h2 className="font-bold text-lg">Dashboard</h2>
                   <p className="text-sm text-muted-foreground mt-1">
                     Your Telepizza customer hub — profile, saved addresses, sign-in methods, and
                     orders in one place.
                   </p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                   <OverviewTile
-                    title="Profile"
-                    body={
-                      profile?.phone
-                        ? `Phone ${phoneStatus}`
-                        : "Add your name and phone for faster checkout."
-                    }
-                    onClick={() => goTo("profile")}
+                    title="Active Orders"
+                    body={`${activeOrders.length} in progress`}
+                    onClick={() => goTo("orders")}
                   />
                   <OverviewTile
-                    title="Addresses"
+                    title="Saved Addresses"
                     body={
                       addresses.length > 0
-                        ? `${addresses.length} saved on this device`
+                        ? `${addresses.length} saved · ${addresses.find((address) => address.isDefault)?.label ?? "default"}`
                         : "No saved addresses yet."
                     }
                     onClick={() => goTo("addresses")}
                   />
                   <OverviewTile
-                    title="Security"
-                    body={
-                      googleConnected && emailPasswordAvailable
-                        ? "Google and email/password ready"
-                        : googleConnected
-                          ? "Google connected — set a Telepizza password anytime"
-                          : emailPasswordAvailable
-                            ? "Email/password ready"
-                            : "Add a sign-in method"
-                    }
-                    onClick={() => goTo("security")}
-                  />
-                  <OverviewTile
-                    title="Orders"
+                    title="Recent Orders"
                     body={
                       localOrders.length > 0
                         ? `${localOrders.length} recent on this device`
@@ -361,36 +430,25 @@ export default function Account() {
                     }
                     onClick={() => goTo("orders")}
                   />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-dashed border-border p-4">
-                    <div className="font-semibold">Loyalty</div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Rewards points will appear here when the loyalty program launches.
-                    </p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="mt-2 px-0 text-brand-red"
-                      onClick={() => goTo("loyalty")}
-                    >
-                      View details
-                    </Button>
-                  </div>
-                  <div className="rounded-2xl border border-dashed border-border p-4">
-                    <div className="font-semibold">Notifications</div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Order and promo preferences are not available yet.
-                    </p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="mt-2 px-0 text-brand-red"
-                      onClick={() => goTo("notifications")}
-                    >
-                      View details
-                    </Button>
-                  </div>
+                  <OverviewTile
+                    title="Account Security"
+                    body={`${user.email_confirmed_at ? "Email verified" : "Email unverified"} · Phone ${phoneStatus.toLowerCase()}`}
+                    onClick={() => goTo("security")}
+                  />
+                  <OverviewTile
+                    title="Last Order"
+                    body={
+                      lastOrder
+                        ? `${lastOrder.orderNumber} · ${lastOrder.branchName}`
+                        : "No previous order."
+                    }
+                    onClick={() => goTo("orders")}
+                  />
+                  <OverviewTile
+                    title="Loyalty"
+                    body="Premium Coming Soon"
+                    onClick={() => goTo("loyalty")}
+                  />
                 </div>
               </section>
             ) : null}
@@ -432,7 +490,18 @@ export default function Account() {
                     className="rounded-2xl bg-muted/40"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Email comes from your sign-in method and cannot be edited here.
+                    Email comes from your sign-in method. To change it securely, use Security → Change
+                    email (confirmation required).
+                  </p>
+                  <p className="text-xs font-[var(--font-accent)] font-semibold text-brand-charcoal">
+                    Email status:{" "}
+                    {user.email_confirmed_at ? "Verified" : "Unverified — confirm via email link"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Provider:{" "}
+                    {[googleConnected ? "Google" : null, emailPasswordAvailable ? "Email/password" : null]
+                      .filter(Boolean)
+                      .join(" · ") || "Unknown"}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -460,13 +529,30 @@ export default function Account() {
                       ? " — verification by WhatsApp OTP is not available yet"
                       : null}
                   </p>
+                  {profile?.phone && !profile.phoneVerified ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="rounded-2xl"
+                      disabled
+                      title="Phone verification is coming soon"
+                      aria-disabled="true"
+                    >
+                      Verify phone (Coming Soon)
+                    </Button>
+                  ) : null}
                 </div>
                 {profileError ? (
                   <p className="text-sm text-brand-red" role="alert">
                     {profileError}
                   </p>
                 ) : null}
-                {profileNotice ? <p className="text-sm text-emerald-700">{profileNotice}</p> : null}
+                {profileNotice ? (
+                  <p className="text-sm text-emerald-700" role="status" aria-live="polite">
+                    {profileNotice}
+                  </p>
+                ) : null}
                 <Button
                   type="submit"
                   className="rounded-2xl brand-gradient text-white font-bold"
@@ -493,6 +579,8 @@ export default function Account() {
                       className="rounded-2xl brand-gradient text-white font-semibold"
                       onClick={() => {
                         setShowAddressForm(true);
+                        setEditingAddressId(null);
+                        setAddressIsDefault(addresses.length === 0);
                         setAddressError(null);
                         setAddressNotice(null);
                       }}
@@ -507,7 +595,7 @@ export default function Account() {
                     <MapPin className="w-8 h-8 text-brand-red mx-auto mb-2" />
                     <p className="font-semibold">No saved addresses yet</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Add Home, Work, or another Multan delivery address for faster checkout.
+                      Add Home, Office, or another Multan delivery address for faster checkout.
                     </p>
                   </div>
                 ) : null}
@@ -518,8 +606,15 @@ export default function Account() {
                       key={address.id}
                       className="rounded-2xl border border-border p-4 flex flex-wrap items-start justify-between gap-3"
                     >
-                      <div>
-                        <div className="font-semibold">{address.label}</div>
+                      <div className="min-w-0">
+                        <div className="font-semibold flex flex-wrap items-center gap-2">
+                          {address.label}
+                          {address.isDefault ? (
+                            <span className="rounded-full bg-brand-red/10 px-2 py-0.5 text-xs text-brand-red">
+                              Default
+                            </span>
+                          ) : null}
+                        </div>
                         <p className="text-sm text-muted-foreground mt-1">
                           {formatSavedAddress(address)}
                         </p>
@@ -527,36 +622,62 @@ export default function Account() {
                           <p className="text-xs text-muted-foreground mt-1">{address.notes}</p>
                         ) : null}
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-2xl"
-                        onClick={() => handleRemoveAddress(address.id)}
-                      >
-                        Remove
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        {!address.isDefault ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-2xl"
+                            onClick={() => handleSetDefaultAddress(address.id)}
+                          >
+                            Make default
+                          </Button>
+                        ) : null}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-2xl"
+                          onClick={() => handleEditAddress(address)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-2xl text-brand-red"
+                          onClick={() => handleRemoveAddress(address.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>
 
                 {showAddressForm ? (
                   <form
-                    onSubmit={handleAddAddress}
+                    onSubmit={handleSaveAddress}
                     className="space-y-3 border-t border-border pt-4"
                     noValidate
                   >
-                    <h3 className="font-semibold">Add address</h3>
+                    <h3 className="font-semibold">
+                      {editingAddressId ? "Edit address" : "Add address"}
+                    </h3>
                     <div className="space-y-2">
                       <Label htmlFor="addressLabel">Label</Label>
-                      <Input
+                      <select
                         id="addressLabel"
                         value={addressLabel}
-                        onChange={(e) => setAddressLabel(e.target.value)}
-                        className="rounded-2xl"
-                        placeholder="Home, Work, Other"
-                        autoComplete="off"
-                      />
+                        onChange={(e) => setAddressLabel(e.target.value as AddressLabel)}
+                        className="flex h-10 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm"
+                      >
+                        <option value="Home">Home</option>
+                        <option value="Office">Office</option>
+                        <option value="Other">Other</option>
+                      </select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="addressLine1">Street / landmark</Label>
@@ -573,6 +694,20 @@ export default function Account() {
                         required
                       />
                     </div>
+                    <label className="flex items-start gap-3 rounded-2xl border border-border p-3 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={addressIsDefault}
+                        onChange={(event) => setAddressIsDefault(event.target.checked)}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        <span className="font-semibold block">Use as default address</span>
+                        <span className="text-muted-foreground">
+                          Checkout will select this address first.
+                        </span>
+                      </span>
+                    </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label htmlFor="addressArea">Area (optional)</Label>
@@ -613,14 +748,14 @@ export default function Account() {
                     ) : null}
                     <div className="flex flex-wrap gap-2">
                       <Button type="submit" className="rounded-2xl brand-gradient text-white font-semibold">
-                        Save address
+                        {editingAddressId ? "Update address" : "Save address"}
                       </Button>
                       <Button
                         type="button"
                         variant="outline"
                         className="rounded-2xl"
                         onClick={() => {
-                          setShowAddressForm(false);
+                          resetAddressForm();
                           setAddressError(null);
                         }}
                       >
@@ -630,7 +765,11 @@ export default function Account() {
                   </form>
                 ) : null}
 
-                {addressNotice ? <p className="text-sm text-emerald-700">{addressNotice}</p> : null}
+                {addressNotice ? (
+                  <p className="text-sm text-emerald-700" role="status" aria-live="polite">
+                    {addressNotice}
+                  </p>
+                ) : null}
               </section>
             ) : null}
 
@@ -639,10 +778,45 @@ export default function Account() {
                 <div>
                   <h2 className="font-bold text-lg">Security & login methods</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Google and email share the same Telepizza customer account. Roles and staff
-                    access never come from Google profile data.
+                    Review how you sign in and keep your Telepizza customer account secure.
                   </p>
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <SecurityFact
+                    label="Email"
+                    value={user.email_confirmed_at ? "Verified" : "Unverified"}
+                  />
+                  <SecurityFact
+                    label="Phone"
+                    value={
+                      profile?.phone
+                        ? profile.phoneVerified
+                          ? "Verified"
+                          : "Unverified — verification coming soon"
+                        : "Not set"
+                    }
+                  />
+                  <SecurityFact
+                    label="Last login"
+                    value={
+                      user.last_sign_in_at
+                        ? new Date(user.last_sign_in_at).toLocaleString()
+                        : "Not available"
+                    }
+                  />
+                  <SecurityFact
+                    label="Active sessions"
+                    value={
+                      session
+                        ? "This device is signed in"
+                        : "No active session on this device"
+                    }
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Only this device's session is shown. Use Logout above to end it.
+                </p>
+                <h3 className="font-semibold">Linked accounts</h3>
                 <ul className="space-y-3 text-sm">
                   <li className="rounded-2xl border border-border p-4 flex items-start justify-between gap-3">
                     <div>
@@ -765,7 +939,9 @@ export default function Account() {
                       </p>
                     ) : null}
                     {passwordNotice ? (
-                      <p className="text-sm text-emerald-700">{passwordNotice}</p>
+                      <p className="text-sm text-emerald-700" role="status" aria-live="polite">
+                        {passwordNotice}
+                      </p>
                     ) : null}
                     <Button
                       type="submit"
@@ -781,12 +957,93 @@ export default function Account() {
                         "Update password"
                       )}
                     </Button>
+                    <Link href="/forgot-password">
+                      <Button type="button" variant="ghost" className="rounded-2xl">
+                        Forgot password?
+                      </Button>
+                    </Link>
                   </form>
                 ) : (
                   <p className="text-sm text-muted-foreground">
                     A verified email is required before setting a password.
                   </p>
                 )}
+
+                <form
+                  onSubmit={(event) => void handleEmailChange(event)}
+                  className="space-y-4 border-t border-border pt-4"
+                  noValidate
+                >
+                  <h3 className="font-semibold">Change email</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Your account stays the same. Confirm the new address by email before it becomes
+                    active; you may also be asked to approve the change from your current inbox.
+                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="newEmail">New email</Label>
+                    <Input
+                      id="newEmail"
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => {
+                        setNewEmail(e.target.value);
+                        setEmailChangeError(null);
+                      }}
+                      className="rounded-2xl"
+                      disabled={emailChangeBusy}
+                      autoComplete="email"
+                      placeholder="new@email.com"
+                    />
+                  </div>
+                  {emailPasswordAvailable ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="emailChangePassword">Current Telepizza password</Label>
+                      <Input
+                        id="emailChangePassword"
+                        type="password"
+                        value={emailChangePassword}
+                        onChange={(e) => {
+                          setEmailChangePassword(e.target.value);
+                          setEmailChangeError(null);
+                        }}
+                        className="rounded-2xl"
+                        disabled={emailChangeBusy}
+                        autoComplete="current-password"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Never enter your Google password — only the Telepizza password you set for
+                        this account.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Google-only accounts can request an email change while signed in; confirm both
+                      inboxes if Secure Email Change is on.
+                    </p>
+                  )}
+                  {emailChangeError ? (
+                    <p className="text-sm text-brand-red" role="alert">
+                      {emailChangeError}
+                    </p>
+                  ) : null}
+                  {emailChangeNotice ? (
+                    <p className="text-sm text-emerald-700" role="status" aria-live="polite">
+                      {emailChangeNotice}
+                    </p>
+                  ) : null}
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    className="rounded-2xl font-semibold"
+                    disabled={emailChangeBusy || !newEmail.trim()}
+                  >
+                    {emailChangeBusy ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Send confirmation"
+                    )}
+                  </Button>
+                </form>
               </section>
             ) : null}
 
@@ -795,9 +1052,71 @@ export default function Account() {
                 <div>
                   <h2 className="font-bold text-lg">Orders</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    View Active, Completed, and Cancelled orders. Tracking opens from My Orders.
+                    Orders linked to your saved phone on this device. Full Active / Completed /
+                    Cancelled views open in My Orders.
                   </p>
                 </div>
+                {!profile?.phone ? (
+                  <div className="rounded-2xl border border-dashed border-border p-6 text-center">
+                    <Package className="w-8 h-8 text-brand-red mx-auto mb-2" aria-hidden="true" />
+                    <p className="font-semibold">Add a phone number to match orders</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Orders are matched by the phone used at checkout. Save your phone in Profile
+                      first.
+                    </p>
+                    <Button
+                      type="button"
+                      className="mt-4 rounded-2xl brand-gradient text-white font-semibold"
+                      onClick={() => goTo("profile")}
+                    >
+                      Go to Profile
+                    </Button>
+                  </div>
+                ) : localOrders.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border p-6 text-center">
+                    <Package className="w-8 h-8 text-brand-red mx-auto mb-2" aria-hidden="true" />
+                    <p className="font-semibold">No orders yet</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      When you place an order with this phone, it will appear here on this device.
+                    </p>
+                    <Link href="/menu">
+                      <Button className="mt-4 rounded-2xl brand-gradient text-white font-semibold">
+                        Browse menu
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <ul className="space-y-3">
+                    {localOrders.slice(0, 5).map((order) => (
+                      <li
+                        key={order.id}
+                        className="rounded-2xl border border-border p-4 flex flex-wrap items-start justify-between gap-3"
+                      >
+                        <div className="min-w-0">
+                          <div className="font-semibold text-brand-red">{order.orderNumber}</div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {new Date(order.createdAt).toLocaleString()} · {order.branchName}
+                          </p>
+                          <p className="text-sm font-semibold mt-1">
+                            Rs {order.totalAmount.toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold capitalize">
+                            {order.status}
+                          </span>
+                          <Link
+                            href={`/track/${encodeURIComponent(order.orderNumber)}?phone=${encodeURIComponent(order.contactPhone)}`}
+                          >
+                            <Button type="button" variant="outline" size="sm" className="rounded-2xl">
+                              Track
+                            </Button>
+                          </Link>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 <div className="flex flex-wrap gap-2">
                   <Link href="/orders">
                     <Button className="rounded-2xl brand-gradient text-white font-semibold">
@@ -810,42 +1129,75 @@ export default function Account() {
                     </Button>
                   </Link>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {localOrders.length > 0
-                    ? `${localOrders.length} order(s) remembered on this device.`
-                    : "No orders on this device yet."}
-                </p>
               </section>
             ) : null}
 
             {section === "loyalty" ? (
-              <section className="rounded-3xl border border-border bg-white p-6 space-y-3">
-                <h2 className="font-bold text-lg">Loyalty</h2>
-                <p className="text-sm text-muted-foreground">
-                  Telepizza rewards are not live yet. When loyalty launches, points and offers will
-                  show here for your customer account.
-                </p>
-                <div className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
-                  Program status: not available yet — no points to display.
+              <section className="rounded-3xl border border-border bg-white p-4 sm:p-6 space-y-5">
+                <div>
+                  <h2 className="font-bold text-lg">Telepizza Loyalty</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Premium rewards are coming soon. Points and rewards are not available yet.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-dashed border-border p-6 text-center">
+                  <Gift className="w-9 h-9 text-brand-red mx-auto mb-3" aria-hidden="true" />
+                  <h3 className="font-semibold">Premium Coming Soon</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    We will share program details here when rewards launch. Existing orders do not
+                    currently earn points.
+                  </p>
                 </div>
               </section>
             ) : null}
 
             {section === "notifications" ? (
-              <section className="rounded-3xl border border-border bg-white p-6 space-y-3">
+              <section className="rounded-3xl border border-border bg-white p-4 sm:p-6 space-y-4">
                 <h2 className="font-bold text-lg">Notifications</h2>
                 <p className="text-sm text-muted-foreground">
-                  Order alerts and promo preferences will live here. Preference controls are not
-                  available yet.
+                  Choose how you hear from us when notification preferences become available.
                 </p>
-                <div className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
-                  Preference center: not available yet.
+                <p className="text-xs text-muted-foreground">
+                  These settings are not available yet, so no changes can be saved.
+                </p>
+                <div className="space-y-2">
+                  <PreferenceSwitch label="Order Updates" />
+                  <PreferenceSwitch label="Promotions" />
+                  <PreferenceSwitch label="SMS" />
+                  <PreferenceSwitch label="WhatsApp" />
+                  <PreferenceSwitch label="Email" />
                 </div>
               </section>
             ) : null}
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SecurityFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-border p-4 min-w-0">
+      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="font-semibold mt-1 break-words">{value}</div>
+    </div>
+  );
+}
+
+function PreferenceSwitch({ label }: { label: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-border p-4 text-sm">
+      <div>
+        <div className="font-semibold">{label}</div>
+        <p className="text-xs text-muted-foreground">Coming Soon — not available yet</p>
+      </div>
+      <input
+        type="checkbox"
+        disabled
+        aria-label={`${label} notifications unavailable`}
+        className="h-4 w-4 accent-brand-red"
+      />
     </div>
   );
 }
@@ -863,7 +1215,7 @@ function OverviewTile({
     <button
       type="button"
       onClick={onClick}
-      className="rounded-2xl border border-border p-4 text-left hover:border-brand-red/30 transition-colors"
+      className="rounded-2xl border border-border p-4 text-left hover:border-brand-red/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
     >
       <div className="font-semibold">{title}</div>
       <p className="text-sm text-muted-foreground mt-1">{body}</p>
