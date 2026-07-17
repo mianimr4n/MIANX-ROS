@@ -105,7 +105,7 @@ Catalog freeze 13/58/3/40/7, branches 2, WhatsApp `0304-1110495` unchanged (guar
 
 ## UI states (screenshots)
 
-Browser automation screenshots were attempted only if a local website session was available at delivery time. Documented UI states:
+**Screenshots blocked in this delivery session** — browser automation could not attach a tab (`No browser tab available` after create/navigate). UI states are documented below and covered by static regression tests.
 
 | State | Route / section | Expected |
 |---|---|---|
@@ -117,8 +117,6 @@ Browser automation screenshots were attempted only if a local website session wa
 | Account Security | `/account#security` | Google / Email methods; set vs change password; Change email |
 | Account Profile | `/account#profile` | Name, email+status, phone Unverified |
 | Expired link | `/auth/callback?error=…` | Safe expired/invalid copy + links |
-
-**Note:** If screenshots could not be captured in-session, treat them as blocked for this delivery; UI is covered by static regression tests.
 
 ---
 
