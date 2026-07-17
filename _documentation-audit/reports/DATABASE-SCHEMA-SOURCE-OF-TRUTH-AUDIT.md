@@ -1,6 +1,6 @@
 # Database schema source-of-truth audit
 
-Date: 2026-07-18  
+Date: 2026-07-18
 Scope: documentation and read-only production inspection; no migration, DDL, DML, merge, or deployment was performed.
 
 ## Executive result
