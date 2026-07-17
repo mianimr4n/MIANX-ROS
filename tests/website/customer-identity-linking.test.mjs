@@ -33,8 +33,10 @@ test("Google password attach uses updateUser on current session only", () => {
   assert.match(authContext, /supabase\.auth\.updateUser\(\{\s*password:/);
   assert.match(authContext, /never sent to Telepizza API/i);
   assert.match(authContext, /setPassword/);
+  assert.match(authContext, /current_password:\s*current/);
   assert.match(account, /Set a Telepizza password|Update Telepizza password/);
   assert.match(account, /You can now sign in using Google or email and password/);
+  assert.match(account, /firstTimePassword/);
   assert.match(account, /showPassword/);
   assert.match(account, /if \(passwordBusy\) return/);
 });
