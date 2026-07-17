@@ -5,35 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
-import { AUTH_PASSWORD_REQUIREMENTS_COPY } from "@/lib/auth-utils";
-
-function hasGoogleIdentity(user: {
-  app_metadata?: { provider?: string; providers?: string[] };
-  identities?: Array<{ provider?: string }>;
-} | null): boolean {
-  if (!user) return false;
-  const providers = user.app_metadata?.providers;
-  if (Array.isArray(providers) && providers.includes("google")) return true;
-  if (user.app_metadata?.provider === "google") return true;
-  if (Array.isArray(user.identities) && user.identities.some((entry) => entry.provider === "google")) {
-    return true;
-  }
-  return false;
-}
-
-function hasEmailIdentity(user: {
-  app_metadata?: { provider?: string; providers?: string[] };
-  identities?: Array<{ provider?: string }>;
-} | null): boolean {
-  if (!user) return false;
-  const providers = user.app_metadata?.providers;
-  if (Array.isArray(providers) && providers.includes("email")) return true;
-  if (user.app_metadata?.provider === "email") return true;
-  if (Array.isArray(user.identities) && user.identities.some((entry) => entry.provider === "email")) {
-    return true;
-  }
-  return false;
-}
+import {
+  AUTH_PASSWORD_REQUIREMENTS_COPY,
+  hasEmailIdentity,
+  hasGoogleIdentity,
+  isFirstTimePasswordAttach,
+} from "@/lib/auth-utils";
 
 export default function Account() {
   const { profile, user, isAuthenticated, isLoading, signOut, updateProfile, setPassword } = useAuth();
@@ -44,6 +21,7 @@ export default function Account() {
   const [profileNotice, setProfileNotice] = useState<string | null>(null);
   const [profileBusy, setProfileBusy] = useState(false);
 
+  const [currentPassword, setCurrentPassword] = useState("");
   const [password, setPasswordValue] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -91,6 +69,7 @@ export default function Account() {
   const email = profile?.email || user.email || null;
   const googleConnected = hasGoogleIdentity(user);
   const emailPasswordAvailable = hasEmailIdentity(user);
+  const firstTimePassword = isFirstTimePasswordAttach(user);
   const canSetPassword = Boolean(email);
 
   async function handleSaveProfile(event: React.FormEvent) {
@@ -125,14 +104,23 @@ export default function Account() {
     setPasswordNotice(null);
     setPasswordBusy(true);
     try {
-      const result = await setPassword({ password, confirmPassword });
+      const result = await setPassword({
+        password,
+        confirmPassword,
+        currentPassword: firstTimePassword ? undefined : currentPassword,
+      });
       if (!result.ok) {
         setPasswordError(result.message);
         return;
       }
+      setCurrentPassword("");
       setPasswordValue("");
       setConfirmPassword("");
-      setPasswordNotice("You can now sign in using Google or email and password.");
+      setPasswordNotice(
+        firstTimePassword
+          ? "You can now sign in using Google or email and password."
+          : "Your Telepizza password was updated.",
+      );
     } finally {
       setPasswordBusy(false);
     }
@@ -259,18 +247,34 @@ export default function Account() {
               noValidate
             >
               <h3 className="font-semibold">
-                {googleConnected && !emailPasswordAvailable
+                {firstTimePassword
                   ? "Set a Telepizza password"
-                  : emailPasswordAvailable
-                    ? "Update Telepizza password"
-                    : "Set a Telepizza password"}
+                  : "Update Telepizza password"}
               </h3>
               <p className="text-xs text-muted-foreground">
-                Attaches a Telepizza password to this same account via Supabase Auth — never asks for your
-                Google password and does not create a second login.
+                {firstTimePassword
+                  ? "Attaches a Telepizza password to this same account via Supabase Auth — never asks for your Google password and does not create a second login."
+                  : "Enter your current Telepizza password to change it. Never enter your Google password here."}
               </p>
+              {!firstTimePassword ? (
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword">Current password</Label>
+                  <Input
+                    id="currentPassword"
+                    type={showPassword ? "text" : "password"}
+                    value={currentPassword}
+                    onChange={(e) => {
+                      setCurrentPassword(e.target.value);
+                      setPasswordError(null);
+                    }}
+                    className="rounded-2xl"
+                    disabled={passwordBusy}
+                    autoComplete="current-password"
+                  />
+                </div>
+              ) : null}
               <div className="space-y-2">
-                <Label htmlFor="newPassword">Password</Label>
+                <Label htmlFor="newPassword">New password</Label>
                 <div className="relative">
                   <Input
                     id="newPassword"
@@ -323,7 +327,13 @@ export default function Account() {
                 className="rounded-2xl font-semibold"
                 disabled={passwordBusy}
               >
-                {passwordBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save password"}
+                {passwordBusy ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : firstTimePassword ? (
+                  "Save password"
+                ) : (
+                  "Update password"
+                )}
               </Button>
             </form>
           ) : (
