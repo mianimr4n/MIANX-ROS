@@ -1,8 +1,8 @@
 # Customer Ordering System
 
-**Branch:** `feature/customer-ordering-system`  
-**Base:** latest `origin/main` (`f8945b5` when branched)  
-**Scope:** customer-facing ordering UX only  
+**Branch:** `feature/customer-ordering-system`
+**Base:** latest `origin/main` (`f8945b5` when branched)
+**Scope:** customer-facing ordering UX only
 **Recommendation:** **BLOCKED for production rollout pending visual/browser and live API QA; ready for code review**
 
 ## Audit and architecture reused
