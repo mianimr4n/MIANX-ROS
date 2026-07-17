@@ -5,6 +5,22 @@ Operations checklist when customers report missing signup confirmation emails.
 **Scope:** Supabase Auth email confirmation for customer email/password signup.  
 **Do not** commit SMTP passwords, API keys, or dashboard secrets to this repository.
 
+> **Owner required (app cannot fix delivery):** Configure custom SMTP + SPF/DKIM/DMARC on your sender domain, then verify Redirect URLs include `/auth/callback`. Until that is done, confirmation emails may never arrive or land in spam even when the website UX (Account Created / Resend / Open Gmail) works correctly.
+
+---
+
+## Owner go-live checklist (copy this)
+
+- [ ] Custom SMTP enabled in Supabase Auth (not default mailer alone)
+- [ ] Sender domain verified with provider
+- [ ] SPF DNS record published
+- [ ] DKIM DNS records published and verified
+- [ ] DMARC policy published
+- [ ] Site URL = production website origin
+- [ ] Redirect URLs include production + local `/auth/callback`
+- [ ] Test signup to a fresh mailbox; Auth Logs show send success
+- [ ] No SMTP credentials stored in git
+
 ---
 
 ## 1. Expected product behavior
