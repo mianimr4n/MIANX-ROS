@@ -2,7 +2,7 @@
 
 Operations checklist when customers report missing signup confirmation, password reset, or email-change emails.
 
-**Scope:** Supabase Auth emails for customer email/password signup, confirmation resend, password recovery, and email change.  
+**Scope:** Supabase Auth emails for customer email/password signup, confirmation resend, password recovery, and email change.
 **Do not** commit SMTP passwords, API keys, or dashboard secrets to this repository.
 
 > **Owner required (app cannot fix delivery):** Configure custom SMTP + SPF/DKIM/DMARC on your sender domain, then verify Redirect URLs include `/auth/callback`. Until that is done, auth emails may never arrive or land in spam even when the website UX (Account Created / Resend / Forgot password / Open Gmail) works correctly.

@@ -1,9 +1,9 @@
 # Customer Authentication — Production Close
 
-**Branch:** `fix/customer-auth-production`  
-**Base:** latest `main`  
-**Status:** `CUSTOMER AUTHENTICATION SYSTEM: PASS`  
-**Date:** 2026-07-17  
+**Branch:** `fix/customer-auth-production`
+**Base:** latest `main`
+**Status:** `CUSTOMER AUTHENTICATION SYSTEM: PASS`
+**Date:** 2026-07-17
 **Related:** Ports solid fixes from PR #57 (`feature/sprint-4-5a-customer-onboarding`); does **not** include Rider / Sprint 4.6 / OTP / POS / Kitchen / Admin.
 
 ---
@@ -85,10 +85,12 @@
 
 ## Commits
 
-1. `bc3bfff` — Port Sprint 4.5A customer auth and Account Center from PR #57  
-2. `66c3a1a` — feat(auth): add forgot/reset password and secure email change  
-3. `a51ab22` — docs(auth): record customer auth production close and fix email-map test  
-4. `7979627` — docs(auth): note blocked screenshots in customer auth production report
+1. `903f394` — feat(auth): add forgot/reset password and secure email change
+2. `f187a9b` — docs(auth): record customer auth production close and fix email-map test
+3. `7ad2d82` — docs(auth): note blocked screenshots in customer auth production report
+4. `4ada3c5` — docs(auth): link PR #58 in customer auth production report
+5. `277f44d` — feat(account): complete customer Account Center
+6. `f0effe4` — test(auth): cover Account Center owner feedback
 
 ---
 
