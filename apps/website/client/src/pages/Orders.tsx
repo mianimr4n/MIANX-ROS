@@ -93,7 +93,13 @@ export default function Orders() {
             </p>
             <h1 className="brand-heading text-3xl">My Orders</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Orders saved on this device for your checkout phone.
+              {!profile?.phone
+                ? "Add a phone number to see orders matched to your checkout."
+                : orders.length === 0
+                  ? "You have no recent orders yet."
+                  : orders.length === 1
+                    ? "You have 1 recent order."
+                    : `You have ${orders.length} recent orders.`}
             </p>
           </div>
           <Link href="/account#orders">
@@ -151,7 +157,7 @@ export default function Orders() {
               <div className="rounded-3xl border border-border bg-white p-8 text-center text-muted-foreground">
                 {orders.length === 0
                   ? "No orders yet. Place your first order from the menu."
-                  : `No ${tab} orders on this device.`}
+                  : `No ${tab} orders right now.`}
                 {orders.length === 0 ? (
                   <div className="mt-4">
                     <Link href="/menu">

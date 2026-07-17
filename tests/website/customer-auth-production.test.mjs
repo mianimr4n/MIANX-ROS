@@ -63,9 +63,10 @@ test("profile shows honest phone Unverified and email verification status", () =
   const account = read("apps/website/client/src/pages/Account.tsx");
   assert.match(account, /Phone status:/);
   assert.match(account, /Unverified/);
+  assert.match(account, /Verification Pending/);
   assert.match(account, /email_confirmed_at/);
   assert.match(account, /phoneVerified\s*\?\s*"Verified"/);
-  assert.match(account, /: "Unverified"/);
+  assert.match(account, /StatusBadge/);
 });
 
 test("Account Center supports complete address book and checkout selection", () => {
@@ -80,6 +81,7 @@ test("Account Center supports complete address book and checkout selection", () 
   assert.match(account, /Make default/);
   assert.match(account, /\bEdit\b/);
   assert.match(account, /\bDelete\b/);
+  assert.match(account, /Add Address/);
   assert.match(checkout, /listSavedAddresses/);
   assert.match(checkout, /saved-delivery-address/);
   assert.match(checkout, /formatSavedAddress/);
@@ -96,6 +98,7 @@ test("orders expose status, honest operational gaps, and feasible reorder", () =
   assert.match(orders, /Type:<\/span>/);
   assert.match(orders, /Reorder/);
   assert.match(orders, /menuItemSlug/);
+  assert.match(orders, /You have \$\{orders\.length\} recent orders/);
   assert.match(store, /menuItemSlug\?: string/);
   assert.doesNotMatch(orders, /\b(driver|invoice|ETA|Payment)\b/i);
 });
@@ -109,14 +112,23 @@ test("security, loyalty, notifications, and overview expose requested production
   assert.match(account, /Linked accounts/);
   assert.match(account, /Only this device's session is shown/);
   assert.match(account, /Forgot password\?/);
+  assert.match(account, /AUTH_PASSWORD_REQUIREMENTS_COPY/);
+  assert.match(account, /Password requirements/);
   assert.match(account, /Premium Coming Soon/);
+  assert.match(account, /Telepizza Rewards/);
+  assert.match(account, /Earn points/);
+  assert.match(account, /Exclusive offers/);
   assert.doesNotMatch(account, /Current points|Points history|Gold preview|Starter preview/);
+  assert.doesNotMatch(account, /recent on this device|remembered on this device/);
   assert.match(account, /Order Updates/);
   assert.match(account, /Promotions/);
-  assert.match(account, /SMS/);
-  assert.match(account, /WhatsApp/);
+  assert.match(account, /Delivery Alerts/);
+  assert.match(account, /Special Offers/);
+  assert.match(account, /Recent Orders/);
   assert.match(account, /Active Orders/);
-  assert.match(account, /Account Security/);
-  assert.match(account, /Last Order/);
+  assert.match(account, /Saved Addresses/);
+  assert.match(account, /Email ✓ Verified/);
+  assert.match(account, /Phone ⚠ Verification Pending/);
+  assert.match(account, /View Order History/);
   assert.doesNotMatch(account, /Favorite Items|Reward Points/);
 });
