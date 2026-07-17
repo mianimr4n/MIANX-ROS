@@ -21,7 +21,13 @@ export function buildQuoteItemsFromCart(
     price: number;
     name: string;
     instructions?: string;
-    extras?: Array<{ label: string; price: number }>;
+    extras?: Array<{
+      label: string;
+      price: number;
+      slug?: string;
+      groupCode?: string;
+      optionCode?: string;
+    }>;
   }>,
 ): CartLineInput[] {
   return items.map((item) => ({
@@ -33,6 +39,12 @@ export function buildQuoteItemsFromCart(
     variantName: item.variant,
     instructions: item.instructions,
     extras: item.extras,
+    modifiers: (item.extras ?? [])
+      .filter((extra) => extra.groupCode && extra.optionCode)
+      .map((extra) => ({
+        groupCode: extra.groupCode as string,
+        optionCode: extra.optionCode as string,
+      })),
   }));
 }
 
@@ -76,6 +88,7 @@ export function checkoutAttemptFingerprint(input: {
       variantLabel: item.variantLabel ?? null,
       quantity: item.quantity,
       extras: item.extras,
+      modifiers: item.modifiers,
       instructions: item.instructions ?? null,
     })),
   });
@@ -131,10 +144,13 @@ export function buildWhatsAppOrderUrl(input: {
     `Type: ${input.orderType}`,
     input.deliveryAddress ? `Address: ${input.deliveryAddress}` : null,
     "",
-    ...input.items.map(
-      (item) =>
-        `- ${item.quantity}x ${item.productName}${item.variantName ? ` (${item.variantName})` : ""}`,
-    ),
+    ...input.items.flatMap((item) => {
+      const head = `- ${item.quantity}x ${item.productName}${item.variantName ? ` (${item.variantName})` : ""}`;
+      const extras = (item.extras ?? []).map(
+        (extra) => `  + ${extra.label}${extra.price ? ` — Rs ${extra.price}` : ""}`,
+      );
+      return [head, ...extras];
+    }),
   ].filter(Boolean);
   return `https://wa.me/92${phone}?text=${encodeURIComponent(lines.join("\n"))}`;
 }

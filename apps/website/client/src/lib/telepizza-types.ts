@@ -22,6 +22,29 @@ export interface MenuVariant {
   isDefault?: boolean;
 }
 
+export interface ModifierOption {
+  code: string;
+  name: string;
+  priceDelta: number;
+  priceDeltaBySize?: Partial<Record<"small" | "medium" | "large", number>>;
+  sizeCode?: "small" | "medium" | "large";
+  linkedMenuItemSlug?: string;
+  isDefault?: boolean;
+  sortOrder: number;
+}
+
+export interface ModifierGroup {
+  code: string;
+  name: string;
+  description?: string;
+  selectionType: "single" | "multi";
+  minSelect: number;
+  maxSelect: number | null;
+  isRequired: boolean;
+  sortOrder: number;
+  options: ModifierOption[];
+}
+
 export interface MenuItem {
   id: string;
   slug?: string;
@@ -35,6 +58,8 @@ export interface MenuItem {
   productType?: string;
   featured?: boolean;
   variants?: MenuVariant[];
+  /** Relational modifier groups (DB or static fallback). */
+  modifierGroups?: ModifierGroup[];
 }
 
 export interface MenuCategory {
@@ -52,7 +77,17 @@ export interface CreateOrderItemPayload {
   productName: string;
   variantName?: string;
   instructions?: string;
-  extras?: Array<{ label: string; price: number }>;
+  extras?: Array<{
+    label: string;
+    price: number;
+    slug?: string;
+    groupCode?: string;
+    optionCode?: string;
+  }>;
+  modifiers?: Array<{
+    groupCode: string;
+    optionCode: string;
+  }>;
 }
 
 export interface CreateOrderPayload {
@@ -128,6 +163,14 @@ export interface OrderTrackingResponse {
     unitPrice: number;
     totalPrice: number;
     instructions?: string | null;
+    extras?: Array<{ slug?: string; label: string; price: number; kind?: string }>;
+    modifiers?: Array<{
+      groupCode: string;
+      groupName: string;
+      optionCode: string;
+      optionName: string;
+      priceDelta: number;
+    }>;
   }>;
 }
 

@@ -28,7 +28,8 @@ test("product detail reuses catalog data and shared configurator", () => {
   assert.match(configurator, /item\.variants/);
   assert.match(configurator, /quantity/);
   assert.match(configurator, /Special instructions/);
-  assert.match(configurator, /resolveCatalogToppingPrice/);
+  assert.match(configurator, /getModifierGroupsForItem/);
+  assert.match(configurator, /buildSelectedModifiers/);
   assert.match(configurator, /Final prices are verified by the server/);
   assert.match(dialog, /ProductConfigurator/);
 });

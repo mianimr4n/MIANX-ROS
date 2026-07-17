@@ -9,6 +9,9 @@ export interface StoredUser {
 export interface OrderLineExtra {
   label: string;
   price: number;
+  slug?: string;
+  groupCode?: string;
+  optionCode?: string;
 }
 
 export interface StoredOrderItem {
@@ -60,6 +63,7 @@ export interface CreateWebsiteOrderPayload {
     variantName?: string;
     instructions?: string;
     extras?: OrderLineExtra[];
+    modifiers?: Array<{ groupCode: string; optionCode: string }>;
   }>;
 }
 

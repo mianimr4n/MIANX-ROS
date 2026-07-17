@@ -7,6 +7,7 @@ import type {
   MenuCatalog,
   MenuCatalogCategory,
   MenuCatalogItem,
+  MenuCatalogModifierGroup,
   MenuCatalogVariant,
 } from "./types.js";
 import { splitMenuCatalogForCustomer } from "./visibility.js";
@@ -189,8 +190,124 @@ async function fetchBranches(client: SupabaseClient): Promise<BranchSummary[]> {
   }));
 }
 
+async function fetchModifierGroupsByItemSlug(
+  client: SupabaseClient,
+): Promise<Map<string, MenuCatalogModifierGroup[]>> {
+  const { data, error } = await client
+    .from("item_modifier_groups")
+    .select(
+      "sort_order, is_active, is_required, min_select, max_select, menu_item:menu_items!inner(slug), group:modifier_groups!inner(code, name, description, selection_type, min_select, max_select, is_required, sort_order, is_active, options:modifier_options(code, name, price_delta, price_delta_by_size, size_code, is_default, sort_order, is_active, linked_item:menu_items!modifier_options_linked_menu_item_id_fkey(slug)))",
+    )
+    .eq("is_active", true);
+
+  if (error) {
+    // Additive feature — catalog still works before migration is applied.
+    return new Map();
+  }
+
+  const bySlug = new Map<string, MenuCatalogModifierGroup[]>();
+  for (const row of data ?? []) {
+    const menuItemRaw = (row as { menu_item: { slug: string } | { slug: string }[] }).menu_item;
+    const groupRaw = (
+      row as {
+        group:
+          | {
+              code: string;
+              name: string;
+              description: string | null;
+              selection_type: "single" | "multi";
+              min_select: number;
+              max_select: number | null;
+              is_required: boolean;
+              sort_order: number;
+              is_active: boolean;
+              options:
+                | Array<{
+                    code: string;
+                    name: string;
+                    price_delta: number | string;
+                    price_delta_by_size: Partial<Record<"small" | "medium" | "large", number>> | null;
+                    size_code: string | null;
+                    is_default: boolean;
+                    sort_order: number;
+                    is_active: boolean;
+                    linked_item: { slug: string } | { slug: string }[] | null;
+                  }>
+                | null;
+            }
+          | Array<{
+              code: string;
+              name: string;
+              description: string | null;
+              selection_type: "single" | "multi";
+              min_select: number;
+              max_select: number | null;
+              is_required: boolean;
+              sort_order: number;
+              is_active: boolean;
+              options:
+                | Array<{
+                    code: string;
+                    name: string;
+                    price_delta: number | string;
+                    price_delta_by_size: Partial<Record<"small" | "medium" | "large", number>> | null;
+                    size_code: string | null;
+                    is_default: boolean;
+                    sort_order: number;
+                    is_active: boolean;
+                    linked_item: { slug: string } | { slug: string }[] | null;
+                  }>
+                | null;
+            }>;
+      }
+    ).group;
+
+    const menuItem = Array.isArray(menuItemRaw) ? menuItemRaw[0] : menuItemRaw;
+    const group = Array.isArray(groupRaw) ? groupRaw[0] : groupRaw;
+    if (!menuItem?.slug || !group || group.is_active === false) continue;
+
+    const mapped: MenuCatalogModifierGroup = {
+      code: group.code,
+      name: group.name,
+      description: group.description ?? undefined,
+      selectionType: group.selection_type,
+      minSelect: (row as { min_select: number | null }).min_select ?? group.min_select,
+      maxSelect: (row as { max_select: number | null }).max_select ?? group.max_select,
+      isRequired: (row as { is_required: boolean | null }).is_required ?? group.is_required,
+      sortOrder: (row as { sort_order: number }).sort_order ?? group.sort_order,
+      options: (group.options ?? [])
+        .filter((option) => option.is_active !== false)
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((option) => {
+          const linked = Array.isArray(option.linked_item)
+            ? option.linked_item[0]
+            : option.linked_item;
+          return {
+            code: option.code,
+            name: option.name,
+            priceDelta: parseNumber(option.price_delta),
+            priceDeltaBySize: option.price_delta_by_size ?? undefined,
+            sizeCode: option.size_code ?? undefined,
+            linkedMenuItemSlug: linked?.slug,
+            isDefault: option.is_default,
+            sortOrder: option.sort_order,
+          };
+        }),
+    };
+
+    const existing = bySlug.get(menuItem.slug) ?? [];
+    existing.push(mapped);
+    bySlug.set(
+      menuItem.slug,
+      existing.sort((a, b) => a.sortOrder - b.sortOrder),
+    );
+  }
+
+  return bySlug;
+}
+
 async function fetchMenuCatalog(client: SupabaseClient): Promise<MenuCatalog> {
-  const [categoriesResult, itemsResult] = await Promise.all([
+  const [categoriesResult, itemsResult, modifiersBySlug] = await Promise.all([
     client
       .from("menu_categories")
       .select("id, name, slug, sort_order")
@@ -203,6 +320,7 @@ async function fetchMenuCatalog(client: SupabaseClient): Promise<MenuCatalog> {
       )
       .eq("is_available", true)
       .order("name", { ascending: true }),
+    fetchModifierGroupsByItemSlug(client),
   ]);
 
   if (categoriesResult.error) {
@@ -253,6 +371,7 @@ async function fetchMenuCatalog(client: SupabaseClient): Promise<MenuCatalog> {
         productType: item.product_type,
         featured: item.is_featured,
         variants: variants.length > 0 ? variants : undefined,
+        modifierGroups: modifiersBySlug.get(item.slug),
       };
     })
     .sort((left, right) => {

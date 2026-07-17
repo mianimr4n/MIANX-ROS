@@ -61,6 +61,7 @@ export function quoteOrder(payload: {
     variantName?: string;
     instructions?: string;
     extras?: Array<{ label?: string; slug?: string; price?: number }>;
+    modifiers?: Array<{ groupCode: string; optionCode: string }>;
   }>;
 }) {
   return fetchApiData<QuoteOrderResponse>("/orders/quote", {

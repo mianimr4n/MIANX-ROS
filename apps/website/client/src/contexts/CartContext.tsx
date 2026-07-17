@@ -5,6 +5,10 @@ import { getLineItemTotal } from "@/data/cart-config";
 export interface CartExtra {
   label: string;
   price: number;
+  /** Catalog / modifier option code for server re-pricing */
+  slug?: string;
+  groupCode?: string;
+  optionCode?: string;
 }
 
 export interface CartItem {
