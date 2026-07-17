@@ -1,12 +1,19 @@
 # Telepizza Master Roadmap — Locked Order
 
-**Status:** ✅ **LOCKED** as master sequence (owner-approved 2026-07-16)
-**Date:** 2026-07-16
+**Status:** ✅ **LOCKED** as master sequence (owner-approved 2026-07-16) · **Database freeze override 2026-07-18**
+**Date:** 2026-07-18
 **Catalog freeze:** v1.2.0 (13 / 58 / 3 / 40 / 7 · 2 branches)
+**Database freeze:** **BLOCKED — CORE RESTAURANT FOUNDATIONS REQUIRED**
 **Canonical architecture:** O1–O12 FROZEN · Authz via `AuthPrincipal`
-**Related:** `PROJECT-MILESTONE-AND-ROADMAP.md` · `SPRINT-04-4-ORDER-LIFECYCLE-ARCHITECTURE.md`
+**Related:** `PROJECT-MILESTONE-AND-ROADMAP.md` · `SPRINT-04-4-ORDER-LIFECYCLE-ARCHITECTURE.md` · `DATABASE-PRE-FREEZE-REMEDIATION-PLAN.md`
 
 This document is the **single master sequence**. No app, ERP module, payment, inventory, finance, mobile app, AI agent, final number, or go-live step is skipped. Implementation of a later phase must not begin until the prior phase is **PASS AND CLOSED**.
+
+### Database freeze gate (owner scope change)
+
+Schema foundations for **menu modifiers, restaurant tables, QR, dine-in sessions, kitchen tickets, and POS/bill headers** are **required before database freeze**. Admin/POS/Kitchen/Rider **UI** is **not** a freeze blocker. Privilege P0/P1 remediations from the pre-freeze audit remain mandatory.
+
+See: `docs/architecture/DATABASE-PRE-FREEZE-REMEDIATION-PLAN.md` · slices DB-R0…DB-R7.
 
 ---
 
@@ -96,8 +103,9 @@ Do **not** treat current Multan pilot numbers as permanently locked forever. Fin
 
 | Work | Status |
 |---|---|
-| Architecture freeze (branch / kitchen / rider / cancel / audit / RLS) | ▶ **Sprint 4.4 — plan-only (this turn)** |
-| Branch confirm/reject · Kitchen preparing/ready | 🔒 After 4.4 + Slice 2D |
+| Architecture freeze (branch / kitchen / rider / cancel / audit / RLS) | ▶ Sprint 4.4 plan + **core restaurant DB foundations** (pre-freeze) |
+| **DB foundations:** tables, QR, dine-in sessions, kitchen tickets, POS/bill headers | 🔒 **REQUIRED BEFORE DATABASE FREEZE** (docs: architecture/*) |
+| Branch confirm/reject · Kitchen preparing/ready | 🔒 After 4.4 + Slice 2D + kitchen schema |
 | Rider assignment · Dispatch · Delivered | 🔒 After staff transition APIs |
 | Cancellation matrix · Order history/audit · Notifications | 🔒 Implementation slices after architecture close |
 | Branch/RLS enforcement (Slice 2D) | ▶ PR ready — await owner review / prod migration apply (hard gate before POS/Kitchen/Rider UI) |
@@ -108,7 +116,7 @@ Do **not** treat current Multan pilot numbers as permanently locked forever. Fin
 
 Admin dashboard · User/staff · Roles · Branches · Menu/price · Deals · Order control · Reports · Audit · Settings
 
-**Status:** Not started (after Phase 5 operational APIs)
+**Status:** Not started (after Phase 5 operational APIs) · **UI not a DB freeze blocker**; menu modifier Admin CRUD uses PR #63 schema
 
 ---
 
@@ -116,7 +124,7 @@ Admin dashboard · User/staff · Roles · Branches · Menu/price · Deals · Ord
 
 Dine-in/takeaway/delivery · Cashier · Payments · Receipts · Shifts · Cash reconciliation · Branch sync · Offline-safe
 
-**Status:** Not started · **Requires Slice 2D RLS PASS**
+**Status:** Not started · **Requires Slice 2D RLS PASS** · **`pos_sessions` / bills schema REQUIRED BEFORE DB FREEZE**; full POS UI + `payment_splits` = feature phase
 
 ---
 
@@ -124,7 +132,7 @@ Dine-in/takeaway/delivery · Cashier · Payments · Receipts · Shifts · Cash r
 
 Kitchen queue · KOT · Preparing/ready · Timers · Item status · Priority · Branch isolation
 
-**Status:** Not started · **Requires Slice 2D + lifecycle APIs**
+**Status:** Not started · **Requires Slice 2D + lifecycle APIs** · **`kitchen_*` schema REQUIRED BEFORE DB FREEZE**; Kitchen UI = feature phase
 
 ---
 
@@ -197,10 +205,12 @@ PRODUCTION V1.0 = LIVE
 
 | Now | Next |
 |---|---|
-| Phase 4 **PASS AND CLOSED** | **Sprint 4.4** Order Lifecycle Architecture (**plan-only**) |
+| Phase 4 **PASS AND CLOSED** | **Sprint 4.4** + **DB-R0…R7** restaurant pre-freeze foundations |
+| Database freeze | **BLOCKED — CORE RESTAURANT FOUNDATIONS REQUIRED** |
 | Phase 3 eng paused | Ops continues Meta/Twilio in parallel |
-| Phase 5 implementation | After 4.4 architecture **APPROVED / FROZEN** + Slice 2D for staff UI unlock |
+| Phase 5 / 7 / 8 UI | After schema foundations + Slice 2D; UI does not unblock DB freeze |
 
 ---
 
 **TELEPIZZA MASTER ROADMAP: LOCKED**
+**DATABASE FREEZE: BLOCKED — CORE RESTAURANT FOUNDATIONS REQUIRED**
