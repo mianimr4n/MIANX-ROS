@@ -84,7 +84,8 @@ test("resend confirmation is rate-limited with safe error handling", () => {
   assert.match(register, /Resend Email/);
   assert.match(register, /RESEND_COOLDOWN_SECONDS/);
   assert.match(authUtils, /Too many email requests/);
-  assert.match(authUtils, /could not send the confirmation email/i);
+  assert.match(authUtils, /could not send the email right now/i);
+  assert.match(authUtils, /over_email_send_rate_limit|rate limit/);
 });
 
 test("phone normalization and duplicate protection remain in place", () => {
