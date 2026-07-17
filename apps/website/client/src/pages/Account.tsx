@@ -34,7 +34,7 @@ import {
   type AddressLabel,
   type SavedCustomerAddress,
 } from "@/lib/customer-addresses";
-import { getLoyaltyPoints, listLocalOrders } from "@/lib/customer-store";
+import { listLocalOrders } from "@/lib/customer-store";
 
 type AccountSection =
   | "overview"
@@ -130,9 +130,11 @@ export default function Account() {
     setAddresses(listSavedAddresses(ownerKey));
   }, [ownerKey]);
 
-  const orderKey = profile?.phone || user?.email || user?.id;
-  const localOrders = useMemo(() => listLocalOrders(orderKey), [orderKey]);
-  const loyaltyPoints = profile?.phone ? getLoyaltyPoints(profile.phone) : 0;
+  const orderKey = profile?.phone ?? undefined;
+  const localOrders = useMemo(
+    () => (orderKey ? listLocalOrders(orderKey) : []),
+    [orderKey],
+  );
   const activeOrders = localOrders.filter(
     (order) => !["completed", "delivered", "cancelled", "canceled"].includes(order.status.toLowerCase()),
   );
@@ -307,6 +309,7 @@ export default function Account() {
   }
 
   function handleRemoveAddress(addressId: string) {
+    if (!window.confirm("Delete this saved address from this device?")) return;
     removeSavedAddress(ownerKey, addressId);
     setAddresses(listSavedAddresses(ownerKey));
     setAddressNotice("Address removed.");
@@ -377,7 +380,7 @@ export default function Account() {
                     <button
                       type="button"
                       onClick={() => goTo(item.id)}
-                      className={`w-full flex items-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+                      className={`w-full flex items-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
                         active
                           ? "bg-brand-red/10 text-brand-red"
                           : "text-brand-charcoal hover:bg-muted/60"
@@ -419,11 +422,6 @@ export default function Account() {
                     onClick={() => goTo("addresses")}
                   />
                   <OverviewTile
-                    title="Reward Points"
-                    body={`${loyaltyPoints} points · ${loyaltyPoints >= 1000 ? "Gold" : "Starter"} tier`}
-                    onClick={() => goTo("loyalty")}
-                  />
-                  <OverviewTile
                     title="Recent Orders"
                     body={
                       localOrders.length > 0
@@ -433,9 +431,9 @@ export default function Account() {
                     onClick={() => goTo("orders")}
                   />
                   <OverviewTile
-                    title="Favorite Items"
-                    body="Coming soon — favorites are not stored yet."
-                    onClick={() => goTo("overview")}
+                    title="Account Security"
+                    body={`${user.email_confirmed_at ? "Email verified" : "Email unverified"} · Phone ${phoneStatus.toLowerCase()}`}
+                    onClick={() => goTo("security")}
                   />
                   <OverviewTile
                     title="Last Order"
@@ -445,6 +443,11 @@ export default function Account() {
                         : "No previous order."
                     }
                     onClick={() => goTo("orders")}
+                  />
+                  <OverviewTile
+                    title="Loyalty"
+                    body="Premium Coming Soon"
+                    onClick={() => goTo("loyalty")}
                   />
                 </div>
               </section>
@@ -532,13 +535,11 @@ export default function Account() {
                       variant="outline"
                       size="sm"
                       className="rounded-2xl"
-                      onClick={() =>
-                        setProfileNotice(
-                          "Phone verification is coming soon. WhatsApp OTP is not enabled yet.",
-                        )
-                      }
+                      disabled
+                      title="Phone verification is coming soon"
+                      aria-disabled="true"
                     >
-                      Verify phone
+                      Verify phone (Coming Soon)
                     </Button>
                   ) : null}
                 </div>
@@ -547,7 +548,11 @@ export default function Account() {
                     {profileError}
                   </p>
                 ) : null}
-                {profileNotice ? <p className="text-sm text-emerald-700">{profileNotice}</p> : null}
+                {profileNotice ? (
+                  <p className="text-sm text-emerald-700" role="status" aria-live="polite">
+                    {profileNotice}
+                  </p>
+                ) : null}
                 <Button
                   type="submit"
                   className="rounded-2xl brand-gradient text-white font-bold"
@@ -760,7 +765,11 @@ export default function Account() {
                   </form>
                 ) : null}
 
-                {addressNotice ? <p className="text-sm text-emerald-700">{addressNotice}</p> : null}
+                {addressNotice ? (
+                  <p className="text-sm text-emerald-700" role="status" aria-live="polite">
+                    {addressNotice}
+                  </p>
+                ) : null}
               </section>
             ) : null}
 
@@ -769,8 +778,7 @@ export default function Account() {
                 <div>
                   <h2 className="font-bold text-lg">Security & login methods</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Google and email share the same Telepizza customer account. Roles and staff
-                    access never come from Google profile data.
+                    Review how you sign in and keep your Telepizza customer account secure.
                   </p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
@@ -780,7 +788,13 @@ export default function Account() {
                   />
                   <SecurityFact
                     label="Phone"
-                    value={profile?.phoneVerified ? "Verified" : "Unverified — OTP coming soon"}
+                    value={
+                      profile?.phone
+                        ? profile.phoneVerified
+                          ? "Verified"
+                          : "Unverified — verification coming soon"
+                        : "Not set"
+                    }
                   />
                   <SecurityFact
                     label="Last login"
@@ -800,8 +814,7 @@ export default function Account() {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Supabase exposes the current browser session here, but not a cross-device session
-                  list. Signing out ends this device session.
+                  Only this device's session is shown. Use Logout above to end it.
                 </p>
                 <h3 className="font-semibold">Linked accounts</h3>
                 <ul className="space-y-3 text-sm">
@@ -926,7 +939,9 @@ export default function Account() {
                       </p>
                     ) : null}
                     {passwordNotice ? (
-                      <p className="text-sm text-emerald-700">{passwordNotice}</p>
+                      <p className="text-sm text-emerald-700" role="status" aria-live="polite">
+                        {passwordNotice}
+                      </p>
                     ) : null}
                     <Button
                       type="submit"
@@ -961,9 +976,8 @@ export default function Account() {
                 >
                   <h3 className="font-semibold">Change email</h3>
                   <p className="text-xs text-muted-foreground">
-                    Updates the same Supabase auth user (no duplicate account). You must confirm the
-                    new address by email before it becomes active. With Secure Email Change enabled
-                    in Supabase, your current inbox may also need to approve the change.
+                    Your account stays the same. Confirm the new address by email before it becomes
+                    active; you may also be asked to approve the change from your current inbox.
                   </p>
                   <div className="space-y-2">
                     <Label htmlFor="newEmail">New email</Label>
@@ -1013,7 +1027,9 @@ export default function Account() {
                     </p>
                   ) : null}
                   {emailChangeNotice ? (
-                    <p className="text-sm text-emerald-700">{emailChangeNotice}</p>
+                    <p className="text-sm text-emerald-700" role="status" aria-live="polite">
+                      {emailChangeNotice}
+                    </p>
                   ) : null}
                   <Button
                     type="submit"
@@ -1036,9 +1052,71 @@ export default function Account() {
                 <div>
                   <h2 className="font-bold text-lg">Orders</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    View Active, Completed, and Cancelled orders. Tracking opens from My Orders.
+                    Orders linked to your saved phone on this device. Full Active / Completed /
+                    Cancelled views open in My Orders.
                   </p>
                 </div>
+                {!profile?.phone ? (
+                  <div className="rounded-2xl border border-dashed border-border p-6 text-center">
+                    <Package className="w-8 h-8 text-brand-red mx-auto mb-2" aria-hidden="true" />
+                    <p className="font-semibold">Add a phone number to match orders</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Orders are matched by the phone used at checkout. Save your phone in Profile
+                      first.
+                    </p>
+                    <Button
+                      type="button"
+                      className="mt-4 rounded-2xl brand-gradient text-white font-semibold"
+                      onClick={() => goTo("profile")}
+                    >
+                      Go to Profile
+                    </Button>
+                  </div>
+                ) : localOrders.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border p-6 text-center">
+                    <Package className="w-8 h-8 text-brand-red mx-auto mb-2" aria-hidden="true" />
+                    <p className="font-semibold">No orders yet</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      When you place an order with this phone, it will appear here on this device.
+                    </p>
+                    <Link href="/menu">
+                      <Button className="mt-4 rounded-2xl brand-gradient text-white font-semibold">
+                        Browse menu
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <ul className="space-y-3">
+                    {localOrders.slice(0, 5).map((order) => (
+                      <li
+                        key={order.id}
+                        className="rounded-2xl border border-border p-4 flex flex-wrap items-start justify-between gap-3"
+                      >
+                        <div className="min-w-0">
+                          <div className="font-semibold text-brand-red">{order.orderNumber}</div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {new Date(order.createdAt).toLocaleString()} · {order.branchName}
+                          </p>
+                          <p className="text-sm font-semibold mt-1">
+                            Rs {order.totalAmount.toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold capitalize">
+                            {order.status}
+                          </span>
+                          <Link
+                            href={`/track/${encodeURIComponent(order.orderNumber)}?phone=${encodeURIComponent(order.contactPhone)}`}
+                          >
+                            <Button type="button" variant="outline" size="sm" className="rounded-2xl">
+                              Track
+                            </Button>
+                          </Link>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 <div className="flex flex-wrap gap-2">
                   <Link href="/orders">
                     <Button className="rounded-2xl brand-gradient text-white font-semibold">
@@ -1051,49 +1129,25 @@ export default function Account() {
                     </Button>
                   </Link>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {localOrders.length > 0
-                    ? `${localOrders.length} order(s) remembered on this device.`
-                    : "No orders on this device yet."}
-                </p>
               </section>
             ) : null}
 
             {section === "loyalty" ? (
               <section className="rounded-3xl border border-border bg-white p-4 sm:p-6 space-y-5">
                 <div>
-                  <h2 className="font-bold text-lg">Loyalty preview</h2>
+                  <h2 className="font-bold text-lg">Telepizza Loyalty</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    A production-ready preview of the upcoming rewards program. Points cannot be
-                    earned or redeemed yet.
+                    Premium rewards are coming soon. Points and rewards are not available yet.
                   </p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <SecurityFact label="Current points" value={`${loyaltyPoints} points`} />
-                  <SecurityFact
-                    label="Tier"
-                    value={loyaltyPoints >= 1000 ? "Gold preview" : "Starter preview"}
-                  />
-                </div>
-                <div className="rounded-2xl border border-border p-4">
-                  <h3 className="font-semibold">Rewards</h3>
+                <div className="rounded-2xl border border-dashed border-border p-6 text-center">
+                  <Gift className="w-9 h-9 text-brand-red mx-auto mb-3" aria-hidden="true" />
+                  <h3 className="font-semibold">Premium Coming Soon</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Free sides, pizza upgrades, and member offers are Coming Soon. Redemption is
-                    disabled until the loyalty service launches.
-                  </p>
-                  <Button type="button" disabled className="mt-3 rounded-2xl">
-                    Redeem reward
-                  </Button>
-                </div>
-                <div className="rounded-2xl border border-border p-4">
-                  <h3 className="font-semibold">Points history</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    No reward activity yet. Eligible order history will appear after launch.
+                    We will share program details here when rewards launch. Existing orders do not
+                    currently earn points.
                   </p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Coming Soon — this preview does not promise points for existing orders.
-                </p>
               </section>
             ) : null}
 
@@ -1101,8 +1155,10 @@ export default function Account() {
               <section className="rounded-3xl border border-border bg-white p-4 sm:p-6 space-y-4">
                 <h2 className="font-bold text-lg">Notifications</h2>
                 <p className="text-sm text-muted-foreground">
-                  Preview of preference controls. All switches are disabled until notification
-                  delivery and consent storage are available.
+                  Choose how you hear from us when notification preferences become available.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  These settings are not available yet, so no changes can be saved.
                 </p>
                 <div className="space-y-2">
                   <PreferenceSwitch label="Order Updates" />
@@ -1131,13 +1187,18 @@ function SecurityFact({ label, value }: { label: string; value: string }) {
 
 function PreferenceSwitch({ label }: { label: string }) {
   return (
-    <label className="flex items-center justify-between gap-3 rounded-2xl border border-border p-4 text-sm">
-      <span>
-        <span className="font-semibold block">{label}</span>
-        <span className="text-xs text-muted-foreground">Coming Soon</span>
-      </span>
-      <input type="checkbox" disabled aria-label={`${label} notifications unavailable`} />
-    </label>
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-border p-4 text-sm">
+      <div>
+        <div className="font-semibold">{label}</div>
+        <p className="text-xs text-muted-foreground">Coming Soon — not available yet</p>
+      </div>
+      <input
+        type="checkbox"
+        disabled
+        aria-label={`${label} notifications unavailable`}
+        className="h-4 w-4 accent-brand-red"
+      />
+    </div>
   );
 }
 
@@ -1154,7 +1215,7 @@ function OverviewTile({
     <button
       type="button"
       onClick={onClick}
-      className="rounded-2xl border border-border p-4 text-left hover:border-brand-red/30 transition-colors"
+      className="rounded-2xl border border-border p-4 text-left hover:border-brand-red/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
     >
       <div className="font-semibold">{title}</div>
       <p className="text-sm text-muted-foreground mt-1">{body}</p>
