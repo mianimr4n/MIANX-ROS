@@ -15,7 +15,7 @@ export const APPROVED_AUTH_ORIGINS = [
 
 const AUTH_NEXT_STORAGE_KEY = "telepizza.auth.next";
 
-/** Internal destinations customers may resume after OAuth / login. */
+/** Internal destinations customers may resume after OAuth / login / recovery. */
 const SAFE_AUTH_DESTINATION_PREFIXES = [
   "/account",
   "/checkout",
@@ -23,7 +23,44 @@ const SAFE_AUTH_DESTINATION_PREFIXES = [
   "/menu",
   "/track",
   "/order-success",
+  "/reset-password",
 ] as const;
+
+const AUTH_FLOW_STORAGE_KEY = "telepizza.auth.flow";
+
+export type AuthEmailFlow = "recovery" | "email_change" | "signup";
+
+export function rememberAuthEmailFlow(flow: AuthEmailFlow): void {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(AUTH_FLOW_STORAGE_KEY, flow);
+}
+
+export function consumeAuthEmailFlow(): AuthEmailFlow | null {
+  if (typeof window === "undefined") return null;
+  const value = window.sessionStorage.getItem(AUTH_FLOW_STORAGE_KEY);
+  window.sessionStorage.removeItem(AUTH_FLOW_STORAGE_KEY);
+  if (value === "recovery" || value === "email_change" || value === "signup") {
+    return value;
+  }
+  return null;
+}
+
+export function peekAuthEmailFlowFromLocation(): AuthEmailFlow | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const type = (params.get("type") || hashParams.get("type") || "").toLowerCase();
+    if (type === "recovery") return "recovery";
+    if (type === "email_change" || type === "email_change_current" || type === "email_change_new") {
+      return "email_change";
+    }
+    if (type === "signup" || type === "invite") return "signup";
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
 
 export function isSafeInternalAuthPath(value: string | null | undefined): value is string {
   if (!value) return false;
@@ -99,10 +136,41 @@ export function getEmailConfirmationRedirectTo(): string {
   return getGoogleOAuthRedirectTo();
 }
 
+/**
+ * Password recovery + email-change confirmation redirect.
+ * Must be listed under Supabase Auth → Redirect URLs.
+ */
+export function getPasswordRecoveryRedirectTo(): string {
+  return getGoogleOAuthRedirectTo();
+}
+
+export function getEmailChangeRedirectTo(): string {
+  return getGoogleOAuthRedirectTo();
+}
+
 export function mapOAuthCallbackError(raw: string | null | undefined): string {
   const normalized = (raw ?? "").toLowerCase();
   if (!normalized) {
     return "Sign-in could not be completed. Please try again.";
+  }
+  if (
+    normalized.includes("otp_expired") ||
+    normalized.includes("expired") ||
+    normalized.includes("token has expired") ||
+    normalized.includes("flow_state_expired")
+  ) {
+    return "This link has expired. Request a new email and try again.";
+  }
+  if (
+    normalized.includes("otp_disabled") ||
+    normalized.includes("invalid") ||
+    normalized.includes("token not found") ||
+    normalized.includes("flow_state_not_found")
+  ) {
+    return "This link is invalid or was already used. Request a new email if you still need access.";
+  }
+  if (normalized.includes("email_exists") || normalized.includes("already been registered")) {
+    return "Unable to complete this email change. Try a different address or sign in.";
   }
   if (
     normalized.includes("access_denied") ||

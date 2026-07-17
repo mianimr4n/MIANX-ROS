@@ -20,8 +20,11 @@ import {
   type AuthMeResponse,
 } from "@/lib/auth-utils";
 import {
+  getEmailChangeRedirectTo,
   getEmailConfirmationRedirectTo,
   getGoogleOAuthRedirectTo,
+  getPasswordRecoveryRedirectTo,
+  rememberAuthEmailFlow,
   rememberAuthNextPath,
 } from "@/lib/auth-redirect";
 import { normalizePakistaniMobileE164 } from "@/lib/phone";
@@ -57,6 +60,26 @@ interface AuthContextType {
   signInWithGoogle: (options?: { next?: string | null }) => Promise<GoogleSignInResult>;
   /** Rate-limited resend of signup confirmation email (never enumerates accounts). */
   resendConfirmationEmail: (email: string) => Promise<ActionResult>;
+  /**
+   * Request a password-reset email. Always succeeds from the UI perspective when the
+   * request is accepted — never reveals whether the email exists.
+   */
+  requestPasswordReset: (email: string) => Promise<ActionResult>;
+  /**
+   * Set a new Telepizza password after opening a recovery link (authenticated recovery session).
+   */
+  completePasswordReset: (input: {
+    password: string;
+    confirmPassword: string;
+  }) => Promise<ActionResult>;
+  /**
+   * Request an email change on the current auth user. Confirmation is sent by Supabase.
+   * Requires current Telepizza password when an email identity already exists.
+   */
+  requestEmailChange: (input: {
+    newEmail: string;
+    currentPassword?: string;
+  }) => Promise<ActionResult>;
   /**
    * Attach or change Telepizza email/password on the current Supabase user (no second auth user).
    * OAuth-only first-time set: password + confirm only.
@@ -243,6 +266,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
       }
 
+      rememberAuthEmailFlow("signup");
+
       const { data, error } = await supabase.auth.signUp({
         email: validated.email,
         password: validated.password,
@@ -282,6 +307,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     }
 
+    rememberAuthEmailFlow("signup");
+
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: normalized,
@@ -297,6 +324,120 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Always generic — never reveal whether the email exists or is already confirmed.
     return { ok: true };
   }, []);
+
+  const requestPasswordReset = useCallback(async (email: string): Promise<ActionResult> => {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+      return { ok: false, message: "Enter a valid email address." };
+    }
+
+    const supabase = getSupabaseClient();
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        ok: false,
+        message: "Authentication is not configured. Please try again later.",
+      };
+    }
+
+    rememberAuthEmailFlow("recovery");
+    rememberAuthNextPath("/reset-password");
+
+    const { error } = await supabase.auth.resetPasswordForEmail(normalized, {
+      redirectTo: getPasswordRecoveryRedirectTo(),
+    });
+
+    if (error) {
+      // Still return ok for common "user not found" style failures to avoid enumeration.
+      const mapped = mapSupabaseAuthError(error.message);
+      if (mapped === genericAuthErrorMessage()) {
+        return { ok: true };
+      }
+      return { ok: false, message: mapped };
+    }
+
+    return { ok: true };
+  }, []);
+
+  const completePasswordReset = useCallback(
+    async (input: { password: string; confirmPassword: string }): Promise<ActionResult> => {
+      const supabase = getSupabaseClient();
+      if (!supabase || !isSupabaseConfigured || !session?.user) {
+        return {
+          ok: false,
+          message: "This reset link is invalid or expired. Request a new password reset email.",
+        };
+      }
+
+      if (input.password !== input.confirmPassword) {
+        return { ok: false, message: "Passwords do not match." };
+      }
+
+      const strength = validatePasswordStrength(input.password);
+      if (!strength.ok) {
+        return strength;
+      }
+
+      const { data, error } = await supabase.auth.updateUser({ password: input.password });
+      if (error) {
+        return { ok: false, message: mapSupabaseAuthError(error.message) };
+      }
+      if (data.user) setUser(data.user);
+      return { ok: true };
+    },
+    [session],
+  );
+
+  const requestEmailChange = useCallback(
+    async (input: { newEmail: string; currentPassword?: string }): Promise<ActionResult> => {
+      const supabase = getSupabaseClient();
+      if (!supabase || !isSupabaseConfigured || !session?.user) {
+        return { ok: false, message: "Sign in again to change your email." };
+      }
+
+      const newEmail = input.newEmail.trim().toLowerCase();
+      if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+        return { ok: false, message: "Enter a valid email address." };
+      }
+
+      const currentEmail = session.user.email?.trim().toLowerCase() ?? "";
+      if (currentEmail && newEmail === currentEmail) {
+        return { ok: false, message: "Enter a different email address than your current one." };
+      }
+
+      // Prove Telepizza password ownership when email/password is already attached.
+      if (hasEmailIdentity(session.user)) {
+        const current = input.currentPassword?.trim() ?? "";
+        if (!current) {
+          return {
+            ok: false,
+            message: "Enter your current Telepizza password to change your email.",
+          };
+        }
+        const { error: verifyError } = await supabase.auth.signInWithPassword({
+          email: currentEmail,
+          password: current,
+        });
+        if (verifyError) {
+          return { ok: false, message: genericAuthErrorMessage() };
+        }
+      }
+
+      rememberAuthEmailFlow("email_change");
+      rememberAuthNextPath("/account#security");
+
+      const { data, error } = await supabase.auth.updateUser(
+        { email: newEmail },
+        { emailRedirectTo: getEmailChangeRedirectTo() },
+      );
+
+      if (error) {
+        return { ok: false, message: mapSupabaseAuthError(error.message) };
+      }
+      if (data.user) setUser(data.user);
+      return { ok: true };
+    },
+    [session],
+  );
 
   const signIn = useCallback(
     async (input: { email: string; password: string }): Promise<SignInResult> => {
@@ -519,6 +660,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn,
       signInWithGoogle,
       resendConfirmationEmail,
+      requestPasswordReset,
+      completePasswordReset,
+      requestEmailChange,
       setPassword,
       updateProfile,
       signOut,
@@ -534,6 +678,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn,
       signInWithGoogle,
       resendConfirmationEmail,
+      requestPasswordReset,
+      completePasswordReset,
+      requestEmailChange,
       setPassword,
       updateProfile,
       signOut,

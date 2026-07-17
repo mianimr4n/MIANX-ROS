@@ -139,10 +139,28 @@ export function mapSupabaseAuthError(message: string | undefined): string {
   if (
     normalized.includes("error sending confirmation") ||
     normalized.includes("error sending magic link") ||
+    normalized.includes("error sending recovery") ||
     normalized.includes("unable to send") ||
     normalized.includes("smtp")
   ) {
-    return "We could not send the confirmation email right now. Check spam later or try Resend Email.";
+    return "We could not send the email right now. Check spam later or try again in a few minutes.";
+  }
+
+  if (
+    normalized.includes("otp_expired") ||
+    normalized.includes("token has expired") ||
+    normalized.includes("flow_state_expired") ||
+    (normalized.includes("expired") && normalized.includes("link"))
+  ) {
+    return "This link has expired. Request a new email and try again.";
+  }
+
+  if (
+    normalized.includes("same email") ||
+    normalized.includes("email address is the same") ||
+    normalized.includes("new email is the same")
+  ) {
+    return "Enter a different email address than your current one.";
   }
 
   if (

@@ -43,7 +43,7 @@ type AccountSection =
   | "notifications";
 
 const NAV_ITEMS: Array<{ id: AccountSection; label: string; icon: typeof LayoutDashboard }> = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "overview", label: "Dashboard", icon: LayoutDashboard },
   { id: "profile", label: "Profile", icon: UserRound },
   { id: "addresses", label: "Addresses", icon: MapPin },
   { id: "security", label: "Security", icon: Shield },
@@ -60,7 +60,16 @@ function sectionFromHash(): AccountSection {
 }
 
 export default function Account() {
-  const { profile, user, isAuthenticated, isLoading, signOut, updateProfile, setPassword } = useAuth();
+  const {
+    profile,
+    user,
+    isAuthenticated,
+    isLoading,
+    signOut,
+    updateProfile,
+    setPassword,
+    requestEmailChange,
+  } = useAuth();
 
   const [section, setSection] = useState<AccountSection>(sectionFromHash);
 
@@ -77,6 +86,12 @@ export default function Account() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordNotice, setPasswordNotice] = useState<string | null>(null);
   const [passwordBusy, setPasswordBusy] = useState(false);
+
+  const [newEmail, setNewEmail] = useState("");
+  const [emailChangePassword, setEmailChangePassword] = useState("");
+  const [emailChangeError, setEmailChangeError] = useState<string | null>(null);
+  const [emailChangeNotice, setEmailChangeNotice] = useState<string | null>(null);
+  const [emailChangeBusy, setEmailChangeBusy] = useState(false);
 
   const [addresses, setAddresses] = useState<SavedCustomerAddress[]>([]);
   const [addressLabel, setAddressLabel] = useState("Home");
@@ -217,6 +232,30 @@ export default function Account() {
     }
   }
 
+  async function handleEmailChange(event: React.FormEvent) {
+    event.preventDefault();
+    if (emailChangeBusy) return;
+    setEmailChangeError(null);
+    setEmailChangeNotice(null);
+    setEmailChangeBusy(true);
+    try {
+      const result = await requestEmailChange({
+        newEmail,
+        currentPassword: emailPasswordAvailable ? emailChangePassword : undefined,
+      });
+      if (!result.ok) {
+        setEmailChangeError(result.message);
+        return;
+      }
+      setEmailChangePassword("");
+      setEmailChangeNotice(
+        "Check your inbox (and spam) to confirm the new email. Until confirmed, keep using your current address to sign in.",
+      );
+    } finally {
+      setEmailChangeBusy(false);
+    }
+  }
+
   function handleAddAddress(event: React.FormEvent) {
     event.preventDefault();
     setAddressError(null);
@@ -314,7 +353,7 @@ export default function Account() {
             {section === "overview" ? (
               <section className="rounded-3xl border border-border bg-white p-6 space-y-5">
                 <div>
-                  <h2 className="font-bold text-lg">Overview</h2>
+                  <h2 className="font-bold text-lg">Dashboard</h2>
                   <p className="text-sm text-muted-foreground mt-1">
                     Your Telepizza customer hub — profile, saved addresses, sign-in methods, and
                     orders in one place.
@@ -432,7 +471,18 @@ export default function Account() {
                     className="rounded-2xl bg-muted/40"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Email comes from your sign-in method and cannot be edited here.
+                    Email comes from your sign-in method. To change it securely, use Security → Change
+                    email (confirmation required).
+                  </p>
+                  <p className="text-xs font-[var(--font-accent)] font-semibold text-brand-charcoal">
+                    Email status:{" "}
+                    {user.email_confirmed_at ? "Verified" : "Unverified — confirm via email link"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Provider:{" "}
+                    {[googleConnected ? "Google" : null, emailPasswordAvailable ? "Email/password" : null]
+                      .filter(Boolean)
+                      .join(" · ") || "Unknown"}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -787,6 +837,81 @@ export default function Account() {
                     A verified email is required before setting a password.
                   </p>
                 )}
+
+                <form
+                  onSubmit={(event) => void handleEmailChange(event)}
+                  className="space-y-4 border-t border-border pt-4"
+                  noValidate
+                >
+                  <h3 className="font-semibold">Change email</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Updates the same Supabase auth user (no duplicate account). You must confirm the
+                    new address by email before it becomes active. With Secure Email Change enabled
+                    in Supabase, your current inbox may also need to approve the change.
+                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="newEmail">New email</Label>
+                    <Input
+                      id="newEmail"
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => {
+                        setNewEmail(e.target.value);
+                        setEmailChangeError(null);
+                      }}
+                      className="rounded-2xl"
+                      disabled={emailChangeBusy}
+                      autoComplete="email"
+                      placeholder="new@email.com"
+                    />
+                  </div>
+                  {emailPasswordAvailable ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="emailChangePassword">Current Telepizza password</Label>
+                      <Input
+                        id="emailChangePassword"
+                        type="password"
+                        value={emailChangePassword}
+                        onChange={(e) => {
+                          setEmailChangePassword(e.target.value);
+                          setEmailChangeError(null);
+                        }}
+                        className="rounded-2xl"
+                        disabled={emailChangeBusy}
+                        autoComplete="current-password"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Never enter your Google password — only the Telepizza password you set for
+                        this account.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Google-only accounts can request an email change while signed in; confirm both
+                      inboxes if Secure Email Change is on.
+                    </p>
+                  )}
+                  {emailChangeError ? (
+                    <p className="text-sm text-brand-red" role="alert">
+                      {emailChangeError}
+                    </p>
+                  ) : null}
+                  {emailChangeNotice ? (
+                    <p className="text-sm text-emerald-700">{emailChangeNotice}</p>
+                  ) : null}
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    className="rounded-2xl font-semibold"
+                    disabled={emailChangeBusy || !newEmail.trim()}
+                  >
+                    {emailChangeBusy ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Send confirmation"
+                    )}
+                  </Button>
+                </form>
               </section>
             ) : null}
 

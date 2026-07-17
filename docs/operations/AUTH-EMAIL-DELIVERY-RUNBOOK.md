@@ -1,11 +1,11 @@
-# Auth email delivery runbook (customer confirmation)
+# Auth email delivery runbook (customer confirmation + recovery)
 
-Operations checklist when customers report missing signup confirmation emails.
+Operations checklist when customers report missing signup confirmation, password reset, or email-change emails.
 
-**Scope:** Supabase Auth email confirmation for customer email/password signup.  
+**Scope:** Supabase Auth emails for customer email/password signup, confirmation resend, password recovery, and email change.  
 **Do not** commit SMTP passwords, API keys, or dashboard secrets to this repository.
 
-> **Owner required (app cannot fix delivery):** Configure custom SMTP + SPF/DKIM/DMARC on your sender domain, then verify Redirect URLs include `/auth/callback`. Until that is done, confirmation emails may never arrive or land in spam even when the website UX (Account Created / Resend / Open Gmail) works correctly.
+> **Owner required (app cannot fix delivery):** Configure custom SMTP + SPF/DKIM/DMARC on your sender domain, then verify Redirect URLs include `/auth/callback`. Until that is done, auth emails may never arrive or land in spam even when the website UX (Account Created / Resend / Forgot password / Open Gmail) works correctly.
 
 ---
 
@@ -18,7 +18,11 @@ Operations checklist when customers report missing signup confirmation emails.
 - [ ] DMARC policy published
 - [ ] Site URL = production website origin
 - [ ] Redirect URLs include production + local `/auth/callback`
+- [ ] Confirm email enabled for signup
+- [ ] Secure password change enabled (requires current Telepizza password for changes)
+- [ ] Secure email change enabled (dual confirmation preferred for production)
 - [ ] Test signup to a fresh mailbox; Auth Logs show send success
+- [ ] Test forgot-password to a fresh mailbox; link lands on `/auth/callback` → `/reset-password`
 - [ ] No SMTP credentials stored in git
 
 ---
@@ -31,11 +35,19 @@ Operations checklist when customers report missing signup confirmation emails.
 | Confirmation required | No session until email is confirmed; UI shows **Account Created**, the email address, Resend Email, and Open Gmail |
 | Resend | Rate-limited “Resend Email” via `supabase.auth.resend({ type: "signup" })` (client cooldown ~60s) |
 | Login before confirm | Sign-in fails with a safe “confirm your email” message — never reported as logged in |
+| Forgot password | `resetPasswordForEmail` → always shows generic “if an account exists…” (no enumeration) |
+| Reset password | Recovery link → `/auth/callback` → `/reset-password` → `updateUser({ password })` on same auth user |
+| Email change | Account → Security → `updateUser({ email })` with confirmation; Telepizza password required when email identity exists |
 | Google OAuth | Separate path — no confirmation email; never asks for a Google password |
+| Expired / invalid links | Callback maps `otp_expired` / invalid tokens to safe “request a new email” copy |
 
 Safe confirmation copy (website):
 
 > Account Created — We sent a confirmation link to {email}. Didn’t receive it? Resend Email / Open Gmail.
+
+Safe recovery copy (website):
+
+> If an account exists for that address, we sent a reset link.
 
 Application code **cannot** fix SMTP delivery. If Auth Logs show a successful send and the customer still has nothing, treat it as provider/DNS reputation (§4–§5).
 
@@ -44,9 +56,11 @@ Application code **cannot** fix SMTP delivery. If Auth Logs show a successful se
 ## 2. Supabase Auth Logs check
 
 1. Open Supabase Dashboard → project → **Authentication** → **Logs** (or **Logs** → Auth).
-2. Filter around the customer signup / resend timestamp.
+2. Filter around the customer signup / resend / recovery / email-change timestamp.
 3. Look for:
    - `user_confirmation_requested` / signup events
+   - recovery / password reset events
+   - email change confirmation events
    - mailer / SMTP send success vs failure
    - `over_email_send_rate_limit` / 429-class errors
 4. If Auth never attempted a send, fix signup configuration (confirm email enabled, redirect allowlist) before blaming SMTP.
@@ -70,14 +84,14 @@ Do **not** tell the customer whether another arbitrary email exists in the syste
 
 ## 4. Custom SMTP required for production
 
-Supabase **default** mailer is for development / low volume. It is rate-limited and not suitable as the sole production confirmation path.
+Supabase **default** mailer is for development / low volume. It is rate-limited and not suitable as the sole production confirmation / recovery path.
 
 **Owner action (dashboard checklist):**
 
 - [ ] Authentication → **SMTP Settings** (or Project Settings → Auth → SMTP)
 - [ ] Production provider configured (Resend, Postmark, SendGrid, Amazon SES, etc.)
 - [ ] Verified sender domain (see §5)
-- [ ] Test confirmation sent from a fresh test mailbox
+- [ ] Test confirmation + recovery sent from a fresh test mailbox
 - [ ] Auth Logs show SMTP send success (not default-mailer throttling)
 
 Never paste SMTP credentials into git, PR descriptions, or chat logs that are committed.
@@ -93,7 +107,7 @@ Never paste SMTP credentials into git, PR descriptions, or chat logs that are co
 | DMARC | [ ] `_dmarc` policy aligned with From domain | Policy alignment for the From domain |
 | Matching From domain | [ ] Prefer `noreply@yourdomain` over shared Supabase default | Consistent branding + deliverability |
 
-Until DNS is verified, confirmation mail may land in spam or be dropped. The website cannot work around this.
+Until DNS is verified, confirmation / recovery mail may land in spam or be dropped. The website cannot work around this.
 
 ---
 
@@ -113,14 +127,16 @@ Actions:
 
 ---
 
-## 7. Resend test (safe)
+## 7. Resend / recovery test (safe)
 
 1. Register a **new** test mailbox you control (or use plus-addressing).
 2. Confirm UI shows **Account Created** with the email address (no auto-login when confirmation is required).
 3. Wait for the Resend cooldown, then click **Resend Email**.
 4. Optionally click **Open Gmail** and confirm the message arrived (inbox or spam).
 5. Open the link → lands on `/auth/callback` → session established → safe internal redirect.
-6. Confirm Auth Logs show the resend attempt.
+6. From Login → Forgot password → confirm generic success copy (never “email not found”).
+7. Open recovery link → `/reset-password` → set Telepizza password → sign in with email/password.
+8. Confirm Auth Logs show the send attempts.
 
 ---
 
@@ -131,10 +147,12 @@ Actions:
 | Site URL | Production website origin (e.g. `https://telepizza-website.vercel.app`) |
 | Redirect URLs | Include `https://telepizza-website.vercel.app/auth/callback` and local `http://localhost:3000/auth/callback` (and `:5173` if used) |
 | Link in email | Points at allowlisted `/auth/callback` (or Supabase verify URL that redirects there) |
-| Callback page | Handles PKCE / session; maps cancel/errors safely; never open-redirects |
-| `emailRedirectTo` | Website always sets confirmation + resend redirect to `/auth/callback` |
+| Callback page | Handles PKCE / session; maps cancel/expired/invalid errors safely; never open-redirects |
+| Recovery | Routes authenticated recovery sessions to `/reset-password` |
+| Email change | Routes confirmed change back to Account → Security |
+| `emailRedirectTo` | Website always sets confirmation / resend / recovery / email-change redirect to `/auth/callback` |
 
-Website helpers: `getEmailConfirmationRedirectTo()` / `getGoogleOAuthRedirectTo()` in `apps/website/client/src/lib/auth-redirect.ts`.
+Website helpers: `getEmailConfirmationRedirectTo()` / `getPasswordRecoveryRedirectTo()` / `getEmailChangeRedirectTo()` / `getGoogleOAuthRedirectTo()` in `apps/website/client/src/lib/auth-redirect.ts`.
 
 ---
 
@@ -146,7 +164,9 @@ Website helpers: `getEmailConfirmationRedirectTo()` / `getGoogleOAuthRedirectTo(
 | Send attempted, customer empty + spam empty | Default SMTP / domain reputation | Custom SMTP + DNS (§4–§5) |
 | Rate-limit errors | Too many sends / default mailer | Wait; move to custom SMTP |
 | Link opens but session fails | Redirect URL not allowlisted / wrong Site URL | Fix Redirect URLs + Site URL |
+| Link says expired | OTP / recovery token TTL exceeded | Ask customer to request a fresh email |
 | Customer already confirmed | Resend may no-op | Ask them to sign in; keep messages generic |
+| Email change not applied | Secure email change requires both inboxes | Confirm old + new messages |
 
 ---
 
