@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "wouter";
 import {
   Bell,
@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import {
+  AUTH_MIN_PASSWORD_LENGTH,
   AUTH_PASSWORD_REQUIREMENTS_COPY,
   hasEmailIdentity,
   hasGoogleIdentity,
@@ -44,6 +45,8 @@ type AccountSection =
   | "orders"
   | "loyalty"
   | "notifications";
+
+type StatusTone = "success" | "warning" | "neutral";
 
 const NAV_ITEMS: Array<{ id: AccountSection; label: string; icon: typeof LayoutDashboard }> = [
   { id: "overview", label: "Dashboard", icon: LayoutDashboard },
@@ -120,6 +123,30 @@ export default function Account() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
+  function resetAddressForm() {
+    setAddressLine1("");
+    setAddressArea("");
+    setAddressNotes("");
+    setAddressLabel("Home");
+    setAddressCity("Multan");
+    setAddressIsDefault(false);
+    setEditingAddressId(null);
+    setShowAddressForm(false);
+  }
+
+  useEffect(() => {
+    if (!showAddressForm) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        resetAddressForm();
+        setAddressError(null);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showAddressForm]);
+
   const ownerKey = user?.id || profile?.email || user?.email || "";
 
   useEffect(() => {
@@ -185,13 +212,25 @@ export default function Account() {
   const emailPasswordAvailable = hasEmailIdentity(user);
   const firstTimePassword = isFirstTimePasswordAttach(user);
   const canSetPassword = Boolean(email);
-  const phoneStatus = profile?.phone
+  const emailVerified = Boolean(user.email_confirmed_at);
+  const phoneStatusLabel = profile?.phone
     ? profile.phoneVerified
       ? "Verified"
-      : "Unverified"
+      : "Verification Pending"
     : "Not set";
+  const phoneStatusTone: StatusTone = profile?.phone
+    ? profile.phoneVerified
+      ? "success"
+      : "warning"
+    : "neutral";
+  const phoneStatusBadgeLabel = profile?.phone
+    ? profile.phoneVerified
+      ? "Phone ✓ Verified"
+      : "Phone ⚠ Verification Pending"
+    : "Phone Not Set";
+  const passwordChecks = getPasswordRequirementChecks(password);
 
-  async function handleSaveProfile(event: React.FormEvent) {
+  async function handleSaveProfile(event: FormEvent) {
     event.preventDefault();
     if (profileBusy) return;
     setProfileError(null);
@@ -216,7 +255,7 @@ export default function Account() {
     }
   }
 
-  async function handleSetPassword(event: React.FormEvent) {
+  async function handleSetPassword(event: FormEvent) {
     event.preventDefault();
     if (passwordBusy) return;
     setPasswordError(null);
@@ -245,7 +284,7 @@ export default function Account() {
     }
   }
 
-  async function handleEmailChange(event: React.FormEvent) {
+  async function handleEmailChange(event: FormEvent) {
     event.preventDefault();
     if (emailChangeBusy) return;
     setEmailChangeError(null);
@@ -269,18 +308,7 @@ export default function Account() {
     }
   }
 
-  function resetAddressForm() {
-    setAddressLine1("");
-    setAddressArea("");
-    setAddressNotes("");
-    setAddressLabel("Home");
-    setAddressCity("Multan");
-    setAddressIsDefault(false);
-    setEditingAddressId(null);
-    setShowAddressForm(false);
-  }
-
-  function handleSaveAddress(event: React.FormEvent) {
+  function handleSaveAddress(event: FormEvent) {
     event.preventDefault();
     setAddressError(null);
     setAddressNotice(null);
@@ -302,14 +330,12 @@ export default function Account() {
     setAddresses(listSavedAddresses(ownerKey));
     resetAddressForm();
     setAddressNotice(
-      editingAddressId
-        ? "Address updated on this device."
-        : "Address saved on this device for faster checkout.",
+      editingAddressId ? "Address updated." : "Address saved for faster checkout.",
     );
   }
 
   function handleRemoveAddress(addressId: string) {
-    if (!window.confirm("Delete this saved address from this device?")) return;
+    if (!window.confirm("Delete this saved address?")) return;
     removeSavedAddress(ownerKey, addressId);
     setAddresses(listSavedAddresses(ownerKey));
     setAddressNotice("Address removed.");
@@ -337,22 +363,34 @@ export default function Account() {
   return (
     <div className="min-h-screen bg-background py-10">
       <div className="container max-w-5xl space-y-6">
-        <div className="rounded-3xl border border-border bg-white p-6 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
-              Account Center
-            </p>
-            <h1 className="brand-heading text-3xl mb-1">{displayName}</h1>
-            {email ? <p className="text-sm text-muted-foreground">{email}</p> : null}
-            {profile?.phone ? (
-              <p className="text-sm text-muted-foreground mt-1">
-                {profile.phone} · Phone {phoneStatus}
+        <div className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 space-y-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                Account Center
               </p>
-            ) : (
-              <p className="text-sm text-muted-foreground mt-1">
-                Add a phone number in Profile for faster checkout.
-              </p>
-            )}
+              <h1 className="brand-heading text-2xl sm:text-3xl mb-1 break-words">{displayName}</h1>
+              {email ? (
+                <p className="text-sm text-muted-foreground break-all">{email}</p>
+              ) : null}
+              {profile?.phone ? (
+                <p className="text-sm text-muted-foreground mt-1">{profile.phone}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Add a phone number in Profile for faster checkout.
+                </p>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2" aria-label="Verification status">
+              <StatusBadge
+                label={emailVerified ? "Email ✓ Verified" : "Email ⚠ Verification Pending"}
+                tone={emailVerified ? "success" : "warning"}
+              />
+              <StatusBadge
+                label={phoneStatusBadgeLabel}
+                tone={phoneStatusTone}
+              />
+            </div>
           </div>
           <Button
             variant="outline"
@@ -360,8 +398,9 @@ export default function Account() {
               void signOut();
             }}
             className="rounded-2xl"
+            aria-label="Log out of your Telepizza account"
           >
-            <LogOut className="w-4 h-4 mr-2" />
+            <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
             Logout
           </Button>
         </div>
@@ -369,14 +408,14 @@ export default function Account() {
         <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
           <nav
             aria-label="Account sections"
-            className="rounded-3xl border border-border bg-white p-3 h-fit lg:sticky lg:top-24"
+            className="rounded-3xl border border-border bg-white p-3 h-fit shadow-sm lg:sticky lg:top-24"
           >
-            <ul className="flex lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0">
+            <ul className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:flex lg:flex-col">
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const active = section === item.id;
                 return (
-                  <li key={item.id} className="shrink-0">
+                  <li key={item.id} className="min-w-0">
                     <button
                       type="button"
                       onClick={() => goTo(item.id)}
@@ -387,7 +426,7 @@ export default function Account() {
                       }`}
                       aria-current={active ? "page" : undefined}
                     >
-                      <Icon className="w-4 h-4" />
+                      <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
                       {item.label}
                     </button>
                   </li>
@@ -398,72 +437,101 @@ export default function Account() {
 
           <div className="space-y-6 min-w-0">
             {section === "overview" ? (
-              <section className="rounded-3xl border border-border bg-white p-6 space-y-5">
+              <section className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-5">
                 <div>
                   <h2 className="font-bold text-lg">Dashboard</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Your Telepizza customer hub — profile, saved addresses, sign-in methods, and
-                    orders in one place.
+                    Everything you need to manage orders, addresses, and account details.
                   </p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                  <OverviewTile
-                    title="Active Orders"
-                    body={`${activeOrders.length} in progress`}
+                  <OverviewMetric
+                    title="Recent Orders"
+                    value={String(localOrders.length)}
+                    detail={
+                      localOrders.length === 1
+                        ? "1 recent order"
+                        : `${localOrders.length} recent orders`
+                    }
                     onClick={() => goTo("orders")}
                   />
-                  <OverviewTile
+                  <OverviewMetric
+                    title="Active Orders"
+                    value={String(activeOrders.length)}
+                    detail={
+                      activeOrders.length === 1
+                        ? "1 order in progress"
+                        : `${activeOrders.length} orders in progress`
+                    }
+                    onClick={() => goTo("orders")}
+                  />
+                  <OverviewMetric
                     title="Saved Addresses"
-                    body={
+                    value={String(addresses.length)}
+                    detail={
                       addresses.length > 0
-                        ? `${addresses.length} saved · ${addresses.find((address) => address.isDefault)?.label ?? "default"}`
-                        : "No saved addresses yet."
+                        ? `Default: ${addresses.find((address) => address.isDefault)?.label ?? "—"}`
+                        : "No saved addresses yet"
                     }
                     onClick={() => goTo("addresses")}
                   />
-                  <OverviewTile
-                    title="Recent Orders"
-                    body={
-                      localOrders.length > 0
-                        ? `${localOrders.length} recent on this device`
-                        : "No orders yet — browse the menu to start."
+                  <OverviewMetric
+                    title="Phone"
+                    value={phoneStatusLabel}
+                    detail={
+                      profile?.phone
+                        ? profile.phoneVerified
+                          ? "Verified for your account"
+                          : "Unverified until WhatsApp OTP launches"
+                        : "Add a number in Profile"
                     }
-                    onClick={() => goTo("orders")}
+                    tone={phoneStatusTone}
+                    onClick={() => goTo("profile")}
                   />
-                  <OverviewTile
-                    title="Account Security"
-                    body={`${user.email_confirmed_at ? "Email verified" : "Email unverified"} · Phone ${phoneStatus.toLowerCase()}`}
+                  <OverviewMetric
+                    title="Email"
+                    value={emailVerified ? "Verified" : "Unverified"}
+                    detail={
+                      emailVerified
+                        ? "Confirmed for this account"
+                        : "Confirm via the link sent to your inbox"
+                    }
+                    tone={emailVerified ? "success" : "warning"}
                     onClick={() => goTo("security")}
                   />
-                  <OverviewTile
-                    title="Last Order"
-                    body={
-                      lastOrder
-                        ? `${lastOrder.orderNumber} · ${lastOrder.branchName}`
-                        : "No previous order."
-                    }
-                    onClick={() => goTo("orders")}
-                  />
-                  <OverviewTile
+                  <OverviewMetric
                     title="Loyalty"
-                    body="Premium Coming Soon"
+                    value="Coming Soon"
+                    detail="Telepizza Rewards launching soon"
                     onClick={() => goTo("loyalty")}
                   />
                 </div>
+                {lastOrder ? (
+                  <p className="text-sm text-muted-foreground">
+                    Last order:{" "}
+                    <button
+                      type="button"
+                      onClick={() => goTo("orders")}
+                      className="font-semibold text-brand-charcoal underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-sm"
+                    >
+                      {lastOrder.orderNumber}
+                    </button>{" "}
+                    · {lastOrder.branchName}
+                  </p>
+                ) : null}
               </section>
             ) : null}
 
             {section === "profile" ? (
               <form
                 onSubmit={(event) => void handleSaveProfile(event)}
-                className="rounded-3xl border border-border bg-white p-6 space-y-4"
+                className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-5"
                 noValidate
               >
                 <div>
                   <h2 className="font-bold text-lg">Profile</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    One customer profile for Google and email sign-in. Phone stays Unverified until
-                    WhatsApp OTP launches.
+                    Keep your contact details up to date for faster ordering and delivery.
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -493,9 +561,17 @@ export default function Account() {
                     Email comes from your sign-in method. To change it securely, use Security → Change
                     email (confirmation required).
                   </p>
-                  <p className="text-xs font-[var(--font-accent)] font-semibold text-brand-charcoal">
-                    Email status:{" "}
-                    {user.email_confirmed_at ? "Verified" : "Unverified — confirm via email link"}
+                  <p className="text-xs font-[var(--font-accent)] font-semibold text-brand-charcoal flex flex-wrap items-center gap-2">
+                    <span>Email status:</span>
+                    <StatusBadge
+                      label={emailVerified ? "✓ Verified" : "⚠ Verification Pending"}
+                      tone={emailVerified ? "success" : "warning"}
+                    />
+                    {!emailVerified ? (
+                      <span className="font-normal text-muted-foreground">
+                        — confirm via email link
+                      </span>
+                    ) : null}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Provider:{" "}
@@ -523,12 +599,15 @@ export default function Account() {
                     Pakistani mobiles normalize as 03XXXXXXXXX → +923XXXXXXXXX. Checkout still
                     collects phone when placing an order.
                   </p>
-                  <p className="text-xs font-[var(--font-accent)] font-semibold text-brand-charcoal">
-                    Phone status: {phoneStatus}
-                    {profile?.phone && !profile.phoneVerified
-                      ? " — verification by WhatsApp OTP is not available yet"
-                      : null}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-[var(--font-accent)] font-semibold text-brand-charcoal">
+                    <span>Phone status:</span>
+                    <StatusBadge label={phoneStatusBadgeLabel} tone={phoneStatusTone} />
+                    {profile?.phone && !profile.phoneVerified ? (
+                      <span className="font-normal text-muted-foreground">
+                        — verification by WhatsApp OTP is not available yet
+                      </span>
+                    ) : null}
+                  </div>
                   {profile?.phone && !profile.phoneVerified ? (
                     <Button
                       type="button"
@@ -564,13 +643,12 @@ export default function Account() {
             ) : null}
 
             {section === "addresses" ? (
-              <section className="rounded-3xl border border-border bg-white p-6 space-y-4">
+              <section className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h2 className="font-bold text-lg">Addresses</h2>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Saved on this device for now. No map GPS required — enter the address you use
-                      for delivery.
+                      Keep delivery locations ready for quicker checkout in this browser.
                     </p>
                   </div>
                   {!showAddressForm ? (
@@ -585,18 +663,35 @@ export default function Account() {
                         setAddressNotice(null);
                       }}
                     >
-                      Add address
+                      Add Address
                     </Button>
                   ) : null}
                 </div>
 
                 {addresses.length === 0 && !showAddressForm ? (
-                  <div className="rounded-2xl border border-dashed border-border p-6 text-center">
-                    <MapPin className="w-8 h-8 text-brand-red mx-auto mb-2" />
-                    <p className="font-semibold">No saved addresses yet</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Add Home, Office, or another Multan delivery address for faster checkout.
-                    </p>
+                  <div className="rounded-2xl border border-dashed border-border px-6 py-10 text-center space-y-4">
+                    <MapPin className="w-14 h-14 text-brand-red mx-auto" aria-hidden="true" />
+                    <div>
+                      <p className="font-semibold text-lg">No saved addresses yet</p>
+                      <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+                        Add Home, Office, or another Multan delivery address for faster checkout.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="lg"
+                      className="rounded-2xl brand-gradient text-white font-semibold px-8"
+                      onClick={() => {
+                        setShowAddressForm(true);
+                        setEditingAddressId(null);
+                        setAddressIsDefault(true);
+                        setAddressError(null);
+                        setAddressNotice(null);
+                      }}
+                      aria-label="Add your first delivery address"
+                    >
+                      Add Address
+                    </Button>
                   </div>
                 ) : null}
 
@@ -672,7 +767,7 @@ export default function Account() {
                         id="addressLabel"
                         value={addressLabel}
                         onChange={(e) => setAddressLabel(e.target.value as AddressLabel)}
-                        className="flex h-10 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm"
+                        className="flex h-10 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
                       >
                         <option value="Home">Home</option>
                         <option value="Office">Office</option>
@@ -774,7 +869,7 @@ export default function Account() {
             ) : null}
 
             {section === "security" ? (
-              <section className="rounded-3xl border border-border bg-white p-6 space-y-4">
+              <section className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-5">
                 <div>
                   <h2 className="font-bold text-lg">Security & login methods</h2>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -784,16 +879,24 @@ export default function Account() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   <SecurityFact
                     label="Email"
-                    value={user.email_confirmed_at ? "Verified" : "Unverified"}
+                    value={
+                      <StatusBadge
+                        label={emailVerified ? "Verified" : "Unverified"}
+                        tone={emailVerified ? "success" : "warning"}
+                      />
+                    }
                   />
                   <SecurityFact
                     label="Phone"
                     value={
-                      profile?.phone
-                        ? profile.phoneVerified
-                          ? "Verified"
-                          : "Unverified — verification coming soon"
-                        : "Not set"
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusBadge label={phoneStatusBadgeLabel} tone={phoneStatusTone} />
+                        {profile?.phone && !profile.phoneVerified ? (
+                          <span className="text-xs text-muted-foreground font-normal">
+                            Verification coming soon
+                          </span>
+                        ) : null}
+                      </div>
                     }
                   />
                   <SecurityFact
@@ -874,6 +977,29 @@ export default function Account() {
                         ? "Attaches a Telepizza password to this same account — never asks for your Google password and does not create a second login."
                         : "Enter your current Telepizza password to change it. Never enter your Google password here."}
                     </p>
+                    <div
+                      className="rounded-2xl border border-border bg-muted/30 p-4 space-y-2"
+                      aria-live="polite"
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Password requirements
+                      </p>
+                      <p className="text-sm text-brand-charcoal">{AUTH_PASSWORD_REQUIREMENTS_COPY}</p>
+                      <ul className="space-y-1.5 text-xs" aria-label="Password strength checklist">
+                        {passwordChecks.map((check) => (
+                          <li
+                            key={check.id}
+                            className={
+                              check.met
+                                ? "text-emerald-700 font-semibold"
+                                : "text-muted-foreground"
+                            }
+                          >
+                            {check.met ? "✓" : "○"} {check.label}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                     {!firstTimePassword ? (
                       <div className="space-y-2">
                         <Label htmlFor="currentPassword">Current password</Label>
@@ -908,12 +1034,16 @@ export default function Account() {
                         />
                         <button
                           type="button"
-                          className="absolute inset-y-0 right-0 px-3 text-muted-foreground"
+                          className="absolute inset-y-0 right-0 rounded-r-2xl px-3 text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-inset"
                           onClick={() => setShowPassword((value) => !value)}
                           aria-label={showPassword ? "Hide password" : "Show password"}
                           disabled={passwordBusy}
                         >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showPassword ? (
+                            <EyeOff className="w-4 h-4" aria-hidden="true" />
+                          ) : (
+                            <Eye className="w-4 h-4" aria-hidden="true" />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -931,7 +1061,6 @@ export default function Account() {
                         disabled={passwordBusy}
                         autoComplete="new-password"
                       />
-                      <p className="text-xs text-muted-foreground">{AUTH_PASSWORD_REQUIREMENTS_COPY}</p>
                     </div>
                     {passwordError ? (
                       <p className="text-sm text-brand-red" role="alert">
@@ -1048,12 +1177,17 @@ export default function Account() {
             ) : null}
 
             {section === "orders" ? (
-              <section className="rounded-3xl border border-border bg-white p-6 space-y-4">
+              <section className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-4">
                 <div>
-                  <h2 className="font-bold text-lg">Orders</h2>
+                  <h2 className="font-bold text-lg">Recent Orders</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Orders linked to your saved phone on this device. Full Active / Completed /
-                    Cancelled views open in My Orders.
+                    {!profile?.phone
+                      ? "Add a phone number in Profile so we can match your checkout orders."
+                      : localOrders.length === 0
+                        ? "You have no recent orders yet."
+                        : localOrders.length === 1
+                          ? "You have 1 recent order."
+                          : `You have ${localOrders.length} recent orders.`}
                   </p>
                 </div>
                 {!profile?.phone ? (
@@ -1077,7 +1211,7 @@ export default function Account() {
                     <Package className="w-8 h-8 text-brand-red mx-auto mb-2" aria-hidden="true" />
                     <p className="font-semibold">No orders yet</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      When you place an order with this phone, it will appear here on this device.
+                      When you place an order with this phone, it will appear here.
                     </p>
                     <Link href="/menu">
                       <Button className="mt-4 rounded-2xl brand-gradient text-white font-semibold">
@@ -1120,7 +1254,7 @@ export default function Account() {
                 <div className="flex flex-wrap gap-2">
                   <Link href="/orders">
                     <Button className="rounded-2xl brand-gradient text-white font-semibold">
-                      Open My Orders
+                      View Order History
                     </Button>
                   </Link>
                   <Link href="/menu">
@@ -1133,39 +1267,58 @@ export default function Account() {
             ) : null}
 
             {section === "loyalty" ? (
-              <section className="rounded-3xl border border-border bg-white p-4 sm:p-6 space-y-5">
+              <section className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-5">
                 <div>
-                  <h2 className="font-bold text-lg">Telepizza Loyalty</h2>
+                  <h2 className="font-bold text-lg">Telepizza Rewards</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Premium rewards are coming soon. Points and rewards are not available yet.
+                    A premium loyalty experience is on the way — no points are earned yet.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-dashed border-border p-6 text-center">
-                  <Gift className="w-9 h-9 text-brand-red mx-auto mb-3" aria-hidden="true" />
-                  <h3 className="font-semibold">Premium Coming Soon</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    We will share program details here when rewards launch. Existing orders do not
-                    currently earn points.
-                  </p>
+                <div className="rounded-2xl border border-dashed border-border p-6 sm:p-8 text-center space-y-4">
+                  <Gift className="w-10 h-10 text-brand-red mx-auto" aria-hidden="true" />
+                  <div>
+                    <StatusBadge label="Coming Soon" tone="warning" />
+                    <h3 className="font-semibold text-lg mt-3">Premium Coming Soon</h3>
+                    <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+                      Launching soon with real rewards tied to your Telepizza account.
+                    </p>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-2 text-left max-w-sm mx-auto list-disc pl-5">
+                    <li>Earn points on every eligible order</li>
+                    <li>Redeem rewards on future pizzas and sides</li>
+                    <li>Birthday treats when the program launches</li>
+                    <li>Exclusive offers for Rewards members</li>
+                  </ul>
                 </div>
               </section>
             ) : null}
 
             {section === "notifications" ? (
-              <section className="rounded-3xl border border-border bg-white p-4 sm:p-6 space-y-4">
-                <h2 className="font-bold text-lg">Notifications</h2>
-                <p className="text-sm text-muted-foreground">
-                  Choose how you hear from us when notification preferences become available.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  These settings are not available yet, so no changes can be saved.
-                </p>
-                <div className="space-y-2">
-                  <PreferenceSwitch label="Order Updates" />
-                  <PreferenceSwitch label="Promotions" />
-                  <PreferenceSwitch label="SMS" />
-                  <PreferenceSwitch label="WhatsApp" />
-                  <PreferenceSwitch label="Email" />
+              <section className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-4">
+                <div>
+                  <h2 className="font-bold text-lg">Notifications</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Prefer how you hear from Telepizza. Preference controls are coming soon —
+                    nothing can be saved yet.
+                  </p>
+                </div>
+                <div className="space-y-2" role="group" aria-label="Notification preferences coming soon">
+                  <PreferenceSwitch
+                    label="Order Updates"
+                    description="Status changes from kitchen to delivery"
+                  />
+                  <PreferenceSwitch
+                    label="Promotions"
+                    description="Seasonal deals and limited-time offers"
+                  />
+                  <PreferenceSwitch
+                    label="Delivery Alerts"
+                    description="Rider and arrival updates for your order"
+                  />
+                  <PreferenceSwitch
+                    label="Special Offers"
+                    description="Member-only discounts when Rewards launches"
+                  />
                 </div>
               </section>
             ) : null}
@@ -1176,7 +1329,7 @@ export default function Account() {
   );
 }
 
-function SecurityFact({ label, value }: { label: string; value: string }) {
+function SecurityFact({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="rounded-2xl border border-border p-4 min-w-0">
       <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
@@ -1185,40 +1338,101 @@ function SecurityFact({ label, value }: { label: string; value: string }) {
   );
 }
 
-function PreferenceSwitch({ label }: { label: string }) {
+function StatusBadge({ label, tone }: { label: string; tone: StatusTone }) {
+  const toneClass =
+    tone === "success"
+      ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+      : tone === "warning"
+        ? "bg-amber-50 text-amber-900 border-amber-200"
+        : "bg-muted text-muted-foreground border-border";
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${toneClass}`}
+    >
+      {label}
+    </span>
+  );
+}
+
+function PreferenceSwitch({ label, description }: { label: string; description: string }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-2xl border border-border p-4 text-sm">
-      <div>
+      <div className="min-w-0">
         <div className="font-semibold">{label}</div>
-        <p className="text-xs text-muted-foreground">Coming Soon — not available yet</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+        <p className="text-xs text-amber-800 font-semibold mt-1">Coming Soon — not available yet</p>
       </div>
       <input
         type="checkbox"
         disabled
-        aria-label={`${label} notifications unavailable`}
-        className="h-4 w-4 accent-brand-red"
+        aria-label={`${label}: coming soon, not available yet`}
+        className="h-4 w-4 shrink-0 accent-brand-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
       />
     </div>
   );
 }
 
-function OverviewTile({
+function OverviewMetric({
   title,
-  body,
+  value,
+  detail,
+  tone,
   onClick,
 }: {
   title: string;
-  body: string;
+  value: string;
+  detail: string;
+  tone?: StatusTone;
   onClick: () => void;
 }) {
+  const valueClass =
+    tone === "success"
+      ? "text-emerald-800"
+      : tone === "warning"
+        ? "text-amber-900"
+        : "text-brand-charcoal";
   return (
     <button
       type="button"
       onClick={onClick}
-      className="rounded-2xl border border-border p-4 text-left hover:border-brand-red/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
+      aria-label={`${title}: ${value}. ${detail}`}
+      className="rounded-2xl border border-border p-4 text-left hover:border-brand-red/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 min-w-0"
     >
-      <div className="font-semibold">{title}</div>
-      <p className="text-sm text-muted-foreground mt-1">{body}</p>
+      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </div>
+      <div className={`font-bold text-xl mt-2 break-words ${valueClass}`}>{value}</div>
+      <p className="text-sm text-muted-foreground mt-1">{detail}</p>
     </button>
   );
+}
+
+function getPasswordRequirementChecks(password: string) {
+  return [
+    {
+      id: "length",
+      label: `At least ${AUTH_MIN_PASSWORD_LENGTH} characters`,
+      met: password.length >= AUTH_MIN_PASSWORD_LENGTH,
+    },
+    {
+      id: "upper",
+      label: "One uppercase letter",
+      met: /[A-Z]/.test(password),
+    },
+    {
+      id: "lower",
+      label: "One lowercase letter",
+      met: /[a-z]/.test(password),
+    },
+    {
+      id: "digit",
+      label: "One number",
+      met: /\d/.test(password),
+    },
+    {
+      id: "symbol",
+      label: "One special character",
+      met: /[^A-Za-z0-9]/.test(password),
+    },
+  ] as const;
 }
