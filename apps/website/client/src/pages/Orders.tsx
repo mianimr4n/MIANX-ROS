@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { listLocalOrders, type StoredOrder } from "@/lib/customer-store";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 
 type OrderTab = "active" | "completed" | "cancelled";
@@ -17,8 +18,12 @@ function filterOrders(orders: StoredOrder[], tab: OrderTab): StoredOrder[] {
   return orders.filter((order) => bucketForStatus(order.status) === tab);
 }
 
+const STATUS_STEPS = ["pending", "confirmed", "preparing", "ready", "dispatched", "completed"];
+
 export default function Orders() {
+  const [, navigate] = useLocation();
   const { profile, user, isAuthenticated } = useAuth();
+  const { addItem, setOrderDetails } = useCart();
   const orderKey = profile?.phone || user?.email || user?.id;
   const orders = listLocalOrders(orderKey);
   const [tab, setTab] = useState<OrderTab>("active");
@@ -33,6 +38,31 @@ export default function Orders() {
     }),
     [orders],
   );
+
+  function handleReorder(order: StoredOrder) {
+    if (!order.items.every((item) => item.menuItemSlug)) return;
+    order.items.forEach((item) => {
+      const extrasTotal = (item.extras ?? []).reduce((sum, extra) => sum + extra.price, 0);
+      addItem({
+        id: `${item.menuItemSlug}-${item.variantName ?? "standard"}`,
+        menuSlug: item.menuItemSlug!,
+        name: item.productName,
+        price: Math.max(0, item.unitPrice - extrasTotal),
+        quantity: item.quantity,
+        category: "Reorder",
+        variant: item.variantName,
+        extras: item.extras,
+        instructions: item.instructions,
+      });
+    });
+    setOrderDetails({
+      deliveryMode: order.orderType === "pickup" ? "pickup" : "delivery",
+      deliveryAddress: order.deliveryAddress ?? "",
+      orderInstructions: order.notes ?? "",
+      couponCode: "",
+    });
+    navigate("/checkout");
+  }
 
   if (!isAuthenticated || !user) {
     return (
@@ -110,7 +140,7 @@ export default function Orders() {
         ) : (
           <div className="space-y-4">
             {filtered.map((order) => (
-              <div key={order.id} className="rounded-3xl border border-border bg-white p-5">
+              <div key={order.id} className="rounded-3xl border border-border bg-white p-4 sm:p-5 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
                   <div className="font-[var(--font-accent)] font-bold text-brand-red">
                     {order.orderNumber}
@@ -120,15 +150,68 @@ export default function Orders() {
                 <div className="text-sm text-muted-foreground mb-3">
                   {new Date(order.createdAt).toLocaleString()} · {order.branchName}
                 </div>
-                <div className="flex items-center justify-between">
+                {bucketForStatus(order.status) !== "cancelled" ? (
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                    {STATUS_STEPS.map((step, index) => {
+                      const activeIndex = STATUS_STEPS.indexOf(order.status.toLowerCase());
+                      return (
+                        <div
+                          key={step}
+                          className={`rounded-xl px-2 py-1.5 text-center text-[10px] font-semibold capitalize ${
+                            index <= activeIndex
+                              ? "bg-brand-red text-white"
+                              : "bg-brand-cream text-muted-foreground"
+                          }`}
+                        >
+                          {step}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl bg-muted/50 p-3 text-sm text-muted-foreground">
+                    This order was cancelled.
+                  </div>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                  <div><span className="font-semibold">Branch:</span> {order.branchName}</div>
+                  <div><span className="font-semibold">Payment:</span> Not provided</div>
+                  <div><span className="font-semibold">ETA:</span> Not available</div>
+                </div>
+                <div className="space-y-1 text-sm">
+                  {order.items.map((item, index) => (
+                    <div key={`${item.productName}-${index}`} className="flex justify-between gap-3">
+                      <span>{item.quantity}× {item.productName}{item.variantName ? ` (${item.variantName})` : ""}</span>
+                      <span>Rs {item.totalPrice.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="font-bold">Rs {order.totalAmount.toLocaleString()}</div>
-                  <Link
-                    href={`/track/${encodeURIComponent(order.orderNumber)}?phone=${encodeURIComponent(order.contactPhone)}`}
-                  >
-                    <Button variant="outline" size="sm" className="rounded-2xl">
-                      Track
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="rounded-2xl"
+                      disabled={!order.items.every((item) => item.menuItemSlug)}
+                      title={
+                        order.items.every((item) => item.menuItemSlug)
+                          ? "Add these items to cart"
+                          : "Reorder is unavailable for orders saved before this update"
+                      }
+                      onClick={() => handleReorder(order)}
+                    >
+                      Reorder
                     </Button>
-                  </Link>
+                    <Link
+                      href={`/track/${encodeURIComponent(order.orderNumber)}?phone=${encodeURIComponent(order.contactPhone)}`}
+                    >
+                      <Button variant="outline" size="sm" className="rounded-2xl">
+                        Track
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}

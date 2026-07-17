@@ -29,9 +29,12 @@ import {
   formatSavedAddress,
   listSavedAddresses,
   removeSavedAddress,
+  setDefaultSavedAddress,
+  updateSavedAddress,
+  type AddressLabel,
   type SavedCustomerAddress,
 } from "@/lib/customer-addresses";
-import { listLocalOrders } from "@/lib/customer-store";
+import { getLoyaltyPoints, listLocalOrders } from "@/lib/customer-store";
 
 type AccountSection =
   | "overview"
@@ -63,6 +66,7 @@ export default function Account() {
   const {
     profile,
     user,
+    session,
     isAuthenticated,
     isLoading,
     signOut,
@@ -94,7 +98,7 @@ export default function Account() {
   const [emailChangeBusy, setEmailChangeBusy] = useState(false);
 
   const [addresses, setAddresses] = useState<SavedCustomerAddress[]>([]);
-  const [addressLabel, setAddressLabel] = useState("Home");
+  const [addressLabel, setAddressLabel] = useState<AddressLabel>("Home");
   const [addressLine1, setAddressLine1] = useState("");
   const [addressArea, setAddressArea] = useState("");
   const [addressCity, setAddressCity] = useState("Multan");
@@ -102,6 +106,8 @@ export default function Account() {
   const [addressError, setAddressError] = useState<string | null>(null);
   const [addressNotice, setAddressNotice] = useState<string | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const [addressIsDefault, setAddressIsDefault] = useState(false);
 
   useEffect(() => {
     setFullName(profile?.fullName ?? "");
@@ -126,6 +132,11 @@ export default function Account() {
 
   const orderKey = profile?.phone || user?.email || user?.id;
   const localOrders = useMemo(() => listLocalOrders(orderKey), [orderKey]);
+  const loyaltyPoints = profile?.phone ? getLoyaltyPoints(profile.phone) : 0;
+  const activeOrders = localOrders.filter(
+    (order) => !["completed", "delivered", "cancelled", "canceled"].includes(order.status.toLowerCase()),
+  );
+  const lastOrder = localOrders[0];
 
   function goTo(next: AccountSection) {
     setSection(next);
@@ -256,35 +267,68 @@ export default function Account() {
     }
   }
 
-  function handleAddAddress(event: React.FormEvent) {
-    event.preventDefault();
-    setAddressError(null);
-    setAddressNotice(null);
-    const result = addSavedAddress(ownerKey, {
-      label: addressLabel,
-      line1: addressLine1,
-      area: addressArea,
-      city: addressCity,
-      notes: addressNotes,
-    });
-    if (!result.ok) {
-      setAddressError(result.message);
-      return;
-    }
-    setAddresses(listSavedAddresses(ownerKey));
+  function resetAddressForm() {
     setAddressLine1("");
     setAddressArea("");
     setAddressNotes("");
     setAddressLabel("Home");
     setAddressCity("Multan");
+    setAddressIsDefault(false);
+    setEditingAddressId(null);
     setShowAddressForm(false);
-    setAddressNotice("Address saved on this device for faster checkout later.");
+  }
+
+  function handleSaveAddress(event: React.FormEvent) {
+    event.preventDefault();
+    setAddressError(null);
+    setAddressNotice(null);
+    const input = {
+      label: addressLabel,
+      line1: addressLine1,
+      area: addressArea,
+      city: addressCity,
+      notes: addressNotes,
+      isDefault: addressIsDefault,
+    };
+    const result = editingAddressId
+      ? updateSavedAddress(ownerKey, editingAddressId, input)
+      : addSavedAddress(ownerKey, input);
+    if (!result.ok) {
+      setAddressError(result.message);
+      return;
+    }
+    setAddresses(listSavedAddresses(ownerKey));
+    resetAddressForm();
+    setAddressNotice(
+      editingAddressId
+        ? "Address updated on this device."
+        : "Address saved on this device for faster checkout.",
+    );
   }
 
   function handleRemoveAddress(addressId: string) {
     removeSavedAddress(ownerKey, addressId);
     setAddresses(listSavedAddresses(ownerKey));
     setAddressNotice("Address removed.");
+  }
+
+  function handleEditAddress(address: SavedCustomerAddress) {
+    setEditingAddressId(address.id);
+    setAddressLabel(address.label);
+    setAddressLine1(address.line1);
+    setAddressArea(address.area);
+    setAddressCity(address.city);
+    setAddressNotes(address.notes);
+    setAddressIsDefault(address.isDefault);
+    setAddressError(null);
+    setAddressNotice(null);
+    setShowAddressForm(true);
+  }
+
+  function handleSetDefaultAddress(addressId: string) {
+    setDefaultSavedAddress(ownerKey, addressId);
+    setAddresses(listSavedAddresses(ownerKey));
+    setAddressNotice("Default delivery address updated.");
   }
 
   return (
@@ -359,40 +403,28 @@ export default function Account() {
                     orders in one place.
                   </p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                   <OverviewTile
-                    title="Profile"
-                    body={
-                      profile?.phone
-                        ? `Phone ${phoneStatus}`
-                        : "Add your name and phone for faster checkout."
-                    }
-                    onClick={() => goTo("profile")}
+                    title="Active Orders"
+                    body={`${activeOrders.length} in progress`}
+                    onClick={() => goTo("orders")}
                   />
                   <OverviewTile
-                    title="Addresses"
+                    title="Saved Addresses"
                     body={
                       addresses.length > 0
-                        ? `${addresses.length} saved on this device`
+                        ? `${addresses.length} saved · ${addresses.find((address) => address.isDefault)?.label ?? "default"}`
                         : "No saved addresses yet."
                     }
                     onClick={() => goTo("addresses")}
                   />
                   <OverviewTile
-                    title="Security"
-                    body={
-                      googleConnected && emailPasswordAvailable
-                        ? "Google and email/password ready"
-                        : googleConnected
-                          ? "Google connected — set a Telepizza password anytime"
-                          : emailPasswordAvailable
-                            ? "Email/password ready"
-                            : "Add a sign-in method"
-                    }
-                    onClick={() => goTo("security")}
+                    title="Reward Points"
+                    body={`${loyaltyPoints} points · ${loyaltyPoints >= 1000 ? "Gold" : "Starter"} tier`}
+                    onClick={() => goTo("loyalty")}
                   />
                   <OverviewTile
-                    title="Orders"
+                    title="Recent Orders"
                     body={
                       localOrders.length > 0
                         ? `${localOrders.length} recent on this device`
@@ -400,36 +432,20 @@ export default function Account() {
                     }
                     onClick={() => goTo("orders")}
                   />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-dashed border-border p-4">
-                    <div className="font-semibold">Loyalty</div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Rewards points will appear here when the loyalty program launches.
-                    </p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="mt-2 px-0 text-brand-red"
-                      onClick={() => goTo("loyalty")}
-                    >
-                      View details
-                    </Button>
-                  </div>
-                  <div className="rounded-2xl border border-dashed border-border p-4">
-                    <div className="font-semibold">Notifications</div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Order and promo preferences are not available yet.
-                    </p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="mt-2 px-0 text-brand-red"
-                      onClick={() => goTo("notifications")}
-                    >
-                      View details
-                    </Button>
-                  </div>
+                  <OverviewTile
+                    title="Favorite Items"
+                    body="Coming soon — favorites are not stored yet."
+                    onClick={() => goTo("overview")}
+                  />
+                  <OverviewTile
+                    title="Last Order"
+                    body={
+                      lastOrder
+                        ? `${lastOrder.orderNumber} · ${lastOrder.branchName}`
+                        : "No previous order."
+                    }
+                    onClick={() => goTo("orders")}
+                  />
                 </div>
               </section>
             ) : null}
@@ -510,6 +526,21 @@ export default function Account() {
                       ? " — verification by WhatsApp OTP is not available yet"
                       : null}
                   </p>
+                  {profile?.phone && !profile.phoneVerified ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="rounded-2xl"
+                      onClick={() =>
+                        setProfileNotice(
+                          "Phone verification is coming soon. WhatsApp OTP is not enabled yet.",
+                        )
+                      }
+                    >
+                      Verify phone
+                    </Button>
+                  ) : null}
                 </div>
                 {profileError ? (
                   <p className="text-sm text-brand-red" role="alert">
@@ -543,6 +574,8 @@ export default function Account() {
                       className="rounded-2xl brand-gradient text-white font-semibold"
                       onClick={() => {
                         setShowAddressForm(true);
+                        setEditingAddressId(null);
+                        setAddressIsDefault(addresses.length === 0);
                         setAddressError(null);
                         setAddressNotice(null);
                       }}
@@ -557,7 +590,7 @@ export default function Account() {
                     <MapPin className="w-8 h-8 text-brand-red mx-auto mb-2" />
                     <p className="font-semibold">No saved addresses yet</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Add Home, Work, or another Multan delivery address for faster checkout.
+                      Add Home, Office, or another Multan delivery address for faster checkout.
                     </p>
                   </div>
                 ) : null}
@@ -568,8 +601,15 @@ export default function Account() {
                       key={address.id}
                       className="rounded-2xl border border-border p-4 flex flex-wrap items-start justify-between gap-3"
                     >
-                      <div>
-                        <div className="font-semibold">{address.label}</div>
+                      <div className="min-w-0">
+                        <div className="font-semibold flex flex-wrap items-center gap-2">
+                          {address.label}
+                          {address.isDefault ? (
+                            <span className="rounded-full bg-brand-red/10 px-2 py-0.5 text-xs text-brand-red">
+                              Default
+                            </span>
+                          ) : null}
+                        </div>
                         <p className="text-sm text-muted-foreground mt-1">
                           {formatSavedAddress(address)}
                         </p>
@@ -577,36 +617,62 @@ export default function Account() {
                           <p className="text-xs text-muted-foreground mt-1">{address.notes}</p>
                         ) : null}
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-2xl"
-                        onClick={() => handleRemoveAddress(address.id)}
-                      >
-                        Remove
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        {!address.isDefault ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-2xl"
+                            onClick={() => handleSetDefaultAddress(address.id)}
+                          >
+                            Make default
+                          </Button>
+                        ) : null}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-2xl"
+                          onClick={() => handleEditAddress(address)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-2xl text-brand-red"
+                          onClick={() => handleRemoveAddress(address.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>
 
                 {showAddressForm ? (
                   <form
-                    onSubmit={handleAddAddress}
+                    onSubmit={handleSaveAddress}
                     className="space-y-3 border-t border-border pt-4"
                     noValidate
                   >
-                    <h3 className="font-semibold">Add address</h3>
+                    <h3 className="font-semibold">
+                      {editingAddressId ? "Edit address" : "Add address"}
+                    </h3>
                     <div className="space-y-2">
                       <Label htmlFor="addressLabel">Label</Label>
-                      <Input
+                      <select
                         id="addressLabel"
                         value={addressLabel}
-                        onChange={(e) => setAddressLabel(e.target.value)}
-                        className="rounded-2xl"
-                        placeholder="Home, Work, Other"
-                        autoComplete="off"
-                      />
+                        onChange={(e) => setAddressLabel(e.target.value as AddressLabel)}
+                        className="flex h-10 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm"
+                      >
+                        <option value="Home">Home</option>
+                        <option value="Office">Office</option>
+                        <option value="Other">Other</option>
+                      </select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="addressLine1">Street / landmark</Label>
@@ -623,6 +689,20 @@ export default function Account() {
                         required
                       />
                     </div>
+                    <label className="flex items-start gap-3 rounded-2xl border border-border p-3 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={addressIsDefault}
+                        onChange={(event) => setAddressIsDefault(event.target.checked)}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        <span className="font-semibold block">Use as default address</span>
+                        <span className="text-muted-foreground">
+                          Checkout will select this address first.
+                        </span>
+                      </span>
+                    </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label htmlFor="addressArea">Area (optional)</Label>
@@ -663,14 +743,14 @@ export default function Account() {
                     ) : null}
                     <div className="flex flex-wrap gap-2">
                       <Button type="submit" className="rounded-2xl brand-gradient text-white font-semibold">
-                        Save address
+                        {editingAddressId ? "Update address" : "Save address"}
                       </Button>
                       <Button
                         type="button"
                         variant="outline"
                         className="rounded-2xl"
                         onClick={() => {
-                          setShowAddressForm(false);
+                          resetAddressForm();
                           setAddressError(null);
                         }}
                       >
@@ -693,6 +773,36 @@ export default function Account() {
                     access never come from Google profile data.
                   </p>
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <SecurityFact
+                    label="Email"
+                    value={user.email_confirmed_at ? "Verified" : "Unverified"}
+                  />
+                  <SecurityFact
+                    label="Phone"
+                    value={profile?.phoneVerified ? "Verified" : "Unverified — OTP coming soon"}
+                  />
+                  <SecurityFact
+                    label="Last login"
+                    value={
+                      user.last_sign_in_at
+                        ? new Date(user.last_sign_in_at).toLocaleString()
+                        : "Not available"
+                    }
+                  />
+                  <SecurityFact
+                    label="Active sessions"
+                    value={
+                      session
+                        ? "This device is signed in"
+                        : "No active session on this device"
+                    }
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Supabase exposes the current browser session here, but not a cross-device session
+                  list. Signing out ends this device session.
+                </p>
                 <ul className="space-y-3 text-sm">
                   <li className="rounded-2xl border border-border p-4 flex items-start justify-between gap-3">
                     <div>
@@ -831,6 +941,11 @@ export default function Account() {
                         "Update password"
                       )}
                     </Button>
+                    <Link href="/forgot-password">
+                      <Button type="button" variant="ghost" className="rounded-2xl">
+                        Forgot password?
+                      </Button>
+                    </Link>
                   </form>
                 ) : (
                   <p className="text-sm text-muted-foreground">
@@ -944,27 +1059,56 @@ export default function Account() {
             ) : null}
 
             {section === "loyalty" ? (
-              <section className="rounded-3xl border border-border bg-white p-6 space-y-3">
-                <h2 className="font-bold text-lg">Loyalty</h2>
-                <p className="text-sm text-muted-foreground">
-                  Telepizza rewards are not live yet. When loyalty launches, points and offers will
-                  show here for your customer account.
-                </p>
-                <div className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
-                  Program status: not available yet — no points to display.
+              <section className="rounded-3xl border border-border bg-white p-4 sm:p-6 space-y-5">
+                <div>
+                  <h2 className="font-bold text-lg">Loyalty preview</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    A production-ready preview of the upcoming rewards program. Points cannot be
+                    earned or redeemed yet.
+                  </p>
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <SecurityFact label="Current points" value={`${loyaltyPoints} points`} />
+                  <SecurityFact
+                    label="Tier"
+                    value={loyaltyPoints >= 1000 ? "Gold preview" : "Starter preview"}
+                  />
+                </div>
+                <div className="rounded-2xl border border-border p-4">
+                  <h3 className="font-semibold">Rewards</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Free sides, pizza upgrades, and member offers are Coming Soon. Redemption is
+                    disabled until the loyalty service launches.
+                  </p>
+                  <Button type="button" disabled className="mt-3 rounded-2xl">
+                    Redeem reward
+                  </Button>
+                </div>
+                <div className="rounded-2xl border border-border p-4">
+                  <h3 className="font-semibold">Points history</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    No reward activity yet. Eligible order history will appear after launch.
+                  </p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Coming Soon — this preview does not promise points for existing orders.
+                </p>
               </section>
             ) : null}
 
             {section === "notifications" ? (
-              <section className="rounded-3xl border border-border bg-white p-6 space-y-3">
+              <section className="rounded-3xl border border-border bg-white p-4 sm:p-6 space-y-4">
                 <h2 className="font-bold text-lg">Notifications</h2>
                 <p className="text-sm text-muted-foreground">
-                  Order alerts and promo preferences will live here. Preference controls are not
-                  available yet.
+                  Preview of preference controls. All switches are disabled until notification
+                  delivery and consent storage are available.
                 </p>
-                <div className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
-                  Preference center: not available yet.
+                <div className="space-y-2">
+                  <PreferenceSwitch label="Order Updates" />
+                  <PreferenceSwitch label="Promotions" />
+                  <PreferenceSwitch label="SMS" />
+                  <PreferenceSwitch label="WhatsApp" />
+                  <PreferenceSwitch label="Email" />
                 </div>
               </section>
             ) : null}
@@ -972,6 +1116,27 @@ export default function Account() {
         </div>
       </div>
     </div>
+  );
+}
+
+function SecurityFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-border p-4 min-w-0">
+      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="font-semibold mt-1 break-words">{value}</div>
+    </div>
+  );
+}
+
+function PreferenceSwitch({ label }: { label: string }) {
+  return (
+    <label className="flex items-center justify-between gap-3 rounded-2xl border border-border p-4 text-sm">
+      <span>
+        <span className="font-semibold block">{label}</span>
+        <span className="text-xs text-muted-foreground">Coming Soon</span>
+      </span>
+      <input type="checkbox" disabled aria-label={`${label} notifications unavailable`} />
+    </label>
   );
 }
 

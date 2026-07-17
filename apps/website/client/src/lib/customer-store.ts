@@ -12,6 +12,7 @@ export interface OrderLineExtra {
 }
 
 export interface StoredOrderItem {
+  menuItemSlug?: string;
   productName: string;
   variantName?: string;
   quantity: number;
@@ -103,6 +104,7 @@ export function saveLocalOrder(
     const extrasTotal = (item.extras ?? []).reduce((sum, extra) => sum + extra.price, 0);
     const lineUnit = item.unitPrice + extrasTotal;
     return {
+      menuItemSlug: item.menuItemSlug,
       productName: item.productName,
       variantName: item.variantName,
       quantity: item.quantity,
