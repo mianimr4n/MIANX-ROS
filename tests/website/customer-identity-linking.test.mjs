@@ -45,7 +45,8 @@ test("Login keeps Google primary and safe Google-account hint without enumeratio
   const login = read("apps/website/client/src/pages/Login.tsx");
   assert.match(login, /Continue with Google/);
   assert.match(login, /Created your account with Google\?/);
-  assert.match(login, /set a password from your Account/);
+  assert.match(login, /set a Telepizza password from/);
+  assert.match(login, /Account → Security|Account/);
   assert.doesNotMatch(login, /resetPasswordForEmail|forgot password/i);
   assert.doesNotMatch(login, /this email is registered|account exists/i);
 });
@@ -53,10 +54,10 @@ test("Login keeps Google primary and safe Google-account hint without enumeratio
 test("Account profile + sign-in methods UI and Coming Soon cards", () => {
   const account = read("apps/website/client/src/pages/Account.tsx");
   assert.match(account, /Save profile/);
-  assert.match(account, /Sign-in methods/);
-  assert.match(account, /Phone\/WhatsApp OTP/);
-  assert.match(account, /Coming Soon/);
-  assert.match(account, /My Orders/);
+  assert.match(account, /Security & login methods|Email & password/);
+  assert.match(account, /Phone \/ WhatsApp sign-in/);
+  assert.match(account, /not available yet|not live yet/i);
+  assert.match(account, /Open My Orders|Orders/);
   assert.doesNotMatch(account, /listNotifications|unreadNotifications/);
   assert.match(account, /Phone status:/);
   assert.match(account, /Unverified/);

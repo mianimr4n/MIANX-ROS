@@ -166,3 +166,48 @@ test("catalog freeze and branches regression guards remain intact", () => {
   assert.match(branches, /royal-orchard/);
   assert.match(branches, /northern-bypass/);
 });
+
+test("Account Center IA: Overview, Profile, Addresses, Security, Orders, Loyalty, Notifications", () => {
+  const account = read("apps/website/client/src/pages/Account.tsx");
+  const addresses = read("apps/website/client/src/lib/customer-addresses.ts");
+  const orders = read("apps/website/client/src/pages/Orders.tsx");
+
+  assert.match(account, /Account Center/);
+  assert.match(account, /Overview/);
+  assert.match(account, /Addresses/);
+  assert.match(account, /Security & login methods/);
+  assert.match(account, /Loyalty/);
+  assert.match(account, /Notifications/);
+  assert.match(account, /Phone status:/);
+  assert.match(account, /Unverified/);
+  assert.match(account, /Not available yet/);
+  assert.doesNotMatch(account, /WhatsApp OTP is enabled|implement.*OTP/i);
+  assert.doesNotMatch(account, /listNotifications|unreadNotifications/);
+
+  assert.match(addresses, /addSavedAddress/);
+  assert.match(addresses, /listSavedAddresses/);
+  assert.doesNotMatch(addresses, /gps|geolocation|api[_-]?key|secret/i);
+
+  assert.match(orders, /Active/);
+  assert.match(orders, /Completed/);
+  assert.match(orders, /Cancelled/);
+  assert.match(orders, /role=["']tablist["']/);
+});
+
+test("phone remains honestly Unverified; OTP not implemented", () => {
+  const account = read("apps/website/client/src/pages/Account.tsx");
+  const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
+  assert.match(account, /Unverified until WhatsApp OTP launches|Unverified — verification by WhatsApp OTP is not available yet|stays Unverified/i);
+  assert.match(authContext, /phoneVerified:\s*false/);
+  assert.doesNotMatch(account, /phoneVerified:\s*true|Mark as verified|Verify with OTP/i);
+});
+
+test("SMTP owner go-live checklist is explicit", () => {
+  const runbook = read("docs/operations/AUTH-EMAIL-DELIVERY-RUNBOOK.md");
+  assert.match(runbook, /Owner go-live checklist/);
+  assert.match(runbook, /Owner required \(app cannot fix delivery\)/);
+  assert.match(runbook, /Custom SMTP enabled/);
+  assert.match(runbook, /SPF DNS/);
+  assert.match(runbook, /DKIM DNS/);
+  assert.match(runbook, /DMARC policy/);
+});
