@@ -13,6 +13,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { ApiRequestError, fetchApiData, isApiConfigured } from "@/lib/api";
 import {
   genericAuthErrorMessage,
+  hasEmailIdentity,
   mapSupabaseAuthError,
   validatePasswordStrength,
   validateSignupInput,
@@ -56,8 +57,16 @@ interface AuthContextType {
   signInWithGoogle: (options?: { next?: string | null }) => Promise<GoogleSignInResult>;
   /** Rate-limited resend of signup confirmation email (never enumerates accounts). */
   resendConfirmationEmail: (email: string) => Promise<ActionResult>;
-  /** Attach email/password to the currently authenticated Supabase user (no second auth user). */
-  setPassword: (input: { password: string; confirmPassword: string }) => Promise<ActionResult>;
+  /**
+   * Attach or change Telepizza email/password on the current Supabase user (no second auth user).
+   * OAuth-only first-time set: password + confirm only.
+   * Change-password (email identity already present): requires currentPassword.
+   */
+  setPassword: (input: {
+    password: string;
+    confirmPassword: string;
+    currentPassword?: string;
+  }) => Promise<ActionResult>;
   updateProfile: (input: { fullName?: string; phone?: string | null }) => Promise<ActionResult>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -350,7 +359,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const setPassword = useCallback(
-    async (input: { password: string; confirmPassword: string }): Promise<ActionResult> => {
+    async (input: {
+      password: string;
+      confirmPassword: string;
+      currentPassword?: string;
+    }): Promise<ActionResult> => {
       const supabase = getSupabaseClient();
       if (!supabase || !isSupabaseConfigured || !session?.user) {
         return { ok: false, message: "Sign in again to set a password." };
@@ -371,11 +384,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Password stays in Supabase Auth only — never sent to Telepizza API / public.users.
-      const { error } = await supabase.auth.updateUser({ password: input.password });
+      const hasTelepizzaPassword = hasEmailIdentity(session.user);
+
+      if (hasTelepizzaPassword) {
+        // Change-password: require current Telepizza password (never Google password).
+        const current = input.currentPassword?.trim() ?? "";
+        if (!current) {
+          return {
+            ok: false,
+            message: "Enter your current Telepizza password to change it.",
+          };
+        }
+
+        const { data, error } = await supabase.auth.updateUser({
+          password: input.password,
+          current_password: current,
+        });
+        if (error) {
+          return { ok: false, message: mapSupabaseAuthError(error.message) };
+        }
+        if (data.user) setUser(data.user);
+        return { ok: true };
+      }
+
+      // First-time password attach for OAuth-only (e.g. Google) users.
+      // Use updateUser({ password }) only — do not send current_password or ask for Google password.
+      const { data, error } = await supabase.auth.updateUser({ password: input.password });
       if (error) {
         return { ok: false, message: mapSupabaseAuthError(error.message) };
       }
-
+      if (data.user) setUser(data.user);
       return { ok: true };
     },
     [session],

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,10 +15,8 @@ import {
 import { DEFAULT_AUTH_DESTINATION } from "@/lib/auth-redirect";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
-const CONFIRMATION_SUCCESS_COPY =
-  "Account created. Check your inbox and spam folder to confirm your email.";
-
 const RESEND_COOLDOWN_SECONDS = 60;
+const GMAIL_INBOX_URL = "https://mail.google.com/mail/u/0/#inbox";
 
 export default function Register() {
   const [, navigate] = useLocation();
@@ -83,7 +81,7 @@ export default function Register() {
       if (result.needsEmailConfirmation) {
         setAwaitingConfirmation(true);
         setEmail(validated.email);
-        setInfo(CONFIRMATION_SUCCESS_COPY);
+        setInfo(null);
         setResendCooldown(RESEND_COOLDOWN_SECONDS);
         return;
       }
@@ -99,6 +97,7 @@ export default function Register() {
   const handleResend = async () => {
     if (resendBusy || resendCooldown > 0 || !email.trim()) return;
     setError(null);
+    setInfo(null);
     setResendBusy(true);
     try {
       const result = await resendConfirmationEmail(email);
@@ -129,143 +128,177 @@ export default function Register() {
 
   return (
     <AuthPageShell
-      title="Create Account"
-      description="Continue with Google, or create an account with email."
+      title={awaitingConfirmation ? "Account Created" : "Create Account"}
+      description={
+        awaitingConfirmation
+          ? "Confirm your email to finish signing up."
+          : "Continue with Google, or create an account with email."
+      }
       note={
         isSupabaseConfigured
           ? undefined
           : "Registration is temporarily unavailable until authentication is configured."
       }
     >
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-4"
-        noValidate
-      >
-        {!awaitingConfirmation ? (
-          <GoogleSignInButton
-            disabled={formDisabled}
-            onError={(message) => {
-              setInfo(null);
-              setError(message);
-            }}
-            label="Continue with Google"
-            placement="primary"
-            dividerLabel="or continue with email"
-            next={DEFAULT_AUTH_DESTINATION}
-          />
-        ) : null}
-        <div className="space-y-2">
-          <Label htmlFor="fullName">Full name (optional)</Label>
-          <Input
-            id="fullName"
-            value={fullName}
-            onChange={(e) => {
-              setFullName(e.target.value);
-              setError(null);
-            }}
-            className="rounded-2xl"
-            disabled={formDisabled}
-            autoComplete="name"
-          />
+      {awaitingConfirmation ? (
+        <div className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-4">
+          <div className="flex justify-center">
+            <div className="rounded-full bg-brand-red/10 p-3">
+              <Mail className="w-7 h-7 text-brand-red" aria-hidden />
+            </div>
+          </div>
+          <p className="text-center text-sm text-brand-charcoal">
+            We sent a confirmation link to{" "}
+            <span className="font-semibold break-all">{email}</span>.
+          </p>
+          <p className="text-center text-xs text-muted-foreground">
+            Check your inbox and spam folder. After you confirm, return here to sign in. You cannot
+            sign in until your email is confirmed.
+          </p>
+          <p className="text-center text-sm font-semibold text-brand-charcoal">
+            {"Didn't receive it?"}
+          </p>
+          {error ? (
+            <p className="text-sm text-brand-red text-center" role="alert">
+              {error}
+            </p>
+          ) : null}
+          {info ? <p className="text-sm text-emerald-700 text-center">{info}</p> : null}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full rounded-2xl font-semibold"
+            disabled={resendBusy || resendCooldown > 0 || !isSupabaseConfigured}
+            onClick={() => void handleResend()}
+          >
+            {resendBusy ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : resendCooldown > 0 ? (
+              `Resend Email (${resendCooldown}s)`
+            ) : (
+              "Resend Email"
+            )}
+          </Button>
+          <a
+            href={GMAIL_INBOX_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block"
+          >
+            <Button type="button" variant="secondary" className="w-full rounded-2xl font-semibold">
+              Open Gmail
+            </Button>
+          </a>
+          <a
+            href={`mailto:${email}`}
+            className="block text-center text-sm text-muted-foreground hover:text-brand-charcoal hover:underline"
+          >
+            Open email app
+          </a>
+          <Link href="/login" className="block text-center text-sm text-brand-red font-semibold hover:underline">
+            Go to login
+          </Link>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setError(null);
-            }}
-            className="rounded-2xl"
-            required
-            disabled={formDisabled}
-            placeholder="you@gmail.com"
-          />
-        </div>
-        {!awaitingConfirmation ? (
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
+      ) : (
+        <>
+          <form
+            onSubmit={handleSubmit}
+            className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-4"
+            noValidate
+          >
+            <GoogleSignInButton
+              disabled={formDisabled}
+              onError={(message) => {
+                setInfo(null);
+                setError(message);
+              }}
+              label="Continue with Google"
+              placement="primary"
+              dividerLabel="or continue with email"
+              next={DEFAULT_AUTH_DESTINATION}
+            />
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full name (optional)</Label>
               <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="new-password"
-                value={password}
+                id="fullName"
+                value={fullName}
                 onChange={(e) => {
-                  setPassword(e.target.value);
+                  setFullName(e.target.value);
                   setError(null);
                 }}
-                className="rounded-2xl pr-12"
-                required
-                minLength={AUTH_MIN_PASSWORD_LENGTH}
+                className="rounded-2xl"
                 disabled={formDisabled}
+                autoComplete="name"
               />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 px-3 text-muted-foreground hover:text-brand-charcoal disabled:opacity-50"
-                onClick={() => setShowPassword((value) => !value)}
-                disabled={formDisabled}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
             </div>
-            <p className="text-xs text-muted-foreground">{AUTH_PASSWORD_REQUIREMENTS_COPY}</p>
-          </div>
-        ) : null}
-        {error ? (
-          <p className="text-sm text-brand-red" role="alert">
-            {error}
-          </p>
-        ) : null}
-        {info ? <p className="text-sm text-emerald-700">{info}</p> : null}
-        {awaitingConfirmation ? (
-          <div className="space-y-3">
-            <p className="text-xs text-muted-foreground">
-              After confirming, return here to sign in. We never report a successful login before email
-              confirmation when confirmation is required.
-            </p>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError(null);
+                }}
+                className="rounded-2xl"
+                required
+                disabled={formDisabled}
+                placeholder="you@gmail.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError(null);
+                  }}
+                  className="rounded-2xl pr-12"
+                  required
+                  minLength={AUTH_MIN_PASSWORD_LENGTH}
+                  disabled={formDisabled}
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 px-3 text-muted-foreground hover:text-brand-charcoal disabled:opacity-50"
+                  onClick={() => setShowPassword((value) => !value)}
+                  disabled={formDisabled}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">{AUTH_PASSWORD_REQUIREMENTS_COPY}</p>
+            </div>
+            {error ? (
+              <p className="text-sm text-brand-red" role="alert">
+                {error}
+              </p>
+            ) : null}
+            {info ? <p className="text-sm text-emerald-700">{info}</p> : null}
             <Button
-              type="button"
-              variant="outline"
-              className="w-full rounded-2xl font-semibold"
-              disabled={resendBusy || resendCooldown > 0 || !isSupabaseConfigured}
-              onClick={() => void handleResend()}
+              type="submit"
+              className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
+              disabled={formDisabled}
             >
-              {resendBusy ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : resendCooldown > 0 ? (
-                `Resend confirmation email (${resendCooldown}s)`
-              ) : (
-                "Resend confirmation email"
-              )}
+              {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create account with email"}
             </Button>
-            <Link href="/login" className="block text-center text-sm text-brand-red font-semibold hover:underline">
-              Go to login
+          </form>
+          <p className="text-sm text-muted-foreground mt-4 text-center">
+            Already registered?{" "}
+            <Link href="/login" className="text-brand-red font-semibold hover:underline">
+              Login
             </Link>
-          </div>
-        ) : (
-          <Button
-            type="submit"
-            className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
-            disabled={formDisabled}
-          >
-            {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create account with email"}
-          </Button>
-        )}
-      </form>
-      {!awaitingConfirmation ? (
-        <p className="text-sm text-muted-foreground mt-4 text-center">
-          Already registered?{" "}
-          <Link href="/login" className="text-brand-red font-semibold hover:underline">
-            Login
-          </Link>
-        </p>
-      ) : null}
+          </p>
+        </>
+      )}
     </AuthPageShell>
   );
 }

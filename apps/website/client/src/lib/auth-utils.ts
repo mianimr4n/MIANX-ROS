@@ -77,6 +77,45 @@ export function validateSignupInput(input: SignupInput): SignupValidationResult 
   };
 }
 
+export type AuthIdentityUser = {
+  app_metadata?: { provider?: string; providers?: string[] };
+  identities?: Array<{ provider?: string }>;
+  user_metadata?: Record<string, unknown> | null;
+} | null;
+
+/** True when the Supabase user has a Google OAuth identity linked. */
+export function hasGoogleIdentity(user: AuthIdentityUser): boolean {
+  if (!user) return false;
+  const providers = user.app_metadata?.providers;
+  if (Array.isArray(providers) && providers.includes("google")) return true;
+  if (user.app_metadata?.provider === "google") return true;
+  if (Array.isArray(user.identities) && user.identities.some((entry) => entry.provider === "google")) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * True when email/password is already attached (email identity present).
+ * Used to decide first-time password set (OAuth-only) vs change-password.
+ * Never treats Google OAuth alone as having a Telepizza password.
+ */
+export function hasEmailIdentity(user: AuthIdentityUser): boolean {
+  if (!user) return false;
+  const providers = user.app_metadata?.providers;
+  if (Array.isArray(providers) && providers.includes("email")) return true;
+  if (user.app_metadata?.provider === "email") return true;
+  if (Array.isArray(user.identities) && user.identities.some((entry) => entry.provider === "email")) {
+    return true;
+  }
+  return false;
+}
+
+/** OAuth-only users setting a Telepizza password for the first time. */
+export function isFirstTimePasswordAttach(user: AuthIdentityUser): boolean {
+  return Boolean(user) && !hasEmailIdentity(user);
+}
+
 export function genericAuthErrorMessage(): string {
   return "Invalid email or password.";
 }
@@ -103,7 +142,7 @@ export function mapSupabaseAuthError(message: string | undefined): string {
     normalized.includes("unable to send") ||
     normalized.includes("smtp")
   ) {
-    return "We could not send the confirmation email right now. Check spam later or try Resend.";
+    return "We could not send the confirmation email right now. Check spam later or try Resend Email.";
   }
 
   if (
@@ -112,6 +151,15 @@ export function mapSupabaseAuthError(message: string | undefined): string {
     normalized.includes("validation_failed")
   ) {
     return "Google sign-in is not available right now. Please use email and password, or try again later.";
+  }
+
+  // Secure password-change setting: current Telepizza password required (never Google password).
+  if (
+    normalized.includes("current password required") ||
+    normalized.includes("current_password") ||
+    normalized.includes("error_code_current_password")
+  ) {
+    return "Enter your current Telepizza password to change it. This is not your Google password.";
   }
 
   if (

@@ -165,8 +165,12 @@ export default function Login() {
           {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign in with email"}
         </Button>
         <p className="text-xs text-muted-foreground text-center">
-          Created your account with Google? Continue with Google, or set a password from your Account
-          page.
+          Created your account with Google? Continue with Google, or set a Telepizza password from
+          Account → Security. Never enter your Google password here.
+        </p>
+        <p className="text-xs text-muted-foreground text-center">
+          Just registered with email? Confirm your email before signing in — check inbox and spam,
+          or use Resend on the registration screen.
         </p>
       </form>
 

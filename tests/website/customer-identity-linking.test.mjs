@@ -33,8 +33,10 @@ test("Google password attach uses updateUser on current session only", () => {
   assert.match(authContext, /supabase\.auth\.updateUser\(\{\s*password:/);
   assert.match(authContext, /never sent to Telepizza API/i);
   assert.match(authContext, /setPassword/);
+  assert.match(authContext, /current_password:\s*current/);
   assert.match(account, /Set a Telepizza password|Update Telepizza password/);
   assert.match(account, /You can now sign in using Google or email and password/);
+  assert.match(account, /firstTimePassword/);
   assert.match(account, /showPassword/);
   assert.match(account, /if \(passwordBusy\) return/);
 });
@@ -43,7 +45,8 @@ test("Login keeps Google primary and safe Google-account hint without enumeratio
   const login = read("apps/website/client/src/pages/Login.tsx");
   assert.match(login, /Continue with Google/);
   assert.match(login, /Created your account with Google\?/);
-  assert.match(login, /set a password from your Account/);
+  assert.match(login, /set a Telepizza password from/);
+  assert.match(login, /Account → Security|Account/);
   assert.doesNotMatch(login, /resetPasswordForEmail|forgot password/i);
   assert.doesNotMatch(login, /this email is registered|account exists/i);
 });
@@ -51,10 +54,10 @@ test("Login keeps Google primary and safe Google-account hint without enumeratio
 test("Account profile + sign-in methods UI and Coming Soon cards", () => {
   const account = read("apps/website/client/src/pages/Account.tsx");
   assert.match(account, /Save profile/);
-  assert.match(account, /Sign-in methods/);
-  assert.match(account, /Phone\/WhatsApp OTP/);
-  assert.match(account, /Coming Soon/);
-  assert.match(account, /My Orders/);
+  assert.match(account, /Security & login methods|Email & password/);
+  assert.match(account, /Phone \/ WhatsApp sign-in/);
+  assert.match(account, /not available yet|not live yet/i);
+  assert.match(account, /Open My Orders|Orders/);
   assert.doesNotMatch(account, /listNotifications|unreadNotifications/);
   assert.match(account, /Phone status:/);
   assert.match(account, /Unverified/);

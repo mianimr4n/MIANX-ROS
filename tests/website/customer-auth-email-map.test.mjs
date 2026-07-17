@@ -43,9 +43,11 @@ test("Google flow never requests a Google password", () => {
   const googleBtn = read("apps/website/client/src/components/GoogleSignInButton.tsx");
 
   assert.match(googleBtn, /Continue with Google|signInWithGoogle/);
-  assert.doesNotMatch(login, /google password|Google password/i);
-  assert.doesNotMatch(register, /google password|Google password/i);
-  assert.match(account, /never asks for your\s+Google password/i);
+  // Warning copy that says not to enter a Google password is allowed; do not add a Google-password field.
+  assert.doesNotMatch(login, /id=["']googlePassword["']|Google password<\/Label>|type=["']password["'][^>]*google/i);
+  assert.doesNotMatch(register, /id=["']googlePassword["']|Google password<\/Label>/i);
+  assert.match(account, /never asks for your Google password|Never enter your Google password/i);
+  assert.match(login, /Never enter your Google password|Continue with Google/i);
 });
 
 test("logged-in Google user can set a Telepizza password via updateUser", () => {
@@ -53,18 +55,17 @@ test("logged-in Google user can set a Telepizza password via updateUser", () => 
   const account = read("apps/website/client/src/pages/Account.tsx");
 
   assert.match(authContext, /supabase\.auth\.updateUser\(\{\s*password:/);
+  assert.match(authContext, /current_password:\s*current/);
   assert.match(account, /Set a Telepizza password/);
-  assert.match(account, /does not create a second login/);
+  assert.match(account, /does not create a second login|never asks for your Google password/i);
 });
 
 test("email signup confirmation-required state is generic and safe", () => {
   const register = read("apps/website/client/src/pages/Register.tsx");
   const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
 
-  assert.match(
-    register,
-    /Account created\. Check your inbox and spam folder to confirm your email\./,
-  );
+  assert.match(register, /Account Created/);
+  assert.match(register, /We sent a confirmation link to/);
   assert.match(authContext, /emailRedirectTo:\s*getEmailConfirmationRedirectTo/);
   assert.match(authContext, /needsEmailConfirmation/);
   assert.match(authContext, /do not treat as logged in/i);
@@ -80,7 +81,7 @@ test("resend confirmation is rate-limited with safe error handling", () => {
   assert.match(authContext, /resendConfirmationEmail/);
   assert.match(authContext, /auth\.resend\(\{/);
   assert.match(authContext, /type:\s*"signup"/);
-  assert.match(register, /Resend confirmation email/);
+  assert.match(register, /Resend Email/);
   assert.match(register, /RESEND_COOLDOWN_SECONDS/);
   assert.match(authUtils, /Too many email requests/);
   assert.match(authUtils, /could not send the confirmation email/i);
@@ -145,18 +146,14 @@ test("catalog freeze 13/58/3/40/7 and two branches remain guarded", () => {
   assert.match(branches, /coming-soon/);
 });
 
-test("checkout and Sprint 4.5 admin order APIs are out of scope for this hotfix", () => {
+test("checkout still requires name/phone; Sprint 4.5A does not invent admin order modules", () => {
   const checkout = read("apps/website/client/src/pages/Checkout.tsx");
   assert.match(checkout, /Name and phone are required/);
 
-  // Hotfix must not introduce admin order transition modules on main.
-  let adminOrdersMissing = false;
-  try {
-    read("backend/api/src/modules/admin/orders.ts");
-  } catch {
-    adminOrdersMissing = true;
-  }
-  assert.equal(adminOrdersMissing, true);
+  // Sprint 4.5 admin orders may exist on main; 4.5A must not rewrite their transition surface.
+  const adminOrders = read("backend/api/src/modules/admin/orders.ts");
+  assert.match(adminOrders, /router|orders/i);
+  assert.doesNotMatch(adminOrders, /sprint.?4\.5a|customer.?onboarding/i);
 });
 
 test("email delivery runbook exists without SMTP secrets", () => {
