@@ -91,12 +91,13 @@ test("orders expose status, honest operational gaps, and feasible reorder", () =
   const store = read("apps/website/client/src/lib/customer-store.ts");
 
   assert.match(orders, /STATUS_STEPS/);
-  assert.match(orders, /Payment:<\/span> Not provided/);
-  assert.match(orders, /ETA:<\/span> Not available/);
+  assert.match(orders, /statusBadgeClass/);
+  assert.match(orders, /Branch:<\/span>/);
+  assert.match(orders, /Type:<\/span>/);
   assert.match(orders, /Reorder/);
   assert.match(orders, /menuItemSlug/);
   assert.match(store, /menuItemSlug\?: string/);
-  assert.doesNotMatch(orders, /driver|invoice/i);
+  assert.doesNotMatch(orders, /\b(driver|invoice|ETA|Payment)\b/i);
 });
 
 test("security, loyalty, notifications, and overview expose requested production states", () => {
@@ -106,15 +107,16 @@ test("security, loyalty, notifications, and overview expose requested production
   assert.match(account, /last_sign_in_at/);
   assert.match(account, /Active sessions/);
   assert.match(account, /Linked accounts/);
-  assert.match(account, /current browser session/);
+  assert.match(account, /Only this device's session is shown/);
   assert.match(account, /Forgot password\?/);
-  assert.match(account, /Current points/);
-  assert.match(account, /Points history/);
+  assert.match(account, /Premium Coming Soon/);
+  assert.doesNotMatch(account, /Current points|Points history|Gold preview|Starter preview/);
   assert.match(account, /Order Updates/);
   assert.match(account, /Promotions/);
   assert.match(account, /SMS/);
   assert.match(account, /WhatsApp/);
   assert.match(account, /Active Orders/);
-  assert.match(account, /Favorite Items/);
+  assert.match(account, /Account Security/);
   assert.match(account, /Last Order/);
+  assert.doesNotMatch(account, /Favorite Items|Reward Points/);
 });
