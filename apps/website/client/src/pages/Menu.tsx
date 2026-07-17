@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 import { AlertCircle, Plus, RefreshCw, Search, UtensilsCrossed } from "lucide-react";
 
-import { useSearch } from "wouter";
+import { Link, useSearch } from "wouter";
 
 import { useAddMenuItem } from "@/hooks/useAddMenuItem";
 
@@ -468,11 +468,13 @@ export default function Menu() {
 
                   </p>
 
-                  <h3 className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal mb-1">
+                  <Link href={`/menu/${encodeURIComponent(item.slug ?? item.id)}`}>
+                    <h3 className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal mb-1 hover:text-brand-red">
 
-                    {item.name}
+                      {item.name}
 
-                  </h3>
+                    </h3>
+                  </Link>
 
                   <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
 
@@ -544,7 +546,7 @@ export default function Menu() {
 
                   )}
 
-                  <div className="mt-auto flex items-center justify-between">
+                  <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
 
                     <span className="font-[var(--font-accent)] font-bold text-xl text-brand-red">
 
@@ -552,6 +554,12 @@ export default function Menu() {
 
                     </span>
 
+                    <div className="flex items-center gap-2">
+                    <Link href={`/menu/${encodeURIComponent(item.slug ?? item.id)}`}>
+                      <Button variant="ghost" size="sm" className="rounded-xl text-brand-red">
+                        View
+                      </Button>
+                    </Link>
                     <Button
 
                       onClick={() => handleAddItem(item)}
@@ -567,6 +575,7 @@ export default function Menu() {
                       {isPizzaItem(item) ? "Customize" : "Add"}
 
                     </Button>
+                    </div>
 
                   </div>
 

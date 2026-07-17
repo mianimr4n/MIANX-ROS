@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useRoute } from "wouter";
-import { Loader2, PackageSearch, XCircle } from "lucide-react";
+import { Check, Clock3, Loader2, PackageSearch, RefreshCw, XCircle } from "lucide-react";
 import { ApiRequestError, isApiConfigured } from "@/lib/api";
 import { cancelOrder, fetchOrderTracking } from "@/lib/telepizza-api";
-import { getLocalOrder } from "@/lib/customer-store";
+import { getLocalOrder, updateLocalOrderStatus } from "@/lib/customer-store";
 import { canGuestCancelOrder, mapCancelApiError } from "@/lib/order-access";
 import type { OrderTrackingResponse } from "@/lib/telepizza-types";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const STATUS_STEPS = ["pending", "confirmed", "preparing", "ready", "dispatched", "completed"];
+const STATUS_LABELS: Record<string, string> = {
+  pending: "Pending",
+  confirmed: "Confirmed",
+  preparing: "Preparing",
+  ready: "Ready",
+  dispatched: "Dispatched",
+  completed: "Delivered / collected",
+  cancelled: "Cancelled",
+};
 
 export default function TrackOrder() {
   const [, params] = useRoute("/track/:orderNumber");
@@ -23,6 +32,7 @@ export default function TrackOrder() {
   const [loading, setLoading] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null);
 
   const canCancelOnline = useMemo(
     () =>
@@ -35,15 +45,21 @@ export default function TrackOrder() {
     [tracking, orderNumber],
   );
 
-  const loadTracking = async (nextOrderNumber = orderNumber, nextPhone = phone) => {
-    setLoading(true);
+  const loadTracking = async (
+    nextOrderNumber = orderNumber,
+    nextPhone = phone,
+    background = false,
+  ) => {
+    if (!background) setLoading(true);
     setError(null);
-    setTracking(null);
+    if (!background) setTracking(null);
 
     try {
       if (isApiConfigured && !nextOrderNumber.startsWith("LOC-")) {
         const remote = await fetchOrderTracking(nextOrderNumber, nextPhone);
         setTracking(remote);
+        updateLocalOrderStatus(remote.orderNumber, nextPhone, remote.status, remote.updatedAt);
+        setLastCheckedAt(new Date().toISOString());
         return;
       }
 
@@ -74,10 +90,11 @@ export default function TrackOrder() {
           instructions: item.instructions,
         })),
       });
+      setLastCheckedAt(new Date().toISOString());
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Could not load tracking.");
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   };
 
@@ -94,6 +111,7 @@ export default function TrackOrder() {
         status: result.status,
         updatedAt: result.cancelledAt,
       });
+      updateLocalOrderStatus(tracking.orderNumber, phone, result.status, result.cancelledAt);
     } catch (cancelError) {
       const code =
         cancelError instanceof ApiRequestError ? cancelError.code : undefined;
@@ -114,6 +132,23 @@ export default function TrackOrder() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (
+      !tracking ||
+      !isApiConfigured ||
+      orderNumber.startsWith("LOC-") ||
+      ["completed", "cancelled"].includes(tracking.status.toLowerCase())
+    ) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      void loadTracking(orderNumber, phone, true);
+    }, 30_000);
+    return () => window.clearInterval(timer);
+    // Poll only while the current remote order is active.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tracking?.status, orderNumber, phone]);
 
   const activeIndex = tracking ? STATUS_STEPS.indexOf(tracking.status) : -1;
 
@@ -145,30 +180,67 @@ export default function TrackOrder() {
           </div>
         </form>
 
-        {error && <p className="text-brand-red mb-4">{error}</p>}
+        {error && <p role="alert" className="text-brand-red mb-4">{error}</p>}
 
         {tracking && (
           <div className="rounded-3xl border border-border bg-white p-6 space-y-6">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
               <PackageSearch className="w-6 h-6 text-brand-red" />
               <div>
                 <div className="font-[var(--font-display)] font-bold text-xl">{tracking.orderNumber}</div>
-                <div className="text-sm text-muted-foreground capitalize">{tracking.status.replace("-", " ")}</div>
+                <div className="text-sm text-muted-foreground">
+                  {STATUS_LABELS[tracking.status.toLowerCase()] ?? tracking.status.replace("-", " ")}
+                </div>
               </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-2xl"
+                disabled={loading}
+                onClick={() => void loadTracking()}
+              >
+                <RefreshCw className={`mr-2 h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {STATUS_STEPS.map((step, index) => (
-                <div
-                  key={step}
-                  className={`rounded-2xl px-3 py-2 text-xs font-[var(--font-accent)] font-semibold capitalize ${
-                    index <= activeIndex ? "bg-brand-red text-white" : "bg-brand-cream text-muted-foreground"
-                  }`}
-                >
-                  {step}
+            {tracking.status.toLowerCase() === "cancelled" ? (
+              <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-900">
+                <XCircle className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <div className="font-semibold">This order was cancelled</div>
+                  <p className="text-sm">Contact Telepizza if you need help placing a new order.</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <ol className="grid gap-2 sm:grid-cols-6" aria-label={`Order progress: ${tracking.status}`}>
+                {STATUS_STEPS.map((step, index) => {
+                  const complete = index <= activeIndex;
+                  const current = index === activeIndex;
+                  return (
+                    <li
+                      key={step}
+                      aria-current={current ? "step" : undefined}
+                      className={`flex items-center gap-2 rounded-2xl px-3 py-3 text-xs font-semibold sm:flex-col sm:text-center ${
+                        complete ? "bg-brand-red text-white" : "bg-brand-cream text-muted-foreground"
+                      }`}
+                    >
+                      {complete ? <Check className="h-4 w-4" /> : <Clock3 className="h-4 w-4" />}
+                      <span>{STATUS_LABELS[step]}</span>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {isApiConfigured && !orderNumber.startsWith("LOC-")
+                ? "Active orders refresh automatically every 30 seconds. No driver location is available."
+                : "Status reflects the order saved on this device."}
+              {lastCheckedAt ? ` Last checked ${new Date(lastCheckedAt).toLocaleTimeString()}.` : ""}
+            </p>
 
             <div className="space-y-2">
               {tracking.items.map((item, index) => (
