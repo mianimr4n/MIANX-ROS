@@ -84,7 +84,8 @@
 
 1. `bc3bfff` — Port Sprint 4.5A customer auth and Account Center from PR #57  
 2. `66c3a1a` — feat(auth): add forgot/reset password and secure email change  
-3. _(follow-up)_ — test fix + this production report
+3. `a51ab22` — docs(auth): record customer auth production close and fix email-map test  
+4. `7979627` — docs(auth): note blocked screenshots in customer auth production report
 
 ---
 
@@ -144,6 +145,6 @@ Catalog freeze 13/58/3/40/7, branches 2, WhatsApp `0304-1110495` unchanged (guar
 
 ## PR
 
-See GitHub PR created from `fix/customer-auth-production` (URL filled at create time).
+https://github.com/mianimr4n/telepizza/pull/58
 
 CUSTOMER AUTHENTICATION SYSTEM: PASS
