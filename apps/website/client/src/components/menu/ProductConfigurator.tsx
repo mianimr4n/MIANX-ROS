@@ -7,17 +7,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useCart, type CartExtra } from "@/contexts/CartContext";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
-import {
-  PIZZA_ADDON_DRINK_IDS,
-  PIZZA_ADDON_FRIES_IDS,
-  PIZZA_TOPPING_SLUGS,
-  findCatalogItemBySlug,
-  getToppingTierFromVariantLabel,
-  isPizzaItem,
-  resolveCatalogToppingPrice,
-} from "@/data/cart-config";
 import { handleImageError } from "@/lib/image-fallback";
 import { getDefaultVariant, getVariantId } from "@/lib/menu-utils";
+import {
+  buildSelectedModifiers,
+  defaultSelectionsForGroups,
+  getModifierGroupsForItem,
+  resolveOptionPriceForTier,
+  sizeTierFromVariantLabel,
+  toggleGroupOption,
+  validateModifierSelections,
+  type ModifierGroupDef,
+} from "@/lib/modifiers";
 import type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
 
 type ProductConfiguratorProps = {
@@ -36,105 +37,74 @@ export function ProductConfigurator({
   const { addItem } = useCart();
   const { items: catalogItems, toppings } = useMenuCatalog();
   const [selectedVariantLabel, setSelectedVariantLabel] = useState("");
-  const [extraChicken, setExtraChicken] = useState(false);
-  const [extraCheese, setExtraCheese] = useState(false);
-  const [extraCheeseSlice, setExtraCheeseSlice] = useState(false);
-  const [drinkId, setDrinkId] = useState("none");
-  const [friesId, setFriesId] = useState("none");
+  const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [instructions, setInstructions] = useState("");
   const [quantity, setQuantity] = useState(1);
 
+  const modifierGroups = useMemo(() => getModifierGroupsForItem(item), [item]);
+  const priceCatalog = useMemo(() => [...catalogItems, ...toppings], [catalogItems, toppings]);
+
   useEffect(() => {
     setSelectedVariantLabel(initialVariantLabel ?? getDefaultVariant(item)?.label ?? "");
-    setExtraChicken(false);
-    setExtraCheese(false);
-    setExtraCheeseSlice(false);
-    setDrinkId("none");
-    setFriesId("none");
+    setSelections(defaultSelectionsForGroups(modifierGroups));
     setInstructions("");
     setQuantity(1);
-  }, [item, initialVariantLabel]);
-
-  const drinkOptions = useMemo(
-    () =>
-      catalogItems.filter((entry) =>
-        PIZZA_ADDON_DRINK_IDS.includes(entry.id as (typeof PIZZA_ADDON_DRINK_IDS)[number]),
-      ),
-    [catalogItems],
-  );
-  const friesOptions = useMemo(
-    () =>
-      catalogItems.filter((entry) =>
-        PIZZA_ADDON_FRIES_IDS.includes(entry.id as (typeof PIZZA_ADDON_FRIES_IDS)[number]),
-      ),
-    [catalogItems],
-  );
-  const chickenTopping = useMemo(
-    () => findCatalogItemBySlug(toppings, PIZZA_TOPPING_SLUGS.chicken),
-    [toppings],
-  );
-  const cheeseTopping = useMemo(
-    () => findCatalogItemBySlug(toppings, PIZZA_TOPPING_SLUGS.cheese),
-    [toppings],
-  );
-  const cheeseSliceTopping = useMemo(
-    () => findCatalogItemBySlug(toppings, PIZZA_TOPPING_SLUGS.cheeseSlice),
-    [toppings],
-  );
+  }, [item, initialVariantLabel, modifierGroups]);
 
   const selectedVariant =
     item.variants?.find((variant) => variant.label === selectedVariantLabel) ??
     getDefaultVariant(item);
-  const toppingTier = selectedVariant
-    ? getToppingTierFromVariantLabel(selectedVariant.label)
-    : "small";
-  const chickenPrice = resolveCatalogToppingPrice(chickenTopping, toppingTier);
-  const cheesePrice = resolveCatalogToppingPrice(cheeseTopping, toppingTier);
-  const cheeseSlicePrice = resolveCatalogToppingPrice(cheeseSliceTopping, "small");
-  const pizza = isPizzaItem(item);
+  const sizeTier = sizeTierFromVariantLabel(selectedVariant?.label);
+  const selectedModifiers = buildSelectedModifiers({
+    groups: modifierGroups,
+    selections,
+    sizeTier,
+    catalogItems: priceCatalog,
+  });
 
-  const extras: CartExtra[] = [];
-  if (extraChicken && chickenPrice != null) {
-    extras.push({ label: `Extra Chicken (${selectedVariant?.label ?? "Small"})`, price: chickenPrice });
-  }
-  if (extraCheese && cheesePrice != null) {
-    extras.push({ label: `Extra Cheese (${selectedVariant?.label ?? "Small"})`, price: cheesePrice });
-  }
-  if (extraCheeseSlice && cheeseSlicePrice != null) {
-    extras.push({ label: "Extra Cheese Slice", price: cheeseSlicePrice });
-  }
-  const selectedDrink = drinkOptions.find((entry) => entry.id === drinkId);
-  if (selectedDrink?.price != null) extras.push({ label: selectedDrink.name, price: selectedDrink.price });
-  const selectedFries = friesOptions.find((entry) => entry.id === friesId);
-  if (selectedFries?.price != null) extras.push({ label: selectedFries.name, price: selectedFries.price });
+  const extras: CartExtra[] = selectedModifiers.map((modifier) => ({
+    label: modifier.optionName,
+    price: modifier.priceDelta,
+    slug: modifier.linkedMenuItemSlug ?? modifier.optionCode,
+    groupCode: modifier.groupCode,
+    optionCode: modifier.optionCode,
+  }));
 
   const basePrice = selectedVariant?.price ?? item.price;
   const extrasTotal = extras.reduce((sum, extra) => sum + extra.price, 0);
   const lineTotal = (basePrice ?? 0) * quantity + extrasTotal * quantity;
+
+  const setGroupSelection = (group: ModifierGroupDef, optionCode: string, checked: boolean) => {
+    setSelections((current) => ({
+      ...current,
+      [group.code]: toggleGroupOption({
+        group,
+        current: current[group.code] ?? [],
+        optionCode,
+        checked,
+      }),
+    }));
+  };
 
   const handleAdd = () => {
     if (basePrice == null) {
       toast.error("This item is not available to order right now.");
       return;
     }
-    if (extraChicken && chickenPrice == null) {
-      toast.error("Extra chicken is unavailable for this size.");
-      return;
-    }
-    if (extraCheese && cheesePrice == null) {
-      toast.error("Extra cheese is unavailable for this size.");
-      return;
-    }
-    if (extraCheeseSlice && cheeseSlicePrice == null) {
-      toast.error("Extra cheese slice is unavailable.");
+
+    const validationError = validateModifierSelections(modifierGroups, selections);
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
 
     const variant = selectedVariant as MenuVariant | undefined;
     const variantId = variant ? getVariantId(variant) : null;
     const optionKey = extras
-      .map((extra) => extra.label.toLowerCase().replace(/[^a-z0-9]+/g, "-"))
-      .join("-");
+      .map((extra) => `${extra.groupCode ?? "x"}-${extra.optionCode ?? extra.label}`)
+      .join("-")
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, "-");
     const noteKey = instructions.trim()
       ? instructions.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32)
       : null;
@@ -208,22 +178,19 @@ export function ProductConfigurator({
           </fieldset>
         ) : null}
 
-        {pizza ? (
-          <>
-            <fieldset className="space-y-2">
-              <legend className="font-[var(--font-accent)] font-semibold">Extra toppings</legend>
-              <div className="space-y-2">
-                <ToppingOption label="Extra Chicken" price={chickenPrice} checked={extraChicken} onChange={setExtraChicken} />
-                <ToppingOption label="Extra Cheese" price={cheesePrice} checked={extraCheese} onChange={setExtraCheese} />
-                <ToppingOption label="Extra Cheese Slice" price={cheeseSlicePrice} checked={extraCheeseSlice} onChange={setExtraCheeseSlice} />
-              </div>
-            </fieldset>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <AddonSelect label="Add a drink" value={drinkId} onChange={setDrinkId} options={drinkOptions} />
-              <AddonSelect label="Add fries" value={friesId} onChange={setFriesId} options={friesOptions} />
-            </div>
-          </>
-        ) : null}
+        {modifierGroups.map((group) => (
+          <ModifierGroupFields
+            key={group.code}
+            group={group}
+            selected={selections[group.code] ?? []}
+            sizeTier={sizeTier}
+            catalogItems={priceCatalog}
+            onToggle={(optionCode, checked) => setGroupSelection(group, optionCode, checked)}
+            onSelectSingle={(optionCode) =>
+              setGroupSelection(group, optionCode, optionCode !== "none")
+            }
+          />
+        ))}
 
         <div className="space-y-2">
           <Label htmlFor={`product-notes-${item.id}`}>Special instructions (optional)</Label>
@@ -274,56 +241,104 @@ export function ProductConfigurator({
   );
 }
 
-function ToppingOption({
-  label,
-  price,
-  checked,
-  onChange,
+function ModifierGroupFields({
+  group,
+  selected,
+  sizeTier,
+  catalogItems,
+  onToggle,
+  onSelectSingle,
 }: {
-  label: string;
-  price: number | null;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
+  group: ModifierGroupDef;
+  selected: string[];
+  sizeTier: "small" | "medium" | "large";
+  catalogItems: MenuItem[];
+  onToggle: (optionCode: string, checked: boolean) => void;
+  onSelectSingle: (optionCode: string) => void;
 }) {
-  const unavailable = price == null;
-  return (
-    <label className={`flex items-center justify-between gap-3 rounded-2xl border p-3 ${unavailable ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:border-brand-red/40"}`}>
-      <span className="text-sm">{label}</span>
-      <span className="flex items-center gap-3">
-        <span className="text-sm font-bold text-brand-red">{unavailable ? "Unavailable" : `+Rs ${price.toLocaleString()}`}</span>
-        <input type="checkbox" checked={checked && !unavailable} disabled={unavailable} onChange={(event) => onChange(event.target.checked)} className="h-4 w-4 accent-brand-red" />
-      </span>
-    </label>
-  );
-}
+  const optionalSingle = group.selectionType === "single" && !group.isRequired;
 
-function AddonSelect({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: MenuItem[];
-}) {
+  if (optionalSingle) {
+    const value = selected[0] ?? "none";
+    return (
+      <div className="space-y-2">
+        <Label>{group.name}</Label>
+        <Select value={value} onValueChange={(next) => onSelectSingle(next)}>
+          <SelectTrigger className="rounded-2xl" aria-label={group.name}>
+            <SelectValue placeholder="None" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">None</SelectItem>
+            {group.options.map((option) => {
+              const price = resolveOptionPriceForTier(option, sizeTier, catalogItems);
+              return (
+                <SelectItem key={option.code} value={option.code}>
+                  {option.name} · +Rs {price.toLocaleString()}
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
+
+  if (group.selectionType === "single") {
+    return (
+      <fieldset className="space-y-2">
+        <legend className="font-[var(--font-accent)] font-semibold">{group.name}</legend>
+        <div className="flex flex-wrap gap-2">
+          {group.options.map((option) => {
+            const isSelected = selected.includes(option.code);
+            const price = resolveOptionPriceForTier(option, sizeTier, catalogItems);
+            return (
+              <button
+                key={option.code}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => onToggle(option.code, true)}
+                className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
+                  isSelected
+                    ? "border-brand-red bg-brand-red text-white"
+                    : "border-border bg-white hover:border-brand-red/50"
+                }`}
+              >
+                {option.name}
+                {price > 0 ? <span className="opacity-80"> · +Rs {price.toLocaleString()}</span> : null}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+    );
+  }
+
   return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="rounded-2xl" aria-label={label}>
-          <SelectValue placeholder="None" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="none">None</SelectItem>
-          {options.map((option) => (
-            <SelectItem key={option.id} value={option.id}>
-              {option.name} · Rs {option.price?.toLocaleString()}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <fieldset className="space-y-2">
+      <legend className="font-[var(--font-accent)] font-semibold">{group.name}</legend>
+      <div className="space-y-2">
+        {group.options.map((option) => {
+          const price = resolveOptionPriceForTier(option, sizeTier, catalogItems);
+          const checked = selected.includes(option.code);
+          return (
+            <label
+              key={option.code}
+              className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border p-3 hover:border-brand-red/40"
+            >
+              <span className="text-sm">{option.name}</span>
+              <span className="flex items-center gap-3">
+                <span className="text-sm font-bold text-brand-red">+Rs {price.toLocaleString()}</span>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(event) => onToggle(option.code, event.target.checked)}
+                  className="h-4 w-4 accent-brand-red"
+                />
+              </span>
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }

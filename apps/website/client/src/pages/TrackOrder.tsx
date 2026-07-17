@@ -88,6 +88,7 @@ export default function TrackOrder() {
           unitPrice: item.unitPrice,
           totalPrice: item.totalPrice,
           instructions: item.instructions,
+          extras: item.extras,
         })),
       });
       setLastCheckedAt(new Date().toISOString());
@@ -244,12 +245,33 @@ export default function TrackOrder() {
 
             <div className="space-y-2">
               {tracking.items.map((item, index) => (
-                <div key={`${item.productName}-${index}`} className="flex justify-between text-sm border-b border-border pb-2">
-                  <span>
-                    {item.productName}
-                    {item.variantName ? ` (${item.variantName})` : ""} x{item.quantity}
-                  </span>
-                  <span className="font-bold">Rs {item.totalPrice.toLocaleString()}</span>
+                <div key={`${item.productName}-${index}`} className="border-b border-border pb-2 text-sm">
+                  <div className="flex justify-between gap-3">
+                    <span>
+                      {item.productName}
+                      {item.variantName ? ` (${item.variantName})` : ""} x{item.quantity}
+                    </span>
+                    <span className="font-bold">Rs {item.totalPrice.toLocaleString()}</span>
+                  </div>
+                  {(item.extras ?? item.modifiers ?? []).length > 0 ? (
+                    <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                      {(item.extras ?? []).map((extra) => (
+                        <li key={`${extra.slug ?? extra.label}-${extra.price}`}>
+                          + {extra.label}
+                          {extra.price ? ` — Rs ${extra.price.toLocaleString()}` : ""}
+                        </li>
+                      ))}
+                      {!item.extras?.length &&
+                        (item.modifiers ?? []).map((modifier) => (
+                          <li key={`${modifier.groupCode}-${modifier.optionCode}`}>
+                            + {modifier.optionName}
+                            {modifier.priceDelta
+                              ? ` — Rs ${modifier.priceDelta.toLocaleString()}`
+                              : ""}
+                          </li>
+                        ))}
+                    </ul>
+                  ) : null}
                 </div>
               ))}
             </div>

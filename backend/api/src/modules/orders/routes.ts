@@ -22,6 +22,11 @@ const orderExtraSchema = z.object({
   price: z.number().nonnegative().optional(),
 });
 
+const orderModifierSchema = z.object({
+  groupCode: z.string().min(1).max(80),
+  optionCode: z.string().min(1).max(80),
+});
+
 const orderItemSchema = z.object({
   menuItemSlug: z.string().min(1).max(100),
   variantLabel: z.string().max(100).optional(),
@@ -34,6 +39,7 @@ const orderItemSchema = z.object({
   instructions: z.string().max(250).optional(),
   toppings: z.array(toppingSlugSchema).max(20).optional(),
   extras: z.array(orderExtraSchema).max(20).optional(),
+  modifiers: z.array(orderModifierSchema).max(40).optional(),
 });
 
 const quoteOrderSchema = z.object({

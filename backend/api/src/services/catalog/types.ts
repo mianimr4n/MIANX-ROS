@@ -42,6 +42,30 @@ export interface MenuCatalogItem {
   productType: string;
   featured: boolean;
   variants?: MenuCatalogVariant[];
+  modifierGroups?: MenuCatalogModifierGroup[];
+}
+
+export interface MenuCatalogModifierOption {
+  code: string;
+  name: string;
+  priceDelta: number;
+  priceDeltaBySize?: Partial<Record<"small" | "medium" | "large", number>>;
+  sizeCode?: string;
+  linkedMenuItemSlug?: string;
+  isDefault: boolean;
+  sortOrder: number;
+}
+
+export interface MenuCatalogModifierGroup {
+  code: string;
+  name: string;
+  description?: string;
+  selectionType: "single" | "multi";
+  minSelect: number;
+  maxSelect: number | null;
+  isRequired: boolean;
+  sortOrder: number;
+  options: MenuCatalogModifierOption[];
 }
 
 export interface MenuCatalog {

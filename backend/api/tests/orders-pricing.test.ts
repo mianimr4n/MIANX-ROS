@@ -8,6 +8,7 @@ import {
   priceOrderLines,
   type CatalogMenuItem,
 } from "../src/services/orders/pricing.js";
+import { priceModifierSelections } from "../src/services/orders/modifiers.js";
 
 const pizza: CatalogMenuItem = {
   id: "pizza-1",
@@ -96,5 +97,73 @@ describe("orders pricing engine (Sprint 4.1)", () => {
   it("hashes idempotency payloads stably", () => {
     expect(hashIdempotencyPayload({ a: 1 })).toBe(hashIdempotencyPayload({ a: 1 }));
     expect(hashIdempotencyPayload({ a: 1 })).not.toBe(hashIdempotencyPayload({ a: 2 }));
+  });
+
+  it("prices relational modifiers with size-tier deltas and ignores client prices", () => {
+    const optionsByKey = new Map([
+      [
+        "crust::classic",
+        {
+          id: "opt-crust",
+          code: "classic",
+          name: "Classic Crust",
+          price_delta: 0,
+          price_delta_by_size: null,
+          size_code: null,
+          linked_menu_item_id: null,
+          is_active: true,
+          sort_order: 1,
+          group: { id: "g1", code: "crust", name: "Crust", is_active: true },
+        },
+      ],
+      [
+        "extra-chicken::extra-chicken",
+        {
+          id: "opt-chicken",
+          code: "extra-chicken",
+          name: "Extra Chicken",
+          price_delta: 50,
+          price_delta_by_size: { small: 50, medium: 100, large: 150 },
+          size_code: null,
+          linked_menu_item_id: null,
+          is_active: true,
+          sort_order: 2,
+          group: { id: "g2", code: "extra-chicken", name: "Extra chicken", is_active: true },
+        },
+      ],
+    ]);
+
+    const pricedModifiers = priceModifierSelections({
+      selections: [
+        { groupCode: "crust", optionCode: "classic" },
+        { groupCode: "extra-chicken", optionCode: "extra-chicken" },
+      ],
+      optionsByKey,
+      tier: "medium",
+    });
+    expect(pricedModifiers.map((entry) => entry.priceDelta)).toEqual([0, 100]);
+
+    const priced = priceOrderLines({
+      menuBySlug: new Map([["tele-special", pizza]]),
+      modifiersByKey: optionsByKey,
+      lines: [
+        {
+          menuItemSlug: "tele-special",
+          variantLabel: "10 inch Medium",
+          quantity: 1,
+          unitPrice: 1,
+          modifiers: [
+            { groupCode: "crust", optionCode: "classic" },
+            { groupCode: "extra-chicken", optionCode: "extra-chicken" },
+          ],
+          extras: [{ label: "Ignored Extra", slug: "extra-cheese", price: 9999 }],
+        },
+      ],
+    });
+
+    expect(priced.lines[0]?.foodUnitPrice).toBe(899);
+    expect(priced.lines[0]?.modifiers).toHaveLength(2);
+    expect(priced.lines[0]?.lineUnitPrice).toBe(999);
+    expect(priced.lines[0]?.extras.every((extra) => extra.kind === "modifier")).toBe(true);
   });
 });

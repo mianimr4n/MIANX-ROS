@@ -21,6 +21,7 @@ export interface QuoteCartLineCanon {
   quantity: number;
   toppings: Array<{ slug: string }>;
   extras: Array<{ slug: string | null; label: string | null }>;
+  modifiers: Array<{ groupCode: string; optionCode: string }>;
   instructions: string | null;
 }
 
@@ -82,6 +83,7 @@ export function buildQuoteCartCanon(
     quantity: number;
     toppings?: Array<{ slug: string }>;
     extras?: Array<{ slug?: string; label?: string }>;
+    modifiers?: Array<{ groupCode: string; optionCode: string }>;
     instructions?: string;
   }>,
 ): QuoteCartLineCanon[] {
@@ -96,6 +98,14 @@ export function buildQuoteCartCanon(
         label: extra.label ?? null,
       }))
       .sort((a, b) => `${a.slug}:${a.label}`.localeCompare(`${b.slug}:${b.label}`)),
+    modifiers: (item.modifiers ?? [])
+      .map((modifier) => ({
+        groupCode: modifier.groupCode,
+        optionCode: modifier.optionCode,
+      }))
+      .sort((a, b) =>
+        `${a.groupCode}:${a.optionCode}`.localeCompare(`${b.groupCode}:${b.optionCode}`),
+      ),
     instructions: item.instructions?.trim() || null,
   }));
 }

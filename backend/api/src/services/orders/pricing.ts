@@ -1,6 +1,11 @@
 import { createHash } from "node:crypto";
 
 import { ApiError } from "../../common/http.js";
+import {
+  priceModifierSelections,
+  type ModifierOptionRow,
+  type PricedModifierSnapshot,
+} from "./modifiers.js";
 
 export type ToppingSizeTier = "small" | "medium" | "large";
 
@@ -29,6 +34,11 @@ export interface QuoteToppingInput {
   price?: number;
 }
 
+export interface QuoteModifierInput {
+  groupCode: string;
+  optionCode: string;
+}
+
 export interface QuoteLineInput {
   menuItemSlug: string;
   variantLabel?: string;
@@ -41,6 +51,8 @@ export interface QuoteLineInput {
    * Resolve via slug, topping label heuristics, or menu item name (addons).
    */
   extras?: QuoteToppingInput[];
+  /** Relational modifier selections (preferred). */
+  modifiers?: QuoteModifierInput[];
   /** Ignored money / display fields from clients. */
   unitPrice?: number;
   productName?: string;
@@ -51,7 +63,19 @@ export interface PricedExtraSnapshot {
   slug: string;
   label: string;
   price: number;
-  kind: "topping" | "addon";
+  kind: "topping" | "addon" | "modifier";
+  groupCode?: string;
+  optionCode?: string;
+}
+
+export interface PricedModifierLine {
+  modifierOptionId: string;
+  groupCode: string;
+  groupName: string;
+  optionCode: string;
+  optionName: string;
+  priceDelta: number;
+  sortOrder: number;
 }
 
 export interface PricedOrderLine {
@@ -62,6 +86,7 @@ export interface PricedOrderLine {
   quantity: number;
   foodUnitPrice: number;
   extras: PricedExtraSnapshot[];
+  modifiers: PricedModifierLine[];
   lineUnitPrice: number;
   lineTotal: number;
   instructions: string | null;
@@ -229,6 +254,8 @@ function collectExtraRefs(line: QuoteLineInput): Array<{ slug?: string; label?: 
 export function priceOrderLines(input: {
   lines: QuoteLineInput[];
   menuBySlug: Map<string, CatalogMenuItem>;
+  /** Optional relational modifiers keyed by groupCode::optionCode */
+  modifiersByKey?: Map<string, ModifierOptionRow>;
 }): OrderPricingResult {
   if (input.lines.length === 0) {
     throw new ApiError(400, "VALIDATION_ERROR", "At least one order item is required.");
@@ -304,62 +331,90 @@ export function priceOrderLines(input: {
       );
     }
 
-    const extras: PricedExtraSnapshot[] = [];
-    for (const ref of collectExtraRefs(line)) {
-      let catalogItem: CatalogMenuItem | undefined;
-      if (ref.slug) {
-        catalogItem = input.menuBySlug.get(ref.slug);
-      } else if (ref.label) {
-        const needle = ref.label.trim().toLowerCase();
-        for (const candidate of input.menuBySlug.values()) {
-          if (candidate.name.trim().toLowerCase() === needle) {
-            catalogItem = candidate;
-            break;
+    const modifierSelections = line.modifiers ?? [];
+    let pricedModifiers: PricedModifierSnapshot[] = [];
+    if (modifierSelections.length > 0) {
+      if (!input.modifiersByKey || input.modifiersByKey.size === 0) {
+        throw new ApiError(
+          400,
+          "MODIFIER_NOT_FOUND",
+          "Modifier catalog is unavailable for pricing.",
+        );
+      }
+      pricedModifiers = priceModifierSelections({
+        selections: modifierSelections,
+        optionsByKey: input.modifiersByKey,
+        tier,
+      });
+    }
+
+    const extras: PricedExtraSnapshot[] = pricedModifiers.map((modifier) => ({
+      slug: modifier.optionCode,
+      label: modifier.optionName,
+      price: modifier.priceDelta,
+      kind: "modifier" as const,
+      groupCode: modifier.groupCode,
+      optionCode: modifier.optionCode,
+    }));
+
+    // Legacy extras / toppings path when modifiers were not provided
+    if (pricedModifiers.length === 0) {
+      for (const ref of collectExtraRefs(line)) {
+        let catalogItem: CatalogMenuItem | undefined;
+        if (ref.slug) {
+          catalogItem = input.menuBySlug.get(ref.slug);
+        } else if (ref.label) {
+          const needle = ref.label.trim().toLowerCase();
+          for (const candidate of input.menuBySlug.values()) {
+            if (candidate.name.trim().toLowerCase() === needle) {
+              catalogItem = candidate;
+              break;
+            }
           }
         }
-      }
 
-      if (!catalogItem) {
-        throw new ApiError(
-          400,
-          "TOPPING_NOT_FOUND",
-          `Could not resolve topping/addon '${ref.slug ?? ref.label ?? "unknown"}' from catalog.`,
-        );
-      }
-      if (catalogItem.is_available === false) {
-        throw new ApiError(
-          400,
-          "CATALOG_ITEM_UNAVAILABLE",
-          `Topping/addon '${catalogItem.slug}' is currently unavailable.`,
-        );
-      }
-
-      if (catalogItem.product_type === "topping") {
-        const priced = resolveToppingPrice(catalogItem, tier);
-        extras.push({
-          slug: catalogItem.slug,
-          label: catalogItem.name,
-          price: priced.price,
-          kind: "topping",
-        });
-      } else {
-        const addonVariant = resolveVariant(catalogItem, undefined);
-        const price = addonVariant
-          ? parseNumber(addonVariant.price)
-          : parseNumber(catalogItem.base_price);
-        if (!price && catalogItem.base_price === null && !addonVariant) {
+        if (!catalogItem) {
           throw new ApiError(
             400,
-            "PRICE_UNAVAILABLE",
-            `No server price available for addon '${catalogItem.slug}'.`,
+            "TOPPING_NOT_FOUND",
+            `Could not resolve topping/addon '${ref.slug ?? ref.label ?? "unknown"}' from catalog.`,
           );
         }
-        extras.push({
-          slug: catalogItem.slug,
-          label: catalogItem.name,
-          price,
-          kind: "addon",
-        });
+        if (catalogItem.is_available === false) {
+          throw new ApiError(
+            400,
+            "CATALOG_ITEM_UNAVAILABLE",
+            `Topping/addon '${catalogItem.slug}' is currently unavailable.`,
+          );
+        }
+
+        if (catalogItem.product_type === "topping") {
+          const priced = resolveToppingPrice(catalogItem, tier);
+          extras.push({
+            slug: catalogItem.slug,
+            label: catalogItem.name,
+            price: priced.price,
+            kind: "topping",
+          });
+        } else {
+          const addonVariant = resolveVariant(catalogItem, undefined);
+          const price = addonVariant
+            ? parseNumber(addonVariant.price)
+            : parseNumber(catalogItem.base_price);
+          if (!price && catalogItem.base_price === null && !addonVariant) {
+            throw new ApiError(
+              400,
+              "PRICE_UNAVAILABLE",
+              `No server price available for addon '${catalogItem.slug}'.`,
+            );
+          }
+          extras.push({
+            slug: catalogItem.slug,
+            label: catalogItem.name,
+            price,
+            kind: "addon",
+          });
+        }
       }
     }
 
@@ -376,6 +431,15 @@ export function priceOrderLines(input: {
       quantity: line.quantity,
       foodUnitPrice,
       extras,
+      modifiers: pricedModifiers.map((modifier) => ({
+        modifierOptionId: modifier.modifierOptionId,
+        groupCode: modifier.groupCode,
+        groupName: modifier.groupName,
+        optionCode: modifier.optionCode,
+        optionName: modifier.optionName,
+        priceDelta: modifier.priceDelta,
+        sortOrder: modifier.sortOrder,
+      })),
       lineUnitPrice,
       lineTotal,
       instructions: line.instructions?.trim() || null,

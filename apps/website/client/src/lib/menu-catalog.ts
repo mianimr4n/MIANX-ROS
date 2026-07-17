@@ -2,6 +2,11 @@ import {
   menuCategories as fallbackMenuCategories,
   menuItems as fallbackMenuItems,
 } from "@/data/menu-data";
+import {
+  getStaticModifierGroupsForItem,
+  type ModifierGroupDef,
+  type ModifierSizeTier,
+} from "@/data/modifier-catalog";
 import { getCategoryPlaceholderImage, resolveMenuItemImage } from "@/lib/menu-images";
 import {
   getCustomerBrowseCategories,
@@ -9,7 +14,7 @@ import {
   isCustomerBrowseItem,
 } from "@/lib/menu-visibility";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
-import type { MenuCategory, MenuItem, MenuVariant } from "@/lib/telepizza-types";
+import type { MenuCategory, MenuItem, MenuVariant, ModifierGroup } from "@/lib/telepizza-types";
 
 export type MenuCatalogSource = "supabase" | "static";
 
@@ -82,7 +87,35 @@ function getCategory(category: SupabaseMenuItemRow["category"]) {
   return category;
 }
 
-function mapMenuItemRow(row: SupabaseMenuItemRow): MenuItem {
+function mapModifierGroups(defs: ModifierGroupDef[]): ModifierGroup[] {
+  return defs.map((group) => ({
+    code: group.code,
+    name: group.name,
+    description: group.description,
+    selectionType: group.selectionType,
+    minSelect: group.minSelect,
+    maxSelect: group.maxSelect,
+    isRequired: group.isRequired,
+    sortOrder: group.sortOrder,
+    options: group.options.map((option) => ({
+      code: option.code,
+      name: option.name,
+      priceDelta: option.priceDelta,
+      priceDeltaBySize: option.priceDeltaBySize,
+      sizeCode: option.sizeCode,
+      linkedMenuItemSlug: option.linkedMenuItemSlug,
+      isDefault: option.isDefault,
+      sortOrder: option.sortOrder,
+    })),
+  }));
+}
+
+function attachStaticModifiers(item: MenuItem): MenuItem {
+  const groups = mapModifierGroups(getStaticModifierGroupsForItem(item.slug ?? item.id));
+  return groups.length > 0 ? { ...item, modifierGroups: groups } : item;
+}
+
+function mapMenuItemRow(row: SupabaseMenuItemRow, modifierGroups?: ModifierGroup[]): MenuItem {
   const category = getCategory(row.category);
   const categoryName = category?.name ?? "Uncategorized";
   const categorySlug = category?.slug ?? "uncategorized";
@@ -116,7 +149,115 @@ function mapMenuItemRow(row: SupabaseMenuItemRow): MenuItem {
     productType: row.product_type,
     featured: row.is_featured,
     variants: variants.length > 0 ? variants : undefined,
+    modifierGroups:
+      modifierGroups && modifierGroups.length > 0
+        ? modifierGroups
+        : mapModifierGroups(getStaticModifierGroupsForItem(row.slug)),
   };
+}
+
+interface SupabaseModifierOptionRow {
+  code: string;
+  name: string;
+  price_delta: number | string;
+  price_delta_by_size: Partial<Record<ModifierSizeTier, number>> | null;
+  size_code: string | null;
+  is_default: boolean;
+  sort_order: number;
+  is_active: boolean;
+  linked_item: { slug: string } | { slug: string }[] | null;
+}
+
+interface SupabaseItemModifierGroupRow {
+  menu_item_id: string;
+  sort_order: number;
+  is_active: boolean;
+  is_required: boolean | null;
+  min_select: number | null;
+  max_select: number | null;
+  menu_item: { slug: string } | { slug: string }[] | null;
+  group:
+    | {
+        code: string;
+        name: string;
+        description: string | null;
+        selection_type: "single" | "multi";
+        min_select: number;
+        max_select: number | null;
+        is_required: boolean;
+        sort_order: number;
+        is_active: boolean;
+        options: SupabaseModifierOptionRow[] | null;
+      }
+    | {
+        code: string;
+        name: string;
+        description: string | null;
+        selection_type: "single" | "multi";
+        min_select: number;
+        max_select: number | null;
+        is_required: boolean;
+        sort_order: number;
+        is_active: boolean;
+        options: SupabaseModifierOptionRow[] | null;
+      }[]
+    | null;
+}
+
+function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+function mapSupabaseModifierGroupsBySlug(
+  rows: SupabaseItemModifierGroupRow[],
+): Map<string, ModifierGroup[]> {
+  const bySlug = new Map<string, ModifierGroup[]>();
+
+  for (const row of rows) {
+    if (row.is_active === false) continue;
+    const menuItem = unwrapOne(row.menu_item);
+    const group = unwrapOne(row.group);
+    if (!menuItem?.slug || !group || group.is_active === false) continue;
+
+    const options = (group.options ?? [])
+      .filter((option) => option.is_active !== false)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((option) => {
+        const linked = unwrapOne(option.linked_item);
+        return {
+          code: option.code,
+          name: option.name,
+          priceDelta: parseNumber(option.price_delta),
+          priceDeltaBySize: option.price_delta_by_size ?? undefined,
+          sizeCode: (option.size_code as ModifierSizeTier | null) ?? undefined,
+          linkedMenuItemSlug: linked?.slug,
+          isDefault: option.is_default,
+          sortOrder: option.sort_order,
+        };
+      });
+
+    const mapped: ModifierGroup = {
+      code: group.code,
+      name: group.name,
+      description: group.description ?? undefined,
+      selectionType: group.selection_type,
+      minSelect: row.min_select ?? group.min_select,
+      maxSelect: row.max_select ?? group.max_select,
+      isRequired: row.is_required ?? group.is_required,
+      sortOrder: row.sort_order ?? group.sort_order,
+      options,
+    };
+
+    const existing = bySlug.get(menuItem.slug) ?? [];
+    existing.push(mapped);
+    bySlug.set(
+      menuItem.slug,
+      existing.sort((a, b) => a.sortOrder - b.sortOrder),
+    );
+  }
+
+  return bySlug;
 }
 
 function splitCatalog(
@@ -143,7 +284,7 @@ function buildStaticCatalog(): MenuCatalogResult {
       })),
   );
 
-  return splitCatalog(categories, fallbackMenuItems, "static");
+  return splitCatalog(categories, fallbackMenuItems.map(attachStaticModifiers), "static");
 }
 
 export function getStaticMenuCatalog(): MenuCatalogResult {
@@ -157,7 +298,7 @@ export async function fetchMenuCatalogFromSupabase(): Promise<MenuCatalogResult>
     return buildStaticCatalog();
   }
 
-  const [categoriesResult, itemsResult] = await Promise.all([
+  const [categoriesResult, itemsResult, modifiersResult] = await Promise.all([
     supabase
       .from("menu_categories")
       .select("id, name, slug, sort_order")
@@ -170,6 +311,12 @@ export async function fetchMenuCatalogFromSupabase(): Promise<MenuCatalogResult>
       )
       .eq("is_available", true)
       .order("name", { ascending: true }),
+    supabase
+      .from("item_modifier_groups")
+      .select(
+        "menu_item_id, sort_order, is_active, is_required, min_select, max_select, menu_item:menu_items(slug), group:modifier_groups(code, name, description, selection_type, min_select, max_select, is_required, sort_order, is_active, options:modifier_options(code, name, price_delta, price_delta_by_size, size_code, is_default, sort_order, is_active, linked_item:menu_items!modifier_options_linked_menu_item_id_fkey(slug)))",
+      )
+      .eq("is_active", true),
   ]);
 
   if (categoriesResult.error) {
@@ -187,7 +334,14 @@ export async function fetchMenuCatalogFromSupabase(): Promise<MenuCatalogResult>
     sortOrder: row.sort_order,
   }));
 
-  const items = (itemsResult.data as SupabaseMenuItemRow[]).map(mapMenuItemRow);
+  const modifiersBySlug =
+    modifiersResult.error || !modifiersResult.data
+      ? new Map<string, ModifierGroup[]>()
+      : mapSupabaseModifierGroupsBySlug(modifiersResult.data as SupabaseItemModifierGroupRow[]);
+
+  const items = (itemsResult.data as SupabaseMenuItemRow[]).map((row) =>
+    mapMenuItemRow(row, modifiersBySlug.get(row.slug)),
+  );
 
   if (categories.length === 0 || items.length === 0) {
     throw new Error("Supabase returned an empty menu catalog.");

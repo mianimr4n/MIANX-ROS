@@ -17,6 +17,7 @@ export interface CreateOrderItemInput {
   instructions?: string;
   toppings?: Array<{ slug: string }>;
   extras?: OrderLineExtra[];
+  modifiers?: Array<{ groupCode: string; optionCode: string }>;
 }
 
 export interface QuoteOrderInput {

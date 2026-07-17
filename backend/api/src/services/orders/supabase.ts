@@ -11,6 +11,10 @@ import {
   type CatalogMenuItem,
 } from "./pricing.js";
 import {
+  modifierSelectionKey,
+  type ModifierOptionRow,
+} from "./modifiers.js";
+import {
   assertQuoteMatchesCreate,
   assertQuoteNotExpired,
   assertQuotePricesStillValid,
@@ -142,6 +146,46 @@ async function loadCatalogMap(
   return map;
 }
 
+async function loadModifiersMap(
+  supabase: SupabaseClient,
+  lines: QuoteOrderInput["items"] | CreateOrderInput["items"],
+): Promise<Map<string, ModifierOptionRow>> {
+  const selections = lines.flatMap((line) => line.modifiers ?? []);
+  if (selections.length === 0) {
+    return new Map();
+  }
+
+  const groupCodes = [...new Set(selections.map((entry) => entry.groupCode))];
+  const optionCodes = [...new Set(selections.map((entry) => entry.optionCode))];
+
+  const { data, error } = await supabase
+    .from("modifier_options")
+    .select(
+      "id, code, name, price_delta, price_delta_by_size, size_code, linked_menu_item_id, is_active, sort_order, group:modifier_groups!inner(id, code, name, is_active)",
+    )
+    .in("code", optionCodes)
+    .eq("is_active", true);
+
+  if (error) {
+    // Table may not exist until migration is applied — fail clearly for modifier requests.
+    throw new ApiError(500, "MODIFIER_LOOKUP_FAILED", error.message);
+  }
+
+  const map = new Map<string, ModifierOptionRow>();
+  for (const raw of data ?? []) {
+    const row = raw as unknown as ModifierOptionRow & {
+      group:
+        | ModifierOptionRow["group"]
+        | NonNullable<ModifierOptionRow["group"]>[]
+        | null;
+    };
+    const group = Array.isArray(row.group) ? row.group[0] ?? null : row.group;
+    if (!group || !groupCodes.includes(group.code)) continue;
+    map.set(modifierSelectionKey(group.code, row.code), { ...row, group });
+  }
+  return map;
+}
+
 function requireDeliveryAddress(
   orderType: CreateOrderInput["orderType"] | QuoteOrderInput["orderType"],
   deliveryAddress: string | undefined,
@@ -257,7 +301,8 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
       const signingSecret = envStatus.config.jwtSecret;
       const branch = await loadOperatingBranch(supabase, input.branchCode);
       const menuBySlug = await loadCatalogMap(supabase, input.items);
-      const priced = priceOrderLines({ lines: input.items, menuBySlug });
+      const modifiersByKey = await loadModifiersMap(supabase, input.items);
+      const priced = priceOrderLines({ lines: input.items, menuBySlug, modifiersByKey });
 
       const cartCanon = buildQuoteCartCanon(input.items);
       const cartHash = hashQuoteCart(cartCanon);
@@ -381,6 +426,10 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
             slug: extra.slug ?? null,
             label: extra.label ?? null,
           })),
+          modifiers: (item.modifiers ?? []).map((modifier) => ({
+            groupCode: modifier.groupCode,
+            optionCode: modifier.optionCode,
+          })),
           instructions: item.instructions ?? null,
         })),
       });
@@ -419,7 +468,8 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
 
       const branch = await loadOperatingBranch(supabase, input.branchCode);
       const menuBySlug = await loadCatalogMap(supabase, input.items);
-      const priced = priceOrderLines({ lines: input.items, menuBySlug });
+      const modifiersByKey = await loadModifiersMap(supabase, input.items);
+      const priced = priceOrderLines({ lines: input.items, menuBySlug, modifiersByKey });
 
       const orderNumber = generateOrderNumber();
       const notes = [input.notes?.trim(), input.couponCode?.trim() ? `Promo code: ${input.couponCode.trim()}` : null]
@@ -490,25 +540,54 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         throw new ApiError(500, "ORDER_CREATE_FAILED", orderError?.message ?? "Order insert failed.");
       }
 
-      const { error: itemsError } = await supabase.from("order_items").insert(
-        priced.lines.map((line) => ({
-          order_id: order.id,
-          menu_item_id: line.menuItemId,
-          variant_id: line.variantId,
-          product_name: line.productName,
-          variant_name: line.variantName,
-          quantity: line.quantity,
-          unit_price: line.lineUnitPrice,
-          total_price: line.lineTotal,
-          food_unit_price: line.foodUnitPrice,
-          extras_snapshot: line.extrasSnapshot,
-          instructions: line.instructions,
-        })),
-      );
+      const { data: insertedItems, error: itemsError } = await supabase
+        .from("order_items")
+        .insert(
+          priced.lines.map((line) => ({
+            order_id: order.id,
+            menu_item_id: line.menuItemId,
+            variant_id: line.variantId,
+            product_name: line.productName,
+            variant_name: line.variantName,
+            quantity: line.quantity,
+            unit_price: line.lineUnitPrice,
+            total_price: line.lineTotal,
+            food_unit_price: line.foodUnitPrice,
+            extras_snapshot: line.extrasSnapshot,
+            instructions: line.instructions,
+          })),
+        )
+        .select("id");
 
-      if (itemsError) {
+      if (itemsError || !insertedItems) {
         await supabase.from("orders").delete().eq("id", order.id);
-        throw new ApiError(500, "ORDER_ITEMS_CREATE_FAILED", itemsError.message);
+        throw new ApiError(500, "ORDER_ITEMS_CREATE_FAILED", itemsError?.message ?? "Order items insert failed.");
+      }
+
+      const modifierRows = priced.lines.flatMap((line, index) => {
+        const orderItemId = insertedItems[index]?.id;
+        if (!orderItemId) return [];
+        return line.modifiers.map((modifier) => ({
+          order_item_id: orderItemId,
+          modifier_option_id: modifier.modifierOptionId,
+          group_code: modifier.groupCode,
+          group_name: modifier.groupName,
+          option_code: modifier.optionCode,
+          option_name: modifier.optionName,
+          price_delta: modifier.priceDelta,
+          quantity: 1,
+          sort_order: modifier.sortOrder,
+        }));
+      });
+
+      if (modifierRows.length > 0) {
+        const { error: modifiersError } = await supabase
+          .from("order_item_modifiers")
+          .insert(modifierRows);
+        if (modifiersError) {
+          await supabase.from("orders").delete().eq("id", order.id);
+          throw new ApiError(500, "ORDER_MODIFIERS_CREATE_FAILED", modifiersError.message);
+        }
       }
 
       if (input.orderType === "delivery" && deliveryAddress) {
