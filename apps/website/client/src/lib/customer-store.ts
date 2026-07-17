@@ -95,9 +95,9 @@ export function generateLocalOrderNumber() {
 
 export function saveLocalOrder(
   payload: CreateWebsiteOrderPayload,
-  overrides?: Partial<Pick<CreatedOrderResult, "orderNumber" | "status" | "source">>,
+  overrides?: Partial<CreatedOrderResult>,
 ): CreatedOrderResult {
-  const now = new Date().toISOString();
+  const now = overrides?.createdAt ?? new Date().toISOString();
   const orderNumber = overrides?.orderNumber ?? generateLocalOrderNumber();
 
   const items: StoredOrderItem[] = payload.items.map((item) => {
@@ -129,8 +129,8 @@ export function saveLocalOrder(
     deliveryAddress: payload.deliveryAddress,
     notes: payload.notes,
     couponCode: payload.couponCode,
-    subtotal,
-    totalAmount: subtotal,
+    subtotal: overrides?.subtotal ?? subtotal,
+    totalAmount: overrides?.totalAmount ?? subtotal,
     createdAt: now,
     updatedAt: now,
     source: overrides?.source ?? "local",
@@ -165,6 +165,23 @@ export function getLocalOrder(orderNumber: string, phone: string): StoredOrder |
         order.contactPhone.replace(/\D/g, "") === normalized,
     ) ?? null
   );
+}
+
+export function updateLocalOrderStatus(
+  orderNumber: string,
+  phone: string,
+  status: string,
+  updatedAt: string,
+): void {
+  const normalized = phone.replace(/\D/g, "");
+  const orders = readOrders();
+  const next = orders.map((order) =>
+    order.orderNumber === orderNumber &&
+    order.contactPhone.replace(/\D/g, "") === normalized
+      ? { ...order, status, updatedAt }
+      : order,
+  );
+  writeOrders(next);
 }
 
 /**

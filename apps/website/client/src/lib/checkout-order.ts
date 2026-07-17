@@ -1,5 +1,6 @@
 import type { CreateWebsiteOrderPayload } from "@/lib/customer-store";
 import { normalizePhoneE164 } from "@/lib/phone";
+import { BRAND } from "@/lib/brand";
 
 export type CartLineInput = CreateWebsiteOrderPayload["items"][number];
 
@@ -112,7 +113,7 @@ export function mapCheckoutApiError(code: string | undefined, fallbackMessage: s
 }
 
 export function buildWhatsAppOrderUrl(input: {
-  branchPhone: string;
+  branchPhone?: string;
   orderNumber?: string;
   contactName: string;
   contactPhone: string;
@@ -120,7 +121,8 @@ export function buildWhatsAppOrderUrl(input: {
   orderType: string;
   deliveryAddress?: string;
 }): string {
-  const phone = input.branchPhone.replace(/\D/g, "").replace(/^0/, "");
+  // Ordering support is a locked business number; branch display phones must not reroute orders.
+  const phone = BRAND.phone.replace(/\D/g, "").replace(/^0/, "");
   const lines = [
     "Hi Telepizza, I'd like to place an order:",
     input.orderNumber ? `Order ref: ${input.orderNumber}` : null,

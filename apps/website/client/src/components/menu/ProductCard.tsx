@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { handleImageError } from "@/lib/image-fallback";
 import { useAddMenuItem } from "@/hooks/useAddMenuItem";
@@ -44,9 +45,11 @@ export function ProductCard({ item, index = 0, compact = false }: ProductCardPro
         <p className="text-[11px] uppercase tracking-wider text-brand-red font-[var(--font-accent)] font-bold mb-1">
           {item.category}
         </p>
-        <h3 className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal mb-1 line-clamp-1">
-          {item.name}
-        </h3>
+        <Link href={`/menu/${encodeURIComponent(item.slug ?? item.id)}`}>
+          <h3 className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal mb-1 line-clamp-1 hover:text-brand-red">
+            {item.name}
+          </h3>
+        </Link>
         {!compact && item.description && (
           <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{item.description}</p>
         )}
@@ -55,12 +58,18 @@ export function ProductCard({ item, index = 0, compact = false }: ProductCardPro
             {defaultVariant.label}
           </p>
         )}
-        <div className="mt-auto flex items-center justify-between gap-3">
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3">
           <div className="inline-flex items-center justify-center rounded-2xl bg-brand-red/10 px-3 py-2">
             <span className="font-[var(--font-accent)] font-extrabold text-lg text-brand-red">
               {formatMenuPriceLabel(item, displayPrice)}
             </span>
           </div>
+          <div className="flex items-center gap-1">
+          <Link href={`/menu/${encodeURIComponent(item.slug ?? item.id)}`}>
+            <Button variant="ghost" size="sm" className="rounded-2xl text-brand-red">
+              View
+            </Button>
+          </Link>
           <Button
             onClick={() => addMenuItem(item, defaultVariant?.label)}
             size="sm"
@@ -69,6 +78,7 @@ export function ProductCard({ item, index = 0, compact = false }: ProductCardPro
             <Plus className="w-4 h-4 mr-1" />
             {isPizzaItem(item) ? "Customize" : "Add"}
           </Button>
+          </div>
         </div>
       </div>
     </motion.div>

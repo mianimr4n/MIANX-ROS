@@ -81,6 +81,9 @@ export async function submitWebsiteOrder(
       saveLocalOrder(payload, {
         orderNumber: apiOrder.orderNumber,
         status: apiOrder.status,
+        subtotal: apiOrder.subtotal,
+        totalAmount: apiOrder.totalAmount,
+        createdAt: apiOrder.createdAt,
         source: "api",
       });
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Loader2, MessageCircle, RefreshCw } from "lucide-react";
+import { Banknote, Loader2, MessageCircle, RefreshCw, Store, Truck } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,7 +40,7 @@ export default function Checkout() {
   const [savedAddresses, setSavedAddresses] = useState<SavedCustomerAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
   const [notes, setNotes] = useState(state.order.orderInstructions);
-  const [couponCode, setCouponCode] = useState(state.order.couponCode);
+  const [couponCode] = useState(state.order.couponCode);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [quotePhase, setQuotePhase] = useState<QuotePhase>(isApiConfigured ? "loading" : "idle");
@@ -290,6 +290,8 @@ export default function Checkout() {
         source: result.source,
         status: result.status,
         total: String(result.totalAmount),
+        branch: selectedBranch.name,
+        orderType: deliveryMode,
       });
       navigate(`/order-success/${encodeURIComponent(result.orderNumber)}?${successParams.toString()}`);
     } catch (submitError) {
@@ -341,6 +343,7 @@ export default function Checkout() {
                   <Label htmlFor="contact-name">Full name</Label>
                   <Input
                     id="contact-name"
+                    autoComplete="name"
                     value={contactName}
                     onChange={(e) => setContactName(e.target.value)}
                     className="rounded-2xl"
@@ -350,6 +353,9 @@ export default function Checkout() {
                   <Label htmlFor="contact-phone">Phone</Label>
                   <Input
                     id="contact-phone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
                     className="rounded-2xl"
@@ -364,6 +370,36 @@ export default function Checkout() {
                   to save your details for next time.
                 </p>
               )}
+            </section>
+
+            <section className="rounded-3xl border border-border bg-white p-6 space-y-4">
+              <fieldset>
+                <legend className="font-[var(--font-display)] font-bold text-xl">
+                  How would you like your order?
+                </legend>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {(["delivery", "pickup"] as const).map((mode) => {
+                    const selected = deliveryMode === mode;
+                    const Icon = mode === "delivery" ? Truck : Store;
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => setOrderDetails({ deliveryMode: mode })}
+                        className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 font-semibold capitalize focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
+                          selected
+                            ? "border-brand-red bg-brand-red text-white"
+                            : "border-border hover:border-brand-red/50"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {mode}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
             </section>
 
             {deliveryMode === "delivery" && (
@@ -411,6 +447,9 @@ export default function Checkout() {
                   </p>
                 ) : null}
                 <Textarea
+                  id="checkout-delivery-address"
+                  aria-label="Delivery address"
+                  autoComplete="street-address"
                   value={deliveryAddress}
                   onChange={(e) => {
                     setDeliveryAddress(e.target.value);
@@ -425,17 +464,38 @@ export default function Checkout() {
             <section className="rounded-3xl border border-border bg-white p-6 space-y-3">
               <h2 className="font-[var(--font-display)] font-bold text-xl">Order notes</h2>
               <Textarea
+                aria-label="Order notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Landmark, gate code, special requests..."
                 className="rounded-2xl min-h-[90px]"
               />
               <Input
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-                placeholder="Promo code (optional)"
-                className="rounded-2xl"
+                aria-label="Promo codes"
+                value=""
+                readOnly
+                disabled
+                placeholder="Promo codes coming soon"
+                className="rounded-2xl disabled:opacity-70"
               />
+              <p className="text-xs text-muted-foreground">
+                Online promo redemption is not available yet.
+              </p>
+            </section>
+
+            <section className="rounded-3xl border border-border bg-white p-6 space-y-3">
+              <h2 className="font-[var(--font-display)] font-bold text-xl">Payment</h2>
+              <div className="flex items-start gap-3 rounded-2xl border border-brand-red bg-brand-red/5 p-4">
+                <Banknote className="mt-0.5 h-5 w-5 shrink-0 text-brand-red" />
+                <div>
+                  <div className="font-semibold">
+                    {deliveryMode === "delivery" ? "Cash on delivery" : "Pay when you collect"}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Online card payment is not available. The branch will confirm payment details.
+                  </p>
+                </div>
+              </div>
             </section>
           </div>
 
@@ -527,7 +587,7 @@ export default function Checkout() {
                 </>
               )}
 
-              {error && <p className="text-sm text-brand-red">{error}</p>}
+              {error && <p role="alert" aria-live="assertive" className="text-sm text-brand-red">{error}</p>}
 
               <Button
                 onClick={handleSubmit}

@@ -19,7 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { getLineItemTotal, VERIFIED_COUPON_CODES } from "@/data/cart-config";
+import { getLineItemTotal } from "@/data/cart-config";
+import { BRAND } from "@/lib/brand";
 
 export default function CartDrawer() {
   const { state, removeItem, updateQuantity, clearCart, toggleCart, setOrderDetails, subtotal, totalPrice } =
@@ -27,12 +28,8 @@ export default function CartDrawer() {
   const { selectedBranch } = useBranch();
   const { order } = state;
 
-  const couponValid = order.couponCode.trim()
-    ? Boolean(VERIFIED_COUPON_CODES[order.couponCode.trim().toUpperCase()])
-    : null;
-
   const buildWhatsAppUrl = () => {
-    const phone = selectedBranch.phone.replace(/-/g, "").replace(/^0/, "");
+    const phone = BRAND.phone.replace(/\D/g, "").replace(/^0/, "");
     const lines = [
       `*New Order from Telepizza Website*`,
       ``,
@@ -104,11 +101,14 @@ export default function CartDrawer() {
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 400, damping: 35 }}
             className="fixed top-0 right-0 bottom-0 z-[61] w-full max-w-md bg-white shadow-2xl flex flex-col"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cart-title"
           >
             <div className="flex items-center justify-between p-5 border-b border-border">
               <div className="flex items-center gap-3">
                 <ShoppingBag className="w-5 h-5 text-brand-red" />
-                <span className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal">
+                <span id="cart-title" className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal">
                   Your Cart
                 </span>
                 <span className="bg-brand-red/10 text-brand-red text-xs font-[var(--font-accent)] font-bold px-2 py-0.5 rounded-full">
@@ -116,6 +116,8 @@ export default function CartDrawer() {
                 </span>
               </div>
               <button
+                type="button"
+                aria-label="Close cart"
                 onClick={toggleCart}
                 className="p-2 rounded-xl hover:bg-brand-cream-dark transition-colors"
               >
@@ -174,6 +176,8 @@ export default function CartDrawer() {
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
                             <button
+                              type="button"
+                              aria-label={`Decrease ${item.name} quantity`}
                               onClick={() => updateQuantity(item.id, item.quantity - 1)}
                               className="w-7 h-7 rounded-lg bg-white border border-border flex items-center justify-center hover:bg-brand-red hover:text-white hover:border-brand-red transition-all"
                             >
@@ -183,12 +187,16 @@ export default function CartDrawer() {
                               {item.quantity}
                             </span>
                             <button
+                              type="button"
+                              aria-label={`Increase ${item.name} quantity`}
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
                               className="w-7 h-7 rounded-lg bg-white border border-border flex items-center justify-center hover:bg-brand-red hover:text-white hover:border-brand-red transition-all"
                             >
                               <Plus className="w-3 h-3" />
                             </button>
                             <button
+                              type="button"
+                              aria-label={`Remove ${item.name} from cart`}
                               onClick={() => removeItem(item.id)}
                               className="p-1.5 text-muted-foreground hover:text-brand-red hover:bg-brand-red/10 rounded-lg"
                             >
@@ -261,25 +269,19 @@ export default function CartDrawer() {
                   <div className="space-y-2">
                     <Label htmlFor="coupon-code" className="font-[var(--font-accent)] font-semibold text-sm flex items-center gap-1.5">
                       <Tag className="w-3.5 h-3.5" />
-                      Promo code (optional)
+                      Promo codes
                     </Label>
                     <Input
                       id="coupon-code"
-                      value={order.couponCode}
-                      onChange={(event) => setOrderDetails({ couponCode: event.target.value })}
-                      placeholder="Enter code if you have one"
-                      className="rounded-2xl"
+                      value=""
+                      disabled
+                      readOnly
+                      placeholder="Coming soon"
+                      className="rounded-2xl disabled:opacity-70"
                     />
-                    {couponValid === false && (
-                      <p className="text-xs text-brand-red">
-                        Code not recognized online — branch will verify on WhatsApp.
-                      </p>
-                    )}
-                    {couponValid === true && (
-                      <p className="text-xs text-brand-charcoal">
-                        {VERIFIED_COUPON_CODES[order.couponCode.trim().toUpperCase()].description}
-                      </p>
-                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Online promo redemption is not available yet.
+                    </p>
                   </div>
                 </>
               )}
@@ -294,8 +296,7 @@ export default function CartDrawer() {
                   </span>
                 </div>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Delivery charges and taxes are confirmed by the branch on WhatsApp. No automatic
-                  discounts are applied online unless a verified promo code is configured.
+                  Taxes and delivery fees are calculated from the server quote at checkout.
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal">

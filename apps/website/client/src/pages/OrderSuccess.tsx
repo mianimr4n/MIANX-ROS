@@ -1,5 +1,5 @@
 import { Link, useRoute } from "wouter";
-import { AlertTriangle, CheckCircle2, MapPin, MessageCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, MapPin, MessageCircle, ReceiptText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBranch } from "@/contexts/BranchContext";
 import { BrandLogoMark } from "@/components/BrandLogo";
@@ -12,6 +12,8 @@ export default function OrderSuccess() {
   const phone = search.get("phone") ?? "";
   const source = search.get("source") ?? "local";
   const status = search.get("status") ?? "pending";
+  const branchName = search.get("branch");
+  const orderType = search.get("orderType");
   const totalParam = search.get("total");
   const parsedTotal = totalParam ? Number(totalParam) : NaN;
   const isConfirmedApiOrder = source === "api" && !orderNumber.startsWith("LOC-");
@@ -19,11 +21,11 @@ export default function OrderSuccess() {
   const { selectedBranch } = useBranch();
 
   const whatsappUrl = (() => {
-    const branchPhone = selectedBranch.phone.replace(/-/g, "").replace(/^0/, "");
+    const orderingPhone = BRAND.phone.replace(/\D/g, "").replace(/^0/, "");
     const message = encodeURIComponent(
       `Hi Telepizza, I placed order ${orderNumber} on the website. Please confirm.`,
     );
-    return `https://wa.me/92${branchPhone}?text=${message}`;
+    return `https://wa.me/92${orderingPhone}?text=${message}`;
   })();
 
   return (
@@ -63,18 +65,35 @@ export default function OrderSuccess() {
                   <div className="font-bold text-lg text-brand-red">Rs {parsedTotal.toLocaleString()}</div>
                 </div>
               )}
+              {orderType === "delivery" || orderType === "pickup" ? (
+                <div className="flex items-start gap-2">
+                  <ReceiptText className="mt-0.5 h-4 w-4 text-brand-red" />
+                  <div>
+                    <div className="text-sm text-muted-foreground">Payment method</div>
+                    <div className="font-semibold">
+                      {orderType === "delivery" ? "Cash on delivery" : "Pay when you collect"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Payment status will be confirmed by the branch.
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </>
           )}
           {isLocalFallback && (
             <p className="text-sm text-amber-700 bg-amber-50 rounded-2xl px-4 py-3">
               Local reference only — not a confirmed branch order. Use WhatsApp to confirm with{" "}
-              {selectedBranch.phone}.
+              {BRAND.phone}.
             </p>
           )}
           <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
             <MapPin className="w-4 h-4 text-brand-red" />
-            {selectedBranch.name}
+            {branchName || selectedBranch.name}
           </div>
+          <p className="rounded-2xl bg-brand-cream px-4 py-3 text-sm text-muted-foreground">
+            The branch will confirm timing after reviewing your order. No estimated arrival time is available yet.
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           {isConfirmedApiOrder && (
@@ -88,6 +107,12 @@ export default function OrderSuccess() {
               {isConfirmedApiOrder ? "Message branch on WhatsApp" : "Confirm on WhatsApp"}
             </Button>
           </a>
+          <Link href="/orders">
+            <Button variant="outline" className="rounded-2xl px-8">Order history</Button>
+          </Link>
+          <Link href="/menu">
+            <Button variant="ghost" className="rounded-2xl px-8">Back to menu</Button>
+          </Link>
         </div>
       </div>
     </div>
