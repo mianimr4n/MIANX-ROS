@@ -46,7 +46,7 @@ export function OpsShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50">
-      <header className="border-b border-zinc-800 bg-zinc-900/80 sticky top-0 z-20 backdrop-blur">
+      <header className="border-b border-zinc-800 bg-zinc-900/80 sticky top-0 z-20 backdrop-blur print:hidden">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div>
             <p className="text-xs uppercase tracking-widest text-red-400">Telepizza Ops</p>

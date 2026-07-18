@@ -29,6 +29,7 @@ export default function OpsKitchen() {
   const [tickets, setTickets] = useState<KitchenTicket[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  const [busyTicketId, setBusyTicketId] = useState<string | null>(null);
   const token = session?.access_token;
 
   const refresh = useCallback(async () => {
@@ -58,14 +59,17 @@ export default function OpsKitchen() {
   }, [tickets]);
 
   async function advance(ticket: KitchenTicket) {
-    if (!token) return;
+    if (!token || busyTicketId) return;
     const next = NEXT[ticket.status];
     if (!next) return;
+    setBusyTicketId(ticket.id);
     try {
       await patchKitchenTicketStatus(token, ticket.id, next);
       await refresh();
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Status update failed");
+    } finally {
+      setBusyTicketId(null);
     }
   }
 
@@ -115,10 +119,11 @@ export default function OpsKitchen() {
                   {NEXT[ticket.status] ? (
                     <button
                       type="button"
+                      disabled={busyTicketId === ticket.id}
                       onClick={() => void advance(ticket)}
-                      className="mt-3 w-full min-h-12 rounded-xl bg-red-600 text-base font-bold hover:bg-red-500"
+                      className="mt-3 w-full min-h-12 rounded-xl bg-red-600 text-base font-bold hover:bg-red-500 disabled:opacity-50"
                     >
-                      → {NEXT[ticket.status]}
+                      {busyTicketId === ticket.id ? "Updating…" : `→ ${NEXT[ticket.status]}`}
                     </button>
                   ) : null}
                 </article>

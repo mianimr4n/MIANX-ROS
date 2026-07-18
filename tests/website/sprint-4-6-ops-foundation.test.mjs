@@ -43,5 +43,21 @@ describe("Sprint 4.6 restaurant ops foundation (static)", () => {
     const doc = read("docs/architecture/SPRINT-04-6-RESTAURANT-OPS-FOUNDATION.md");
     assert.match(doc, /Restaurant Operations Foundation/);
     assert.match(doc, /No new migrations/);
+    assert.match(doc, /delivery\.update/);
+    assert.match(doc, /DELIVERY_SYNC_FAILED|compensating rollback/i);
+  });
+
+  it("guards dispatch and kitchen against double-submit", () => {
+    const dispatch = read("apps/website/client/src/pages/ops/OpsDispatch.tsx");
+    const kitchen = read("apps/website/client/src/pages/ops/OpsKitchen.tsx");
+    assert.match(dispatch, /busyId/);
+    assert.match(dispatch, /canUpdateStatus/);
+    assert.match(kitchen, /busyTicketId/);
+  });
+
+  it("defines ops print stylesheet", () => {
+    const css = read("apps/website/client/src/index.css");
+    assert.match(css, /@media print/);
+    assert.match(css, /ops-print-ticket/);
   });
 });

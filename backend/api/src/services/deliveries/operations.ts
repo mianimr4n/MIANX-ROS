@@ -241,7 +241,8 @@ export function createSupabaseDeliveryOperationsDataSource(
     },
 
     async listAssignments(scope, filters) {
-      if (!hasPermission(scope, "delivery.read") && !hasPermission(scope, "order.manage")) {
+      // Seeded matrix: delivery.read (BM/rider/CS). order.manage alone is not a delivery shortcut.
+      if (!hasPermission(scope, "delivery.read")) {
         throw new ApiError(403, "AUTHZ_FORBIDDEN", "Missing permission to list deliveries.");
       }
       const supabase = getClient();
@@ -330,7 +331,8 @@ export function createSupabaseDeliveryOperationsDataSource(
     },
 
     async assignRider({ scope, deliveryId, riderId }) {
-      if (!hasPermission(scope, "delivery.assign") && !hasPermission(scope, "order.manage")) {
+      // Seeded matrix: delivery.assign only (branch-manager). No order.manage shortcut.
+      if (!hasPermission(scope, "delivery.assign")) {
         throw new ApiError(403, "AUTHZ_FORBIDDEN", "Missing permission to assign riders.");
       }
       const supabase = getClient();
@@ -405,11 +407,13 @@ export function createSupabaseDeliveryOperationsDataSource(
         throw new ApiError(400, "VALIDATION_ERROR", "Unsupported delivery status.");
       }
 
+      // Seeded matrix: riders own delivery.update; BM assigns via delivery.assign; BM order
+      // dispatch/complete stays on admin order routes (no order.manage delivery-status shortcut).
       const needsUpdate = toStatus === "picked-up" || toStatus === "delivered";
-      if (needsUpdate && !hasPermission(scope, "delivery.update") && !hasPermission(scope, "order.manage")) {
+      if (needsUpdate && !hasPermission(scope, "delivery.update")) {
         throw new ApiError(403, "AUTHZ_FORBIDDEN", "Missing permission to update delivery status.");
       }
-      if (toStatus === "assigned" && !hasPermission(scope, "delivery.assign") && !hasPermission(scope, "order.manage")) {
+      if (toStatus === "assigned" && !hasPermission(scope, "delivery.assign")) {
         throw new ApiError(403, "AUTHZ_FORBIDDEN", "Missing permission to assign delivery.");
       }
 
@@ -430,12 +434,19 @@ export function createSupabaseDeliveryOperationsDataSource(
       }
 
       if (delivery.status === toStatus) {
-        const { data: order } = await supabase.from("orders").select("status").eq("id", delivery.order_id).maybeSingle();
+        let orderStatus = "";
+        if (rule.orderAction) {
+          // Heal order mirror on idempotent replay if a prior attempt left lanes divergent.
+          orderStatus = await mirrorOrderStatus(supabase, scope, delivery.order_id, rule.orderAction);
+        } else {
+          const { data: order } = await supabase.from("orders").select("status").eq("id", delivery.order_id).maybeSingle();
+          orderStatus = (order as { status?: string } | null)?.status ?? "";
+        }
         return {
           deliveryId: delivery.id,
           status: toStatus,
           orderId: delivery.order_id,
-          orderStatus: (order as { status?: string } | null)?.status ?? "",
+          orderStatus,
           idempotentReplay: true,
         };
       }
@@ -448,6 +459,7 @@ export function createSupabaseDeliveryOperationsDataSource(
         );
       }
 
+      const previousStatus = delivery.status as DeliveryStatus;
       const now = new Date().toISOString();
       const patch: Record<string, unknown> = { status: toStatus, updated_at: now };
       if (toStatus === "picked-up") patch.picked_up_at = now;
@@ -467,11 +479,34 @@ export function createSupabaseDeliveryOperationsDataSource(
       }
 
       let orderStatus = "";
-      if (rule.orderAction) {
-        orderStatus = await mirrorOrderStatus(supabase, scope, delivery.order_id, rule.orderAction);
-      } else {
-        const { data: order } = await supabase.from("orders").select("status").eq("id", delivery.order_id).maybeSingle();
-        orderStatus = (order as { status?: string } | null)?.status ?? "";
+      try {
+        if (rule.orderAction) {
+          orderStatus = await mirrorOrderStatus(supabase, scope, delivery.order_id, rule.orderAction);
+        } else {
+          const { data: order } = await supabase.from("orders").select("status").eq("id", delivery.order_id).maybeSingle();
+          orderStatus = (order as { status?: string } | null)?.status ?? "";
+        }
+      } catch (mirrorError) {
+        // Compensating rollback: prefer delivery↔order consistency without a DB transaction/RPC.
+        const rollback: Record<string, unknown> = {
+          status: previousStatus,
+          updated_at: new Date().toISOString(),
+        };
+        if (toStatus === "picked-up") rollback.picked_up_at = null;
+        if (toStatus === "delivered") rollback.delivered_at = null;
+        const { error: rollbackError } = await supabase
+          .from("deliveries")
+          .update(rollback)
+          .eq("id", delivery.id)
+          .eq("status", toStatus);
+        if (rollbackError) {
+          throw new ApiError(
+            500,
+            "DELIVERY_ORDER_INCONSISTENT",
+            `Order mirror failed and delivery rollback also failed: ${rollbackError.message}`,
+          );
+        }
+        throw mirrorError;
       }
 
       void note;

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ApiError, validateBody } from "../../common/http.js";
 import {
   createRequireAuthenticatedUser,
+  requireAnyPermission,
   requirePermission,
   type AuthorizedRequest,
 } from "../../middleware/authorization.js";
@@ -133,6 +134,7 @@ export function createRidersRouter(deps: RidersRouterDependencies) {
   router.post(
     "/deliveries/:deliveryId/status",
     requireAuthenticatedUser,
+    requireAnyPermission(["delivery.update", "delivery.assign"]),
     validateBody(statusBodySchema),
     async (req, res, next) => {
       try {
