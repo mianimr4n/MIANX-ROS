@@ -5,6 +5,7 @@ import { createAdminRouter } from "./admin/routes.js";
 import { createAuthRouter } from "./auth/routes.js";
 import { createBranchesRouter } from "./branches/routes.js";
 import { createDineInRouter } from "./dine-in/routes.js";
+import { createKitchenRouter } from "./kitchen/routes.js";
 import { createMenuRouter } from "./menu/routes.js";
 import { createOrdersRouter } from "./orders/routes.js";
 import { createRidersRouter } from "./riders/routes.js";
@@ -42,6 +43,11 @@ export const apiModules: ApiModuleDescriptor[] = [
     summary: "Public dine-in session resolve (table QR) and session state by public token.",
   },
   {
+    name: "kitchen",
+    basePath: "/api/v1/kitchen",
+    summary: "Kitchen tickets queue and status transitions (DB-R5 foundation).",
+  },
+  {
     name: "riders",
     basePath: "/api/v1/riders",
     summary: "Rider assignment and delivery workflows.",
@@ -72,6 +78,14 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
     "/api/v1/dine-in",
     createDineInRouter({
       dineInSessions: dependencies.dineInSessions,
+    }),
+  );
+  app.use(
+    "/api/v1/kitchen",
+    createKitchenRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      kitchenTickets: dependencies.kitchenTickets,
     }),
   );
   app.use("/api/v1/riders", createRidersRouter());
