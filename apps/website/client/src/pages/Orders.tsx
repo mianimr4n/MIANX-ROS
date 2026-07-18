@@ -3,38 +3,42 @@ import { Link, useLocation } from "wouter";
 import { listLocalOrders, type StoredOrder } from "@/lib/customer-store";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 import { Button } from "@/components/ui/button";
+import { OrderStatusTimeline } from "@/components/my-telepizza/OrderStatusTimeline";
+import { ReorderReviewDialog } from "@/components/my-telepizza/ReorderReviewDialog";
+import { bucketForOrderStatus, type OrderStatusBucket } from "@/lib/order-status";
+import {
+  buildReorderPreview,
+  confirmedReorderCartItems,
+  type ReorderPreview,
+} from "@/lib/reorder";
+import { rememberAuthNextPath } from "@/lib/auth-redirect";
 
-type OrderTab = "active" | "completed" | "cancelled";
-
-function bucketForStatus(status: string): OrderTab {
-  const normalized = status.trim().toLowerCase();
-  if (normalized === "cancelled" || normalized === "canceled") return "cancelled";
-  if (normalized === "completed" || normalized === "delivered") return "completed";
-  return "active";
-}
+type OrderTab = OrderStatusBucket;
 
 function filterOrders(orders: StoredOrder[], tab: OrderTab): StoredOrder[] {
-  return orders.filter((order) => bucketForStatus(order.status) === tab);
+  return orders.filter((order) => bucketForOrderStatus(order.status) === tab);
 }
 
 function statusBadgeClass(status: string): string {
-  const bucket = bucketForStatus(status);
+  const bucket = bucketForOrderStatus(status);
   if (bucket === "cancelled") return "bg-muted text-muted-foreground";
   if (bucket === "completed") return "bg-emerald-50 text-emerald-800";
   return "bg-brand-red/10 text-brand-red";
 }
 
-const STATUS_STEPS = ["pending", "confirmed", "preparing", "ready", "dispatched", "completed"];
-
 export default function Orders() {
   const [, navigate] = useLocation();
   const { profile, user, isAuthenticated } = useAuth();
   const { addItem, setOrderDetails } = useCart();
+  const { items: catalogItems, isLoading: catalogLoading } = useMenuCatalog();
   // Match device-local orders by checkout phone only — never invent an email match.
   const orderKey = profile?.phone ?? undefined;
   const orders = useMemo(() => (orderKey ? listLocalOrders(orderKey) : []), [orderKey]);
   const [tab, setTab] = useState<OrderTab>("active");
+  const [reorderPreview, setReorderPreview] = useState<ReorderPreview | null>(null);
+  const [reorderOpen, setReorderOpen] = useState(false);
 
   const filtered = useMemo(() => filterOrders(orders, tab), [orders, tab]);
 
@@ -47,37 +51,38 @@ export default function Orders() {
     [orders],
   );
 
-  function handleReorder(order: StoredOrder) {
-    if (!order.items.every((item) => item.menuItemSlug)) return;
-    order.items.forEach((item) => {
-      const extrasTotal = (item.extras ?? []).reduce((sum, extra) => sum + extra.price, 0);
-      addItem({
-        id: `${item.menuItemSlug}-${item.variantName ?? "standard"}`,
-        menuSlug: item.menuItemSlug!,
-        name: item.productName,
-        price: Math.max(0, item.unitPrice - extrasTotal),
-        quantity: item.quantity,
-        category: "Reorder",
-        variant: item.variantName,
-        extras: item.extras,
-        instructions: item.instructions,
-      });
-    });
+  function openReorderReview(order: StoredOrder) {
+    if (catalogLoading) return;
+    setReorderPreview(buildReorderPreview(order, catalogItems));
+    setReorderOpen(true);
+  }
+
+  function confirmReorder() {
+    if (!reorderPreview) return;
+    const items = confirmedReorderCartItems(reorderPreview);
+    if (!items.length) return;
+    items.forEach((item) => addItem(item));
     setOrderDetails({
-      deliveryMode: order.orderType === "pickup" ? "pickup" : "delivery",
-      deliveryAddress: order.deliveryAddress ?? "",
-      orderInstructions: order.notes ?? "",
+      deliveryMode: reorderPreview.order.orderType === "pickup" ? "pickup" : "delivery",
+      deliveryAddress: reorderPreview.order.deliveryAddress ?? "",
+      orderInstructions: reorderPreview.order.notes ?? "",
       couponCode: "",
     });
+    setReorderOpen(false);
+    setReorderPreview(null);
     navigate("/checkout");
   }
 
   if (!isAuthenticated || !user) {
+    const returnPath = "/orders";
     return (
       <div className="container py-16 text-center">
-        <p className="text-muted-foreground mb-4">Login to view your orders.</p>
-        <Link href="/login">
-          <Button className="rounded-2xl brand-gradient text-white">Login</Button>
+        <p className="text-muted-foreground mb-4">Sign in to view your orders.</p>
+        <Link
+          href={`/login?next=${encodeURIComponent(returnPath)}`}
+          onClick={() => rememberAuthNextPath(returnPath)}
+        >
+          <Button className="rounded-2xl brand-gradient text-white">Sign in</Button>
         </Link>
       </div>
     );
@@ -88,23 +93,27 @@ export default function Orders() {
       <div className="container max-w-3xl space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
-              Account
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-red mb-1">
+              My Telepizza
             </p>
             <h1 className="brand-heading text-3xl">My Orders</h1>
             <p className="text-sm text-muted-foreground mt-1">
               {!profile?.phone
-                ? "Add a phone number to see orders matched to your checkout."
+                ? "Add a phone number to see orders matched to your checkout on this device."
                 : orders.length === 0
-                  ? "You have no recent orders yet."
+                  ? "You have no recent orders on this device yet."
                   : orders.length === 1
-                    ? "You have 1 recent order."
-                    : `You have ${orders.length} recent orders.`}
+                    ? "You have 1 recent order on this device."
+                    : `You have ${orders.length} recent orders on this device.`}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              History shown here is matched by checkout phone on this browser. Cross-device account
+              history needs customer-linked orders (future).
             </p>
           </div>
-          <Link href="/account#orders">
+          <Link href="/my-telepizza#orders">
             <Button variant="outline" className="rounded-2xl">
-              Back to Account
+              Back to My Telepizza
             </Button>
           </Link>
         </div>
@@ -115,7 +124,7 @@ export default function Orders() {
             <p className="text-sm text-muted-foreground mt-1">
               Orders are matched by the phone number used at checkout.
             </p>
-            <Link href="/account#profile">
+            <Link href="/my-telepizza#profile">
               <Button className="mt-4 rounded-2xl brand-gradient text-white">Go to Profile</Button>
             </Link>
           </div>
@@ -186,32 +195,7 @@ export default function Orders() {
                     <div className="text-sm text-muted-foreground">
                       {new Date(order.createdAt).toLocaleString()} · {order.branchName}
                     </div>
-                    {bucketForStatus(order.status) !== "cancelled" ? (
-                      <div
-                        className="grid grid-cols-3 sm:grid-cols-6 gap-1.5"
-                        aria-label={`Order progress: ${order.status}`}
-                      >
-                        {STATUS_STEPS.map((step, index) => {
-                          const activeIndex = STATUS_STEPS.indexOf(order.status.toLowerCase());
-                          return (
-                            <div
-                              key={step}
-                              className={`rounded-xl px-2 py-1.5 text-center text-[10px] font-semibold capitalize ${
-                                index <= activeIndex
-                                  ? "bg-brand-red text-white"
-                                  : "bg-brand-cream text-muted-foreground"
-                              }`}
-                            >
-                              {step}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="rounded-2xl bg-muted/50 p-3 text-sm text-muted-foreground">
-                        This order was cancelled.
-                      </div>
-                    )}
+                    <OrderStatusTimeline status={order.status} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                       <div>
                         <span className="font-semibold">Branch:</span> {order.branchName}
@@ -243,13 +227,13 @@ export default function Orders() {
                           variant="outline"
                           size="sm"
                           className="rounded-2xl"
-                          disabled={!order.items.every((item) => item.menuItemSlug)}
+                          disabled={catalogLoading || !order.items.some((item) => item.menuItemSlug)}
                           title={
-                            order.items.every((item) => item.menuItemSlug)
-                              ? "Add these items to cart"
-                              : "Reorder is unavailable for orders saved before this update"
+                            order.items.some((item) => item.menuItemSlug)
+                              ? "Review live prices before adding to cart"
+                              : "Reorder is unavailable for orders saved before catalog linking"
                           }
-                          onClick={() => handleReorder(order)}
+                          onClick={() => openReorderReview(order)}
                         >
                           Reorder
                         </Button>
@@ -269,6 +253,16 @@ export default function Orders() {
           </>
         )}
       </div>
+
+      <ReorderReviewDialog
+        open={reorderOpen}
+        preview={reorderPreview}
+        onOpenChange={(open) => {
+          setReorderOpen(open);
+          if (!open) setReorderPreview(null);
+        }}
+        onConfirm={confirmReorder}
+      />
     </div>
   );
 }
