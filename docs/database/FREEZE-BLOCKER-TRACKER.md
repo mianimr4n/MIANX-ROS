@@ -3,12 +3,12 @@
 **Board:** Telepizza Database Freeze Remediation Board  
 **Date:** 2026-07-18  
 **Source of truth:** [PR #76](https://github.com/mianimr4n/telepizza/pull/76) · `_documentation-audit/reports/DATABASE-V1-FREEZE-REVIEW-BOARD.md`  
-**Git baseline:** `origin/main` @ `9c1d21c` (Merge PR #68 — DB-R2 production close)  
+**Git baseline:** `origin/main` @ `7e51c0c` (R3–R6 + hash privilege harden #78)  
 **Linked project:** `pyeowxvacgypohrbvgee`  
-**Mode:** Docs-only remediation tracker — **no migrations, no production apply, no feature work, no Sprint 4.5**
+**Mode:** Execution war room — tracker statuses updated as blockers clear
 
-**Applied truth (unchanged):** R0–R2 on `main` **and** linked remote through `20260718130200`.  
-**Missing truth:** R3–R6 DESIGNED-ONLY in PRs #69–#72; restaurant tables absent on remote.
+**Applied truth:** R0–R6 + `20260718171000` hash harden on `main` **and** linked remote through `20260718171000`.  
+**Remaining gate:** B-08 owner written deferral (`kitchen_stations`, `pos_sessions`).
 
 ---
 
@@ -17,11 +17,11 @@
 | Gate | Result |
 |---|---|
 | R0–R2 applied | **DONE** |
-| R3–R6 merged + applied | **OPEN / BLOCKED** |
-| PR hygiene (#71 pollution, #72 mega-stack, superseded/conflicting PRs) | **OPEN** |
-| Post-apply restaurant security certification | **BLOCKED** (needs apply) |
-| Owner deferrals (`kitchen_stations`, `pos_sessions`) | **OPEN** |
-| **Database V1 Freeze** | **BLOCKED** |
+| R3–R6 merged + applied | **DONE** |
+| PR hygiene (#71 pollution, #72 mega-stack, superseded/conflicting PRs) | **DONE** |
+| Post-apply restaurant security certification | **DONE** (see security evidence + `…171000`) |
+| Owner deferrals (`kitchen_stations`, `pos_sessions`) | **OPEN — OWNER DECISION** |
+| **Database V1 Freeze** | **BLOCKED (B-08 only)** |
 
 ---
 
@@ -29,16 +29,16 @@
 
 | Blocker ID | Priority | Description | Owner | Status | Dependencies | Action type | Blocking freeze? | Verification Steps | Completion Evidence |
 |---|---|---|---|---|---|---|---|---|---|
-| **B-01** | P0 | DB-R3 not on `main` / prod — `20260718140000` absent; `restaurant_tables` NULL | Human Owner + Platform | OPEN | B-09, B-10 (close hygiene first preferred) | Migration → Production apply → Verification | **YES** | After merge #69: `migration list --linked` shows `20260718140000`; `to_regclass('public.restaurant_tables')` NOT NULL; RLS on; `qr_token_hash` revoked from client roles | PR #69 MERGED; remote version present; schema check PASS |
-| **B-02** | P0 | DB-R4 not on `main` / prod — `20260718150000` absent; `dine_in_sessions` NULL | Human Owner + Platform | OPEN | B-01 | Migration → Production apply → Verification | **YES** | Rebase #70 after #69; apply `20260718150000`; verify `dine_in_sessions`, branch-match trigger, one-active-session index | PR #70 MERGED (post-rebase); remote version present; schema check PASS |
-| **B-03** | P0 | DB-R5 not on `main` / prod — `20260718160000` absent; `kitchen_tickets` / `kitchen_ticket_items` NULL | Human Owner + Platform | BLOCKED | B-05 (must depollute #71 first) | Migration → Production apply → Verification | **YES** | Merge **clean** R5 only; apply `20260718160000`; verify UNIQUE(`order_id`), branch-match, kitchen/BM policies | Clean #71 MERGED without `docs/team/**`; remote version present; schema check PASS |
-| **B-04** | P0 | DB-R6 not on `main` / prod — `20260718170000` absent; `restaurant_bills` / `bill_orders` NULL | Human Owner + Platform | BLOCKED | B-02, B-03, B-06 | Migration → Production apply → Verification | **YES** | Rebase #72 to R6-only; apply `20260718170000`; verify one-open-bill-per-session; `bill_orders` UNIQUE(`order_id`) | Clean R6-only #72 MERGED; remote version present; schema check PASS |
-| **B-05** | P0 | PR #71 scope pollution — tip `e63087b` ships ~47 `docs/team/**` paths; kitchen scope doc says schema migrations out of scope while shipping R5 | Platform (PR author) + Human Owner | OPEN | None (first in merge sequence) | Manual review | **YES** | Reset/split to kitchen-only (`443b695` lineage: migration + API + tests); move `docs/team/**` to separate docs PR or defer post-freeze; confirm tip ≠ `e63087b` | Diff of merge candidate has **zero** `docs/team/**`; board re-check PASS |
-| **B-06** | P0 | PR #72 unsafe as merge/apply vehicle — stacks R3–R6 + inherits pollution SHAs `443b695`/`e63087b` | Platform (PR author) + Human Owner | BLOCKED | B-05, B-01, B-02, B-03 | Manual review | **YES** | Rebase onto main after clean R5; retain **only** `20260718170000` (+ R6 API/tests); do not mega-merge | #72 head is R6-only delta; no `docs/team/**`; no duplicate R3–R5 migration files |
-| **B-07** | P0 | No post-apply restaurant security certification — QR/session/kitchen/POS RLS & hash revokes exist only in unmerged SQL | Security + Platform | BLOCKED | B-01, B-02, B-03, B-04 | Verification | **YES** | After full apply through `20260718170000`: re-run grants/RLS/DEFINER/hash-column privilege checks on linked prod; confirm no anon writes; RLS enabled on new tables | Linked security query pack PASS; freeze re-audit documents PASS |
-| **B-08** | P1 | Owner gate on deferred objects — `kitchen_stations`, `pos_sessions` deferred vs earlier “REQUIRED” architecture language | Human Owner | OPEN | None (can run in parallel) | Documentation only / Architecture | **YES** (owner) | Written accept-as-deferred for V1 **or** schedule explicit slices before LOCK | Owner-signed note in freeze LOCK package (or scheduled migration PRs listed) |
-| **B-09** | P1 | Superseded OPEN PRs create double-apply confusion — #65/#66 MERGEABLE though `20260718130000` / `20260718130100` already on remote | Human Owner | OPEN | None (do before feature merges) | Manual review | **YES** | Close #65 and #66 as superseded; no merge of migration content | Both PRs CLOSED; `migration list` still through `…130200` only (no duplicate apply) |
-| **B-10** | P1 | Conflicting architecture PRs — #62/#64 `mergeable=false` / DIRTY (add/add on workflow, snapshot, menu-modifier docs) | Human Owner + Docs | OPEN | None (do before feature merges) | Manual review | **YES** | Close/supersede #62 and #64; do not resolve-and-merge stale remediation SQL | Both PRs CLOSED; no re-apply of pre-R0 designs |
+| **B-01** | P0 | DB-R3 not on `main` / prod — `20260718140000` absent; `restaurant_tables` NULL | Human Owner + Platform | DONE | B-09, B-10 (close hygiene first preferred) | Migration → Production apply → Verification | **YES** | After merge #69: `migration list --linked` shows `20260718140000`; `to_regclass('public.restaurant_tables')` NOT NULL; RLS on; `qr_token_hash` revoked from client roles | #69 `abe0ab6`; remote `…140000`; table present |
+| **B-02** | P0 | DB-R4 not on `main` / prod — `20260718150000` absent; `dine_in_sessions` NULL | Human Owner + Platform | DONE | B-01 | Migration → Production apply → Verification | **YES** | Rebase #70 after #69; apply `20260718150000`; verify `dine_in_sessions`, branch-match trigger, one-active-session index | #70 `1df9660`; remote `…150000`; indexes present |
+| **B-03** | P0 | DB-R5 not on `main` / prod — `20260718160000` absent; `kitchen_tickets` / `kitchen_ticket_items` NULL | Human Owner + Platform | DONE | B-05 (must depollute #71 first) | Migration → Production apply → Verification | **YES** | Merge **clean** R5 only; apply `20260718160000`; verify UNIQUE(`order_id`), branch-match, kitchen/BM policies | #71 `6bdec44` (clean tip); remote `…160000` |
+| **B-04** | P0 | DB-R6 not on `main` / prod — `20260718170000` absent; `restaurant_bills` / `bill_orders` NULL | Human Owner + Platform | DONE | B-02, B-03, B-06 | Migration → Production apply → Verification | **YES** | Rebase #72 to R6-only; apply `20260718170000`; verify one-open-bill-per-session; `bill_orders` UNIQUE(`order_id`) | #72 R6-only `f2b1e3f`; remote `…170000` |
+| **B-05** | P0 | PR #71 scope pollution — tip `e63087b` ships ~47 `docs/team/**` paths; kitchen scope doc says schema migrations out of scope while shipping R5 | Platform (PR author) + Human Owner | DONE | None (first in merge sequence) | Manual review | **YES** | Reset/split to kitchen-only (`443b695` lineage: migration + API + tests); move `docs/team/**` to separate docs PR or defer post-freeze; confirm tip ≠ `e63087b` | Tip reset → rebased `9ea0a40`; zero `docs/team/**` |
+| **B-06** | P0 | PR #72 unsafe as merge/apply vehicle — stacks R3–R6 + inherits pollution SHAs `443b695`/`e63087b` | Platform (PR author) + Human Owner | DONE | B-05, B-01, B-02, B-03 | Manual review | **YES** | Rebase onto main after clean R5; retain **only** `20260718170000` (+ R6 API/tests); do not mega-merge | Head `3e88a54` R6-only; no pollution |
+| **B-07** | P0 | No post-apply restaurant security certification — QR/session/kitchen/POS RLS & hash revokes exist only in unmerged SQL | Security + Platform | DONE | B-01, B-02, B-03, B-04 | Verification | **YES** | After full apply through `20260718170000`: re-run grants/RLS/DEFINER/hash-column privilege checks on linked prod; confirm no anon writes; RLS enabled on new tables | Evidence file + #78 `…171000` hash harden; hash SELECT=false |
+| **B-08** | P1 | Owner gate on deferred objects — `kitchen_stations`, `pos_sessions` deferred vs earlier “REQUIRED” architecture language | Human Owner | OPEN — OWNER DECISION | None (can run in parallel) | Documentation only / Architecture | **YES** (owner) | Written accept-as-deferred for V1 **or** schedule explicit slices before LOCK | **Awaiting owner written deferral this turn** |
+| **B-09** | P1 | Superseded OPEN PRs create double-apply confusion — #65/#66 MERGEABLE though `20260718130000` / `20260718130100` already on remote | Human Owner | DONE | None (do before feature merges) | Manual review | **YES** | Close #65 and #66 as superseded; no merge of migration content | #65/#66 CLOSED |
+| **B-10** | P1 | Conflicting architecture PRs — #62/#64 `mergeable=false` / DIRTY (add/add on workflow, snapshot, menu-modifier docs) | Human Owner + Docs | DONE | None (do before feature merges) | Manual review | **YES** | Close/supersede #62 and #64; do not resolve-and-merge stale remediation SQL | #62/#64 CLOSED |
 
 ---
 
@@ -265,7 +265,7 @@ E. Post-stack security re-check → freeze re-audit → LOCK path only if PASS
 | READY | Hygiene done; awaiting owner merge/apply gate |
 | DONE | Merged/applied/verified with completion evidence |
 
-**Current snapshot:** R0–R2 = DONE (historical). B-01/B-02/B-05/B-08/B-09/B-10 = OPEN. B-03/B-04/B-06/B-07 = BLOCKED.
+**Current snapshot:** B-01…B-07, B-09, B-10 = DONE. **B-08 = OPEN — OWNER DECISION** (blocks LOCK).
 
 ---
 
@@ -280,4 +280,4 @@ E. Post-stack security re-check → freeze re-audit → LOCK path only if PASS
 
 ---
 
-DATABASE V1 FREEZE: BLOCKED — REMEDIATION TRACKER ACTIVE
+DATABASE V1 FREEZE: BLOCKED — B-08 OWNER DEFERRAL REQUIRED
