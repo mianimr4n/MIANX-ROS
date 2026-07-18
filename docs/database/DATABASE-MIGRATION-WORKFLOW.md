@@ -1,5 +1,13 @@
 # Database migration workflow
 
+## Freeze status (2026-07-18)
+
+```text
+DATABASE FREEZE: BLOCKED — CORE RESTAURANT FOUNDATIONS REQUIRED
+```
+
+Remediation progress: **DB-R0** (grants) and **DB-R1** (`public.profiles` retirement) applied on linked prod. Freeze remains **BLOCKED** pending **DB-R2…R7**. See `_documentation-audit/reports/DB-R1-PROFILES-RETIREMENT-CLOSE.md`.
+
 ## Source of truth
 
 The ordered SQL files in `supabase/migrations/` are the canonical source of truth for the Telepizza database schema. Every persistent schema or seed change must be represented by a reviewed, forward-only migration committed to Git.
