@@ -31,6 +31,10 @@ import {
 } from "./services/tables/management.js";
 import { createQrTokenValidator, type QrTokenValidator } from "./services/tables/qr.js";
 import {
+  createDeliveryOperationsDataSource,
+  type DeliveryOperationsDataSource,
+} from "./services/deliveries/operations.js";
+import {
   createDineInSessionsService,
   type DineInSessionsService,
 } from "./services/dine-in/sessions.js";
@@ -41,6 +45,7 @@ export interface AppDependencies {
   branchOrderManagement: BranchOrderManagementDataSource;
   kitchenTickets: KitchenTicketsService;
   restaurantBills: RestaurantBillsService;
+  deliveryOperations: DeliveryOperationsDataSource;
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
   staffInviteRepository: StaffInviteRepository;
@@ -58,6 +63,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     branchOrderManagement: createBranchOrderManagementDataSource(envStatus),
     kitchenTickets: createKitchenTicketsService(envStatus),
     restaurantBills: createRestaurantBillsService(envStatus),
+    deliveryOperations: createDeliveryOperationsDataSource(envStatus),
     authTokenVerifier: createSupabaseAuthTokenVerifier(envStatus),
     authProfileRepository: createSupabaseAuthProfileRepository(envStatus),
     staffInviteRepository: createSupabaseStaffInviteRepository(envStatus),

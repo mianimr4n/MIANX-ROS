@@ -414,6 +414,22 @@ export function createSupabaseBranchOrderManagementDataSource(
         await cancelKitchenTicketForOrder(supabase, order.id);
       }
 
+      // Sprint 4.6 — staff dispatch/complete keeps deliveries lane aligned when present.
+      if (plan.toStatus === "dispatched") {
+        await supabase
+          .from("deliveries")
+          .update({ status: "picked-up", picked_up_at: now, updated_at: now })
+          .eq("order_id", order.id)
+          .in("status", ["pending", "assigned"]);
+      }
+      if (plan.toStatus === "completed") {
+        await supabase
+          .from("deliveries")
+          .update({ status: "delivered", delivered_at: now, updated_at: now })
+          .eq("order_id", order.id)
+          .in("status", ["pending", "assigned", "picked-up"]);
+      }
+
       return {
         orderId: order.id,
         orderNumber: (updated as { order_number: string }).order_number,

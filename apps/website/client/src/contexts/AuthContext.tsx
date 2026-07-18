@@ -53,6 +53,9 @@ interface AuthContextType {
   session: Session | null;
   profile: CustomerProfile | null;
   roles: string[];
+  permissions: string[];
+  branchIds: string[];
+  isSuperAdmin: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
   signUp: (input: { email: string; password: string; fullName?: string }) => Promise<SignUpResult>;
@@ -121,6 +124,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [branchIds, setBranchIds] = useState<string[]>([]);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const profileRequestId = useRef(0);
   const appliedAccessToken = useRef<string | null>(null);
@@ -133,6 +139,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRoles([]);
+    setPermissions([]);
+    setBranchIds([]);
+    setIsSuperAdmin(false);
   }, []);
 
   const applySession = useCallback(
@@ -156,6 +165,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!nextSession?.access_token) {
         setProfile(null);
         setRoles([]);
+        setPermissions([]);
+        setBranchIds([]);
+        setIsSuperAdmin(false);
         return;
       }
 
@@ -179,6 +191,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               : null,
           );
           setRoles(["customer"]);
+          setPermissions([]);
+          setBranchIds([]);
+          setIsSuperAdmin(false);
           return;
         }
 
@@ -195,6 +210,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
         // Roles / branches / permissions come only from the API principal (DB), never metadata.
         setRoles(me.roles);
+        setPermissions(me.permissions ?? []);
+        setBranchIds(me.branchIds ?? []);
+        setIsSuperAdmin(Boolean(me.isSuperAdmin));
       } catch (error) {
         if (requestId !== profileRequestId.current) return;
 
@@ -209,6 +227,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setProfile(null);
         setRoles([]);
+        setPermissions([]);
+        setBranchIds([]);
+        setIsSuperAdmin(false);
       }
     },
     [clearLocalAuth],
@@ -654,6 +675,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       profile,
       roles,
+      permissions,
+      branchIds,
+      isSuperAdmin,
       isLoading,
       isAuthenticated: Boolean(session?.user),
       signUp,
@@ -673,6 +697,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       profile,
       roles,
+      permissions,
+      branchIds,
+      isSuperAdmin,
       isLoading,
       signUp,
       signIn,
