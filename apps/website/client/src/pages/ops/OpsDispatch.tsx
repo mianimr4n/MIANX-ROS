@@ -17,8 +17,10 @@ export default function OpsDispatch() {
   const [riders, setRiders] = useState<RiderRosterItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedRider, setSelectedRider] = useState<Record<string, string>>({});
+  const [busyId, setBusyId] = useState<string | null>(null);
   const token = session?.access_token;
   const canAssign = isSuperAdmin || permissions.includes("delivery.assign");
+  const canUpdateStatus = isSuperAdmin || permissions.includes("delivery.update");
 
   const refresh = useCallback(async () => {
     if (!token) return;
@@ -42,27 +44,33 @@ export default function OpsDispatch() {
   }, [refresh]);
 
   async function onAssign(deliveryId: string) {
-    if (!token) return;
+    if (!token || busyId) return;
     const riderId = selectedRider[deliveryId];
     if (!riderId) {
       setError("Select a rider first.");
       return;
     }
+    setBusyId(deliveryId);
     try {
       await assignDeliveryRider(token, deliveryId, riderId);
       await refresh();
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Assign failed");
+    } finally {
+      setBusyId(null);
     }
   }
 
   async function onStatus(deliveryId: string, status: "picked-up" | "delivered") {
-    if (!token) return;
+    if (!token || busyId) return;
+    setBusyId(deliveryId);
     try {
       await updateDeliveryStatus(token, deliveryId, status);
       await refresh();
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Status update failed");
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -100,6 +108,7 @@ export default function OpsDispatch() {
                       <select
                         className="min-h-12 rounded-xl bg-zinc-800 px-3 text-sm"
                         value={selectedRider[row.id] ?? ""}
+                        disabled={busyId === row.id}
                         onChange={(e) =>
                           setSelectedRider((prev) => ({ ...prev, [row.id]: e.target.value }))
                         }
@@ -113,29 +122,32 @@ export default function OpsDispatch() {
                       </select>
                       <button
                         type="button"
+                        disabled={busyId === row.id}
                         onClick={() => void onAssign(row.id)}
-                        className="min-h-12 rounded-xl bg-red-600 font-bold hover:bg-red-500"
+                        className="min-h-12 rounded-xl bg-red-600 font-bold hover:bg-red-500 disabled:opacity-50"
                       >
-                        Assign rider
+                        {busyId === row.id ? "Working…" : "Assign rider"}
                       </button>
                     </>
                   ) : null}
-                  {row.status === "assigned" ? (
+                  {canUpdateStatus && row.status === "assigned" ? (
                     <button
                       type="button"
+                      disabled={busyId === row.id}
                       onClick={() => void onStatus(row.id, "picked-up")}
-                      className="min-h-12 rounded-xl bg-amber-600 font-bold hover:bg-amber-500"
+                      className="min-h-12 rounded-xl bg-amber-600 font-bold hover:bg-amber-500 disabled:opacity-50"
                     >
-                      Mark picked up (dispatch)
+                      {busyId === row.id ? "Working…" : "Mark picked up (dispatch)"}
                     </button>
                   ) : null}
-                  {row.status === "picked-up" ? (
+                  {canUpdateStatus && row.status === "picked-up" ? (
                     <button
                       type="button"
+                      disabled={busyId === row.id}
                       onClick={() => void onStatus(row.id, "delivered")}
-                      className="min-h-12 rounded-xl bg-emerald-600 font-bold hover:bg-emerald-500"
+                      className="min-h-12 rounded-xl bg-emerald-600 font-bold hover:bg-emerald-500 disabled:opacity-50"
                     >
-                      Mark delivered
+                      {busyId === row.id ? "Working…" : "Mark delivered"}
                     </button>
                   ) : null}
                 </div>

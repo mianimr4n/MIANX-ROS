@@ -216,3 +216,33 @@
     color: var(--brand-charcoal);
   }
 }
+
+/* Sprint 4.6 — kitchen / counter ticket print (ops order detail) */
+@media print {
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .ops-shell-nav,
+  .ops-shell-aside,
+  nav,
+  header,
+  aside,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .ops-print-ticket {
+    border: none !important;
+    background: #fff !important;
+    color: #111 !important;
+    box-shadow: none !important;
+    min-height: 0 !important;
+  }
+
+  .ops-print-ticket * {
+    color: #111 !important;
+    border-color: #ccc !important;
+  }
+}

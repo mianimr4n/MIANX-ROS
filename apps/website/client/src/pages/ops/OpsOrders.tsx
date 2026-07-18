@@ -128,7 +128,7 @@ export default function OpsOrders() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 min-h-[28rem]">
+        <section className="ops-print-ticket rounded-2xl border border-zinc-800 bg-zinc-900 p-5 min-h-[28rem]">
           {!detail ? (
             <p className="text-zinc-400">Select an order to view details and actions.</p>
           ) : (
@@ -136,7 +136,7 @@ export default function OpsOrders() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="text-2xl font-bold font-mono">{detail.orderNumber}</h2>
-                  <p className="text-zinc-400">
+                  <p className="text-zinc-400 print:text-black">
                     {detail.branchCode ?? detail.branchId} · {detail.orderType} · {detail.status}
                   </p>
                 </div>

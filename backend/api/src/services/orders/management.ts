@@ -153,6 +153,40 @@ function assertBranchInScope(scope: BranchActorScope, branchId: string): void {
   }
 }
 
+/**
+ * Sprint 4.6 — keep deliveries lane aligned with admin dispatch/complete.
+ * Errors are checked and propagated so callers can retry; idempotent replays also heal.
+ * Full multi-row atomicity would require an RPC (deferred — no migration in this sprint).
+ */
+async function syncDeliveryLaneForOrderStatus(
+  supabase: SupabaseClient,
+  orderId: string,
+  toStatus: string,
+  now: string,
+): Promise<void> {
+  if (toStatus === "dispatched") {
+    const { error } = await supabase
+      .from("deliveries")
+      .update({ status: "picked-up", picked_up_at: now, updated_at: now })
+      .eq("order_id", orderId)
+      .in("status", ["pending", "assigned"]);
+    if (error) {
+      throw new ApiError(500, "DELIVERY_SYNC_FAILED", error.message);
+    }
+    return;
+  }
+  if (toStatus === "completed") {
+    const { error } = await supabase
+      .from("deliveries")
+      .update({ status: "delivered", delivered_at: now, updated_at: now })
+      .eq("order_id", orderId)
+      .in("status", ["pending", "assigned", "picked-up"]);
+    if (error) {
+      throw new ApiError(500, "DELIVERY_SYNC_FAILED", error.message);
+    }
+  }
+}
+
 function toListItem(row: Record<string, unknown>): SafeBranchOrderListItem {
   return {
     id: row.id as string,
@@ -327,8 +361,11 @@ export function createSupabaseBranchOrderManagementDataSource(
         note,
       });
 
-      // Idempotent no-op: already at target status. No update, no new log.
+      // Idempotent no-op: already at target status. No update, no new log — still heal delivery lane.
       if (plan.idempotentNoop) {
+        if (plan.toStatus === "dispatched" || plan.toStatus === "completed") {
+          await syncDeliveryLaneForOrderStatus(supabase, order.id, plan.toStatus, new Date().toISOString());
+        }
         return {
           orderId: order.id,
           orderNumber: order.order_number,
@@ -368,6 +405,9 @@ export function createSupabaseBranchOrderManagementDataSource(
           .maybeSingle();
         if (fresh && (fresh as { status: string }).status === plan.toStatus) {
           // Concurrent identical transition already applied it — treat as idempotent, no duplicate log.
+          if (plan.toStatus === "dispatched" || plan.toStatus === "completed") {
+            await syncDeliveryLaneForOrderStatus(supabase, order.id, plan.toStatus, now);
+          }
           return {
             orderId: order.id,
             orderNumber: order.order_number,
@@ -415,19 +455,8 @@ export function createSupabaseBranchOrderManagementDataSource(
       }
 
       // Sprint 4.6 — staff dispatch/complete keeps deliveries lane aligned when present.
-      if (plan.toStatus === "dispatched") {
-        await supabase
-          .from("deliveries")
-          .update({ status: "picked-up", picked_up_at: now, updated_at: now })
-          .eq("order_id", order.id)
-          .in("status", ["pending", "assigned"]);
-      }
-      if (plan.toStatus === "completed") {
-        await supabase
-          .from("deliveries")
-          .update({ status: "delivered", delivered_at: now, updated_at: now })
-          .eq("order_id", order.id)
-          .in("status", ["pending", "assigned", "picked-up"]);
+      if (plan.toStatus === "dispatched" || plan.toStatus === "completed") {
+        await syncDeliveryLaneForOrderStatus(supabase, order.id, plan.toStatus, now);
       }
 
       return {

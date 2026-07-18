@@ -10,6 +10,8 @@ interface FakeState {
   billOrders: Array<Record<string, unknown>>;
   logs: Array<Record<string, unknown>>;
   deliveriesUpdated: number;
+  /** When set, delivery updates fail with this message (Sprint 4.6 sync checks). */
+  deliveryUpdateError?: string | null;
   /** When set, applied to the target order right before an UPDATE to simulate a concurrent write. */
   concurrentStatusById?: Record<string, string>;
 }
@@ -23,6 +25,7 @@ const state: FakeState = {
   billOrders: [],
   logs: [],
   deliveriesUpdated: 0,
+  deliveryUpdateError: null,
 };
 
 function matchFilters(row: Record<string, unknown>, filters: Array<[string, string, unknown]>): boolean {
@@ -89,6 +92,9 @@ class FakeQuery {
       return Promise.resolve({ data: null, error: null });
     }
     if (this.table === "deliveries" && this.op === "update") {
+      if (state.deliveryUpdateError) {
+        return Promise.resolve({ data: null, error: { message: state.deliveryUpdateError } });
+      }
       state.deliveriesUpdated += 1;
       return Promise.resolve({ data: null, error: null });
     }
@@ -258,6 +264,7 @@ beforeEach(() => {
   state.billOrders = [];
   state.logs = [];
   state.deliveriesUpdated = 0;
+  state.deliveryUpdateError = null;
   state.concurrentStatusById = {};
 });
 
@@ -428,6 +435,29 @@ describe("branch order management — transitions + audit + concurrency", () => 
     // Between read and write, another actor cancels the order.
     state.concurrentStatusById = { o1: "cancelled" };
     await expectApiError(ds.transitionOrder({ scope: bmB1, orderId: "o1", action: "confirm" }), "ORDER_STATE_CONFLICT");
+    expect(state.logs).toHaveLength(0);
+  });
+
+  it("Sprint 4.6 dispatch syncs delivery lane and surfaces DELIVERY_SYNC_FAILED", async () => {
+    state.orders = [seedOrder({ status: "ready" })];
+    const res = await ds.transitionOrder({ scope: bmB1, orderId: "o1", action: "dispatch" });
+    expect(res.status).toBe("dispatched");
+    expect(state.deliveriesUpdated).toBe(1);
+
+    state.orders = [seedOrder({ status: "ready" })];
+    state.logs = [];
+    state.deliveriesUpdated = 0;
+    state.deliveryUpdateError = "simulated delivery write failure";
+    await expectApiError(ds.transitionOrder({ scope: bmB1, orderId: "o1", action: "dispatch" }), "DELIVERY_SYNC_FAILED");
+    expect(state.orders[0].status).toBe("dispatched");
+    expect(state.logs).toHaveLength(1);
+  });
+
+  it("Sprint 4.6 idempotent dispatch still attempts delivery heal sync", async () => {
+    state.orders = [seedOrder({ status: "dispatched" })];
+    const res = await ds.transitionOrder({ scope: bmB1, orderId: "o1", action: "dispatch" });
+    expect(res.idempotentReplay).toBe(true);
+    expect(state.deliveriesUpdated).toBe(1);
     expect(state.logs).toHaveLength(0);
   });
 });
