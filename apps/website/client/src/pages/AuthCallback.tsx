@@ -72,7 +72,7 @@ export default function AuthCallback() {
     if (flow === "recovery" || storedNext === "/reset-password") {
       destination = "/reset-password";
     } else if (flow === "email_change") {
-      destination = sanitizeAuthNextPath(storedNext || "/account#security", "/account#security");
+      destination = sanitizeAuthNextPath(storedNext || "/my-telepizza#security", "/my-telepizza#security");
     } else {
       destination = sanitizeAuthNextPath(
         fromQuery ?? (storedNext || DEFAULT_AUTH_DESTINATION),

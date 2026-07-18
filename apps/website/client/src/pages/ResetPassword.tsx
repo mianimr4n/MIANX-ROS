@@ -78,9 +78,9 @@ export default function ResetPassword() {
           </p>
           <Button
             className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
-            onClick={() => navigate("/account#security")}
+            onClick={() => navigate("/my-telepizza#security")}
           >
-            Go to Account
+            Go to My Telepizza
           </Button>
           <Link href="/login">
             <Button variant="outline" className="w-full rounded-2xl py-6">

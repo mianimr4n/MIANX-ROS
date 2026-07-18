@@ -7,18 +7,17 @@ import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, Menu as MenuIcon, X, Phone, MapPin, ChevronDown, ChevronUp, Check, Construction } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
-import { useIsMobile } from "@/hooks/useMobile";
 import { useBranch } from "@/contexts/BranchContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { rememberAuthNextPath } from "@/lib/auth-redirect";
 
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/menu", label: "Menu" },
-  { href: "/about", label: "About Us" },
-  { href: "/contact", label: "Contact" },
+  { href: "/menu?category=Deals", label: "Deals" },
 ];
 
 export default function Navbar() {
@@ -27,10 +26,23 @@ export default function Navbar() {
   const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
   const [location] = useLocation();
   const { totalItems, toggleCart } = useCart();
-  const isMobile = useIsMobile();
   const { selectedBranch, setSelectedBranch, allBranches } = useBranch();
   const { isAuthenticated } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const pathOnly = location.split("?")[0] ?? location;
+  const hubHref = isAuthenticated ? "/my-telepizza" : `/login?next=${encodeURIComponent("/my-telepizza")}`;
+
+  function isNavActive(href: string): boolean {
+    if (href === "/") return pathOnly === "/";
+    if (href.startsWith("/menu?category=Deals")) {
+      return pathOnly === "/menu" && (location.includes("category=Deals") || location.includes("category=deals"));
+    }
+    if (href === "/menu") {
+      return pathOnly === "/menu" && !location.includes("category=Deals") && !location.includes("category=deals");
+    }
+    return pathOnly === href || pathOnly.startsWith(`${href}/`);
+  }
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -72,7 +84,7 @@ export default function Navbar() {
               key={link.href}
               href={link.href}
               className={`font-[var(--font-accent)] font-medium text-sm px-4 py-2 rounded-lg transition-all duration-200 active:scale-95 ${
-                location === link.href
+                isNavActive(link.href)
                   ? "text-brand-red bg-brand-red/10"
                   : scrolled
                   ? "text-brand-charcoal/70 hover:text-brand-charcoal hover:bg-brand-cream-dark"
@@ -213,22 +225,32 @@ export default function Navbar() {
             </a>
           )}
 
-          {/* Account */}
-          <Link href={isAuthenticated ? "/account" : "/login"}>
+          {/* My Telepizza */}
+          <Link
+            href={hubHref}
+            onClick={() => {
+              if (!isAuthenticated) rememberAuthNextPath("/my-telepizza");
+            }}
+          >
             <Button
               variant="ghost"
               size="sm"
               className={`hidden md:inline-flex rounded-xl font-[var(--font-accent)] font-semibold ${
-                scrolled ? "text-brand-charcoal hover:text-brand-red" : "text-white hover:text-brand-gold"
+                pathOnly === "/my-telepizza" || pathOnly === "/account"
+                  ? "text-brand-red"
+                  : scrolled
+                    ? "text-brand-charcoal hover:text-brand-red"
+                    : "text-white hover:text-brand-gold"
               }`}
             >
-              {isAuthenticated ? "Account" : "Login"}
+              My Telepizza
             </Button>
           </Link>
 
           {/* Cart Button */}
           <button
             onClick={toggleCart}
+            aria-label={totalItems > 0 ? `Cart, ${totalItems} items` : "Open cart"}
             className={`relative p-2.5 rounded-xl transition-all duration-200 active:scale-95 ${
               scrolled
                 ? "bg-brand-cream-dark hover:bg-brand-red hover:text-white text-brand-charcoal"
@@ -282,12 +304,36 @@ export default function Navbar() {
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
                       className={`font-[var(--font-display)] font-semibold text-lg py-2 transition-colors ${
-                        location === link.href ? "text-brand-red" : "text-white hover:text-brand-gold"
+                        isNavActive(link.href) ? "text-brand-red" : "text-white hover:text-brand-gold"
                       }`}
                     >
                       {link.label}
                     </Link>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggleCart();
+                      setMobileOpen(false);
+                    }}
+                    className="font-[var(--font-display)] font-semibold text-lg py-2 text-left text-white hover:text-brand-gold"
+                  >
+                    Cart{totalItems > 0 ? ` (${totalItems})` : ""}
+                  </button>
+                  <Link
+                    href={hubHref}
+                    onClick={() => {
+                      if (!isAuthenticated) rememberAuthNextPath("/my-telepizza");
+                      setMobileOpen(false);
+                    }}
+                    className={`font-[var(--font-display)] font-semibold text-lg py-2 transition-colors ${
+                      pathOnly === "/my-telepizza" || pathOnly === "/account"
+                        ? "text-brand-red"
+                        : "text-white hover:text-brand-gold"
+                    }`}
+                  >
+                    My Telepizza
+                  </Link>
                   <div className="mt-auto pt-6 border-t border-white/10 space-y-3">
                     {/* Mobile Branch Selector */}
                     <div className="bg-white/5 rounded-xl p-4">

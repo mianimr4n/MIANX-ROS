@@ -77,7 +77,7 @@ test("email identity requires current password for change-password", () => {
 });
 
 test("Account UI: Google set-password has no Current password field; change-password does", () => {
-  const account = read("apps/website/client/src/pages/Account.tsx");
+  const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
   const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
   const authUtils = read("apps/website/client/src/lib/auth-utils.ts");
 
@@ -167,13 +167,13 @@ test("catalog freeze and branches regression guards remain intact", () => {
   assert.match(branches, /northern-bypass/);
 });
 
-test("Account Center IA: Dashboard, Profile, Addresses, Security, Orders, Loyalty, Notifications", () => {
-  const account = read("apps/website/client/src/pages/Account.tsx");
+test("My Telepizza IA: Dashboard, Profile, Addresses, Security, Orders, Loyalty, Notifications", () => {
+  const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
   const addresses = read("apps/website/client/src/lib/customer-addresses.ts");
   const orders = read("apps/website/client/src/pages/Orders.tsx");
 
-  assert.match(account, /Account Center/);
-  assert.match(account, /Dashboard/);
+  assert.match(account, /My Telepizza/);
+  assert.match(account, /Dashboard|Your hub/);
   assert.match(account, /Addresses/);
   assert.match(account, /Security & login methods/);
   assert.match(account, /Loyalty/);
@@ -195,7 +195,7 @@ test("Account Center IA: Dashboard, Profile, Addresses, Security, Orders, Loyalt
 });
 
 test("phone remains honestly Unverified; OTP not implemented", () => {
-  const account = read("apps/website/client/src/pages/Account.tsx");
+  const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
   const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
   assert.match(account, /Unverified until WhatsApp OTP launches|Unverified — verification by WhatsApp OTP is not available yet|stays Unverified/i);
   assert.match(authContext, /phoneVerified:\s*false/);

@@ -14,9 +14,10 @@ const AUTH_MIN_PASSWORD_LENGTH = 8;
 const AUTH_PASSWORD_REQUIREMENTS_COPY =
   "At least 8 characters, including uppercase, lowercase, a number, and a symbol.";
 const AUTH_CALLBACK_PATH = "/auth/callback";
-const DEFAULT_AUTH_DESTINATION = "/account";
+const DEFAULT_AUTH_DESTINATION = "/my-telepizza";
 
 const SAFE_AUTH_DESTINATION_PREFIXES = [
+  "/my-telepizza",
   "/account",
   "/checkout",
   "/orders",
@@ -78,6 +79,7 @@ function mapOAuthCallbackError(raw) {
 
 test("safe internal redirects accept checkout and reject external next URLs", () => {
   assert.equal(sanitizeAuthNextPath("/checkout"), "/checkout");
+  assert.equal(sanitizeAuthNextPath("/my-telepizza"), "/my-telepizza");
   assert.equal(sanitizeAuthNextPath("/account"), "/account");
   assert.equal(sanitizeAuthNextPath("/orders"), "/orders");
   assert.equal(sanitizeAuthNextPath("https://evil.example/phish"), DEFAULT_AUTH_DESTINATION);
@@ -87,6 +89,7 @@ test("safe internal redirects accept checkout and reject external next URLs", ()
   assert.equal(sanitizeAuthNextPath("javascript:alert(1)"), DEFAULT_AUTH_DESTINATION);
 
   const redirectLib = read("apps/website/client/src/lib/auth-redirect.ts");
+  assert.match(redirectLib, /DEFAULT_AUTH_DESTINATION = ["']\/my-telepizza["']/);
   assert.match(redirectLib, /telepizza-website\.vercel\.app/);
   assert.match(redirectLib, /localhost:3000/);
   assert.match(redirectLib, /localhost:5173/);
@@ -141,7 +144,7 @@ test("Login/Register keep Google primary CTA and no OTP/staff public signup", ()
 });
 
 test("Account shows Coming Soon for loyalty/notifications and profile phone management", () => {
-  const account = read("apps/website/client/src/pages/Account.tsx");
+  const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
   assert.match(account, /Add a phone number|faster checkout/);
   assert.match(account, /Loyalty|Notifications/);
   assert.match(account, /not available yet|not live yet/i);

@@ -28,7 +28,7 @@ function normalizePakistaniMobileE164(phone) {
 
 test("Google password attach uses updateUser on current session only", () => {
   const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
-  const account = read("apps/website/client/src/pages/Account.tsx");
+  const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
 
   assert.match(authContext, /supabase\.auth\.updateUser\(\{\s*password:/);
   assert.match(authContext, /never sent to Telepizza API/i);
@@ -53,7 +53,7 @@ test("Login keeps Google primary and safe Google-account hint without enumeratio
 });
 
 test("Account profile + sign-in methods UI and Coming Soon cards", () => {
-  const account = read("apps/website/client/src/pages/Account.tsx");
+  const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
   assert.match(account, /Save profile/);
   assert.match(account, /Security & login methods|Email & password/);
   assert.match(account, /Phone \/ WhatsApp sign-in/);

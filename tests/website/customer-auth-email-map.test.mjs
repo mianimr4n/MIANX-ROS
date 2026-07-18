@@ -39,7 +39,7 @@ test("OAuth metadata cannot set role / user_type / branch on signup", () => {
 test("Google flow never requests a Google password", () => {
   const login = read("apps/website/client/src/pages/Login.tsx");
   const register = read("apps/website/client/src/pages/Register.tsx");
-  const account = read("apps/website/client/src/pages/Account.tsx");
+  const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
   const googleBtn = read("apps/website/client/src/components/GoogleSignInButton.tsx");
 
   assert.match(googleBtn, /Continue with Google|signInWithGoogle/);
@@ -52,7 +52,7 @@ test("Google flow never requests a Google password", () => {
 
 test("logged-in Google user can set a Telepizza password via updateUser", () => {
   const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
-  const account = read("apps/website/client/src/pages/Account.tsx");
+  const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
 
   assert.match(authContext, /supabase\.auth\.updateUser\(\{\s*password:/);
   assert.match(authContext, /current_password:\s*current/);
@@ -92,7 +92,7 @@ test("phone normalization and duplicate protection remain in place", () => {
   const phoneWeb = read("apps/website/client/src/lib/phone.ts");
   const phoneApi = read("backend/api/src/services/auth/phone.ts");
   const repo = read("backend/api/src/services/auth/supabase.ts");
-  const account = read("apps/website/client/src/pages/Account.tsx");
+  const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
 
   assert.match(phoneWeb, /normalizePakistaniMobileE164/);
   assert.match(phoneApi, /normalizePakistaniMobileE164/);

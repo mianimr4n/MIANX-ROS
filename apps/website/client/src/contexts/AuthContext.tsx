@@ -423,7 +423,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       rememberAuthEmailFlow("email_change");
-      rememberAuthNextPath("/account#security");
+      rememberAuthNextPath("/my-telepizza#security");
 
       const { data, error } = await supabase.auth.updateUser(
         { email: newEmail },

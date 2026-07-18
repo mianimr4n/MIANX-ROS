@@ -440,8 +440,8 @@ export default function Checkout() {
                 ) : user ? (
                   <p className="text-sm text-muted-foreground">
                     No saved addresses.{" "}
-                    <Link href="/account#addresses" className="font-semibold text-brand-red">
-                      Add one in Account Center
+                    <Link href="/my-telepizza#addresses" className="font-semibold text-brand-red">
+                      Add a device draft in My Telepizza
                     </Link>
                     , or enter an address below.
                   </p>

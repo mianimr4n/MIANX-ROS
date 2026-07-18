@@ -1,4 +1,6 @@
-/** Local saved delivery addresses for Account Center (no server table yet). */
+/** Device-only delivery address drafts (no server table yet).
+ * Not account source of truth — see docs/architecture/MY-TELEPIZZA-ADDRESSES-MIGRATION-PROPOSAL.md
+ */
 
 export type AddressLabel = "Home" | "Office" | "Other";
 

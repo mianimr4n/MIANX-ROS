@@ -32,9 +32,9 @@ export default function Loyalty() {
             <Link href="/menu">
               <Button className="rounded-2xl brand-gradient text-white">Browse Menu</Button>
             </Link>
-            <Link href="/account">
+            <Link href="/my-telepizza">
               <Button variant="outline" className="rounded-2xl">
-                My Account
+                My Telepizza
               </Button>
             </Link>
           </div>
