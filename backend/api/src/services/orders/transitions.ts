@@ -1,12 +1,12 @@
 import { ApiError } from "../../common/http.js";
 
 /**
- * Sprint 4.5 — Branch order lifecycle state machine.
+ * Sprint 4.5 + 4.6 — Branch / delivery order lifecycle state machine.
  *
  * Authority: docs/architecture/SPRINT-04-4-ORDER-LIFECYCLE-ARCHITECTURE.md §3 (FROZEN).
  * Uses the frozen `orders.status` enum only — never invents enum values.
  * "reject" is NOT a status; it is `cancelled` + reason `rejected_by_branch` (frozen §3.4).
- * Dispatch / delivered / completed transitions belong to Sprint 4.6 (delivery lane) — not here.
+ * Sprint 4.6 adds `dispatch` (ready→dispatched) and `complete` (ready|dispatched→completed).
  */
 
 export const ORDER_STATUSES = [
@@ -33,7 +33,14 @@ export const STAFF_CANCEL_REASON_CODES: ReadonlySet<string> = new Set([
   "test",
 ]);
 
-export type BranchOrderAction = "confirm" | "reject" | "preparing" | "ready" | "cancel";
+export type BranchOrderAction =
+  | "confirm"
+  | "reject"
+  | "preparing"
+  | "ready"
+  | "dispatch"
+  | "complete"
+  | "cancel";
 
 interface TransitionRule {
   /** Statuses from which the action is valid. */
@@ -61,6 +68,18 @@ export const TRANSITION_RULES: Record<BranchOrderAction, TransitionRule> = {
   },
   preparing: { from: ["confirmed"], to: "preparing", permission: "order.manage", reasonRequired: false },
   ready: { from: ["preparing"], to: "ready", permission: "order.manage", reasonRequired: false },
+  /** Delivery out-for-delivery mirror (Sprint 4.6). */
+  dispatch: { from: ["ready"], to: "dispatched", permission: "order.manage", reasonRequired: false },
+  /**
+   * Pickup / dine-in: ready → completed.
+   * Delivery: dispatched → completed (also mirrored from rider `delivered`).
+   */
+  complete: {
+    from: ["ready", "dispatched"],
+    to: "completed",
+    permission: "order.manage",
+    reasonRequired: false,
+  },
   cancel: {
     from: ["pending", "confirmed", "preparing", "ready"],
     to: "cancelled",

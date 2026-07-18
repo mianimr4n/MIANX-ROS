@@ -18,12 +18,17 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AuthCallback from "./pages/AuthCallback";
 import StaffAccept from "./pages/StaffAccept";
+import StaffLogin from "./pages/StaffLogin";
 import Account from "./pages/Account";
 import MyTelepizza from "./pages/MyTelepizza";
 import Orders from "./pages/Orders";
 import Branches from "./pages/Branches";
 import Loyalty from "./pages/Loyalty";
 import Notifications from "./pages/Notifications";
+import OpsDashboard from "./pages/ops/OpsDashboard";
+import OpsOrders from "./pages/ops/OpsOrders";
+import OpsKitchen from "./pages/ops/OpsKitchen";
+import OpsDispatch from "./pages/ops/OpsDispatch";
 import { AuthProvider } from "./contexts/AuthContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -41,6 +46,10 @@ function ScrollToTop() {
     window.scrollTo(0, 0);
   }, [location]);
   return null;
+}
+
+function isOpsChrome(path: string) {
+  return path === "/staff/login" || path.startsWith("/ops");
 }
 
 function Router() {
@@ -62,6 +71,11 @@ function Router() {
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/staff/accept" component={StaffAccept} />
+      <Route path="/staff/login" component={StaffLogin} />
+      <Route path="/ops/orders" component={OpsOrders} />
+      <Route path="/ops/kitchen" component={OpsKitchen} />
+      <Route path="/ops/dispatch" component={OpsDispatch} />
+      <Route path="/ops" component={OpsDashboard} />
       <Route path="/my-telepizza" component={MyTelepizza} />
       <Route path="/account" component={Account} />
       <Route path="/orders" component={Orders} />
@@ -70,6 +84,27 @@ function Router() {
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
+  );
+}
+
+function AppShell() {
+  const [location] = useLocation();
+  const ops = isOpsChrome(location);
+
+  return (
+    <>
+      {!ops ? <Navbar /> : null}
+      <ScrollToTop />
+      <main className={ops ? "min-h-screen" : "min-h-screen pt-[72px]"}>
+        <Router />
+      </main>
+      {!ops ? (
+        <>
+          <Footer />
+          <CartDrawer />
+        </>
+      ) : null}
+    </>
   );
 }
 
@@ -82,17 +117,11 @@ function App() {
           <AuthProvider>
             <CartProvider>
               <MenuCatalogProvider>
-              <BranchProvider>
-                <PizzaCustomizerProvider>
-                  <Navbar />
-                  <ScrollToTop />
-                  <main className="min-h-screen pt-[72px]">
-                    <Router />
-                  </main>
-                  <Footer />
-                  <CartDrawer />
-                </PizzaCustomizerProvider>
-              </BranchProvider>
+                <BranchProvider>
+                  <PizzaCustomizerProvider>
+                    <AppShell />
+                  </PizzaCustomizerProvider>
+                </BranchProvider>
               </MenuCatalogProvider>
             </CartProvider>
           </AuthProvider>

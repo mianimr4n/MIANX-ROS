@@ -114,7 +114,7 @@ export function createAdminOrdersRouter(deps: AdminOrdersRouterDependencies) {
       }
     };
 
-  for (const action of ["confirm", "reject", "preparing", "ready", "cancel"] as const) {
+  for (const action of ["confirm", "reject", "preparing", "ready", "dispatch", "complete", "cancel"] as const) {
     router.post(
       `/:id/${action}`,
       requireAuthenticatedUser,

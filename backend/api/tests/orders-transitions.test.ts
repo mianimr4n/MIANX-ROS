@@ -55,6 +55,28 @@ describe("planTransition — frozen state machine", () => {
     expect(planTransition({ action: "ready", currentStatus: "preparing", actor: staff }).toStatus).toBe("ready");
   });
 
+  it("Sprint 4.6 dispatch: ready -> dispatched", () => {
+    expect(planTransition({ action: "dispatch", currentStatus: "ready", actor: staff }).toStatus).toBe("dispatched");
+  });
+
+  it("Sprint 4.6 complete: ready -> completed (pickup)", () => {
+    expect(planTransition({ action: "complete", currentStatus: "ready", actor: staff }).toStatus).toBe("completed");
+  });
+
+  it("Sprint 4.6 complete: dispatched -> completed (delivery)", () => {
+    expect(planTransition({ action: "complete", currentStatus: "dispatched", actor: staff }).toStatus).toBe(
+      "completed",
+    );
+  });
+
+  it("Sprint 4.6 dispatch rejected from preparing", () => {
+    expectApiError(
+      () => planTransition({ action: "dispatch", currentStatus: "preparing", actor: staff }),
+      "INVALID_ORDER_TRANSITION",
+      409,
+    );
+  });
+
   it("cancel requires a reason code", () => {
     expectApiError(
       () => planTransition({ action: "cancel", currentStatus: "pending", actor: staff }),

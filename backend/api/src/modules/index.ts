@@ -50,7 +50,7 @@ export const apiModules: ApiModuleDescriptor[] = [
   {
     name: "riders",
     basePath: "/api/v1/riders",
-    summary: "Rider assignment and delivery workflows.",
+    summary: "Sprint 4.6 rider roster, assignment, and delivery status with order mirror.",
   },
   {
     name: "admin",
@@ -88,7 +88,14 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
       kitchenTickets: dependencies.kitchenTickets,
     }),
   );
-  app.use("/api/v1/riders", createRidersRouter());
+  app.use(
+    "/api/v1/riders",
+    createRidersRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      deliveryOperations: dependencies.deliveryOperations,
+    }),
+  );
   app.use(
     "/api/v1/admin",
     createAdminRouter({
