@@ -9,7 +9,9 @@ import {
 import type { AuthTokenVerifier } from "../../middleware/auth.js";
 import type { AuthPrincipalRepository } from "../../services/auth/supabase.js";
 import type { BranchOrderManagementDataSource } from "../../services/orders/management.js";
+import type { RestaurantTablesDataSource } from "../../services/tables/management.js";
 import { createAdminOrdersRouter } from "./orders.js";
+import { createAdminTablesRouter } from "./tables.js";
 import {
   assertCanReadInvites,
   type InviteAuditContext,
@@ -32,6 +34,7 @@ export interface AdminRouterDependencies {
   authProfileRepository: AuthPrincipalRepository;
   staffInviteRepository: StaffInviteRepository;
   branchOrderManagement: BranchOrderManagementDataSource;
+  restaurantTables: RestaurantTablesDataSource;
   inviteAppOrigin: string;
 }
 
@@ -94,6 +97,16 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       branchOrderManagement: dependencies.branchOrderManagement,
+    }),
+  );
+
+  // DB-R3 — branch-scoped restaurant tables (Bearer + AuthPrincipal gated).
+  router.use(
+    "/tables",
+    createAdminTablesRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      restaurantTables: dependencies.restaurantTables,
     }),
   );
 
