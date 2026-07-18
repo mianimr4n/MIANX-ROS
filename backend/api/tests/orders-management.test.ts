@@ -6,6 +6,8 @@ interface FakeState {
   orderItems: Array<Record<string, unknown>>;
   kitchenTickets: Array<Record<string, unknown>>;
   kitchenTicketItems: Array<Record<string, unknown>>;
+  restaurantBills: Array<Record<string, unknown>>;
+  billOrders: Array<Record<string, unknown>>;
   logs: Array<Record<string, unknown>>;
   deliveriesUpdated: number;
   /** When set, applied to the target order right before an UPDATE to simulate a concurrent write. */
@@ -17,6 +19,8 @@ const state: FakeState = {
   orderItems: [],
   kitchenTickets: [],
   kitchenTicketItems: [],
+  restaurantBills: [],
+  billOrders: [],
   logs: [],
   deliveriesUpdated: 0,
 };
@@ -32,7 +36,7 @@ function matchFilters(row: Record<string, unknown>, filters: Array<[string, stri
 
 class FakeQuery {
   private op: "select" | "insert" | "update" = "select";
-  private single = false;
+  private asSingle = false;
   private filters: Array<[string, string, unknown]> = [];
   private payload: Record<string, unknown> | null = null;
   constructor(private table: string) {}
@@ -69,7 +73,11 @@ class FakeQuery {
     return this;
   }
   maybeSingle() {
-    this.single = true;
+    this.asSingle = true;
+    return this.resolve();
+  }
+  single() {
+    this.asSingle = true;
     return this.resolve();
   }
   then(res: (v: unknown) => unknown, rej?: (e: unknown) => unknown) {
@@ -86,13 +94,13 @@ class FakeQuery {
     }
     if (this.table === "order_items") {
       const matched = state.orderItems.filter((o) => matchFilters(o, this.filters));
-      if (this.single) return Promise.resolve({ data: matched[0] ?? null, error: null });
+      if (this.asSingle) return Promise.resolve({ data: matched[0] ?? null, error: null });
       return Promise.resolve({ data: matched, error: null });
     }
     if (this.table === "kitchen_tickets") {
       if (this.op === "select") {
         const matched = state.kitchenTickets.filter((o) => matchFilters(o, this.filters));
-        if (this.single) return Promise.resolve({ data: matched[0] ?? null, error: null });
+        if (this.asSingle) return Promise.resolve({ data: matched[0] ?? null, error: null });
         return Promise.resolve({ data: matched, error: null });
       }
       if (this.op === "insert") {
@@ -104,13 +112,13 @@ class FakeQuery {
           return Promise.resolve({ data: null, error: { code: "23505", message: "duplicate" } });
         }
         state.kitchenTickets.push(row);
-        if (this.single) return Promise.resolve({ data: { id: row.id }, error: null });
+        if (this.asSingle) return Promise.resolve({ data: { id: row.id }, error: null });
         return Promise.resolve({ data: row, error: null });
       }
       if (this.op === "update") {
         const matched = state.kitchenTickets.filter((o) => matchFilters(o, this.filters));
         for (const target of matched) {
-          Object.assign(target, this.payload);
+          Object.assign(target, this.payload!);
         }
         return Promise.resolve({ data: matched[0] ?? null, error: null });
       }
@@ -124,10 +132,50 @@ class FakeQuery {
       }
       return Promise.resolve({ data: null, error: null });
     }
+    if (this.table === "bill_orders") {
+      if (this.op === "select") {
+        const matched = state.billOrders.filter((o) => matchFilters(o, this.filters));
+        if (this.asSingle) return Promise.resolve({ data: matched[0] ?? null, error: null });
+        return Promise.resolve({ data: matched, error: null });
+      }
+      if (this.op === "insert") {
+        const payload = this.payload as Record<string, unknown>;
+        const row: Record<string, unknown> = {
+          id: `bo-${state.billOrders.length + 1}`,
+          ...payload,
+        };
+        if (state.billOrders.some((b) => b.order_id === row.order_id)) {
+          return Promise.resolve({ data: null, error: { code: "23505", message: "duplicate" } });
+        }
+        state.billOrders.push(row);
+        return Promise.resolve({ data: row, error: null });
+      }
+    }
+    if (this.table === "restaurant_bills") {
+      if (this.op === "select") {
+        const matched = state.restaurantBills.filter((o) => matchFilters(o, this.filters));
+        if (this.asSingle) return Promise.resolve({ data: matched[0] ?? null, error: null });
+        return Promise.resolve({ data: matched, error: null });
+      }
+      if (this.op === "insert") {
+        const row: Record<string, unknown> = {
+          id: `rb-${state.restaurantBills.length + 1}`,
+          ...(this.payload as Record<string, unknown>),
+        };
+        state.restaurantBills.push(row);
+        if (this.asSingle) return Promise.resolve({ data: { id: row.id }, error: null });
+        return Promise.resolve({ data: row, error: null });
+      }
+      if (this.op === "update") {
+        const matched = state.restaurantBills.filter((o) => matchFilters(o, this.filters));
+        for (const target of matched) Object.assign(target, this.payload!);
+        return Promise.resolve({ data: matched[0] ?? null, error: null });
+      }
+    }
     if (this.table === "orders") {
       if (this.op === "select") {
         const matched = state.orders.filter((o) => matchFilters(o, this.filters));
-        if (this.single) return Promise.resolve({ data: matched[0] ?? null, error: null });
+        if (this.asSingle) return Promise.resolve({ data: matched[0] ?? null, error: null });
         return Promise.resolve({ data: matched, error: null, count: matched.length });
       }
       if (this.op === "update") {
@@ -137,7 +185,7 @@ class FakeQuery {
           target.status = state.concurrentStatusById[target.id as string];
         }
         if (target && matchFilters(target, this.filters)) {
-          Object.assign(target, this.payload);
+          Object.assign(target, this.payload!);
           return Promise.resolve({ data: { order_number: target.order_number, status: target.status }, error: null });
         }
         return Promise.resolve({ data: null, error: null });
@@ -148,7 +196,15 @@ class FakeQuery {
 }
 
 vi.mock("@supabase/supabase-js", () => ({
-  createClient: () => ({ from: (table: string) => new FakeQuery(table) }),
+  createClient: () => ({
+    from: (table: string) => new FakeQuery(table),
+    rpc: async (fn: string) => {
+      if (fn === "next_restaurant_bill_number") {
+        return { data: `RO-20260718-${String(state.restaurantBills.length + 1).padStart(4, "0")}`, error: null };
+      }
+      return { data: null, error: { message: `unknown rpc ${fn}` } };
+    },
+  }),
 }));
 
 import { ApiError } from "../src/common/http.js";
@@ -198,6 +254,8 @@ beforeEach(() => {
   state.orderItems = [];
   state.kitchenTickets = [];
   state.kitchenTicketItems = [];
+  state.restaurantBills = [];
+  state.billOrders = [];
   state.logs = [];
   state.deliveriesUpdated = 0;
   state.concurrentStatusById = {};
@@ -276,6 +334,45 @@ describe("branch order management — transitions + audit + concurrency", () => 
       order_item_id: "oi1",
       item_name_snapshot: "Tele Special (Large)",
       quantity: 1,
+    });
+    // Delivery/pickup must not create restaurant bills (DB-R6 dine-in only).
+    expect(state.restaurantBills).toHaveLength(0);
+    expect(state.billOrders).toHaveLength(0);
+  });
+
+  it("confirm dine-in with session creates kitchen ticket AND attaches to open bill", async () => {
+    const sessionId = "sess-1";
+    state.orders = [
+      seedOrder({
+        status: "pending",
+        order_type: "dine-in",
+        dine_in_session_id: sessionId,
+      }),
+    ];
+    state.orderItems = [
+      {
+        id: "oi1",
+        order_id: "o1",
+        product_name: "Tele Special",
+        variant_name: "Large",
+        quantity: 1,
+        extras_snapshot: [],
+        modifiers: [],
+      },
+    ];
+    const res = await ds.transitionOrder({ scope: cashierB1, orderId: "o1", action: "confirm" });
+    expect(res.status).toBe("confirmed");
+    expect(state.kitchenTickets).toHaveLength(1);
+    expect(state.restaurantBills).toHaveLength(1);
+    expect(state.restaurantBills[0]).toMatchObject({
+      dine_in_session_id: sessionId,
+      branch_id: B1,
+      status: "open",
+    });
+    expect(state.billOrders).toHaveLength(1);
+    expect(state.billOrders[0]).toMatchObject({
+      order_id: "o1",
+      restaurant_bill_id: state.restaurantBills[0].id,
     });
   });
 

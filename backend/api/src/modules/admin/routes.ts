@@ -10,8 +10,10 @@ import type { AuthTokenVerifier } from "../../middleware/auth.js";
 import type { AuthPrincipalRepository } from "../../services/auth/supabase.js";
 import type { BranchOrderManagementDataSource } from "../../services/orders/management.js";
 import type { RestaurantTablesDataSource } from "../../services/tables/management.js";
+import type { RestaurantBillsService } from "../../services/bills/restaurant-bills.js";
 import { createAdminOrdersRouter } from "./orders.js";
 import { createAdminTablesRouter } from "./tables.js";
+import { createAdminBillsRouter } from "./bills.js";
 import {
   assertCanReadInvites,
   type InviteAuditContext,
@@ -35,6 +37,7 @@ export interface AdminRouterDependencies {
   staffInviteRepository: StaffInviteRepository;
   branchOrderManagement: BranchOrderManagementDataSource;
   restaurantTables: RestaurantTablesDataSource;
+  restaurantBills: RestaurantBillsService;
   inviteAppOrigin: string;
 }
 
@@ -107,6 +110,16 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       restaurantTables: dependencies.restaurantTables,
+    }),
+  );
+
+  // DB-R6 — dine-in restaurant bills (Bearer + AuthPrincipal gated).
+  router.use(
+    "/bills",
+    createAdminBillsRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      restaurantBills: dependencies.restaurantBills,
     }),
   );
 
