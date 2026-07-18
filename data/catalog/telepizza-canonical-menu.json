@@ -1,0 +1,2853 @@
+{
+  "schemaVersion": 1,
+  "code": "telepizza-canonical-menu",
+  "title": "Telepizza Canonical Menu Manifest",
+  "currency": "PKR",
+  "generatedAt": "2026-07-18",
+  "completionStatus": "BLOCKED_OWNER_EVIDENCE_REQUIRED",
+  "completionReason": "Owner structured menu-board image files are not present in the repository. Partial V1 hybrid baseline is verified from approved extraction docs + owner sync migration + production API (13/58/3/40/7). GM Jul-13 conflicts and missing domains require owner confirmation before PASS.",
+  "evidenceRank": [
+    {
+      "rank": 1,
+      "source": "owner-menu-board-images",
+      "status": "MISSING_FROM_REPO",
+      "path": null
+    },
+    {
+      "rank": 2,
+      "source": "approved-extracted-docs",
+      "status": "PRESENT",
+      "paths": [
+        "_documentation-audit/evidence/REAL_MENU_EXTRACTED.md",
+        "REAL-MENU-EXTRACTION.md"
+      ]
+    },
+    {
+      "rank": 3,
+      "source": "production-db-via-api",
+      "status": "VERIFIED_COUNTS",
+      "meta": {
+        "source": "supabase",
+        "module": "menu",
+        "categoryCount": 13,
+        "itemCount": 58,
+        "toppingCount": 3,
+        "variantCount": 40,
+        "dealCount": 7
+      }
+    },
+    {
+      "rank": 4,
+      "source": "migrations",
+      "status": "PRESENT",
+      "paths": [
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "supabase/migrations/20260718120000_product_modifier_system.sql"
+      ]
+    },
+    {
+      "rank": 5,
+      "source": "website-fallback",
+      "status": "ALIGNED_TO_HYBRID",
+      "path": "apps/website/client/src/data/menu-data.ts"
+    },
+    {
+      "rank": 6,
+      "source": "promo-creatives",
+      "status": "TEMPORARY_ONLY",
+      "note": "Eid/Iftar ≠ evergreen"
+    }
+  ],
+  "decisions": {
+    "BFR-001": "APPROVED HYBRID — V1 base = verified Website/DB board-era; GM = reference only",
+    "BFR-007": "telebar PLANNED_V2 — excluded from V1",
+    "BFR-018": "Zinger multi-source conflict — board 450 kept under hybrid; still flagged"
+  },
+  "freezeBaseline": {
+    "publicCategories": 13,
+    "browseItems": 58,
+    "toppings": 3,
+    "variants": 40,
+    "deals": 7,
+    "note": "Do not expand sellable browse without freeze bump + owner approval"
+  },
+  "counts": {
+    "sellableBrowse": 58,
+    "toppings": 3,
+    "discontinued": 6,
+    "variantsIncludingToppings": 40,
+    "deals": 7,
+    "ownerGapsNotSellable": 15
+  },
+  "domains": {
+    "pizzas": "partial — V1 specialty set present; Malai Boti gap",
+    "burgers": "partial — zinger + patty only; grill/smash/extra chicken on GM gaps",
+    "broast": "discontinued in browse — GM evidence retained as discontinued rows",
+    "sandwiches": "present — board-era prices",
+    "wraps": "partial — board set present; GM jumbo/grill gaps",
+    "pasta": "partial — 2 of GM set; alfredo gap; naming ambiguous",
+    "wings": "present — board-era",
+    "fries": "present — board-era",
+    "sides": "present as chicken-sides + dips",
+    "drinks": "present",
+    "water": "present under drinks",
+    "sauces": "present as Dips browse SKUs (not separate sauce tables)",
+    "toppings": "present as modifier-only SKUs + linked options",
+    "crust": "modifier group seeded — price evidence incomplete",
+    "add-ons": "add-drinks / add-sides linked to catalog SKUs",
+    "deals": "7 evergreen board deals; Eid/Iftar temporary hidden"
+  },
+  "categories": [
+    {
+      "code": "signature-pizzas",
+      "name": "Signature Pizzas",
+      "sortOrder": 10,
+      "lifecycle": "sellable"
+    },
+    {
+      "code": "classic-pizzas",
+      "name": "Classic Pizzas",
+      "sortOrder": 20,
+      "lifecycle": "sellable"
+    },
+    {
+      "code": "specialty-pizzas",
+      "name": "Specialty Pizzas",
+      "sortOrder": 30,
+      "lifecycle": "sellable"
+    },
+    {
+      "code": "burgers",
+      "name": "Burgers",
+      "sortOrder": 40,
+      "lifecycle": "sellable"
+    },
+    {
+      "code": "sandwiches",
+      "name": "Sandwiches",
+      "sortOrder": 50,
+      "lifecycle": "sellable"
+    },
+    {
+      "code": "wings",
+      "name": "Wings",
+      "sortOrder": 60,
+      "lifecycle": "sellable"
+    },
+    {
+      "code": "fries",
+      "name": "Fries",
+      "sortOrder": 70,
+      "lifecycle": "sellable"
+    },
+    {
+      "code": "wraps-rolls",
+      "name": "Wraps & Rolls",
+      "sortOrder": 80,
+      "lifecycle": "sellable"
+    },
+    {
+      "code": "pasta",
+      "name": "Pasta",
+      "sortOrder": 90,
+      "lifecycle": "sellable"
+    },
+    {
+      "code": "chicken-sides",
+      "name": "Chicken & Sides",
+      "sortOrder": 100,
+      "lifecycle": "sellable"
+    },
+    {
+      "code": "dips",
+      "name": "Dips",
+      "sortOrder": 105,
+      "lifecycle": "sellable"
+    },
+    {
+      "code": "drinks",
+      "name": "Drinks",
+      "sortOrder": 110,
+      "lifecycle": "sellable"
+    },
+    {
+      "code": "deals",
+      "name": "Deals",
+      "sortOrder": 120,
+      "lifecycle": "sellable"
+    },
+    {
+      "code": "toppings",
+      "name": "Toppings",
+      "sortOrder": 200,
+      "lifecycle": "hidden",
+      "notes": "Internal SKUs; not a customer browse tab"
+    },
+    {
+      "code": "broast",
+      "name": "Broast",
+      "sortOrder": 999,
+      "lifecycle": "discontinued",
+      "notes": "Retired from customer browse by owner sync 20260716160000; GM Link 4 still lists Injected Broast"
+    }
+  ],
+  "items": [
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "tele-special",
+      "name": "Tele Special",
+      "categoryCode": "signature-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "Special chicken with special sauce, topped with olive, mushroom & capsicum.",
+      "badge": "Signature",
+      "featured": true,
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": null,
+      "variants": [
+        {
+          "code": "small",
+          "label": "6 inch Small",
+          "sizeCode": "small",
+          "pricePkr": 499,
+          "isDefault": true
+        },
+        {
+          "code": "medium",
+          "label": "9 inch Medium",
+          "sizeCode": "medium",
+          "pricePkr": 950,
+          "isDefault": false
+        },
+        {
+          "code": "large",
+          "label": "12 inch Large",
+          "sizeCode": "large",
+          "pricePkr": 1570,
+          "isDefault": false
+        }
+      ],
+      "gmReference": {
+        "small": 620,
+        "medium": 1250,
+        "large": 1890,
+        "mediumLabel": "10\""
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "peri-peri",
+      "name": "Peri Peri",
+      "categoryCode": "signature-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "Peri peri sauce with tikka chicken topped with kabab, sausages & tomato.",
+      "badge": null,
+      "featured": false,
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": null,
+      "variants": [
+        {
+          "code": "small",
+          "label": "6 inch Small",
+          "sizeCode": "small",
+          "pricePkr": 499,
+          "isDefault": true
+        },
+        {
+          "code": "medium",
+          "label": "9 inch Medium",
+          "sizeCode": "medium",
+          "pricePkr": 950,
+          "isDefault": false
+        },
+        {
+          "code": "large",
+          "label": "12 inch Large",
+          "sizeCode": "large",
+          "pricePkr": 1570,
+          "isDefault": false
+        }
+      ],
+      "gmReference": {
+        "small": 620,
+        "medium": 1250,
+        "large": 1890,
+        "mediumLabel": "10\""
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "bihari-kabab",
+      "name": "Bihari Kabab",
+      "categoryCode": "signature-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "Garlic sauce with tikka chicken topped kabab slice, onion & mushroom.",
+      "badge": "Hot",
+      "featured": false,
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": null,
+      "variants": [
+        {
+          "code": "small",
+          "label": "6 inch Small",
+          "sizeCode": "small",
+          "pricePkr": 499,
+          "isDefault": true
+        },
+        {
+          "code": "medium",
+          "label": "9 inch Medium",
+          "sizeCode": "medium",
+          "pricePkr": 950,
+          "isDefault": false
+        },
+        {
+          "code": "large",
+          "label": "12 inch Large",
+          "sizeCode": "large",
+          "pricePkr": 1570,
+          "isDefault": false
+        }
+      ],
+      "gmReference": {
+        "small": 620,
+        "medium": 1250,
+        "large": 1890,
+        "mediumLabel": "10\""
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "kababish",
+      "name": "Kababish",
+      "categoryCode": "signature-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "Special sauce with fajita chicken topped with kabab mushroom & capsicum.",
+      "badge": null,
+      "featured": false,
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": null,
+      "variants": [
+        {
+          "code": "small",
+          "label": "6 inch Small",
+          "sizeCode": "small",
+          "pricePkr": 499,
+          "isDefault": true
+        },
+        {
+          "code": "medium",
+          "label": "9 inch Medium",
+          "sizeCode": "medium",
+          "pricePkr": 950,
+          "isDefault": false
+        },
+        {
+          "code": "large",
+          "label": "12 inch Large",
+          "sizeCode": "large",
+          "pricePkr": 1570,
+          "isDefault": false
+        }
+      ],
+      "gmReference": {
+        "small": 620,
+        "medium": 1250,
+        "large": 1890,
+        "mediumLabel": "10\""
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "tikka",
+      "name": "Tikka",
+      "categoryCode": "classic-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "Tikka sauce with tikka chicken topped with olive & onion.",
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": null,
+      "variants": [
+        {
+          "code": "small",
+          "label": "6 inch Small",
+          "sizeCode": "small",
+          "pricePkr": 470,
+          "isDefault": true
+        },
+        {
+          "code": "medium",
+          "label": "9 inch Medium",
+          "sizeCode": "medium",
+          "pricePkr": 890,
+          "isDefault": false
+        },
+        {
+          "code": "large",
+          "label": "12 inch Large",
+          "sizeCode": "large",
+          "pricePkr": 1470,
+          "isDefault": false
+        }
+      ],
+      "gmReference": {
+        "small": 600,
+        "medium": 1200,
+        "large": 1790,
+        "mediumLabel": "10\""
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "bonfire",
+      "name": "Bonfire",
+      "categoryCode": "classic-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "Bonfire sauce with fajita chicken topped with jalapeno, mushroom & tomato.",
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": null,
+      "variants": [
+        {
+          "code": "small",
+          "label": "6 inch Small",
+          "sizeCode": "small",
+          "pricePkr": 470,
+          "isDefault": true
+        },
+        {
+          "code": "medium",
+          "label": "9 inch Medium",
+          "sizeCode": "medium",
+          "pricePkr": 890,
+          "isDefault": false
+        },
+        {
+          "code": "large",
+          "label": "12 inch Large",
+          "sizeCode": "large",
+          "pricePkr": 1470,
+          "isDefault": false
+        }
+      ],
+      "gmReference": {
+        "small": 600,
+        "medium": 1200,
+        "large": 1790,
+        "mediumLabel": "10\""
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "chicken-supreme",
+      "name": "Chicken Supreme",
+      "categoryCode": "classic-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "Original red base sauce, three types of chicken topped with olive, mushroom jalapeno & capsicum.",
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": null,
+      "variants": [
+        {
+          "code": "small",
+          "label": "6 inch Small",
+          "sizeCode": "small",
+          "pricePkr": 470,
+          "isDefault": true
+        },
+        {
+          "code": "medium",
+          "label": "9 inch Medium",
+          "sizeCode": "medium",
+          "pricePkr": 890,
+          "isDefault": false
+        },
+        {
+          "code": "large",
+          "label": "12 inch Large",
+          "sizeCode": "large",
+          "pricePkr": 1470,
+          "isDefault": false
+        }
+      ],
+      "gmReference": {
+        "small": 600,
+        "medium": 1200,
+        "large": 1790,
+        "mediumLabel": "10\""
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "real-fajita",
+      "name": "Real Fajita",
+      "categoryCode": "classic-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "Fajita sauce with fajita chicken topped with onion & capsicum.",
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": null,
+      "variants": [
+        {
+          "code": "small",
+          "label": "6 inch Small",
+          "sizeCode": "small",
+          "pricePkr": 470,
+          "isDefault": true
+        },
+        {
+          "code": "medium",
+          "label": "9 inch Medium",
+          "sizeCode": "medium",
+          "pricePkr": 890,
+          "isDefault": false
+        },
+        {
+          "code": "large",
+          "label": "12 inch Large",
+          "sizeCode": "large",
+          "pricePkr": 1470,
+          "isDefault": false
+        }
+      ],
+      "gmReference": {
+        "small": 600,
+        "medium": 1200,
+        "large": 1790,
+        "mediumLabel": "10\""
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "mexicana",
+      "name": "Mexicana",
+      "categoryCode": "classic-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "Special sauce with smoked chicken topped with sausages, black olive, tomato & capsicum.",
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": null,
+      "variants": [
+        {
+          "code": "small",
+          "label": "6 inch Small",
+          "sizeCode": "small",
+          "pricePkr": 470,
+          "isDefault": true
+        },
+        {
+          "code": "medium",
+          "label": "9 inch Medium",
+          "sizeCode": "medium",
+          "pricePkr": 890,
+          "isDefault": false
+        },
+        {
+          "code": "large",
+          "label": "12 inch Large",
+          "sizeCode": "large",
+          "pricePkr": 1470,
+          "isDefault": false
+        }
+      ],
+      "gmReference": {
+        "small": 600,
+        "medium": 1200,
+        "large": 1790,
+        "mediumLabel": "10\""
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "cheese-lover",
+      "name": "Cheese Lover",
+      "categoryCode": "classic-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "Original red base sauce loaded with mozzarella cheese.",
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": null,
+      "variants": [
+        {
+          "code": "small",
+          "label": "6 inch Small",
+          "sizeCode": "small",
+          "pricePkr": 470,
+          "isDefault": true
+        },
+        {
+          "code": "medium",
+          "label": "9 inch Medium",
+          "sizeCode": "medium",
+          "pricePkr": 890,
+          "isDefault": false
+        },
+        {
+          "code": "large",
+          "label": "12 inch Large",
+          "sizeCode": "large",
+          "pricePkr": 1470,
+          "isDefault": false
+        }
+      ],
+      "gmReference": {
+        "small": 600,
+        "medium": 1200,
+        "large": 1790,
+        "mediumLabel": "10\""
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "chicago-extreme",
+      "name": "Chicago Extreme",
+      "categoryCode": "specialty-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "Double layers extreme pizza with 2 premium sauces, lots of cheese & chicken.",
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": null,
+      "variants": [
+        {
+          "code": "medium",
+          "label": "Medium",
+          "sizeCode": "medium",
+          "pricePkr": 1199,
+          "isDefault": true
+        },
+        {
+          "code": "large",
+          "label": "Large",
+          "sizeCode": "large",
+          "pricePkr": 1899,
+          "isDefault": false
+        }
+      ],
+      "gmReference": {
+        "medium": 1470,
+        "large": 2150
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "crown-crust",
+      "name": "Crown Crust",
+      "categoryCode": "specialty-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "Any flavour with chicken stuffing on edges & Tele Pizza signature sauce.",
+      "badge": "Chef Special",
+      "featured": true,
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": null,
+      "variants": [
+        {
+          "code": "medium",
+          "label": "Medium",
+          "sizeCode": "medium",
+          "pricePkr": 1199,
+          "isDefault": true
+        },
+        {
+          "code": "large",
+          "label": "Large",
+          "sizeCode": "large",
+          "pricePkr": 1799,
+          "isDefault": false
+        }
+      ],
+      "gmReference": {
+        "medium": 1470,
+        "large": 2099
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "SIZE_AMBIGUOUS_ON_BOARD",
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "stuffed-crust",
+      "name": "Stuffed Crust",
+      "categoryCode": "specialty-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "Any flavour with kabab stuffing on edges.",
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": 1749,
+      "variants": [],
+      "gmReference": {
+        "flat": 2050
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "SIZE_AMBIGUOUS_ON_BOARD",
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "tele-extreme",
+      "name": "Tele Extreme Pizza",
+      "categoryCode": "specialty-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "2 premium sauces with loaded chicken & lots of cheese.",
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": 1699,
+      "variants": [],
+      "gmReference": {
+        "flat": 1950
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "sixteen-inch-incher",
+      "name": "16\" Incher",
+      "categoryCode": "specialty-pizzas",
+      "productType": "pizza",
+      "lifecycle": "sellable",
+      "description": "Sixteen-inch specialty pizza.",
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": 2399,
+      "variants": [],
+      "gmReference": {
+        "flat": 2800
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "MULTI_SOURCE_PRICE_CONFLICT",
+        "BFR-018",
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "zinger-burger",
+      "name": "Zinger Burger",
+      "categoryCode": "burgers",
+      "productType": "burger",
+      "lifecycle": "sellable",
+      "description": "Crispy zinger burger.",
+      "badge": "Popular",
+      "featured": true,
+      "imageUrl": "/images/menu-burger.jpg",
+      "basePricePkr": 450,
+      "variants": [],
+      "promoConflict": {
+        "price": 440,
+        "source": "standalone promo poster"
+      },
+      "gmReference": {
+        "board": 450,
+        "promo": 440,
+        "gm": 550
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "patty-burger",
+      "name": "Patty Burger",
+      "categoryCode": "burgers",
+      "productType": "burger",
+      "lifecycle": "sellable",
+      "description": "Tele Pizza patty burger.",
+      "imageUrl": "/images/menu-burger.jpg",
+      "basePricePkr": 299,
+      "variants": [],
+      "gmReference": {
+        "gm": 350
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "crunchy-sandwich",
+      "name": "Crunchy Sandwich",
+      "categoryCode": "sandwiches",
+      "productType": "sandwich",
+      "lifecycle": "sellable",
+      "description": "Served with dip sauce & fries.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 799,
+      "variants": [],
+      "gmReference": {
+        "gm": 950
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "special-sandwich",
+      "name": "Special Sandwich",
+      "categoryCode": "sandwiches",
+      "productType": "sandwich",
+      "lifecycle": "sellable",
+      "description": "Served with dip sauce & fries.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 749,
+      "variants": [],
+      "gmReference": {
+        "gm": 930
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "baked-smoked-sandwich",
+      "name": "Baked Smoked",
+      "categoryCode": "sandwiches",
+      "productType": "sandwich",
+      "lifecycle": "sellable",
+      "description": "Served with dip sauce & fries.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 749,
+      "variants": [],
+      "gmReference": {
+        "gm": 930
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "sizzling-sandwich",
+      "name": "Sizzling Sandwich",
+      "categoryCode": "sandwiches",
+      "productType": "sandwich",
+      "lifecycle": "sellable",
+      "description": "Served with dip sauce & fries.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 749,
+      "variants": [],
+      "gmReference": {
+        "gm": 930
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_NAME_CONFLICT",
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "jumbo-wrap",
+      "name": "Tele Pizza Special Jumbo Wrap",
+      "categoryCode": "wraps-rolls",
+      "productType": "wrap",
+      "lifecycle": "sellable",
+      "description": "Tele Pizza special jumbo wrap.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 649,
+      "variants": [],
+      "notes": [
+        "GM Link 4 lists different Jumbo wrap SKUs @ 950 — OWNER_CONFIRMATION_REQUIRED",
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ],
+      "gmReference": {
+        "gmNote": "GM has Wrap it Hot / Jalapeno Kick Jumbo @ 950"
+      }
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "crunchy-wrap",
+      "name": "Crunchy Wrap",
+      "categoryCode": "wraps-rolls",
+      "productType": "wrap",
+      "lifecycle": "sellable",
+      "description": "Crunchy chicken wrap.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 399,
+      "variants": [],
+      "gmReference": {
+        "gm": 550
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "dynamite-wrap",
+      "name": "Dynamite Wrap",
+      "categoryCode": "wraps-rolls",
+      "productType": "wrap",
+      "lifecycle": "sellable",
+      "description": "Dynamite-flavoured wrap.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 399,
+      "variants": [],
+      "gmReference": {
+        "gm": 550
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "behari-roll",
+      "name": "Behari Roll",
+      "categoryCode": "wraps-rolls",
+      "productType": "wrap",
+      "lifecycle": "sellable",
+      "description": "4 pcs special chicken with special sauce, wrapped in crispy tortilla baked with lots of cheese, mushroom & olives, served with dip sauce & fries.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 799,
+      "variants": [],
+      "gmReference": {
+        "gm": 950
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "crunchy-pasta",
+      "name": "Crunchy Pasta",
+      "categoryCode": "pasta",
+      "productType": "pasta",
+      "lifecycle": "sellable",
+      "description": "Crunchy pasta.",
+      "badge": "Hot",
+      "imageUrl": "/images/pasta-dish.jpg",
+      "basePricePkr": 849,
+      "variants": [],
+      "gmReference": {
+        "gm": 980
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "NAME_AMBIGUOUS_ON_BOARD",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "special-pasta",
+      "name": "Special Pasta / Flaming Pasta",
+      "categoryCode": "pasta",
+      "productType": "pasta",
+      "lifecycle": "sellable",
+      "description": "Special flaming pasta.",
+      "imageUrl": "/images/pasta-dish.jpg",
+      "basePricePkr": 749,
+      "variants": [],
+      "notes": "Board layout ambiguous for Special vs Flaming naming; GM lists SPECIAL/FLAMING/ALFREDO at higher prices"
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "fried-crispy-wings",
+      "name": "Fried & Crispy",
+      "categoryCode": "wings",
+      "productType": "wings",
+      "lifecycle": "sellable",
+      "description": "Crispy fried chicken wings.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 599,
+      "variants": [],
+      "gmReference": {
+        "gm": 650
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "bbq-wings",
+      "name": "BBQ",
+      "categoryCode": "wings",
+      "productType": "wings",
+      "lifecycle": "sellable",
+      "description": "BBQ-flavoured chicken wings.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 599,
+      "variants": [],
+      "gmReference": {
+        "gm": 650
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "creamo-wings",
+      "name": "Creamo",
+      "categoryCode": "wings",
+      "productType": "wings",
+      "lifecycle": "sellable",
+      "description": "Creamy-style chicken wings.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 599,
+      "variants": [],
+      "gmReference": {
+        "gm": 650
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "oven-baked-wings",
+      "name": "Oven Baked",
+      "categoryCode": "wings",
+      "productType": "wings",
+      "lifecycle": "sellable",
+      "description": "Oven-baked chicken wings.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 549,
+      "variants": [],
+      "gmReference": {
+        "gm": 600
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "flaming-wings",
+      "name": "Flaming",
+      "categoryCode": "wings",
+      "productType": "wings",
+      "lifecycle": "sellable",
+      "description": "Spicy flaming chicken wings.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 549,
+      "variants": [],
+      "gmReference": {
+        "gm": 600
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "loaded-fries",
+      "name": "Loaded Fries",
+      "categoryCode": "fries",
+      "productType": "fries",
+      "lifecycle": "sellable",
+      "description": "Loaded fries.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 650,
+      "variants": [],
+      "gmReference": {
+        "gm": 790
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "french-fries",
+      "name": "French Fries",
+      "categoryCode": "fries",
+      "productType": "fries",
+      "lifecycle": "sellable",
+      "description": "French fries.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 199,
+      "variants": [],
+      "gmReference": {
+        "gm": 250
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "family-fries",
+      "name": "Family Fries",
+      "categoryCode": "fries",
+      "productType": "fries",
+      "lifecycle": "sellable",
+      "description": "Family-size fries.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 350,
+      "variants": [],
+      "gmReference": {
+        "gm": 390
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "chicken-tender-strips",
+      "name": "Chicken Tender Strips",
+      "categoryCode": "chicken-sides",
+      "productType": "side",
+      "lifecycle": "sellable",
+      "description": "5 pcs juicy chicken tender strips with blend of spices, served with secret delicious dip sauce.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 590,
+      "variants": [],
+      "gmReference": {
+        "gm": 750
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "crispy-box",
+      "name": "Crispy Box",
+      "categoryCode": "chicken-sides",
+      "productType": "side",
+      "lifecycle": "sellable",
+      "description": "3 pcs crispy chicken (1 Chest, 1 Drum, 1 Wing) with 1 Garlic Ranch.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 670,
+      "variants": [],
+      "gmReference": {
+        "gm": 790
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "fried-chicken-chest",
+      "name": "Fried Chicken (Chest)",
+      "categoryCode": "chicken-sides",
+      "productType": "side",
+      "lifecycle": "sellable",
+      "description": "Fried chicken chest piece.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 250,
+      "variants": [],
+      "gmReference": {
+        "gm": 300
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "GM_PRICE_CONFLICT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "fried-chicken",
+      "name": "Fried Chicken",
+      "categoryCode": "chicken-sides",
+      "productType": "side",
+      "lifecycle": "sellable",
+      "description": "Fried chicken piece.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 220,
+      "variants": [],
+      "gmReference": {
+        "gm": 280
+      },
+      "notes": [
+        "BFR-001 HYBRID: keep board-era V1 price; GM Jul-13 is reference only — do not silent-replace"
+      ]
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "nuggets",
+      "name": "Nuggets",
+      "categoryCode": "chicken-sides",
+      "productType": "side",
+      "lifecycle": "sellable",
+      "description": "10 pieces.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 449,
+      "variants": []
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "hot-shots",
+      "name": "Hot Shots",
+      "categoryCode": "chicken-sides",
+      "productType": "side",
+      "lifecycle": "sellable",
+      "description": "10 pieces.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 449,
+      "variants": []
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "special-sauce-dip",
+      "name": "Special Sauce",
+      "categoryCode": "dips",
+      "productType": "side",
+      "lifecycle": "sellable",
+      "description": "Tele Pizza special sauce dip.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 50,
+      "variants": [],
+      "domain": "sauces"
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "bone-fire-dip",
+      "name": "Bone Fire",
+      "categoryCode": "dips",
+      "productType": "side",
+      "lifecycle": "sellable",
+      "description": "Bone fire sauce dip.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 50,
+      "variants": [],
+      "domain": "sauces"
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "dip-sauce",
+      "name": "Dip Sauce",
+      "categoryCode": "dips",
+      "productType": "side",
+      "lifecycle": "sellable",
+      "description": "Classic dip sauce.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 50,
+      "variants": [],
+      "domain": "sauces"
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "garlic-ranch-dip",
+      "name": "Garlic Ranch",
+      "categoryCode": "dips",
+      "productType": "side",
+      "lifecycle": "sellable",
+      "description": "Garlic ranch dip.",
+      "imageUrl": "/images/sides-platter.jpg",
+      "basePricePkr": 50,
+      "variants": [],
+      "domain": "sauces"
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "drink-1-5l",
+      "name": "1.5 Liter",
+      "categoryCode": "drinks",
+      "productType": "drink",
+      "lifecycle": "sellable",
+      "description": "1.5 liter soft drink.",
+      "imageUrl": "/images/desserts-drinks.jpg",
+      "basePricePkr": 210,
+      "variants": [],
+      "domain": "drinks"
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "drink-1l",
+      "name": "1 Liter",
+      "categoryCode": "drinks",
+      "productType": "drink",
+      "lifecycle": "sellable",
+      "description": "1 liter soft drink.",
+      "imageUrl": "/images/desserts-drinks.jpg",
+      "basePricePkr": 170,
+      "variants": [],
+      "domain": "drinks"
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "drink-500ml",
+      "name": "500 ml",
+      "categoryCode": "drinks",
+      "productType": "drink",
+      "lifecycle": "sellable",
+      "description": "500 ml soft drink.",
+      "imageUrl": "/images/desserts-drinks.jpg",
+      "basePricePkr": 110,
+      "variants": [],
+      "domain": "drinks"
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "drink-345ml",
+      "name": "345 ml",
+      "categoryCode": "drinks",
+      "productType": "drink",
+      "lifecycle": "sellable",
+      "description": "345 ml soft drink.",
+      "imageUrl": "/images/desserts-drinks.jpg",
+      "basePricePkr": 70,
+      "variants": [],
+      "domain": "drinks"
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "large-water",
+      "name": "Large Water",
+      "categoryCode": "drinks",
+      "productType": "drink",
+      "lifecycle": "sellable",
+      "description": "Large bottled water.",
+      "imageUrl": "/images/desserts-drinks.jpg",
+      "basePricePkr": 99,
+      "variants": [],
+      "domain": "water"
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "small-water",
+      "name": "Small Water",
+      "categoryCode": "drinks",
+      "productType": "drink",
+      "lifecycle": "sellable",
+      "description": "Small bottled water.",
+      "imageUrl": "/images/desserts-drinks.jpg",
+      "basePricePkr": 50,
+      "variants": [],
+      "domain": "water"
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "EID_PROMO_CONFLICT",
+        "TEMPORARY_PRICE_NOT_EVERGREEN",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "family-deal",
+      "name": "Family Deal",
+      "categoryCode": "deals",
+      "productType": "deal",
+      "lifecycle": "sellable",
+      "description": "1 Large Pizza + 10 Pcs Wings + 1.5 Liter Drink.",
+      "badge": null,
+      "featured": true,
+      "imageUrl": "/images/promos/family-deal.jpg",
+      "basePricePkr": 2250,
+      "variants": [],
+      "promoConflict": {
+        "price": 2199,
+        "source": "Eid Celebration"
+      }
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "EID_PROMO_CONFLICT",
+        "TEMPORARY_PRICE_NOT_EVERGREEN",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "pizza-fest",
+      "name": "Pizza Fest",
+      "categoryCode": "deals",
+      "productType": "deal",
+      "lifecycle": "sellable",
+      "description": "1 Large Pizza + 1.5 Liter Drink.",
+      "badge": "Hot",
+      "featured": true,
+      "imageUrl": "/images/promos/pizza-fest.jpg",
+      "basePricePkr": 1680,
+      "variants": [],
+      "promoConflict": {
+        "price": 1649,
+        "source": "Eid Celebration"
+      }
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "mega-offer",
+      "name": "Mega Offer",
+      "categoryCode": "deals",
+      "productType": "deal",
+      "lifecycle": "sellable",
+      "description": "2 Large Pizza + 1.5 Liter Coke.",
+      "badge": null,
+      "featured": false,
+      "imageUrl": "/images/products/deal-combo.jpg",
+      "basePricePkr": 3140,
+      "variants": []
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "EID_PROMO_CONFLICT",
+        "TEMPORARY_PRICE_NOT_EVERGREEN",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "pair-deal",
+      "name": "Pair Deal",
+      "categoryCode": "deals",
+      "productType": "deal",
+      "lifecycle": "sellable",
+      "description": "2 Medium Pizza + 1.5 Liter Coke.",
+      "badge": "Hot",
+      "featured": true,
+      "imageUrl": "/images/promos/pair-deal.jpg",
+      "basePricePkr": 1999,
+      "variants": [],
+      "promoConflict": {
+        "price": 2099,
+        "note": "Eid Celebration; drink size conflict 1L vs 1.5L"
+      }
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "family-festival",
+      "name": "Family Festival",
+      "categoryCode": "deals",
+      "productType": "deal",
+      "lifecycle": "sellable",
+      "description": "5 Zinger Burger + 1.5 Drink.",
+      "badge": null,
+      "featured": false,
+      "imageUrl": "/images/products/deal-combo.jpg",
+      "basePricePkr": 2350,
+      "variants": []
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "deal-for-two",
+      "name": "Deal for 2",
+      "categoryCode": "deals",
+      "productType": "deal",
+      "lifecycle": "sellable",
+      "description": "2 Zinger Burger + 2 Drink 345ml.",
+      "badge": null,
+      "featured": false,
+      "imageUrl": "/images/products/deal-combo.jpg",
+      "basePricePkr": 999,
+      "variants": []
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "EID_PROMO_CONFLICT",
+        "TEMPORARY_PRICE_NOT_EVERGREEN",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "knock-out-deal",
+      "name": "Knock Out Deal",
+      "categoryCode": "deals",
+      "productType": "deal",
+      "lifecycle": "sellable",
+      "description": "3 Zinger Burger + 1 Liter Drink.",
+      "badge": null,
+      "featured": false,
+      "imageUrl": "/images/promos/knock-out-deal.jpg",
+      "basePricePkr": 1440,
+      "variants": [],
+      "promoConflict": {
+        "price": 1390,
+        "source": "Eid Celebration"
+      }
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "extra-chicken",
+      "name": "Extra Chicken",
+      "categoryCode": "toppings",
+      "productType": "topping",
+      "lifecycle": "modifier-only",
+      "description": "Extra chicken topping for pizza. Size tier matches small / medium / large pizza.",
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": null,
+      "variants": [
+        {
+          "code": "small",
+          "label": "Small",
+          "sizeCode": "small",
+          "pricePkr": 50,
+          "isDefault": true
+        },
+        {
+          "code": "medium",
+          "label": "Medium",
+          "sizeCode": "medium",
+          "pricePkr": 100,
+          "isDefault": false
+        },
+        {
+          "code": "large",
+          "label": "Large",
+          "sizeCode": "large",
+          "pricePkr": 150,
+          "isDefault": false
+        }
+      ],
+      "domain": "toppings"
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [],
+      "code": "extra-cheese",
+      "name": "Extra Cheese",
+      "categoryCode": "toppings",
+      "productType": "topping",
+      "lifecycle": "modifier-only",
+      "description": "Extra cheese topping for pizza. Size tier matches small / medium / large pizza.",
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": null,
+      "variants": [
+        {
+          "code": "small",
+          "label": "Small",
+          "sizeCode": "small",
+          "pricePkr": 50,
+          "isDefault": true
+        },
+        {
+          "code": "medium",
+          "label": "Medium",
+          "sizeCode": "medium",
+          "pricePkr": 100,
+          "isDefault": false
+        },
+        {
+          "code": "large",
+          "label": "Large",
+          "sizeCode": "large",
+          "pricePkr": 150,
+          "isDefault": false
+        }
+      ],
+      "domain": "toppings"
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "apps/website/client/src/data/menu-data.ts",
+        "prod-api:2026-07-18"
+      ],
+      "flags": [
+        "MODIFIER_SEED_PRICE_MISMATCH"
+      ],
+      "code": "extra-cheese-slice",
+      "name": "Extra Cheese Slice",
+      "categoryCode": "toppings",
+      "productType": "topping",
+      "lifecycle": "modifier-only",
+      "description": "Extra cheese slice topping for pizza (single verified price).",
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": 60,
+      "variants": [],
+      "domain": "toppings",
+      "notes": "Board/catalog SKU = 60; static modifier-catalog.ts previously used priceDelta 50 — align to 60"
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL-MENU-EXTRACTION.md#Injected-Broast",
+        "supabase/migrations/20260714100000_sync_verified_menu_catalog.sql",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)"
+      ],
+      "flags": [
+        "RETIRED_BY_OWNER_SYNC",
+        "GM_EVIDENCE_PRESENT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "quarter-broast",
+      "name": "Quarter Broast",
+      "categoryCode": "broast",
+      "productType": "side",
+      "lifecycle": "discontinued",
+      "description": "1 Leg & 1 Thigh OR 1 Wing & 1 Chest, 1 Bun, Fries, (1 Dip) Garlic Dip OR Mustard Dip.",
+      "imageUrl": "/images/products/broast.jpg",
+      "basePricePkr": 750,
+      "variants": [],
+      "domain": "broast",
+      "notes": "Present on GM Link 4; retired from browse by owner menu sync. Do not re-activate without owner approval + board images."
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL-MENU-EXTRACTION.md#Injected-Broast",
+        "supabase/migrations/20260714100000_sync_verified_menu_catalog.sql",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)"
+      ],
+      "flags": [
+        "RETIRED_BY_OWNER_SYNC",
+        "GM_EVIDENCE_PRESENT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "half-broast",
+      "name": "Half Broast",
+      "categoryCode": "broast",
+      "productType": "side",
+      "lifecycle": "discontinued",
+      "description": "1 Leg, 1 Thigh, 1 wing, 1 chest, 1 Bun, Fries, (3 Dips) 1 Garlic Dip, 1 Mustard Dip & 1 Tangy Dip.",
+      "imageUrl": "/images/products/broast.jpg",
+      "basePricePkr": 1390,
+      "variants": [],
+      "domain": "broast",
+      "notes": "Present on GM Link 4; retired from browse by owner menu sync. Do not re-activate without owner approval + board images."
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL-MENU-EXTRACTION.md#Injected-Broast",
+        "supabase/migrations/20260714100000_sync_verified_menu_catalog.sql",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)"
+      ],
+      "flags": [
+        "RETIRED_BY_OWNER_SYNC",
+        "GM_EVIDENCE_PRESENT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "full-broast",
+      "name": "Full Broast",
+      "categoryCode": "broast",
+      "productType": "side",
+      "lifecycle": "discontinued",
+      "description": "2 Legs, 2 Thighs, 2 wings, 2 chests, 2 Buns, Fries, (6 Dips) 2 Garlic Dips, 2 Mustard Dips & 2 Tangy Dips.",
+      "imageUrl": "/images/products/broast.jpg",
+      "basePricePkr": 2590,
+      "variants": [],
+      "domain": "broast",
+      "notes": "Present on GM Link 4; retired from browse by owner menu sync. Do not re-activate without owner approval + board images."
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL-MENU-EXTRACTION.md#Injected-Broast",
+        "supabase/migrations/20260714100000_sync_verified_menu_catalog.sql",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)"
+      ],
+      "flags": [
+        "RETIRED_BY_OWNER_SYNC",
+        "GM_EVIDENCE_PRESENT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "broast-garlic-dip",
+      "name": "Extra Garlic Dip",
+      "categoryCode": "broast",
+      "productType": "side",
+      "lifecycle": "discontinued",
+      "description": "Extra garlic sauce dip for broast.",
+      "imageUrl": "/images/products/broast.jpg",
+      "basePricePkr": 60,
+      "variants": [],
+      "domain": "broast",
+      "notes": "Present on GM Link 4; retired from browse by owner menu sync. Do not re-activate without owner approval + board images."
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL-MENU-EXTRACTION.md#Injected-Broast",
+        "supabase/migrations/20260714100000_sync_verified_menu_catalog.sql",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)"
+      ],
+      "flags": [
+        "RETIRED_BY_OWNER_SYNC",
+        "GM_EVIDENCE_PRESENT",
+        "OWNER_CONFIRMATION_REQUIRED"
+      ],
+      "code": "broast-mustard-dip",
+      "name": "Extra Mustard Dip",
+      "categoryCode": "broast",
+      "productType": "side",
+      "lifecycle": "discontinued",
+      "description": "Extra mustard sauce dip for broast.",
+      "imageUrl": "/images/products/broast.jpg",
+      "basePricePkr": 60,
+      "variants": [],
+      "domain": "broast",
+      "notes": "Present on GM Link 4; retired from browse by owner menu sync. Do not re-activate without owner approval + board images."
+    },
+    {
+      "temporary": false,
+      "currency": "PKR",
+      "pricingEra": "board-v1-hybrid-bfr001",
+      "evidence": [
+        "REAL_MENU_EXTRACTED.md",
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql"
+      ],
+      "flags": [
+        "RETIRED_BY_OWNER_SYNC",
+        "OWNER_CONFIRMATION_REQUIRED",
+        "POSTER_ONLY"
+      ],
+      "code": "behari-kabab-pizza",
+      "name": "Behari Kabab Pizza",
+      "categoryCode": "specialty-pizzas",
+      "productType": "pizza",
+      "lifecycle": "discontinued",
+      "description": "Specialty poster starting price only.",
+      "imageUrl": "/images/menu-pizza.jpg",
+      "basePricePkr": 549,
+      "variants": [],
+      "notes": "Not on GM specialty photo; Bihari Kabab exists as signature pizza. Retired from browse."
+    }
+  ],
+  "modifierGroups": [
+    {
+      "code": "crust",
+      "name": "Crust",
+      "selectionType": "single",
+      "minSelect": 1,
+      "maxSelect": 1,
+      "isRequired": true,
+      "lifecycle": "owner-confirmation-required",
+      "flags": [
+        "NO_BOARD_PRICE_EVIDENCE"
+      ],
+      "notes": "Crust deltas (thick 50 / cheese-burst 150) seeded in DB-R2 — not printed on structured boards in repo evidence. Keep in schema; do not treat as evergreen-verified.",
+      "options": [
+        {
+          "code": "classic",
+          "name": "Classic Crust",
+          "priceDeltaPkr": 0,
+          "evidenceStatus": "default-zero"
+        },
+        {
+          "code": "thin",
+          "name": "Thin Crust",
+          "priceDeltaPkr": 0,
+          "evidenceStatus": "default-zero"
+        },
+        {
+          "code": "thick",
+          "name": "Thick Crust",
+          "priceDeltaPkr": 50,
+          "evidenceStatus": "unverified-seed"
+        },
+        {
+          "code": "cheese-burst",
+          "name": "Cheese Burst Crust",
+          "priceDeltaPkr": 150,
+          "evidenceStatus": "unverified-seed"
+        }
+      ]
+    },
+    {
+      "code": "extra-chicken",
+      "name": "Extra chicken",
+      "selectionType": "multi",
+      "linkedItemCodes": [
+        "extra-chicken"
+      ],
+      "lifecycle": "sellable",
+      "evidenceStatus": "board-verified-via-topping-sku",
+      "options": [
+        {
+          "code": "extra-chicken",
+          "name": "Extra Chicken",
+          "priceDeltaPkr": 50,
+          "priceDeltaBySize": {
+            "small": 50,
+            "medium": 100,
+            "large": 150
+          },
+          "linkedMenuItemCode": "extra-chicken"
+        }
+      ]
+    },
+    {
+      "code": "extra-cheese",
+      "name": "Extra cheese",
+      "selectionType": "multi",
+      "linkedItemCodes": [
+        "extra-cheese",
+        "extra-cheese-slice"
+      ],
+      "lifecycle": "sellable",
+      "evidenceStatus": "board-verified-via-topping-sku",
+      "options": [
+        {
+          "code": "extra-cheese",
+          "name": "Extra Cheese",
+          "priceDeltaPkr": 50,
+          "priceDeltaBySize": {
+            "small": 50,
+            "medium": 100,
+            "large": 150
+          },
+          "linkedMenuItemCode": "extra-cheese"
+        },
+        {
+          "code": "extra-cheese-slice",
+          "name": "Extra Cheese Slice",
+          "priceDeltaPkr": 60,
+          "linkedMenuItemCode": "extra-cheese-slice",
+          "flags": [
+            "ALIGN_TO_SKU_60"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "extra-vegetables",
+      "name": "Extra vegetables",
+      "selectionType": "multi",
+      "lifecycle": "owner-confirmation-required",
+      "flags": [
+        "NO_BOARD_PRICE_EVIDENCE"
+      ],
+      "notes": "Vegetable option prices (30–40) are DB-R2 seed only — not on structured boards in repo.",
+      "options": [
+        {
+          "code": "olives",
+          "name": "Olives",
+          "priceDeltaPkr": 40,
+          "evidenceStatus": "unverified-seed"
+        },
+        {
+          "code": "mushrooms",
+          "name": "Mushrooms",
+          "priceDeltaPkr": 40,
+          "evidenceStatus": "unverified-seed"
+        },
+        {
+          "code": "onions",
+          "name": "Onions",
+          "priceDeltaPkr": 30,
+          "evidenceStatus": "unverified-seed"
+        },
+        {
+          "code": "bell-peppers",
+          "name": "Bell Peppers",
+          "priceDeltaPkr": 30,
+          "evidenceStatus": "unverified-seed"
+        },
+        {
+          "code": "jalapenos",
+          "name": "Jalapeños",
+          "priceDeltaPkr": 40,
+          "evidenceStatus": "unverified-seed"
+        },
+        {
+          "code": "sweet-corn",
+          "name": "Sweet Corn",
+          "priceDeltaPkr": 30,
+          "evidenceStatus": "unverified-seed"
+        },
+        {
+          "code": "tomatoes",
+          "name": "Tomatoes",
+          "priceDeltaPkr": 30,
+          "evidenceStatus": "unverified-seed"
+        }
+      ]
+    },
+    {
+      "code": "extra-toppings",
+      "name": "Extra toppings",
+      "selectionType": "multi",
+      "lifecycle": "owner-confirmation-required",
+      "flags": [
+        "NO_BOARD_PRICE_EVIDENCE"
+      ],
+      "notes": "Pepperoni / smoked / BBQ chicken option deltas are DB-R2 seed only.",
+      "options": [
+        {
+          "code": "pepperoni",
+          "name": "Pepperoni",
+          "priceDeltaPkr": 80,
+          "evidenceStatus": "unverified-seed"
+        },
+        {
+          "code": "smoked-chicken",
+          "name": "Smoked Chicken",
+          "priceDeltaPkr": 80,
+          "evidenceStatus": "unverified-seed"
+        },
+        {
+          "code": "bbq-chicken",
+          "name": "BBQ Chicken",
+          "priceDeltaPkr": 80,
+          "evidenceStatus": "unverified-seed"
+        }
+      ]
+    },
+    {
+      "code": "add-drinks",
+      "name": "Add drinks",
+      "selectionType": "single",
+      "lifecycle": "sellable",
+      "notes": "price_delta must resolve from linked drink SKU base_price (70/110/170/210), not stale seed fallbacks",
+      "options": [
+        {
+          "code": "drink-345ml",
+          "name": "Drink 345ml",
+          "linkedMenuItemCode": "drink-345ml",
+          "priceDeltaPkr": 70
+        },
+        {
+          "code": "drink-500ml",
+          "name": "Drink 500ml",
+          "linkedMenuItemCode": "drink-500ml",
+          "priceDeltaPkr": 110
+        },
+        {
+          "code": "drink-1l",
+          "name": "Drink 1L",
+          "linkedMenuItemCode": "drink-1l",
+          "priceDeltaPkr": 170
+        },
+        {
+          "code": "drink-1-5l",
+          "name": "Drink 1.5L",
+          "linkedMenuItemCode": "drink-1-5l",
+          "priceDeltaPkr": 210
+        }
+      ]
+    },
+    {
+      "code": "add-sides",
+      "name": "Add sides",
+      "selectionType": "single",
+      "lifecycle": "sellable",
+      "notes": "Align to fries SKU prices 199/350/650 (static modifier-catalog previously had wrong 449/399)",
+      "options": [
+        {
+          "code": "french-fries",
+          "name": "French Fries",
+          "linkedMenuItemCode": "french-fries",
+          "priceDeltaPkr": 199
+        },
+        {
+          "code": "family-fries",
+          "name": "Family Fries",
+          "linkedMenuItemCode": "family-fries",
+          "priceDeltaPkr": 350
+        },
+        {
+          "code": "loaded-fries",
+          "name": "Loaded Fries",
+          "linkedMenuItemCode": "loaded-fries",
+          "priceDeltaPkr": 650
+        }
+      ]
+    }
+  ],
+  "temporaryOffers": [
+    {
+      "code": "eid-family-deal",
+      "name": "Eid Celebration Family Deal",
+      "pricePkr": 2199,
+      "evergreenCode": "family-deal",
+      "temporary": true,
+      "lifecycle": "hidden",
+      "flags": [
+        "TEMPORARY_NOT_EVERGREEN"
+      ]
+    },
+    {
+      "code": "eid-pizza-fest",
+      "name": "Eid Celebration Pizza Fest",
+      "pricePkr": 1649,
+      "evergreenCode": "pizza-fest",
+      "temporary": true,
+      "lifecycle": "hidden",
+      "flags": [
+        "TEMPORARY_NOT_EVERGREEN"
+      ]
+    },
+    {
+      "code": "eid-knock-out",
+      "name": "Eid Celebration Knock Out",
+      "pricePkr": 1390,
+      "evergreenCode": "knock-out-deal",
+      "temporary": true,
+      "lifecycle": "hidden",
+      "flags": [
+        "TEMPORARY_NOT_EVERGREEN"
+      ]
+    },
+    {
+      "code": "eid-pair-deal",
+      "name": "Eid Celebration Pair Deal",
+      "pricePkr": 2099,
+      "evergreenCode": "pair-deal",
+      "temporary": true,
+      "lifecycle": "hidden",
+      "flags": [
+        "TEMPORARY_NOT_EVERGREEN",
+        "CONTENT_CONFLICT_DRINK_SIZE"
+      ]
+    },
+    {
+      "code": "iftar-tele-special",
+      "name": "Tele Special Pizza — Iftar Special",
+      "pricePkr": 799,
+      "temporary": true,
+      "lifecycle": "hidden",
+      "flags": [
+        "TEMPORARY_NOT_EVERGREEN",
+        "TIME_WINDOW_5PM_7PM"
+      ]
+    }
+  ],
+  "ownerGapsNotInV1Sellable": [
+    {
+      "code": "malai-boti",
+      "domain": "pizzas",
+      "name": "Malai Boti",
+      "gmPrices": {
+        "small": 620,
+        "medium": 1270,
+        "large": 1890
+      },
+      "source": "REAL-MENU-EXTRACTION.md Link 3",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    },
+    {
+      "code": "smokehouse-burger",
+      "domain": "burgers",
+      "name": "Smokehouse Burger",
+      "gmPricePkr": 650,
+      "source": "GM Link 4",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    },
+    {
+      "code": "grill-boss-burger",
+      "domain": "burgers",
+      "name": "Grill Boss Burger",
+      "gmPricePkr": 890,
+      "source": "GM Link 4",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    },
+    {
+      "code": "chipotle-fire-burger",
+      "domain": "burgers",
+      "name": "Chipotle Fire Burger",
+      "gmPricePkr": 890,
+      "source": "GM Link 4",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    },
+    {
+      "code": "classic-beef-burger",
+      "domain": "burgers",
+      "name": "Classic Beef Burger",
+      "gmPricePkr": 690,
+      "source": "GM Link 4",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    },
+    {
+      "code": "signature-beef-burger",
+      "domain": "burgers",
+      "name": "Signature Beef Burger",
+      "gmPricePkr": 1090,
+      "source": "GM Link 4",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    },
+    {
+      "code": "supreme-beef-burger",
+      "domain": "burgers",
+      "name": "Supreme Beef Burger",
+      "gmPricePkr": 1090,
+      "source": "GM Link 4",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    },
+    {
+      "code": "classic-crunch-burger",
+      "domain": "burgers",
+      "name": "Classic Crunch Burger",
+      "gmPricePkr": 450,
+      "source": "GM Link 2",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    },
+    {
+      "code": "big-boss-burger",
+      "domain": "burgers",
+      "name": "Big Boss Burger",
+      "gmPricePkr": 690,
+      "source": "GM Link 2",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    },
+    {
+      "code": "paratha-roll",
+      "domain": "sides",
+      "name": "Paratha roll",
+      "gmPricePkr": 390,
+      "source": "GM Link 2",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    },
+    {
+      "code": "mozzarella-jalapeno-sticks",
+      "domain": "sides",
+      "name": "Mozzarella jalapeno sticks",
+      "gmPricePkr": 599,
+      "source": "GM Link 2",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    },
+    {
+      "code": "alfredo-pasta",
+      "domain": "pasta",
+      "name": "ALFREDO PASTA",
+      "gmPricePkr": 1100,
+      "source": "GM Link 2",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    },
+    {
+      "code": "wrap-it-hot-grilled-jumbo",
+      "domain": "wraps",
+      "name": "Wrap it Hot Grilled Jumbo",
+      "gmPricePkr": 950,
+      "source": "GM Link 4",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    },
+    {
+      "code": "jalapeno-kick-grilled-jumbo",
+      "domain": "wraps",
+      "name": "Jalapeno Kick Grilled Jumbo",
+      "gmPricePkr": 950,
+      "source": "GM Link 4",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    },
+    {
+      "code": "telebar-module",
+      "domain": "telebar",
+      "name": "telebar (43 SKUs)",
+      "note": "PLANNED_V2 / BFR-007 — excluded from V1",
+      "source": "REAL-MENU-EXTRACTION.md",
+      "lifecycle": "owner-confirmation-required",
+      "sellable": false,
+      "reason": "Present on GM evidence but not in V1 board-hybrid freeze; do not invent into sellable catalog without owner board confirmation"
+    }
+  ],
+  "syncRules": {
+    "identity": "code (slug) — never UUID",
+    "upsert": "ON CONFLICT (slug) DO UPDATE",
+    "deactivateObsolete": "is_available=false / is_active=false — no destructive DELETE",
+    "preserveOrderHistory": true,
+    "applyProduction": false,
+    "requireOwnerApproval": true
+  }
+}
