@@ -1,8 +1,9 @@
 # Menu Modifier Architecture (DB-R2)
 
-**Status:** Implementation design — aligned with merged PR #63  
+**Status:** Production applied (PR #67 → `72a232c`); freeze still **BLOCKED** pending R3–R7  
 **Date:** 2026-07-18  
-**Migration:** `20260718120000_product_modifier_system.sql` (+ `20260718130200_db_r2_modifier_owner_alignment.sql`)
+**Migration:** `20260718120000_product_modifier_system.sql` (+ `20260718130200_db_r2_modifier_owner_alignment.sql`)  
+**Close:** `_documentation-audit/reports/DB-R2-MENU-MODIFIERS-PRODUCTION-CLOSE.md`
 
 ---
 
