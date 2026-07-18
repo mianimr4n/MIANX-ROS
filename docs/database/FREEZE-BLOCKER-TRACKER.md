@@ -3,12 +3,12 @@
 **Board:** Telepizza Database Freeze Remediation Board  
 **Date:** 2026-07-18  
 **Source of truth:** [PR #76](https://github.com/mianimr4n/telepizza/pull/76) · `_documentation-audit/reports/DATABASE-V1-FREEZE-REVIEW-BOARD.md`  
-**Git baseline:** `origin/main` @ `7e51c0c` (R3–R6 + hash privilege harden #78)  
+**Git baseline:** `origin/main` @ `4b5f564` (R3–R6 + hash privilege harden #78 + freeze tracker #77)  
 **Linked project:** `pyeowxvacgypohrbvgee`  
-**Mode:** Execution war room — tracker statuses updated as blockers clear
+**Mode:** Closed — all freeze blockers DONE; PASS LOCKED
 
 **Applied truth:** R0–R6 + `20260718171000` hash harden on `main` **and** linked remote through `20260718171000`.  
-**Remaining gate:** B-08 owner written deferral (`kitchen_stations`, `pos_sessions`).
+**Owner deferral (B-08):** CLOSED 2026-07-18 — `kitchen_stations` and `pos_sessions` officially deferred to DATABASE V2.
 
 ---
 
@@ -20,8 +20,8 @@
 | R3–R6 merged + applied | **DONE** |
 | PR hygiene (#71 pollution, #72 mega-stack, superseded/conflicting PRs) | **DONE** |
 | Post-apply restaurant security certification | **DONE** (see security evidence + `…171000`) |
-| Owner deferrals (`kitchen_stations`, `pos_sessions`) | **OPEN — OWNER DECISION** |
-| **Database V1 Freeze** | **BLOCKED (B-08 only)** |
+| Owner deferrals (`kitchen_stations`, `pos_sessions`) | **DONE** (owner product decision 2026-07-18 → V2) |
+| **Database V1 Freeze** | **PASS LOCKED** |
 
 ---
 
@@ -36,7 +36,7 @@
 | **B-05** | P0 | PR #71 scope pollution — tip `e63087b` ships ~47 `docs/team/**` paths; kitchen scope doc says schema migrations out of scope while shipping R5 | Platform (PR author) + Human Owner | DONE | None (first in merge sequence) | Manual review | **YES** | Reset/split to kitchen-only (`443b695` lineage: migration + API + tests); move `docs/team/**` to separate docs PR or defer post-freeze; confirm tip ≠ `e63087b` | Tip reset → rebased `9ea0a40`; zero `docs/team/**` |
 | **B-06** | P0 | PR #72 unsafe as merge/apply vehicle — stacks R3–R6 + inherits pollution SHAs `443b695`/`e63087b` | Platform (PR author) + Human Owner | DONE | B-05, B-01, B-02, B-03 | Manual review | **YES** | Rebase onto main after clean R5; retain **only** `20260718170000` (+ R6 API/tests); do not mega-merge | Head `3e88a54` R6-only; no pollution |
 | **B-07** | P0 | No post-apply restaurant security certification — QR/session/kitchen/POS RLS & hash revokes exist only in unmerged SQL | Security + Platform | DONE | B-01, B-02, B-03, B-04 | Verification | **YES** | After full apply through `20260718170000`: re-run grants/RLS/DEFINER/hash-column privilege checks on linked prod; confirm no anon writes; RLS enabled on new tables | Evidence file + #78 `…171000` hash harden; hash SELECT=false |
-| **B-08** | P1 | Owner gate on deferred objects — `kitchen_stations`, `pos_sessions` deferred vs earlier “REQUIRED” architecture language | Human Owner | OPEN — OWNER DECISION | None (can run in parallel) | Documentation only / Architecture | **YES** (owner) | Written accept-as-deferred for V1 **or** schedule explicit slices before LOCK | **Awaiting owner written deferral this turn** |
+| **B-08** | P1 | Owner gate on deferred objects — `kitchen_stations`, `pos_sessions` deferred vs earlier “REQUIRED” architecture language | Human Owner | **DONE** | None | Documentation only | **YES** (owner) | Written accept-as-deferred for V1 **or** schedule explicit slices before LOCK | Owner product decision 2026-07-18 — both deferred to V2; declaration PASS LOCKED |
 | **B-09** | P1 | Superseded OPEN PRs create double-apply confusion — #65/#66 MERGEABLE though `20260718130000` / `20260718130100` already on remote | Human Owner | DONE | None (do before feature merges) | Manual review | **YES** | Close #65 and #66 as superseded; no merge of migration content | #65/#66 CLOSED |
 | **B-10** | P1 | Conflicting architecture PRs — #62/#64 `mergeable=false` / DIRTY (add/add on workflow, snapshot, menu-modifier docs) | Human Owner + Docs | DONE | None (do before feature merges) | Manual review | **YES** | Close/supersede #62 and #64; do not resolve-and-merge stale remediation SQL | #62/#64 CLOSED |
 
@@ -82,7 +82,7 @@
 | **Estimated effort** | 0.5 day after depollution |
 | **Blocking database freeze?** | **YES** |
 | **Action type** | Migration · Production apply · Verification |
-| **Status note** | **BLOCKED** by B-05 |
+| **Status note** | Cleared via clean #71 merge |
 
 ### B-04 — R6 POS bills missing (P0)
 
@@ -96,7 +96,7 @@
 | **Estimated effort** | 0.5–1 day after prerequisites |
 | **Blocking database freeze?** | **YES** |
 | **Action type** | Migration · Production apply · Verification |
-| **Status note** | **BLOCKED** by B-02, B-03, B-06 |
+| **Status note** | Cleared via R6-only #72 merge |
 
 ### B-05 — PR #71 scope pollution (P0)
 
@@ -124,7 +124,7 @@
 | **Estimated effort** | 0.5 day (rebase/hygiene) |
 | **Blocking database freeze?** | **YES** |
 | **Action type** | Manual review |
-| **Status note** | **BLOCKED** until B-05 cleared and prior slices on main |
+| **Status note** | Cleared — R6-only rebase merged |
 
 ### B-07 — Post-apply restaurant security certification missing (P0)
 
@@ -138,9 +138,9 @@
 | **Estimated effort** | 0.5–1 day after stack applied |
 | **Blocking database freeze?** | **YES** |
 | **Action type** | Verification · Testing |
-| **Status note** | **BLOCKED** until B-01…B-04 applied |
+| **Status note** | Cleared — security evidence + `…171000` hash harden |
 
-### B-08 — Owner deferral gate (P1)
+### B-08 — Owner deferral gate (P1) — CLOSED
 
 | Field | Value |
 |---|---|
@@ -149,9 +149,11 @@
 | **Risk** | Mid-stream scope fights; Admin/Kitchen/POS assumptions diverge |
 | **Required fix** | Written owner accept for V1 deferral **or** schedule slices before LOCK |
 | **Owner** | Human Owner |
-| **Estimated effort** | Hours (decision) or multi-day (if slices required) |
-| **Blocking database freeze?** | **YES** (owner gate) |
-| **Action type** | Documentation only · Architecture |
+| **Estimated effort** | Hours (decision) |
+| **Blocking database freeze?** | **YES** (owner gate) — **cleared** |
+| **Action type** | Documentation only |
+| **Status** | **DONE** — 2026-07-18 |
+| **Completion evidence** | Owner approved product decision (2026-07-18): V1 includes `restaurant_tables`, secure QR, `dine_in_sessions`, `kitchen_tickets`, `restaurant_bills`, `bill_orders`, existing customer ordering, branch ops, security/RLS. Officially deferred to V2: (1) `kitchen_stations` — multi-station routing not required for Aug 14 launch; kitchen tickets sufficient; (2) `pos_sessions` — cashier shift/session management out of V1; bill foundation sufficient. Declaration: PASS LOCKED. |
 
 ### B-09 — Superseded OPEN apply PRs #65/#66 (P1)
 
@@ -170,7 +172,7 @@
 
 | Field | Value |
 |---|---|
-| **Root cause** | Add/add conflicts vs main on workflow, production snapshot, menu-modifier architecture docs; designs predate applied R0–R2 |
+| **Root cause** | Add/add conflicts vs main on workflow, production snapshot, menu-modifier docs; designs predate applied R0–R2 |
 | **Impact** | Stale SSOT companions; cannot merge cleanly |
 | **Risk** | Misleading remediation SQL reintroduced; governance noise |
 | **Required fix** | Close/supersede both; fold any useful bits via later docs only if needed |
@@ -190,29 +192,30 @@ From Review Board risk register — **do not elevate to freeze blockers**:
 | RR-06 / catalog-era snapshots in closed #62/#64 | P1 | **NO** (once PRs closed) | Refresh snapshot **after** R3–R6 apply |
 | RR-08 Catalog count drift | P2 | **NO** | Reconcile counts; no pricing edits in freeze window |
 | RR-09 Analytics / loyalty / inventory | P3 | **NO** | Expected V2 — keep out of V1 freeze |
+| `kitchen_stations` / `pos_sessions` | — | **NO** (deferred V2) | Owner decision 2026-07-18; tracked as DATABASE V2 scope |
 
 Performance (board ~70/100): **NON-BLOCKING** — missing domains block freeze, not indexes.
 
 ---
 
-## Remediation roadmap (ordered)
+## Remediation roadmap (ordered) — COMPLETE
 
-Lowest risk / highest dependency first. **WHY** on each step.
+Lowest risk / highest dependency first. All steps executed.
 
-| Step | Action | Clears | WHY this order |
+| Step | Action | Clears | Status |
 |---|---|---|---|
-| **0** | **Depollute #71** (B-05) — kitchen-only tip; split/defer `docs/team/**` | B-05 → unblocks B-03, B-06 | Pollution is the first merge-sequence gate; nothing restaurant-slice should land until tip ≠ `e63087b` |
-| **1** | **Close superseded** #65/#66 (B-09) — no migration merge | B-09 | Eliminates double-apply confusion before any new apply window opens |
-| **2** | **Close/supersede conflicting** #62/#64 (B-10) | B-10 | Clears DIRTY merge graph and stale pre-apply designs before R3 review |
-| **3** | **Owner-review → MERGE #69** (B-01) → apply `20260718140000` | B-01 | R3 is FK foundation; board forbids R4 before R3 |
-| **4** | **Rebase #70 → MERGE** (B-02) → apply `20260718150000` | B-02 | R4 needs `restaurant_tables`; R6 needs `dine_in_sessions` |
-| **5** | **MERGE clean R5** (B-03) → apply `20260718160000` | B-03 | Only after B-05; operational freeze order keeps R5 before R6 |
-| **6** | **Rebase #72 to R6-only → MERGE** (B-04, B-06) → apply `20260718170000` | B-04, B-06 | Reject mega-stack; apply only from clean `main` |
-| **7** | **Security + schema re-audit** on linked prod through `20260718170000` (B-07) | B-07 | Live RLS/grants/hash revoke certification is freeze completeness |
-| **8** | **Owner written accept/defer** for `kitchen_stations` / `pos_sessions` (B-08) | B-08 | Can parallelize earlier; required before LOCK declaration |
-| **9** | Emit **LOCK** declaration only after PASS (fold #73/#74/#75/#76 as historical evidence) | Freeze gate | Board: do not merge audit PRs as “freeze PASS” signals |
+| **0** | **Depollute #71** (B-05) | B-05 | DONE |
+| **1** | **Close superseded** #65/#66 (B-09) | B-09 | DONE |
+| **2** | **Close/supersede conflicting** #62/#64 (B-10) | B-10 | DONE |
+| **3** | **MERGE #69** (B-01) → apply `20260718140000` | B-01 | DONE |
+| **4** | **MERGE #70** (B-02) → apply `20260718150000` | B-02 | DONE |
+| **5** | **MERGE clean R5** (B-03) → apply `20260718160000` | B-03 | DONE |
+| **6** | **R6-only #72 MERGE** (B-04, B-06) → apply `20260718170000` | B-04, B-06 | DONE |
+| **7** | **Security + schema re-audit** + hash harden `…171000` (B-07) | B-07 | DONE |
+| **8** | **Owner written deferral** for `kitchen_stations` / `pos_sessions` (B-08) | B-08 | **DONE** 2026-07-18 |
+| **9** | Emit **PASS LOCKED** declaration | Freeze gate | **DONE** |
 
-**FORBIDDEN (unchanged from Review Board):**
+**FORBIDDEN (unchanged from Review Board; still in force under LOCK):**
 
 - Merge polluted #71 tip `e63087b`
 - Mega-merge #72 as substitute for steps 3–6
@@ -221,9 +224,8 @@ Lowest risk / highest dependency first. **WHY** on each step.
 - Apply R4 before R3, or R6 before R4
 - Apply from polluted branches — apply only from clean `main`
 - Auto-merge any PR from this tracker
-- Start Sprint 4.5 / Kitchen/POS/Admin/Staff/Rider/customer feature builds assuming frozen DB
-
-**Estimated calendar to APPROVED (with gated human approvals):** ~1 week — not same-day.
+- Expand V1 schema with deferred objects (`kitchen_stations`, `pos_sessions`) without owner unfreeze
+- Start Sprint 4.5 / Kitchen/POS/Admin/Staff/Rider/customer feature builds assuming unfrozen DB expansion
 
 ---
 
@@ -236,21 +238,21 @@ Lowest risk / highest dependency first. **WHY** on each step.
 | Production apply | B-01, B-02, B-03, B-04 |
 | Verification | B-01, B-02, B-03, B-04, B-07 |
 | Testing | B-07 (security re-audit pack) |
-| Documentation only | B-08 (written deferral accept) |
-| Architecture | B-08 (if owner schedules slices instead of defer) |
+| Documentation only | B-08 (written deferral accept) — **complete** |
 
 ---
 
-## Valid production apply sequence (reference)
+## Valid production apply sequence (reference) — FROZEN HEAD
 
-Linked: `pyeowxvacgypohrbvgee` · Human Owner approval each step · forward-only · `migration list` + `db push --linked --dry-run` before every apply
+Linked: `pyeowxvacgypohrbvgee` · forward-only · head = `20260718171000`
 
 ```text
 A. 20260718140000  (R3)  → restaurant_tables + QR hash
 B. 20260718150000  (R4)  → dine_in_sessions + order FKs
-C. 20260718160000  (R5)  → kitchen_tickets + kitchen_ticket_items   [clean #71 only]
-D. 20260718170000  (R6)  → restaurant_bills + bill_orders           [R6-only #72]
-E. Post-stack security re-check → freeze re-audit → LOCK path only if PASS
+C. 20260718160000  (R5)  → kitchen_tickets + kitchen_ticket_items
+D. 20260718170000  (R6)  → restaurant_bills + bill_orders
+E. 20260718171000       → hash column privilege harden
+F. Owner deferral B-08 → PASS LOCKED
 ```
 
 ---
@@ -265,7 +267,7 @@ E. Post-stack security re-check → freeze re-audit → LOCK path only if PASS
 | READY | Hygiene done; awaiting owner merge/apply gate |
 | DONE | Merged/applied/verified with completion evidence |
 
-**Current snapshot:** B-01…B-07, B-09, B-10 = DONE. **B-08 = OPEN — OWNER DECISION** (blocks LOCK).
+**Current snapshot:** B-01…B-10 = **DONE**. **Open freeze blockers: none.** Freeze = **PASS LOCKED**.
 
 ---
 
@@ -273,11 +275,18 @@ E. Post-stack security re-check → freeze re-audit → LOCK path only if PASS
 
 | Artifact | Location |
 |---|---|
+| PASS LOCKED declaration | `docs/database/DATABASE-V1-FREEZE-DECLARATION.md` |
+| Freeze checklist | `docs/database/DATABASE-FREEZE-CHECKLIST.md` |
+| Pass-lock evidence | `_documentation-audit/reports/DATABASE-V1-FREEZE-PASS-LOCKED.md` |
+| Security evidence | `_documentation-audit/reports/DATABASE-V1-FREEZE-SECURITY-EVIDENCE.md` |
 | Review Board decision | [PR #76](https://github.com/mianimr4n/telepizza/pull/76) · `_documentation-audit/reports/DATABASE-V1-FREEZE-REVIEW-BOARD.md` |
-| War-room / R7 / enterprise audits | PRs #75 / #73 / #74 (hold; consistently BLOCKED) |
-| Feature slices | #69 R3 · #70 R4 · #71 R5 (polluted) · #72 R6 (mega-stack) |
-| Superseded / conflicting | #65/#66 close · #62/#64 close |
+| Feature slices | #69 R3 · #70 R4 · #71 R5 · #72 R6 · #78 hash harden · #77 tracker |
 
 ---
 
-DATABASE V1 FREEZE: BLOCKED — B-08 OWNER DEFERRAL REQUIRED
+```
+DATABASE V1 FREEZE
+STATUS
+PASS
+LOCKED
+```

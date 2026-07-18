@@ -1,7 +1,7 @@
 # Database V1 Freeze Checklist
 
 **Linked:** `pyeowxvacgypohrbvgee`  
-**Updated:** 2026-07-18 (war-room execution)
+**Updated:** 2026-07-18 (PASS LOCKED — owner deferral B-08)
 
 | Gate | Status |
 |---|---|
@@ -15,5 +15,8 @@
 | Hash privilege harden `…171000` | DONE |
 | Security evidence (RLS/grants/hashes) | DONE |
 | Regression (`check` / `test:db` / `test:backend` / `build:website`) | DONE |
-| Owner deferral `kitchen_stations` / `pos_sessions` (B-08) | **OPEN** |
-| **Freeze LOCK** | **BLOCKED (B-08)** |
+| Owner deferral `kitchen_stations` / `pos_sessions` (B-08) | **DONE** (2026-07-18 owner product decision → V2) |
+| **Freeze LOCK** | **PASS LOCKED** |
+
+**Frozen head migration:** `20260718171000`  
+**Declaration:** `docs/database/DATABASE-V1-FREEZE-DECLARATION.md`
