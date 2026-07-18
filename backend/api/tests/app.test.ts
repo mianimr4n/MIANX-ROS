@@ -168,7 +168,7 @@ describe("Telepizza API app", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.ok).toBe(true);
-    expect(response.body.modules).toHaveLength(6);
+    expect(response.body.modules).toHaveLength(7);
   });
 
   it("returns readiness issues when required variables are missing", async () => {
