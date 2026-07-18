@@ -1,7 +1,9 @@
 # OWNER REVIEW REQUIRED — Customer addresses cloud persistence
 
-**Status:** Proposal only — **do not apply** until owner approves.  
-**Sprint:** 4.5A My Telepizza  
+**Status:** Proposal only — **do not apply** until owner approves.
+
+**Sprint:** 4.5A My Telepizza
+
 **Why:** There is no `customer_addresses` (or equivalent) table. Device-local drafts must not be treated as account source of truth.
 
 ## Goal

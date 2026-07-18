@@ -1,7 +1,9 @@
 # OWNER REVIEW REQUIRED — Preferred branch persistence
 
-**Status:** Proposal only — **do not apply** until owner approves.  
-**Sprint:** 4.5A My Telepizza  
+**Status:** Proposal only — **do not apply** until owner approves.
+
+**Sprint:** 4.5A My Telepizza
+
 **Why:** Branch selection today is device/`localStorage` (`telepizza.selectedBranchId`). There is no preferred-branch column on `users` / `customers`.
 
 ## Goal

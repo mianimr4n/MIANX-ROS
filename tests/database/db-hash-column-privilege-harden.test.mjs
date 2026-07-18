@@ -13,14 +13,15 @@ const migrationPath = path.join(
 test("hash privilege harden excludes qr_token_hash and public_token_hash from client grants", () => {
   const sql = fs.readFileSync(migrationPath, "utf8");
   assert.match(sql, /revoke all on table public\.restaurant_tables from anon, authenticated/i);
-  assert.match(sql, /grant select \([\s\S]*?qr_version[\s\S]*?\) on table public\.restaurant_tables to authenticated/i);
+  assert.match(sql, /grant select \([^)]*qr_version[^)]*\) on table public\.restaurant_tables to authenticated/i);
+  // [^)]* keeps the column-list assertion inside one GRANT; [\s\S]* can span grants via comments.
   assert.doesNotMatch(
     sql,
-    /grant select \([\s\S]*qr_token_hash[\s\S]*\) on table public\.restaurant_tables to authenticated/i,
+    /grant select \([^)]*qr_token_hash[^)]*\) on table public\.restaurant_tables to authenticated/i,
   );
   assert.match(sql, /revoke all on table public\.dine_in_sessions from anon, authenticated/i);
   assert.doesNotMatch(
     sql,
-    /grant (select|update) \([\s\S]*public_token_hash[\s\S]*\) on table public\.dine_in_sessions to authenticated/i,
+    /grant (select|update) \([^)]*public_token_hash[^)]*\) on table public\.dine_in_sessions to authenticated/i,
   );
 });

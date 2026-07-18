@@ -1,6 +1,7 @@
 # Future architecture — Telepizza Rewards / offers (not implemented)
 
-**Status:** Design note only — **no migrations** in Sprint 4.5A.  
+**Status:** Design note only — **no migrations** in Sprint 4.5A.
+
 **UI:** My Telepizza shows “Coming soon” / “Offers will appear here” — no fake points.
 
 ## Suggested future model (when approved)
