@@ -19,6 +19,7 @@ import ResetPassword from "./pages/ResetPassword";
 import AuthCallback from "./pages/AuthCallback";
 import StaffAccept from "./pages/StaffAccept";
 import Account from "./pages/Account";
+import MyTelepizza from "./pages/MyTelepizza";
 import Orders from "./pages/Orders";
 import Branches from "./pages/Branches";
 import Loyalty from "./pages/Loyalty";
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/staff/accept" component={StaffAccept} />
+      <Route path="/my-telepizza" component={MyTelepizza} />
       <Route path="/account" component={Account} />
       <Route path="/orders" component={Orders} />
       <Route path="/loyalty" component={Loyalty} />

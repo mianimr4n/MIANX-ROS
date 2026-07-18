@@ -3,7 +3,7 @@
  * Never trust arbitrary external `next` URLs.
  */
 
-export const DEFAULT_AUTH_DESTINATION = "/account";
+export const DEFAULT_AUTH_DESTINATION = "/my-telepizza";
 export const AUTH_CALLBACK_PATH = "/auth/callback";
 
 /** Approved website origins (Supabase redirect allowlist must match). */
@@ -17,6 +17,7 @@ const AUTH_NEXT_STORAGE_KEY = "telepizza.auth.next";
 
 /** Internal destinations customers may resume after OAuth / login / recovery. */
 const SAFE_AUTH_DESTINATION_PREFIXES = [
+  "/my-telepizza",
   "/account",
   "/checkout",
   "/orders",
@@ -24,6 +25,7 @@ const SAFE_AUTH_DESTINATION_PREFIXES = [
   "/track",
   "/order-success",
   "/reset-password",
+  "/branches",
 ] as const;
 
 const AUTH_FLOW_STORAGE_KEY = "telepizza.auth.flow";
