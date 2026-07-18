@@ -36,7 +36,7 @@ test("forgot + reset password flows exist without email enumeration", () => {
 
 test("secure email change uses same auth user and never Google password", () => {
   const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
-  const account = read("apps/website/client/src/pages/Account.tsx");
+  const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
 
   assert.match(authContext, /requestEmailChange/);
   assert.match(authContext, /updateUser\(\s*\{\s*email:\s*newEmail\s*\}/);
@@ -60,17 +60,17 @@ test("Auth callback maps expired and invalid email links safely", () => {
 });
 
 test("profile shows honest phone Unverified and email verification status", () => {
-  const account = read("apps/website/client/src/pages/Account.tsx");
+  const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
   assert.match(account, /Phone status:/);
   assert.match(account, /Unverified/);
   assert.match(account, /Verification Pending/);
   assert.match(account, /email_confirmed_at/);
-  assert.match(account, /phoneVerified\s*\?\s*"Verified"/);
+  assert.match(account, /phoneVerified\s*\?\s*"Phone ✓ Verified"/);
   assert.match(account, /StatusBadge/);
 });
 
-test("Account Center supports complete address book and checkout selection", () => {
-  const account = read("apps/website/client/src/pages/Account.tsx");
+test("My Telepizza supports device address drafts and checkout selection", () => {
+  const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
   const addresses = read("apps/website/client/src/lib/customer-addresses.ts");
   const checkout = read("apps/website/client/src/pages/Checkout.tsx");
 
@@ -81,7 +81,8 @@ test("Account Center supports complete address book and checkout selection", () 
   assert.match(account, /Make default/);
   assert.match(account, /\bEdit\b/);
   assert.match(account, /\bDelete\b/);
-  assert.match(account, /Add Address/);
+  assert.match(account, /Add device draft/);
+  assert.match(account, /OWNER REVIEW REQUIRED/);
   assert.match(checkout, /listSavedAddresses/);
   assert.match(checkout, /saved-delivery-address/);
   assert.match(checkout, /formatSavedAddress/);
@@ -91,20 +92,23 @@ test("Account Center supports complete address book and checkout selection", () 
 test("orders expose status, honest operational gaps, and feasible reorder", () => {
   const orders = read("apps/website/client/src/pages/Orders.tsx");
   const store = read("apps/website/client/src/lib/customer-store.ts");
+  const timeline = read("apps/website/client/src/components/my-telepizza/OrderStatusTimeline.tsx");
 
-  assert.match(orders, /STATUS_STEPS/);
+  assert.match(timeline, /ORDER_STATUS_STEPS/);
+  assert.match(orders, /OrderStatusTimeline/);
   assert.match(orders, /statusBadgeClass/);
   assert.match(orders, /Branch:<\/span>/);
   assert.match(orders, /Type:<\/span>/);
   assert.match(orders, /Reorder/);
+  assert.match(orders, /ReorderReviewDialog/);
   assert.match(orders, /menuItemSlug/);
-  assert.match(orders, /You have \$\{orders\.length\} recent orders/);
+  assert.match(orders, /recent orders on this device/);
   assert.match(store, /menuItemSlug\?: string/);
   assert.doesNotMatch(orders, /\b(driver|invoice|ETA|Payment)\b/i);
 });
 
-test("security, loyalty, notifications, and overview expose requested production states", () => {
-  const account = read("apps/website/client/src/pages/Account.tsx");
+test("security, loyalty, notifications, and hub expose requested production states", () => {
+  const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
 
   assert.match(account, /email_confirmed_at/);
   assert.match(account, /last_sign_in_at/);
@@ -114,19 +118,18 @@ test("security, loyalty, notifications, and overview expose requested production
   assert.match(account, /Forgot password\?/);
   assert.match(account, /AUTH_PASSWORD_REQUIREMENTS_COPY/);
   assert.match(account, /Password requirements/);
-  assert.match(account, /Premium Coming Soon/);
+  assert.match(account, /Coming soon/);
   assert.match(account, /Telepizza Rewards/);
+  assert.match(account, /Offers will appear here/);
   assert.match(account, /Earn points/);
-  assert.match(account, /Exclusive offers/);
   assert.doesNotMatch(account, /Current points|Points history|Gold preview|Starter preview/);
-  assert.doesNotMatch(account, /recent on this device|remembered on this device/);
   assert.match(account, /Order Updates/);
   assert.match(account, /Promotions/);
   assert.match(account, /Delivery Alerts/);
   assert.match(account, /Special Offers/);
   assert.match(account, /Recent Orders/);
-  assert.match(account, /Active Orders/);
-  assert.match(account, /Saved Addresses/);
+  assert.match(account, /Active order|No active order/);
+  assert.match(account, /Addresses/);
   assert.match(account, /Email ✓ Verified/);
   assert.match(account, /Phone ⚠ Verification Pending/);
   assert.match(account, /View Order History/);
