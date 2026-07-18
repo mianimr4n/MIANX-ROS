@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { ApiError } from "../../common/http.js";
 import type { EnvironmentStatus } from "../../config/env.js";
+import { attachConfirmedDineInOrderToBill } from "../bills/restaurant-bills.js";
 import {
   cancelKitchenTicketForOrder,
   createKitchenTicketForConfirmedOrder,
@@ -398,8 +399,10 @@ export function createSupabaseBranchOrderManagementDataSource(
       }
 
       // DB-R5 Option B: create kitchen ticket when order becomes confirmed (idempotent).
+      // DB-R6 Option B: attach dine-in order to session open bill (idempotent; skips delivery/pickup).
       if (plan.toStatus === "confirmed") {
         await createKitchenTicketForConfirmedOrder(supabase, order.id);
+        await attachConfirmedDineInOrderToBill(supabase, order.id);
       }
 
       if (plan.toStatus === "cancelled") {

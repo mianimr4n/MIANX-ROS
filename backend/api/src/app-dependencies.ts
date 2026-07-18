@@ -14,6 +14,10 @@ import {
   type BranchOrderManagementDataSource,
 } from "./services/orders/management.js";
 import {
+  createRestaurantBillsService,
+  type RestaurantBillsService,
+} from "./services/bills/restaurant-bills.js";
+import {
   createKitchenTicketsService,
   type KitchenTicketsService,
 } from "./services/kitchen/tickets.js";
@@ -36,6 +40,7 @@ export interface AppDependencies {
   ordersDataSource: OrdersDataSource;
   branchOrderManagement: BranchOrderManagementDataSource;
   kitchenTickets: KitchenTicketsService;
+  restaurantBills: RestaurantBillsService;
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
   staffInviteRepository: StaffInviteRepository;
@@ -52,6 +57,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     ordersDataSource: createOrdersDataSource(envStatus),
     branchOrderManagement: createBranchOrderManagementDataSource(envStatus),
     kitchenTickets: createKitchenTicketsService(envStatus),
+    restaurantBills: createRestaurantBillsService(envStatus),
     authTokenVerifier: createSupabaseAuthTokenVerifier(envStatus),
     authProfileRepository: createSupabaseAuthProfileRepository(envStatus),
     staffInviteRepository: createSupabaseStaffInviteRepository(envStatus),
