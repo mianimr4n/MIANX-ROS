@@ -4,6 +4,7 @@ import type { AppDependencies } from "../app-dependencies.js";
 import { createAdminRouter } from "./admin/routes.js";
 import { createAuthRouter } from "./auth/routes.js";
 import { createBranchesRouter } from "./branches/routes.js";
+import { createDineInRouter } from "./dine-in/routes.js";
 import { createMenuRouter } from "./menu/routes.js";
 import { createOrdersRouter } from "./orders/routes.js";
 import { createRidersRouter } from "./riders/routes.js";
@@ -36,6 +37,11 @@ export const apiModules: ApiModuleDescriptor[] = [
     summary: "Cart, checkout, and tracking APIs.",
   },
   {
+    name: "dine-in",
+    basePath: "/api/v1/dine-in",
+    summary: "Public dine-in session resolve (table QR) and session state by public token.",
+  },
+  {
     name: "riders",
     basePath: "/api/v1/riders",
     summary: "Rider assignment and delivery workflows.",
@@ -61,6 +67,12 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
   app.use(
     "/api/v1/orders",
     createOrdersRouter(dependencies.ordersDataSource, dependencies.authTokenVerifier),
+  );
+  app.use(
+    "/api/v1/dine-in",
+    createDineInRouter({
+      dineInSessions: dependencies.dineInSessions,
+    }),
   );
   app.use("/api/v1/riders", createRidersRouter());
   app.use(

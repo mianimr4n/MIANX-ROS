@@ -22,6 +22,10 @@ import {
   type RestaurantTablesDataSource,
 } from "./services/tables/management.js";
 import { createQrTokenValidator, type QrTokenValidator } from "./services/tables/qr.js";
+import {
+  createDineInSessionsService,
+  type DineInSessionsService,
+} from "./services/dine-in/sessions.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -32,10 +36,12 @@ export interface AppDependencies {
   staffInviteRepository: StaffInviteRepository;
   restaurantTables: RestaurantTablesDataSource;
   qrTokenValidator: QrTokenValidator;
+  dineInSessions: DineInSessionsService;
   inviteAppOrigin: string;
 }
 
 export function createAppDependencies(envStatus: EnvironmentStatus): AppDependencies {
+  const qrTokenValidator = createQrTokenValidator(envStatus);
   return {
     catalogDataSource: createSupabaseCatalogDataSource(envStatus),
     ordersDataSource: createOrdersDataSource(envStatus),
@@ -44,7 +50,8 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     authProfileRepository: createSupabaseAuthProfileRepository(envStatus),
     staffInviteRepository: createSupabaseStaffInviteRepository(envStatus),
     restaurantTables: createRestaurantTablesDataSource(envStatus),
-    qrTokenValidator: createQrTokenValidator(envStatus),
+    qrTokenValidator,
+    dineInSessions: createDineInSessionsService(envStatus, qrTokenValidator),
     inviteAppOrigin: envStatus.config.corsOrigin,
   };
 }
