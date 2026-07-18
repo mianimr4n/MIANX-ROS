@@ -1,8 +1,27 @@
--- Product modifier system (additive; does not mutate historical order_items).
+-- =============================================================================
+-- DB-R2: Product / menu modifier system
+-- Additive; does not mutate historical order_items rows or delete topping SKUs.
 -- Size pricing remains on menu_item_variants; this schema covers crust/extras/addons
 -- and order-time modifier snapshots for Admin CRUD without code changes.
 --
+-- Naming (locked with PR #63 / architecture):
+--   item_modifier_groups  ≡  menu_item_modifier_groups  (junction; do not invent a second model)
+--   selection_type 'multi' ≡ owner wording 'multiple'
+--   order_item_modifiers.option_name ≡ snapshot "name"
+--   order_item_modifiers.unit_price ≡ per-unit snapshot; total_price ≡ quantity * unit_price
+--   price_delta retained as synonym of unit_price for PR #63 / API compat
+--
+-- Pricing integrity (server-side):
+--   Client-sent money fields are never trusted. Quote/create resolves live catalog
+--   prices and persists immutable snapshots on order_item_modifiers (+ extras_snapshot).
+--
+-- Topping migration strategy:
+--   Existing product_type = 'topping' menu_items remain. Modifier options link via
+--   linked_menu_item_id. Do NOT delete topping rows until verified post-apply.
+--
 -- Apply via approved migration workflow only — do not run against production ad hoc.
+-- Remote note: version may land after R0/R1 in production history (gap is intentional).
+-- =============================================================================
 
 -- ---------------------------------------------------------------------------
 -- 1) Catalog tables
@@ -49,20 +68,24 @@ create table if not exists public.modifier_options (
   constraint chk_modifier_options_price_delta check (price_delta >= 0)
 );
 
+-- Junction: item_modifier_groups ≡ menu_item_modifier_groups
+-- branch_id NULL = global attachment; non-null = branch-specific override/attachment
 create table if not exists public.item_modifier_groups (
   id uuid primary key default gen_random_uuid(),
   menu_item_id uuid not null
     references public.menu_items (id) on delete cascade,
   modifier_group_id uuid not null
     references public.modifier_groups (id) on delete cascade,
+  branch_id uuid
+    references public.branches (id) on delete cascade,
   is_required boolean,
   min_select integer,
   max_select integer,
   sort_order integer not null default 0,
   is_active boolean not null default true,
+  is_available boolean not null default true,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
-  constraint uq_item_modifier_groups unique (menu_item_id, modifier_group_id),
   constraint chk_item_modifier_groups_min check (min_select is null or min_select >= 0),
   constraint chk_item_modifier_groups_max
     check (
@@ -72,7 +95,27 @@ create table if not exists public.item_modifier_groups (
     )
 );
 
+-- UNIQUE(menu_item_id, modifier_group_id, branch_id) with NULL branch = one global row
+create unique index if not exists uq_item_modifier_groups_item_group_branch
+  on public.item_modifier_groups (menu_item_id, modifier_group_id, branch_id)
+  nulls not distinct;
+
+-- Optional per-branch option availability (absent row ⇒ available / default-open)
+create table if not exists public.branch_modifier_options (
+  id uuid primary key default gen_random_uuid(),
+  branch_id uuid not null
+    references public.branches (id) on delete cascade,
+  modifier_option_id uuid not null
+    references public.modifier_options (id) on delete cascade,
+  is_available boolean not null default true,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+  constraint uq_branch_modifier_options unique (branch_id, modifier_option_id)
+);
+
 -- Historical stability: snapshot columns + nullable FK to live option
+-- option_name ≡ display name; unit_price/total_price are money snapshots;
+-- price_delta kept for API/PR #63 compat (= unit_price for quantity 1 lines)
 create table if not exists public.order_item_modifiers (
   id uuid primary key default gen_random_uuid(),
   order_item_id uuid not null
@@ -84,6 +127,8 @@ create table if not exists public.order_item_modifiers (
   option_code varchar(80) not null,
   option_name varchar(150) not null,
   price_delta numeric(12, 2) not null default 0,
+  unit_price numeric(12, 2) not null default 0,
+  total_price numeric(12, 2) not null default 0,
   quantity integer not null default 1 check (quantity > 0),
   sort_order integer not null default 0,
   created_at timestamptz not null default timezone('utc', now())
@@ -97,6 +142,13 @@ create index if not exists idx_item_modifier_groups_item
 
 create index if not exists idx_item_modifier_groups_group
   on public.item_modifier_groups (modifier_group_id);
+
+create index if not exists idx_item_modifier_groups_branch
+  on public.item_modifier_groups (branch_id)
+  where branch_id is not null;
+
+create index if not exists idx_branch_modifier_options_branch
+  on public.branch_modifier_options (branch_id);
 
 create index if not exists idx_order_item_modifiers_order_item
   on public.order_item_modifiers (order_item_id, sort_order);
@@ -116,13 +168,20 @@ create trigger set_item_modifier_groups_updated_at
 before update on public.item_modifier_groups
 for each row execute function public.set_updated_at();
 
+drop trigger if exists set_branch_modifier_options_updated_at on public.branch_modifier_options;
+create trigger set_branch_modifier_options_updated_at
+before update on public.branch_modifier_options
+for each row execute function public.set_updated_at();
+
 -- ---------------------------------------------------------------------------
 -- 2) RLS + locked grants (catalog SELECT; order modifiers like order_items)
+--    Post-R0 model: no client DML; no TRUNCATE/REFERENCES/TRIGGER for clients
 -- ---------------------------------------------------------------------------
 
 alter table public.modifier_groups enable row level security;
 alter table public.modifier_options enable row level security;
 alter table public.item_modifier_groups enable row level security;
+alter table public.branch_modifier_options enable row level security;
 alter table public.order_item_modifiers enable row level security;
 
 drop policy if exists "Public can read active modifier groups" on public.modifier_groups;
@@ -151,6 +210,7 @@ on public.item_modifier_groups
 for select
 using (
   is_active = true
+  and is_available = true
   and exists (
     select 1
     from public.menu_items mi
@@ -158,6 +218,12 @@ using (
       and mi.is_available = true
   )
 );
+
+drop policy if exists "Public can read branch modifier options" on public.branch_modifier_options;
+create policy "Public can read branch modifier options"
+on public.branch_modifier_options
+for select
+using (true);
 
 drop policy if exists "Customers select own order item modifiers" on public.order_item_modifiers;
 create policy "Customers select own order item modifiers"
@@ -191,17 +257,20 @@ using (
 revoke all on table public.modifier_groups from anon, authenticated;
 revoke all on table public.modifier_options from anon, authenticated;
 revoke all on table public.item_modifier_groups from anon, authenticated;
+revoke all on table public.branch_modifier_options from anon, authenticated;
 revoke all on table public.order_item_modifiers from anon, authenticated;
 
 grant select on table public.modifier_groups to anon, authenticated;
 grant select on table public.modifier_options to anon, authenticated;
 grant select on table public.item_modifier_groups to anon, authenticated;
+grant select on table public.branch_modifier_options to anon, authenticated;
 
 grant select on table public.order_item_modifiers to authenticated;
 
 grant select, insert, update, delete on table public.modifier_groups to service_role;
 grant select, insert, update, delete on table public.modifier_options to service_role;
 grant select, insert, update, delete on table public.item_modifier_groups to service_role;
+grant select, insert, update, delete on table public.branch_modifier_options to service_role;
 grant select, insert, update, delete on table public.order_item_modifiers to service_role;
 
 -- ---------------------------------------------------------------------------
@@ -226,13 +295,13 @@ insert into public.modifier_groups (
   (
     'extra-chicken',
     'Extra chicken',
-    'Optional chicken add-on (size-tiered)',
+    'Optional chicken add-on (size-tiered); linked to topping SKU',
     'multi', 0, 1, false, 30
   ),
   (
     'extra-cheese',
     'Extra cheese',
-    'Optional cheese add-ons',
+    'Optional cheese add-ons; linked to topping SKUs',
     'multi', 0, 3, false, 40
   ),
   (
@@ -313,6 +382,7 @@ on conflict (modifier_group_id, code) do update set
   is_active = true,
   updated_at = timezone('utc', now());
 
+-- Map existing topping SKUs into modifiers (keep menu_items.product_type = topping)
 insert into public.modifier_options (
   modifier_group_id, code, name, price_delta, price_delta_by_size,
   linked_menu_item_id, is_default, sort_order
@@ -323,7 +393,7 @@ select
   'Extra Chicken',
   50,
   '{"small":50,"medium":100,"large":150}'::jsonb,
-  (select id from public.menu_items where slug = 'extra-chicken' limit 1),
+  (select id from public.menu_items where slug = 'extra-chicken' and product_type = 'topping' limit 1),
   false,
   1
 from public.modifier_groups g
@@ -347,7 +417,8 @@ cross join (
     ('extra-cheese', 'Extra Cheese', 50::numeric, '{"small":50,"medium":100,"large":150}', 'extra-cheese', 1),
     ('extra-cheese-slice', 'Extra Cheese Slice', 50::numeric, null, 'extra-cheese-slice', 2)
 ) as v(code, name, price_delta, price_delta_by_size, linked_slug, sort_order)
-left join public.menu_items mi on mi.slug = v.linked_slug
+left join public.menu_items mi
+  on mi.slug = v.linked_slug and mi.product_type = 'topping'
 where g.code = 'extra-cheese'
 on conflict (modifier_group_id, code) do update set
   name = excluded.name,
@@ -445,12 +516,13 @@ on conflict (modifier_group_id, code) do update set
 
 -- ---------------------------------------------------------------------------
 -- 4) Attach pizza catalog items (variants remain the size source)
+--    Global rows: branch_id NULL
 -- ---------------------------------------------------------------------------
 
 insert into public.item_modifier_groups (
-  menu_item_id, modifier_group_id, sort_order, is_active
+  menu_item_id, modifier_group_id, branch_id, sort_order, is_active, is_available
 )
-select mi.id, g.id, g.sort_order, true
+select mi.id, g.id, null, g.sort_order, true, true
 from public.menu_items mi
 cross join public.modifier_groups g
 where mi.slug in (
@@ -480,7 +552,8 @@ where mi.slug in (
     'add-sides'
   )
   and mi.is_available = true
-on conflict (menu_item_id, modifier_group_id) do update set
+on conflict (menu_item_id, modifier_group_id, branch_id) do update set
   sort_order = excluded.sort_order,
   is_active = true,
+  is_available = true,
   updated_at = timezone('utc', now());

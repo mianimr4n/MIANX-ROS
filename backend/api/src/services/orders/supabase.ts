@@ -575,6 +575,8 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
           option_code: modifier.optionCode,
           option_name: modifier.optionName,
           price_delta: modifier.priceDelta,
+          unit_price: modifier.priceDelta,
+          total_price: modifier.priceDelta,
           quantity: 1,
           sort_order: modifier.sortOrder,
         }));
