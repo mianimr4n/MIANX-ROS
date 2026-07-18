@@ -17,6 +17,11 @@ import {
   createSupabaseStaffInviteRepository,
   type StaffInviteRepository,
 } from "./services/staff/invites.js";
+import {
+  createRestaurantTablesDataSource,
+  type RestaurantTablesDataSource,
+} from "./services/tables/management.js";
+import { createQrTokenValidator, type QrTokenValidator } from "./services/tables/qr.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -25,6 +30,8 @@ export interface AppDependencies {
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
   staffInviteRepository: StaffInviteRepository;
+  restaurantTables: RestaurantTablesDataSource;
+  qrTokenValidator: QrTokenValidator;
   inviteAppOrigin: string;
 }
 
@@ -36,6 +43,8 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     authTokenVerifier: createSupabaseAuthTokenVerifier(envStatus),
     authProfileRepository: createSupabaseAuthProfileRepository(envStatus),
     staffInviteRepository: createSupabaseStaffInviteRepository(envStatus),
+    restaurantTables: createRestaurantTablesDataSource(envStatus),
+    qrTokenValidator: createQrTokenValidator(envStatus),
     inviteAppOrigin: envStatus.config.corsOrigin,
   };
 }

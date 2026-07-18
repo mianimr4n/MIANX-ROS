@@ -43,7 +43,7 @@ export const apiModules: ApiModuleDescriptor[] = [
   {
     name: "admin",
     basePath: "/api/v1/admin",
-    summary: "Administrative controls, staff invites, and dashboards.",
+    summary: "Administrative controls, staff invites, restaurant tables, and dashboards.",
   },
 ];
 
@@ -70,6 +70,7 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
       authProfileRepository: dependencies.authProfileRepository,
       staffInviteRepository: dependencies.staffInviteRepository,
       branchOrderManagement: dependencies.branchOrderManagement,
+      restaurantTables: dependencies.restaurantTables,
       inviteAppOrigin: dependencies.inviteAppOrigin,
     }),
   );
