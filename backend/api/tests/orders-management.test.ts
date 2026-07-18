@@ -3,13 +3,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // --- Mock the Supabase client so the data source runs against an in-memory fake. ---
 interface FakeState {
   orders: Array<Record<string, unknown>>;
+  orderItems: Array<Record<string, unknown>>;
+  kitchenTickets: Array<Record<string, unknown>>;
+  kitchenTicketItems: Array<Record<string, unknown>>;
   logs: Array<Record<string, unknown>>;
   deliveriesUpdated: number;
   /** When set, applied to the target order right before an UPDATE to simulate a concurrent write. */
   concurrentStatusById?: Record<string, string>;
 }
 
-const state: FakeState = { orders: [], logs: [], deliveriesUpdated: 0 };
+const state: FakeState = {
+  orders: [],
+  orderItems: [],
+  kitchenTickets: [],
+  kitchenTicketItems: [],
+  logs: [],
+  deliveriesUpdated: 0,
+};
 
 function matchFilters(row: Record<string, unknown>, filters: Array<[string, string, unknown]>): boolean {
   return filters.every(([kind, col, val]) => {
@@ -30,9 +40,9 @@ class FakeQuery {
     if (this.op !== "insert" && this.op !== "update") this.op = "select";
     return this;
   }
-  insert(row: Record<string, unknown>) {
+  insert(row: Record<string, unknown> | Array<Record<string, unknown>>) {
     this.op = "insert";
-    this.payload = row;
+    this.payload = row as Record<string, unknown>;
     return this;
   }
   update(patch: Record<string, unknown>) {
@@ -72,6 +82,46 @@ class FakeQuery {
     }
     if (this.table === "deliveries" && this.op === "update") {
       state.deliveriesUpdated += 1;
+      return Promise.resolve({ data: null, error: null });
+    }
+    if (this.table === "order_items") {
+      const matched = state.orderItems.filter((o) => matchFilters(o, this.filters));
+      if (this.single) return Promise.resolve({ data: matched[0] ?? null, error: null });
+      return Promise.resolve({ data: matched, error: null });
+    }
+    if (this.table === "kitchen_tickets") {
+      if (this.op === "select") {
+        const matched = state.kitchenTickets.filter((o) => matchFilters(o, this.filters));
+        if (this.single) return Promise.resolve({ data: matched[0] ?? null, error: null });
+        return Promise.resolve({ data: matched, error: null });
+      }
+      if (this.op === "insert") {
+        const row: Record<string, unknown> = {
+          id: `kt-${state.kitchenTickets.length + 1}`,
+          ...(this.payload as Record<string, unknown>),
+        };
+        if (state.kitchenTickets.some((t) => t.order_id === row.order_id)) {
+          return Promise.resolve({ data: null, error: { code: "23505", message: "duplicate" } });
+        }
+        state.kitchenTickets.push(row);
+        if (this.single) return Promise.resolve({ data: { id: row.id }, error: null });
+        return Promise.resolve({ data: row, error: null });
+      }
+      if (this.op === "update") {
+        const matched = state.kitchenTickets.filter((o) => matchFilters(o, this.filters));
+        for (const target of matched) {
+          Object.assign(target, this.payload);
+        }
+        return Promise.resolve({ data: matched[0] ?? null, error: null });
+      }
+    }
+    if (this.table === "kitchen_ticket_items" && this.op === "insert") {
+      const rows = Array.isArray(this.payload)
+        ? (this.payload as Array<Record<string, unknown>>)
+        : [this.payload as Record<string, unknown>];
+      for (const row of rows) {
+        state.kitchenTicketItems.push({ id: `kti-${state.kitchenTicketItems.length + 1}`, ...row });
+      }
       return Promise.resolve({ data: null, error: null });
     }
     if (this.table === "orders") {
@@ -145,6 +195,9 @@ const superAdmin = { userId: "u-sa", isSuperAdmin: true, roles: ["super-admin"],
 
 beforeEach(() => {
   state.orders = [];
+  state.orderItems = [];
+  state.kitchenTickets = [];
+  state.kitchenTicketItems = [];
   state.logs = [];
   state.deliveriesUpdated = 0;
   state.concurrentStatusById = {};
@@ -189,6 +242,17 @@ describe("branch order management — branch isolation", () => {
 describe("branch order management — transitions + audit + concurrency", () => {
   it("confirm pending->confirmed writes exactly one audit log", async () => {
     state.orders = [seedOrder({ status: "pending" })];
+    state.orderItems = [
+      {
+        id: "oi1",
+        order_id: "o1",
+        product_name: "Tele Special",
+        variant_name: "Large",
+        quantity: 1,
+        extras_snapshot: [],
+        modifiers: [],
+      },
+    ];
     const res = await ds.transitionOrder({ scope: cashierB1, orderId: "o1", action: "confirm" });
     expect(res.status).toBe("confirmed");
     expect(res.idempotentReplay).toBe(false);
@@ -201,6 +265,18 @@ describe("branch order management — transitions + audit + concurrency", () => 
       actor_type: "staff",
       actor_user_id: "u-cashier",
     });
+    expect(state.kitchenTickets).toHaveLength(1);
+    expect(state.kitchenTickets[0]).toMatchObject({
+      order_id: "o1",
+      branch_id: B1,
+      status: "queued",
+    });
+    expect(state.kitchenTicketItems).toHaveLength(1);
+    expect(state.kitchenTicketItems[0]).toMatchObject({
+      order_item_id: "oi1",
+      item_name_snapshot: "Tele Special (Large)",
+      quantity: 1,
+    });
   });
 
   it("idempotent repeat (confirm an already-confirmed order) adds NO new log", async () => {
@@ -208,6 +284,15 @@ describe("branch order management — transitions + audit + concurrency", () => 
     const res = await ds.transitionOrder({ scope: cashierB1, orderId: "o1", action: "confirm" });
     expect(res.idempotentReplay).toBe(true);
     expect(state.logs).toHaveLength(0);
+    expect(state.kitchenTickets).toHaveLength(0);
+  });
+
+  it("confirm is idempotent for kitchen tickets when one already exists", async () => {
+    state.orders = [seedOrder({ status: "pending" })];
+    state.kitchenTickets = [{ id: "kt-existing", order_id: "o1", branch_id: B1, status: "queued" }];
+    await ds.transitionOrder({ scope: cashierB1, orderId: "o1", action: "confirm" });
+    expect(state.kitchenTickets).toHaveLength(1);
+    expect(state.kitchenTickets[0].id).toBe("kt-existing");
   });
 
   it("reject writes cancelled + rejected_by_branch", async () => {

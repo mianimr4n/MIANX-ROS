@@ -2,6 +2,10 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { ApiError } from "../../common/http.js";
 import type { EnvironmentStatus } from "../../config/env.js";
+import {
+  cancelKitchenTicketForOrder,
+  createKitchenTicketForConfirmedOrder,
+} from "../kitchen/tickets.js";
 import { parseNumber } from "./pricing.js";
 import {
   planTransition,
@@ -393,12 +397,18 @@ export function createSupabaseBranchOrderManagementDataSource(
         throw new ApiError(500, "ORDER_AUDIT_LOG_FAILED", logError.message);
       }
 
+      // DB-R5 Option B: create kitchen ticket when order becomes confirmed (idempotent).
+      if (plan.toStatus === "confirmed") {
+        await createKitchenTicketForConfirmedOrder(supabase, order.id);
+      }
+
       if (plan.toStatus === "cancelled") {
         await supabase
           .from("deliveries")
           .update({ status: "cancelled", updated_at: now })
           .eq("order_id", order.id)
           .neq("status", "delivered");
+        await cancelKitchenTicketForOrder(supabase, order.id);
       }
 
       return {
