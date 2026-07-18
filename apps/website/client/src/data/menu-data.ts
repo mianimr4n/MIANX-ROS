@@ -1,32 +1,19 @@
+/**
+ * GENERATED FILE — do not edit prices by hand.
+ *
+ * Source of truth: data/catalog/telepizza-canonical-menu.json
+ * Generator: node scripts/generate-menu-fallback-from-canonical.mjs
+ * Live path: Supabase / API via MenuCatalogContext (preferred).
+ * This file is the offline emergency fallback only (priced copy of canonical).
+ *
+ * Manifest status: BLOCKED_OWNER_EVIDENCE_REQUIRED
+ * Generated from canonical dated: 2026-07-18
+ */
 import type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
 import { withMenuItemImages } from "@/lib/menu-images";
 
 export type MenuSize = "Small" | "Medium" | "Large";
 export type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
-
-const signatureVariants: MenuVariant[] = [
-  { label: "6 inch Small", price: 499 },
-  { label: "9 inch Medium", price: 950 },
-  { label: "12 inch Large", price: 1570 },
-];
-
-const classicVariants: MenuVariant[] = [
-  { label: "6 inch Small", price: 470 },
-  { label: "9 inch Medium", price: 890 },
-  { label: "12 inch Large", price: 1470 },
-];
-
-const toppingChickenVariants: MenuVariant[] = [
-  { label: "Small", price: 50, sizeCode: "small", isDefault: true },
-  { label: "Medium", price: 100, sizeCode: "medium" },
-  { label: "Large", price: 150, sizeCode: "large" },
-];
-
-const toppingCheeseVariants: MenuVariant[] = [
-  { label: "Small", price: 50, sizeCode: "small", isDefault: true },
-  { label: "Medium", price: 100, sizeCode: "medium" },
-  { label: "Large", price: 150, sizeCode: "large" },
-];
 
 /** Customer browse categories only (13 + All). Toppings are internal catalog SKUs, not a menu tab. */
 export const menuCategories = [
@@ -55,7 +42,12 @@ const baseMenuItems: MenuItem[] = [
       "Special chicken with special sauce, topped with olive, mushroom & capsicum.",
     image: "/images/menu-pizza.jpg",
     badge: "Signature",
-    variants: signatureVariants,
+    featured: true,
+    variants: [
+    { label: "6 inch Small", price: 499, sizeCode: "small", isDefault: true },
+    { label: "9 inch Medium", price: 950, sizeCode: "medium" },
+    { label: "12 inch Large", price: 1570, sizeCode: "large" },
+  ],
   },
   {
     id: "peri-peri",
@@ -64,7 +56,11 @@ const baseMenuItems: MenuItem[] = [
     description:
       "Peri peri sauce with tikka chicken topped with kabab, sausages & tomato.",
     image: "/images/menu-pizza.jpg",
-    variants: signatureVariants,
+    variants: [
+    { label: "6 inch Small", price: 499, sizeCode: "small", isDefault: true },
+    { label: "9 inch Medium", price: 950, sizeCode: "medium" },
+    { label: "12 inch Large", price: 1570, sizeCode: "large" },
+  ],
   },
   {
     id: "bihari-kabab",
@@ -74,7 +70,11 @@ const baseMenuItems: MenuItem[] = [
       "Garlic sauce with tikka chicken topped kabab slice, onion & mushroom.",
     image: "/images/menu-pizza.jpg",
     badge: "Hot",
-    variants: signatureVariants,
+    variants: [
+    { label: "6 inch Small", price: 499, sizeCode: "small", isDefault: true },
+    { label: "9 inch Medium", price: 950, sizeCode: "medium" },
+    { label: "12 inch Large", price: 1570, sizeCode: "large" },
+  ],
   },
   {
     id: "kababish",
@@ -83,15 +83,24 @@ const baseMenuItems: MenuItem[] = [
     description:
       "Special sauce with fajita chicken topped with kabab mushroom & capsicum.",
     image: "/images/menu-pizza.jpg",
-    variants: signatureVariants,
+    variants: [
+    { label: "6 inch Small", price: 499, sizeCode: "small", isDefault: true },
+    { label: "9 inch Medium", price: 950, sizeCode: "medium" },
+    { label: "12 inch Large", price: 1570, sizeCode: "large" },
+  ],
   },
   {
     id: "tikka",
     name: "Tikka",
     category: "Classic Pizzas",
-    description: "Tikka sauce with tikka chicken topped with olive & onion.",
+    description:
+      "Tikka sauce with tikka chicken topped with olive & onion.",
     image: "/images/menu-pizza.jpg",
-    variants: classicVariants,
+    variants: [
+    { label: "6 inch Small", price: 470, sizeCode: "small", isDefault: true },
+    { label: "9 inch Medium", price: 890, sizeCode: "medium" },
+    { label: "12 inch Large", price: 1470, sizeCode: "large" },
+  ],
   },
   {
     id: "bonfire",
@@ -100,7 +109,11 @@ const baseMenuItems: MenuItem[] = [
     description:
       "Bonfire sauce with fajita chicken topped with jalapeno, mushroom & tomato.",
     image: "/images/menu-pizza.jpg",
-    variants: classicVariants,
+    variants: [
+    { label: "6 inch Small", price: 470, sizeCode: "small", isDefault: true },
+    { label: "9 inch Medium", price: 890, sizeCode: "medium" },
+    { label: "12 inch Large", price: 1470, sizeCode: "large" },
+  ],
   },
   {
     id: "chicken-supreme",
@@ -109,7 +122,11 @@ const baseMenuItems: MenuItem[] = [
     description:
       "Original red base sauce, three types of chicken topped with olive, mushroom jalapeno & capsicum.",
     image: "/images/menu-pizza.jpg",
-    variants: classicVariants,
+    variants: [
+    { label: "6 inch Small", price: 470, sizeCode: "small", isDefault: true },
+    { label: "9 inch Medium", price: 890, sizeCode: "medium" },
+    { label: "12 inch Large", price: 1470, sizeCode: "large" },
+  ],
   },
   {
     id: "real-fajita",
@@ -118,7 +135,11 @@ const baseMenuItems: MenuItem[] = [
     description:
       "Fajita sauce with fajita chicken topped with onion & capsicum.",
     image: "/images/menu-pizza.jpg",
-    variants: classicVariants,
+    variants: [
+    { label: "6 inch Small", price: 470, sizeCode: "small", isDefault: true },
+    { label: "9 inch Medium", price: 890, sizeCode: "medium" },
+    { label: "12 inch Large", price: 1470, sizeCode: "large" },
+  ],
   },
   {
     id: "mexicana",
@@ -127,15 +148,24 @@ const baseMenuItems: MenuItem[] = [
     description:
       "Special sauce with smoked chicken topped with sausages, black olive, tomato & capsicum.",
     image: "/images/menu-pizza.jpg",
-    variants: classicVariants,
+    variants: [
+    { label: "6 inch Small", price: 470, sizeCode: "small", isDefault: true },
+    { label: "9 inch Medium", price: 890, sizeCode: "medium" },
+    { label: "12 inch Large", price: 1470, sizeCode: "large" },
+  ],
   },
   {
     id: "cheese-lover",
     name: "Cheese Lover",
     category: "Classic Pizzas",
-    description: "Original red base sauce loaded with mozzarella cheese.",
+    description:
+      "Original red base sauce loaded with mozzarella cheese.",
     image: "/images/menu-pizza.jpg",
-    variants: classicVariants,
+    variants: [
+    { label: "6 inch Small", price: 470, sizeCode: "small", isDefault: true },
+    { label: "9 inch Medium", price: 890, sizeCode: "medium" },
+    { label: "12 inch Large", price: 1470, sizeCode: "large" },
+  ],
   },
   {
     id: "chicago-extreme",
@@ -145,9 +175,9 @@ const baseMenuItems: MenuItem[] = [
       "Double layers extreme pizza with 2 premium sauces, lots of cheese & chicken.",
     image: "/images/menu-pizza.jpg",
     variants: [
-      { label: "Medium", price: 1199 },
-      { label: "Large", price: 1899 },
-    ],
+    { label: "Medium", price: 1199, sizeCode: "medium", isDefault: true },
+    { label: "Large", price: 1899, sizeCode: "large" },
+  ],
   },
   {
     id: "crown-crust",
@@ -157,16 +187,18 @@ const baseMenuItems: MenuItem[] = [
       "Any flavour with chicken stuffing on edges & Tele Pizza signature sauce.",
     image: "/images/menu-pizza.jpg",
     badge: "Chef Special",
+    featured: true,
     variants: [
-      { label: "Medium", price: 1199 },
-      { label: "Large", price: 1799 },
-    ],
+    { label: "Medium", price: 1199, sizeCode: "medium", isDefault: true },
+    { label: "Large", price: 1799, sizeCode: "large" },
+  ],
   },
   {
     id: "stuffed-crust",
     name: "Stuffed Crust",
     category: "Specialty Pizzas",
-    description: "Any flavour with kabab stuffing on edges.",
+    description:
+      "Any flavour with kabab stuffing on edges.",
     image: "/images/menu-pizza.jpg",
     price: 1749,
   },
@@ -174,15 +206,17 @@ const baseMenuItems: MenuItem[] = [
     id: "tele-extreme",
     name: "Tele Extreme Pizza",
     category: "Specialty Pizzas",
-    description: "2 premium sauces with loaded chicken & lots of cheese.",
+    description:
+      "2 premium sauces with loaded chicken & lots of cheese.",
     image: "/images/menu-pizza.jpg",
     price: 1699,
   },
   {
     id: "sixteen-inch-incher",
-    name: '16" Incher',
+    name: "16\" Incher",
     category: "Specialty Pizzas",
-    description: "Sixteen-inch specialty pizza.",
+    description:
+      "Sixteen-inch specialty pizza.",
     image: "/images/menu-pizza.jpg",
     price: 2399,
   },
@@ -190,16 +224,19 @@ const baseMenuItems: MenuItem[] = [
     id: "zinger-burger",
     name: "Zinger Burger",
     category: "Burgers",
-    description: "Crispy zinger burger.",
+    description:
+      "Crispy zinger burger.",
     image: "/images/menu-burger.jpg",
-    price: 450,
     badge: "Popular",
+    featured: true,
+    price: 450,
   },
   {
     id: "patty-burger",
     name: "Patty Burger",
     category: "Burgers",
-    description: "Tele Pizza patty burger.",
+    description:
+      "Tele Pizza patty burger.",
     image: "/images/menu-burger.jpg",
     price: 299,
   },
@@ -207,7 +244,8 @@ const baseMenuItems: MenuItem[] = [
     id: "crunchy-sandwich",
     name: "Crunchy Sandwich",
     category: "Sandwiches",
-    description: "Served with dip sauce & fries.",
+    description:
+      "Served with dip sauce & fries.",
     image: "/images/sides-platter.jpg",
     price: 799,
   },
@@ -215,7 +253,8 @@ const baseMenuItems: MenuItem[] = [
     id: "special-sandwich",
     name: "Special Sandwich",
     category: "Sandwiches",
-    description: "Served with dip sauce & fries.",
+    description:
+      "Served with dip sauce & fries.",
     image: "/images/sides-platter.jpg",
     price: 749,
   },
@@ -223,7 +262,8 @@ const baseMenuItems: MenuItem[] = [
     id: "baked-smoked-sandwich",
     name: "Baked Smoked",
     category: "Sandwiches",
-    description: "Served with dip sauce & fries.",
+    description:
+      "Served with dip sauce & fries.",
     image: "/images/sides-platter.jpg",
     price: 749,
   },
@@ -231,7 +271,8 @@ const baseMenuItems: MenuItem[] = [
     id: "sizzling-sandwich",
     name: "Sizzling Sandwich",
     category: "Sandwiches",
-    description: "Served with dip sauce & fries.",
+    description:
+      "Served with dip sauce & fries.",
     image: "/images/sides-platter.jpg",
     price: 749,
   },
@@ -239,7 +280,8 @@ const baseMenuItems: MenuItem[] = [
     id: "jumbo-wrap",
     name: "Tele Pizza Special Jumbo Wrap",
     category: "Wraps & Rolls",
-    description: "Tele Pizza special jumbo wrap.",
+    description:
+      "Tele Pizza special jumbo wrap.",
     image: "/images/sides-platter.jpg",
     price: 649,
   },
@@ -247,7 +289,8 @@ const baseMenuItems: MenuItem[] = [
     id: "crunchy-wrap",
     name: "Crunchy Wrap",
     category: "Wraps & Rolls",
-    description: "Crunchy chicken wrap.",
+    description:
+      "Crunchy chicken wrap.",
     image: "/images/sides-platter.jpg",
     price: 399,
   },
@@ -255,7 +298,8 @@ const baseMenuItems: MenuItem[] = [
     id: "dynamite-wrap",
     name: "Dynamite Wrap",
     category: "Wraps & Rolls",
-    description: "Dynamite-flavoured wrap.",
+    description:
+      "Dynamite-flavoured wrap.",
     image: "/images/sides-platter.jpg",
     price: 399,
   },
@@ -272,16 +316,18 @@ const baseMenuItems: MenuItem[] = [
     id: "crunchy-pasta",
     name: "Crunchy Pasta",
     category: "Pasta",
-    description: "Crunchy pasta.",
+    description:
+      "Crunchy pasta.",
     image: "/images/pasta-dish.jpg",
-    price: 849,
     badge: "Hot",
+    price: 849,
   },
   {
     id: "special-pasta",
     name: "Special Pasta / Flaming Pasta",
     category: "Pasta",
-    description: "Special flaming pasta.",
+    description:
+      "Special flaming pasta.",
     image: "/images/pasta-dish.jpg",
     price: 749,
   },
@@ -289,7 +335,8 @@ const baseMenuItems: MenuItem[] = [
     id: "fried-crispy-wings",
     name: "Fried & Crispy",
     category: "Wings",
-    description: "Crispy fried chicken wings.",
+    description:
+      "Crispy fried chicken wings.",
     image: "/images/sides-platter.jpg",
     price: 599,
   },
@@ -297,7 +344,8 @@ const baseMenuItems: MenuItem[] = [
     id: "bbq-wings",
     name: "BBQ",
     category: "Wings",
-    description: "BBQ-flavoured chicken wings.",
+    description:
+      "BBQ-flavoured chicken wings.",
     image: "/images/sides-platter.jpg",
     price: 599,
   },
@@ -305,7 +353,8 @@ const baseMenuItems: MenuItem[] = [
     id: "creamo-wings",
     name: "Creamo",
     category: "Wings",
-    description: "Creamy-style chicken wings.",
+    description:
+      "Creamy-style chicken wings.",
     image: "/images/sides-platter.jpg",
     price: 599,
   },
@@ -313,7 +362,8 @@ const baseMenuItems: MenuItem[] = [
     id: "oven-baked-wings",
     name: "Oven Baked",
     category: "Wings",
-    description: "Oven-baked chicken wings.",
+    description:
+      "Oven-baked chicken wings.",
     image: "/images/sides-platter.jpg",
     price: 549,
   },
@@ -321,7 +371,8 @@ const baseMenuItems: MenuItem[] = [
     id: "flaming-wings",
     name: "Flaming",
     category: "Wings",
-    description: "Spicy flaming chicken wings.",
+    description:
+      "Spicy flaming chicken wings.",
     image: "/images/sides-platter.jpg",
     price: 549,
   },
@@ -329,7 +380,8 @@ const baseMenuItems: MenuItem[] = [
     id: "loaded-fries",
     name: "Loaded Fries",
     category: "Fries",
-    description: "Loaded fries.",
+    description:
+      "Loaded fries.",
     image: "/images/sides-platter.jpg",
     price: 650,
   },
@@ -337,7 +389,8 @@ const baseMenuItems: MenuItem[] = [
     id: "french-fries",
     name: "French Fries",
     category: "Fries",
-    description: "French fries.",
+    description:
+      "French fries.",
     image: "/images/sides-platter.jpg",
     price: 199,
   },
@@ -345,7 +398,8 @@ const baseMenuItems: MenuItem[] = [
     id: "family-fries",
     name: "Family Fries",
     category: "Fries",
-    description: "Family-size fries.",
+    description:
+      "Family-size fries.",
     image: "/images/sides-platter.jpg",
     price: 350,
   },
@@ -371,7 +425,8 @@ const baseMenuItems: MenuItem[] = [
     id: "fried-chicken-chest",
     name: "Fried Chicken (Chest)",
     category: "Chicken & Sides",
-    description: "Fried chicken chest piece.",
+    description:
+      "Fried chicken chest piece.",
     image: "/images/sides-platter.jpg",
     price: 250,
   },
@@ -379,7 +434,8 @@ const baseMenuItems: MenuItem[] = [
     id: "fried-chicken",
     name: "Fried Chicken",
     category: "Chicken & Sides",
-    description: "Fried chicken piece.",
+    description:
+      "Fried chicken piece.",
     image: "/images/sides-platter.jpg",
     price: 220,
   },
@@ -387,7 +443,8 @@ const baseMenuItems: MenuItem[] = [
     id: "nuggets",
     name: "Nuggets",
     category: "Chicken & Sides",
-    description: "10 pieces.",
+    description:
+      "10 pieces.",
     image: "/images/sides-platter.jpg",
     price: 449,
   },
@@ -395,7 +452,8 @@ const baseMenuItems: MenuItem[] = [
     id: "hot-shots",
     name: "Hot Shots",
     category: "Chicken & Sides",
-    description: "10 pieces.",
+    description:
+      "10 pieces.",
     image: "/images/sides-platter.jpg",
     price: 449,
   },
@@ -403,7 +461,8 @@ const baseMenuItems: MenuItem[] = [
     id: "special-sauce-dip",
     name: "Special Sauce",
     category: "Dips",
-    description: "Tele Pizza special sauce dip.",
+    description:
+      "Tele Pizza special sauce dip.",
     image: "/images/sides-platter.jpg",
     price: 50,
   },
@@ -411,7 +470,8 @@ const baseMenuItems: MenuItem[] = [
     id: "bone-fire-dip",
     name: "Bone Fire",
     category: "Dips",
-    description: "Bone fire sauce dip.",
+    description:
+      "Bone fire sauce dip.",
     image: "/images/sides-platter.jpg",
     price: 50,
   },
@@ -419,7 +479,8 @@ const baseMenuItems: MenuItem[] = [
     id: "dip-sauce",
     name: "Dip Sauce",
     category: "Dips",
-    description: "Classic dip sauce.",
+    description:
+      "Classic dip sauce.",
     image: "/images/sides-platter.jpg",
     price: 50,
   },
@@ -427,7 +488,8 @@ const baseMenuItems: MenuItem[] = [
     id: "garlic-ranch-dip",
     name: "Garlic Ranch",
     category: "Dips",
-    description: "Garlic ranch dip.",
+    description:
+      "Garlic ranch dip.",
     image: "/images/sides-platter.jpg",
     price: 50,
   },
@@ -435,7 +497,8 @@ const baseMenuItems: MenuItem[] = [
     id: "drink-1-5l",
     name: "1.5 Liter",
     category: "Drinks",
-    description: "1.5 liter soft drink.",
+    description:
+      "1.5 liter soft drink.",
     image: "/images/desserts-drinks.jpg",
     price: 210,
   },
@@ -443,7 +506,8 @@ const baseMenuItems: MenuItem[] = [
     id: "drink-1l",
     name: "1 Liter",
     category: "Drinks",
-    description: "1 liter soft drink.",
+    description:
+      "1 liter soft drink.",
     image: "/images/desserts-drinks.jpg",
     price: 170,
   },
@@ -451,7 +515,8 @@ const baseMenuItems: MenuItem[] = [
     id: "drink-500ml",
     name: "500 ml",
     category: "Drinks",
-    description: "500 ml soft drink.",
+    description:
+      "500 ml soft drink.",
     image: "/images/desserts-drinks.jpg",
     price: 110,
   },
@@ -459,7 +524,8 @@ const baseMenuItems: MenuItem[] = [
     id: "drink-345ml",
     name: "345 ml",
     category: "Drinks",
-    description: "345 ml soft drink.",
+    description:
+      "345 ml soft drink.",
     image: "/images/desserts-drinks.jpg",
     price: 70,
   },
@@ -467,7 +533,8 @@ const baseMenuItems: MenuItem[] = [
     id: "large-water",
     name: "Large Water",
     category: "Drinks",
-    description: "Large bottled water.",
+    description:
+      "Large bottled water.",
     image: "/images/desserts-drinks.jpg",
     price: 99,
   },
@@ -475,7 +542,8 @@ const baseMenuItems: MenuItem[] = [
     id: "small-water",
     name: "Small Water",
     category: "Drinks",
-    description: "Small bottled water.",
+    description:
+      "Small bottled water.",
     image: "/images/desserts-drinks.jpg",
     price: 50,
   },
@@ -483,24 +551,29 @@ const baseMenuItems: MenuItem[] = [
     id: "family-deal",
     name: "Family Deal",
     category: "Deals",
-    description: "1 Large Pizza + 10 Pcs Wings + 1.5 Liter Drink.",
+    description:
+      "1 Large Pizza + 10 Pcs Wings + 1.5 Liter Drink.",
     image: "/images/promos/family-deal.jpg",
+    featured: true,
     price: 2250,
   },
   {
     id: "pizza-fest",
     name: "Pizza Fest",
     category: "Deals",
-    description: "1 Large Pizza + 1.5 Liter Drink.",
+    description:
+      "1 Large Pizza + 1.5 Liter Drink.",
     image: "/images/promos/pizza-fest.jpg",
-    price: 1680,
     badge: "Hot",
+    featured: true,
+    price: 1680,
   },
   {
     id: "mega-offer",
     name: "Mega Offer",
     category: "Deals",
-    description: "2 Large Pizza + 1.5 Liter Coke.",
+    description:
+      "2 Large Pizza + 1.5 Liter Coke.",
     image: "/images/products/deal-combo.jpg",
     price: 3140,
   },
@@ -508,16 +581,19 @@ const baseMenuItems: MenuItem[] = [
     id: "pair-deal",
     name: "Pair Deal",
     category: "Deals",
-    description: "2 Medium Pizza + 1.5 Liter Coke.",
+    description:
+      "2 Medium Pizza + 1.5 Liter Coke.",
     image: "/images/promos/pair-deal.jpg",
-    price: 1999,
     badge: "Hot",
+    featured: true,
+    price: 1999,
   },
   {
     id: "family-festival",
     name: "Family Festival",
     category: "Deals",
-    description: "5 Zinger Burger + 1.5 Drink.",
+    description:
+      "5 Zinger Burger + 1.5 Drink.",
     image: "/images/products/deal-combo.jpg",
     price: 2350,
   },
@@ -525,7 +601,8 @@ const baseMenuItems: MenuItem[] = [
     id: "deal-for-two",
     name: "Deal for 2",
     category: "Deals",
-    description: "2 Zinger Burger + 2 Drink 345ml.",
+    description:
+      "2 Zinger Burger + 2 Drink 345ml.",
     image: "/images/products/deal-combo.jpg",
     price: 999,
   },
@@ -533,12 +610,11 @@ const baseMenuItems: MenuItem[] = [
     id: "knock-out-deal",
     name: "Knock Out Deal",
     category: "Deals",
-    description: "3 Zinger Burger + 1 Liter Drink.",
+    description:
+      "3 Zinger Burger + 1 Liter Drink.",
     image: "/images/promos/knock-out-deal.jpg",
     price: 1440,
   },
-  // Internal topping SKUs (product_type=topping) — used by Pizza Customizer / future Admin.
-  // Not listed in customer browse categories above.
   {
     id: "extra-chicken",
     name: "Extra Chicken",
@@ -548,7 +624,11 @@ const baseMenuItems: MenuItem[] = [
       "Extra chicken topping for pizza. Size tier matches small / medium / large pizza.",
     image: "/images/menu-pizza.jpg",
     productType: "topping",
-    variants: toppingChickenVariants,
+    variants: [
+    { label: "Small", price: 50, sizeCode: "small", isDefault: true },
+    { label: "Medium", price: 100, sizeCode: "medium" },
+    { label: "Large", price: 150, sizeCode: "large" },
+  ],
   },
   {
     id: "extra-cheese",
@@ -559,14 +639,19 @@ const baseMenuItems: MenuItem[] = [
       "Extra cheese topping for pizza. Size tier matches small / medium / large pizza.",
     image: "/images/menu-pizza.jpg",
     productType: "topping",
-    variants: toppingCheeseVariants,
+    variants: [
+    { label: "Small", price: 50, sizeCode: "small", isDefault: true },
+    { label: "Medium", price: 100, sizeCode: "medium" },
+    { label: "Large", price: 150, sizeCode: "large" },
+  ],
   },
   {
     id: "extra-cheese-slice",
     name: "Extra Cheese Slice",
     category: "Toppings",
     categorySlug: "toppings",
-    description: "Extra cheese slice topping for pizza (single verified price).",
+    description:
+      "Extra cheese slice topping for pizza (single verified price).",
     image: "/images/menu-pizza.jpg",
     productType: "topping",
     price: 60,

@@ -1,3 +1,11 @@
+/**
+ * Menu catalog loader.
+ *
+ * Preferred source: live Supabase / API (DB = operational source of truth).
+ * Fallback: generated copy of data/catalog/telepizza-canonical-menu.json via menu-data.ts
+ * (explicit offline control — regenerate with scripts/generate-menu-fallback-from-canonical.mjs).
+ * Do not maintain a second hand-edited price list.
+ */
 import {
   menuCategories as fallbackMenuCategories,
   menuItems as fallbackMenuItems,

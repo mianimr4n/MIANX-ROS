@@ -1,7 +1,9 @@
 /**
- * Static modifier catalog — mirrors supabase migration seed
- * `20260718120000_product_modifier_system.sql` for offline / bundled website use.
- * Source of truth for Admin CRUD is the database; this file is the fallback only.
+ * Static modifier catalog — offline / bundled website fallback only.
+ * Linked SKU price_delta values must match data/catalog/telepizza-canonical-menu.json
+ * (and live menu_items.base_price). Unverified seed options (crust paid tiers,
+ * vegetables, meat extras) remain flagged OWNER_CONFIRMATION_REQUIRED in the canonical
+ * manifest — do not treat those deltas as board-verified evergreen prices.
  */
 
 export type ModifierSelectionType = "single" | "multi";
@@ -130,7 +132,7 @@ export const STATIC_MODIFIER_GROUPS: ModifierGroupDef[] = [
       {
         code: "extra-cheese-slice",
         name: "Extra Cheese Slice",
-        priceDelta: 50,
+        priceDelta: 60,
         linkedMenuItemSlug: "extra-cheese-slice",
         sortOrder: 2,
       },
@@ -178,9 +180,9 @@ export const STATIC_MODIFIER_GROUPS: ModifierGroupDef[] = [
     sortOrder: 70,
     options: [
       { code: "drink-345ml", name: "Drink 345ml", priceDelta: 70, linkedMenuItemSlug: "drink-345ml", sortOrder: 1 },
-      { code: "drink-500ml", name: "Drink 500ml", priceDelta: 100, linkedMenuItemSlug: "drink-500ml", sortOrder: 2 },
-      { code: "drink-1l", name: "Drink 1L", priceDelta: 150, linkedMenuItemSlug: "drink-1l", sortOrder: 3 },
-      { code: "drink-1-5l", name: "Drink 1.5L", priceDelta: 200, linkedMenuItemSlug: "drink-1-5l", sortOrder: 4 },
+      { code: "drink-500ml", name: "Drink 500ml", priceDelta: 110, linkedMenuItemSlug: "drink-500ml", sortOrder: 2 },
+      { code: "drink-1l", name: "Drink 1L", priceDelta: 170, linkedMenuItemSlug: "drink-1l", sortOrder: 3 },
+      { code: "drink-1-5l", name: "Drink 1.5L", priceDelta: 210, linkedMenuItemSlug: "drink-1-5l", sortOrder: 4 },
     ],
   },
   {
@@ -193,8 +195,8 @@ export const STATIC_MODIFIER_GROUPS: ModifierGroupDef[] = [
     sortOrder: 80,
     options: [
       { code: "french-fries", name: "French Fries", priceDelta: 199, linkedMenuItemSlug: "french-fries", sortOrder: 1 },
-      { code: "family-fries", name: "Family Fries", priceDelta: 449, linkedMenuItemSlug: "family-fries", sortOrder: 2 },
-      { code: "loaded-fries", name: "Loaded Fries", priceDelta: 399, linkedMenuItemSlug: "loaded-fries", sortOrder: 3 },
+      { code: "family-fries", name: "Family Fries", priceDelta: 350, linkedMenuItemSlug: "family-fries", sortOrder: 2 },
+      { code: "loaded-fries", name: "Loaded Fries", priceDelta: 650, linkedMenuItemSlug: "loaded-fries", sortOrder: 3 },
     ],
   },
 ];
