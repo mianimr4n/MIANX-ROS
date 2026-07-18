@@ -1,10 +1,10 @@
 # Launch Mode — AI Agent Coordination Status
 
-**Date:** 2026-07-19  
-**Coordinator:** Project Manager Agent (Mianx.ai Launch Mode)  
-**Priority:** Highest — Telepizza Pakistan production launch before **14 August**  
-**ERP expansion:** Deferred until Telepizza launch complete  
-**Roadmap SSOT:** `docs/architecture/TELEPIZZA-MASTER-ROADMAP.md`  
+**Date:** 2026-07-19
+**Coordinator:** Project Manager Agent (Mianx.ai Launch Mode)
+**Priority:** Highest — Telepizza Pakistan production launch before **14 August**
+**ERP expansion:** Deferred until Telepizza launch complete
+**Roadmap SSOT:** `docs/architecture/TELEPIZZA-MASTER-ROADMAP.md`
 
 ---
 
@@ -50,8 +50,8 @@
 | 15 | Order saved in history | 🟡 | Server store yes; customer hub still partly device-local |
 | 16 | Customer can reorder | ✅ | Catalog-backed reorder (PR #82) |
 
-**Digital ops loop (platform):** ✅ Foundation shipped (merge remediation to `main` still pending)  
-**14 Aug business readiness:** still needs staff/rider accounts, Owner GO/NO-GO, Bypass decision, COD acceptance  
+**Digital ops loop (platform):** ✅ Foundation shipped (merge remediation to `main` still pending)
+**14 Aug business readiness:** still needs staff/rider accounts, Owner GO/NO-GO, Bypass decision, COD acceptance
 
 Northern Bypass remains **`coming-soon`** until approved activation.
 
@@ -59,15 +59,15 @@ Northern Bypass remains **`coming-soon`** until approved activation.
 
 ## Remaining Owner / Ops tasks (not code)
 
-1. Merge Sprint 4.6 remediation follow-up PR to `main` + deploy API/website  
-2. Create staff invites (BM, kitchen, cashier) + rider roster rows for Royal Orchard  
-3. Dry-run one live order through `/ops` end-to-end  
-4. Lock Tier A (COD + RO) vs dual-branch Bypass activation  
-5. Aug 13 GO/NO-GO with smoke evidence  
+1. Merge Sprint 4.6 remediation follow-up PR to `main` + deploy API/website
+2. Create staff invites (BM, kitchen, cashier) + rider roster rows for Royal Orchard
+3. Dry-run one live order through `/ops` end-to-end
+4. Lock Tier A (COD + RO) vs dual-branch Bypass activation
+5. Aug 13 GO/NO-GO with smoke evidence
 
 ---
 
 ## Definition of Done (task)
 
-Code + backend + DB + UI + responsive + a11y + tests + build + docs + **Ready for review**.  
+Code + backend + DB + UI + responsive + a11y + tests + build + docs + **Ready for review**.
 Launch Mode agents do not merge or deploy automatically.
