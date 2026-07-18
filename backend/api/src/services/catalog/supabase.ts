@@ -196,9 +196,11 @@ async function fetchModifierGroupsByItemSlug(
   const { data, error } = await client
     .from("item_modifier_groups")
     .select(
-      "sort_order, is_active, is_required, min_select, max_select, menu_item:menu_items!inner(slug), group:modifier_groups!inner(code, name, description, selection_type, min_select, max_select, is_required, sort_order, is_active, options:modifier_options(code, name, price_delta, price_delta_by_size, size_code, is_default, sort_order, is_active, linked_item:menu_items!modifier_options_linked_menu_item_id_fkey(slug)))",
+      "sort_order, is_active, is_available, is_required, min_select, max_select, menu_item:menu_items!inner(slug), group:modifier_groups!inner(code, name, description, selection_type, min_select, max_select, is_required, sort_order, is_active, options:modifier_options(code, name, price_delta, price_delta_by_size, size_code, is_default, sort_order, is_active, linked_item:menu_items!modifier_options_linked_menu_item_id_fkey(slug)))",
     )
-    .eq("is_active", true);
+    .eq("is_active", true)
+    .eq("is_available", true)
+    .is("branch_id", null);
 
   if (error) {
     // Additive feature — catalog still works before migration is applied.
