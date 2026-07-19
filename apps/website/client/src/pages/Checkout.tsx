@@ -26,6 +26,11 @@ import {
   listSavedAddresses,
   type SavedCustomerAddress,
 } from "@/lib/customer-addresses";
+import {
+  cloudAddressToSaved,
+  cloudAddressesAvailable,
+  fetchCloudAddresses,
+} from "@/lib/customer-addresses-api";
 
 type QuotePhase = "idle" | "loading" | "ready" | "expiring" | "expired" | "error";
 
@@ -33,7 +38,7 @@ export default function Checkout() {
   const [, navigate] = useLocation();
   const { state, subtotal, clearCart, setOrderDetails } = useCart();
   const { selectedBranch } = useBranch();
-  const { profile, user, session } = useAuth();
+  const { profile, user, session, isAuthenticated } = useAuth();
   const [contactName, setContactName] = useState(profile?.fullName ?? "");
   const [contactPhone, setContactPhone] = useState(profile?.phone ?? "");
   const [deliveryAddress, setDeliveryAddress] = useState(state.order.deliveryAddress);
@@ -128,6 +133,34 @@ export default function Checkout() {
       setSelectedAddressId("");
       return;
     }
+
+    const usingCloudAddresses = Boolean(
+      isAuthenticated && session?.access_token && cloudAddressesAvailable(),
+    );
+
+    if (usingCloudAddresses && session?.access_token) {
+      void fetchCloudAddresses(session.access_token)
+        .then((rows) => {
+          const next = rows.map(cloudAddressToSaved);
+          setSavedAddresses(next);
+          if (!deliveryAddress.trim() && next.length > 0) {
+            const selected = next.find((address) => address.isDefault) ?? next[0];
+            setSelectedAddressId(selected.id);
+            setDeliveryAddress(formatSavedAddress(selected));
+          }
+        })
+        .catch(() => {
+          const next = listSavedAddresses(ownerKey);
+          setSavedAddresses(next);
+          if (!deliveryAddress.trim() && next.length > 0) {
+            const selected = next.find((address) => address.isDefault) ?? next[0];
+            setSelectedAddressId(selected.id);
+            setDeliveryAddress(formatSavedAddress(selected));
+          }
+        });
+      return;
+    }
+
     const next = listSavedAddresses(ownerKey);
     setSavedAddresses(next);
     if (!deliveryAddress.trim() && next.length > 0) {
@@ -135,7 +168,7 @@ export default function Checkout() {
       setSelectedAddressId(selected.id);
       setDeliveryAddress(formatSavedAddress(selected));
     }
-  }, [profile?.email, user?.email, user?.id]);
+  }, [profile?.email, user?.email, user?.id, isAuthenticated, session?.access_token]);
 
   // Rotate idempotency key when material checkout data changes
   useEffect(() => {

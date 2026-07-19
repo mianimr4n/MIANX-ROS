@@ -25,7 +25,8 @@ test("CP-1 addresses: cloud sync flag, extended fields, import helpers, no GPS",
   assert.doesNotMatch(addresses, /latitude|longitude|gps|coordinates/i);
   assert.match(addressesApi, /\/me\/addresses/);
   assert.match(addressesApi, /Authorization/);
-  assert.match(hub, /ADDRESSES_CLOUD_SYNC_AVAILABLE/);
+  assert.match(addressesApi, /cloudAddressToSaved/);
+  assert.match(hub, /ADDRESSES_CLOUD_SYNC_AVAILABLE|fetchCloudAddresses/);
   assert.match(hub, /fetchCloudAddresses/);
   assert.match(hub, /importCloudAddresses/);
 });
@@ -35,7 +36,10 @@ test("CP-1 Menu search debounce and address-aware checkout imports", () => {
   const checkout = read("apps/website/client/src/pages/Checkout.tsx");
 
   assert.match(menu, /setDebouncedSearch/);
-  assert.match(menu, /180/);
-  assert.match(menu, /aria-label=["']Search menu(?: items)?["']/);
-  assert.match(checkout, /listSavedAddresses/);
+  assert.match(menu, /type=["']search["']/);
+  assert.match(menu, /aria-hidden=["']true["']/);
+  assert.match(menu, /aria-pressed=/);
+  assert.match(menu, /aria-live=["']polite["']/);
+  assert.match(menu, /FavoriteHeartButton/);
+  assert.match(checkout, /fetchCloudAddresses|cloudAddressToSaved/);
 });

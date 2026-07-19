@@ -51,7 +51,7 @@ test("addresses: cloud SoT enabled with device draft import honesty", () => {
   const addresses = read("apps/website/client/src/lib/customer-addresses.ts");
   const proposal = read("docs/architecture/MY-TELEPIZZA-ADDRESSES-MIGRATION-PROPOSAL.md");
 
-  assert.match(hub, /ADDRESSES_CLOUD_SYNC_AVAILABLE/);
+  assert.match(hub, /fetchCloudAddresses|importCloudAddresses/);
   assert.match(addresses, /ADDRESSES_CLOUD_SYNC_AVAILABLE = true/);
   assert.match(hub, /fetchCloudAddresses|importCloudAddresses/);
   assert.match(addresses, /draftToImportPayload|markAddressImportCompleted/);

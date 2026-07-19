@@ -1,5 +1,5 @@
 import { fetchApiData, isApiConfigured } from "@/lib/api";
-import type { AddressLabel } from "@/lib/customer-addresses";
+import type { AddressLabel, SavedCustomerAddress } from "@/lib/customer-addresses";
 
 export type CloudCustomerAddress = {
   id: string;
@@ -41,6 +41,26 @@ function authHeaders(accessToken: string): Record<string, string> {
 
 export function cloudAddressesAvailable(): boolean {
   return isApiConfigured;
+}
+
+export function cloudAddressToSaved(address: CloudCustomerAddress): SavedCustomerAddress {
+  return {
+    id: address.id,
+    label: address.label,
+    recipientName: address.recipientName,
+    phone: address.phone,
+    line1: address.line1,
+    line2: address.line2,
+    area: address.area,
+    city: address.city,
+    landmark: address.landmark,
+    deliveryZone: address.deliveryZone,
+    preferredBranchId: address.preferredBranchId,
+    notes: "",
+    isDefault: address.isDefault,
+    createdAt: address.createdAt,
+    updatedAt: address.updatedAt,
+  };
 }
 
 export async function fetchCloudAddresses(accessToken: string): Promise<CloudCustomerAddress[]> {
