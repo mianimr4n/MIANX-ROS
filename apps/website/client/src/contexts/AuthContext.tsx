@@ -573,7 +573,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Use updateUser({ password }) only — do not send current_password or ask for Google password.
       const { data, error } = await supabase.auth.updateUser({ password: input.password });
       if (error) {
-        return { ok: false, message: mapSupabaseAuthError(error.message) };
+        const mapped = mapSupabaseAuthError(error.message);
+        // Secure password-change on the project must not force Google users to invent a current password.
+        if (
+          mapped.toLowerCase().includes("current telepizza password") ||
+          (error.message ?? "").toLowerCase().includes("current password")
+        ) {
+          return {
+            ok: false,
+            message:
+              "Could not attach a Telepizza password yet. Sign out, sign back in with Google, then try Set password again — never enter your Google password here.",
+          };
+        }
+        return { ok: false, message: mapped };
       }
       if (data.user) setUser(data.user);
       return { ok: true };
@@ -639,7 +651,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (error.code === "PHONE_ALREADY_IN_USE") {
             return {
               ok: false,
-              message: "This phone number cannot be used. Try a different number.",
+              message:
+                "This phone number is already linked to another account. Use a different number.",
             };
           }
           if (error.code === "USER_ACCESS_DISABLED") {
