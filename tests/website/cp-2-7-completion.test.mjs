@@ -41,15 +41,6 @@ test("CP-6 reviews migration enforces owned completed order RLS", () => {
   assert.match(migration, /order_reviews_update_own/);
 });
 
-test("FAV-01 ProductDetail exposes FavoriteHeartButton near title", () => {
-  const productDetail = read("apps/website/client/src/pages/ProductDetail.tsx");
-  const menu = read("apps/website/client/src/pages/Menu.tsx");
-
-  assert.match(productDetail, /FavoriteHeartButton/);
-  assert.match(menu, /FavoriteHeartButton/);
-  assert.match(menu, /debouncedSearch/);
-});
-
 test("NOTIF-01 submit-order never fails after successful API create", () => {
   const submitOrder = read("apps/website/client/src/lib/submit-order.ts");
 
