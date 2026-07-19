@@ -118,13 +118,17 @@ test("confirmation UX: Account Created, email shown, Resend Email, Open Gmail", 
   const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
 
   assert.match(register, /Account Created/);
-  assert.match(register, /We sent a confirmation link to/);
-  assert.match(register, /Didn't receive it\?/);
+  assert.match(register, /We've sent a verification email to|We&apos;ve sent a verification email to/);
+  assert.match(register, /Didn't receive it\?|Didn&apos;t receive it\?/);
+  assert.match(register, /Check your spam folder/);
   assert.match(register, /Resend Email/);
   assert.match(register, /Open Gmail/);
+  assert.match(register, /Open Mail App/);
   assert.match(register, /mail\.google\.com/);
   assert.match(register, /cannot\s+sign in until your email is confirmed/i);
-  assert.match(register, /RESEND_COOLDOWN_SECONDS/);
+  assert.match(register, /RESEND_COOLDOWN_SECONDS\s*=\s*60/);
+  assert.match(register, /Email resent successfully/);
+  assert.match(register, /Too many attempts, please wait/);
   assert.doesNotMatch(register, /Account created\. Please confirm your email\./i);
   assert.doesNotMatch(register, /Account created\. Check your inbox and spam folder to confirm your email\./);
 
@@ -132,6 +136,50 @@ test("confirmation UX: Account Created, email shown, Resend Email, Open Gmail", 
   assert.match(authContext, /needsEmailConfirmation/);
   assert.match(authContext, /do not treat as logged in/i);
   assert.match(authContext, /resendConfirmationEmail/);
+});
+
+test("signup confirmation callback lands on Welcome profile completion", () => {
+  const callback = read("apps/website/client/src/pages/AuthCallback.tsx");
+  const redirect = read("apps/website/client/src/lib/auth-redirect.ts");
+  const app = read("apps/website/client/src/App.tsx");
+  const welcome = read("apps/website/client/src/pages/Welcome.tsx");
+
+  assert.match(redirect, /POST_SIGNUP_DESTINATION\s*=\s*["']\/welcome["']/);
+  assert.match(redirect, /["']\/welcome["']/);
+  assert.match(callback, /flow === ["']signup["']/);
+  assert.match(callback, /POST_SIGNUP_DESTINATION/);
+  assert.match(app, /path=["']\/welcome["']/);
+  assert.match(welcome, /Welcome to Telepizza/);
+  assert.match(welcome, /normalizePakistaniMobileE164/);
+});
+
+test("phone normalization 03XXXXXXXXX → +923XXXXXXXXX on profile and checkout", () => {
+  const phone = read("apps/website/client/src/lib/phone.ts");
+  const checkout = read("apps/website/client/src/pages/Checkout.tsx");
+  const myTelepizza = read("apps/website/client/src/pages/MyTelepizza.tsx");
+  const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
+
+  assert.match(phone, /export function normalizePakistaniMobileE164/);
+  assert.match(phone, /\+92\$\{national\}/);
+  assert.match(checkout, /normalizePakistaniMobileE164/);
+  assert.match(checkout, /contactPhoneE164/);
+  assert.match(myTelepizza, /normalizePakistaniMobileE164/);
+  assert.match(authContext, /normalizePakistaniMobileE164/);
+  assert.match(authContext, /already linked to another account/);
+
+  // Mirror of production helper.
+  function normalizePakistaniMobileE164(value) {
+    const digits = value.replace(/\D/g, "");
+    let national = null;
+    if (digits.startsWith("92") && digits.length === 12 && digits[2] === "3") national = digits.slice(2);
+    else if (digits.startsWith("0") && digits.length === 11 && digits[1] === "3") national = digits.slice(1);
+    else if (digits.length === 10 && digits.startsWith("3")) national = digits;
+    if (!national || !/^3\d{9}$/.test(national)) return { ok: false };
+    return { ok: true, e164: `+92${national}` };
+  }
+  assert.deepEqual(normalizePakistaniMobileE164("03001234567"), { ok: true, e164: "+923001234567" });
+  assert.deepEqual(normalizePakistaniMobileE164("+923001234567"), { ok: true, e164: "+923001234567" });
+  assert.equal(normalizePakistaniMobileE164("0211234567").ok, false);
 });
 
 test("no privilege from OAuth metadata", () => {

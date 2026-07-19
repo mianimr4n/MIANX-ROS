@@ -65,7 +65,12 @@ test("email signup confirmation-required state is generic and safe", () => {
   const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
 
   assert.match(register, /Account Created/);
-  assert.match(register, /We sent a confirmation link to/);
+  assert.match(register, /We've sent a verification email to|We&apos;ve sent a verification email to/);
+  assert.match(register, /Didn't receive it\?|Didn&apos;t receive it\?/);
+  assert.match(register, /Check your spam folder/);
+  assert.match(register, /Open Mail App|Open email app/);
+  assert.match(register, /Email resent successfully/);
+  assert.match(register, /RESEND_COOLDOWN_SECONDS\s*=\s*60/);
   assert.match(authContext, /emailRedirectTo:\s*getEmailConfirmationRedirectTo/);
   assert.match(authContext, /needsEmailConfirmation/);
   assert.match(authContext, /do not treat as logged in/i);
