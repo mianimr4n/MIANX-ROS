@@ -82,7 +82,8 @@ test("My Telepizza supports device address drafts and checkout selection", () =>
   assert.match(account, /\bEdit\b/);
   assert.match(account, /\bDelete\b/);
   assert.match(account, /Add device draft/);
-  assert.match(account, /OWNER REVIEW REQUIRED/);
+  assert.match(account, /Address book sync is not available yet|not synced to your Telepizza account/i);
+  assert.doesNotMatch(account, /OWNER REVIEW REQUIRED/);
   assert.match(checkout, /listSavedAddresses/);
   assert.match(checkout, /saved-delivery-address/);
   assert.match(checkout, /formatSavedAddress/);

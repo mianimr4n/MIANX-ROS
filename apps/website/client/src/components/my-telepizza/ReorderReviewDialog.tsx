@@ -33,9 +33,9 @@ export function ReorderReviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl">
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl border-border">
         <DialogHeader>
-          <DialogTitle>Review reorder</DialogTitle>
+          <DialogTitle className="brand-heading text-xl">Review reorder</DialogTitle>
           <DialogDescription>
             Prices and availability are refreshed from the live menu. Unavailable items are not
             added. Nothing is substituted silently.
