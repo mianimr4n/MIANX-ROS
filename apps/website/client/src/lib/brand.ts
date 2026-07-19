@@ -12,6 +12,7 @@ export const BRAND = {
   colors: {
     red: "#E31E24",
     redDark: "#B5121B",
+    gold: "#F5B800",
     cream: "#FFF7F3",
   },
 } as const;

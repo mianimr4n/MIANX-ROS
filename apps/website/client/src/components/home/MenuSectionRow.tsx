@@ -62,14 +62,14 @@ export function MenuSectionRow({
             )}
           </div>
           <Link href={viewAllHref}>
-            <span className="hidden sm:inline-flex items-center text-brand-red font-[var(--font-accent)] font-bold text-sm hover:underline">
+            <span className="inline-flex items-center text-brand-red font-[var(--font-accent)] font-bold text-xs sm:text-sm hover:underline shrink-0">
               View All
-              <ChevronRight className="w-4 h-4 ml-1" />
+              <ChevronRight className="w-4 h-4 ml-0.5" />
             </span>
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {items.map((item, index) => (
             <ProductCard key={item.id} item={item} index={index} />
           ))}

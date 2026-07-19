@@ -43,7 +43,7 @@
   --font-display: "Poppins", sans-serif;
   --font-body: "DM Sans", sans-serif;
   --font-accent: "Space Grotesk", sans-serif;
-  /* Official Telepizza Pakistan brand palette */
+  /* Official Telepizza Pakistan brand palette — red + gold first */
   --color-brand-red: #E31E24;
   --color-brand-red-dark: #B5121B;
   --color-brand-red-light: #F04B50;
@@ -209,11 +209,36 @@
     background: linear-gradient(180deg, var(--brand-cream) 0%, var(--brand-white) 100%);
   }
 
+  .brand-stripe {
+    background: repeating-linear-gradient(
+      90deg,
+      var(--brand-red) 0 28px,
+      var(--color-brand-gold) 28px 56px
+    );
+  }
+
   .brand-heading {
     font-family: var(--font-display);
     font-weight: 800;
     letter-spacing: -0.02em;
     color: var(--brand-charcoal);
+  }
+
+  .brand-heading-accent {
+    color: var(--brand-red);
+  }
+
+  .text-brand-gold-strong {
+    color: var(--color-brand-gold);
+  }
+}
+
+@keyframes hero-kenburns {
+  from {
+    transform: scale(1.05);
+  }
+  to {
+    transform: scale(1.12);
   }
 }
 
