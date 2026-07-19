@@ -36,25 +36,30 @@ test("hub dashboard: active order empty state, shortcuts, preferred branch hones
   assert.match(hub, /aria-label=["']My Telepizza shortcuts["']/);
   assert.match(hub, /Preferred branch/);
   assert.match(hub, /Selected on this device only/);
-  assert.match(hub, /MY-TELEPIZZA-PREFERRED-BRANCH-MIGRATION-PROPOSAL/);
   assert.match(hub, /Profile completion/);
+  assert.match(hub, /More for you/);
+  assert.match(hub, /focusMainAfterNav/);
   assert.match(hub, /HubSupportCard/);
   assert.match(support, /WhatsApp support/);
   assert.match(support, /Need help/);
+  assert.doesNotMatch(hub, /docs\/architecture/);
+  assert.doesNotMatch(hub, /OWNER REVIEW REQUIRED/);
 });
 
-test("addresses: OWNER REVIEW REQUIRED — no cloud SoT claim", () => {
+test("addresses: honest device drafts — no customer-facing owner/docs jargon", () => {
   const hub = read("apps/website/client/src/pages/MyTelepizza.tsx");
   const addresses = read("apps/website/client/src/lib/customer-addresses.ts");
   const proposal = read("docs/architecture/MY-TELEPIZZA-ADDRESSES-MIGRATION-PROPOSAL.md");
 
-  assert.match(hub, /OWNER REVIEW REQUIRED/);
   assert.match(hub, /ADDRESSES_CLOUD_SYNC_AVAILABLE = false/);
-  assert.match(hub, /not your account source of truth|Not account source of truth/i);
-  assert.match(hub, /Device draft/);
+  assert.match(hub, /Device draft|device draft/i);
+  assert.match(hub, /not synced to your (Telepizza )?account|Saved on this device only/i);
   assert.match(addresses, /Not account source of truth/);
   assert.match(proposal, /OWNER REVIEW REQUIRED/);
   assert.match(proposal, /customer_addresses/);
+  assert.doesNotMatch(hub, /OWNER REVIEW REQUIRED/);
+  assert.doesNotMatch(hub, /customer_addresses/);
+  assert.doesNotMatch(hub, /docs\/architecture/);
   assert.doesNotMatch(hub, /Synced to your Telepizza account across devices/);
 });
 
@@ -85,6 +90,7 @@ test("loyalty and payments stay honest — no fake rewards or live wallets", () 
   assert.match(hub, /JazzCash, EasyPaisa, and saved cards are/);
   assert.match(hub, /not live/i);
   assert.doesNotMatch(hub, /You have \d+ points|Rs \d+ rewards balance|earn \d+%/i);
+  assert.doesNotMatch(hub, /docs\/architecture\/MY-TELEPIZZA-LOYALTY/);
   assert.match(loyaltyFuture, /no migrations/i);
 });
 
@@ -93,4 +99,11 @@ test("no new unrelated migrations in this sprint folder claim", () => {
   const branchProposal = read("docs/architecture/MY-TELEPIZZA-PREFERRED-BRANCH-MIGRATION-PROPOSAL.md");
   assert.match(addressesProposal, /do not apply/i);
   assert.match(branchProposal, /do not apply/i);
+});
+
+test("notifications empty state avoids duplicate copy and links honest prefs", () => {
+  const notifications = read("apps/website/client/src/pages/Notifications.tsx");
+  assert.match(notifications, /No notifications yet/);
+  assert.match(notifications, /\/my-telepizza#notifications/);
+  assert.doesNotMatch(notifications, /No notifications yet\.[\s\S]*No notifications yet/);
 });

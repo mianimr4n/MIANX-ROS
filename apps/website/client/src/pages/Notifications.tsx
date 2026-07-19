@@ -30,14 +30,19 @@ export default function Notifications() {
               <p className="text-sm text-muted-foreground">
                 Login to view notifications.
               </p>
-              <Link
-                href={`/login?next=${encodeURIComponent(returnPath)}`}
-                onClick={() => rememberAuthNextPath(returnPath)}
-              >
-                <Button className="rounded-2xl brand-gradient text-white font-semibold">Login</Button>
-              </Link>
+              <Button asChild className="rounded-2xl brand-gradient text-white font-semibold">
+                <Link
+                  href={`/login?next=${encodeURIComponent(returnPath)}`}
+                  onClick={() => rememberAuthNextPath(returnPath)}
+                >
+                  Login
+                </Link>
+              </Button>
               <p className="text-xs text-muted-foreground">
-                <Link href="/my-telepizza" className="font-semibold text-brand-red underline-offset-2 hover:underline">
+                <Link
+                  href="/my-telepizza"
+                  className="font-semibold text-brand-red underline-offset-2 hover:underline"
+                >
                   Back to My Telepizza
                 </Link>
               </p>
@@ -85,19 +90,15 @@ export default function Notifications() {
             </div>
             <p className="font-semibold text-brand-charcoal">No notifications yet</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              No notifications yet. Place an order to receive updates here.
+              Place an order to receive on-device updates here. Email alerts are not sent yet.
             </p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
-              <Link href="/menu">
-                <Button className="rounded-2xl brand-gradient text-white font-semibold">
-                  Browse menu
-                </Button>
-              </Link>
-              <Link href="/my-telepizza#notifications">
-                <Button variant="outline" className="rounded-2xl">
-                  Notification prefs
-                </Button>
-              </Link>
+              <Button asChild className="rounded-2xl brand-gradient text-white font-semibold">
+                <Link href="/menu">Browse menu</Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-2xl">
+                <Link href="/my-telepizza#notifications">Notification prefs</Link>
+              </Button>
             </div>
           </div>
         ) : (

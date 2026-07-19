@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "wouter";
 import {
   Bell,
@@ -13,7 +13,6 @@ import {
   MapPin,
   Package,
   RotateCcw,
-  Settings,
   Shield,
   Star,
   Store,
@@ -68,7 +67,7 @@ type HubSection =
 
 type StatusTone = "success" | "warning" | "neutral";
 
-/** Cloud address book requires owner-approved migration — see docs/architecture/MY-TELEPIZZA-ADDRESSES-MIGRATION-PROPOSAL.md */
+/** Cloud address book is not enabled for customers yet — device drafts only. */
 const ADDRESSES_CLOUD_SYNC_AVAILABLE = false;
 
 const NAV_ITEMS: Array<{ id: HubSection; label: string; icon: typeof LayoutDashboard }> = [
@@ -124,6 +123,7 @@ export default function MyTelepizza() {
   const { addItem, setOrderDetails } = useCart();
 
   const [section, setSection] = useState<HubSection>(sectionFromHash);
+  const focusMainAfterNav = useRef(false);
   const [reorderPreview, setReorderPreview] = useState<ReorderPreview | null>(null);
   const [reorderOpen, setReorderOpen] = useState(false);
 
@@ -169,6 +169,17 @@ export default function MyTelepizza() {
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+
+  useEffect(() => {
+    if (!focusMainAfterNav.current) return;
+    focusMainAfterNav.current = false;
+    const main = document.getElementById("my-telepizza-main");
+    if (!main) return;
+    const heading = main.querySelector<HTMLElement>("h2");
+    const target = heading ?? main;
+    if (heading) heading.tabIndex = -1;
+    target.focus({ preventScroll: false });
+  }, [section]);
 
   function resetAddressForm() {
     setAddressLine1("");
@@ -219,6 +230,7 @@ export default function MyTelepizza() {
   const lastOrder = localOrders[0];
 
   function goTo(next: HubSection) {
+    focusMainAfterNav.current = true;
     setSection(next);
     if (typeof window !== "undefined") {
       window.history.replaceState(null, "", `#${next}`);
@@ -323,24 +335,29 @@ export default function MyTelepizza() {
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-                <Link
-                  href={`/login?next=${encodeURIComponent(returnPath)}`}
-                  onClick={() => rememberAuthNextPath(returnPath)}
-                  className="sm:min-w-[9.5rem]"
+                <Button
+                  asChild
+                  className="w-full rounded-2xl brand-gradient text-white font-semibold sm:min-w-[9.5rem]"
                 >
-                  <Button className="w-full rounded-2xl brand-gradient text-white font-semibold">
+                  <Link
+                    href={`/login?next=${encodeURIComponent(returnPath)}`}
+                    onClick={() => rememberAuthNextPath(returnPath)}
+                  >
                     Sign in
-                  </Button>
-                </Link>
-                <Link
-                  href={`/register?next=${encodeURIComponent(returnPath)}`}
-                  onClick={() => rememberAuthNextPath(returnPath)}
-                  className="sm:min-w-[9.5rem]"
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full rounded-2xl font-semibold sm:min-w-[9.5rem]"
                 >
-                  <Button variant="outline" className="w-full rounded-2xl font-semibold">
+                  <Link
+                    href={`/register?next=${encodeURIComponent(returnPath)}`}
+                    onClick={() => rememberAuthNextPath(returnPath)}
+                  >
                     Create account
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
               <p className="text-xs text-muted-foreground">Powered by Mianx.ai</p>
             </div>
@@ -592,14 +609,14 @@ export default function MyTelepizza() {
                     <button
                       type="button"
                       onClick={() => goTo(item.id)}
-                      className={`w-full flex items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
+                      className={`w-full flex items-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl px-2.5 py-2 sm:px-3 sm:py-2.5 text-left text-xs sm:text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
                         active
-                          ? "bg-brand-red/10 text-brand-red shadow-sm ring-1 ring-brand-red/15"
-                          : "text-brand-charcoal hover:bg-muted/60"
+                          ? "bg-brand-red/10 text-brand-red"
+                          : "text-brand-charcoal/80 hover:bg-muted/50 hover:text-brand-charcoal"
                       }`}
                       aria-current={active ? "page" : undefined}
                     >
-                      <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 opacity-80" aria-hidden="true" />
                       <span className="truncate">{item.label}</span>
                     </button>
                   </li>
@@ -676,13 +693,13 @@ export default function MyTelepizza() {
                             {activeOrder.branchName} · Rs {activeOrder.totalAmount.toLocaleString()}
                           </p>
                         </div>
-                        <Link
-                          href={`/track/${encodeURIComponent(activeOrder.orderNumber)}?phone=${encodeURIComponent(activeOrder.contactPhone)}`}
-                        >
-                          <Button size="sm" className="rounded-2xl brand-gradient text-white">
+                        <Button asChild size="sm" className="rounded-2xl brand-gradient text-white">
+                          <Link
+                            href={`/track/${encodeURIComponent(activeOrder.orderNumber)}?phone=${encodeURIComponent(activeOrder.contactPhone)}`}
+                          >
                             Track live
-                          </Button>
-                        </Link>
+                          </Link>
+                        </Button>
                       </div>
                       <OrderStatusTimeline status={activeOrder.status} />
                     </article>
@@ -693,13 +710,22 @@ export default function MyTelepizza() {
                       <p className="text-sm text-muted-foreground">
                         When you place an order, live status will show here.
                       </p>
-                      <Link href="/menu">
-                        <Button className="mt-2 rounded-2xl brand-gradient text-white">
-                          Order from the menu
-                        </Button>
-                      </Link>
+                      <Button asChild className="mt-2 rounded-2xl brand-gradient text-white">
+                        <Link href="/menu">Order from the menu</Link>
+                      </Button>
                     </div>
                   )}
+                </section>
+
+                <section className="space-y-4" aria-labelledby="hub-more-heading">
+                  <div>
+                    <h2 id="hub-more-heading" className="font-bold text-base text-brand-charcoal/80">
+                      More for you
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Recent orders, delivery drafts, and quieter account shortcuts.
+                    </p>
+                  </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <HubPreviewPanel
@@ -733,7 +759,7 @@ export default function MyTelepizza() {
                                     {order.branchName} · Rs {order.totalAmount.toLocaleString()}
                                   </p>
                                 </div>
-                                <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold capitalize text-brand-charcoal">
+                                <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-xs font-semibold capitalize text-brand-charcoal">
                                   {order.status}
                                 </span>
                               </div>
@@ -768,118 +794,82 @@ export default function MyTelepizza() {
                       <p className="mt-2 text-xs text-muted-foreground">
                         {ADDRESSES_CLOUD_SYNC_AVAILABLE
                           ? "Synced to your account."
-                          : "Not account source of truth — OWNER REVIEW REQUIRED for cloud addresses."}
+                          : "Saved on this device only — not synced to your account yet."}
                       </p>
-                    </HubPreviewPanel>
-
-                    <HubPreviewPanel
-                      id="hub-favorites"
-                      icon={Heart}
-                      title="Favorites"
-                      actionLabel="Browse menu"
-                      actionHref="/menu"
-                    >
-                      <StatusBadge label="Coming soon" tone="warning" />
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Saved favourites aren&apos;t available in My Telepizza yet. We won&apos;t show
-                        placeholder pizzas here.
-                      </p>
-                    </HubPreviewPanel>
-
-                    <HubPreviewPanel
-                      id="hub-reviews"
-                      icon={Star}
-                      title="Reviews"
-                      actionLabel="See orders"
-                      onAction={() => goTo("orders")}
-                    >
-                      <StatusBadge label="Coming soon" tone="warning" />
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Order reviews aren&apos;t live yet. When they launch, real ratings will appear
-                        here — nothing invented.
-                      </p>
-                    </HubPreviewPanel>
-
-                    <HubPreviewPanel
-                      id="hub-notifications"
-                      icon={Bell}
-                      title="Notifications"
-                      actionLabel="Open"
-                      onAction={() => goTo("notifications")}
-                    >
-                      <p className="text-sm text-muted-foreground">
-                        Preference controls are coming soon — nothing can be saved yet. Payment
-                        prefs stay honest: JazzCash, EasyPaisa, and saved cards are not live.
-                      </p>
-                      <Link
-                        href="/notifications"
-                        className="mt-3 inline-flex text-sm font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
-                      >
-                        Inbox on device
-                      </Link>
-                    </HubPreviewPanel>
-
-                    <HubPreviewPanel
-                      id="hub-settings"
-                      icon={Settings}
-                      title="Settings"
-                      actionLabel="Profile"
-                      onAction={() => goTo("profile")}
-                    >
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Account details, security, and preference sections — no extra clicks buried
-                        in menus.
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="rounded-2xl"
-                          onClick={() => goTo("profile")}
-                        >
-                          Profile
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="rounded-2xl"
-                          onClick={() => goTo("security")}
-                        >
-                          Security
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="rounded-2xl"
-                          onClick={() => goTo("notifications")}
-                        >
-                          Prefs
-                        </Button>
-                      </div>
                     </HubPreviewPanel>
                   </div>
 
+                  <div className="rounded-2xl border border-dashed border-border bg-white/60 px-4 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                      Account shortcuts
+                    </p>
+                    <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                      <li>
+                        <button
+                          type="button"
+                          className="font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
+                          onClick={() => goTo("profile")}
+                        >
+                          Profile
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          type="button"
+                          className="font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
+                          onClick={() => goTo("security")}
+                        >
+                          Security
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          type="button"
+                          className="font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
+                          onClick={() => goTo("notifications")}
+                        >
+                          Notification prefs
+                        </button>
+                      </li>
+                      <li>
+                        <Link
+                          href="/notifications"
+                          className="font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
+                        >
+                          Device inbox
+                        </Link>
+                      </li>
+                      <li className="text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5">
+                          <Heart className="h-3.5 w-3.5" aria-hidden="true" />
+                          Favorites — coming soon
+                        </span>
+                      </li>
+                      <li className="text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5">
+                          <Star className="h-3.5 w-3.5" aria-hidden="true" />
+                          Reviews — coming soon
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-border p-4 space-y-2">
+                    <div className="rounded-2xl border border-border/80 bg-muted/10 p-4 space-y-2">
                       <div className="flex items-center gap-2 text-sm font-semibold">
                         <Store className="w-4 h-4 text-brand-red" aria-hidden="true" />
                         Preferred branch
                       </div>
                       <p className="font-bold text-brand-charcoal">{selectedBranch.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        Selected on this device only — cloud sync needs owner-approved storage (
-                        docs/architecture/MY-TELEPIZZA-PREFERRED-BRANCH-MIGRATION-PROPOSAL.md).
+                        Selected on this device only. Saving a preferred branch to your account is
+                        coming later.
                       </p>
-                      <Link href="/branches">
-                        <Button type="button" variant="outline" size="sm" className="rounded-2xl">
-                          Change branch
-                        </Button>
-                      </Link>
+                      <Button asChild type="button" variant="outline" size="sm" className="rounded-2xl">
+                        <Link href="/branches">Change branch</Link>
+                      </Button>
                     </div>
-                    <div className="rounded-2xl border border-border p-4">
+                    <div className="rounded-2xl border border-border/80 bg-muted/10 p-4">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <p className="text-sm font-semibold">Profile completion</p>
@@ -922,7 +912,7 @@ export default function MyTelepizza() {
                   </div>
 
                   {lastCompleted || lastOrder ? (
-                    <div className="rounded-2xl border border-border bg-gradient-to-r from-brand-cream/40 to-white p-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="rounded-2xl border border-border/80 bg-muted/10 p-4 flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold">Quick reorder</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
@@ -942,7 +932,7 @@ export default function MyTelepizza() {
                   ) : null}
                 </section>
 
-                <HubSupportCard
+                                <HubSupportCard
                   orderNumber={activeOrder?.orderNumber}
                   contactPhone={activeOrder?.contactPhone}
                 />
@@ -1075,8 +1065,8 @@ export default function MyTelepizza() {
                   <div>
                     <h2 className="font-bold text-lg">Addresses</h2>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Device drafts for faster checkout in this browser — not your account source of
-                      truth until cloud addresses are approved.
+                      Device drafts for faster checkout in this browser. They are not synced to your
+                      Telepizza account yet.
                     </p>
                   </div>
                   {!showAddressForm ? (
@@ -1101,15 +1091,11 @@ export default function MyTelepizza() {
                   role="status"
                 >
                   <p className="font-semibold text-amber-950">
-                    OWNER REVIEW REQUIRED — cloud address book not available
+                    Address book sync is not available yet
                   </p>
                   <p className="text-amber-900/90">
-                    No <code className="text-xs">customer_addresses</code> table exists yet. We are
-                    not treating localStorage as account source of truth. See{" "}
-                    <span className="font-medium">
-                      docs/architecture/MY-TELEPIZZA-ADDRESSES-MIGRATION-PROPOSAL.md
-                    </span>
-                    . Device drafts below are optional same-browser helpers only.
+                    Drafts below stay on this browser only. We will not treat them as your full
+                    account address book until cloud sync launches.
                   </p>
                 </div>
 
@@ -1119,8 +1105,7 @@ export default function MyTelepizza() {
                     <div>
                       <p className="font-semibold text-lg">No device address drafts yet</p>
                       <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-                        Add a Multan delivery draft for quicker checkout on this browser, or wait for
-                        cloud addresses after owner approval.
+                        Add a Multan delivery draft for quicker checkout on this browser.
                       </p>
                     </div>
                     <Button
@@ -1532,11 +1517,9 @@ export default function MyTelepizza() {
                         "Update password"
                       )}
                     </Button>
-                    <Link href="/forgot-password">
-                      <Button type="button" variant="ghost" className="rounded-2xl">
-                        Forgot password?
-                      </Button>
-                    </Link>
+                    <Button asChild type="button" variant="ghost" className="rounded-2xl">
+                      <Link href="/forgot-password">Forgot password?</Link>
+                    </Button>
                   </form>
                 ) : (
                   <p className="text-sm text-muted-foreground">
@@ -1667,11 +1650,9 @@ export default function MyTelepizza() {
                     <p className="text-sm text-muted-foreground mt-1">
                       When you place an order with this phone, it will appear here.
                     </p>
-                    <Link href="/menu">
-                      <Button className="mt-4 rounded-2xl brand-gradient text-white font-semibold">
-                        Browse menu
-                      </Button>
-                    </Link>
+                    <Button asChild className="mt-4 rounded-2xl brand-gradient text-white font-semibold">
+                      <Link href="/menu">Browse menu</Link>
+                    </Button>
                   </div>
                 ) : (
                   <ul className="space-y-3">
@@ -1706,29 +1687,28 @@ export default function MyTelepizza() {
                           >
                             Reorder
                           </Button>
-                          <Link
-                            href={`/track/${encodeURIComponent(order.orderNumber)}?phone=${encodeURIComponent(order.contactPhone)}`}
-                          >
-                            <Button type="button" variant="outline" size="sm" className="rounded-2xl">
+                          <Button asChild type="button" variant="outline" size="sm" className="rounded-2xl">
+                            <Link
+                              href={`/track/${encodeURIComponent(order.orderNumber)}?phone=${encodeURIComponent(order.contactPhone)}`}
+                            >
                               Track
-                            </Button>
-                          </Link>
+                            </Link>
+                          </Button>
                         </div>
                       </li>
                     ))}
                   </ul>
                 )}
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                  <Link href="/orders">
-                    <Button className="w-full rounded-2xl brand-gradient text-white font-semibold sm:w-auto">
-                      View Order History
-                    </Button>
-                  </Link>
-                  <Link href="/menu">
-                    <Button variant="outline" className="w-full rounded-2xl sm:w-auto">
-                      Browse menu
-                    </Button>
-                  </Link>
+                  <Button
+                    asChild
+                    className="w-full rounded-2xl brand-gradient text-white font-semibold sm:w-auto"
+                  >
+                    <Link href="/orders">View Order History</Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full rounded-2xl sm:w-auto">
+                    <Link href="/menu">Browse menu</Link>
+                  </Button>
                 </div>
               </section>
             ) : null}
@@ -1755,9 +1735,6 @@ export default function MyTelepizza() {
                     <li>Redeem real rewards on future pizzas and sides</li>
                     <li>Member offers when the program launches</li>
                   </ul>
-                  <p className="text-xs text-muted-foreground">
-                    Future design note: docs/architecture/MY-TELEPIZZA-LOYALTY-FUTURE-ARCHITECTURE.md
-                  </p>
                 </div>
               </section>
             ) : null}
@@ -1811,11 +1788,9 @@ export default function MyTelepizza() {
                   <p className="mt-1 text-xs text-muted-foreground">
                     Order update messages stored on this browser appear in your notifications inbox.
                   </p>
-                  <Link href="/notifications" className="mt-3 inline-block">
-                    <Button type="button" variant="outline" size="sm" className="rounded-2xl">
-                      Open notifications inbox
-                    </Button>
-                  </Link>
+                  <Button asChild type="button" variant="outline" size="sm" className="mt-3 rounded-2xl">
+                    <Link href="/notifications">Open notifications inbox</Link>
+                  </Button>
                 </div>
               </section>
             ) : null}
@@ -1964,12 +1939,18 @@ function HubPreviewPanel({
           </h3>
         </div>
         {actionHref ? (
-          <Link href={actionHref}>
-            <Button type="button" variant="ghost" size="sm" className="h-8 shrink-0 rounded-xl px-2 text-brand-red">
+          <Button
+            asChild
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 shrink-0 rounded-xl px-2 text-brand-red"
+          >
+            <Link href={actionHref}>
               {actionLabel}
               <ChevronRight className="ml-0.5 h-3.5 w-3.5" aria-hidden="true" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         ) : (
           <Button
             type="button"
