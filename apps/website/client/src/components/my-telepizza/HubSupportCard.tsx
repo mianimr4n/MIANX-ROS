@@ -51,44 +51,45 @@ export function HubSupportCard({ orderNumber, contactPhone }: HubSupportCardProp
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <a
-            href={toWhatsAppUrl(BRAND.phone, waText)}
-            target="_blank"
-            rel="noreferrer"
-            className="sm:flex-1 sm:min-w-[10rem]"
+          <Button
+            asChild
+            className="w-full rounded-2xl brand-gradient text-white font-semibold focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 sm:min-w-[10rem] sm:flex-1"
           >
-            <Button
-              type="button"
-              className="w-full rounded-2xl brand-gradient text-white font-semibold focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
-            >
+            <a href={toWhatsAppUrl(BRAND.phone, waText)} target="_blank" rel="noreferrer">
               <MessageCircle className="mr-2 h-4 w-4" aria-hidden="true" />
               WhatsApp support
-            </Button>
-          </a>
-          <a
-            href={`tel:+92${branchPhone.replace(/-/g, "").replace(/^0/, "")}`}
-            className="sm:flex-1 sm:min-w-[10rem]"
+            </a>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="w-full rounded-2xl font-semibold sm:min-w-[10rem] sm:flex-1"
           >
-            <Button type="button" variant="outline" className="w-full rounded-2xl font-semibold">
+            <a href={`tel:+92${branchPhone.replace(/-/g, "").replace(/^0/, "")}`}>
               <Phone className="mr-2 h-4 w-4" aria-hidden="true" />
               Call {branchPhone}
-            </Button>
-          </a>
+            </a>
+          </Button>
           {orderNumber && contactPhone ? (
-            <Link
-              href={`/track/${encodeURIComponent(orderNumber)}?phone=${encodeURIComponent(contactPhone)}`}
-              className="sm:flex-1 sm:min-w-[10rem]"
+            <Button
+              asChild
+              variant="outline"
+              className="w-full rounded-2xl font-semibold sm:min-w-[10rem] sm:flex-1"
             >
-              <Button type="button" variant="outline" className="w-full rounded-2xl font-semibold">
+              <Link
+                href={`/track/${encodeURIComponent(orderNumber)}?phone=${encodeURIComponent(contactPhone)}`}
+              >
                 Track this order
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           ) : (
-            <Link href="/track" className="sm:flex-1 sm:min-w-[10rem]">
-              <Button type="button" variant="outline" className="w-full rounded-2xl font-semibold">
-                Track an order
-              </Button>
-            </Link>
+            <Button
+              asChild
+              variant="outline"
+              className="w-full rounded-2xl font-semibold sm:min-w-[10rem] sm:flex-1"
+            >
+              <Link href="/track">Track an order</Link>
+            </Button>
           )}
         </div>
       </div>

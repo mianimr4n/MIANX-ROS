@@ -784,7 +784,7 @@ export default function MyTelepizza() {
                     <button
                       type="button"
                       onClick={() => goTo(item.id)}
-                      className={`w-full flex items-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl px-2.5 py-2 sm:px-3 sm:py-2.5 text-left text-xs sm:text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
+                      className={`w-full flex min-h-11 items-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl px-2.5 py-2.5 sm:px-3 sm:py-3 text-left text-xs sm:text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
                         active
                           ? "bg-brand-red/10 text-brand-red"
                           : "text-brand-charcoal/80 hover:bg-muted/50 hover:text-brand-charcoal"
@@ -973,7 +973,7 @@ export default function MyTelepizza() {
                       <p className="mt-2 text-xs text-muted-foreground">
                         {usingCloudAddresses
                           ? "Synced to your Telepizza account."
-                          : "Device drafts only — sign in with API for cloud sync."}
+                          : "Saved on this device only — not synced to your account yet."}
                       </p>
                     </HubPreviewPanel>
                   </div>
@@ -1002,12 +1002,13 @@ export default function MyTelepizza() {
                         </button>
                       </li>
                       <li>
-                        <Link
-                          href="/settings"
+                        <button
+                          type="button"
                           className="font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
+                          onClick={() => goTo("notifications")}
                         >
                           Notification prefs
-                        </Link>
+                        </button>
                       </li>
                       <li>
                         <Link
@@ -1095,31 +1096,11 @@ export default function MyTelepizza() {
                     </div>
                   </div>
 
-                  {lastCompleted || lastOrder ? (
-                    <div className="rounded-2xl border border-border/80 bg-muted/10 p-4 flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold">Quick reorder</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {(lastCompleted ?? lastOrder)!.orderNumber} · review live prices before
-                          adding to cart
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        className="rounded-2xl brand-gradient text-white font-semibold"
-                        disabled={catalogLoading}
-                        onClick={() => void openReorderReview((lastCompleted ?? lastOrder)!)}
-                      >
-                        Review &amp; reorder
-                      </Button>
-                    </div>
-                  ) : null}
+                  <HubSupportCard
+                    orderNumber={activeOrder?.orderNumber}
+                    contactPhone={activeOrder?.contactPhone}
+                  />
                 </section>
-
-                                <HubSupportCard
-                  orderNumber={activeOrder?.orderNumber}
-                  contactPhone={activeOrder?.contactPhone}
-                />
               </div>
             ) : null}
 
@@ -1251,7 +1232,7 @@ export default function MyTelepizza() {
                     <p className="text-sm text-muted-foreground mt-1">
                       {usingCloudAddresses
                         ? "Delivery addresses synced to your Telepizza account."
-                        : "Device drafts for faster checkout in this browser until cloud sync is available."}
+                        : "Saved on this device only until account sync is available."}
                     </p>
                   </div>
                   {!showAddressForm ? (
@@ -1268,7 +1249,7 @@ export default function MyTelepizza() {
                         setAddressNotice(null);
                       }}
                     >
-                      {usingCloudAddresses ? "Add address" : "Add device draft"}
+                      {usingCloudAddresses ? "Add address" : "Add address draft"}
                     </Button>
                   ) : null}
                 </div>
@@ -1308,8 +1289,8 @@ export default function MyTelepizza() {
                     role="status"
                   >
                     <p className="text-amber-900/90">
-                      Cloud address book needs the live API. Device drafts below are optional
-                      same-browser helpers only.
+                      Account address sync is unavailable right now. Browser drafts below are optional
+                      helpers on this device only.
                     </p>
                   </div>
                 ) : null}
@@ -1318,9 +1299,13 @@ export default function MyTelepizza() {
                   <div className="rounded-2xl border border-dashed border-border px-6 py-10 text-center space-y-4">
                     <MapPin className="w-14 h-14 text-brand-red mx-auto" aria-hidden="true" />
                     <div>
-                      <p className="font-semibold text-lg">No device address drafts yet</p>
+                      <p className="font-semibold text-lg">
+                        {usingCloudAddresses ? "No saved addresses yet" : "No address drafts yet"}
+                      </p>
                       <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-                        Add a Multan delivery draft for quicker checkout on this browser.
+                        {usingCloudAddresses
+                          ? "Add a Multan delivery address for faster checkout."
+                          : "Add a Multan delivery draft for quicker checkout on this browser."}
                       </p>
                     </div>
                     <Button
@@ -1334,9 +1319,9 @@ export default function MyTelepizza() {
                         setAddressError(null);
                         setAddressNotice(null);
                       }}
-                      aria-label="Add your first delivery address draft"
+                      aria-label={usingCloudAddresses ? "Add your first delivery address" : "Add your first delivery address draft"}
                     >
-                      Add device draft
+                      {usingCloudAddresses ? "Add address" : "Add address draft"}
                     </Button>
                   </div>
                 ) : null}
@@ -2029,8 +2014,8 @@ export default function MyTelepizza() {
                     Notifications &amp; checkout prefs
                   </h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Choose how you hear from Telepizza. Prefs save on this device; live SMTP email is
-                    deferred.
+                    Choose how you hear from Telepizza. Preference controls are coming soon —
+                    nothing can be saved yet.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-border bg-brand-cream/30 p-4 text-sm space-y-2">
@@ -2041,18 +2026,35 @@ export default function MyTelepizza() {
                     yet — we will not pretend they are.
                   </p>
                 </div>
-                <Link href="/settings">
-                  <Button type="button" variant="outline" className="rounded-2xl">
-                    Open notification prefs in Settings
-                  </Button>
-                </Link>
+                <div
+                  className="space-y-2"
+                  role="group"
+                  aria-label="Notification preferences coming soon"
+                >
+                  <PreferenceSwitch
+                    label="Order Updates"
+                    description="Status changes from kitchen to delivery"
+                  />
+                  <PreferenceSwitch
+                    label="Promotions"
+                    description="Seasonal deals and limited-time offers"
+                  />
+                  <PreferenceSwitch
+                    label="Delivery Alerts"
+                    description="Rider and arrival updates for your order"
+                  />
+                  <PreferenceSwitch
+                    label="Special Offers"
+                    description="Member-only discounts when Rewards launches"
+                  />
+                </div>
                 <div className="rounded-2xl border border-dashed border-border p-4">
                   <p className="text-sm font-semibold text-brand-charcoal">Device inbox</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Order update messages stored on this browser appear in your notifications inbox.
-                    Email copies are not sent until SMTP ships.
+                    Email alerts are not sent yet.
                   </p>
-                  <Button asChild type="button" variant="outline" size="sm" className="mt-3 rounded-2xl">
+                  <Button asChild type="button" variant="outline" size="sm" className="mt-3 min-h-11 rounded-2xl">
                     <Link href="/notifications">Open notifications inbox</Link>
                   </Button>
                 </div>
@@ -2097,6 +2099,24 @@ function StatusBadge({ label, tone }: { label: string; tone: StatusTone }) {
     >
       {label}
     </span>
+  );
+}
+
+function PreferenceSwitch({ label, description }: { label: string; description: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-muted/20 p-4 text-sm">
+      <div className="min-w-0">
+        <div className="font-semibold">{label}</div>
+        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+        <p className="text-xs text-amber-800 font-semibold mt-1">Coming soon — not available yet</p>
+      </div>
+      <input
+        type="checkbox"
+        disabled
+        aria-label={`${label}: coming soon, not available yet`}
+        className="h-4 w-4 shrink-0 accent-brand-red opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
+      />
+    </div>
   );
 }
 

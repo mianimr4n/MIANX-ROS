@@ -46,7 +46,7 @@ export function OrderStatusTimeline({
             key={step}
             role="listitem"
             aria-current={current ? "step" : undefined}
-            className={`rounded-xl px-2 ${compact ? "py-1 text-xs" : "py-1.5 text-xs"} text-center font-semibold capitalize motion-safe:transition-colors ${
+                    className={`rounded-xl px-2 ${compact ? "min-h-9 py-1 text-xs" : "min-h-10 py-1.5 text-xs"} text-center font-semibold capitalize motion-safe:transition-colors motion-reduce:transition-none ${
               reached
                 ? "bg-brand-red text-white shadow-sm"
                 : "bg-brand-cream text-muted-foreground ring-1 ring-inset ring-border/60"

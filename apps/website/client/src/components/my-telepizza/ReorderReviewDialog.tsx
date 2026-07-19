@@ -103,7 +103,7 @@ export function ReorderReviewDialog({
           <Button
             type="button"
             variant="outline"
-            className="rounded-2xl"
+            className="min-h-11 rounded-2xl"
             onClick={() => onOpenChange(false)}
             disabled={busy}
           >
@@ -111,7 +111,7 @@ export function ReorderReviewDialog({
           </Button>
           <Button
             type="button"
-            className="rounded-2xl brand-gradient text-white font-semibold"
+            className="min-h-11 rounded-2xl brand-gradient text-white font-semibold"
             disabled={!preview.canAddAny || busy}
             onClick={onConfirm}
           >

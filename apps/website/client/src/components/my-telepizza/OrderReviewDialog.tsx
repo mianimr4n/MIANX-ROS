@@ -83,7 +83,7 @@ export function OrderReviewDialog({
                     role="radio"
                     aria-checked={rating === value}
                     aria-label={`${value} star${value === 1 ? "" : "s"}`}
-                    className={`rounded-xl p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
+                    className={`min-h-11 min-w-11 rounded-xl p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
                       selected ? "text-brand-red" : "text-muted-foreground hover:text-brand-red/70"
                     }`}
                     onClick={() => setRating(value)}

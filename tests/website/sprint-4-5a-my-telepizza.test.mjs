@@ -101,7 +101,8 @@ test("no new unrelated migrations in this sprint folder claim", () => {
 test("notifications empty state avoids duplicate copy and links honest prefs", () => {
   const notifications = read("apps/website/client/src/pages/Notifications.tsx");
   assert.match(notifications, /No notifications yet/);
-  assert.match(notifications, /\/settings/);
+  assert.match(notifications, /\/my-telepizza#notifications/);
   assert.doesNotMatch(notifications, /No notifications yet\.[\s\S]*No notifications yet/);
+  assert.doesNotMatch(notifications, /SMTP/);
 });
 
