@@ -26,6 +26,7 @@ import {
   listSavedAddresses,
   type SavedCustomerAddress,
 } from "@/lib/customer-addresses";
+import { normalizePakistaniMobileE164 } from "@/lib/phone";
 
 type QuotePhase = "idle" | "loading" | "ready" | "expiring" | "expired" | "error";
 
@@ -229,6 +230,14 @@ export default function Checkout() {
       return;
     }
 
+    const phoneNormalized = normalizePakistaniMobileE164(contactPhone);
+    if (!phoneNormalized.ok) {
+      setError(phoneNormalized.message);
+      return;
+    }
+    const contactPhoneE164 = phoneNormalized.e164;
+    setContactPhone(contactPhoneE164);
+
     if (deliveryMode === "delivery" && !deliveryAddress.trim()) {
       setError("Delivery address is required.");
       return;
@@ -265,7 +274,7 @@ export default function Checkout() {
           branchName: selectedBranch.name,
           orderType: deliveryMode,
           contactName: contactName.trim(),
-          contactPhone: contactPhone.trim(),
+          contactPhone: contactPhoneE164,
           deliveryAddress: deliveryMode === "delivery" ? deliveryAddress.trim() : undefined,
           notes: notes.trim() || undefined,
           couponCode: couponCode.trim() || undefined,
@@ -286,7 +295,7 @@ export default function Checkout() {
 
       clearCart();
       const successParams = new URLSearchParams({
-        phone: contactPhone.trim(),
+        phone: contactPhoneE164,
         source: result.source,
         status: result.status,
         total: String(result.totalAmount),
@@ -356,8 +365,14 @@ export default function Checkout() {
                     type="tel"
                     inputMode="tel"
                     autoComplete="tel"
+                    placeholder="03XXXXXXXXX or +923XXXXXXXXX"
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
+                    onBlur={() => {
+                      if (!contactPhone.trim()) return;
+                      const normalized = normalizePakistaniMobileE164(contactPhone);
+                      if (normalized.ok) setContactPhone(normalized.e164);
+                    }}
                     className="rounded-2xl"
                   />
                 </div>

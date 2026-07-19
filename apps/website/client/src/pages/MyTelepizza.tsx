@@ -55,6 +55,7 @@ import {
   confirmedReorderCartItems,
   type ReorderPreview,
 } from "@/lib/reorder";
+import { normalizePakistaniMobileE164 } from "@/lib/phone";
 
 type HubSection =
   | "overview"
@@ -1005,6 +1006,11 @@ export default function MyTelepizza() {
                     onChange={(e) => {
                       setPhone(e.target.value);
                       setProfileError(null);
+                    }}
+                    onBlur={() => {
+                      if (!phone.trim()) return;
+                      const normalized = normalizePakistaniMobileE164(phone);
+                      if (normalized.ok) setPhone(normalized.e164);
                     }}
                     className="rounded-2xl"
                     disabled={profileBusy}
