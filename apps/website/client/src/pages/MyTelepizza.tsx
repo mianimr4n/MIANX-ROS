@@ -2,16 +2,20 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "re
 import { Link } from "wouter";
 import {
   Bell,
+  ChevronRight,
   Eye,
   EyeOff,
   Gift,
+  Heart,
   LayoutDashboard,
   Loader2,
   LogOut,
   MapPin,
   Package,
   RotateCcw,
+  Settings,
   Shield,
+  Star,
   Store,
   UserCircle2,
   UserRound,
@@ -245,12 +249,46 @@ export default function MyTelepizza() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background py-16" aria-busy="true">
-        <div className="container max-w-5xl space-y-4">
-          <div className="h-28 rounded-3xl bg-muted/60 animate-pulse motion-reduce:animate-none" />
+      <div className="min-h-screen bg-background py-10 sm:py-16" aria-busy="true" aria-live="polite">
+        <div className="container max-w-5xl space-y-6">
+          <div className="overflow-hidden rounded-3xl border border-border bg-white shadow-sm">
+            <div className="h-1.5 brand-gradient" aria-hidden="true" />
+            <div className="space-y-4 p-4 sm:p-6">
+              <div className="h-3 w-28 rounded-full bg-muted/70 animate-pulse motion-reduce:animate-none" />
+              <div className="h-8 w-2/3 max-w-sm rounded-2xl bg-muted/70 animate-pulse motion-reduce:animate-none" />
+              <div className="h-4 w-1/2 max-w-xs rounded-full bg-muted/60 animate-pulse motion-reduce:animate-none" />
+              <div className="flex gap-2">
+                <div className="h-7 w-28 rounded-full bg-muted/60 animate-pulse motion-reduce:animate-none" />
+                <div className="h-7 w-32 rounded-full bg-muted/60 animate-pulse motion-reduce:animate-none" />
+              </div>
+            </div>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
-            <div className="h-64 rounded-3xl bg-muted/60 animate-pulse motion-reduce:animate-none" />
-            <div className="h-80 rounded-3xl bg-muted/60 animate-pulse motion-reduce:animate-none" />
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:flex lg:flex-col rounded-3xl border border-border bg-white p-3 shadow-sm">
+              {Array.from({ length: 7 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-10 rounded-2xl bg-muted/60 animate-pulse motion-reduce:animate-none"
+                />
+              ))}
+            </div>
+            <div className="space-y-4">
+              <div className="h-40 rounded-3xl border border-border bg-white p-4 shadow-sm">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="h-24 rounded-2xl bg-muted/60 animate-pulse motion-reduce:animate-none"
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="h-52 rounded-3xl bg-muted/50 animate-pulse motion-reduce:animate-none" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="h-36 rounded-3xl bg-muted/50 animate-pulse motion-reduce:animate-none" />
+                <div className="h-36 rounded-3xl bg-muted/50 animate-pulse motion-reduce:animate-none" />
+              </div>
+            </div>
           </div>
           <p className="sr-only">Loading My Telepizza…</p>
         </div>
@@ -261,30 +299,52 @@ export default function MyTelepizza() {
   if (!isAuthenticated || !user) {
     const returnPath = "/my-telepizza";
     return (
-      <div className="min-h-screen bg-background py-16">
-        <div className="container max-w-md text-center">
-          <UserCircle2 className="w-16 h-16 text-brand-red mx-auto mb-4" aria-hidden="true" />
-          <h1 className="brand-heading text-3xl mb-3">My Telepizza</h1>
-          <p className="text-muted-foreground mb-6">
-            Sign in for your personal hub — reorder, track, addresses, and faster checkout. Guest
-            ordering stays available from the menu anytime.
-          </p>
-          <div className="flex gap-3 justify-center">
-            <Link
-              href={`/login?next=${encodeURIComponent(returnPath)}`}
-              onClick={() => rememberAuthNextPath(returnPath)}
-            >
-              <Button className="rounded-2xl brand-gradient text-white">Sign in</Button>
-            </Link>
-            <Link
-              href={`/register?next=${encodeURIComponent(returnPath)}`}
-              onClick={() => rememberAuthNextPath(returnPath)}
-            >
-              <Button variant="outline" className="rounded-2xl">
-                Create account
-              </Button>
-            </Link>
-          </div>
+      <div className="min-h-screen bg-background py-12 sm:py-16">
+        <div className="container max-w-lg">
+          <section
+            className="overflow-hidden rounded-3xl border border-border bg-white text-center shadow-sm"
+            aria-labelledby="my-telepizza-signin-heading"
+          >
+            <div className="h-1.5 brand-gradient" aria-hidden="true" />
+            <div className="space-y-5 px-6 py-10 sm:px-10">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-cream">
+                <UserCircle2 className="h-9 w-9 text-brand-red" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-red">
+                  Telepizza Pakistan
+                </p>
+                <h1 id="my-telepizza-signin-heading" className="brand-heading text-3xl mb-3">
+                  My Telepizza
+                </h1>
+                <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+                  Sign in for your personal hub — reorder, track, addresses, and faster checkout. Guest
+                  ordering stays available from the menu anytime.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+                <Link
+                  href={`/login?next=${encodeURIComponent(returnPath)}`}
+                  onClick={() => rememberAuthNextPath(returnPath)}
+                  className="sm:min-w-[9.5rem]"
+                >
+                  <Button className="w-full rounded-2xl brand-gradient text-white font-semibold">
+                    Sign in
+                  </Button>
+                </Link>
+                <Link
+                  href={`/register?next=${encodeURIComponent(returnPath)}`}
+                  onClick={() => rememberAuthNextPath(returnPath)}
+                  className="sm:min-w-[9.5rem]"
+                >
+                  <Button variant="outline" className="w-full rounded-2xl font-semibold">
+                    Create account
+                  </Button>
+                </Link>
+              </div>
+              <p className="text-xs text-muted-foreground">Powered by Mianx.ai</p>
+            </div>
+          </section>
         </div>
       </div>
     );
@@ -447,58 +507,82 @@ export default function MyTelepizza() {
     setAddressNotice("Default delivery address updated.");
   }
 
+  const welcomeInitial = (displayName.trim().charAt(0) || "T").toUpperCase();
+  const recentOrdersPreview = localOrders.slice(0, 2);
+  const defaultAddress = addresses.find((address) => address.isDefault) ?? addresses[0] ?? null;
+
   return (
-    <div className="min-h-screen bg-background py-10">
+    <div className="min-h-screen bg-background py-8 sm:py-10">
+      <a
+        href="#my-telepizza-main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-2xl focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-brand-red focus:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-red"
+      >
+        Skip to My Telepizza content
+      </a>
       <div className="container max-w-5xl space-y-6">
-        <div className="rounded-3xl border border-border bg-gradient-to-br from-white via-brand-cream/40 to-white p-4 shadow-sm sm:p-6 flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0 space-y-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-brand-red mb-1">
-                My Telepizza
-              </p>
-              <h1 className="brand-heading text-2xl sm:text-3xl mb-1 break-words">
-                Welcome back, {displayName}
-              </h1>
-              {email ? (
-                <p className="text-sm text-muted-foreground break-all">{email}</p>
-              ) : null}
-              {profile?.phone ? (
-                <p className="text-sm text-muted-foreground mt-1">{profile.phone}</p>
-              ) : (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Add a phone number in Profile for faster checkout.
+        <header className="overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-white via-brand-cream/50 to-white shadow-sm">
+          <div className="h-1.5 brand-gradient" aria-hidden="true" />
+          <div className="flex flex-wrap items-start justify-between gap-4 p-4 sm:p-6">
+            <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl brand-gradient text-lg font-bold text-white shadow-sm sm:h-14 sm:w-14 sm:text-xl"
+                aria-hidden="true"
+              >
+                {welcomeInitial}
+              </div>
+              <div className="min-w-0 space-y-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-brand-red mb-1">
+                    My Telepizza
+                  </p>
+                  <h1 className="brand-heading text-2xl sm:text-3xl mb-1 break-words">
+                    Welcome back, {displayName}
+                  </h1>
+                  {email ? (
+                    <p className="text-sm text-muted-foreground break-all">{email}</p>
+                  ) : null}
+                  {profile?.phone ? (
+                    <p className="text-sm text-muted-foreground mt-1">{profile.phone}</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Add a phone number in Profile for faster checkout.
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2" aria-label="Verification status">
+                  <StatusBadge
+                    label={emailVerified ? "Email ✓ Verified" : "Email ⚠ Verification Pending"}
+                    tone={emailVerified ? "success" : "warning"}
+                  />
+                  <StatusBadge label={phoneStatusBadgeLabel} tone={phoneStatusTone} />
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Telepizza Pakistan · Powered by Mianx.ai
                 </p>
-              )}
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2" aria-label="Verification status">
-              <StatusBadge
-                label={emailVerified ? "Email ✓ Verified" : "Email ⚠ Verification Pending"}
-                tone={emailVerified ? "success" : "warning"}
-              />
-              <StatusBadge
-                label={phoneStatusBadgeLabel}
-                tone={phoneStatusTone}
-              />
-            </div>
+            <Button
+              variant="outline"
+              onClick={() => {
+                void signOut();
+              }}
+              className="rounded-2xl shrink-0"
+              aria-label="Log out of your Telepizza account"
+            >
+              <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
+              Logout
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              void signOut();
-            }}
-            className="rounded-2xl"
-            aria-label="Log out of your Telepizza account"
-          >
-            <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
-            Logout
-          </Button>
-        </div>
+        </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
           <nav
             aria-label="My Telepizza sections"
             className="rounded-3xl border border-border bg-white p-3 h-fit shadow-sm lg:sticky lg:top-24"
           >
+            <p className="mb-2 hidden px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:block">
+              Navigate
+            </p>
             <ul className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:flex lg:flex-col">
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
@@ -508,15 +592,15 @@ export default function MyTelepizza() {
                     <button
                       type="button"
                       onClick={() => goTo(item.id)}
-                      className={`w-full flex items-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
+                      className={`w-full flex items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
                         active
-                          ? "bg-brand-red/10 text-brand-red"
+                          ? "bg-brand-red/10 text-brand-red shadow-sm ring-1 ring-brand-red/15"
                           : "text-brand-charcoal hover:bg-muted/60"
                       }`}
                       aria-current={active ? "page" : undefined}
                     >
                       <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      {item.label}
+                      <span className="truncate">{item.label}</span>
                     </button>
                   </li>
                 );
@@ -524,12 +608,17 @@ export default function MyTelepizza() {
             </ul>
           </nav>
 
-          <div className="space-y-6 min-w-0">
+          <div id="my-telepizza-main" className="space-y-6 min-w-0" tabIndex={-1}>
             {section === "overview" ? (
               <div className="space-y-6">
-                <section className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-5">
+                <section
+                  className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-5"
+                  aria-labelledby="hub-overview-heading"
+                >
                   <div>
-                    <h2 className="font-bold text-lg">Your hub</h2>
+                    <h2 id="hub-overview-heading" className="font-bold text-lg">
+                      Your hub
+                    </h2>
                     <p className="text-sm text-muted-foreground mt-1">
                       Reorder favourites, track what&apos;s cooking, and keep checkout details ready —
                       without clutter.
@@ -537,46 +626,40 @@ export default function MyTelepizza() {
                   </div>
 
                   <div
-                    className="flex flex-wrap gap-2"
+                    className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3"
                     role="navigation"
                     aria-label="My Telepizza shortcuts"
                   >
-                    <Link href="/track">
-                      <Button variant="outline" size="sm" className="rounded-2xl">
-                        <Package className="w-4 h-4 mr-1.5" aria-hidden="true" />
-                        Track
-                      </Button>
-                    </Link>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="rounded-2xl"
+                    <QuickActionCard
+                      href="/track"
+                      icon={Package}
+                      title="Track"
+                      description="Live order status"
+                    />
+                    <QuickActionCard
+                      icon={RotateCcw}
+                      title="Reorder"
+                      description={
+                        lastCompleted || lastOrder ? "Review & add to cart" : "Place an order first"
+                      }
                       disabled={!lastCompleted && !lastOrder}
                       onClick={() => {
                         const target = lastCompleted ?? lastOrder;
                         if (target) openReorderReview(target);
                       }}
-                    >
-                      <RotateCcw className="w-4 h-4 mr-1.5" aria-hidden="true" />
-                      Reorder
-                    </Button>
-                    <Link href="/menu">
-                      <Button variant="outline" size="sm" className="rounded-2xl">
-                        <UtensilsCrossed className="w-4 h-4 mr-1.5" aria-hidden="true" />
-                        Menu
-                      </Button>
-                    </Link>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="rounded-2xl"
+                    />
+                    <QuickActionCard
+                      href="/menu"
+                      icon={UtensilsCrossed}
+                      title="Menu"
+                      description="Browse & order"
+                    />
+                    <QuickActionCard
+                      icon={MapPin}
+                      title="Addresses"
+                      description="Delivery drafts"
                       onClick={() => goTo("addresses")}
-                    >
-                      <MapPin className="w-4 h-4 mr-1.5" aria-hidden="true" />
-                      Addresses
-                    </Button>
+                    />
                   </div>
 
                   {activeOrder ? (
@@ -604,7 +687,7 @@ export default function MyTelepizza() {
                       <OrderStatusTimeline status={activeOrder.status} />
                     </article>
                   ) : (
-                    <div className="rounded-2xl border border-dashed border-border p-5 text-center space-y-2">
+                    <div className="rounded-2xl border border-dashed border-border bg-brand-cream/20 p-5 text-center space-y-2">
                       <Package className="w-8 h-8 text-brand-red mx-auto" aria-hidden="true" />
                       <p className="font-semibold">No active order right now</p>
                       <p className="text-sm text-muted-foreground">
@@ -617,6 +700,167 @@ export default function MyTelepizza() {
                       </Link>
                     </div>
                   )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <HubPreviewPanel
+                      id="hub-recent-orders"
+                      icon={Package}
+                      title="Recent Orders"
+                      actionLabel={localOrders.length > 0 ? "View all" : "Open orders"}
+                      onAction={() => goTo("orders")}
+                    >
+                      {!profile?.phone ? (
+                        <p className="text-sm text-muted-foreground">
+                          Add a phone in Profile to match checkout orders on this device.
+                        </p>
+                      ) : recentOrdersPreview.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          No recent orders on this device yet.
+                        </p>
+                      ) : (
+                        <ul className="space-y-2">
+                          {recentOrdersPreview.map((order) => (
+                            <li
+                              key={order.id}
+                              className="rounded-xl border border-border/80 bg-brand-cream/30 px-3 py-2"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-semibold text-brand-red">
+                                    {order.orderNumber}
+                                  </p>
+                                  <p className="truncate text-xs text-muted-foreground">
+                                    {order.branchName} · Rs {order.totalAmount.toLocaleString()}
+                                  </p>
+                                </div>
+                                <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold capitalize text-brand-charcoal">
+                                  {order.status}
+                                </span>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </HubPreviewPanel>
+
+                    <HubPreviewPanel
+                      id="hub-saved-addresses"
+                      icon={MapPin}
+                      title="Saved Addresses"
+                      actionLabel="Manage"
+                      onAction={() => goTo("addresses")}
+                    >
+                      <p className="font-bold text-brand-charcoal">
+                        {addresses.length === 0
+                          ? "None on this device"
+                          : `${addresses.length} device draft${addresses.length === 1 ? "" : "s"}`}
+                      </p>
+                      {defaultAddress ? (
+                        <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                          {defaultAddress.isDefault ? "Default · " : ""}
+                          {formatSavedAddress(defaultAddress)}
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Save a draft for faster Multan delivery checkout.
+                        </p>
+                      )}
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {ADDRESSES_CLOUD_SYNC_AVAILABLE
+                          ? "Synced to your account."
+                          : "Not account source of truth — OWNER REVIEW REQUIRED for cloud addresses."}
+                      </p>
+                    </HubPreviewPanel>
+
+                    <HubPreviewPanel
+                      id="hub-favorites"
+                      icon={Heart}
+                      title="Favorites"
+                      actionLabel="Browse menu"
+                      actionHref="/menu"
+                    >
+                      <StatusBadge label="Coming soon" tone="warning" />
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Saved favourites aren&apos;t available in My Telepizza yet. We won&apos;t show
+                        placeholder pizzas here.
+                      </p>
+                    </HubPreviewPanel>
+
+                    <HubPreviewPanel
+                      id="hub-reviews"
+                      icon={Star}
+                      title="Reviews"
+                      actionLabel="See orders"
+                      onAction={() => goTo("orders")}
+                    >
+                      <StatusBadge label="Coming soon" tone="warning" />
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Order reviews aren&apos;t live yet. When they launch, real ratings will appear
+                        here — nothing invented.
+                      </p>
+                    </HubPreviewPanel>
+
+                    <HubPreviewPanel
+                      id="hub-notifications"
+                      icon={Bell}
+                      title="Notifications"
+                      actionLabel="Open"
+                      onAction={() => goTo("notifications")}
+                    >
+                      <p className="text-sm text-muted-foreground">
+                        Preference controls are coming soon — nothing can be saved yet. Payment
+                        prefs stay honest: JazzCash, EasyPaisa, and saved cards are not live.
+                      </p>
+                      <Link
+                        href="/notifications"
+                        className="mt-3 inline-flex text-sm font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
+                      >
+                        Inbox on device
+                      </Link>
+                    </HubPreviewPanel>
+
+                    <HubPreviewPanel
+                      id="hub-settings"
+                      icon={Settings}
+                      title="Settings"
+                      actionLabel="Profile"
+                      onAction={() => goTo("profile")}
+                    >
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Account details, security, and preference sections — no extra clicks buried
+                        in menus.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-2xl"
+                          onClick={() => goTo("profile")}
+                        >
+                          Profile
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-2xl"
+                          onClick={() => goTo("security")}
+                        >
+                          Security
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-2xl"
+                          onClick={() => goTo("notifications")}
+                        >
+                          Prefs
+                        </Button>
+                      </div>
+                    </HubPreviewPanel>
+                  </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="rounded-2xl border border-border p-4 space-y-2">
@@ -635,64 +879,50 @@ export default function MyTelepizza() {
                         </Button>
                       </Link>
                     </div>
-                    <div className="rounded-2xl border border-border p-4 space-y-2">
-                      <div className="flex items-center gap-2 text-sm font-semibold">
-                        <MapPin className="w-4 h-4 text-brand-red" aria-hidden="true" />
-                        Addresses
-                      </div>
-                      <p className="font-bold text-brand-charcoal">
-                        {addresses.length === 0
-                          ? "None on this device"
-                          : `${addresses.length} device draft${addresses.length === 1 ? "" : "s"}`}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {ADDRESSES_CLOUD_SYNC_AVAILABLE
-                          ? "Synced to your account."
-                          : "Not account source of truth — OWNER REVIEW REQUIRED for cloud addresses."}
-                      </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-2xl"
-                        onClick={() => goTo("addresses")}
-                      >
-                        Manage addresses
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-border p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold">Profile completion</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {completion.missing.length === 0
-                            ? "Looking good — you are set for faster checkout."
-                            : completion.missing[0]}
+                    <div className="rounded-2xl border border-border p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-semibold">Profile completion</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {completion.missing.length === 0
+                              ? "Looking good — you are set for faster checkout."
+                              : completion.missing[0]}
+                          </p>
+                        </div>
+                        <p className="font-[var(--font-accent)] font-bold text-brand-red text-lg">
+                          {completion.score}%
                         </p>
                       </div>
-                      <p className="font-[var(--font-accent)] font-bold text-brand-red text-lg">
-                        {completion.score}%
-                      </p>
-                    </div>
-                    <div
-                      className="mt-3 h-2 rounded-full bg-brand-cream overflow-hidden"
-                      role="progressbar"
-                      aria-valuenow={completion.score}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-label="Profile completion"
-                    >
                       <div
-                        className="h-full bg-brand-red motion-safe:transition-all"
-                        style={{ width: `${completion.score}%` }}
-                      />
+                        className="mt-3 h-2 rounded-full bg-brand-cream overflow-hidden"
+                        role="progressbar"
+                        aria-valuenow={completion.score}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label="Profile completion"
+                      >
+                        <div
+                          className="h-full bg-brand-red motion-safe:transition-all"
+                          style={{ width: `${completion.score}%` }}
+                        />
+                      </div>
+                      {completion.missing.length > 0 ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="mt-2 rounded-2xl px-2 text-brand-red"
+                          onClick={() => goTo(completion.missing[0]?.includes("address") ? "addresses" : "profile")}
+                        >
+                          Finish next step
+                          <ChevronRight className="ml-1 h-4 w-4" aria-hidden="true" />
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
 
                   {lastCompleted || lastOrder ? (
-                    <div className="rounded-2xl border border-border p-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="rounded-2xl border border-border bg-gradient-to-r from-brand-cream/40 to-white p-4 flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold">Quick reorder</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
@@ -1393,9 +1623,14 @@ export default function MyTelepizza() {
             ) : null}
 
             {section === "orders" ? (
-              <section className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-4">
+              <section
+                className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-4"
+                aria-labelledby="hub-orders-section-heading"
+              >
                 <div>
-                  <h2 className="font-bold text-lg">Recent Orders</h2>
+                  <h2 id="hub-orders-section-heading" className="font-bold text-lg">
+                    Recent Orders
+                  </h2>
                   <p className="text-sm text-muted-foreground mt-1">
                     {!profile?.phone
                       ? "Add a phone number in Profile so we can match your checkout orders on this device."
@@ -1410,7 +1645,7 @@ export default function MyTelepizza() {
                   </p>
                 </div>
                 {!profile?.phone ? (
-                  <div className="rounded-2xl border border-dashed border-border p-6 text-center">
+                  <div className="rounded-2xl border border-dashed border-border bg-brand-cream/20 p-6 text-center">
                     <Package className="w-8 h-8 text-brand-red mx-auto mb-2" aria-hidden="true" />
                     <p className="font-semibold">Add a phone number to match orders</p>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -1426,7 +1661,7 @@ export default function MyTelepizza() {
                     </Button>
                   </div>
                 ) : localOrders.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border p-6 text-center">
+                  <div className="rounded-2xl border border-dashed border-border bg-brand-cream/20 p-6 text-center">
                     <Package className="w-8 h-8 text-brand-red mx-auto mb-2" aria-hidden="true" />
                     <p className="font-semibold">No orders yet</p>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -1441,7 +1676,10 @@ export default function MyTelepizza() {
                 ) : (
                   <ul className="space-y-3">
                     {localOrders.slice(0, 5).map((order) => (
-                      <li key={order.id} className="rounded-2xl border border-border p-4 space-y-3">
+                      <li
+                        key={order.id}
+                        className="rounded-2xl border border-border bg-gradient-to-br from-white to-brand-cream/20 p-4 space-y-3"
+                      >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="min-w-0">
                             <div className="font-semibold text-brand-red">{order.orderNumber}</div>
@@ -1480,14 +1718,14 @@ export default function MyTelepizza() {
                     ))}
                   </ul>
                 )}
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                   <Link href="/orders">
-                    <Button className="rounded-2xl brand-gradient text-white font-semibold">
+                    <Button className="w-full rounded-2xl brand-gradient text-white font-semibold sm:w-auto">
                       View Order History
                     </Button>
                   </Link>
                   <Link href="/menu">
-                    <Button variant="outline" className="rounded-2xl">
+                    <Button variant="outline" className="w-full rounded-2xl sm:w-auto">
                       Browse menu
                     </Button>
                   </Link>
@@ -1525,15 +1763,20 @@ export default function MyTelepizza() {
             ) : null}
 
             {section === "notifications" ? (
-              <section className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-4">
+              <section
+                className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-4"
+                aria-labelledby="hub-notifications-section-heading"
+              >
                 <div>
-                  <h2 className="font-bold text-lg">Notifications &amp; checkout prefs</h2>
+                  <h2 id="hub-notifications-section-heading" className="font-bold text-lg">
+                    Notifications &amp; checkout prefs
+                  </h2>
                   <p className="text-sm text-muted-foreground mt-1">
                     Prefer how you hear from Telepizza. Preference controls are coming soon —
                     nothing can be saved yet.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-border p-4 text-sm space-y-2">
+                <div className="rounded-2xl border border-border bg-brand-cream/30 p-4 text-sm space-y-2">
                   <p className="font-semibold">Payment preferences</p>
                   <p className="text-muted-foreground">
                     Checkout supports paying with your order (cash / pay on delivery or pickup) when
@@ -1541,7 +1784,11 @@ export default function MyTelepizza() {
                     yet — we will not pretend they are.
                   </p>
                 </div>
-                <div className="space-y-2" role="group" aria-label="Notification preferences coming soon">
+                <div
+                  className="space-y-2"
+                  role="group"
+                  aria-label="Notification preferences coming soon"
+                >
                   <PreferenceSwitch
                     label="Order Updates"
                     description="Status changes from kitchen to delivery"
@@ -1558,6 +1805,17 @@ export default function MyTelepizza() {
                     label="Special Offers"
                     description="Member-only discounts when Rewards launches"
                   />
+                </div>
+                <div className="rounded-2xl border border-dashed border-border p-4">
+                  <p className="text-sm font-semibold text-brand-charcoal">Device inbox</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Order update messages stored on this browser appear in your notifications inbox.
+                  </p>
+                  <Link href="/notifications" className="mt-3 inline-block">
+                    <Button type="button" variant="outline" size="sm" className="rounded-2xl">
+                      Open notifications inbox
+                    </Button>
+                  </Link>
                 </div>
               </section>
             ) : null}
@@ -1605,7 +1863,7 @@ function StatusBadge({ label, tone }: { label: string; tone: StatusTone }) {
 
 function PreferenceSwitch({ label, description }: { label: string; description: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-border p-4 text-sm">
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-muted/20 p-4 text-sm">
       <div className="min-w-0">
         <div className="font-semibold">{label}</div>
         <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
@@ -1615,9 +1873,118 @@ function PreferenceSwitch({ label, description }: { label: string; description: 
         type="checkbox"
         disabled
         aria-label={`${label}: coming soon, not available yet`}
-        className="h-4 w-4 shrink-0 accent-brand-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
+        className="h-4 w-4 shrink-0 accent-brand-red opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
       />
     </div>
+  );
+}
+
+const quickActionClassName =
+  "group flex h-full min-h-[6.5rem] w-full flex-col items-start gap-2 rounded-2xl border border-border bg-gradient-to-br from-white to-brand-cream/40 p-3 text-left shadow-sm transition-colors hover:border-brand-red/25 hover:bg-brand-cream/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 sm:min-h-[7rem] sm:p-3.5";
+
+function QuickActionCard({
+  icon: Icon,
+  title,
+  description,
+  href,
+  onClick,
+  disabled = false,
+}: {
+  icon: typeof Package;
+  title: string;
+  description: string;
+  href?: string;
+  onClick?: () => void;
+  disabled?: boolean;
+}) {
+  const content = (
+    <>
+      <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-brand-red/10 text-brand-red">
+        <Icon className="h-4 w-4" aria-hidden="true" />
+      </span>
+      <span>
+        <span className="block text-sm font-semibold text-brand-charcoal">{title}</span>
+        <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground sm:text-xs">
+          {description}
+        </span>
+      </span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className={quickActionClassName}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className={quickActionClassName}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      {content}
+    </button>
+  );
+}
+
+function HubPreviewPanel({
+  id,
+  icon: Icon,
+  title,
+  children,
+  actionLabel,
+  onAction,
+  actionHref,
+}: {
+  id: string;
+  icon: typeof Package;
+  title: string;
+  children: ReactNode;
+  actionLabel: string;
+  onAction?: () => void;
+  actionHref?: string;
+}) {
+  const headingId = `${id}-heading`;
+  return (
+    <section
+      className="flex h-full flex-col rounded-2xl border border-border bg-white p-4 shadow-[0_1px_0_rgba(31,31,31,0.03)]"
+      aria-labelledby={headingId}
+    >
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-cream text-brand-red">
+            <Icon className="h-4 w-4" aria-hidden="true" />
+          </span>
+          <h3 id={headingId} className="truncate text-sm font-semibold text-brand-charcoal">
+            {title}
+          </h3>
+        </div>
+        {actionHref ? (
+          <Link href={actionHref}>
+            <Button type="button" variant="ghost" size="sm" className="h-8 shrink-0 rounded-xl px-2 text-brand-red">
+              {actionLabel}
+              <ChevronRight className="ml-0.5 h-3.5 w-3.5" aria-hidden="true" />
+            </Button>
+          </Link>
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 shrink-0 rounded-xl px-2 text-brand-red"
+            onClick={onAction}
+          >
+            {actionLabel}
+            <ChevronRight className="ml-0.5 h-3.5 w-3.5" aria-hidden="true" />
+          </Button>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">{children}</div>
+    </section>
   );
 }
 

@@ -40,12 +40,16 @@ export function OrderStatusTimeline({
     >
       {ORDER_STATUS_STEPS.map((step, index) => {
         const reached = activeIndex >= 0 && index <= activeIndex;
+        const current = activeIndex >= 0 && index === activeIndex;
         return (
           <div
             key={step}
             role="listitem"
+            aria-current={current ? "step" : undefined}
             className={`rounded-xl px-2 ${compact ? "py-1 text-[10px]" : "py-1.5 text-[10px] sm:text-xs"} text-center font-semibold capitalize motion-safe:transition-colors ${
-              reached ? "bg-brand-red text-white" : "bg-brand-cream text-muted-foreground"
+              reached
+                ? "bg-brand-red text-white shadow-sm"
+                : "bg-brand-cream text-muted-foreground ring-1 ring-inset ring-border/60"
             }`}
           >
             {ORDER_STATUS_LABELS[step] ?? step}
