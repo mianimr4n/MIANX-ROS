@@ -168,7 +168,8 @@ describe("Telepizza API app", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.ok).toBe(true);
-    expect(response.body.modules).toHaveLength(8);
+    expect(response.body.modules).toHaveLength(9);
+    expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("me");
     expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("kitchen");
     expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("dine-in");
   });

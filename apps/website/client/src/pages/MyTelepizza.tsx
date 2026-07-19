@@ -39,16 +39,34 @@ import {
 } from "@/lib/auth-utils";
 import { rememberAuthNextPath } from "@/lib/auth-redirect";
 import {
+  ADDRESSES_CLOUD_SYNC_AVAILABLE,
   addSavedAddress,
+  draftToImportPayload,
   formatSavedAddress,
+  hasCompletedAddressImport,
   listSavedAddresses,
+  markAddressImportCompleted,
   removeSavedAddress,
   setDefaultSavedAddress,
   updateSavedAddress,
   type AddressLabel,
   type SavedCustomerAddress,
 } from "@/lib/customer-addresses";
+import {
+  archiveCloudAddress,
+  cloudAddressesAvailable,
+  createCloudAddress,
+  fetchCloudAddresses,
+  importCloudAddresses,
+  updateCloudAddress,
+} from "@/lib/customer-addresses-api";
+import { isApiConfigured } from "@/lib/api";
 import { listLocalOrders, type StoredOrder } from "@/lib/customer-store";
+import {
+  cloudOrdersAvailable,
+  fetchCloudOrderDetail,
+  fetchCloudOrders,
+} from "@/lib/customer-orders-api";
 import { bucketForOrderStatus } from "@/lib/order-status";
 import {
   buildReorderPreview,
@@ -66,9 +84,6 @@ type HubSection =
   | "notifications";
 
 type StatusTone = "success" | "warning" | "neutral";
-
-/** Cloud address book is not enabled for customers yet — device drafts only. */
-const ADDRESSES_CLOUD_SYNC_AVAILABLE = false;
 
 const NAV_ITEMS: Array<{ id: HubSection; label: string; icon: typeof LayoutDashboard }> = [
   { id: "overview", label: "Dashboard", icon: LayoutDashboard },
@@ -158,6 +173,16 @@ export default function MyTelepizza() {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [addressIsDefault, setAddressIsDefault] = useState(false);
+  const [addressRecipientName, setAddressRecipientName] = useState("");
+  const [addressPhone, setAddressPhone] = useState("");
+  const [addressLine2, setAddressLine2] = useState("");
+  const [addressLandmark, setAddressLandmark] = useState("");
+  const [cloudAddresses, setCloudAddresses] = useState<SavedCustomerAddress[]>([]);
+  const [addressesLoading, setAddressesLoading] = useState(false);
+  const [addressesError, setAddressesError] = useState<string | null>(null);
+  const [cloudOrders, setCloudOrders] = useState<StoredOrder[]>([]);
+  const [usingCloudOrders, setUsingCloudOrders] = useState(false);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   useEffect(() => {
     setFullName(profile?.fullName ?? "");
@@ -220,14 +245,15 @@ export default function MyTelepizza() {
     () => (orderKey ? listLocalOrders(orderKey) : []),
     [orderKey],
   );
-  const activeOrders = localOrders.filter(
+  const hubOrders = usingCloudOrders ? cloudOrders : localOrders;
+  const activeOrders = hubOrders.filter(
     (order) => bucketForOrderStatus(order.status) === "active",
   );
   const activeOrder = activeOrders[0] ?? null;
-  const lastCompleted = localOrders.find(
+  const lastCompleted = hubOrders.find(
     (order) => bucketForOrderStatus(order.status) === "completed",
   );
-  const lastOrder = localOrders[0];
+  const lastOrder = hubOrders[0];
 
   function goTo(next: HubSection) {
     focusMainAfterNav.current = true;
@@ -1643,7 +1669,7 @@ export default function MyTelepizza() {
                       Go to Profile
                     </Button>
                   </div>
-                ) : localOrders.length === 0 ? (
+                ) : hubOrders.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border bg-brand-cream/20 p-6 text-center">
                     <Package className="w-8 h-8 text-brand-red mx-auto mb-2" aria-hidden="true" />
                     <p className="font-semibold">No orders yet</p>

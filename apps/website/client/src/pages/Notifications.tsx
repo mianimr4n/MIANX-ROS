@@ -30,22 +30,12 @@ export default function Notifications() {
               <p className="text-sm text-muted-foreground">
                 Login to view notifications.
               </p>
-              <Button asChild className="rounded-2xl brand-gradient text-white font-semibold">
-                <Link
-                  href={`/login?next=${encodeURIComponent(returnPath)}`}
-                  onClick={() => rememberAuthNextPath(returnPath)}
-                >
-                  Login
-                </Link>
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                <Link
-                  href="/my-telepizza"
-                  className="font-semibold text-brand-red underline-offset-2 hover:underline"
-                >
-                  Back to My Telepizza
-                </Link>
-              </p>
+              <Link
+                href={`/login?next=${encodeURIComponent(returnPath)}`}
+                onClick={() => rememberAuthNextPath(returnPath)}
+              >
+                <Button className="rounded-2xl brand-gradient text-white font-semibold">Login</Button>
+              </Link>
             </div>
           </section>
         </div>
@@ -65,7 +55,8 @@ export default function Notifications() {
               </p>
               <h1 className="brand-heading text-3xl">Notifications</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Updates stored on this device for your account.
+                Device inbox for order updates. Email delivery via SMTP is deferred — manage prefs in
+                Settings.
               </p>
             </div>
             {notifications.length > 0 ? (
@@ -80,6 +71,19 @@ export default function Notifications() {
           </div>
         </header>
 
+        <div className="rounded-2xl border border-border bg-brand-cream/30 p-4 text-sm">
+          <p className="font-semibold">Email notifications</p>
+          <p className="mt-1 text-muted-foreground">
+            Live SMTP is not connected yet. Order emails will not arrive in your inbox — only messages
+            stored on this device appear below until email ships.
+          </p>
+          <Link href="/settings" className="mt-3 inline-block">
+            <Button type="button" variant="outline" size="sm" className="rounded-2xl">
+              Open notification prefs
+            </Button>
+          </Link>
+        </div>
+
         {notifications.length === 0 ? (
           <div
             className="rounded-3xl border border-dashed border-border bg-white p-8 text-center shadow-sm"
@@ -90,15 +94,19 @@ export default function Notifications() {
             </div>
             <p className="font-semibold text-brand-charcoal">No notifications yet</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Place an order to receive on-device updates here. Email alerts are not sent yet.
+              Place an order to receive on-device updates here.
             </p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
-              <Button asChild className="rounded-2xl brand-gradient text-white font-semibold">
-                <Link href="/menu">Browse menu</Link>
-              </Button>
-              <Button asChild variant="outline" className="rounded-2xl">
-                <Link href="/my-telepizza#notifications">Notification prefs</Link>
-              </Button>
+              <Link href="/menu">
+                <Button className="rounded-2xl brand-gradient text-white font-semibold">
+                  Browse menu
+                </Button>
+              </Link>
+              <Link href="/settings">
+                <Button variant="outline" className="rounded-2xl">
+                  Settings
+                </Button>
+              </Link>
             </div>
           </div>
         ) : (

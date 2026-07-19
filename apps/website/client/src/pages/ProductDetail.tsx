@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { ProductBadge } from "@/components/menu/ProductBadge";
 import { ProductConfigurator } from "@/components/menu/ProductConfigurator";
+import { FavoriteHeartButton } from "@/components/menu/FavoriteHeartButton";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 
 export default function ProductDetail() {
@@ -61,7 +62,10 @@ export default function ProductDetail() {
             </span>
             {item.badge ? <ProductBadge badge={item.badge} /> : null}
           </div>
-          <h1 className="brand-heading text-3xl md:text-5xl">{item.name}</h1>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h1 className="brand-heading text-3xl md:text-5xl">{item.name}</h1>
+            <FavoriteHeartButton item={item} />
+          </div>
           <p className="mt-3 max-w-3xl text-muted-foreground">{item.description}</p>
         </div>
         <ProductConfigurator item={item} />

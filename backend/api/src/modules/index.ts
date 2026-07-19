@@ -6,6 +6,7 @@ import { createAuthRouter } from "./auth/routes.js";
 import { createBranchesRouter } from "./branches/routes.js";
 import { createDineInRouter } from "./dine-in/routes.js";
 import { createKitchenRouter } from "./kitchen/routes.js";
+import { createMeRouter } from "./me/routes.js";
 import { createMenuRouter } from "./menu/routes.js";
 import { createOrdersRouter } from "./orders/routes.js";
 import { createRidersRouter } from "./riders/routes.js";
@@ -21,6 +22,11 @@ export const apiModules: ApiModuleDescriptor[] = [
     name: "auth",
     basePath: "/api/v1/auth",
     summary: "Supabase Auth session verification, /me principal, staff invite accept, and authorization foundation.",
+  },
+  {
+    name: "me",
+    basePath: "/api/v1/me",
+    summary: "Authenticated customer self-service (addresses, orders, favorites, reviews).",
   },
   {
     name: "branches",
@@ -66,6 +72,16 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       staffInviteRepository: dependencies.staffInviteRepository,
+    }),
+  );
+  app.use(
+    "/api/v1/me",
+    createMeRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      customerAddresses: dependencies.customerAddresses,
+      customerOrders: dependencies.customerOrders,
+      customerFavorites: dependencies.customerFavorites,
+      customerReviews: dependencies.customerReviews,
     }),
   );
   app.use("/api/v1/branches", createBranchesRouter(dependencies.catalogDataSource));

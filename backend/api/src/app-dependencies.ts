@@ -38,6 +38,22 @@ import {
   createDineInSessionsService,
   type DineInSessionsService,
 } from "./services/dine-in/sessions.js";
+import {
+  createCustomerAddressesDataSourceFromEnv,
+  type CustomerAddressesDataSource,
+} from "./services/addresses/customer-addresses.js";
+import {
+  createCustomerOrdersDataSourceFromEnv,
+  type CustomerOrdersDataSource,
+} from "./services/orders/customer-history.js";
+import {
+  createCustomerFavoritesFromEnv,
+  type CustomerFavoritesDataSource,
+} from "./services/favorites/customer-favorites.js";
+import {
+  createCustomerReviewsFromEnv,
+  type CustomerReviewsDataSource,
+} from "./services/reviews/customer-reviews.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -52,6 +68,10 @@ export interface AppDependencies {
   restaurantTables: RestaurantTablesDataSource;
   qrTokenValidator: QrTokenValidator;
   dineInSessions: DineInSessionsService;
+  customerAddresses: CustomerAddressesDataSource;
+  customerOrders: CustomerOrdersDataSource;
+  customerFavorites: CustomerFavoritesDataSource;
+  customerReviews: CustomerReviewsDataSource;
   inviteAppOrigin: string;
 }
 
@@ -70,6 +90,10 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     restaurantTables: createRestaurantTablesDataSource(envStatus),
     qrTokenValidator,
     dineInSessions: createDineInSessionsService(envStatus, qrTokenValidator),
+    customerAddresses: createCustomerAddressesDataSourceFromEnv(envStatus),
+    customerOrders: createCustomerOrdersDataSourceFromEnv(envStatus),
+    customerFavorites: createCustomerFavoritesFromEnv(envStatus),
+    customerReviews: createCustomerReviewsFromEnv(envStatus),
     inviteAppOrigin: envStatus.config.corsOrigin,
   };
 }

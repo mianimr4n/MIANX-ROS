@@ -22,6 +22,8 @@ import StaffLogin from "./pages/StaffLogin";
 import Account from "./pages/Account";
 import MyTelepizza from "./pages/MyTelepizza";
 import Orders from "./pages/Orders";
+import Favorites from "./pages/Favorites";
+import Settings from "./pages/Settings";
 import Branches from "./pages/Branches";
 import Loyalty from "./pages/Loyalty";
 import Notifications from "./pages/Notifications";
@@ -79,6 +81,8 @@ function Router() {
       <Route path="/my-telepizza" component={MyTelepizza} />
       <Route path="/account" component={Account} />
       <Route path="/orders" component={Orders} />
+      <Route path="/favorites" component={Favorites} />
+      <Route path="/settings" component={Settings} />
       <Route path="/loyalty" component={Loyalty} />
       <Route path="/notifications" component={Notifications} />
       <Route path="/404" component={NotFound} />

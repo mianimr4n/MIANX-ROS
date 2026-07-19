@@ -72,3 +72,4 @@ create policy customer_addresses_delete_own
 ## Current hub behaviour (4.5A)
 
 Device drafts may remain for same-browser checkout convenience, clearly labelled **this browser only — not synced**. Cloud save stays blocked until this migration is approved and applied.
+

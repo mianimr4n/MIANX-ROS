@@ -41,6 +41,7 @@ import { isPizzaItem } from "@/data/cart-config";
 import { formatMenuPriceLabel } from "@/lib/menu-utils";
 
 import { ProductBadge } from "@/components/menu/ProductBadge";
+import { FavoriteHeartButton } from "@/components/menu/FavoriteHeartButton";
 
 
 
@@ -83,12 +84,16 @@ export default function Menu() {
   const [activeCategory, setActiveCategory] = useState(initialCategory);
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
 
   const addMenuItem = useAddMenuItem();
 
-
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 180);
+    return () => window.clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
 
@@ -138,7 +143,7 @@ export default function Menu() {
 
     const matchesCategory = activeCategory === "All" || item.category === activeCategory;
 
-    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = item.name.toLowerCase().includes(debouncedSearch.toLowerCase());
 
     return matchesCategory && matchesSearch;
 
@@ -232,7 +237,11 @@ export default function Menu() {
 
             <Input
 
+              id="menu-search"
+
               placeholder="Search menu..."
+
+              aria-label="Search menu items"
 
               value={search}
 
