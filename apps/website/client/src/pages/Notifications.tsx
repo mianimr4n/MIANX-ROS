@@ -97,7 +97,7 @@ export default function Notifications() {
                 <Link href="/menu">Browse menu</Link>
               </Button>
               <Button asChild variant="outline" className="min-h-11 rounded-2xl">
-                <Link href="/my-telepizza#notifications">Notification prefs</Link>
+                <Link href="/settings#prefs">Notification prefs</Link>
               </Button>
             </div>
           </div>

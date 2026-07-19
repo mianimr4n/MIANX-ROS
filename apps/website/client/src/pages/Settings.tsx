@@ -33,6 +33,13 @@ const SECTIONS: Array<{ id: SettingsSection; label: string }> = [
   { id: "account", label: "Account" },
 ];
 
+function sectionFromHash(): SettingsSection {
+  if (typeof window === "undefined") return "profile";
+  const hash = window.location.hash.replace(/^#/, "").toLowerCase();
+  if (SECTIONS.some((item) => item.id === hash)) return hash as SettingsSection;
+  return "profile";
+}
+
 export default function Settings() {
   const {
     profile,
@@ -46,7 +53,7 @@ export default function Settings() {
     requestEmailChange,
   } = useAuth();
 
-  const [section, setSection] = useState<SettingsSection>("profile");
+  const [section, setSection] = useState<SettingsSection>(sectionFromHash);
   const ownerKey = user?.id || profile?.email || user?.email || "";
 
   const [fullName, setFullName] = useState("");
@@ -82,6 +89,14 @@ export default function Settings() {
     setFullName(profile?.fullName ?? "");
     setPhone(profile?.phone ?? "");
   }, [profile]);
+
+  useEffect(() => {
+    function onHashChange() {
+      setSection(sectionFromHash());
+    }
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
 
   useEffect(() => {
     if (!ownerKey) return;
@@ -131,7 +146,10 @@ export default function Settings() {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="container py-16 text-center">
+      <div className="container py-16 text-center" aria-labelledby="settings-signin-heading">
+        <h1 id="settings-signin-heading" className="brand-heading text-3xl mb-3">
+          Settings
+        </h1>
         <p className="text-muted-foreground mb-4">Sign in to manage your settings.</p>
         <Link href="/login?next=%2Fsettings">
           <Button className="rounded-2xl brand-gradient text-white">Sign in</Button>
@@ -241,7 +259,12 @@ export default function Settings() {
                 <li key={item.id}>
                   <button
                     type="button"
-                    onClick={() => setSection(item.id)}
+                    onClick={() => {
+                      setSection(item.id);
+                      if (typeof window !== "undefined") {
+                        window.history.replaceState(null, "", `#${item.id}`);
+                      }
+                    }}
                     className={`w-full rounded-2xl px-3 py-2.5 text-left text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
                       section === item.id
                         ? "bg-brand-red/10 text-brand-red"

@@ -13,6 +13,7 @@ import {
   MapPin,
   Package,
   RotateCcw,
+  Settings,
   Shield,
   Star,
   Store,
@@ -985,6 +986,15 @@ export default function MyTelepizza() {
                     </p>
                     <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
                       <li>
+                        <Link
+                          href="/settings"
+                          className="inline-flex items-center gap-1.5 font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
+                        >
+                          <Settings className="h-3.5 w-3.5" aria-hidden="true" />
+                          Settings
+                        </Link>
+                      </li>
+                      <li>
                         <button
                           type="button"
                           className="font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
@@ -1003,13 +1013,12 @@ export default function MyTelepizza() {
                         </button>
                       </li>
                       <li>
-                        <button
-                          type="button"
+                        <Link
+                          href="/settings#prefs"
                           className="font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
-                          onClick={() => goTo("notifications")}
                         >
                           Notification prefs
-                        </button>
+                        </Link>
                       </li>
                       <li>
                         <Link
@@ -2020,9 +2029,24 @@ export default function MyTelepizza() {
                     Notifications &amp; checkout prefs
                   </h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Choose how you hear from Telepizza. Preference controls are coming soon —
-                    nothing can be saved yet.
+                    Manage notification preferences in Settings. Prefs save on this device only —
+                    live email delivery is not wired yet.
                   </p>
+                </div>
+                <div className="rounded-2xl border border-border bg-brand-cream/30 p-4 text-sm space-y-3">
+                  <div>
+                    <p className="font-semibold">Notification preferences</p>
+                    <p className="mt-1 text-muted-foreground">
+                      Order updates, promotions, delivery alerts, and special offers can be toggled
+                      in Settings. Saving a preference does not mean an email was sent.
+                    </p>
+                  </div>
+                  <Button asChild type="button" className="rounded-2xl brand-gradient text-white min-h-11">
+                    <Link href="/settings#prefs">
+                      <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Open Settings preferences
+                    </Link>
+                  </Button>
                 </div>
                 <div className="rounded-2xl border border-border bg-brand-cream/30 p-4 text-sm space-y-2">
                   <p className="font-semibold">Payment preferences</p>
@@ -2031,28 +2055,6 @@ export default function MyTelepizza() {
                     you place it. JazzCash, EasyPaisa, and saved cards are <strong>not live</strong>{" "}
                     yet — we will not pretend they are.
                   </p>
-                </div>
-                <div
-                  className="space-y-2"
-                  role="group"
-                  aria-label="Notification preferences coming soon"
-                >
-                  <PreferenceSwitch
-                    label="Order Updates"
-                    description="Status changes from kitchen to delivery"
-                  />
-                  <PreferenceSwitch
-                    label="Promotions"
-                    description="Seasonal deals and limited-time offers"
-                  />
-                  <PreferenceSwitch
-                    label="Delivery Alerts"
-                    description="Rider and arrival updates for your order"
-                  />
-                  <PreferenceSwitch
-                    label="Special Offers"
-                    description="Member-only discounts when Rewards launches"
-                  />
                 </div>
                 <div className="rounded-2xl border border-dashed border-border p-4">
                   <p className="text-sm font-semibold text-brand-charcoal">Device inbox</p>
