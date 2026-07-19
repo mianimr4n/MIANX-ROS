@@ -1,10 +1,10 @@
 # PROC-01 — Phase 1 Customer Migrations Inventory & Apply Plan
 
-**Agent:** C (Migration Governance)  
-**Branch audited:** `origin/polish/my-telepizza-ux`  
-**Governance branch:** `fix/phase-1-migration-governance`  
-**Date:** 2026-07-19  
-**Status:** **PROC-01 READY FOR REVIEW**  
+**Agent:** C (Migration Governance)
+**Branch audited:** `origin/polish/my-telepizza-ux`
+**Governance branch:** `fix/phase-1-migration-governance`
+**Date:** 2026-07-19
+**Status:** **PROC-01 READY FOR REVIEW**
 **Apply status:** **Not applied to production by this agent.** Owner-gated apply only.
 
 ---

@@ -420,4 +420,3 @@ export function createCustomerAddressesDataSource(client: SupabaseLike | null): 
     },
   };
 }
-

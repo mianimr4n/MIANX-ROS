@@ -1,16 +1,16 @@
 # Phase 1 — Customer Platform Completion Program
 
-**Product:** Telepizza Pakistan · Powered by Mianx.ai  
-**Date:** 2026-07-19  
-**Type:** Implementation roadmap & architecture — **planning only** (no application code, no PRs)  
-**Prerequisite audit:** `PHASE-1-CUSTOMER-PLATFORM-COMPLETION-AUDIT.md`  
-**Gate:** Phase 1 ✅ 100% Production Ready **before** Phase 2 Admin ERP  
+**Product:** Telepizza Pakistan · Powered by Mianx.ai
+**Date:** 2026-07-19
+**Type:** Implementation roadmap & architecture — **planning only** (no application code, no PRs)
+**Prerequisite audit:** `PHASE-1-CUSTOMER-PLATFORM-COMPLETION-AUDIT.md`
+**Gate:** Phase 1 ✅ 100% Production Ready **before** Phase 2 Admin ERP
 
 ---
 
 ## Mission rules
 
-- No shortcuts — every remaining module completes the full lifecycle:  
+- No shortcuts — every remaining module completes the full lifecycle:
   `Plan → Implement → Tests → PR Review → Merge → Migrate/Deploy → Smoke → Close`
 - No fake loyalty, fake payment success, or fake GPS/ETA
 - Catalog freeze v1.2.0 remains owner-gated
@@ -94,10 +94,10 @@ Owner approvals
 
 **Hard edges**
 
-- Addresses Owner approval before migration apply  
-- Order History before Reviews (review must attach to a real completed order)  
-- Notification channel decision before prefs that claim to control channels  
-- Settings after prefs model exists (or Settings ships prefs stub that becomes live in same sprint)  
+- Addresses Owner approval before migration apply
+- Order History before Reviews (review must attach to a real completed order)
+- Notification channel decision before prefs that claim to control channels
+- Settings after prefs model exists (or Settings ships prefs stub that becomes live in same sprint)
 - Search harden is independent and should start first (cheap risk reduction)
 
 ---
@@ -183,9 +183,9 @@ Validation: non-empty `line1`; max lengths; city allowlist or free text with tri
 
 ### Frontend screens
 
-- My Telepizza `#addresses` — switch from localStorage SoT to API  
-- Checkout address picker — API-backed  
-- Import drafts dialog  
+- My Telepizza `#addresses` — switch from localStorage SoT to API
+- Checkout address picker — API-backed
+- Import drafts dialog
 - Keep **read-only** local cache as offline convenience **optional**; never write-through without API success
 
 ### RBAC
@@ -200,34 +200,34 @@ No new permission codes required if routes use “authenticated customer owns ro
 
 ### Migration strategy
 
-1. Owner approves proposal  
-2. Forward-only migration + RLS + grants  
-3. Deploy API  
-4. UI feature flag `ADDRESSES_CLOUD_SYNC_AVAILABLE = true`  
-5. Import banner for existing drafts  
-6. After 14 days (or Owner decision), stop writing new drafts as primary; local = cache only  
+1. Owner approves proposal
+2. Forward-only migration + RLS + grants
+3. Deploy API
+4. UI feature flag `ADDRESSES_CLOUD_SYNC_AVAILABLE = true`
+5. Import banner for existing drafts
+6. After 14 days (or Owner decision), stop writing new drafts as primary; local = cache only
 7. Close report
 
 ### Testing
 
-- Unit: default uniqueness, validation  
-- API: CRUD, isolation (user A cannot read B), import idempotency  
-- Static website: hub no longer claims “no table” when flag on  
-- UAT: two browsers, same login  
+- Unit: default uniqueness, validation
+- API: CRUD, isolation (user A cannot read B), import idempotency
+- Static website: hub no longer claims “no table” when flag on
+- UAT: two browsers, same login
 
 ### Documentation
 
-- Update addresses proposal → **APPROVED / APPLIED** close note  
-- Customer help: “Manage delivery addresses”  
-- API notes in OpenAPI/module README  
+- Update addresses proposal → **APPROVED / APPLIED** close note
+- Customer help: “Manage delivery addresses”
+- API notes in OpenAPI/module README
 
 ### Definition of Done — Addresses
 
-- [ ] Owner-approved migration applied  
-- [ ] APIs + RLS isolation tests green  
-- [ ] Hub + checkout use cloud SoT  
-- [ ] Import path tested  
-- [ ] Docs + smoke on production/staging  
+- [ ] Owner-approved migration applied
+- [ ] APIs + RLS isolation tests green
+- [ ] Hub + checkout use cloud SoT
+- [ ] Import path tested
+- [ ] Docs + smoke on production/staging
 - [ ] **Production Ready ✅**
 
 ---
@@ -248,24 +248,24 @@ Query params: `status`, `from`, `to`, `branchId` (must be user’s past branch o
 
 ### Pagination
 
-- Cursor or `limit` (default 20, max 50) + `offset` / `next_cursor`  
+- Cursor or `limit` (default 20, max 50) + `offset` / `next_cursor`
 - Stable sort: `created_at DESC, id DESC`
 
 ### Reorder support
 
-1. `GET /api/v1/me/orders/:orderNumber` (or id) returns lines + modifier snapshots  
-2. Client runs existing `buildReorderPreview` against live catalog  
-3. Customer confirms via `ReorderReviewDialog` — **no silent substitution**  
-4. Cart filled → checkout  
+1. `GET /api/v1/me/orders/:orderNumber` (or id) returns lines + modifier snapshots
+2. Client runs existing `buildReorderPreview` against live catalog
+3. Customer confirms via `ReorderReviewDialog` — **no silent substitution**
+4. Cart filled → checkout
 
 ### Acceptance criteria
 
-- [ ] Signed-in user sees server orders across devices  
-- [ ] Device-local list demoted to “This browser (legacy)” or removed after cutover  
-- [ ] Pagination works at >20 orders  
-- [ ] Reorder refreshes prices; unavailable lines skipped only after confirm  
-- [ ] User cannot read another user’s orders  
-- [ ] Guest track path unchanged  
+- [ ] Signed-in user sees server orders across devices
+- [ ] Device-local list demoted to “This browser (legacy)” or removed after cutover
+- [ ] Pagination works at >20 orders
+- [ ] Reorder refreshes prices; unavailable lines skipped only after confirm
+- [ ] User cannot read another user’s orders
+- [ ] Guest track path unchanged
 
 ### APIs (target)
 
@@ -276,10 +276,10 @@ Query params: `status`, `from`, `to`, `branchId` (must be user’s past branch o
 
 ### Definition of Done — Order History
 
-- [ ] `/me/orders` list + detail  
-- [ ] Hub + `/orders` wired to server  
-- [ ] Reorder path from server detail  
-- [ ] RBAC isolation tests  
+- [ ] `/me/orders` list + detail
+- [ ] Hub + `/orders` wired to server
+- [ ] Reorder path from server detail
+- [ ] RBAC isolation tests
 - [ ] **Production Ready ✅**
 
 ---
@@ -358,19 +358,19 @@ Idempotency key: `event_id + channel`. Transient provider errors retry; permanen
 
 Tables (conceptual):
 
-- `notification_events` — what happened in domain  
-- `notification_outbox` / `notification_deliveries` — channel, status, provider_id, attempts, last_error, created_at, sent_at  
+- `notification_events` — what happened in domain
+- `notification_outbox` / `notification_deliveries` — channel, status, provider_id, attempts, last_error, created_at, sent_at
 
 Retention: ≥90 days for support; PII minimization in templates.
 
 ## Definition of Done — Notifications
 
-- [ ] Channel decision documented + provider configured  
-- [ ] Prefs readable/writable from Settings/hub  
-- [ ] ≥ `order.placed` + one status update email live in staging/prod  
-- [ ] Retry + audit tables/tests  
-- [ ] Disabled “Coming Soon” toggles removed for live channels  
-- [ ] Checkout never fails because notify failed  
+- [ ] Channel decision documented + provider configured
+- [ ] Prefs readable/writable from Settings/hub
+- [ ] ≥ `order.placed` + one status update email live in staging/prod
+- [ ] Retry + audit tables/tests
+- [ ] Disabled “Coming Soon” toggles removed for live channels
+- [ ] Checkout never fails because notify failed
 - [ ] **Production Ready ✅**
 
 ---
@@ -393,18 +393,18 @@ Retention: ≥90 days for support; PII minimization in templates.
 
 ### UX
 
-- Single page with section anchors  
-- Mobile: stacked sections  
-- Danger zone visually separated  
-- No staff settings leaked  
+- Single page with section anchors
+- Mobile: stacked sections
+- Danger zone visually separated
+- No staff settings leaked
 
 ### Definition of Done — Settings
 
-- [ ] `/settings` reachable from nav + My Telepizza  
-- [ ] Profile + password flows work (reuse proven components)  
-- [ ] Live notification prefs (post-WP2)  
-- [ ] Privacy + account sections honest (no fake delete)  
-- [ ] A11y + auth-required gate  
+- [ ] `/settings` reachable from nav + My Telepizza
+- [ ] Profile + password flows work (reuse proven components)
+- [ ] Live notification prefs (post-WP2)
+- [ ] Privacy + account sections honest (no fake delete)
+- [ ] A11y + auth-required gate
 - [ ] **Production Ready ✅**
 
 ---
@@ -425,10 +425,10 @@ Retention: ≥90 days for support; PII minimization in templates.
 
 ### Definition of Done — Search
 
-- [ ] A11y attributes + empty states shipped  
-- [ ] Debounced filter  
-- [ ] Static tests added  
-- [ ] Mobile UAT pass  
+- [ ] A11y attributes + empty states shipped
+- [ ] Debounced filter
+- [ ] Static tests added
+- [ ] Mobile UAT pass
 - [ ] **Production Ready ✅** (Complete, not Partial)
 
 ---
@@ -459,8 +459,8 @@ Let signed-in customers save menu items for quick re-add; surface a Favorites li
 
 ## 4. Non-functional
 
-- Branch-agnostic favorites (catalog SKU ids); availability resolved at add-time  
-- No prices stored on favorite row  
+- Branch-agnostic favorites (catalog SKU ids); availability resolved at add-time
+- No prices stored on favorite row
 
 ## 5. Data model
 
@@ -497,19 +497,19 @@ Authenticated customer own data only; staff no access via `/me`.
 
 ## 9. Testing
 
-- Isolation tests; idempotent PUT; unavailable item rendering; guest CTA  
+- Isolation tests; idempotent PUT; unavailable item rendering; guest CTA
 
 ## 10. Documentation
 
-- Customer help + API notes  
+- Customer help + API notes
 
 ## 11. Definition of Done — Favorites
 
-- [ ] Schema + RLS + APIs  
-- [ ] Menu/detail hearts + `/favorites`  
-- [ ] Guest login prompt  
-- [ ] Unavailable handling  
-- [ ] Tests + smoke  
+- [ ] Schema + RLS + APIs
+- [ ] Menu/detail hearts + `/favorites`
+- [ ] Guest login prompt
+- [ ] Unavailable handling
+- [ ] Tests + smoke
 - [ ] **Production Ready ✅**
 
 ---
@@ -538,7 +538,7 @@ Collect post-order star ratings + optional text for completed orders; optional p
 | R-2 | One review per order per user |
 | R-3 | Stars 1–5 required; comment optional (max length) |
 | R-4 | Edit within 24h; then locked |
-| R-5 | Only `completed` orders reviewable  
+| R-5 | Only `completed` orders reviewable
 | R-6 | Profanity basic filter optional; report flag field |
 | R-7 | No review without authentication matching `auth_user_id` |
 
@@ -567,34 +567,34 @@ order_reviews
 
 ## 6. UX
 
-- Dialog from Orders / Track when status completed and no review  
-- My reviews list under Settings or hub  
-- Honest: “Reviews help Telepizza improve — not published publicly yet” if public off  
+- Dialog from Orders / Track when status completed and no review
+- My reviews list under Settings or hub
+- Honest: “Reviews help Telepizza improve — not published publicly yet” if public off
 
 ## 7. Moderation (MVP)
 
-- Default visible to author  
-- `hidden` via service role / future admin  
-- No fake average stars on Menu until public mode on  
+- Default visible to author
+- `hidden` via service role / future admin
+- No fake average stars on Menu until public mode on
 
 ## 8. Testing
 
-- Cannot review another user’s order  
-- Cannot review non-completed  
-- Duplicate review rejected  
-- Edit window enforcement  
+- Cannot review another user’s order
+- Cannot review non-completed
+- Duplicate review rejected
+- Edit window enforcement
 
 ## 9. Documentation
 
-- Customer copy + moderation SOP (Owner)  
+- Customer copy + moderation SOP (Owner)
 
 ## 10. Definition of Done — Reviews
 
-- [ ] Schema + APIs + RLS  
-- [ ] Create/edit UX on completed orders  
-- [ ] List own reviews  
-- [ ] Public display either shipped with moderation **or** explicitly documented deferred with UI honesty  
-- [ ] Tests + smoke  
+- [ ] Schema + APIs + RLS
+- [ ] Create/edit UX on completed orders
+- [ ] List own reviews
+- [ ] Public display either shipped with moderation **or** explicitly documented deferred with UI honesty
+- [ ] Tests + smoke
 - [ ] **Production Ready ✅**
 
 ---
@@ -628,12 +628,12 @@ order_reviews
 
 **Program DoD**
 
-- [ ] All module DoDs checked  
-- [ ] Full lifecycle evidence per sprint  
-- [ ] Production smoke: login → addresses → order → email/inbox notify → favorite → review  
-- [ ] Audit scoreboard updated to 100% under 12-module definition  
-- [ ] Close report: **Phase 1 PASS AND CLOSED**  
-- [ ] Phase 2 ERP explicitly unblocked by Owner/PM  
+- [ ] All module DoDs checked
+- [ ] Full lifecycle evidence per sprint
+- [ ] Production smoke: login → addresses → order → email/inbox notify → favorite → review
+- [ ] Audit scoreboard updated to 100% under 12-module definition
+- [ ] Close report: **Phase 1 PASS AND CLOSED**
+- [ ] Phase 2 ERP explicitly unblocked by Owner/PM
 
 ---
 
@@ -650,7 +650,7 @@ order_reviews
 | **M6** | Reviews | 1–1.5 weeks | |
 | **M7** | UAT + close | 0.5–1 week | |
 
-**Total envelope:** ~7–12 weeks after M0 approvals (single squad).  
+**Total envelope:** ~7–12 weeks after M0 approvals (single squad).
 **Fast-path risk:** Notifications/SMTP is the longest pole — start provider work on day 1 of M0.
 
 ---

@@ -105,4 +105,3 @@ test("notifications empty state avoids duplicate copy and links honest prefs", (
   assert.doesNotMatch(notifications, /No notifications yet\.[\s\S]*No notifications yet/);
   assert.doesNotMatch(notifications, /SMTP/);
 });
-

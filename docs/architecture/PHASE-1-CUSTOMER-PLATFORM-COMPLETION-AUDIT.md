@@ -1,7 +1,7 @@
 # Phase 1 — Customer Platform Completion Audit
 
-**Product:** Telepizza Pakistan · Powered by Mianx.ai  
-**Date:** 2026-07-19  
+**Product:** Telepizza Pakistan · Powered by Mianx.ai
+**Date:** 2026-07-19
 **Type:** DOC-01 audit refresh — gap analysis + scoreboard reconciliation (no production deploy from this doc)
 **Branch reviewed:** `polish/my-telepizza-ux` (CP-1–CP-6 implementation present; CP-7 UAT not signed)
 **Reference app:** `apps/website` customer surfaces (excludes `/ops/*` staff ERP)
@@ -601,11 +601,11 @@ Phase 1 may be marked **100% Production Ready** only when **all** of the followi
 
 ## C. Explicit non-blockers (may remain deferred with sign-off)
 
-- JazzCash / EasyPaisa / cards  
-- Phone OTP (Slice 2C)  
-- Loyalty points  
-- Northern Bypass activation  
-- Live rider map  
+- JazzCash / EasyPaisa / cards
+- Phone OTP (Slice 2C)
+- Loyalty points
+- Northern Bypass activation
+- Live rider map
 - Admin ERP (Phase 2)
 
 ---

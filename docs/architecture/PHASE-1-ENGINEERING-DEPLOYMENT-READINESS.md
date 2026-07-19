@@ -1,8 +1,8 @@
 # Phase 1 — Engineering & Deployment Readiness (no deploy)
 
-**Product:** Telepizza Pakistan · Powered by Mianx.ai  
-**Branch:** `polish/my-telepizza-ux` · **PR:** #87  
-**Status:** Engineering ready for owner gates — **do not claim Phase 1 PASS AND CLOSED**  
+**Product:** Telepizza Pakistan · Powered by Mianx.ai
+**Branch:** `polish/my-telepizza-ux` · **PR:** #87
+**Status:** Engineering ready for owner gates — **do not claim Phase 1 PASS AND CLOSED**
 **Rule:** This document does **not** authorize merge, staging/production migration apply, or any deploy.
 
 ---
@@ -46,14 +46,14 @@ Do **not** treat `57d7844` / `e56effe` / `e8caf6c` / `4ba84f4` as tip ancestors 
 
 ## Category C owner blockers (may remain)
 
-1. Genuine Support Email  
-2. Genuine Reply-To Email  
-3. Verified Sending Domain  
-4. Email Provider Account Name  
-5. CP-7 UAT owner sign-off (WP-14)  
+1. Genuine Support Email
+2. Genuine Reply-To Email
+3. Verified Sending Domain
+4. Email Provider Account Name
+5. CP-7 UAT owner sign-off (WP-14)
 6. Explicit production migration/deployment approval (WP-15)
 
-Evidence pack: `docs/team/CP-0-OWNER-DECISION-PACK.md`, `docs/team/CP-7-PHASE-1-UAT-CHECKLIST.md`,  
+Evidence pack: `docs/team/CP-0-OWNER-DECISION-PACK.md`, `docs/team/CP-7-PHASE-1-UAT-CHECKLIST.md`,
 `docs/architecture/PHASE-1-CUSTOMER-MIGRATIONS-INVENTORY.md`.
 
 ---
@@ -62,9 +62,9 @@ Evidence pack: `docs/team/CP-0-OWNER-DECISION-PACK.md`, `docs/team/CP-7-PHASE-1-
 
 Do **not** run against linked staging/production without WP-15 approval:
 
-1. `20260719090000_customer_addresses.sql`  
-2. `20260719100000_customer_favorites.sql`  
-3. `20260719110000_order_reviews.sql`  
+1. `20260719090000_customer_addresses.sql`
+2. `20260719100000_customer_favorites.sql`
+3. `20260719110000_order_reviews.sql`
 4. Re-apply `GRANT`s after any `db reset` (see `AGENTS.md`)
 
 See inventory for dry-run / list commands. Automated evidence: `tests/database/cp1-cp6-customer-migrations.test.mjs`.
@@ -73,9 +73,9 @@ See inventory for dry-run / list commands. Automated evidence: `tests/database/c
 
 ## Explicit non-claims
 
-- Not deployed  
-- Migrations not applied to staging/production by this PR  
-- Live SMTP / transactional email not ready  
+- Not deployed
+- Migrations not applied to staging/production by this PR
+- Live SMTP / transactional email not ready
 - Phase 1 not PASS AND CLOSED until Category C cleared + WP-14/WP-15
 
 ---

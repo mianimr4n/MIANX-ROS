@@ -72,4 +72,3 @@ create policy customer_addresses_delete_own
 ## Current hub behaviour (post CP-1)
 
 When API + migration are up: cloud SoT via `/me/addresses`. Device drafts may remain for import only; `ADDRESSES_CLOUD_SYNC_AVAILABLE = true` when wired. Until migration apply in a given env, UI/API degrade honestly.
-

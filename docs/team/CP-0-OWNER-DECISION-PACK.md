@@ -1,17 +1,17 @@
 # CP-0 — Owner Decision Pack
 
-**Product:** Telepizza Pakistan · Powered by Mianx.ai  
-**Program:** Phase 1 Customer Platform Completion  
-**Date opened:** 2026-07-19  
-**Owner policy approvals (D1–D6):** 2026-07-19  
-**Owner Data refresh:** 2026-07-19 (attestation: Mian Imran)  
-**Document type:** Governance / Owner sign-off  
-**Status:** **CP-0 BLOCKED — Support Email, Reply-To Email, Verified Sending Domain, and Email Provider Account Name are still placeholders (not genuine operational values)**  
+**Product:** Telepizza Pakistan · Powered by Mianx.ai
+**Program:** Phase 1 Customer Platform Completion
+**Date opened:** 2026-07-19
+**Owner policy approvals (D1–D6):** 2026-07-19
+**Owner Data refresh:** 2026-07-19 (attestation: Mian Imran)
+**Document type:** Governance / Owner sign-off
+**Status:** **CP-0 BLOCKED — Support Email, Reply-To Email, Verified Sending Domain, and Email Provider Account Name are still placeholders (not genuine operational values)**
 
-**Planning source:** `docs/architecture/PHASE-1-CUSTOMER-PLATFORM-COMPLETION-PROGRAM.md`  
-**Owner Dashboard (after Phase 1 CP-7):** `docs/architecture/PHASE-2-RESTAURANT-ADMIN-ERP-MASTER-PLAN.md`  
-**Related:** `docs/architecture/MY-TELEPIZZA-ADDRESSES-MIGRATION-PROPOSAL.md`  
-**Audit:** `docs/architecture/PHASE-1-CUSTOMER-PLATFORM-COMPLETION-AUDIT.md`  
+**Planning source:** `docs/architecture/PHASE-1-CUSTOMER-PLATFORM-COMPLETION-PROGRAM.md`
+**Owner Dashboard (after Phase 1 CP-7):** `docs/architecture/PHASE-2-RESTAURANT-ADMIN-ERP-MASTER-PLAN.md`
+**Related:** `docs/architecture/MY-TELEPIZZA-ADDRESSES-MIGRATION-PROPOSAL.md`
+**Audit:** `docs/architecture/PHASE-1-CUSTOMER-PLATFORM-COMPLETION-AUDIT.md`
 **SMTP ops (CP-3):** `docs/operations/AUTH-EMAIL-DELIVERY-RUNBOOK.md`
 
 ---

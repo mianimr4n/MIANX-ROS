@@ -1,9 +1,9 @@
 # CP-7 — Phase 1 Customer Platform UAT Checklist
 
-**Product:** Telepizza Pakistan · Powered by Mianx.ai  
-**Date:** 2026-07-19  
-**Branch:** `polish/my-telepizza-ux`  
-**Gate:** Phase 1 Production Ready close (after merge + migrate + this UAT)  
+**Product:** Telepizza Pakistan · Powered by Mianx.ai
+**Date:** 2026-07-19
+**Branch:** `polish/my-telepizza-ux`
+**Gate:** Phase 1 Production Ready close (after merge + migrate + this UAT)
 **Out of scope for this UAT:** Live SMTP (CP-3 Owner-blocked), JazzCash/EasyPaisa, OTP, loyalty ledger, rider GPS, Phase 2 ERP
 
 ---
