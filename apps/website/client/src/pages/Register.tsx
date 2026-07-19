@@ -95,7 +95,12 @@ export default function Register() {
   };
 
   const handleResend = async () => {
-    if (resendBusy || resendCooldown > 0 || !email.trim()) return;
+    if (resendBusy || resendCooldown > 0 || !email.trim()) {
+      if (resendCooldown > 0) {
+        setError(`Too many attempts, please wait ${resendCooldown}s.`);
+      }
+      return;
+    }
     setError(null);
     setInfo(null);
     setResendBusy(true);
@@ -105,7 +110,7 @@ export default function Register() {
         setError(result.message);
         return;
       }
-      setInfo("If that address still needs confirmation, another email is on the way. Check inbox and spam.");
+      setInfo("Email resent successfully. Check inbox and spam.");
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
     } catch {
       setError("We could not send the confirmation email right now. Please try again later.");
@@ -148,12 +153,12 @@ export default function Register() {
             </div>
           </div>
           <p className="text-center text-sm text-brand-charcoal">
-            We sent a confirmation link to{" "}
+            Account Created. We&apos;ve sent a verification email to{" "}
             <span className="font-semibold break-all">{email}</span>.
           </p>
           <p className="text-center text-xs text-muted-foreground">
-            Check your inbox and spam folder. After you confirm, return here to sign in. You cannot
-            sign in until your email is confirmed.
+            Didn&apos;t receive it? Check your spam folder. After you confirm, you&apos;ll land on a
+            welcome / profile page — you cannot sign in until your email is confirmed.
           </p>
           <p className="text-center text-sm font-semibold text-brand-charcoal">
             {"Didn't receive it?"}
@@ -163,7 +168,11 @@ export default function Register() {
               {error}
             </p>
           ) : null}
-          {info ? <p className="text-sm text-emerald-700 text-center">{info}</p> : null}
+          {info ? (
+            <p className="text-sm text-emerald-700 text-center" role="status">
+              {info}
+            </p>
+          ) : null}
           <Button
             type="button"
             variant="outline"
@@ -193,7 +202,7 @@ export default function Register() {
             href={`mailto:${email}`}
             className="block text-center text-sm text-muted-foreground hover:text-brand-charcoal hover:underline"
           >
-            Open email app
+            Open Mail App
           </a>
           <Link href="/login" className="block text-center text-sm text-brand-red font-semibold hover:underline">
             Go to login
