@@ -62,3 +62,19 @@ See inventory for dry-run / list commands. Automated evidence: `tests/database/c
 - Migrations not applied to staging/production by this PR  
 - Live SMTP / transactional email not ready  
 - Phase 1 not PASS AND CLOSED until Category C cleared + WP-14/WP-15
+
+---
+
+## Engineering verification evidence (agent tip)
+
+Commands run on `polish/my-telepizza-ux` tip (all passed except linked Supabase — not configured in this environment):
+
+- `pnpm install --frozen-lockfile`
+- `pnpm check`
+- `pnpm test` (238 tests, fail 0)
+- `pnpm test:db`
+- `pnpm test:backend` (222 tests, fail 0)
+- `pnpm build:website`
+- `git diff --check`
+- `npx supabase migration list --linked` → **blocked**: project not linked (`LegacyProjectNotLinkedError`) — Owner runs with linked credentials (WP-15); no apply performed
+- `npx supabase db push --linked --dry-run` → same link precondition; **not applied**
