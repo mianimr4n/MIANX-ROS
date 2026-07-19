@@ -67,14 +67,17 @@ export default function Navbar() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-white/95 backdrop-blur-xl shadow-md shadow-brand-red/5"
+          ? "bg-white/95 backdrop-blur-xl shadow-md shadow-brand-red/10 border-b border-brand-red/10"
           : "bg-transparent"
       }`}
     >
+      {scrolled && (
+        <div className="h-1 w-full brand-stripe" aria-hidden />
+      )}
       <div className="container flex items-center justify-between h-16 md:h-20">
         {/* Logo */}
         <BrandLogo
-          imageClassName={scrolled ? undefined : "ring-2 ring-white/20"}
+          imageClassName={scrolled ? "ring-2 ring-brand-red/15" : "ring-2 ring-brand-gold/35"}
         />
 
         {/* Desktop Nav */}
@@ -83,15 +86,18 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`font-[var(--font-accent)] font-medium text-sm px-4 py-2 rounded-lg transition-all duration-200 active:scale-95 ${
+              className={`relative font-[var(--font-accent)] font-semibold text-sm px-4 py-2 rounded-lg transition-all duration-200 active:scale-95 ${
                 isNavActive(link.href)
                   ? "text-brand-red bg-brand-red/10"
                   : scrolled
-                  ? "text-brand-charcoal/70 hover:text-brand-charcoal hover:bg-brand-cream-dark"
-                  : "text-white/70 hover:text-white hover:bg-white/10"
+                  ? "text-brand-charcoal/75 hover:text-brand-red hover:bg-brand-cream-dark"
+                  : "text-white/80 hover:text-brand-gold hover:bg-white/10"
               }`}
             >
               {link.label}
+              {isNavActive(link.href) && (
+                <span className="absolute left-3 right-3 -bottom-0.5 h-0.5 rounded-full bg-brand-gold" />
+              )}
             </Link>
           ))}
         </nav>
@@ -268,7 +274,7 @@ export default function Navbar() {
           {/* Order Now CTA */}
           <Link href="/menu">
             <Button
-              className="hidden sm:flex bg-brand-red hover:bg-brand-red-dark text-white font-[var(--font-accent)] font-bold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-brand-red/20 transition-all active:scale-95"
+              className="hidden sm:flex bg-brand-red hover:bg-brand-red-dark text-white font-[var(--font-accent)] font-bold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-brand-red/25 ring-1 ring-brand-gold/40 transition-all active:scale-95"
             >
               Order Now
             </Button>
@@ -287,24 +293,30 @@ export default function Navbar() {
                 {mobileOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
               </button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-72 bg-brand-charcoal border-none p-0">
+            <SheetContent side="right" className="w-[min(100vw-1rem,20rem)] bg-brand-charcoal border-none p-0">
               <div className="flex flex-col h-full">
                 {/* Mobile Header */}
-                <div className="flex items-center justify-between p-6 border-b border-white/10">
+                <div className="h-1 w-full brand-stripe" aria-hidden />
+                <div className="flex items-center justify-between p-5 border-b border-white/10">
                   <BrandLogo
                     href="/"
                     onClick={() => setMobileOpen(false)}
-                    imageClassName="h-9 w-9"
+                    imageClassName="h-9 w-9 ring-2 ring-brand-gold/30"
                   />
+                  <span className="font-[var(--font-display)] font-bold text-brand-gold text-sm tracking-wide">
+                    Telepizza
+                  </span>
                 </div>
-                <nav className="flex-1 p-6 flex flex-col gap-4">
+                <nav className="flex-1 p-5 flex flex-col gap-1 overflow-y-auto">
                   {navLinks.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
-                      className={`font-[var(--font-display)] font-semibold text-lg py-2 transition-colors ${
-                        isNavActive(link.href) ? "text-brand-red" : "text-white hover:text-brand-gold"
+                      className={`font-[var(--font-display)] font-semibold text-lg py-3 px-3 rounded-xl transition-colors ${
+                        isNavActive(link.href)
+                          ? "text-brand-red bg-brand-red/15 border border-brand-red/30"
+                          : "text-white hover:text-brand-gold hover:bg-white/5"
                       }`}
                     >
                       {link.label}
@@ -316,7 +328,7 @@ export default function Navbar() {
                       toggleCart();
                       setMobileOpen(false);
                     }}
-                    className="font-[var(--font-display)] font-semibold text-lg py-2 text-left text-white hover:text-brand-gold"
+                    className="font-[var(--font-display)] font-semibold text-lg py-3 px-3 rounded-xl text-left text-white hover:text-brand-gold hover:bg-white/5"
                   >
                     Cart{totalItems > 0 ? ` (${totalItems})` : ""}
                   </button>
@@ -326,13 +338,18 @@ export default function Navbar() {
                       if (!isAuthenticated) rememberAuthNextPath("/my-telepizza");
                       setMobileOpen(false);
                     }}
-                    className={`font-[var(--font-display)] font-semibold text-lg py-2 transition-colors ${
+                    className={`font-[var(--font-display)] font-semibold text-lg py-3 px-3 rounded-xl transition-colors ${
                       pathOnly === "/my-telepizza" || pathOnly === "/account"
-                        ? "text-brand-red"
-                        : "text-white hover:text-brand-gold"
+                        ? "text-brand-red bg-brand-red/15 border border-brand-red/30"
+                        : "text-white hover:text-brand-gold hover:bg-white/5"
                     }`}
                   >
                     My Telepizza
+                  </Link>
+                  <Link href="/menu" onClick={() => setMobileOpen(false)} className="mt-3">
+                    <Button className="w-full bg-brand-red hover:bg-brand-red-dark text-white font-[var(--font-accent)] font-bold rounded-xl py-6 shadow-lg shadow-brand-red/30 ring-1 ring-brand-gold/40">
+                      Order Now
+                    </Button>
                   </Link>
                   <div className="mt-auto pt-6 border-t border-white/10 space-y-3">
                     {/* Mobile Branch Selector */}

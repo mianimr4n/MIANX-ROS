@@ -81,7 +81,7 @@ export default function Home() {
               Verified Telepizza meal combos at official branch prices
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
             {todaysDeals.map((deal, index) => (
               <DealCard key={deal.id} deal={deal} index={index} />
             ))}

@@ -53,14 +53,14 @@ export function CategoryStrip() {
           </p>
         </div>
         <Link href="/menu">
-          <span className="hidden sm:inline-flex items-center text-brand-red font-[var(--font-accent)] font-bold text-sm hover:underline">
+          <span className="inline-flex items-center text-brand-red font-[var(--font-accent)] font-bold text-xs sm:text-sm hover:underline shrink-0">
             View All
-            <ChevronRight className="w-4 h-4 ml-1" />
+            <ChevronRight className="w-4 h-4 ml-0.5" />
           </span>
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-5">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-5">
         {categories.map((category, index) => (
           <motion.div
             key={category.menuCategory}
