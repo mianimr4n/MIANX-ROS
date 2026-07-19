@@ -17,13 +17,15 @@
 - WhatsApp ordering/support number **`0304-1110495`** never used as OTP sender (D11)
 - Agents do not auto-merge or auto-deploy
 
-## Baseline (from audit)
+## Baseline (from audit — post CP-1–6 implementation on `polish/my-telepizza-ux`)
 
 | State | Modules |
 |---|---|
-| **Complete** | Home, Menu, Cart, Checkout, Order Tracking |
-| **Partial** | Search, My Telepizza, Addresses, Notifications |
-| **Missing** | Favorites, Reviews, Settings |
+| **Complete (implemented)** | Home, Menu, Cart, Checkout, Order Tracking, Addresses, Favorites, Reviews, Settings |
+| **Partial** | Search, My Telepizza, Notifications |
+| **Missing product modules** | None — remaining gaps are CP-3 SMTP (Owner-blocked), CP-7 UAT, hub polish |
+
+**Lifecycle honesty:** Implemented ≠ deployed ≠ operational. Migrations are **committed** on the integration branch; apply in each target env is separate.
 
 ---
 

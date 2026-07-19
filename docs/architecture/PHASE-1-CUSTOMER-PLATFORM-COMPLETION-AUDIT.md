@@ -2,8 +2,23 @@
 
 **Product:** Telepizza Pakistan · Powered by Mianx.ai  
 **Date:** 2026-07-19  
-**Type:** Comprehensive audit & gap analysis only — **no implementation, no PRs, no production changes**  
+**Type:** DOC-01 audit refresh — gap analysis + scoreboard reconciliation (no production deploy from this doc)
+**Branch reviewed:** `polish/my-telepizza-ux` (CP-1–CP-6 implementation present; CP-7 UAT not signed)
 **Reference app:** `apps/website` customer surfaces (excludes `/ops/*` staff ERP)
+
+---
+
+## Lifecycle legend (scoreboard honesty)
+
+| Stage | Meaning in this audit |
+|---|---|
+| **Implemented** | Code + migrations exist on `polish/my-telepizza-ux` |
+| **Reviewed** | PR review recorded (not auto-assumed) |
+| **Merged** | On integration branch — **not** claimed merged to production default |
+| **Deployed** | Running in staging/production — **not claimed** unless env evidence exists |
+| **Operational** | Live API + migrations applied + Owner gates met in target env |
+
+**Phase 1 is not marked PASS.** CP-7 UAT and CP-3 live SMTP remain open.
 
 ---
 
@@ -171,35 +186,36 @@
 ## 4. Favorites
 
 ### 1. Current status
-**Not Started**
+**Complete** (implemented on `polish/my-telepizza-ux`; CP-7 UAT pending)
 
 ### 2. Existing functionality
-- Marketing “Customer Favorites” on Home only (static IDs)
-- No `/favorites`, no heart UI, no persistence API
+- `/favorites` page; `FavoriteHeartButton` on Menu + ProductDetail (CP-5)
+- Cloud API: `GET/PUT/DELETE /api/v1/me/favorites/:itemCode`
+- Migration `20260719100000_customer_favorites.sql` (RLS own-row)
+- Home “Customer Favorites” remains a **separate curated marketing block** (static SKUs)
 
-### 3. Missing features (production Favorites)
-- Per-user save/unsave item
-- Auth-required or device-local store with clear honesty
-- Favorites list page + menu heart controls
-- Optional cloud sync table
+### 3. Missing features
+- Nav badge polish (optional)
+- Cross-device smoke evidence until CP-7 UAT signed
 
 ### 4. Security
-- N/A until built. Future: must not expose other users’ lists; branch-safe catalog IDs only.
+- Auth required for cloud save; `/me/*` scoped by Bearer + RLS `user_id = auth.uid()`
+- Isolation tests: `backend/api/tests/customer-me-cp246.test.ts`, migration matrix `tests/database/cp1-cp6-customer-migrations.test.mjs`
 
 ### 5. Performance
-- N/A
+- Small per-user lists; no pagination needed at pilot scale
 
 ### 6. Accessibility
-- N/A
+- Heart toggle needs CP-7 keyboard/focus UAT on Menu + detail
 
 ### 7. Testing
-- None
+- API route tests + static website wiring (`tests/website/cp-2-7-completion.test.mjs`)
 
 ### 8. Documentation
-- No product spec for website Favorites
+- Program WP5 spec; customer help article still thin
 
 ### 9. Production readiness
-**Blocked** (module does not exist)
+**Ready** (implementation) — **Operational** after migration apply + CP-7 UAT
 
 ---
 
@@ -319,23 +335,24 @@
 **Partial**
 
 ### 2. Existing functionality
-- `/my-telepizza` hub (overview, profile, addresses, security, orders, loyalty placeholder, notifications prefs)
+- `/my-telepizza` hub (overview, profile, addresses, security, orders preview, loyalty placeholder, notifications link)
 - Auth: email/password + Google (when configured); forgot/reset password
-- Profile PATCH; reorder with live price review dialog
-- Honest Coming Soon: loyalty, phone OTP verify, notification prefs
-- `/orders` list page related
+- Profile PATCH; cloud order history + pagination on `/orders` (CP-2); reorder with live price review dialog
+- Cloud addresses when API + migration up (CP-1); import banner for device drafts
+- Reviews dialog on completed orders (CP-6); favorites shortcut (CP-5)
+- Honest Coming Soon: loyalty, phone OTP verify; live SMTP prefs deferred (CP-3 blocked per CP-0)
+- `/settings` canonical for security + notification prefs (CP-4)
 
 ### 3. Missing features
-- Server-side order history as SoT (today partly device-local by phone match)
-- Preferred branch cloud sync (proposal only)
-- Favorites / Reviews integration
+- Hub polish / section IA consistency (CP-7 UAT)
+- Preferred branch cloud sync beyond address field (proposal only)
 - Phone OTP verification (Slice 2C paused — external ops)
 
 ### 4. Security
 - Auth required for hub. Profile strips privilege fields. Google metadata cannot set roles. Password/email change flows hardened in tests.
 
 ### 5. Performance
-- Client-side order lists; fine at pilot volume. No pagination on large histories yet.
+- Server order list paginated (`PAGE_SIZE = 20`, load-more on `/orders`); fine at pilot volume
 
 ### 6. Accessibility
 - Section nav + forms; hash sections — ensure skip links / focus on section change (UAT).
@@ -354,58 +371,74 @@
 ## 9. Addresses
 
 ### 1. Current status
-**Partial**
+**Complete** (implemented; CP-7 UAT + env apply pending)
 
 ### 2. Existing functionality
-- Hub `#addresses` CRUD drafts in `localStorage`
-- Labels Home/Office/Other; default flag; checkout picker
-- UI discloses **not** cloud SoT (`ADDRESSES_CLOUD_SYNC_AVAILABLE = false`)
+- Cloud SoT when API configured: `ADDRESSES_CLOUD_SYNC_AVAILABLE = true` (CP-1)
+- Hub `#addresses` + checkout picker via `GET/POST/PATCH/DELETE /api/v1/me/addresses` + import
+- Extended fields: recipient, phone, delivery zone, preferred branch (no GPS)
+- Migration `20260719090000_customer_addresses.sql` — **committed on `polish/my-telepizza-ux`**, not necessarily applied remotely
+- Device drafts: one-time import banner; local cache not SoT after import
 
 ### 3. Missing features
-- `customer_addresses` table + API + sync
-- Cross-device SoT
-- Validation/geocode (P3)
+- Geocode / map (P3, explicitly out of scope)
+- Production/staging smoke after migration apply in target env
 
 ### 4. Security
-- Owner-keyed local storage; no server PII store yet. Future cloud must be user-scoped RLS.
+- RLS own-row; API uses service_role with auth-scoped queries; anon denied DML
+- Tests: `backend/api/tests/customer-addresses.test.ts`, migration matrix static tests
 
 ### 5. Performance
-- Local — fine.
+- Small lists (max 20 active per D1d); no pagination needed
 
 ### 6. Accessibility
-- Forms in hub; mobile OK.
+- Forms in hub; mobile OK — CP-7 UAT
 
 ### 7. Testing
-- Static assertions on honesty + checkout wiring; no cloud API tests (none exist).
+- API CRUD + import tests; static website + checkout wiring (`tests/website/cp-1-addresses-search.test.mjs`)
 
 ### 8. Documentation
-- Migration proposal exists; **Owner approval pending**.
+- `MY-TELEPIZZA-ADDRESSES-MIGRATION-PROPOSAL.md` — D1 approved; migration committed; apply status env-specific
 
 ### 9. Production readiness
-**Needs Work** (device drafts OK for pilot; **Blocked** for “account SoT Addresses”)
+**Ready** (implementation) — **Operational** after migration apply + grants healthy in target env
 
 ---
 
 ## 10. Reviews
 
 ### 1. Current status
-**Not Started**
+**Complete** (implemented; public display deferred by policy)
 
 ### 2. Existing functionality
-- None as product reviews/ratings  
-- Note: `ReorderReviewDialog` is **price/availability review**, not star ratings
+- Post-order star rating + comment on completed owned orders (CP-6)
+- `OrderReviewDialog` on `/orders`; API `POST/PATCH /api/v1/me/orders/:orderNumber/review`, `GET /api/v1/me/reviews`
+- Migration `20260719110000_order_reviews.sql`; edit window 24h (`REVIEW_LOCKED`); duplicate blocked (`REVIEW_EXISTS`)
+- Note: `ReorderReviewDialog` remains **price/availability review**, distinct from star ratings
+- UI honesty: reviews account-private; no fake public product stars
 
 ### 3. Missing features
-- Post-order rating UI
-- Moderation, abuse controls
-- Display on product/menu (policy decision)
-- API + storage
+- Public product aggregation + moderation SOP (Owner policy — can defer with honesty)
+- CP-7 UAT on completed-order prompt paths
 
-### 4–8. Security / Perf / A11y / Tests / Docs
-- N/A product; no website docs. Agent “reputation” docs are not implementation.
+### 4. Security
+- Auth + ownership; only `completed` orders; one review per order; cross-user blocked at API + RLS
+
+### 5. Performance
+- Small per-user lists
+
+### 6. Accessibility
+- Review dialog — CP-7 UAT
+
+### 7. Testing
+- API: `customer-me-cp246.test.ts` (create, `REVIEW_EXISTS`, `REVIEW_LOCKED`)
+- Static migration RLS tests; website wiring in `cp-2-7-completion.test.mjs`
+
+### 8. Documentation
+- Program WP6 spec; moderation SOP still Owner-owned
 
 ### 9. Production readiness
-**Blocked**
+**Ready** (private MVP) — public display **Needs Work** if required for marketing claims
 
 ---
 
@@ -416,9 +449,9 @@
 
 ### 2. Existing functionality
 - `/notifications` device-local inbox
-- `pushNotification` on order submit (local)
-- Hub prefs UI **disabled** — “Coming Soon”
-- Mark all read
+- `pushNotification` on order submit (local, try/catch — order never blocked — SEC-01)
+- Notification prefs on `/settings` — **device-local save/load** (`customer-notification-prefs.ts`); UI does not claim live SMTP while CP-0 blocked
+- Hub links to Settings for prefs; mark all read on inbox
 
 ### 3. Missing features
 - WhatsApp / SMS / email order status pushes
@@ -449,26 +482,25 @@
 ## 12. Settings
 
 ### 1. Current status
-**Not Started** (as dedicated module)
+**Complete** (implemented; live email prefs remain CP-3-blocked)
 
 ### 2. Existing functionality
-- Closest: My Telepizza **Security** (password, email, login methods, OTP Coming Soon)
-- Theme via `ThemeContext` (not a Settings page)
-- No `/settings` route
+- `/settings` route (CP-4): profile, password, notification prefs (local), privacy copy, account/delete-via-support honesty
+- Reuses proven My Telepizza security patterns; theme via `ThemeContext` (linked, not duplicated)
+- Delete account = support request per D4 — no fake instant wipe
 
 ### 3. Missing features
-- Dedicated Settings page: notifications, language, theme, communication prefs, delete-account/export (policy)
-- Payment methods placeholder honesty
-- Linkage from nav
+- Live notification prefs wired to SMTP when CP-3 unblocks (CP-0 email placeholders pending)
+- Language selector (P3)
 
 ### 4. Security
-- Security subset already auth-gated. Future Settings must not expose staff controls to customers.
+- Auth-gated; no staff controls exposed
 
 ### 5–8. Performance / A11y / Tests / Docs
-- Covered partially under My Telepizza security tests. Mobile requirements mention Settings — website gap. No customer Settings spec.
+- Static tests in `cp-2-7-completion.test.mjs` + auth production tests; CP-7 a11y UAT open
 
 ### 9. Production readiness
-**Blocked** (no Settings product page)
+**Ready** (Settings page + honest prefs) — live email channel **Needs Work** (CP-3)
 
 ---
 
@@ -483,30 +515,29 @@
 4. **Keep honesty:** no fake loyalty points, no fake payment success, no fake GPS
 5. **WhatsApp fallback** remains `0304-1110495` (already locked + tested)
 
-*Customer-code P1 gaps inside Phase 1 modules:* none blocking COD path if Owner accepts device addresses + no automated confirm.
+*Customer-code P1 gaps inside Phase 1 modules:* CP-7 UAT + env migration apply; live SMTP still Owner-blocked (CP-0).
 
 ## Priority 2 — Important
-*(Should complete before claiming Phase 1 = 100% Production Ready under this audit’s 12-module DoD)*
+*(Remaining before claiming Phase 1 = 100% Production Ready under this audit’s 12-module DoD)*
 
-1. **Cloud Addresses** — table + API + My Telepizza/Checkout sync (Owner approve proposal)
-2. **Server order history** for logged-in customers (replace/augment device-local matching)
-3. **Order confirmation channel** — at least one: email and/or WhatsApp template (not on OTP number)
-4. **Notification prefs that control that channel**
-5. **Search test coverage** + a11y pass on Menu search input
-6. **Dedicated Settings page** consolidating Security + notification prefs + theme (can be thin)
-7. **My Telepizza** preferred-branch cloud (optional but Important for dual-branch)
+1. **CP-7 UAT sign-off** on cloud addresses, orders pagination, favorites, reviews, settings
+2. **Migration apply + grants** in staging/production for CP-1/5/6 tables
+3. **Order confirmation channel** — live email (CP-3) when CP-0 email placeholders resolved
+4. **Notification prefs → live channel** (depends on #3; local prefs exist today)
+5. **Search a11y UAT** pass on Menu search input (tests exist; manual UAT open)
+6. **My Telepizza hub polish** — section IA consistency
 
 ## Priority 3 — Enhancement
 
-1. **Favorites** — save items + list page
-2. **Reviews / ratings** — post-order + moderation
-3. **Standalone `/search`** with suggestions
-4. **Promo codes** at checkout (depends on Coupons engine — often ERP W2)
-5. **Live rider map / ETA**
-6. **Cloud cart sync**
-7. **Phone OTP verify** (blocked on Slice 2C.0 Meta/Twilio ops)
-8. **Wallets** JazzCash/EasyPaisa (separate payment sprint)
-9. **Loyalty ledger** (future architecture only)
+1. **Standalone `/search`** with suggestions
+2. **Public review aggregation** on Menu (after moderation SOP)
+3. **Promo codes** at checkout (depends on Coupons engine — often ERP W2)
+4. **Live rider map / ETA**
+5. **Cloud cart sync**
+6. **Phone OTP verify** (blocked on Slice 2C.0 Meta/Twilio ops)
+7. **Wallets** JazzCash/EasyPaisa (separate payment sprint)
+8. **Loyalty ledger** (future architecture only)
+9. **Preferred branch cloud** beyond address field (optional)
 
 ---
 
@@ -519,17 +550,16 @@ P1 (Owner/Release — parallel, non-ERP)
   3. Written COD + honesty acceptance
 
 P2 Customer Platform completion (before Phase 2 ERP)
-  4. Cloud Addresses (Owner approve → migrate → API → UI)
-  5. Authenticated order history SoT API + hub/Orders wiring
-  6. Transactional confirmation (email first OR WA utility template)
-  7. Notifications: wire real events + enable prefs for that channel only
-  8. Customer Settings page (security + prefs + theme links)
-  9. Search/a11y/tests harden
+  4. ~~Cloud Addresses~~ → implemented; **apply migrations + UAT**
+  5. ~~Authenticated order history~~ → implemented; **UAT**
+  6. Transactional confirmation (email first OR WA utility template) — **CP-3 Owner-blocked**
+  7. Notifications: wire real events + enable prefs for live channel — **CP-3**
+  8. ~~Customer Settings page~~ → implemented; **UAT**
+  9. Search/a11y/tests harden — **tests done; UAT open**
 
 P3 (can start after Phase 1 Ready OR parallel low priority)
- 10. Favorites
- 11. Reviews
- 12. Standalone Search / maps / OTP / wallets / loyalty
+ 10. Standalone Search / public review stars
+ 11. Maps / OTP / wallets / loyalty
 ```
 
 **Do not start Phase 2 Admin ERP** until the Definition of Done below is signed — or until CEO explicitly redefines Phase 1 as “Tier A path only” (document that decision).
@@ -607,9 +637,10 @@ Phase 1 may be marked **100% Production Ready** only when **all** of the followi
 | 11 | Notifications | Partial | Needs Work |
 | 12 | Settings | Complete | Ready |
 
-**Overall Phase 1 Progress: ~85%** (reconciled; pre-ship 58% baseline superseded)  
+**Overall Phase 1 Progress: ~85%** (reconciled; pre-ship 58% baseline superseded — not contradictory: 58% was pre-CP-1–6 **implementation**, ~85% is post-implementation **pre-UAT/SMTP**)
+**Phase 1 PASS: NOT claimed.** CP-7 UAT unsigned; CP-3 live email Owner-blocked.
 **Phase 2 Admin ERP: Do not begin until DoD (or CEO fork) is signed.**
 
 ---
 
-*Audit only — no code, no PRs, no production modifications.*
+*DOC-01 refresh — scoreboard + test integrity; no production deploy from this document.*

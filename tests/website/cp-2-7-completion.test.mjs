@@ -29,7 +29,19 @@ test("CP-2–7: orders cloud pagination, favorites, reviews, settings routes", (
   assert.match(favoritesApi, /invalidateFavoritesCache/);
   assert.match(favoritesPage, /FavoriteHeartButton/);
   assert.match(settings, /loadNotificationPreferences/);
+  assert.match(settings, /saveNotificationPreferences/);
   assert.match(submitOrder, /try[\s\S]*pushNotification[\s\S]*catch/);
+});
+
+test("CP-4 notification prefs load/save locally without claiming live SMTP", () => {
+  const prefs = read("apps/website/client/src/lib/customer-notification-prefs.ts");
+  const settings = read("apps/website/client/src/pages/Settings.tsx");
+
+  assert.match(prefs, /loadNotificationPreferences/);
+  assert.match(prefs, /saveNotificationPreferences/);
+  assert.match(prefs, /Live SMTP \/ push email delivery is deferred/i);
+  assert.match(settings, /loadNotificationPreferences/);
+  assert.match(settings, /saveNotificationPreferences/);
 });
 
 test("CP-6 reviews migration enforces owned completed order RLS", () => {

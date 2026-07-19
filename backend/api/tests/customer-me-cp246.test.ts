@@ -2,6 +2,7 @@ import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 
+import { ApiError } from "../src/common/http.js";
 import { createApp } from "../src/app.js";
 import type { AuthPrincipalRepository } from "../src/services/auth/supabase.js";
 import type { AuthTokenVerifier } from "../src/middleware/auth.js";
@@ -169,6 +170,120 @@ describe("CP-2 /me/orders", () => {
     expect(response.body.data.pagination.total).toBe(1);
     expect(listOrders).toHaveBeenCalledWith("user-1", { limit: 20, offset: 0, status: undefined });
   });
+
+  it("returns 404 when a customer requests another user's order detail", async () => {
+    const customerOrders: CustomerOrdersDataSource = {
+      async listOrders() {
+        return { orders: [], total: 0 };
+      },
+      async getOrder() {
+        throw new ApiError(404, "ORDER_NOT_FOUND", "Order not found.");
+      },
+    };
+
+    const customerFavorites: CustomerFavoritesDataSource = {
+      async listFavorites() {
+        return [];
+      },
+      async addFavorite() {
+        throw new Error("unused");
+      },
+      async removeFavorite() {
+        throw new Error("unused");
+      },
+    };
+
+    const customerReviews: CustomerReviewsDataSource = {
+      async listReviews() {
+        return [];
+      },
+      async createReview() {
+        throw new Error("unused");
+      },
+      async updateReview() {
+        throw new Error("unused");
+      },
+    };
+
+    const { app } = createApp(readyEnv, {
+      catalogDataSource,
+      ordersDataSource,
+      customerAddresses,
+      customerOrders,
+      customerFavorites,
+      customerReviews,
+      ...authDeps("user-2"),
+    });
+
+    const response = await request(app)
+      .get("/api/v1/me/orders/TP-9999")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(404);
+    expect(response.body.error.code).toBe("ORDER_NOT_FOUND");
+  });
+
+  it("passes pagination params through to the orders data source", async () => {
+    const listOrders = vi.fn(async () => ({ orders: [], total: 42 }));
+
+    const customerOrders: CustomerOrdersDataSource = {
+      listOrders,
+      async getOrder() {
+        throw new Error("unused");
+      },
+    };
+
+    const customerFavorites: CustomerFavoritesDataSource = {
+      async listFavorites() {
+        return [];
+      },
+      async addFavorite() {
+        throw new Error("unused");
+      },
+      async removeFavorite() {
+        throw new Error("unused");
+      },
+    };
+
+    const customerReviews: CustomerReviewsDataSource = {
+      async listReviews() {
+        return [];
+      },
+      async createReview() {
+        throw new Error("unused");
+      },
+      async updateReview() {
+        throw new Error("unused");
+      },
+    };
+
+    const { app } = createApp(readyEnv, {
+      catalogDataSource,
+      ordersDataSource,
+      customerAddresses,
+      customerOrders,
+      customerFavorites,
+      customerReviews,
+      ...authDeps(),
+    });
+
+    const response = await request(app)
+      .get("/api/v1/me/orders?limit=10&offset=20&status=completed")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.pagination).toEqual({
+      limit: 10,
+      offset: 20,
+      total: 42,
+      returned: 0,
+    });
+    expect(listOrders).toHaveBeenCalledWith("user-1", {
+      limit: 10,
+      offset: 20,
+      status: "completed",
+    });
+  });
 });
 
 describe("CP-4 /me/favorites", () => {
@@ -227,6 +342,65 @@ describe("CP-4 /me/favorites", () => {
     expect(response.status).toBe(200);
     expect(response.body.data.favorite.menuItemCode).toBe("tele-special");
     expect(addFavorite).toHaveBeenCalledWith("user-1", "tele-special");
+  });
+
+  it("lists favorites scoped to the authenticated user only", async () => {
+    const listFavorites = vi.fn(async () => [
+      {
+        id: "fav-1",
+        menuItemCode: "tele-special",
+        createdAt: "2026-07-19T00:00:00.000Z",
+      },
+    ]);
+
+    const customerOrders: CustomerOrdersDataSource = {
+      async listOrders() {
+        return { orders: [], total: 0 };
+      },
+      async getOrder() {
+        throw new Error("unused");
+      },
+    };
+
+    const customerFavorites: CustomerFavoritesDataSource = {
+      listFavorites,
+      async addFavorite() {
+        throw new Error("unused");
+      },
+      async removeFavorite() {
+        throw new Error("unused");
+      },
+    };
+
+    const customerReviews: CustomerReviewsDataSource = {
+      async listReviews() {
+        return [];
+      },
+      async createReview() {
+        throw new Error("unused");
+      },
+      async updateReview() {
+        throw new Error("unused");
+      },
+    };
+
+    const { app } = createApp(readyEnv, {
+      catalogDataSource,
+      ordersDataSource,
+      customerAddresses,
+      customerOrders,
+      customerFavorites,
+      customerReviews,
+      ...authDeps("user-9"),
+    });
+
+    const response = await request(app)
+      .get("/api/v1/me/favorites")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.favorites).toHaveLength(1);
+    expect(listFavorites).toHaveBeenCalledWith("user-9");
   });
 });
 
@@ -295,5 +469,111 @@ describe("CP-6 /me/reviews", () => {
       rating: 5,
       comment: "Great pizza",
     });
+  });
+
+  it("returns REVIEW_EXISTS when the order already has a review", async () => {
+    const customerOrders: CustomerOrdersDataSource = {
+      async listOrders() {
+        return { orders: [], total: 0 };
+      },
+      async getOrder() {
+        throw new Error("unused");
+      },
+    };
+
+    const customerFavorites: CustomerFavoritesDataSource = {
+      async listFavorites() {
+        return [];
+      },
+      async addFavorite() {
+        throw new Error("unused");
+      },
+      async removeFavorite() {
+        throw new Error("unused");
+      },
+    };
+
+    const customerReviews: CustomerReviewsDataSource = {
+      async listReviews() {
+        return [];
+      },
+      async createReview() {
+        throw new ApiError(409, "REVIEW_EXISTS", "This order already has a review.");
+      },
+      async updateReview() {
+        throw new Error("unused");
+      },
+    };
+
+    const { app } = createApp(readyEnv, {
+      catalogDataSource,
+      ordersDataSource,
+      customerAddresses,
+      customerOrders,
+      customerFavorites,
+      customerReviews,
+      ...authDeps(),
+    });
+
+    const response = await request(app)
+      .post("/api/v1/me/orders/TP-1001/review")
+      .set("Authorization", "Bearer valid-token")
+      .send({ rating: 4, comment: "Duplicate" });
+
+    expect(response.status).toBe(409);
+    expect(response.body.error.code).toBe("REVIEW_EXISTS");
+  });
+
+  it("returns REVIEW_LOCKED when the edit window has expired", async () => {
+    const customerOrders: CustomerOrdersDataSource = {
+      async listOrders() {
+        return { orders: [], total: 0 };
+      },
+      async getOrder() {
+        throw new Error("unused");
+      },
+    };
+
+    const customerFavorites: CustomerFavoritesDataSource = {
+      async listFavorites() {
+        return [];
+      },
+      async addFavorite() {
+        throw new Error("unused");
+      },
+      async removeFavorite() {
+        throw new Error("unused");
+      },
+    };
+
+    const customerReviews: CustomerReviewsDataSource = {
+      async listReviews() {
+        return [];
+      },
+      async createReview() {
+        throw new Error("unused");
+      },
+      async updateReview() {
+        throw new ApiError(409, "REVIEW_LOCKED", "Reviews can only be edited within 24 hours.");
+      },
+    };
+
+    const { app } = createApp(readyEnv, {
+      catalogDataSource,
+      ordersDataSource,
+      customerAddresses,
+      customerOrders,
+      customerFavorites,
+      customerReviews,
+      ...authDeps(),
+    });
+
+    const response = await request(app)
+      .patch("/api/v1/me/orders/TP-1001/review")
+      .set("Authorization", "Bearer valid-token")
+      .send({ rating: 3, comment: "Too late" });
+
+    expect(response.status).toBe(409);
+    expect(response.body.error.code).toBe("REVIEW_LOCKED");
   });
 });
