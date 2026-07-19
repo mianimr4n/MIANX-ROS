@@ -17,6 +17,7 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AuthCallback from "./pages/AuthCallback";
+import Welcome from "./pages/Welcome";
 import StaffAccept from "./pages/StaffAccept";
 import StaffLogin from "./pages/StaffLogin";
 import Account from "./pages/Account";
@@ -70,6 +71,7 @@ function Router() {
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/auth/callback" component={AuthCallback} />
+      <Route path="/welcome" component={Welcome} />
       <Route path="/staff/accept" component={StaffAccept} />
       <Route path="/staff/login" component={StaffLogin} />
       <Route path="/ops/orders" component={OpsOrders} />

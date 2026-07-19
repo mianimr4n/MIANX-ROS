@@ -7,6 +7,7 @@ import {
   consumeAuthEmailFlow,
   consumeAuthNextPath,
   DEFAULT_AUTH_DESTINATION,
+  POST_SIGNUP_DESTINATION,
   mapOAuthCallbackError,
   peekAuthEmailFlowFromLocation,
   peekAuthNextFromLocationSearch,
@@ -73,6 +74,9 @@ export default function AuthCallback() {
       destination = "/reset-password";
     } else if (flow === "email_change") {
       destination = sanitizeAuthNextPath(storedNext || "/my-telepizza#security", "/my-telepizza#security");
+    } else if (flow === "signup") {
+      // Email confirmation → Welcome / profile completion (not a generic dashboard).
+      destination = POST_SIGNUP_DESTINATION;
     } else {
       destination = sanitizeAuthNextPath(
         fromQuery ?? (storedNext || DEFAULT_AUTH_DESTINATION),
