@@ -29,3 +29,15 @@ supabase/.temp/
 supabase/.cache/
 supabase/.DS_Store
 .vercel
+
+# Local agent recovery / dumps (never commit)
+.phase1-dump/
+.restore-phase1/
+telepizza/
+.mytelepizza-patch-*.json
+.apply-mytelepizza.mjs
+.dump-*.mjs
+.extract-docs.mjs
+.restore-phase1.mjs
+.test-out*.txt
+.test-final.txt
