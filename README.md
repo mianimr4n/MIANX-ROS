@@ -1,168 +1,77 @@
-# 🍕 Telepizza Platform
+# Telepizza Platform
 
-> The official digital ecosystem for Telepizza Pakistan.
-
----
-
-# 📖 Overview
-
-Telepizza Platform is an enterprise-grade restaurant management ecosystem designed to manage every aspect of Telepizza Pakistan from a single platform.
-
-The platform includes customer-facing applications, restaurant operations, AI-powered automation, multi-branch management, analytics, marketing, and administration.
-
-This project is designed to scale from a single restaurant to a nationwide restaurant chain.
+Official digital platform for **Telepizza Pakistan** (Powered by Mianx.ai).
 
 ---
 
-# 🎯 Vision
+## What ships today
 
-To build Pakistan's most advanced restaurant technology platform that delivers an exceptional customer experience while simplifying restaurant operations through automation and artificial intelligence.
+| Surface | Location | Notes |
+|---|---|---|
+| Customer website | `apps/website` | React + Vite · menu, cart, checkout, account (Phase 1 under Founder review) |
+| Backend API | `backend/api` | Express · Supabase/Postgres |
+| Database | `supabase/migrations` | Forward-only SQL migrations |
+| Canonical menu data | `data/catalog/` | Manifest + generated website fallback |
 
----
-
-# 🏢 Current Branches
-
-- Royal Orchard Branch
-- Northern Bypass Road Branch
-
-The system is designed to support unlimited future branches.
+**Not production-claimed without Founder sign-off:** Admin ERP, POS, mobile apps, franchise portal, full AI workforce.
 
 ---
 
-# 🚀 Core Applications
+## Branches (product)
 
-- Website
-- Mobile App
-- Admin Panel
-- POS System
-- Kitchen Dashboard
-- Delivery Dashboard
-- Rider App
-- Customer Support Panel
-- Franchise Portal
+- Royal Orchard (operating)
+- Northern Bypass (coming soon in product data)
 
 ---
 
-# 🤖 AI Ecosystem
+## Quick start
 
-The platform includes specialized AI teams.
+```bash
+pnpm install
+pnpm dev:website          # http://localhost:3000
+pnpm --filter @telepizza/api dev   # http://localhost:4000
+```
 
-## Customer Experience
-
-- Order Agent
-- WhatsApp Agent
-- Voice Agent
-- Complaint Agent
-- Loyalty Agent
-
-## Marketing Team
-
-- Social Media Agent
-- Content Writer Agent
-- Graphic Design Agent
-- Video Editor Agent
-- SEO Agent
-- Ads Agent
-
-## Development Team
-
-- Frontend Agent
-- Backend Agent
-- Mobile Agent
-- QA Agent
-- DevOps Agent
-- Security Agent
-
-## Restaurant Operations
-
-- Kitchen Agent
-- Inventory Agent
-- Delivery Agent
-- Rider Agent
-- Branch Manager Agent
-
-## Analytics
-
-- Sales Analytics
-- Customer Insights
-- Menu Performance
-- Business Reports
+See `AGENTS.md` for Supabase local stack notes.
 
 ---
 
-# 🌍 Platform Features
+## Documentation
 
-- Online Ordering
-- Multi Branch Management
-- POS
-- Kitchen Display System
-- Rider Tracking
-- Inventory Management
-- CRM
-- Loyalty Program
-- Coupons
-- Promotions
-- Push Notifications
-- AI Automation
-- Business Analytics
-- SEO Management
-- Social Media Management
+**Start here:** [`docs/README.md`](docs/README.md) — Documentation Map (ACTIVE / REFERENCE / ARCHIVE).
+
+| Topic | Path |
+|---|---|
+| Master roadmap | [`docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md`](docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md) |
+| Architecture | [`docs/architecture/`](docs/architecture/) |
+| Database | [`docs/database/`](docs/database/) |
+| Agent / Cloud ops | [`AGENTS.md`](AGENTS.md) |
+
+Historical audits and template packs live under [`docs/18-reference/archive/`](docs/18-reference/archive/).
 
 ---
 
-# 💻 Technology Stack
+## Repository layout
 
-## Frontend
-
-- Next.js
-- React
-- TypeScript
-- Tailwind CSS
-
-## Mobile
-
-- React Native
-- Expo
-
-## Backend
-
-- NestJS
-- PostgreSQL
-- Prisma ORM
-
-## AI
-
-- OpenAI
-- Claude
-- Gemini
-- Custom AI Agents
+```text
+apps/website     Customer web app
+backend/api      REST API
+data/catalog     Canonical menu manifest
+docs/            TEAS documentation tree
+scripts/         Tooling
+supabase/        Migrations & local DB
+tests/           Static + contract tests
+```
 
 ---
 
-# 📂 Project Structure
+## Deploy config
 
-See:
-
-PROJECT_STRUCTURE.md
-
----
-
-# 📚 Documentation
-
-All documentation is located inside:
-
-docs/
+- Website: `vercel.json`
+- API: `render.yaml`
 
 ---
 
-# 📈 Development Roadmap
+## Powered by
 
-See:
-
-ROADMAP.md
-
----
-
-# ❤️ Powered By
-
-Powered by Mianx.ai
+Mianx.ai

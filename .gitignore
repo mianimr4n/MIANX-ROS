@@ -8,8 +8,15 @@ coverage/
 .expo/
 *.log
 
-_repository-cleanup/backups/
-_repository-cleanup/archive/
+# Local Windows junction → docs/18-reference/archive/documentation-audit (compat only; never commit)
+/_documentation-audit/
+
+# Legacy path (tree archived under docs/18-reference/archive/repository-cleanup-20260712/)
+_repository-cleanup/
+
+# Previously never-tracked local cleanup noise (kept on disk under archive; do not inflate git)
+docs/18-reference/archive/repository-cleanup-20260712/backups/
+docs/18-reference/archive/repository-cleanup-20260712/archive/
 
 # Website app exclusions
 apps/website/node_modules/
