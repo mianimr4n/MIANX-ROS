@@ -28,14 +28,14 @@ export default function Notifications() {
                 Notifications
               </h1>
               <p className="text-sm text-muted-foreground">
-                Login to view notifications.
+                Sign in to view order updates stored on this device.
               </p>
               <Button asChild className="rounded-2xl brand-gradient text-white font-semibold">
                 <Link
                   href={`/login?next=${encodeURIComponent(returnPath)}`}
                   onClick={() => rememberAuthNextPath(returnPath)}
                 >
-                  Login
+                  Sign in
                 </Link>
               </Button>
               <p className="text-xs text-muted-foreground">
@@ -65,13 +65,13 @@ export default function Notifications() {
               </p>
               <h1 className="brand-heading text-3xl">Notifications</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Updates stored on this device for your account.
+                On-device inbox for order updates. Email alerts are not sent yet.
               </p>
             </div>
             {notifications.length > 0 ? (
               <Button
                 variant="outline"
-                className="rounded-2xl"
+                className="min-h-11 rounded-2xl"
                 onClick={() => markNotificationsRead(notificationKey)}
               >
                 Mark all read
@@ -90,14 +90,14 @@ export default function Notifications() {
             </div>
             <p className="font-semibold text-brand-charcoal">No notifications yet</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Place an order to receive on-device updates here. Email alerts are not sent yet.
+              Place an order to receive on-device updates here.
             </p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
-              <Button asChild className="rounded-2xl brand-gradient text-white font-semibold">
+              <Button asChild className="min-h-11 rounded-2xl brand-gradient text-white font-semibold">
                 <Link href="/menu">Browse menu</Link>
               </Button>
-              <Button asChild variant="outline" className="rounded-2xl">
-                <Link href="/my-telepizza#notifications">Notification prefs</Link>
+              <Button asChild variant="outline" className="min-h-11 rounded-2xl">
+                <Link href="/settings#prefs">Notification prefs</Link>
               </Button>
             </div>
           </div>

@@ -18,6 +18,7 @@ const AUTH_NEXT_STORAGE_KEY = "telepizza.auth.next";
 /** Internal destinations customers may resume after OAuth / login / recovery. */
 const SAFE_AUTH_DESTINATION_PREFIXES = [
   "/my-telepizza",
+  "/welcome",
   "/account",
   "/checkout",
   "/orders",
@@ -27,6 +28,9 @@ const SAFE_AUTH_DESTINATION_PREFIXES = [
   "/reset-password",
   "/branches",
 ] as const;
+
+/** After email confirmation (signup), land here for profile completion — not a generic dashboard. */
+export const POST_SIGNUP_DESTINATION = "/welcome";
 
 const AUTH_FLOW_STORAGE_KEY = "telepizza.auth.flow";
 

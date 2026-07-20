@@ -13,6 +13,7 @@ import {
   MapPin,
   Package,
   RotateCcw,
+  Settings,
   Shield,
   Star,
   Store,
@@ -40,21 +41,41 @@ import {
 import { rememberAuthNextPath } from "@/lib/auth-redirect";
 import {
   addSavedAddress,
+  draftToImportPayload,
   formatSavedAddress,
+  hasCompletedAddressImport,
   listSavedAddresses,
+  markAddressImportCompleted,
   removeSavedAddress,
   setDefaultSavedAddress,
   updateSavedAddress,
   type AddressLabel,
   type SavedCustomerAddress,
 } from "@/lib/customer-addresses";
+import {
+  archiveCloudAddress,
+  cloudAddressToSaved,
+  cloudAddressesAvailable,
+  createCloudAddress,
+  fetchCloudAddresses,
+  importCloudAddresses,
+  updateCloudAddress,
+} from "@/lib/customer-addresses-api";
 import { listLocalOrders, type StoredOrder } from "@/lib/customer-store";
+import {
+  cloudDetailToStored,
+  cloudListItemToStored,
+  cloudOrdersAvailable,
+  fetchCloudOrderDetail,
+  fetchCloudOrders,
+} from "@/lib/customer-orders-api";
 import { bucketForOrderStatus } from "@/lib/order-status";
 import {
   buildReorderPreview,
   confirmedReorderCartItems,
   type ReorderPreview,
 } from "@/lib/reorder";
+import { normalizePakistaniMobileE164 } from "@/lib/phone";
 
 type HubSection =
   | "overview"
@@ -66,9 +87,6 @@ type HubSection =
   | "notifications";
 
 type StatusTone = "success" | "warning" | "neutral";
-
-/** Cloud address book is not enabled for customers yet — device drafts only. */
-const ADDRESSES_CLOUD_SYNC_AVAILABLE = false;
 
 const NAV_ITEMS: Array<{ id: HubSection; label: string; icon: typeof LayoutDashboard }> = [
   { id: "overview", label: "Dashboard", icon: LayoutDashboard },
@@ -158,6 +176,15 @@ export default function MyTelepizza() {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [addressIsDefault, setAddressIsDefault] = useState(false);
+  const [addressRecipientName, setAddressRecipientName] = useState("");
+  const [addressPhone, setAddressPhone] = useState("");
+  const [addressLine2, setAddressLine2] = useState("");
+  const [addressLandmark, setAddressLandmark] = useState("");
+  const [cloudAddresses, setCloudAddresses] = useState<SavedCustomerAddress[]>([]);
+  const [addressesLoading, setAddressesLoading] = useState(false);
+  const [addressesError, setAddressesError] = useState<string | null>(null);
+  const [cloudOrders, setCloudOrders] = useState<StoredOrder[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   useEffect(() => {
     setFullName(profile?.fullName ?? "");
@@ -185,6 +212,10 @@ export default function MyTelepizza() {
     setAddressLine1("");
     setAddressArea("");
     setAddressNotes("");
+    setAddressLine2("");
+    setAddressLandmark("");
+    setAddressRecipientName(fullName || profile?.fullName || "");
+    setAddressPhone(phone || profile?.phone || "");
     setAddressLabel("Home");
     setAddressCity("Multan");
     setAddressIsDefault(false);
@@ -206,6 +237,12 @@ export default function MyTelepizza() {
   }, [showAddressForm]);
 
   const ownerKey = user?.id || profile?.email || user?.email || "";
+  const usingCloudAddresses = Boolean(
+    isAuthenticated && session?.access_token && cloudAddressesAvailable(),
+  );
+  const usingCloudOrders = Boolean(
+    isAuthenticated && session?.access_token && cloudOrdersAvailable,
+  );
 
   useEffect(() => {
     if (!ownerKey) {
@@ -215,19 +252,53 @@ export default function MyTelepizza() {
     setAddresses(listSavedAddresses(ownerKey));
   }, [ownerKey]);
 
+  useEffect(() => {
+    if (!usingCloudAddresses || !session?.access_token) {
+      setCloudAddresses([]);
+      return;
+    }
+    setAddressesLoading(true);
+    setAddressesError(null);
+    void fetchCloudAddresses(session.access_token)
+      .then((rows) => setCloudAddresses(rows.map(cloudAddressToSaved)))
+      .catch((error) =>
+        setAddressesError(error instanceof Error ? error.message : "Could not load addresses."),
+      )
+      .finally(() => setAddressesLoading(false));
+  }, [usingCloudAddresses, session?.access_token]);
+
+  useEffect(() => {
+    if (!usingCloudOrders || !session?.access_token) {
+      setCloudOrders([]);
+      return;
+    }
+    setOrdersLoading(true);
+    void fetchCloudOrders(session.access_token, { limit: 20, offset: 0 })
+      .then((result) => {
+        setCloudOrders(result.orders.map(cloudListItemToStored));
+      })
+      .catch(() => {
+        setCloudOrders([]);
+      })
+      .finally(() => setOrdersLoading(false));
+  }, [usingCloudOrders, session?.access_token]);
+
+  const displayedAddresses = usingCloudAddresses ? cloudAddresses : addresses;
+
   const orderKey = profile?.phone ?? undefined;
   const localOrders = useMemo(
     () => (orderKey ? listLocalOrders(orderKey) : []),
     [orderKey],
   );
-  const activeOrders = localOrders.filter(
+  const hubOrders = usingCloudOrders ? cloudOrders : localOrders;
+  const activeOrders = hubOrders.filter(
     (order) => bucketForOrderStatus(order.status) === "active",
   );
   const activeOrder = activeOrders[0] ?? null;
-  const lastCompleted = localOrders.find(
+  const lastCompleted = hubOrders.find(
     (order) => bucketForOrderStatus(order.status) === "completed",
   );
-  const lastOrder = localOrders[0];
+  const lastOrder = hubOrders[0];
 
   function goTo(next: HubSection) {
     focusMainAfterNav.current = true;
@@ -237,11 +308,19 @@ export default function MyTelepizza() {
     }
   }
 
-  function openReorderReview(order: StoredOrder) {
+  async function openReorderReview(order: StoredOrder) {
     if (catalogLoading) return;
-    const preview = buildReorderPreview(order, catalogItems);
-    setReorderPreview(preview);
-    setReorderOpen(true);
+    try {
+      let target = order;
+      if (usingCloudOrders && session?.access_token && order.items.length === 0) {
+        const detail = await fetchCloudOrderDetail(session.access_token, order.orderNumber);
+        target = cloudDetailToStored(detail);
+      }
+      setReorderPreview(buildReorderPreview(target, catalogItems));
+      setReorderOpen(true);
+    } catch {
+      // Reorder preview stays closed when detail fetch fails.
+    }
   }
 
   function confirmReorder() {
@@ -388,7 +467,7 @@ export default function MyTelepizza() {
     fullName: fullName.trim() ? fullName : "",
     emailVerified,
     hasPhone: Boolean(profile?.phone),
-    hasDeviceAddress: addresses.length > 0,
+    hasDeviceAddress: displayedAddresses.length > 0,
   });
   const passwordChecks = getPasswordRequirementChecks(password);
 
@@ -470,10 +549,40 @@ export default function MyTelepizza() {
     }
   }
 
-  function handleSaveAddress(event: FormEvent) {
+  async function handleSaveAddress(event: FormEvent) {
     event.preventDefault();
     setAddressError(null);
     setAddressNotice(null);
+
+    if (usingCloudAddresses && session?.access_token) {
+      try {
+        const payload = {
+          label: addressLabel,
+          recipientName: addressRecipientName.trim() || fullName.trim() || "Customer",
+          phone: addressPhone.trim() || phone.trim() || profile?.phone || "",
+          line1: addressLine1,
+          line2: addressLine2 || undefined,
+          landmark: addressLandmark || undefined,
+          area: addressArea || undefined,
+          city: addressCity || undefined,
+          isDefault: addressIsDefault,
+        };
+        if (editingAddressId) {
+          await updateCloudAddress(session.access_token, editingAddressId, payload);
+        } else {
+          await createCloudAddress(session.access_token, payload);
+        }
+        setCloudAddresses((await fetchCloudAddresses(session.access_token)).map(cloudAddressToSaved));
+        resetAddressForm();
+        setAddressNotice(
+          editingAddressId ? "Address updated in your account." : "Address saved to your account.",
+        );
+      } catch (error) {
+        setAddressError(error instanceof Error ? error.message : "Could not save address.");
+      }
+      return;
+    }
+
     const input = {
       label: addressLabel,
       line1: addressLine1,
@@ -498,8 +607,42 @@ export default function MyTelepizza() {
     );
   }
 
-  function handleRemoveAddress(addressId: string) {
+  async function handleImportDeviceDrafts() {
+    if (!usingCloudAddresses || !session?.access_token || !ownerKey) return;
+    const drafts = listSavedAddresses(ownerKey);
+    if (!drafts.length) return;
+    setAddressError(null);
+    setAddressNotice(null);
+    try {
+      await importCloudAddresses(
+        session.access_token,
+        drafts.map((draft) =>
+          draftToImportPayload(draft, {
+            recipientName: profile?.fullName ?? fullName,
+            phone: profile?.phone ?? phone,
+          }),
+        ),
+      );
+      markAddressImportCompleted(ownerKey);
+      setCloudAddresses((await fetchCloudAddresses(session.access_token)).map(cloudAddressToSaved));
+      setAddressNotice("Device drafts imported to your account.");
+    } catch (error) {
+      setAddressError(error instanceof Error ? error.message : "Import failed.");
+    }
+  }
+
+  async function handleRemoveAddress(addressId: string) {
     if (!window.confirm("Delete this saved address?")) return;
+    if (usingCloudAddresses && session?.access_token) {
+      try {
+        await archiveCloudAddress(session.access_token, addressId);
+        setCloudAddresses((await fetchCloudAddresses(session.access_token)).map(cloudAddressToSaved));
+        setAddressNotice("Address removed from your account.");
+      } catch (error) {
+        setAddressError(error instanceof Error ? error.message : "Could not remove address.");
+      }
+      return;
+    }
     removeSavedAddress(ownerKey, addressId);
     setAddresses(listSavedAddresses(ownerKey));
     setAddressNotice("Address removed.");
@@ -511,6 +654,10 @@ export default function MyTelepizza() {
     setAddressLine1(address.line1);
     setAddressArea(address.area);
     setAddressCity(address.city);
+    setAddressRecipientName(address.recipientName || fullName);
+    setAddressPhone(address.phone || phone);
+    setAddressLine2(address.line2);
+    setAddressLandmark(address.landmark);
     setAddressNotes(address.notes);
     setAddressIsDefault(address.isDefault);
     setAddressError(null);
@@ -518,15 +665,45 @@ export default function MyTelepizza() {
     setShowAddressForm(true);
   }
 
-  function handleSetDefaultAddress(addressId: string) {
+  async function handleSetDefaultAddress(addressId: string) {
+    if (usingCloudAddresses && session?.access_token) {
+      const target = cloudAddresses.find((entry) => entry.id === addressId);
+      if (!target) return;
+      try {
+        await updateCloudAddress(session.access_token, addressId, {
+          label: target.label,
+          recipientName: target.recipientName,
+          phone: target.phone,
+          line1: target.line1,
+          line2: target.line2,
+          landmark: target.landmark,
+          area: target.area,
+          city: target.city,
+          deliveryZone: target.deliveryZone,
+          preferredBranchId: target.preferredBranchId,
+          isDefault: true,
+        });
+        setCloudAddresses((await fetchCloudAddresses(session.access_token)).map(cloudAddressToSaved));
+        setAddressNotice("Default delivery address updated.");
+      } catch (error) {
+        setAddressError(error instanceof Error ? error.message : "Could not update default.");
+      }
+      return;
+    }
     setDefaultSavedAddress(ownerKey, addressId);
     setAddresses(listSavedAddresses(ownerKey));
     setAddressNotice("Default delivery address updated.");
   }
 
   const welcomeInitial = (displayName.trim().charAt(0) || "T").toUpperCase();
-  const recentOrdersPreview = localOrders.slice(0, 2);
-  const defaultAddress = addresses.find((address) => address.isDefault) ?? addresses[0] ?? null;
+  const recentOrdersPreview = hubOrders.slice(0, 2);
+  const defaultAddress =
+    displayedAddresses.find((address) => address.isDefault) ?? displayedAddresses[0] ?? null;
+  const deviceDraftCount = addresses.length;
+  const showImportDrafts =
+    usingCloudAddresses &&
+    deviceDraftCount > 0 &&
+    !hasCompletedAddressImport(ownerKey);
 
   return (
     <div className="min-h-screen bg-background py-8 sm:py-10">
@@ -609,7 +786,7 @@ export default function MyTelepizza() {
                     <button
                       type="button"
                       onClick={() => goTo(item.id)}
-                      className={`w-full flex items-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl px-2.5 py-2 sm:px-3 sm:py-2.5 text-left text-xs sm:text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
+                      className={`w-full flex min-h-11 items-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl px-2.5 py-2.5 sm:px-3 sm:py-3 text-left text-xs sm:text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
                         active
                           ? "bg-brand-red/10 text-brand-red"
                           : "text-brand-charcoal/80 hover:bg-muted/50 hover:text-brand-charcoal"
@@ -662,7 +839,7 @@ export default function MyTelepizza() {
                       disabled={!lastCompleted && !lastOrder}
                       onClick={() => {
                         const target = lastCompleted ?? lastOrder;
-                        if (target) openReorderReview(target);
+                        if (target) void openReorderReview(target);
                       }}
                     />
                     <QuickActionCard
@@ -674,7 +851,7 @@ export default function MyTelepizza() {
                     <QuickActionCard
                       icon={MapPin}
                       title="Addresses"
-                      description="Delivery drafts"
+                      description={usingCloudAddresses ? "Account address book" : "Device drafts"}
                       onClick={() => goTo("addresses")}
                     />
                   </div>
@@ -723,7 +900,7 @@ export default function MyTelepizza() {
                       More for you
                     </h2>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Recent orders, delivery drafts, and quieter account shortcuts.
+                      Recent orders, saved addresses, and quieter account shortcuts.
                     </p>
                   </div>
 
@@ -732,16 +909,18 @@ export default function MyTelepizza() {
                       id="hub-recent-orders"
                       icon={Package}
                       title="Recent Orders"
-                      actionLabel={localOrders.length > 0 ? "View all" : "Open orders"}
+                      actionLabel={hubOrders.length > 0 ? "View all" : "Open orders"}
                       onAction={() => goTo("orders")}
                     >
-                      {!profile?.phone ? (
+                      {ordersLoading ? (
+                        <p className="text-sm text-muted-foreground">Loading account orders…</p>
+                      ) : !usingCloudOrders && !profile?.phone ? (
                         <p className="text-sm text-muted-foreground">
                           Add a phone in Profile to match checkout orders on this device.
                         </p>
                       ) : recentOrdersPreview.length === 0 ? (
                         <p className="text-sm text-muted-foreground">
-                          No recent orders on this device yet.
+                          No recent orders yet.
                         </p>
                       ) : (
                         <ul className="space-y-2">
@@ -777,9 +956,11 @@ export default function MyTelepizza() {
                       onAction={() => goTo("addresses")}
                     >
                       <p className="font-bold text-brand-charcoal">
-                        {addresses.length === 0
-                          ? "None on this device"
-                          : `${addresses.length} device draft${addresses.length === 1 ? "" : "s"}`}
+                        {displayedAddresses.length === 0
+                          ? usingCloudAddresses
+                            ? "None saved yet"
+                            : "None on this device"
+                          : `${displayedAddresses.length} saved address${displayedAddresses.length === 1 ? "" : "es"}`}
                       </p>
                       {defaultAddress ? (
                         <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
@@ -788,12 +969,12 @@ export default function MyTelepizza() {
                         </p>
                       ) : (
                         <p className="mt-1 text-sm text-muted-foreground">
-                          Save a draft for faster Multan delivery checkout.
+                          Save a Multan delivery address for faster checkout.
                         </p>
                       )}
                       <p className="mt-2 text-xs text-muted-foreground">
-                        {ADDRESSES_CLOUD_SYNC_AVAILABLE
-                          ? "Synced to your account."
+                        {usingCloudAddresses
+                          ? "Synced to your Telepizza account."
                           : "Saved on this device only — not synced to your account yet."}
                       </p>
                     </HubPreviewPanel>
@@ -804,6 +985,15 @@ export default function MyTelepizza() {
                       Account shortcuts
                     </p>
                     <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                      <li>
+                        <Link
+                          href="/settings"
+                          className="inline-flex items-center gap-1.5 font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
+                        >
+                          <Settings className="h-3.5 w-3.5" aria-hidden="true" />
+                          Settings
+                        </Link>
+                      </li>
                       <li>
                         <button
                           type="button"
@@ -823,13 +1013,12 @@ export default function MyTelepizza() {
                         </button>
                       </li>
                       <li>
-                        <button
-                          type="button"
+                        <Link
+                          href="/settings#prefs"
                           className="font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
-                          onClick={() => goTo("notifications")}
                         >
                           Notification prefs
-                        </button>
+                        </Link>
                       </li>
                       <li>
                         <Link
@@ -839,17 +1028,23 @@ export default function MyTelepizza() {
                           Device inbox
                         </Link>
                       </li>
-                      <li className="text-muted-foreground">
-                        <span className="inline-flex items-center gap-1.5">
+                      <li>
+                        <Link
+                          href="/favorites"
+                          className="inline-flex items-center gap-1.5 font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
+                        >
                           <Heart className="h-3.5 w-3.5" aria-hidden="true" />
-                          Favorites — coming soon
-                        </span>
+                          Favorites
+                        </Link>
                       </li>
-                      <li className="text-muted-foreground">
-                        <span className="inline-flex items-center gap-1.5">
+                      <li>
+                        <Link
+                          href="/orders"
+                          className="inline-flex items-center gap-1.5 font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
+                        >
                           <Star className="h-3.5 w-3.5" aria-hidden="true" />
-                          Reviews — coming soon
-                        </span>
+                          Reviews
+                        </Link>
                       </li>
                     </ul>
                   </div>
@@ -911,31 +1106,11 @@ export default function MyTelepizza() {
                     </div>
                   </div>
 
-                  {lastCompleted || lastOrder ? (
-                    <div className="rounded-2xl border border-border/80 bg-muted/10 p-4 flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold">Quick reorder</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {(lastCompleted ?? lastOrder)!.orderNumber} · review live prices before
-                          adding to cart
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        className="rounded-2xl brand-gradient text-white font-semibold"
-                        disabled={catalogLoading}
-                        onClick={() => openReorderReview((lastCompleted ?? lastOrder)!)}
-                      >
-                        Review &amp; reorder
-                      </Button>
-                    </div>
-                  ) : null}
+                  <HubSupportCard
+                    orderNumber={activeOrder?.orderNumber}
+                    contactPhone={activeOrder?.contactPhone}
+                  />
                 </section>
-
-                                <HubSupportCard
-                  orderNumber={activeOrder?.orderNumber}
-                  contactPhone={activeOrder?.contactPhone}
-                />
               </div>
             ) : null}
 
@@ -1006,6 +1181,11 @@ export default function MyTelepizza() {
                       setPhone(e.target.value);
                       setProfileError(null);
                     }}
+                    onBlur={() => {
+                      if (!phone.trim()) return;
+                      const normalized = normalizePakistaniMobileE164(phone);
+                      if (normalized.ok) setPhone(normalized.e164);
+                    }}
                     className="rounded-2xl"
                     disabled={profileBusy}
                     inputMode="tel"
@@ -1065,8 +1245,9 @@ export default function MyTelepizza() {
                   <div>
                     <h2 className="font-bold text-lg">Addresses</h2>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Device drafts for faster checkout in this browser. They are not synced to your
-                      Telepizza account yet.
+                      {usingCloudAddresses
+                        ? "Delivery addresses synced to your Telepizza account."
+                        : "Saved on this device only until account sync is available."}
                     </p>
                   </div>
                   {!showAddressForm ? (
@@ -1076,36 +1257,70 @@ export default function MyTelepizza() {
                       onClick={() => {
                         setShowAddressForm(true);
                         setEditingAddressId(null);
-                        setAddressIsDefault(addresses.length === 0);
+                        setAddressRecipientName(fullName || profile?.fullName || "");
+                        setAddressPhone(phone || profile?.phone || "");
+                        setAddressIsDefault(displayedAddresses.length === 0);
                         setAddressError(null);
                         setAddressNotice(null);
                       }}
                     >
-                      Add device draft
+                      {usingCloudAddresses ? "Add address" : "Add address draft"}
                     </Button>
                   ) : null}
                 </div>
 
-                <div
-                  className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm space-y-2"
-                  role="status"
-                >
-                  <p className="font-semibold text-amber-950">
-                    Address book sync is not available yet
+                {addressesLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading addresses…</p>
+                ) : null}
+                {addressesError ? (
+                  <p className="text-sm text-brand-red" role="alert">
+                    {addressesError}
                   </p>
-                  <p className="text-amber-900/90">
-                    Drafts below stay on this browser only. We will not treat them as your full
-                    account address book until cloud sync launches.
-                  </p>
-                </div>
+                ) : null}
 
-                {addresses.length === 0 && !showAddressForm ? (
+                {showImportDrafts ? (
+                  <div className="rounded-2xl border border-brand-red/20 bg-brand-cream/40 p-4 text-sm space-y-2">
+                    <p className="font-semibold text-brand-charcoal">
+                      Import {deviceDraftCount} device draft{deviceDraftCount === 1 ? "" : "s"}?
+                    </p>
+                    <p className="text-muted-foreground">
+                      One-time import copies browser drafts into your account without duplicates.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="rounded-2xl"
+                      onClick={() => void handleImportDeviceDrafts()}
+                    >
+                      Import drafts
+                    </Button>
+                  </div>
+                ) : null}
+
+                {!usingCloudAddresses ? (
+                  <div
+                    className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm"
+                    role="status"
+                  >
+                    <p className="text-amber-900/90">
+                      Account address sync is unavailable right now. Browser drafts below are optional
+                      helpers on this device only.
+                    </p>
+                  </div>
+                ) : null}
+
+                {displayedAddresses.length === 0 && !showAddressForm ? (
                   <div className="rounded-2xl border border-dashed border-border px-6 py-10 text-center space-y-4">
                     <MapPin className="w-14 h-14 text-brand-red mx-auto" aria-hidden="true" />
                     <div>
-                      <p className="font-semibold text-lg">No device address drafts yet</p>
+                      <p className="font-semibold text-lg">
+                        {usingCloudAddresses ? "No saved addresses yet" : "No address drafts yet"}
+                      </p>
                       <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-                        Add a Multan delivery draft for quicker checkout on this browser.
+                        {usingCloudAddresses
+                          ? "Add a Multan delivery address for faster checkout."
+                          : "Add a Multan delivery draft for quicker checkout on this browser."}
                       </p>
                     </div>
                     <Button
@@ -1119,15 +1334,15 @@ export default function MyTelepizza() {
                         setAddressError(null);
                         setAddressNotice(null);
                       }}
-                      aria-label="Add your first delivery address draft"
+                      aria-label={usingCloudAddresses ? "Add your first delivery address" : "Add your first delivery address draft"}
                     >
-                      Add device draft
+                      {usingCloudAddresses ? "Add address" : "Add address draft"}
                     </Button>
                   </div>
                 ) : null}
 
                 <ul className="space-y-3">
-                  {addresses.map((address) => (
+                  {displayedAddresses.map((address) => (
                     <li
                       key={address.id}
                       className="rounded-2xl border border-border p-4 flex flex-wrap items-start justify-between gap-3"
@@ -1144,6 +1359,12 @@ export default function MyTelepizza() {
                         <p className="text-sm text-muted-foreground mt-1">
                           {formatSavedAddress(address)}
                         </p>
+                        {address.recipientName ? (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {address.recipientName}
+                            {address.phone ? ` · ${address.phone}` : ""}
+                          </p>
+                        ) : null}
                         {address.notes ? (
                           <p className="text-xs text-muted-foreground mt-1">{address.notes}</p>
                         ) : null}
@@ -1155,7 +1376,7 @@ export default function MyTelepizza() {
                             variant="ghost"
                             size="sm"
                             className="rounded-2xl"
-                            onClick={() => handleSetDefaultAddress(address.id)}
+                            onClick={() => void handleSetDefaultAddress(address.id)}
                           >
                             Make default
                           </Button>
@@ -1174,7 +1395,7 @@ export default function MyTelepizza() {
                           variant="outline"
                           size="sm"
                           className="rounded-2xl text-brand-red"
-                          onClick={() => handleRemoveAddress(address.id)}
+                          onClick={() => void handleRemoveAddress(address.id)}
                         >
                           Delete
                         </Button>
@@ -1185,13 +1406,40 @@ export default function MyTelepizza() {
 
                 {showAddressForm ? (
                   <form
-                    onSubmit={handleSaveAddress}
+                    onSubmit={(event) => void handleSaveAddress(event)}
                     className="space-y-3 border-t border-border pt-4"
                     noValidate
                   >
                     <h3 className="font-semibold">
                       {editingAddressId ? "Edit address" : "Add address"}
                     </h3>
+                    {usingCloudAddresses ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="addressRecipientName">Recipient name</Label>
+                          <Input
+                            id="addressRecipientName"
+                            value={addressRecipientName}
+                            onChange={(e) => setAddressRecipientName(e.target.value)}
+                            className="rounded-2xl"
+                            autoComplete="name"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="addressPhone">Phone</Label>
+                          <Input
+                            id="addressPhone"
+                            value={addressPhone}
+                            onChange={(e) => setAddressPhone(e.target.value)}
+                            className="rounded-2xl"
+                            inputMode="tel"
+                            autoComplete="tel"
+                            required
+                          />
+                        </div>
+                      </div>
+                    ) : null}
                     <div className="space-y-2">
                       <Label htmlFor="addressLabel">Label</Label>
                       <select
@@ -1257,6 +1505,28 @@ export default function MyTelepizza() {
                         />
                       </div>
                     </div>
+                    {usingCloudAddresses ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="addressLine2">Line 2 (optional)</Label>
+                          <Input
+                            id="addressLine2"
+                            value={addressLine2}
+                            onChange={(e) => setAddressLine2(e.target.value)}
+                            className="rounded-2xl"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="addressLandmark">Landmark (optional)</Label>
+                          <Input
+                            id="addressLandmark"
+                            value={addressLandmark}
+                            onChange={(e) => setAddressLandmark(e.target.value)}
+                            className="rounded-2xl"
+                          />
+                        </div>
+                      </div>
+                    ) : null}
                     <div className="space-y-2">
                       <Label htmlFor="addressNotes">Delivery notes (optional)</Label>
                       <Input
@@ -1615,19 +1885,29 @@ export default function MyTelepizza() {
                     Recent Orders
                   </h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {!profile?.phone
-                      ? "Add a phone number in Profile so we can match your checkout orders on this device."
-                      : localOrders.length === 0
-                        ? "You have no recent orders on this device yet."
-                        : localOrders.length === 1
-                          ? "You have 1 recent order on this device."
-                          : `You have ${localOrders.length} recent orders on this device.`}
+                    {usingCloudOrders
+                      ? hubOrders.length === 0
+                        ? "You have no account orders yet."
+                        : hubOrders.length === 1
+                          ? "You have 1 order in your account."
+                          : `You have ${hubOrders.length} recent account orders.`
+                      : !profile?.phone
+                        ? "Add a phone number in Profile so we can match your checkout orders on this device."
+                        : localOrders.length === 0
+                          ? "You have no recent orders on this device yet."
+                          : localOrders.length === 1
+                            ? "You have 1 recent order on this device."
+                            : `You have ${localOrders.length} recent orders on this device.`}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Real checkout history for this browser/phone only — not a fabricated list.
+                    {usingCloudOrders
+                      ? "Account order history — also viewable on the full Orders page."
+                      : "Real checkout history for this browser/phone only — not a fabricated list."}
                   </p>
                 </div>
-                {!profile?.phone ? (
+                {ordersLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading orders…</p>
+                ) : !usingCloudOrders && !profile?.phone ? (
                   <div className="rounded-2xl border border-dashed border-border bg-brand-cream/20 p-6 text-center">
                     <Package className="w-8 h-8 text-brand-red mx-auto mb-2" aria-hidden="true" />
                     <p className="font-semibold">Add a phone number to match orders</p>
@@ -1643,7 +1923,7 @@ export default function MyTelepizza() {
                       Go to Profile
                     </Button>
                   </div>
-                ) : localOrders.length === 0 ? (
+                ) : hubOrders.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border bg-brand-cream/20 p-6 text-center">
                     <Package className="w-8 h-8 text-brand-red mx-auto mb-2" aria-hidden="true" />
                     <p className="font-semibold">No orders yet</p>
@@ -1656,7 +1936,7 @@ export default function MyTelepizza() {
                   </div>
                 ) : (
                   <ul className="space-y-3">
-                    {localOrders.slice(0, 5).map((order) => (
+                    {hubOrders.slice(0, 5).map((order) => (
                       <li
                         key={order.id}
                         className="rounded-2xl border border-border bg-gradient-to-br from-white to-brand-cream/20 p-4 space-y-3"
@@ -1683,7 +1963,7 @@ export default function MyTelepizza() {
                             size="sm"
                             className="rounded-2xl"
                             disabled={catalogLoading}
-                            onClick={() => openReorderReview(order)}
+                            onClick={() => void openReorderReview(order)}
                           >
                             Reorder
                           </Button>
@@ -1749,9 +2029,24 @@ export default function MyTelepizza() {
                     Notifications &amp; checkout prefs
                   </h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Prefer how you hear from Telepizza. Preference controls are coming soon —
-                    nothing can be saved yet.
+                    Manage notification preferences in Settings. Prefs save on this device only —
+                    live email delivery is not wired yet.
                   </p>
+                </div>
+                <div className="rounded-2xl border border-border bg-brand-cream/30 p-4 text-sm space-y-3">
+                  <div>
+                    <p className="font-semibold">Notification preferences</p>
+                    <p className="mt-1 text-muted-foreground">
+                      Order updates, promotions, delivery alerts, and special offers can be toggled
+                      in Settings. Saving a preference does not mean an email was sent.
+                    </p>
+                  </div>
+                  <Button asChild type="button" className="rounded-2xl brand-gradient text-white min-h-11">
+                    <Link href="/settings#prefs">
+                      <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Open Settings preferences
+                    </Link>
+                  </Button>
                 </div>
                 <div className="rounded-2xl border border-border bg-brand-cream/30 p-4 text-sm space-y-2">
                   <p className="font-semibold">Payment preferences</p>
@@ -1761,34 +2056,13 @@ export default function MyTelepizza() {
                     yet — we will not pretend they are.
                   </p>
                 </div>
-                <div
-                  className="space-y-2"
-                  role="group"
-                  aria-label="Notification preferences coming soon"
-                >
-                  <PreferenceSwitch
-                    label="Order Updates"
-                    description="Status changes from kitchen to delivery"
-                  />
-                  <PreferenceSwitch
-                    label="Promotions"
-                    description="Seasonal deals and limited-time offers"
-                  />
-                  <PreferenceSwitch
-                    label="Delivery Alerts"
-                    description="Rider and arrival updates for your order"
-                  />
-                  <PreferenceSwitch
-                    label="Special Offers"
-                    description="Member-only discounts when Rewards launches"
-                  />
-                </div>
                 <div className="rounded-2xl border border-dashed border-border p-4">
                   <p className="text-sm font-semibold text-brand-charcoal">Device inbox</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Order update messages stored on this browser appear in your notifications inbox.
+                    Email alerts are not sent yet.
                   </p>
-                  <Button asChild type="button" variant="outline" size="sm" className="mt-3 rounded-2xl">
+                  <Button asChild type="button" variant="outline" size="sm" className="mt-3 min-h-11 rounded-2xl">
                     <Link href="/notifications">Open notifications inbox</Link>
                   </Button>
                 </div>
@@ -1842,7 +2116,7 @@ function PreferenceSwitch({ label, description }: { label: string; description: 
       <div className="min-w-0">
         <div className="font-semibold">{label}</div>
         <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
-        <p className="text-xs text-amber-800 font-semibold mt-1">Coming Soon — not available yet</p>
+        <p className="text-xs text-amber-800 font-semibold mt-1">Coming soon — not available yet</p>
       </div>
       <input
         type="checkbox"

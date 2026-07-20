@@ -26,6 +26,12 @@ import {
   listSavedAddresses,
   type SavedCustomerAddress,
 } from "@/lib/customer-addresses";
+import {
+  cloudAddressToSaved,
+  cloudAddressesAvailable,
+  fetchCloudAddresses,
+} from "@/lib/customer-addresses-api";
+import { normalizePakistaniMobileE164 } from "@/lib/phone";
 
 type QuotePhase = "idle" | "loading" | "ready" | "expiring" | "expired" | "error";
 
@@ -33,7 +39,7 @@ export default function Checkout() {
   const [, navigate] = useLocation();
   const { state, subtotal, clearCart, setOrderDetails } = useCart();
   const { selectedBranch } = useBranch();
-  const { profile, user, session } = useAuth();
+  const { profile, user, session, isAuthenticated } = useAuth();
   const [contactName, setContactName] = useState(profile?.fullName ?? "");
   const [contactPhone, setContactPhone] = useState(profile?.phone ?? "");
   const [deliveryAddress, setDeliveryAddress] = useState(state.order.deliveryAddress);
@@ -128,6 +134,34 @@ export default function Checkout() {
       setSelectedAddressId("");
       return;
     }
+
+    const usingCloudAddresses = Boolean(
+      isAuthenticated && session?.access_token && cloudAddressesAvailable(),
+    );
+
+    if (usingCloudAddresses && session?.access_token) {
+      void fetchCloudAddresses(session.access_token)
+        .then((rows) => {
+          const next = rows.map(cloudAddressToSaved);
+          setSavedAddresses(next);
+          if (!deliveryAddress.trim() && next.length > 0) {
+            const selected = next.find((address) => address.isDefault) ?? next[0];
+            setSelectedAddressId(selected.id);
+            setDeliveryAddress(formatSavedAddress(selected));
+          }
+        })
+        .catch(() => {
+          const next = listSavedAddresses(ownerKey);
+          setSavedAddresses(next);
+          if (!deliveryAddress.trim() && next.length > 0) {
+            const selected = next.find((address) => address.isDefault) ?? next[0];
+            setSelectedAddressId(selected.id);
+            setDeliveryAddress(formatSavedAddress(selected));
+          }
+        });
+      return;
+    }
+
     const next = listSavedAddresses(ownerKey);
     setSavedAddresses(next);
     if (!deliveryAddress.trim() && next.length > 0) {
@@ -135,7 +169,7 @@ export default function Checkout() {
       setSelectedAddressId(selected.id);
       setDeliveryAddress(formatSavedAddress(selected));
     }
-  }, [profile?.email, user?.email, user?.id]);
+  }, [profile?.email, user?.email, user?.id, isAuthenticated, session?.access_token]);
 
   // Rotate idempotency key when material checkout data changes
   useEffect(() => {
@@ -229,6 +263,14 @@ export default function Checkout() {
       return;
     }
 
+    const phoneNormalized = normalizePakistaniMobileE164(contactPhone);
+    if (!phoneNormalized.ok) {
+      setError(phoneNormalized.message);
+      return;
+    }
+    const contactPhoneE164 = phoneNormalized.e164;
+    setContactPhone(contactPhoneE164);
+
     if (deliveryMode === "delivery" && !deliveryAddress.trim()) {
       setError("Delivery address is required.");
       return;
@@ -265,7 +307,7 @@ export default function Checkout() {
           branchName: selectedBranch.name,
           orderType: deliveryMode,
           contactName: contactName.trim(),
-          contactPhone: contactPhone.trim(),
+          contactPhone: contactPhoneE164,
           deliveryAddress: deliveryMode === "delivery" ? deliveryAddress.trim() : undefined,
           notes: notes.trim() || undefined,
           couponCode: couponCode.trim() || undefined,
@@ -286,7 +328,7 @@ export default function Checkout() {
 
       clearCart();
       const successParams = new URLSearchParams({
-        phone: contactPhone.trim(),
+        phone: contactPhoneE164,
         source: result.source,
         status: result.status,
         total: String(result.totalAmount),
@@ -356,8 +398,14 @@ export default function Checkout() {
                     type="tel"
                     inputMode="tel"
                     autoComplete="tel"
+                    placeholder="03XXXXXXXXX or +923XXXXXXXXX"
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
+                    onBlur={() => {
+                      if (!contactPhone.trim()) return;
+                      const normalized = normalizePakistaniMobileE164(contactPhone);
+                      if (normalized.ok) setContactPhone(normalized.e164);
+                    }}
                     className="rounded-2xl"
                   />
                 </div>

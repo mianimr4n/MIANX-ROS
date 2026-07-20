@@ -87,11 +87,15 @@ export async function submitWebsiteOrder(
         source: "api",
       });
 
-      pushNotification(
-        payload.contactPhone,
-        "Order placed",
-        `Your order ${apiOrder.orderNumber} was received by ${payload.branchName}.`,
-      );
+      try {
+        pushNotification(
+          payload.contactPhone,
+          "Order placed",
+          `Your order ${apiOrder.orderNumber} was received by ${payload.branchName}.`,
+        );
+      } catch (notificationError) {
+        console.warn("Order placed but local notification failed.", notificationError);
+      }
 
       return result;
     } catch (error) {
@@ -103,10 +107,14 @@ export async function submitWebsiteOrder(
   }
 
   const local = saveLocalOrder(payload, { source: "local" });
-  pushNotification(
-    normalizedPhone,
-    "Order saved locally",
-    `Your order ${local.orderNumber} is pending — confirm on WhatsApp.`,
-  );
+  try {
+    pushNotification(
+      normalizedPhone,
+      "Order saved locally",
+      `Your order ${local.orderNumber} is pending — confirm on WhatsApp.`,
+    );
+  } catch (notificationError) {
+    console.warn("Local order saved but notification failed.", notificationError);
+  }
   return local;
 }

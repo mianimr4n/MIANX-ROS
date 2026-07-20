@@ -111,9 +111,13 @@ export function hasEmailIdentity(user: AuthIdentityUser): boolean {
   return false;
 }
 
-/** OAuth-only users setting a Telepizza password for the first time. */
+/** OAuth-only (or any account without email/password identity) setting a Telepizza password. */
 export function isFirstTimePasswordAttach(user: AuthIdentityUser): boolean {
-  return Boolean(user) && !hasEmailIdentity(user);
+  if (!user) return false;
+  // Email/password identity present → change-password requires current Telepizza password.
+  if (hasEmailIdentity(user)) return false;
+  // Google (or other OAuth) without email identity → set password with updateUser({ password }) only.
+  return true;
 }
 
 export function genericAuthErrorMessage(): string {

@@ -1,10 +1,10 @@
-# OWNER REVIEW REQUIRED — Customer addresses cloud persistence
+# Customer addresses cloud persistence
 
-**Status:** Proposal only — **do not apply** until owner approves.
+**Status:** D1 **APPROVED** (CP-0) — forward migration **committed** on `polish/my-telepizza-ux` as `20260719090000_customer_addresses.sql`. **Not claimed applied** in staging/production until env evidence exists.
 
-**Sprint:** 4.5A My Telepizza
+**Sprint:** CP-1 (extends Sprint 4.5A My Telepizza)
 
-**Why:** There is no `customer_addresses` (or equivalent) table. Device-local drafts must not be treated as account source of truth.
+**Why:** Device-local drafts must not be treated as account source of truth after cutover.
 
 ## Goal
 
@@ -13,7 +13,7 @@ Persist delivery addresses per authenticated customer with ownership + RLS, so M
 ## Minimal schema (draft)
 
 ```sql
--- OWNER REVIEW REQUIRED — not applied
+-- D1 APPROVED — applied via 20260719090000_customer_addresses.sql on integration branch
 create table public.customer_addresses (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -69,6 +69,6 @@ create policy customer_addresses_delete_own
 - No RLS weakening for anon write
 - No localStorage as source of truth after cutover
 
-## Current hub behaviour (4.5A)
+## Current hub behaviour (post CP-1)
 
-Device drafts may remain for same-browser checkout convenience, clearly labelled **this browser only — not synced**. Cloud save stays blocked until this migration is approved and applied.
+When API + migration are up: cloud SoT via `/me/addresses`. Device drafts may remain for import only; `ADDRESSES_CLOUD_SYNC_AVAILABLE = true` when wired. Until migration apply in a given env, UI/API degrade honestly.

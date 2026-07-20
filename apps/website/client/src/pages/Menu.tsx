@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { motion } from "framer-motion";
 
@@ -41,6 +41,7 @@ import { isPizzaItem } from "@/data/cart-config";
 import { formatMenuPriceLabel } from "@/lib/menu-utils";
 
 import { ProductBadge } from "@/components/menu/ProductBadge";
+import { FavoriteHeartButton } from "@/components/menu/FavoriteHeartButton";
 
 
 
@@ -83,12 +84,17 @@ export default function Menu() {
   const [activeCategory, setActiveCategory] = useState(initialCategory);
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
 
   const addMenuItem = useAddMenuItem();
 
-
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 180);
+    return () => window.clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
 
@@ -138,7 +144,7 @@ export default function Menu() {
 
     const matchesCategory = activeCategory === "All" || item.category === activeCategory;
 
-    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = item.name.toLowerCase().includes(debouncedSearch.toLowerCase());
 
     return matchesCategory && matchesSearch;
 
@@ -228,11 +234,19 @@ export default function Menu() {
 
           <div className="relative max-w-md mb-4">
 
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
 
             <Input
 
+              id="menu-search"
+
+              type="search"
+
               placeholder="Search menu..."
+
+              aria-label="Search menu items"
+
+              ref={searchInputRef}
 
               value={search}
 
@@ -244,6 +258,14 @@ export default function Menu() {
 
           </div>
 
+          <p className="sr-only" aria-live="polite">
+            {debouncedSearch
+              ? filteredItems.length === 0
+                ? `No menu items match ${debouncedSearch}.`
+                : `${filteredItems.length} menu item${filteredItems.length === 1 ? "" : "s"} match ${debouncedSearch}.`
+              : `${filteredItems.length} menu item${filteredItems.length === 1 ? "" : "s"} shown.`}
+          </p>
+
 
 
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
@@ -254,7 +276,11 @@ export default function Menu() {
 
                 key={cat}
 
+                type="button"
+
                 onClick={() => setActiveCategory(cat)}
+
+                aria-pressed={activeCategory === cat}
 
                 className={`px-4 py-2 rounded-full text-sm font-[var(--font-accent)] font-medium whitespace-nowrap transition-all duration-200 active:scale-95 ${
 
@@ -404,6 +430,8 @@ export default function Menu() {
 
                   setActiveCategory("All");
 
+                  searchInputRef.current?.focus();
+
                 }}
 
                 className="rounded-2xl"
@@ -456,6 +484,10 @@ export default function Menu() {
 
                     {item.badge && <ProductBadge badge={item.badge} />}
 
+                  </div>
+
+                  <div className="absolute top-3 right-3">
+                    <FavoriteHeartButton item={item} />
                   </div>
 
                 </div>

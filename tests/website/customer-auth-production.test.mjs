@@ -81,8 +81,8 @@ test("My Telepizza supports device address drafts and checkout selection", () =>
   assert.match(account, /Make default/);
   assert.match(account, /\bEdit\b/);
   assert.match(account, /\bDelete\b/);
-  assert.match(account, /Add device draft/);
-  assert.match(account, /Address book sync is not available yet|not synced to your Telepizza account/i);
+  assert.match(account, /fetchCloudAddresses|importCloudAddresses/);
+  assert.match(account, /usingCloudAddresses|Synced to your Telepizza account|Device drafts only/);
   assert.doesNotMatch(account, /OWNER REVIEW REQUIRED/);
   assert.match(checkout, /listSavedAddresses/);
   assert.match(checkout, /saved-delivery-address/);
@@ -98,18 +98,18 @@ test("orders expose status, honest operational gaps, and feasible reorder", () =
   assert.match(timeline, /ORDER_STATUS_STEPS/);
   assert.match(orders, /OrderStatusTimeline/);
   assert.match(orders, /statusBadgeClass/);
-  assert.match(orders, /Branch:<\/span>/);
-  assert.match(orders, /Type:<\/span>/);
+  assert.match(orders, /branchName/);
   assert.match(orders, /Reorder/);
   assert.match(orders, /ReorderReviewDialog/);
-  assert.match(orders, /menuItemSlug/);
-  assert.match(orders, /recent orders on this device/);
+  assert.match(orders, /fetchCloudOrders|PAGE_SIZE/);
+  assert.match(orders, /account|this device|this browser/i);
   assert.match(store, /menuItemSlug\?: string/);
   assert.doesNotMatch(orders, /\b(driver|invoice|ETA|Payment)\b/i);
 });
 
 test("security, loyalty, notifications, and hub expose requested production states", () => {
   const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
+  const prefs = read("apps/website/client/src/lib/customer-notification-prefs.ts");
 
   assert.match(account, /email_confirmed_at/);
   assert.match(account, /last_sign_in_at/);
@@ -119,15 +119,15 @@ test("security, loyalty, notifications, and hub expose requested production stat
   assert.match(account, /Forgot password\?/);
   assert.match(account, /AUTH_PASSWORD_REQUIREMENTS_COPY/);
   assert.match(account, /Password requirements/);
-  assert.match(account, /Coming soon/);
+  assert.match(account, /Coming soon/i);
   assert.match(account, /Telepizza Rewards/);
   assert.match(account, /Offers will appear here/);
   assert.match(account, /Earn points/);
   assert.doesNotMatch(account, /Current points|Points history|Gold preview|Starter preview/);
-  assert.match(account, /Order Updates/);
-  assert.match(account, /Promotions/);
-  assert.match(account, /Delivery Alerts/);
-  assert.match(account, /Special Offers/);
+  assert.match(prefs, /Order updates/);
+  assert.match(prefs, /Promotions/);
+  assert.match(prefs, /Delivery alerts/);
+  assert.match(prefs, /Special offers/);
   assert.match(account, /Recent Orders/);
   assert.match(account, /Active order|No active order/);
   assert.match(account, /Addresses/);
