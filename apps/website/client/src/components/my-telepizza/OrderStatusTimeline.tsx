@@ -39,18 +39,29 @@ export function OrderStatusTimeline({
       aria-label={`Order progress: ${label}`}
     >
       {ORDER_STATUS_STEPS.map((step, index) => {
-        const reached = activeIndex >= 0 && index <= activeIndex;
+        const completed = activeIndex >= 0 && index < activeIndex;
         const current = activeIndex >= 0 && index === activeIndex;
+        const future = activeIndex < 0 || index > activeIndex;
+
+        let stepClass =
+          "bg-brand-cream text-muted-foreground ring-1 ring-inset ring-border/60 opacity-70";
+        if (completed) {
+          stepClass =
+            "bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-sm";
+        } else if (current) {
+          stepClass =
+            "bg-brand-red text-white shadow-md ring-2 ring-brand-red/30 scale-[1.02]";
+        } else if (future) {
+          stepClass =
+            "bg-brand-cream/60 text-muted-foreground/80 ring-1 ring-inset ring-border/40";
+        }
+
         return (
           <div
             key={step}
             role="listitem"
             aria-current={current ? "step" : undefined}
-                    className={`rounded-xl px-2 ${compact ? "min-h-9 py-1 text-xs" : "min-h-10 py-1.5 text-xs"} text-center font-semibold capitalize motion-safe:transition-colors motion-reduce:transition-none ${
-              reached
-                ? "bg-brand-red text-white shadow-sm"
-                : "bg-brand-cream text-muted-foreground ring-1 ring-inset ring-border/60"
-            }`}
+            className={`rounded-xl px-2 ${compact ? "min-h-9 py-1 text-xs" : "min-h-10 py-1.5 text-xs"} text-center font-semibold capitalize motion-safe:transition-all motion-reduce:transition-none ${stepClass}`}
           >
             {ORDER_STATUS_LABELS[step] ?? step}
           </div>

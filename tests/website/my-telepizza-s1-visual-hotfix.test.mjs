@@ -18,15 +18,15 @@ test("S1 hotfix: signed-out CTAs use non-overflowing responsive grid", () => {
   assert.doesNotMatch(hub, /sm:min-w-\[9\.5rem\]/);
 });
 
-test("S1 hotfix: addresses degraded state is one neutral card", () => {
+test("S1 hotfix: addresses API error uses retry card; local drafts stay quiet", () => {
   const hub = read("apps/website/client/src/pages/MyTelepizza.tsx");
   const errors = read("apps/website/client/src/lib/customer-errors.ts");
-  assert.match(hub, /You can still add a new address below/);
-  assert.match(hub, /bg-muted\/20/);
-  assert.match(hub, /role=["']status["']/);
-  assert.match(errors, /We couldn'?t load your saved addresses right now/);
+  assert.match(hub, /CustomerRetryCard/);
+  assert.match(hub, /addressesError \?/);
+  assert.match(hub, /saved on this device only/i);
+  assert.match(errors, /We're having trouble loading your information/);
+  assert.doesNotMatch(hub, /addressesError \|\| !usingCloudAddresses/);
   assert.doesNotMatch(hub, /Account address sync is unavailable right now/);
-  assert.match(hub, /addressesError \|\| !usingCloudAddresses/);
 });
 
 test("S1 hotfix: home hides empty active-order card", () => {
@@ -34,4 +34,5 @@ test("S1 hotfix: home hides empty active-order card", () => {
   assert.doesNotMatch(hub, /No active order right now/);
   assert.match(hub, /activeOrder \? \(/);
   assert.match(hub, /recentOrdersPreview\.length > 0/);
+  assert.match(hub, /Current Order/);
 });

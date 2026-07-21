@@ -35,7 +35,7 @@ test("Google password attach uses updateUser on current session only", () => {
   assert.match(authContext, /setPassword/);
   assert.match(authContext, /current_password:\s*current/);
   assert.match(account, /Set a Telepizza password|Update Telepizza password/);
-  assert.match(account, /You can now sign in using Google, Facebook, or email and password/);
+  assert.match(account, /Password created successfully|Password changed/);
   assert.match(account, /firstTimePassword/);
   assert.match(account, /showPassword/);
   assert.match(account, /if \(passwordBusy\) return/);
@@ -61,7 +61,7 @@ test("Account profile + sign-in methods UI and Coming Soon cards", () => {
   assert.match(account, /Open My Orders|Orders/);
   assert.doesNotMatch(account, /listNotifications|unreadNotifications/);
   assert.match(account, /Phone status:/);
-  assert.match(account, /Unverified/);
+  assert.match(account, /Phone added|Add phone|Phone verified/);
 });
 
 test("profile PATCH path is Bearer-only and strips privilege fields", () => {

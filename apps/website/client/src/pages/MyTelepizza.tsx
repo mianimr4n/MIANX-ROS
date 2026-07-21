@@ -72,13 +72,19 @@ import {
   fetchCloudOrders,
 } from "@/lib/customer-orders-api";
 import {
+  computeProfileCompletion,
   legacyHashCanonicalPath,
   pathForSection,
+  phoneStatusLabel,
   primaryTabForSection,
   resolveDisplayName,
   sectionFromLocation,
   type HubSection,
 } from "@/lib/my-telepizza-nav";
+import { toast } from "sonner";
+import { CustomerEmptyState } from "@/components/my-telepizza/CustomerEmptyState";
+import { CustomerRetryCard } from "@/components/my-telepizza/CustomerRetryCard";
+import { BRAND } from "@/lib/brand";
 import { bucketForOrderStatus } from "@/lib/order-status";
 import {
   buildReorderPreview,
@@ -455,16 +461,13 @@ export default function MyTelepizza() {
   const firstTimePassword = isFirstTimePasswordAttach(user);
   const canSetPassword = Boolean(email);
   const emailVerified = Boolean(user.email_confirmed_at);
-  const phoneStatusTone: StatusTone = profile?.phone
-    ? profile.phoneVerified
-      ? "success"
-      : "warning"
-    : "neutral";
-  const phoneStatusBadgeLabel = profile?.phone
-    ? profile.phoneVerified
-      ? "Phone verified"
-      : "Not verified"
-    : "Phone not set";
+  const effectivePhone = (profile?.phone || phone.trim() || "").trim() || null;
+  const phoneStatus = phoneStatusLabel({
+    phone: effectivePhone,
+    phoneVerified: profile?.phoneVerified,
+  });
+  const phoneStatusTone: StatusTone = phoneStatus.tone;
+  const phoneStatusBadgeLabel = phoneStatus.label;
   const passwordChecks = getPasswordRequirementChecks(password);
 
   async function handleSaveProfile(event: FormEvent) {
@@ -482,11 +485,8 @@ export default function MyTelepizza() {
         setProfileError(result.message);
         return;
       }
-      setProfileNotice(
-        phone.trim()
-          ? "Profile saved. Phone remains Not verified until phone verification launches."
-          : "Profile saved.",
-      );
+      setProfileNotice("Profile updated successfully.");
+      toast.success("Profile updated successfully.");
     } finally {
       setProfileBusy(false);
     }
@@ -511,11 +511,11 @@ export default function MyTelepizza() {
       setCurrentPassword("");
       setPasswordValue("");
       setConfirmPassword("");
-      setPasswordNotice(
-        firstTimePassword
-          ? "You can now sign in using Google, Facebook, or email and password."
-          : "Your Telepizza password was updated.",
-      );
+      const successMessage = firstTimePassword
+        ? "Password created successfully."
+        : "Password changed.";
+      setPasswordNotice(successMessage);
+      toast.success(successMessage);
     } finally {
       setPasswordBusy(false);
     }
@@ -538,8 +538,9 @@ export default function MyTelepizza() {
       }
       setEmailChangePassword("");
       setEmailChangeNotice(
-        "Check your inbox (and spam) to confirm the new email. Until confirmed, keep using your current address to sign in.",
+        "Verification pending — check your inbox (and spam) to confirm the new email. Keep using your current address until then.",
       );
+      toast.success("Email verification sent.");
     } finally {
       setEmailChangeBusy(false);
     }
@@ -703,10 +704,26 @@ export default function MyTelepizza() {
     usingCloudAddresses &&
     deviceDraftCount > 0 &&
     !hasCompletedAddressImport(ownerKey);
-  const needsBasics = !phone.trim() || displayedAddresses.length === 0;
+  const needsBasics = !effectivePhone || displayedAddresses.length === 0;
+  const profileCompletion = computeProfileCompletion({
+    emailVerified,
+    hasName: Boolean((fullName || profile?.fullName || "").trim()),
+    hasPhone: Boolean(effectivePhone),
+    hasAddress: displayedAddresses.length > 0,
+  });
   const hasPastOrders =
     hubOrders.some((order) => bucketForOrderStatus(order.status) !== "active") ||
     Boolean(lastCompleted || lastOrder);
+
+  function reloadAddresses() {
+    if (!usingCloudAddresses || !session?.access_token) return;
+    setAddressesLoading(true);
+    setAddressesError(null);
+    void fetchCloudAddresses(session.access_token)
+      .then((rows) => setCloudAddresses(rows.map(cloudAddressToSaved)))
+      .catch((error) => setAddressesError(toCustomerMessage(error, "addresses")))
+      .finally(() => setAddressesLoading(false));
+  }
 
   return (
     <CustomerShell
@@ -719,9 +736,10 @@ export default function MyTelepizza() {
           emailVerified={emailVerified}
           phoneLabel={phoneStatusBadgeLabel}
           phoneTone={phoneStatusTone}
+          profileCompletion={profileCompletion}
           phoneHint={
-            profile?.phone ? (
-              <p className="mt-1 text-sm text-muted-foreground">{profile.phone}</p>
+            effectivePhone ? (
+              <p className="mt-1 text-sm text-muted-foreground">{effectivePhone}</p>
             ) : (
               <p className="mt-1 text-sm text-muted-foreground">
                 Add a phone number in Account for faster checkout.
@@ -740,93 +758,164 @@ export default function MyTelepizza() {
                   className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-5"
                   aria-labelledby="hub-overview-heading"
                 >
-                  <div>
-                    <h2 id="hub-overview-heading" className="font-bold text-lg">
-                      Ready for your next order?
-                    </h2>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Browse the menu{needsBasics ? " or finish a quick delivery detail" : ""} — we
-                      keep this hub quiet until you have something to track.
-                    </p>
-                  </div>
-
-                  <Button
-                    asChild
-                    className="min-h-12 w-full rounded-2xl brand-gradient text-white font-semibold sm:w-auto"
-                  >
-                    <Link href="/menu">
-                      <UtensilsCrossed className="mr-2 h-4 w-4" aria-hidden="true" />
-                      Browse the menu
-                    </Link>
-                  </Button>
-
                   {activeOrder ? (
-                    <article className="rounded-2xl border border-brand-red/20 bg-brand-cream/50 p-4 space-y-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-brand-red">
-                            Active order
-                          </p>
-                          <h3 className="font-bold text-brand-charcoal mt-0.5 break-words">
-                            {activeOrder.orderNumber}
-                          </h3>
-                          <p className="text-sm text-muted-foreground break-words">
-                            {activeOrder.status} · {activeOrder.branchName} · Rs{" "}
-                            {activeOrder.totalAmount.toLocaleString()}
-                          </p>
-                        </div>
-                        <Button
-                          asChild
-                          size="sm"
-                          className="min-h-11 shrink-0 rounded-2xl brand-gradient text-white"
-                        >
-                          <Link
-                            href={`/track/${encodeURIComponent(activeOrder.orderNumber)}?phone=${encodeURIComponent(activeOrder.contactPhone)}`}
-                          >
-                            Track
-                          </Link>
-                        </Button>
+                    <>
+                      <div>
+                        <h2 id="hub-overview-heading" className="font-bold text-lg">
+                          Current Order
+                        </h2>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Track your order in real time.
+                        </p>
                       </div>
-                      <OrderStatusTimeline status={activeOrder.status} />
-                    </article>
-                  ) : null}
 
-                  {hasPastOrders && !activeOrder ? (
-                    <div className="flex flex-wrap gap-2">
+                      <article className="rounded-2xl border border-brand-red/20 bg-brand-cream/50 p-4 space-y-3">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="min-w-0 space-y-1">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-brand-red">
+                              Order {activeOrder.orderNumber}
+                            </p>
+                            <h3 className="font-bold text-brand-charcoal break-words capitalize">
+                              {activeOrder.status}
+                            </h3>
+                            <dl className="grid gap-1 text-sm text-muted-foreground">
+                              <div>
+                                <dt className="inline font-medium text-brand-charcoal">
+                                  Restaurant:{" "}
+                                </dt>
+                                <dd className="inline break-words">{activeOrder.branchName}</dd>
+                              </div>
+                              {activeOrder.deliveryAddress ? (
+                                <div>
+                                  <dt className="inline font-medium text-brand-charcoal">
+                                    Delivery:{" "}
+                                  </dt>
+                                  <dd className="inline break-words">
+                                    {activeOrder.deliveryAddress}
+                                  </dd>
+                                </div>
+                              ) : null}
+                              <div>
+                                <dt className="inline font-medium text-brand-charcoal">Total: </dt>
+                                <dd className="inline">
+                                  Rs {activeOrder.totalAmount.toLocaleString()}
+                                </dd>
+                              </div>
+                            </dl>
+                          </div>
+                        </div>
+                        <OrderStatusTimeline status={activeOrder.status} />
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            asChild
+                            className="min-h-11 rounded-2xl brand-gradient text-white font-semibold"
+                          >
+                            <Link
+                              href={`/track/${encodeURIComponent(activeOrder.orderNumber)}?phone=${encodeURIComponent(activeOrder.contactPhone)}`}
+                            >
+                              Track Order
+                            </Link>
+                          </Button>
+                          <Button asChild variant="outline" className="min-h-11 rounded-2xl">
+                            <Link href="/menu">
+                              <UtensilsCrossed className="mr-2 h-4 w-4" aria-hidden="true" />
+                              Browse Menu
+                            </Link>
+                          </Button>
+                          <Button asChild variant="outline" className="min-h-11 rounded-2xl">
+                            <a
+                              href={`https://wa.me/92${BRAND.phone.replace(/\D/g, "").replace(/^0/, "")}?text=${encodeURIComponent(`Hi Telepizza, I need help with order ${activeOrder.orderNumber}.`)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Support
+                            </a>
+                          </Button>
+                        </div>
+                      </article>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <h2 id="hub-overview-heading" className="font-bold text-lg">
+                          Ready for your next order?
+                        </h2>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Browse the menu
+                          {needsBasics ? " or finish a quick delivery detail" : ""} — we keep this
+                          hub quiet until you have something to track.
+                        </p>
+                      </div>
+
                       <Button
-                        type="button"
-                        variant="outline"
-                        className="min-h-11 rounded-2xl"
-                        disabled={catalogLoading || (!lastCompleted && !lastOrder)}
-                        onClick={() => {
-                          const target = lastCompleted ?? lastOrder;
-                          if (target) void openReorderReview(target);
-                        }}
+                        asChild
+                        className="min-h-12 w-full rounded-2xl brand-gradient text-white font-semibold sm:w-auto"
                       >
-                        <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
-                        Reorder last
+                        <Link href="/menu">
+                          <UtensilsCrossed className="mr-2 h-4 w-4" aria-hidden="true" />
+                          Browse the menu
+                        </Link>
                       </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="min-h-11 rounded-2xl text-brand-red"
-                        onClick={() => goTo("orders")}
-                      >
-                        View orders
-                      </Button>
-                    </div>
-                  ) : null}
+
+                      {hasPastOrders ? (
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="min-h-11 rounded-2xl"
+                            disabled={catalogLoading || (!lastCompleted && !lastOrder)}
+                            onClick={() => {
+                              const target = lastCompleted ?? lastOrder;
+                              if (target) void openReorderReview(target);
+                            }}
+                          >
+                            <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
+                            Reorder last
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="min-h-11 rounded-2xl text-brand-red"
+                            onClick={() => goTo("orders")}
+                          >
+                            View orders
+                          </Button>
+                        </div>
+                      ) : null}
+                    </>
+                  )}
                 </section>
 
                 {needsBasics ? (
-                  <div className="rounded-2xl border border-border bg-muted/20 px-4 py-4 sm:px-5 sm:py-5">
-                    <p className="text-sm font-semibold text-brand-charcoal">Finish your basics</p>
-                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                      A quick phone and address keep checkout fast — one useful next step, not a wall
-                      of empty cards.
-                    </p>
-                    <div className="mt-4 grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
-                      {!phone.trim() ? (
+                  <div className="rounded-2xl border border-border bg-muted/20 px-4 py-4 sm:px-5 sm:py-5 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-brand-charcoal">
+                        Complete your account
+                      </p>
+                      <p className="text-xs font-semibold text-muted-foreground">
+                        {profileCompletion.percent}% complete
+                      </p>
+                    </div>
+                    <div
+                      className="h-2 overflow-hidden rounded-full bg-muted"
+                      role="progressbar"
+                      aria-valuenow={profileCompletion.percent}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                    >
+                      <div
+                        className="h-full rounded-full brand-gradient motion-safe:transition-[width]"
+                        style={{ width: `${profileCompletion.percent}%` }}
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Remaining:</p>
+                    <ul className="space-y-1 text-sm text-brand-charcoal">
+                      {profileCompletion.remaining.map((item) => (
+                        <li key={item.id}>• {item.id === "phone" ? "Add phone" : item.id === "address" ? "Add delivery address" : item.label}</li>
+                      ))}
+                    </ul>
+                    <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
+                      {!effectivePhone ? (
                         <Button
                           type="button"
                           className="min-h-11 w-full rounded-2xl brand-gradient text-white"
@@ -847,7 +936,14 @@ export default function MyTelepizza() {
                       ) : null}
                     </div>
                   </div>
-                ) : null}
+                ) : (
+                  <div
+                    className="rounded-2xl border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-900"
+                    role="status"
+                  >
+                    Your account is ready.
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {!ordersLoading && recentOrdersPreview.length > 0 ? (
@@ -1107,13 +1203,13 @@ export default function MyTelepizza() {
                   <div className="flex flex-wrap items-center gap-2 text-xs font-[var(--font-accent)] font-semibold text-brand-charcoal">
                     <span>Phone status:</span>
                     <StatusBadge label={phoneStatusBadgeLabel} tone={phoneStatusTone} />
-                    {profile?.phone && !profile.phoneVerified ? (
+                    {effectivePhone && !profile?.phoneVerified ? (
                       <span className="font-normal text-muted-foreground">
-                        — verification by WhatsApp OTP is not available yet
+                        — verification coming soon
                       </span>
                     ) : null}
                   </div>
-                  {profile?.phone && !profile.phoneVerified ? (
+                  {effectivePhone && !profile?.phoneVerified ? (
                     <Button
                       type="button"
                       variant="outline"
@@ -1181,18 +1277,20 @@ export default function MyTelepizza() {
                   <p className="text-sm text-muted-foreground">Loading addresses…</p>
                 ) : null}
 
-                {!addressesLoading && (addressesError || !usingCloudAddresses) ? (
-                  <div
-                    className="rounded-2xl border border-border bg-muted/20 px-4 py-4 text-sm space-y-1.5"
-                    role="status"
-                  >
-                    <p className="font-medium text-brand-charcoal">
-                      We couldn&apos;t load your saved addresses right now.
-                    </p>
-                    <p className="text-muted-foreground leading-relaxed">
-                      You can still add a new address below.
-                    </p>
-                  </div>
+                {!addressesLoading && addressesError ? (
+                  <CustomerRetryCard
+                    title="We're having trouble loading your information."
+                    description="Please try again."
+                    onRetry={reloadAddresses}
+                    busy={addressesLoading}
+                  />
+                ) : null}
+
+                {!addressesLoading && !addressesError && !usingCloudAddresses ? (
+                  <p className="text-sm text-muted-foreground rounded-2xl border border-border bg-muted/10 px-4 py-3">
+                    Addresses on this page are saved on this device only until account sync is
+                    available.
+                  </p>
                 ) : null}
 
                 {showImportDrafts ? (
@@ -1215,35 +1313,37 @@ export default function MyTelepizza() {
                   </div>
                 ) : null}
 
-                {displayedAddresses.length === 0 && !showAddressForm ? (
-                  <div className="rounded-2xl border border-dashed border-border px-6 py-10 text-center space-y-4">
-                    <MapPin className="w-14 h-14 text-brand-red mx-auto" aria-hidden="true" />
-                    <div>
-                      <p className="font-semibold text-lg">
-                        {usingCloudAddresses ? "No saved addresses yet" : "No address drafts yet"}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-                        {usingCloudAddresses
-                          ? "Add a Multan delivery address for faster checkout."
-                          : "Add a Multan delivery draft for quicker checkout on this browser."}
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      size="lg"
-                      className="rounded-2xl brand-gradient text-white font-semibold px-8"
-                      onClick={() => {
-                        setShowAddressForm(true);
-                        setEditingAddressId(null);
-                        setAddressIsDefault(true);
-                        setAddressError(null);
-                        setAddressNotice(null);
-                      }}
-                      aria-label={usingCloudAddresses ? "Add your first delivery address" : "Add your first delivery address draft"}
-                    >
-                      {usingCloudAddresses ? "Add address" : "Add address draft"}
-                    </Button>
-                  </div>
+                {displayedAddresses.length === 0 && !showAddressForm && !addressesError ? (
+                  <CustomerEmptyState
+                    icon={MapPin}
+                    title={usingCloudAddresses ? "No saved addresses yet" : "No address drafts yet"}
+                    description={
+                      usingCloudAddresses
+                        ? "Add a Multan delivery address for faster checkout."
+                        : "Add a Multan delivery draft for quicker checkout on this browser."
+                    }
+                    action={
+                      <Button
+                        type="button"
+                        size="lg"
+                        className="rounded-2xl brand-gradient text-white font-semibold px-8 min-h-11"
+                        onClick={() => {
+                          setShowAddressForm(true);
+                          setEditingAddressId(null);
+                          setAddressIsDefault(true);
+                          setAddressError(null);
+                          setAddressNotice(null);
+                        }}
+                        aria-label={
+                          usingCloudAddresses
+                            ? "Add your first delivery address"
+                            : "Add your first delivery address draft"
+                        }
+                      >
+                        {usingCloudAddresses ? "Add address" : "Add address draft"}
+                      </Button>
+                    }
+                  />
                 ) : null}
 
                 <ul className="space-y-3">
@@ -1497,7 +1597,7 @@ export default function MyTelepizza() {
                     value={
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge label={phoneStatusBadgeLabel} tone={phoneStatusTone} />
-                        {profile?.phone && !profile.phoneVerified ? (
+                        {effectivePhone && !profile?.phoneVerified ? (
                           <span className="text-xs text-muted-foreground font-normal">
                             Verification coming soon
                           </span>
@@ -1619,11 +1719,11 @@ export default function MyTelepizza() {
                         {passwordChecks.map((check) => (
                           <li
                             key={check.id}
-                            className={
+                            className={`motion-safe:transition-colors motion-reduce:transition-none ${
                               check.met
                                 ? "text-emerald-700 font-semibold"
                                 : "text-muted-foreground"
-                            }
+                            }`}
                           >
                             {check.met ? "✓" : "○"} {check.label}
                           </li>
@@ -1871,14 +1971,33 @@ export default function MyTelepizza() {
                         className="rounded-2xl border border-border bg-gradient-to-br from-white to-brand-cream/20 p-4 space-y-3"
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="min-w-0">
+                          <div className="min-w-0 space-y-1">
                             <div className="font-semibold text-brand-red">{order.orderNumber}</div>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {new Date(order.createdAt).toLocaleString()} · {order.branchName}
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(order.createdAt).toLocaleString()}
                             </p>
-                            <p className="text-sm font-semibold mt-1">
-                              Rs {order.totalAmount.toLocaleString()}
-                            </p>
+                            <dl className="grid gap-0.5 text-sm text-muted-foreground">
+                              <div>
+                                <dt className="inline font-medium text-brand-charcoal">
+                                  Restaurant:{" "}
+                                </dt>
+                                <dd className="inline">{order.branchName}</dd>
+                              </div>
+                              {order.deliveryAddress ? (
+                                <div>
+                                  <dt className="inline font-medium text-brand-charcoal">
+                                    Delivery:{" "}
+                                  </dt>
+                                  <dd className="inline break-words">{order.deliveryAddress}</dd>
+                                </div>
+                              ) : null}
+                              <div>
+                                <dt className="inline font-medium text-brand-charcoal">Total: </dt>
+                                <dd className="inline font-semibold text-brand-charcoal">
+                                  Rs {order.totalAmount.toLocaleString()}
+                                </dd>
+                              </div>
+                            </dl>
                           </div>
                           <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold capitalize">
                             {order.status}
@@ -1886,22 +2005,32 @@ export default function MyTelepizza() {
                         </div>
                         <OrderStatusTimeline status={order.status} compact />
                         <div className="flex flex-wrap gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="rounded-2xl"
-                            disabled={catalogLoading}
-                            onClick={() => void openReorderReview(order)}
-                          >
-                            Reorder
-                          </Button>
-                          <Button asChild type="button" variant="outline" size="sm" className="rounded-2xl">
+                          <Button asChild size="sm" className="min-h-11 rounded-2xl brand-gradient text-white">
                             <Link
                               href={`/track/${encodeURIComponent(order.orderNumber)}?phone=${encodeURIComponent(order.contactPhone)}`}
                             >
                               Track
                             </Link>
+                          </Button>
+                          <Button asChild size="sm" variant="outline" className="min-h-11 rounded-2xl">
+                            <a
+                              href={`https://wa.me/92${BRAND.phone.replace(/\D/g, "").replace(/^0/, "")}?text=${encodeURIComponent(`Hi Telepizza, I need help with order ${order.orderNumber}.`)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Support
+                            </a>
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="min-h-11 rounded-2xl"
+                            disabled={catalogLoading}
+                            onClick={() => void openReorderReview(order)}
+                          >
+                            <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                            Reorder
                           </Button>
                         </div>
                       </li>
@@ -1927,23 +2056,19 @@ export default function MyTelepizza() {
                 <div>
                   <h2 className="font-bold text-lg">Rewards</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Loyalty · Telepizza Rewards
+                    Loyalty points and member offers
                   </p>
                 </div>
-                <div className="rounded-2xl border border-dashed border-border bg-muted/10 p-6 sm:p-8 text-center space-y-4">
-                  <Gift className="w-10 h-10 text-brand-red mx-auto" aria-hidden="true" />
-                  <div>
-                    <StatusBadge label="Coming Soon" tone="neutral" />
-                    <h3 className="font-semibold text-lg mt-3">Rewards are coming soon</h3>
-                    <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
-                      Offers will appear here when Rewards launches. We will never invent a balance or
-                      member number here. Earn points on eligible orders when the program launches.
-                    </p>
-                  </div>
-                  <Button asChild className="min-h-11 w-full max-w-sm rounded-2xl brand-gradient text-white sm:w-auto">
-                    <Link href="/menu">Keep ordering to be ready when rewards launch</Link>
-                  </Button>
-                </div>
+                <CustomerEmptyState
+                  icon={Gift}
+                  title="Rewards are coming soon."
+                  description="We'll share exclusive offers here when Rewards launches. No points balance is shown until then."
+                  action={
+                    <Button asChild className="min-h-11 rounded-2xl brand-gradient text-white">
+                      <Link href="/menu">Browse Menu</Link>
+                    </Button>
+                  }
+                />
               </section>
             ) : null}
 
@@ -1954,45 +2079,33 @@ export default function MyTelepizza() {
               >
                 <div>
                   <h2 id="hub-notifications-section-heading" className="font-bold text-lg">
-                    Notifications &amp; checkout prefs
+                    Notifications
                   </h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Manage notification preferences in Settings. Prefs save on this device only —
-                    live email delivery is not wired yet.
+                    Order updates and offers — prefs save on this device for now.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-border bg-brand-cream/30 p-4 text-sm space-y-3">
-                  <div>
-                    <p className="font-semibold">Notification preferences</p>
-                    <p className="mt-1 text-muted-foreground">
-                      Order updates, promotions, delivery alerts, and special offers can be toggled
-                      in Settings. Saving a preference does not mean an email was sent.
-                    </p>
-                  </div>
-                  <Button asChild type="button" className="rounded-2xl brand-gradient text-white min-h-11">
-                    <Link href="/settings#prefs">
-                      <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
-                      Open Settings preferences
-                    </Link>
-                  </Button>
-                </div>
-                <div className="rounded-2xl border border-border bg-brand-cream/30 p-4 text-sm space-y-2">
-                  <p className="font-semibold">Payment preferences</p>
-                  <p className="text-muted-foreground">
-                    Checkout supports paying with your order (cash / pay on delivery or pickup) when
-                    you place it. JazzCash, EasyPaisa, and saved cards are <strong>not live</strong>{" "}
-                    yet — we will not pretend they are.
+                <CustomerEmptyState
+                  icon={Bell}
+                  title="No notifications yet."
+                  description="We'll notify you about orders and exclusive offers."
+                  action={
+                    <>
+                      <Button asChild className="min-h-11 rounded-2xl brand-gradient text-white">
+                        <Link href="/settings#prefs">Notification preferences</Link>
+                      </Button>
+                      <Button asChild variant="outline" className="min-h-11 rounded-2xl">
+                        <Link href="/notifications">Open inbox</Link>
+                      </Button>
+                    </>
+                  }
+                />
+                <div className="rounded-2xl border border-border bg-muted/10 p-4 text-sm space-y-1.5">
+                  <p className="font-semibold text-brand-charcoal">Payment preferences</p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Checkout supports paying with your order (cash / pay on delivery or pickup).
+                    JazzCash, EasyPaisa, and saved cards are <strong>not live</strong> yet.
                   </p>
-                </div>
-                <div className="rounded-2xl border border-dashed border-border p-4">
-                  <p className="text-sm font-semibold text-brand-charcoal">Device inbox</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Order update messages stored on this browser appear in your notifications inbox.
-                    Email alerts are not sent yet.
-                  </p>
-                  <Button asChild type="button" variant="outline" size="sm" className="mt-3 min-h-11 rounded-2xl">
-                    <Link href="/notifications">Open notifications inbox</Link>
-                  </Button>
                 </div>
               </section>
             ) : null}

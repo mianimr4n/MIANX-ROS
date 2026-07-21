@@ -614,7 +614,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return {
             ok: false,
             message:
-              "Could not attach a Telepizza password yet. Sign out, sign back in with Google, then try Set password again — never enter your Google password here.",
+              "For your security, please sign in again with Google before creating a Telepizza password.",
           };
         }
         return { ok: false, message: mapped };
@@ -689,6 +689,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           if (error.code === "USER_ACCESS_DISABLED") {
             return { ok: false, message: "Access is disabled for this account." };
+          }
+          if (
+            error.code === "PROFILE_NOT_FOUND" ||
+            error.code === "PROFILE_BOOTSTRAP_FAILED" ||
+            /profile was not found/i.test(error.message)
+          ) {
+            return {
+              ok: false,
+              message:
+                "We couldn't finish setting up your profile yet. Please try again.",
+            };
           }
           return { ok: false, message: error.message || "Could not update profile." };
         }
