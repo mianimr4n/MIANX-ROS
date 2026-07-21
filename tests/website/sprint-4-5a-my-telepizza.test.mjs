@@ -29,21 +29,23 @@ test("My Telepizza route, nav label, and auth return path", () => {
   assert.match(hub, /\/login\?next=/);
 });
 
-test("hub dashboard: active order empty state, shortcuts, preferred branch honesty", () => {
+test("hub dashboard: active order empty state, quiet home, preferred branch", () => {
   const hub = read("apps/website/client/src/pages/MyTelepizza.tsx");
   const support = read("apps/website/client/src/components/my-telepizza/HubSupportCard.tsx");
+  const bottom = read("apps/website/client/src/components/my-telepizza/CustomerBottomNav.tsx");
   assert.match(hub, /No active order right now/);
-  assert.match(hub, /aria-label=["']My Telepizza shortcuts["']/);
+  assert.match(hub, /Ready for your next order\?/);
+  assert.match(hub, /Browse the menu/);
   assert.match(hub, /Preferred branch/);
-  assert.match(hub, /Selected on this device only/);
-  assert.match(hub, /Profile completion/);
-  assert.match(hub, /More for you/);
+  assert.match(hub, /CustomerShell|CustomerBottomNav|CustomerPageHeader/);
+  assert.match(bottom, /aria-label=["']My Telepizza["']/);
   assert.match(hub, /focusMainAfterNav/);
   assert.match(hub, /HubSupportCard/);
   assert.match(support, /WhatsApp support/);
   assert.match(support, /Need help/);
   assert.doesNotMatch(hub, /docs\/architecture/);
   assert.doesNotMatch(hub, /OWNER REVIEW REQUIRED/);
+  assert.doesNotMatch(hub, /Profile completion/);
 });
 
 test("addresses: cloud SoT enabled with device draft import honesty", () => {

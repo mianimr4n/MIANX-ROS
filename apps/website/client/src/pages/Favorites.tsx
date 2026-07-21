@@ -11,6 +11,7 @@ import {
   fetchCloudFavorites,
   favoritesAvailable,
 } from "@/lib/customer-favorites-api";
+import { toCustomerMessage } from "@/lib/customer-errors";
 import { formatMenuPriceLabel } from "@/lib/menu-utils";
 import type { MenuItem } from "@/lib/telepizza-types";
 
@@ -31,7 +32,7 @@ export default function Favorites() {
     void fetchCloudFavorites(session.access_token, user?.id ?? session.access_token)
       .then((rows) => setFavoriteCodes(rows.map((row) => row.menuItemCode)))
       .catch((fetchError) => {
-        setError(fetchError instanceof Error ? fetchError.message : "Could not load favorites.");
+        setError(toCustomerMessage(fetchError, "favorites"));
         setFavoriteCodes([]);
       })
       .finally(() => setLoading(false));

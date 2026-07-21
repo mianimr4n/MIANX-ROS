@@ -221,7 +221,7 @@ test("My Telepizza IA: Dashboard, Profile, Addresses, Security, Orders, Loyalty,
   const orders = read("apps/website/client/src/pages/Orders.tsx");
 
   assert.match(account, /My Telepizza/);
-  assert.match(account, /Dashboard|Your hub/);
+  assert.match(account, /Dashboard|Your hub|Ready for your next order/);
   assert.match(account, /Addresses/);
   assert.match(account, /Security & login methods/);
   assert.match(account, /Loyalty/);

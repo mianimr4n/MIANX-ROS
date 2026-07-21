@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   Bell,
   ChevronRight,
@@ -7,15 +7,12 @@ import {
   EyeOff,
   Gift,
   Heart,
-  LayoutDashboard,
   Loader2,
-  LogOut,
   MapPin,
   Package,
   RotateCcw,
   Settings,
   Shield,
-  Star,
   Store,
   UserCircle2,
   UserRound,
@@ -28,6 +25,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 import { useCart } from "@/contexts/CartContext";
+import { CustomerAccountMenu } from "@/components/my-telepizza/CustomerAccountMenu";
+import { CustomerPageHeader } from "@/components/my-telepizza/CustomerPageHeader";
+import { CustomerShell } from "@/components/my-telepizza/CustomerShell";
 import { HubSupportCard } from "@/components/my-telepizza/HubSupportCard";
 import { OrderStatusTimeline } from "@/components/my-telepizza/OrderStatusTimeline";
 import { ReorderReviewDialog } from "@/components/my-telepizza/ReorderReviewDialog";
@@ -61,6 +61,7 @@ import {
   importCloudAddresses,
   updateCloudAddress,
 } from "@/lib/customer-addresses-api";
+import { toCustomerMessage } from "@/lib/customer-errors";
 import { listLocalOrders, type StoredOrder } from "@/lib/customer-store";
 import {
   cloudDetailToStored,
@@ -69,6 +70,14 @@ import {
   fetchCloudOrderDetail,
   fetchCloudOrders,
 } from "@/lib/customer-orders-api";
+import {
+  legacyHashCanonicalPath,
+  pathForSection,
+  primaryTabForSection,
+  resolveDisplayName,
+  sectionFromLocation,
+  type HubSection,
+} from "@/lib/my-telepizza-nav";
 import { bucketForOrderStatus } from "@/lib/order-status";
 import {
   buildReorderPreview,
@@ -77,52 +86,7 @@ import {
 } from "@/lib/reorder";
 import { normalizePakistaniMobileE164 } from "@/lib/phone";
 
-type HubSection =
-  | "overview"
-  | "profile"
-  | "addresses"
-  | "security"
-  | "orders"
-  | "loyalty"
-  | "notifications";
-
 type StatusTone = "success" | "warning" | "neutral";
-
-const NAV_ITEMS: Array<{ id: HubSection; label: string; icon: typeof LayoutDashboard }> = [
-  { id: "overview", label: "Dashboard", icon: LayoutDashboard },
-  { id: "profile", label: "Profile", icon: UserRound },
-  { id: "addresses", label: "Addresses", icon: MapPin },
-  { id: "security", label: "Security", icon: Shield },
-  { id: "orders", label: "Orders", icon: Package },
-  { id: "loyalty", label: "Loyalty", icon: Gift },
-  { id: "notifications", label: "Notifications", icon: Bell },
-];
-
-function sectionFromHash(): HubSection {
-  if (typeof window === "undefined") return "overview";
-  const hash = window.location.hash.replace(/^#/, "").toLowerCase();
-  if (NAV_ITEMS.some((item) => item.id === hash)) return hash as HubSection;
-  return "overview";
-}
-
-function profileCompletion(input: {
-  fullName: string;
-  emailVerified: boolean;
-  hasPhone: boolean;
-  hasDeviceAddress: boolean;
-}): { score: number; missing: string[] } {
-  const checks = [
-    { ok: Boolean(input.fullName.trim()), label: "Add your name" },
-    { ok: input.emailVerified, label: "Confirm your email" },
-    { ok: input.hasPhone, label: "Add a phone number" },
-    { ok: input.hasDeviceAddress, label: "Add a delivery address draft" },
-  ];
-  const done = checks.filter((check) => check.ok).length;
-  return {
-    score: Math.round((done / checks.length) * 100),
-    missing: checks.filter((check) => !check.ok).map((check) => check.label),
-  };
-}
 
 export default function MyTelepizza() {
   const {
@@ -139,8 +103,13 @@ export default function MyTelepizza() {
   const { selectedBranch } = useBranch();
   const { items: catalogItems, isLoading: catalogLoading } = useMenuCatalog();
   const { addItem, setOrderDetails } = useCart();
+  const [location, navigate] = useLocation();
 
-  const [section, setSection] = useState<HubSection>(sectionFromHash);
+  const [section, setSection] = useState<HubSection>(() =>
+    typeof window === "undefined"
+      ? "overview"
+      : sectionFromLocation(window.location.pathname, window.location.hash),
+  );
   const focusMainAfterNav = useRef(false);
   const [reorderPreview, setReorderPreview] = useState<ReorderPreview | null>(null);
   const [reorderOpen, setReorderOpen] = useState(false);
@@ -192,10 +161,29 @@ export default function MyTelepizza() {
   }, [profile]);
 
   useEffect(() => {
-    const onHash = () => setSection(sectionFromHash());
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    const legacy = legacyHashCanonicalPath(location.split("?")[0], hash);
+    if (legacy) {
+      navigate(legacy, { replace: true });
+      return;
+    }
+    setSection(sectionFromLocation(location.split("?")[0], hash));
+  }, [location, navigate]);
+
+  useEffect(() => {
+    const onHash = () => {
+      const path = typeof window !== "undefined" ? window.location.pathname : location;
+      const hash = typeof window !== "undefined" ? window.location.hash : "";
+      const legacy = legacyHashCanonicalPath(path, hash);
+      if (legacy) {
+        navigate(legacy, { replace: true });
+        return;
+      }
+      setSection(sectionFromLocation(path, hash));
+    };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
-  }, []);
+  }, [location, navigate]);
 
   useEffect(() => {
     if (!focusMainAfterNav.current) return;
@@ -262,7 +250,7 @@ export default function MyTelepizza() {
     void fetchCloudAddresses(session.access_token)
       .then((rows) => setCloudAddresses(rows.map(cloudAddressToSaved)))
       .catch((error) =>
-        setAddressesError(error instanceof Error ? error.message : "Could not load addresses."),
+        setAddressesError(toCustomerMessage(error, "addresses")),
       )
       .finally(() => setAddressesLoading(false));
   }, [usingCloudAddresses, session?.access_token]);
@@ -303,9 +291,7 @@ export default function MyTelepizza() {
   function goTo(next: HubSection) {
     focusMainAfterNav.current = true;
     setSection(next);
-    if (typeof window !== "undefined") {
-      window.history.replaceState(null, "", `#${next}`);
-    }
+    navigate(pathForSection(next));
   }
 
   async function openReorderReview(order: StoredOrder) {
@@ -355,13 +341,15 @@ export default function MyTelepizza() {
             </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:flex lg:flex-col rounded-3xl border border-border bg-white p-3 shadow-sm">
-              {Array.from({ length: 7 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="h-10 rounded-2xl bg-muted/60 animate-pulse motion-reduce:animate-none"
-                />
-              ))}
+            <div className="hidden lg:block">
+              <div className="flex flex-col gap-1 rounded-3xl border border-border bg-white p-3 shadow-sm">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="h-10 rounded-2xl bg-muted/60 animate-pulse motion-reduce:animate-none"
+                  />
+                ))}
+              </div>
             </div>
             <div className="space-y-4">
               <div className="h-40 rounded-3xl border border-border bg-white p-4 shadow-sm">
@@ -447,7 +435,19 @@ export default function MyTelepizza() {
   }
 
   const email = profile?.email || user.email || null;
-  const displayName = fullName || email?.split("@")[0] || "Customer";
+  const providerFullName =
+    (user.user_metadata?.full_name as string | undefined)?.trim() ||
+    (user.user_metadata?.name as string | undefined)?.trim() ||
+    null;
+  const avatarUrl =
+    (user.user_metadata?.avatar_url as string | undefined)?.trim() ||
+    (user.user_metadata?.picture as string | undefined)?.trim() ||
+    null;
+  const displayName = resolveDisplayName({
+    editedOrStoredName: fullName || profile?.fullName,
+    providerFullName,
+    email,
+  });
   const googleConnected = hasGoogleIdentity(user);
   const emailPasswordAvailable = hasEmailIdentity(user);
   const firstTimePassword = isFirstTimePasswordAttach(user);
@@ -460,15 +460,9 @@ export default function MyTelepizza() {
     : "neutral";
   const phoneStatusBadgeLabel = profile?.phone
     ? profile.phoneVerified
-      ? "Phone ✓ Verified"
-      : "Phone ⚠ Verification Pending"
-    : "Phone Not Set";
-  const completion = profileCompletion({
-    fullName: fullName.trim() ? fullName : "",
-    emailVerified,
-    hasPhone: Boolean(profile?.phone),
-    hasDeviceAddress: displayedAddresses.length > 0,
-  });
+      ? "Phone verified"
+      : "Not verified"
+    : "Phone not set";
   const passwordChecks = getPasswordRequirementChecks(password);
 
   async function handleSaveProfile(event: FormEvent) {
@@ -488,7 +482,7 @@ export default function MyTelepizza() {
       }
       setProfileNotice(
         phone.trim()
-          ? "Profile saved. Phone remains Unverified until WhatsApp OTP launches."
+          ? "Profile saved. Phone remains Not verified until phone verification launches."
           : "Profile saved.",
       );
     } finally {
@@ -578,7 +572,7 @@ export default function MyTelepizza() {
           editingAddressId ? "Address updated in your account." : "Address saved to your account.",
         );
       } catch (error) {
-        setAddressError(error instanceof Error ? error.message : "Could not save address.");
+        setAddressError(toCustomerMessage(error, "addresses"));
       }
       return;
     }
@@ -586,9 +580,13 @@ export default function MyTelepizza() {
     const input = {
       label: addressLabel,
       line1: addressLine1,
+      line2: addressLine2,
       area: addressArea,
       city: addressCity,
+      landmark: addressLandmark,
       notes: addressNotes,
+      recipientName: addressRecipientName.trim() || fullName.trim() || "Customer",
+      phone: addressPhone.trim() || phone.trim(),
       isDefault: addressIsDefault,
     };
     const result = editingAddressId
@@ -627,7 +625,7 @@ export default function MyTelepizza() {
       setCloudAddresses((await fetchCloudAddresses(session.access_token)).map(cloudAddressToSaved));
       setAddressNotice("Device drafts imported to your account.");
     } catch (error) {
-      setAddressError(error instanceof Error ? error.message : "Import failed.");
+      setAddressError(toCustomerMessage(error, "addresses"));
     }
   }
 
@@ -639,7 +637,7 @@ export default function MyTelepizza() {
         setCloudAddresses((await fetchCloudAddresses(session.access_token)).map(cloudAddressToSaved));
         setAddressNotice("Address removed from your account.");
       } catch (error) {
-        setAddressError(error instanceof Error ? error.message : "Could not remove address.");
+        setAddressError(toCustomerMessage(error, "addresses"));
       }
       return;
     }
@@ -686,7 +684,7 @@ export default function MyTelepizza() {
         setCloudAddresses((await fetchCloudAddresses(session.access_token)).map(cloudAddressToSaved));
         setAddressNotice("Default delivery address updated.");
       } catch (error) {
-        setAddressError(error instanceof Error ? error.message : "Could not update default.");
+        setAddressError(toCustomerMessage(error, "addresses"));
       }
       return;
     }
@@ -695,7 +693,6 @@ export default function MyTelepizza() {
     setAddressNotice("Default delivery address updated.");
   }
 
-  const welcomeInitial = (displayName.trim().charAt(0) || "T").toUpperCase();
   const recentOrdersPreview = hubOrders.slice(0, 2);
   const defaultAddress =
     displayedAddresses.find((address) => address.isDefault) ?? displayedAddresses[0] ?? null;
@@ -704,105 +701,37 @@ export default function MyTelepizza() {
     usingCloudAddresses &&
     deviceDraftCount > 0 &&
     !hasCompletedAddressImport(ownerKey);
+  const needsBasics = !phone.trim() || displayedAddresses.length === 0;
+  const hasPastOrders =
+    hubOrders.some((order) => bucketForOrderStatus(order.status) !== "active") ||
+    Boolean(lastCompleted || lastOrder);
 
   return (
-    <div className="min-h-screen bg-background py-8 sm:py-10">
-      <a
-        href="#my-telepizza-main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-2xl focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-brand-red focus:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-red"
-      >
-        Skip to My Telepizza content
-      </a>
-      <div className="container max-w-5xl space-y-6">
-        <header className="overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-white via-brand-cream/50 to-white shadow-sm">
-          <div className="h-1.5 brand-gradient" aria-hidden="true" />
-          <div className="flex flex-wrap items-start justify-between gap-4 p-4 sm:p-6">
-            <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-              <div
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl brand-gradient text-lg font-bold text-white shadow-sm sm:h-14 sm:w-14 sm:text-xl"
-                aria-hidden="true"
-              >
-                {welcomeInitial}
-              </div>
-              <div className="min-w-0 space-y-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-brand-red mb-1">
-                    My Telepizza
-                  </p>
-                  <h1 className="brand-heading text-2xl sm:text-3xl mb-1 break-words">
-                    Welcome back, {displayName}
-                  </h1>
-                  {email ? (
-                    <p className="text-sm text-muted-foreground break-all">{email}</p>
-                  ) : null}
-                  {profile?.phone ? (
-                    <p className="text-sm text-muted-foreground mt-1">{profile.phone}</p>
-                  ) : (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Add a phone number in Profile for faster checkout.
-                    </p>
-                  )}
-                </div>
-                <div className="flex flex-wrap items-center gap-2" aria-label="Verification status">
-                  <StatusBadge
-                    label={emailVerified ? "Email ✓ Verified" : "Email ⚠ Verification Pending"}
-                    tone={emailVerified ? "success" : "warning"}
-                  />
-                  <StatusBadge label={phoneStatusBadgeLabel} tone={phoneStatusTone} />
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Telepizza Pakistan · Powered by Mianx.ai
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => {
-                void signOut();
-              }}
-              className="rounded-2xl shrink-0"
-              aria-label="Log out of your Telepizza account"
-            >
-              <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
-              Logout
-            </Button>
-          </div>
-        </header>
-
-        <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
-          <nav
-            aria-label="My Telepizza sections"
-            className="rounded-3xl border border-border bg-white p-3 h-fit shadow-sm lg:sticky lg:top-24"
-          >
-            <p className="mb-2 hidden px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:block">
-              Navigate
-            </p>
-            <ul className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:flex lg:flex-col">
-              {NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const active = section === item.id;
-                return (
-                  <li key={item.id} className="min-w-0">
-                    <button
-                      type="button"
-                      onClick={() => goTo(item.id)}
-                      className={`w-full flex min-h-11 items-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl px-2.5 py-2.5 sm:px-3 sm:py-3 text-left text-xs sm:text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
-                        active
-                          ? "bg-brand-red/10 text-brand-red"
-                          : "text-brand-charcoal/80 hover:bg-muted/50 hover:text-brand-charcoal"
-                      }`}
-                      aria-current={active ? "page" : undefined}
-                    >
-                      <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 opacity-80" aria-hidden="true" />
-                      <span className="truncate">{item.label}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-
-          <div id="my-telepizza-main" className="space-y-6 min-w-0" tabIndex={-1}>
+    <CustomerShell
+      activeTab={primaryTabForSection(section)}
+      identity={
+        <CustomerPageHeader
+          displayName={displayName}
+          email={email}
+          avatarUrl={avatarUrl}
+          emailVerified={emailVerified}
+          phoneLabel={phoneStatusBadgeLabel}
+          phoneTone={phoneStatusTone}
+          phoneHint={
+            profile?.phone ? (
+              <p className="mt-1 text-sm text-muted-foreground">{profile.phone}</p>
+            ) : (
+              <p className="mt-1 text-sm text-muted-foreground">
+                Add a phone number in Account for faster checkout.
+              </p>
+            )
+          }
+          onLogout={() => {
+            void signOut();
+          }}
+        />
+      }
+    >
             {section === "overview" ? (
               <div className="space-y-6">
                 <section
@@ -811,50 +740,23 @@ export default function MyTelepizza() {
                 >
                   <div>
                     <h2 id="hub-overview-heading" className="font-bold text-lg">
-                      Your hub
+                      Ready for your next order?
                     </h2>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Reorder favourites, track what&apos;s cooking, and keep checkout details ready —
-                      without clutter.
+                      Browse the menu{needsBasics ? " or finish a quick delivery detail" : ""} — we
+                      keep this hub quiet until you have something to track.
                     </p>
                   </div>
 
-                  <div
-                    className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3"
-                    role="navigation"
-                    aria-label="My Telepizza shortcuts"
+                  <Button
+                    asChild
+                    className="min-h-12 w-full rounded-2xl brand-gradient text-white font-semibold sm:w-auto"
                   >
-                    <QuickActionCard
-                      href="/track"
-                      icon={Package}
-                      title="Track"
-                      description="Live order status"
-                    />
-                    <QuickActionCard
-                      icon={RotateCcw}
-                      title="Reorder"
-                      description={
-                        lastCompleted || lastOrder ? "Review & add to cart" : "Place an order first"
-                      }
-                      disabled={!lastCompleted && !lastOrder}
-                      onClick={() => {
-                        const target = lastCompleted ?? lastOrder;
-                        if (target) void openReorderReview(target);
-                      }}
-                    />
-                    <QuickActionCard
-                      href="/menu"
-                      icon={UtensilsCrossed}
-                      title="Menu"
-                      description="Browse & order"
-                    />
-                    <QuickActionCard
-                      icon={MapPin}
-                      title="Addresses"
-                      description={usingCloudAddresses ? "Account address book" : "Device drafts"}
-                      onClick={() => goTo("addresses")}
-                    />
-                  </div>
+                    <Link href="/menu">
+                      <UtensilsCrossed className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Browse the menu
+                    </Link>
+                  </Button>
 
                   {activeOrder ? (
                     <article className="rounded-2xl border border-brand-red/20 bg-brand-cream/50 p-4 space-y-3">
@@ -867,14 +769,19 @@ export default function MyTelepizza() {
                             {activeOrder.orderNumber}
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            {activeOrder.branchName} · Rs {activeOrder.totalAmount.toLocaleString()}
+                            {activeOrder.status} · {activeOrder.branchName} · Rs{" "}
+                            {activeOrder.totalAmount.toLocaleString()}
                           </p>
                         </div>
-                        <Button asChild size="sm" className="rounded-2xl brand-gradient text-white">
+                        <Button
+                          asChild
+                          size="sm"
+                          className="min-h-11 rounded-2xl brand-gradient text-white"
+                        >
                           <Link
                             href={`/track/${encodeURIComponent(activeOrder.orderNumber)}?phone=${encodeURIComponent(activeOrder.contactPhone)}`}
                           >
-                            Track live
+                            Track
                           </Link>
                         </Button>
                       </div>
@@ -887,67 +794,104 @@ export default function MyTelepizza() {
                       <p className="text-sm text-muted-foreground">
                         When you place an order, live status will show here.
                       </p>
-                      <Button asChild className="mt-2 rounded-2xl brand-gradient text-white">
-                        <Link href="/menu">Order from the menu</Link>
-                      </Button>
                     </div>
                   )}
+
+                  {hasPastOrders && !activeOrder ? (
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="min-h-11 rounded-2xl"
+                        disabled={catalogLoading || (!lastCompleted && !lastOrder)}
+                        onClick={() => {
+                          const target = lastCompleted ?? lastOrder;
+                          if (target) void openReorderReview(target);
+                        }}
+                      >
+                        <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
+                        Reorder last
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="min-h-11 rounded-2xl text-brand-red"
+                        onClick={() => goTo("orders")}
+                      >
+                        View orders
+                      </Button>
+                    </div>
+                  ) : null}
                 </section>
 
-                <section className="space-y-4" aria-labelledby="hub-more-heading">
-                  <div>
-                    <h2 id="hub-more-heading" className="font-bold text-base text-brand-charcoal/80">
-                      More for you
-                    </h2>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Recent orders, saved addresses, and quieter account shortcuts.
+                {needsBasics ? (
+                  <div className="rounded-2xl border border-brand-red/20 bg-brand-cream/40 px-4 py-3 sm:px-5 sm:py-4">
+                    <p className="text-sm font-semibold text-brand-charcoal">Finish your basics</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      A quick phone and address keep checkout fast — one useful next step, not a wall
+                      of empty cards.
                     </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {!phone.trim() ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="min-h-11 rounded-2xl brand-gradient text-white"
+                          onClick={() => goTo("profile")}
+                        >
+                          Add phone
+                        </Button>
+                      ) : null}
+                      {displayedAddresses.length === 0 ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="min-h-11 rounded-2xl"
+                          onClick={() => goTo("addresses")}
+                        >
+                          Add delivery address
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
+                ) : null}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {!ordersLoading && recentOrdersPreview.length > 0 ? (
                     <HubPreviewPanel
                       id="hub-recent-orders"
                       icon={Package}
                       title="Recent Orders"
-                      actionLabel={hubOrders.length > 0 ? "View all" : "Open orders"}
+                      actionLabel="View all"
                       onAction={() => goTo("orders")}
                     >
-                      {ordersLoading ? (
-                        <p className="text-sm text-muted-foreground">Loading account orders…</p>
-                      ) : !usingCloudOrders && !profile?.phone ? (
-                        <p className="text-sm text-muted-foreground">
-                          Add a phone in Profile to match checkout orders on this device.
-                        </p>
-                      ) : recentOrdersPreview.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                          No recent orders yet.
-                        </p>
-                      ) : (
-                        <ul className="space-y-2">
-                          {recentOrdersPreview.map((order) => (
-                            <li
-                              key={order.id}
-                              className="rounded-xl border border-border/80 bg-brand-cream/30 px-3 py-2"
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-semibold text-brand-red">
-                                    {order.orderNumber}
-                                  </p>
-                                  <p className="truncate text-xs text-muted-foreground">
-                                    {order.branchName} · Rs {order.totalAmount.toLocaleString()}
-                                  </p>
-                                </div>
-                                <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-xs font-semibold capitalize text-brand-charcoal">
-                                  {order.status}
-                                </span>
+                      <ul className="space-y-2">
+                        {recentOrdersPreview.map((order) => (
+                          <li
+                            key={order.id}
+                            className="rounded-xl border border-border/80 bg-brand-cream/30 px-3 py-2"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-brand-red">
+                                  {order.orderNumber}
+                                </p>
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {order.branchName} · Rs {order.totalAmount.toLocaleString()}
+                                </p>
                               </div>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+                              <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-xs font-semibold capitalize text-brand-charcoal">
+                                {order.status}
+                              </span>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
                     </HubPreviewPanel>
+                  ) : null}
 
+                  {defaultAddress ? (
                     <HubPreviewPanel
                       id="hub-saved-addresses"
                       icon={MapPin}
@@ -956,162 +900,130 @@ export default function MyTelepizza() {
                       onAction={() => goTo("addresses")}
                     >
                       <p className="font-bold text-brand-charcoal">
-                        {displayedAddresses.length === 0
-                          ? usingCloudAddresses
-                            ? "None saved yet"
-                            : "None on this device"
-                          : `${displayedAddresses.length} saved address${displayedAddresses.length === 1 ? "" : "es"}`}
+                        {displayedAddresses.length} saved address
+                        {displayedAddresses.length === 1 ? "" : "es"}
                       </p>
-                      {defaultAddress ? (
-                        <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                          {defaultAddress.isDefault ? "Default · " : ""}
-                          {formatSavedAddress(defaultAddress)}
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Save a Multan delivery address for faster checkout.
-                        </p>
-                      )}
+                      <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                        {defaultAddress.isDefault ? "Default · " : ""}
+                        {formatSavedAddress(defaultAddress)}
+                      </p>
                       <p className="mt-2 text-xs text-muted-foreground">
                         {usingCloudAddresses
                           ? "Synced to your Telepizza account."
                           : "Saved on this device only — not synced to your account yet."}
                       </p>
                     </HubPreviewPanel>
-                  </div>
+                  ) : null}
 
-                  <div className="rounded-2xl border border-dashed border-border bg-white/60 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                      Account shortcuts
-                    </p>
-                    <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
-                      <li>
-                        <Link
-                          href="/settings"
-                          className="inline-flex items-center gap-1.5 font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
-                        >
-                          <Settings className="h-3.5 w-3.5" aria-hidden="true" />
-                          Settings
-                        </Link>
-                      </li>
-                      <li>
-                        <button
-                          type="button"
-                          className="font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
-                          onClick={() => goTo("profile")}
-                        >
-                          Profile
-                        </button>
-                      </li>
-                      <li>
-                        <button
-                          type="button"
-                          className="font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
-                          onClick={() => goTo("security")}
-                        >
-                          Security
-                        </button>
-                      </li>
-                      <li>
-                        <Link
-                          href="/settings#prefs"
-                          className="font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
-                        >
-                          Notification prefs
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/notifications"
-                          className="font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
-                        >
-                          Device inbox
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/favorites"
-                          className="inline-flex items-center gap-1.5 font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
-                        >
-                          <Heart className="h-3.5 w-3.5" aria-hidden="true" />
-                          Favorites
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/orders"
-                          className="inline-flex items-center gap-1.5 font-semibold text-brand-red underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 rounded-md"
-                        >
-                          <Star className="h-3.5 w-3.5" aria-hidden="true" />
-                          Reviews
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-border/80 bg-muted/10 p-4 space-y-2">
+                  {selectedBranch?.name ? (
+                    <div className="rounded-2xl border border-border/80 bg-muted/10 p-4 space-y-2 sm:col-span-2">
                       <div className="flex items-center gap-2 text-sm font-semibold">
                         <Store className="w-4 h-4 text-brand-red" aria-hidden="true" />
                         Preferred branch
                       </div>
-                      <p className="font-bold text-brand-charcoal">{selectedBranch.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Selected on this device only. Saving a preferred branch to your account is
-                        coming later.
-                      </p>
-                      <Button asChild type="button" variant="outline" size="sm" className="rounded-2xl">
+                      <p className="font-bold text-brand-charcoal break-words">{selectedBranch.name}</p>
+                      <Button
+                        asChild
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="min-h-11 rounded-2xl"
+                      >
                         <Link href="/branches">Change branch</Link>
                       </Button>
                     </div>
-                    <div className="rounded-2xl border border-border/80 bg-muted/10 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-semibold">Profile completion</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {completion.missing.length === 0
-                              ? "Looking good — you are set for faster checkout."
-                              : completion.missing[0]}
-                          </p>
-                        </div>
-                        <p className="font-[var(--font-accent)] font-bold text-brand-red text-lg">
-                          {completion.score}%
-                        </p>
-                      </div>
-                      <div
-                        className="mt-3 h-2 rounded-full bg-brand-cream overflow-hidden"
-                        role="progressbar"
-                        aria-valuenow={completion.score}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-label="Profile completion"
-                      >
-                        <div
-                          className="h-full bg-brand-red motion-safe:transition-all"
-                          style={{ width: `${completion.score}%` }}
-                        />
-                      </div>
-                      {completion.missing.length > 0 ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="mt-2 rounded-2xl px-2 text-brand-red"
-                          onClick={() => goTo(completion.missing[0]?.includes("address") ? "addresses" : "profile")}
-                        >
-                          Finish next step
-                          <ChevronRight className="ml-1 h-4 w-4" aria-hidden="true" />
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
+                  ) : null}
+                </div>
 
+                {activeOrder ? (
                   <HubSupportCard
-                    orderNumber={activeOrder?.orderNumber}
-                    contactPhone={activeOrder?.contactPhone}
+                    orderNumber={activeOrder.orderNumber}
+                    contactPhone={activeOrder.contactPhone}
                   />
-                </section>
+                ) : null}
               </div>
+            ) : null}
+
+            {section === "account" ? (
+              <CustomerAccountMenu
+                onLogout={() => {
+                  void signOut();
+                }}
+                extra={
+                  <div className="rounded-2xl border border-dashed border-border bg-brand-cream/20 px-4 py-3 text-sm">
+                    <p className="font-semibold text-brand-charcoal">Settings</p>
+                    <p className="mt-1 text-muted-foreground">
+                      Notification and checkout preferences live in Settings.
+                    </p>
+                    <Button
+                      asChild
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="mt-3 min-h-11 rounded-2xl"
+                    >
+                      <Link href="/settings">
+                        <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
+                        Open Settings preferences
+                      </Link>
+                    </Button>
+                  </div>
+                }
+              />
+            ) : null}
+
+            {section === "profile" || section === "security" || section === "notifications" ? (
+              <nav
+                aria-label="Account options"
+                className="rounded-2xl border border-border bg-white/80 p-2 shadow-sm"
+              >
+                <ul className="flex flex-wrap gap-1">
+                  {(
+                    [
+                      { id: "profile" as const, label: "Profile", icon: UserRound },
+                      { id: "security" as const, label: "Security", icon: Shield },
+                      { id: "notifications" as const, label: "Notifications", icon: Bell },
+                    ] as const
+                  ).map((item) => {
+                    const Icon = item.icon;
+                    const active = section === item.id;
+                    return (
+                      <li key={item.id}>
+                        <button
+                          type="button"
+                          onClick={() => goTo(item.id)}
+                          className={`inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
+                            active
+                              ? "bg-brand-red/10 text-brand-red"
+                              : "text-brand-charcoal/80 hover:bg-muted/50"
+                          }`}
+                          aria-current={active ? "page" : undefined}
+                        >
+                          <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                          {item.label}
+                        </button>
+                      </li>
+                    );
+                  })}
+                  <li>
+                    <Link
+                      href="/my-telepizza/favorites"
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-brand-charcoal/80 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
+                    >
+                      <Heart className="h-3.5 w-3.5" aria-hidden="true" />
+                      Favorites
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/my-telepizza/account"
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-brand-charcoal/80 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
+                    >
+                      Account
+                    </Link>
+                  </li>
+                </ul>
+              </nav>
             ) : null}
 
             {section === "profile" ? (
@@ -1996,25 +1908,29 @@ export default function MyTelepizza() {
             {section === "loyalty" ? (
               <section className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-5">
                 <div>
-                  <h2 className="font-bold text-lg">Telepizza Rewards</h2>
+                  <h2 className="font-bold text-lg">Loyalty · Telepizza Rewards</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Offers will appear here when Rewards launches — no points are earned yet.
+                    Rewards are coming soon. We will not invent a balance or tier before launch.
                   </p>
                 </div>
                 <div className="rounded-2xl border border-dashed border-border p-6 sm:p-8 text-center space-y-4">
                   <Gift className="w-10 h-10 text-brand-red mx-auto" aria-hidden="true" />
                   <div>
                     <StatusBadge label="Coming Soon" tone="warning" />
-                    <h3 className="font-semibold text-lg mt-3">Coming soon</h3>
+                    <h3 className="font-semibold text-lg mt-3">Rewards are coming soon</h3>
                     <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-                      Offers will appear here. We will not show fake balances or invented savings.
+                      Offers will appear here when Rewards launches. We will never invent a balance or
+                      member number here.
                     </p>
                   </div>
                   <ul className="text-sm text-muted-foreground space-y-2 text-left max-w-sm mx-auto list-disc pl-5">
-                    <li>Earn points on eligible orders (when the ledger ships)</li>
+                    <li>Earn points on eligible orders when the program launches</li>
                     <li>Redeem real rewards on future pizzas and sides</li>
-                    <li>Member offers when the program launches</li>
+                    <li>Member offers without fake points or tiers</li>
                   </ul>
+                  <Button asChild className="min-h-11 rounded-2xl brand-gradient text-white">
+                    <Link href="/menu">Keep ordering to be ready when rewards launch</Link>
+                  </Button>
                 </div>
               </section>
             ) : null}
@@ -2068,9 +1984,6 @@ export default function MyTelepizza() {
                 </div>
               </section>
             ) : null}
-          </div>
-        </div>
-      </div>
 
       <ReorderReviewDialog
         open={reorderOpen}
@@ -2081,7 +1994,7 @@ export default function MyTelepizza() {
         }}
         onConfirm={confirmReorder}
       />
-    </div>
+    </CustomerShell>
   );
 }
 
@@ -2125,58 +2038,6 @@ function PreferenceSwitch({ label, description }: { label: string; description: 
         className="h-4 w-4 shrink-0 accent-brand-red opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
       />
     </div>
-  );
-}
-
-const quickActionClassName =
-  "group flex h-full min-h-[6.5rem] w-full flex-col items-start gap-2 rounded-2xl border border-border bg-gradient-to-br from-white to-brand-cream/40 p-3 text-left shadow-sm transition-colors hover:border-brand-red/25 hover:bg-brand-cream/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 sm:min-h-[7rem] sm:p-3.5";
-
-function QuickActionCard({
-  icon: Icon,
-  title,
-  description,
-  href,
-  onClick,
-  disabled = false,
-}: {
-  icon: typeof Package;
-  title: string;
-  description: string;
-  href?: string;
-  onClick?: () => void;
-  disabled?: boolean;
-}) {
-  const content = (
-    <>
-      <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-brand-red/10 text-brand-red">
-        <Icon className="h-4 w-4" aria-hidden="true" />
-      </span>
-      <span>
-        <span className="block text-sm font-semibold text-brand-charcoal">{title}</span>
-        <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground sm:text-xs">
-          {description}
-        </span>
-      </span>
-    </>
-  );
-
-  if (href) {
-    return (
-      <Link href={href} className={quickActionClassName}>
-        {content}
-      </Link>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      className={quickActionClassName}
-      disabled={disabled}
-      onClick={onClick}
-    >
-      {content}
-    </button>
   );
 }
 
