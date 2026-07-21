@@ -401,10 +401,10 @@ export default function MyTelepizza() {
                   ordering stays available from the menu anytime.
                 </p>
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <div className="grid w-full min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
                 <Button
                   asChild
-                  className="w-full rounded-2xl brand-gradient text-white font-semibold sm:min-w-[9.5rem]"
+                  className="h-auto min-h-12 w-full min-w-0 whitespace-normal rounded-2xl brand-gradient px-3 text-white font-semibold"
                 >
                   <Link
                     href={`/login?next=${encodeURIComponent(returnPath)}`}
@@ -416,7 +416,7 @@ export default function MyTelepizza() {
                 <Button
                   asChild
                   variant="outline"
-                  className="w-full rounded-2xl font-semibold sm:min-w-[9.5rem]"
+                  className="h-auto min-h-12 w-full min-w-0 whitespace-normal rounded-2xl px-3 font-semibold"
                 >
                   <Link
                     href={`/register?next=${encodeURIComponent(returnPath)}`}
@@ -761,14 +761,14 @@ export default function MyTelepizza() {
                   {activeOrder ? (
                     <article className="rounded-2xl border border-brand-red/20 bg-brand-cream/50 p-4 space-y-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-xs font-semibold uppercase tracking-wide text-brand-red">
                             Active order
                           </p>
-                          <h3 className="font-bold text-brand-charcoal mt-0.5">
+                          <h3 className="font-bold text-brand-charcoal mt-0.5 break-words">
                             {activeOrder.orderNumber}
                           </h3>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-muted-foreground break-words">
                             {activeOrder.status} · {activeOrder.branchName} · Rs{" "}
                             {activeOrder.totalAmount.toLocaleString()}
                           </p>
@@ -776,7 +776,7 @@ export default function MyTelepizza() {
                         <Button
                           asChild
                           size="sm"
-                          className="min-h-11 rounded-2xl brand-gradient text-white"
+                          className="min-h-11 shrink-0 rounded-2xl brand-gradient text-white"
                         >
                           <Link
                             href={`/track/${encodeURIComponent(activeOrder.orderNumber)}?phone=${encodeURIComponent(activeOrder.contactPhone)}`}
@@ -787,15 +787,7 @@ export default function MyTelepizza() {
                       </div>
                       <OrderStatusTimeline status={activeOrder.status} />
                     </article>
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-border bg-brand-cream/20 p-5 text-center space-y-2">
-                      <Package className="w-8 h-8 text-brand-red mx-auto" aria-hidden="true" />
-                      <p className="font-semibold">No active order right now</p>
-                      <p className="text-sm text-muted-foreground">
-                        When you place an order, live status will show here.
-                      </p>
-                    </div>
-                  )}
+                  ) : null}
 
                   {hasPastOrders && !activeOrder ? (
                     <div className="flex flex-wrap gap-2">
@@ -825,18 +817,17 @@ export default function MyTelepizza() {
                 </section>
 
                 {needsBasics ? (
-                  <div className="rounded-2xl border border-brand-red/20 bg-brand-cream/40 px-4 py-3 sm:px-5 sm:py-4">
+                  <div className="rounded-2xl border border-border bg-muted/20 px-4 py-4 sm:px-5 sm:py-5">
                     <p className="text-sm font-semibold text-brand-charcoal">Finish your basics</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                       A quick phone and address keep checkout fast — one useful next step, not a wall
                       of empty cards.
                     </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="mt-4 grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
                       {!phone.trim() ? (
                         <Button
                           type="button"
-                          size="sm"
-                          className="min-h-11 rounded-2xl brand-gradient text-white"
+                          className="min-h-11 w-full rounded-2xl brand-gradient text-white"
                           onClick={() => goTo("profile")}
                         >
                           Add phone
@@ -845,9 +836,8 @@ export default function MyTelepizza() {
                       {displayedAddresses.length === 0 ? (
                         <Button
                           type="button"
-                          size="sm"
                           variant="outline"
-                          className="min-h-11 rounded-2xl"
+                          className="min-h-11 w-full rounded-2xl"
                           onClick={() => goTo("addresses")}
                         >
                           Add delivery address
@@ -975,9 +965,9 @@ export default function MyTelepizza() {
             {section === "profile" || section === "security" || section === "notifications" ? (
               <nav
                 aria-label="Account options"
-                className="rounded-2xl border border-border bg-white/80 p-2 shadow-sm"
+                className="rounded-2xl border border-border bg-white p-2 shadow-sm"
               >
-                <ul className="flex flex-wrap gap-1">
+                <ul className="grid grid-cols-2 gap-1 sm:flex sm:flex-wrap">
                   {(
                     [
                       { id: "profile" as const, label: "Profile", icon: UserRound },
@@ -988,36 +978,36 @@ export default function MyTelepizza() {
                     const Icon = item.icon;
                     const active = section === item.id;
                     return (
-                      <li key={item.id}>
+                      <li key={item.id} className="min-w-0">
                         <button
                           type="button"
                           onClick={() => goTo(item.id)}
-                          className={`inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
+                          className={`inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 sm:w-auto sm:justify-start ${
                             active
                               ? "bg-brand-red/10 text-brand-red"
                               : "text-brand-charcoal/80 hover:bg-muted/50"
                           }`}
                           aria-current={active ? "page" : undefined}
                         >
-                          <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-                          {item.label}
+                          <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                          <span className="truncate">{item.label}</span>
                         </button>
                       </li>
                     );
                   })}
-                  <li>
+                  <li className="min-w-0">
                     <Link
                       href="/my-telepizza/favorites"
-                      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-brand-charcoal/80 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
+                      className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-brand-charcoal/80 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 sm:w-auto sm:justify-start"
                     >
-                      <Heart className="h-3.5 w-3.5" aria-hidden="true" />
-                      Favorites
+                      <Heart className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      <span className="truncate">Favorites</span>
                     </Link>
                   </li>
-                  <li>
+                  <li className="min-w-0 col-span-2 sm:col-span-1">
                     <Link
                       href="/my-telepizza/account"
-                      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-brand-charcoal/80 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
+                      className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-brand-charcoal/80 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 sm:w-auto sm:justify-start"
                     >
                       Account
                     </Link>
@@ -1184,14 +1174,23 @@ export default function MyTelepizza() {
                 {addressesLoading ? (
                   <p className="text-sm text-muted-foreground">Loading addresses…</p>
                 ) : null}
-                {addressesError ? (
-                  <p className="text-sm text-brand-red" role="alert">
-                    {addressesError}
-                  </p>
+
+                {!addressesLoading && (addressesError || !usingCloudAddresses) ? (
+                  <div
+                    className="rounded-2xl border border-border bg-muted/20 px-4 py-4 text-sm space-y-1.5"
+                    role="status"
+                  >
+                    <p className="font-medium text-brand-charcoal">
+                      We couldn&apos;t load your saved addresses right now.
+                    </p>
+                    <p className="text-muted-foreground leading-relaxed">
+                      You can still add a new address below.
+                    </p>
+                  </div>
                 ) : null}
 
                 {showImportDrafts ? (
-                  <div className="rounded-2xl border border-brand-red/20 bg-brand-cream/40 p-4 text-sm space-y-2">
+                  <div className="rounded-2xl border border-border bg-muted/15 p-4 text-sm space-y-2">
                     <p className="font-semibold text-brand-charcoal">
                       Import {deviceDraftCount} device draft{deviceDraftCount === 1 ? "" : "s"}?
                     </p>
@@ -1202,23 +1201,11 @@ export default function MyTelepizza() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="rounded-2xl"
+                      className="min-h-11 rounded-2xl"
                       onClick={() => void handleImportDeviceDrafts()}
                     >
                       Import drafts
                     </Button>
-                  </div>
-                ) : null}
-
-                {!usingCloudAddresses ? (
-                  <div
-                    className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm"
-                    role="status"
-                  >
-                    <p className="text-amber-900/90">
-                      Account address sync is unavailable right now. Browser drafts below are optional
-                      helpers on this device only.
-                    </p>
                   </div>
                 ) : null}
 
@@ -1908,27 +1895,22 @@ export default function MyTelepizza() {
             {section === "loyalty" ? (
               <section className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-5">
                 <div>
-                  <h2 className="font-bold text-lg">Loyalty · Telepizza Rewards</h2>
+                  <h2 className="font-bold text-lg">Rewards</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Rewards are coming soon. We will not invent a balance or tier before launch.
+                    Loyalty · Telepizza Rewards
                   </p>
                 </div>
-                <div className="rounded-2xl border border-dashed border-border p-6 sm:p-8 text-center space-y-4">
+                <div className="rounded-2xl border border-dashed border-border bg-muted/10 p-6 sm:p-8 text-center space-y-4">
                   <Gift className="w-10 h-10 text-brand-red mx-auto" aria-hidden="true" />
                   <div>
-                    <StatusBadge label="Coming Soon" tone="warning" />
+                    <StatusBadge label="Coming Soon" tone="neutral" />
                     <h3 className="font-semibold text-lg mt-3">Rewards are coming soon</h3>
-                    <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+                    <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
                       Offers will appear here when Rewards launches. We will never invent a balance or
-                      member number here.
+                      member number here. Earn points on eligible orders when the program launches.
                     </p>
                   </div>
-                  <ul className="text-sm text-muted-foreground space-y-2 text-left max-w-sm mx-auto list-disc pl-5">
-                    <li>Earn points on eligible orders when the program launches</li>
-                    <li>Redeem real rewards on future pizzas and sides</li>
-                    <li>Member offers without fake points or tiers</li>
-                  </ul>
-                  <Button asChild className="min-h-11 rounded-2xl brand-gradient text-white">
+                  <Button asChild className="min-h-11 w-full max-w-sm rounded-2xl brand-gradient text-white sm:w-auto">
                     <Link href="/menu">Keep ordering to be ready when rewards launch</Link>
                   </Button>
                 </div>

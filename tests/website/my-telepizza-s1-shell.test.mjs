@@ -74,7 +74,7 @@ test("S1: customer shell components exist and stay customer-only", () => {
 test("S1: customer errors hide schema/table internals", () => {
   const errors = read("apps/website/client/src/lib/customer-errors.ts");
   assert.match(errors, /toCustomerMessage/);
-  assert.match(errors, /We could not load your saved addresses right now/);
+  assert.match(errors, /We couldn'?t load your saved addresses right now/);
   assert.match(errors, /We could not load all order details right now/);
   assert.match(errors, /Your session has expired/);
   assert.match(errors, /You appear to be offline/);
@@ -99,9 +99,9 @@ test("S1: Home is quiet — no zero-value clutter, active order still supported"
   assert.match(hub, /Ready for your next order\?/);
   assert.match(hub, /Finish your basics/);
   assert.match(hub, /Add delivery address|Add phone/);
-  assert.match(hub, /No active order right now/);
   assert.match(hub, /Active order/);
   assert.match(hub, /Browse the menu/);
+  assert.doesNotMatch(hub, /No active order right now/);
   assert.doesNotMatch(hub, /0 points|fake balance|1,?000 points/i);
   assert.doesNotMatch(hub, /Profile completion/);
 });

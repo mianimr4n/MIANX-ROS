@@ -132,7 +132,9 @@ test("security, loyalty, notifications, and hub expose requested production stat
   assert.match(prefs, /Delivery alerts/);
   assert.match(prefs, /Special offers/);
   assert.match(account, /Recent Orders/);
-  assert.match(account, /Active order|No active order/);
+  assert.match(account, /Active order/);
+  assert.doesNotMatch(account, /No active order right now/);
+  assert.match(account, /couldn.?t load your saved addresses|You can still add a new address/i);
   assert.match(account, /Addresses/);
   assert.match(header, /Email verified|Email ✓ Verified/);
   assert.match(account, /Not verified|Phone ⚠|Phone Not Set|Phone verified|Phone not set/);
