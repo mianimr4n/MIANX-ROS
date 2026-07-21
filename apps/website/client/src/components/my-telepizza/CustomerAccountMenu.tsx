@@ -66,27 +66,27 @@ type CustomerAccountMenuProps = {
 export function CustomerAccountMenu({ onLogout, extra }: CustomerAccountMenuProps) {
   return (
     <section
-      className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-4"
+      className="rounded-3xl border border-border bg-white p-4 shadow-sm sm:p-6 space-y-5"
       aria-labelledby="account-menu-heading"
     >
-      <div>
+      <div className="min-w-0 space-y-1.5">
         <h2 id="account-menu-heading" className="font-bold text-lg">
           Account
         </h2>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm leading-relaxed text-muted-foreground">
           Manage your details, security, and quieter tools — without cluttering the main menu.
         </p>
       </div>
-      <ul className="space-y-2">
+      <ul className="space-y-2.5">
         {DEFAULT_ITEMS.map((item) => {
           const Icon = item.icon;
           return (
             <li key={item.id}>
               <Link
                 href={item.href!}
-                className="flex min-h-12 items-center gap-3 rounded-2xl border border-border/80 px-3 py-3 transition-colors hover:border-brand-red/25 hover:bg-brand-cream/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
+                className="flex min-h-12 items-center gap-3 rounded-2xl border border-border/80 px-3 py-3 transition-colors hover:border-brand-red/25 hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-cream text-brand-red">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted/40 text-brand-red">
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <span className="min-w-0">
@@ -98,7 +98,7 @@ export function CustomerAccountMenu({ onLogout, extra }: CustomerAccountMenuProp
           );
         })}
       </ul>
-      {extra}
+      {extra ? <div className="min-w-0 space-y-3">{extra}</div> : null}
       <Button
         type="button"
         variant="outline"

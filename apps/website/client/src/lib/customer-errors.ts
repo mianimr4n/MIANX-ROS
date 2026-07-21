@@ -17,7 +17,7 @@ export type CustomerErrorContext =
   | "generic";
 
 const CONTEXT_LOAD: Record<CustomerErrorContext, string> = {
-  addresses: "We could not load your saved addresses right now.",
+  addresses: "We couldn't load your saved addresses right now.",
   orders: "We could not load all order details right now.",
   favorites: "We could not load your favorites right now.",
   reviews: "We could not load all order details right now.",

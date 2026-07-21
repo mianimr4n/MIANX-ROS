@@ -33,10 +33,11 @@ test("hub dashboard: active order empty state, quiet home, preferred branch", ()
   const hub = read("apps/website/client/src/pages/MyTelepizza.tsx");
   const support = read("apps/website/client/src/components/my-telepizza/HubSupportCard.tsx");
   const bottom = read("apps/website/client/src/components/my-telepizza/CustomerBottomNav.tsx");
-  assert.match(hub, /No active order right now/);
   assert.match(hub, /Ready for your next order\?/);
   assert.match(hub, /Browse the menu/);
   assert.match(hub, /Preferred branch/);
+  assert.match(hub, /activeOrder \? \(/);
+  assert.doesNotMatch(hub, /No active order right now/);
   assert.match(hub, /CustomerShell|CustomerBottomNav|CustomerPageHeader/);
   assert.match(bottom, /aria-label=["']My Telepizza["']/);
   assert.match(hub, /focusMainAfterNav/);
