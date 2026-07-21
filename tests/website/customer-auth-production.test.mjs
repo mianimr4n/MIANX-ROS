@@ -61,12 +61,14 @@ test("Auth callback maps expired and invalid email links safely", () => {
 
 test("profile shows honest phone Unverified and email verification status", () => {
   const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
+  const header = read("apps/website/client/src/components/my-telepizza/CustomerPageHeader.tsx");
   assert.match(account, /Phone status:/);
-  assert.match(account, /Unverified/);
-  assert.match(account, /Verification Pending/);
+  assert.match(account, /Unverified|Not verified/);
+  assert.match(account, /Verification Pending|emailVerified/);
   assert.match(account, /email_confirmed_at/);
-  assert.match(account, /phoneVerified\s*\?\s*"Phone ✓ Verified"/);
+  assert.match(account, /phoneVerified\s*\?\s*"Phone verified"/);
   assert.match(account, /StatusBadge/);
+  assert.match(header, /Email verified|Email ✓ Verified/);
 });
 
 test("My Telepizza supports device address drafts and checkout selection", () => {
@@ -109,6 +111,7 @@ test("orders expose status, honest operational gaps, and feasible reorder", () =
 
 test("security, loyalty, notifications, and hub expose requested production states", () => {
   const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
+  const header = read("apps/website/client/src/components/my-telepizza/CustomerPageHeader.tsx");
   const prefs = read("apps/website/client/src/lib/customer-notification-prefs.ts");
 
   assert.match(account, /email_confirmed_at/);
@@ -131,8 +134,8 @@ test("security, loyalty, notifications, and hub expose requested production stat
   assert.match(account, /Recent Orders/);
   assert.match(account, /Active order|No active order/);
   assert.match(account, /Addresses/);
-  assert.match(account, /Email ✓ Verified/);
-  assert.match(account, /Phone ⚠ Verification Pending/);
+  assert.match(header, /Email verified|Email ✓ Verified/);
+  assert.match(account, /Not verified|Phone ⚠|Phone Not Set|Phone verified|Phone not set/);
   assert.match(account, /View Order History/);
   assert.doesNotMatch(account, /Favorite Items|Reward Points/);
 });

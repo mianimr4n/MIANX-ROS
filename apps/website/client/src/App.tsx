@@ -80,6 +80,14 @@ function Router() {
       <Route path="/ops/kitchen" component={OpsKitchen} />
       <Route path="/ops/dispatch" component={OpsDispatch} />
       <Route path="/ops" component={OpsDashboard} />
+      <Route path="/my-telepizza/orders" component={MyTelepizza} />
+      <Route path="/my-telepizza/addresses" component={MyTelepizza} />
+      <Route path="/my-telepizza/rewards" component={MyTelepizza} />
+      <Route path="/my-telepizza/account/profile" component={MyTelepizza} />
+      <Route path="/my-telepizza/account/security" component={MyTelepizza} />
+      <Route path="/my-telepizza/account/notifications" component={MyTelepizza} />
+      <Route path="/my-telepizza/account" component={MyTelepizza} />
+      <Route path="/my-telepizza/favorites" component={Favorites} />
       <Route path="/my-telepizza" component={MyTelepizza} />
       <Route path="/account" component={Account} />
       <Route path="/orders" component={Orders} />

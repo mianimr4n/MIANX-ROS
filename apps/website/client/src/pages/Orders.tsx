@@ -29,6 +29,7 @@ import {
   updateCloudReview,
   type CloudReview,
 } from "@/lib/customer-reviews-api";
+import { toCustomerMessage } from "@/lib/customer-errors";
 
 const PAGE_SIZE = 20;
 
@@ -94,10 +95,16 @@ export default function Orders() {
         setCloudOrders((current) => (append ? [...current, ...mapped] : mapped));
         setCloudTotal(result.total);
         setCloudOffset(offset + mapped.length);
-        const reviewRows = await fetchCloudReviews(session.access_token);
-        setReviews(reviewRows);
+        try {
+          const reviewRows = await fetchCloudReviews(session.access_token);
+          setReviews(reviewRows);
+          setReviewError(null);
+        } catch (reviewFetchError) {
+          setReviews([]);
+          setReviewError(toCustomerMessage(reviewFetchError, "reviews"));
+        }
       } catch (error) {
-        setCloudError(error instanceof Error ? error.message : "Could not load account orders.");
+        setCloudError(toCustomerMessage(error, "orders"));
         if (!append) {
           setCloudOrders([]);
           setCloudTotal(0);
@@ -143,7 +150,7 @@ export default function Orders() {
       setReorderPreview(buildReorderPreview(target, catalogItems));
       setReorderOpen(true);
     } catch (error) {
-      setCloudError(error instanceof Error ? error.message : "Could not load order for reorder.");
+      setCloudError(toCustomerMessage(error, "orders"));
     } finally {
       setReorderBusy(false);
     }
