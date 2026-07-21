@@ -28,7 +28,7 @@ test("forgot + reset password flows exist without email enumeration", () => {
   assert.match(forgot, /never reveal whether an account/i);
   assert.doesNotMatch(forgot, /no account found|email not found|user not found/i);
   assert.match(reset, /completePasswordReset/);
-  assert.match(reset, /Never enter your Google password/);
+  assert.match(reset, /Never enter your Google or Facebook password/);
   assert.match(callback, /recovery/);
   assert.match(callback, /\/reset-password/);
   assert.match(callback, /expired|invalid/i);

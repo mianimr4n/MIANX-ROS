@@ -183,6 +183,7 @@ const SAFE_AUTH_DESTINATION_PREFIXES = [
   "/track",
   "/order-success",
   "/reset-password",
+  "/forgot-password",
   "/branches",
   "/settings",
   "/favorites",
@@ -245,4 +246,70 @@ test("S2 callback resolves stuck loading with friendly timeout copy", () => {
   const callback = read("apps/website/client/src/pages/AuthCallback.tsx");
   assert.match(callback, /30_000/);
   assert.match(callback, /Unable to sign in\. Please try again\./);
+});
+
+test("S2 account recovery preserves next and uses My Telepizza copy", () => {
+  const login = read("apps/website/client/src/pages/Login.tsx");
+  const forgot = read("apps/website/client/src/pages/ForgotPassword.tsx");
+  const reset = read("apps/website/client/src/pages/ResetPassword.tsx");
+  const redirectLib = read("apps/website/client/src/lib/auth-redirect.ts");
+
+  assert.match(login, /Forgot your password\?/);
+  assert.match(login, /buildAuthHref\(["']\/forgot-password["']/);
+  assert.doesNotMatch(login, /aria-hidden=\{!emailOpen\}/);
+  assert.match(forgot, /buildAuthHref\(["']\/login["']/);
+  assert.match(forgot, /My Telepizza → Security/);
+  assert.match(forgot, /Google or Facebook/);
+  assert.match(reset, /buildAuthHref\(["']\/login["']/);
+  assert.match(reset, /Google or Facebook password/);
+  assert.match(redirectLib, /buildAuthHref/);
+  assert.match(redirectLib, /["']\/forgot-password["']/);
+});
+
+test("S2 profile sync degraded state keeps session with metadata fallback", () => {
+  const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
+  const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
+
+  assert.match(authContext, /isProfileSyncDegraded/);
+  assert.match(authContext, /setIsProfileSyncDegraded\(true\)/);
+  assert.match(authContext, /applyMetadataFallbackProfile/);
+  assert.match(account, /isProfileSyncDegraded/);
+  assert.match(account, /Some account details could not be loaded right now/);
+  assert.match(account, /refreshProfile/);
+});
+
+test("S2 backend bootstraps missing customer profile on getMe and updateOwnProfile", () => {
+  const repo = read("backend/api/src/services/auth/supabase.ts");
+
+  assert.match(repo, /bootstrapCustomerProfile/);
+  assert.match(repo, /ensure_customer_profile_for_auth_user/);
+  assert.match(repo, /p_auth_user_id/);
+  assert.match(repo, /p_email/);
+  assert.match(repo, /p_full_name_meta/);
+  assert.match(repo, /PROFILE_BOOTSTRAP_FAILED/);
+  assert.match(repo, /couldn't finish setting up your profile/);
+  assert.doesNotMatch(repo, /Profile was not found for this account/);
+});
+
+test("S2 frontend catches PROFILE_NOT_FOUND and PROFILE_BOOTSTRAP_FAILED safely", () => {
+  const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
+
+  assert.match(authContext, /PROFILE_NOT_FOUND/);
+  assert.match(authContext, /PROFILE_BOOTSTRAP_FAILED/);
+  assert.match(authContext, /couldn't finish setting up your profile/);
+  assert.doesNotMatch(authContext, /Profile was not found for this account/);
+});
+
+test("S2 Facebook OAuth documentation exists with Meta dashboard steps", () => {
+  const doc = read("docs/operations/FACEBOOK-OAUTH-SETUP.md");
+
+  assert.match(doc, /Valid OAuth Redirect URI/);
+  assert.match(doc, /supabase\.co\/auth\/v1\/callback/);
+  assert.match(doc, /App Domains/);
+  assert.match(doc, /Facebook App ID/);
+  assert.match(doc, /Facebook Secret/);
+  assert.match(doc, /public_profile,email/);
+  assert.match(doc, /App Review/);
+  assert.match(doc, /Live mode/);
+  assert.doesNotMatch(doc, /user_friends|user_photos|user_posts/);
 });

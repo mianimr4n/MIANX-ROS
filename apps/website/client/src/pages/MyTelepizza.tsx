@@ -102,10 +102,12 @@ export default function MyTelepizza() {
     session,
     isAuthenticated,
     isLoading,
+    isProfileSyncDegraded,
     signOut,
     updateProfile,
     setPassword,
     requestEmailChange,
+    refreshProfile,
   } = useAuth();
   const { selectedBranch } = useBranch();
   const { items: catalogItems, isLoading: catalogLoading } = useMenuCatalog();
@@ -1126,6 +1128,30 @@ export default function MyTelepizza() {
                     Keep your contact details up to date for faster ordering and delivery.
                   </p>
                 </div>
+
+                {isProfileSyncDegraded ? (
+                  <div
+                    className="rounded-2xl border border-border bg-muted/20 px-4 py-4 text-sm space-y-2"
+                    role="status"
+                  >
+                    <p className="font-medium text-brand-charcoal">
+                      Some account details could not be loaded right now.
+                    </p>
+                    <p className="text-muted-foreground leading-relaxed">
+                      You are still signed in. Profile edits may be unavailable until we reconnect.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="min-h-11 rounded-2xl"
+                      onClick={() => void refreshProfile()}
+                    >
+                      Try again
+                    </Button>
+                  </div>
+                ) : null}
+
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Full name</Label>
                   <Input

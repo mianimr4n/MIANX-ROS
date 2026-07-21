@@ -46,9 +46,10 @@ test("Login keeps social primary and safe social-account hint without enumeratio
   assert.match(login, /SocialAuthButtons/);
   assert.match(login, /Created your account with Google or Facebook\?/);
   assert.match(login, /Telepizza password/);
-  assert.match(login, /Account → Security|Account/);
-  assert.match(login, /Forgot password\?/);
-  assert.match(login, /href=["']\/forgot-password["']/);
+  assert.match(login, /My Telepizza → Security/);
+  assert.match(login, /Forgot your password\?/);
+  assert.match(login, /buildAuthHref\(["']\/forgot-password["']/);
+  assert.doesNotMatch(login, /aria-hidden=\{!emailOpen\}/);
   assert.doesNotMatch(login, /this email is registered|account exists/i);
 });
 
