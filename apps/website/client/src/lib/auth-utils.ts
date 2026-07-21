@@ -278,12 +278,18 @@ export function mapSupabaseAuthError(message: string | undefined): string {
     normalized.includes("supabase") ||
     normalized.includes("jwt") ||
     normalized.includes("postgres") ||
-    normalized.includes("stack")
+    normalized.includes("stack") ||
+    normalized.includes("oauth") ||
+    normalized.includes("provider") ||
+    normalized.includes("identity") ||
+    normalized.includes("access_token") ||
+    normalized.includes("refresh_token")
   ) {
     return "Something went wrong. Please try again.";
   }
 
-  return message.trim();
+  // Never surface raw Supabase/provider messages — use generic copy.
+  return "Unable to sign in. Please try again.";
 }
 
 export type AuthMeResponse = {

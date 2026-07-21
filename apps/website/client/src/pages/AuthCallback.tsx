@@ -28,6 +28,18 @@ export default function AuthCallback() {
   const flowHint = useRef(peekAuthEmailFlowFromLocation() ?? consumeAuthEmailFlow());
 
   useEffect(() => {
+    if (error || isAuthenticated) return;
+
+    const timeout = window.setTimeout(() => {
+      if (!redirected.current) {
+        setError((current) => current ?? "Unable to sign in. Please try again.");
+      }
+    }, 30_000);
+
+    return () => window.clearTimeout(timeout);
+  }, [error, isAuthenticated]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
 
     const params = new URLSearchParams(window.location.search);
@@ -58,7 +70,7 @@ export default function AuthCallback() {
     if (!isAuthenticated) {
       // Still exchanging PKCE code — keep the loading state.
       if (hasAuthCode) return;
-      setError((current) => current ?? "Sign-in could not be completed. Please try again.");
+      setError((current) => current ?? "Unable to sign in. Please try again.");
       return;
     }
 

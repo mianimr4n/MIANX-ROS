@@ -220,7 +220,14 @@ export default function Login() {
       <div className="mt-5 space-y-3 text-center text-sm text-muted-foreground">
         <p>
           New here?{" "}
-          <Link href="/register" className="text-brand-red font-semibold hover:underline">
+          <Link
+            href={
+              nextPath !== DEFAULT_AUTH_DESTINATION
+                ? `/register?next=${encodeURIComponent(nextPath)}`
+                : "/register"
+            }
+            className="text-brand-red font-semibold hover:underline"
+          >
             Create an account
           </Link>
         </p>

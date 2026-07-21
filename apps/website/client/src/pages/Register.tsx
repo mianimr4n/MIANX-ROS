@@ -12,14 +12,18 @@ import {
   AUTH_PASSWORD_REQUIREMENTS_COPY,
   validateSignupInput,
 } from "@/lib/auth-utils";
-import { DEFAULT_AUTH_DESTINATION } from "@/lib/auth-redirect";
+import {
+  DEFAULT_AUTH_DESTINATION,
+  peekAuthNextFromLocationSearch,
+  sanitizeAuthNextPath,
+} from "@/lib/auth-redirect";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 const GMAIL_INBOX_URL = "https://mail.google.com/mail/u/0/#inbox";
 
 export default function Register() {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { signUp, resendConfirmationEmail, isAuthenticated, isLoading } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -35,11 +39,17 @@ export default function Register() {
   const emailPanelId = useId();
   const signupCompletedRef = useRef(false);
 
+  const search = typeof window !== "undefined" ? window.location.search : "";
+  const nextPath = sanitizeAuthNextPath(
+    peekAuthNextFromLocationSearch(search) ?? peekAuthNextFromLocationSearch(location),
+    DEFAULT_AUTH_DESTINATION,
+  );
+
   useEffect(() => {
     if (!isLoading && isAuthenticated && !awaitingConfirmation) {
-      navigate(DEFAULT_AUTH_DESTINATION);
+      navigate(nextPath);
     }
-  }, [isAuthenticated, isLoading, navigate, awaitingConfirmation]);
+  }, [isAuthenticated, isLoading, navigate, awaitingConfirmation, nextPath]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -88,7 +98,7 @@ export default function Register() {
         return;
       }
 
-      navigate(DEFAULT_AUTH_DESTINATION);
+      navigate(nextPath);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -206,7 +216,14 @@ export default function Register() {
           >
             Open Mail App
           </a>
-          <Link href="/login" className="block text-center text-sm text-brand-red font-semibold hover:underline">
+          <Link
+            href={
+              nextPath !== DEFAULT_AUTH_DESTINATION
+                ? `/login?next=${encodeURIComponent(nextPath)}`
+                : "/login"
+            }
+            className="block text-center text-sm text-brand-red font-semibold hover:underline"
+          >
             Go to login
           </Link>
         </div>
@@ -219,7 +236,7 @@ export default function Register() {
                 setInfo(null);
                 setError(message);
               }}
-              next={DEFAULT_AUTH_DESTINATION}
+              next={nextPath}
             />
 
             {error && !emailOpen ? (
@@ -344,7 +361,14 @@ export default function Register() {
           </div>
           <p className="text-sm text-muted-foreground mt-4 text-center">
             Already registered?{" "}
-            <Link href="/login" className="text-brand-red font-semibold hover:underline">
+            <Link
+              href={
+                nextPath !== DEFAULT_AUTH_DESTINATION
+                  ? `/login?next=${encodeURIComponent(nextPath)}`
+                  : "/login"
+              }
+              className="text-brand-red font-semibold hover:underline"
+            >
               Login
             </Link>
           </p>

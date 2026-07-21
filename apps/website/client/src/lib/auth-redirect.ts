@@ -27,6 +27,9 @@ const SAFE_AUTH_DESTINATION_PREFIXES = [
   "/order-success",
   "/reset-password",
   "/branches",
+  "/settings",
+  "/favorites",
+  "/notifications",
 ] as const;
 
 /** After email confirmation (signup), land here for profile completion — not a generic dashboard. */

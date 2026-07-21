@@ -170,3 +170,79 @@ test("S2 scope guard — no OTP, Twilio, loyalty, Graph API in social request pa
   assert.match(identity, /FACEBOOK_OAUTH_SCOPES\s*=\s*["']public_profile,email["']/);
   assert.doesNotMatch(authContext, /scopes:\s*["'][^"']*friends/i);
 });
+
+const DEFAULT_AUTH_DESTINATION = "/my-telepizza";
+const AUTH_CALLBACK_PATH = "/auth/callback";
+const SAFE_AUTH_DESTINATION_PREFIXES = [
+  "/my-telepizza",
+  "/welcome",
+  "/account",
+  "/checkout",
+  "/orders",
+  "/menu",
+  "/track",
+  "/order-success",
+  "/reset-password",
+  "/branches",
+  "/settings",
+  "/favorites",
+  "/notifications",
+];
+
+function isSafeInternalAuthPath(value) {
+  if (!value) return false;
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("/")) return false;
+  if (trimmed.startsWith("//")) return false;
+  if (trimmed.includes("://")) return false;
+  if (trimmed.includes("\\")) return false;
+  if (/[\s<>"']/.test(trimmed)) return false;
+  if (trimmed === AUTH_CALLBACK_PATH || trimmed.startsWith(`${AUTH_CALLBACK_PATH}?`)) return false;
+  if (trimmed === "/login" || trimmed.startsWith("/login?")) return false;
+  if (trimmed === "/register" || trimmed.startsWith("/register?")) return false;
+  const pathOnly = trimmed.split(/[?#]/)[0] ?? trimmed;
+  return SAFE_AUTH_DESTINATION_PREFIXES.some(
+    (prefix) => pathOnly === prefix || pathOnly.startsWith(`${prefix}/`),
+  );
+}
+
+function sanitizeAuthNextPath(value, fallback = DEFAULT_AUTH_DESTINATION) {
+  return isSafeInternalAuthPath(value) ? value.trim() : fallback;
+}
+
+test("S2 redirect validation accepts customer paths and blocks open redirects", () => {
+  assert.equal(sanitizeAuthNextPath("/checkout"), "/checkout");
+  assert.equal(sanitizeAuthNextPath("/my-telepizza/orders"), "/my-telepizza/orders");
+  assert.equal(sanitizeAuthNextPath("/my-telepizza/addresses"), "/my-telepizza/addresses");
+  assert.equal(sanitizeAuthNextPath("/settings"), "/settings");
+  assert.equal(sanitizeAuthNextPath("/favorites"), "/favorites");
+  assert.equal(sanitizeAuthNextPath("/menu"), "/menu");
+  assert.equal(sanitizeAuthNextPath("/"), DEFAULT_AUTH_DESTINATION);
+  assert.equal(sanitizeAuthNextPath("/cart"), DEFAULT_AUTH_DESTINATION);
+  assert.equal(sanitizeAuthNextPath("https://evil.example"), DEFAULT_AUTH_DESTINATION);
+  assert.equal(sanitizeAuthNextPath("//evil.example"), DEFAULT_AUTH_DESTINATION);
+  assert.equal(sanitizeAuthNextPath("javascript:alert(1)"), DEFAULT_AUTH_DESTINATION);
+  assert.equal(sanitizeAuthNextPath("data:text/html,test"), DEFAULT_AUTH_DESTINATION);
+  assert.equal(sanitizeAuthNextPath("\\evil.example"), DEFAULT_AUTH_DESTINATION);
+  assert.equal(sanitizeAuthNextPath("/%2F%2Fevil.example"), DEFAULT_AUTH_DESTINATION);
+});
+
+test("S2 Register preserves intended destination for social and email signup", () => {
+  const register = read("apps/website/client/src/pages/Register.tsx");
+  assert.match(register, /sanitizeAuthNextPath/);
+  assert.match(register, /peekAuthNextFromLocationSearch/);
+  assert.match(register, /next=\{nextPath\}/);
+  assert.match(register, /navigate\(nextPath\)/);
+});
+
+test("S2 auth errors never fall back to raw provider messages", () => {
+  const authUtils = read("apps/website/client/src/lib/auth-utils.ts");
+  assert.match(authUtils, /Unable to sign in\. Please try again\./);
+  assert.doesNotMatch(authUtils, /return message\.trim\(\)/);
+});
+
+test("S2 callback resolves stuck loading with friendly timeout copy", () => {
+  const callback = read("apps/website/client/src/pages/AuthCallback.tsx");
+  assert.match(callback, /30_000/);
+  assert.match(callback, /Unable to sign in\. Please try again\./);
+});
