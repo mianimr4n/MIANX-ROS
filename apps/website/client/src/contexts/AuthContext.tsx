@@ -22,11 +22,12 @@ import {
 import {
   getEmailChangeRedirectTo,
   getEmailConfirmationRedirectTo,
-  getGoogleOAuthRedirectTo,
+  getOAuthRedirectTo,
   getPasswordRecoveryRedirectTo,
   rememberAuthEmailFlow,
   rememberAuthNextPath,
 } from "@/lib/auth-redirect";
+import { FACEBOOK_OAUTH_SCOPES } from "@/lib/auth-identity";
 import { normalizePakistaniMobileE164 } from "@/lib/phone";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { clearStoredUser } from "@/lib/customer-store";
@@ -45,7 +46,7 @@ type SignUpResult =
   | { ok: false; message: string };
 
 type SignInResult = { ok: true } | { ok: false; message: string };
-type GoogleSignInResult = { ok: true } | { ok: false; message: string };
+type SocialSignInResult = { ok: true } | { ok: false; message: string };
 type ActionResult = { ok: true } | { ok: false; message: string };
 
 interface AuthContextType {
@@ -60,7 +61,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   signUp: (input: { email: string; password: string; fullName?: string }) => Promise<SignUpResult>;
   signIn: (input: { email: string; password: string }) => Promise<SignInResult>;
-  signInWithGoogle: (options?: { next?: string | null }) => Promise<GoogleSignInResult>;
+  signInWithGoogle: (options?: { next?: string | null }) => Promise<SocialSignInResult>;
+  signInWithFacebook: (options?: { next?: string | null }) => Promise<SocialSignInResult>;
   /** Rate-limited resend of signup confirmation email (never enumerates accounts). */
   resendConfirmationEmail: (email: string) => Promise<ActionResult>;
   /**
@@ -490,7 +492,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signInWithGoogle = useCallback(
-    async (options?: { next?: string | null }): Promise<GoogleSignInResult> => {
+    async (options?: { next?: string | null }): Promise<SocialSignInResult> => {
       const supabase = getSupabaseClient();
       if (!supabase || !isSupabaseConfigured) {
         return {
@@ -504,10 +506,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: getGoogleOAuthRedirectTo(),
+          redirectTo: getOAuthRedirectTo(),
           queryParams: {
             prompt: "select_account",
           },
+        },
+      });
+
+      if (error) {
+        return { ok: false, message: mapSupabaseAuthError(error.message) };
+      }
+
+      return { ok: true };
+    },
+    [],
+  );
+
+  const signInWithFacebook = useCallback(
+    async (options?: { next?: string | null }): Promise<SocialSignInResult> => {
+      const supabase = getSupabaseClient();
+      if (!supabase || !isSupabaseConfigured) {
+        return {
+          ok: false,
+          message: "Authentication is not configured. Please try again later.",
+        };
+      }
+
+      rememberAuthNextPath(options?.next);
+
+      // Scopes: public_profile + email only — never friends/photos/posts/etc.
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "facebook",
+        options: {
+          redirectTo: getOAuthRedirectTo(),
+          scopes: FACEBOOK_OAUTH_SCOPES,
         },
       });
 
@@ -696,6 +728,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signIn,
       signInWithGoogle,
+      signInWithFacebook,
       resendConfirmationEmail,
       requestPasswordReset,
       completePasswordReset,
@@ -717,6 +750,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signIn,
       signInWithGoogle,
+      signInWithFacebook,
       resendConfirmationEmail,
       requestPasswordReset,
       completePasswordReset,

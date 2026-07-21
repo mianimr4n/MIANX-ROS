@@ -72,9 +72,9 @@ function mapOAuthCallbackError(raw) {
     normalized.includes("user canceled") ||
     normalized.includes("consent")
   ) {
-    return "Google sign-in was cancelled. You can try again or use email.";
+    return "Login cancelled. You can try again or use email.";
   }
-  return "Sign-in could not be completed. Please try again.";
+  return "Unable to sign in. Please try again.";
 }
 
 test("safe internal redirects accept checkout and reject external next URLs", () => {
@@ -103,7 +103,7 @@ test("Google OAuth uses callback route and signInWithOAuth google provider", () 
   const callback = read("apps/website/client/src/pages/AuthCallback.tsx");
 
   assert.match(authContext, /signInWithOAuth\(\{\s*provider:\s*["']google["']/);
-  assert.match(authContext, /redirectTo:\s*getGoogleOAuthRedirectTo\(\)/);
+  assert.match(authContext, /redirectTo:\s*getOAuthRedirectTo\(\)/);
   assert.match(redirectLib, /AUTH_CALLBACK_PATH\s*=\s*["']\/auth\/callback["']/);
   assert.match(app, /path=["']\/auth\/callback["']/);
   assert.match(callback, /Restoring your Telepizza session/);
@@ -113,7 +113,7 @@ test("Google OAuth uses callback route and signInWithOAuth google provider", () 
 
 test("OAuth cancellation and provider errors stay generic", () => {
   assert.match(mapOAuthCallbackError("access_denied"), /cancelled/i);
-  assert.match(mapOAuthCallbackError("server_error"), /could not be completed/i);
+  assert.match(mapOAuthCallbackError("server_error"), /unable to sign in/i);
   assert.doesNotMatch(mapOAuthCallbackError("supabase jwt failed"), /supabase|jwt/i);
 });
 
@@ -131,11 +131,11 @@ test("password strength rejects weak passwords and matches UI copy", () => {
   assert.match(register, /if \(submitting/);
 });
 
-test("Login/Register keep Google primary CTA and no OTP/staff public signup", () => {
+test("Login/Register keep social primary CTA and no OTP/staff public signup", () => {
   const login = read("apps/website/client/src/pages/Login.tsx");
   const register = read("apps/website/client/src/pages/Register.tsx");
-  assert.match(login, /or sign in with email/);
-  assert.match(register, /or continue with email/);
+  assert.match(login, /Use email instead/);
+  assert.match(register, /Use email instead/);
   assert.match(login, /Browse the menu/);
   assert.doesNotMatch(login, /otp|whatsapp.?otp|phone.?otp/i);
   assert.doesNotMatch(register, /otp|whatsapp.?otp|phone.?otp/i);
@@ -178,7 +178,9 @@ test("no Google client secret in website sources", () => {
     "apps/website/client/src/lib/auth-redirect.ts",
     "apps/website/client/src/lib/supabase.ts",
     "apps/website/client/src/contexts/AuthContext.tsx",
+    "apps/website/client/src/components/SocialAuthButtons.tsx",
     "apps/website/client/src/components/GoogleSignInButton.tsx",
+    "apps/website/client/src/lib/auth-identity.ts",
     "apps/website/client/src/pages/AuthCallback.tsx",
     "apps/website/client/src/pages/Login.tsx",
     "apps/website/client/src/pages/Register.tsx",

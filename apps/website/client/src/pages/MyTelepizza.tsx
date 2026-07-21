@@ -35,6 +35,7 @@ import {
   AUTH_MIN_PASSWORD_LENGTH,
   AUTH_PASSWORD_REQUIREMENTS_COPY,
   hasEmailIdentity,
+  hasFacebookIdentity,
   hasGoogleIdentity,
   isFirstTimePasswordAttach,
 } from "@/lib/auth-utils";
@@ -449,6 +450,7 @@ export default function MyTelepizza() {
     email,
   });
   const googleConnected = hasGoogleIdentity(user);
+  const facebookConnected = hasFacebookIdentity(user);
   const emailPasswordAvailable = hasEmailIdentity(user);
   const firstTimePassword = isFirstTimePasswordAttach(user);
   const canSetPassword = Boolean(email);
@@ -511,7 +513,7 @@ export default function MyTelepizza() {
       setConfirmPassword("");
       setPasswordNotice(
         firstTimePassword
-          ? "You can now sign in using Google or email and password."
+          ? "You can now sign in using Google, Facebook, or email and password."
           : "Your Telepizza password was updated.",
       );
     } finally {
@@ -1069,7 +1071,11 @@ export default function MyTelepizza() {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Provider:{" "}
-                    {[googleConnected ? "Google" : null, emailPasswordAvailable ? "Email/password" : null]
+                    {[
+                      googleConnected ? "Google" : null,
+                      facebookConnected ? "Facebook" : null,
+                      emailPasswordAvailable ? "Email/password" : null,
+                    ]
                       .filter(Boolean)
                       .join(" · ") || "Unknown"}
                   </p>
@@ -1536,15 +1542,39 @@ export default function MyTelepizza() {
                   </li>
                   <li className="rounded-2xl border border-border p-4 flex items-start justify-between gap-3">
                     <div>
+                      <div className="font-semibold">Facebook</div>
+                      <p className="text-muted-foreground mt-0.5">
+                        {facebookConnected
+                          ? "Connected — you can sign in with Facebook on this account."
+                          : "Not connected on this account yet."}
+                      </p>
+                    </div>
+                    <span className="text-xs font-semibold shrink-0">
+                      {facebookConnected ? "Connected" : "Not connected"}
+                    </span>
+                  </li>
+                  <li className="rounded-2xl border border-border p-4 flex items-start justify-between gap-3">
+                    <div>
                       <div className="font-semibold">Email & password</div>
                       <p className="text-muted-foreground mt-0.5">
                         {emailPasswordAvailable
                           ? "Ready — you can sign in with email and your Telepizza password."
-                          : "Not set yet — attach a Telepizza password below (never your Google password)."}
+                          : "Not set yet — attach a Telepizza password below (never your Google or Facebook password)."}
                       </p>
                     </div>
                     <span className="text-xs font-semibold shrink-0">
                       {emailPasswordAvailable ? "Ready" : "Not set"}
+                    </span>
+                  </li>
+                  <li className="rounded-2xl border border-dashed border-border p-4 flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-semibold">Apple</div>
+                      <p className="text-muted-foreground mt-0.5">
+                        Sign in with Apple is planned. It is not available yet.
+                      </p>
+                    </div>
+                    <span className="text-xs font-semibold shrink-0 text-muted-foreground">
+                      Coming soon
                     </span>
                   </li>
                   <li className="rounded-2xl border border-dashed border-border p-4 flex items-start justify-between gap-3">

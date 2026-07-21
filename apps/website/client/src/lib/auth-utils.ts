@@ -1,3 +1,5 @@
+import { mapIdentityConflictMessage } from "@/lib/auth-identity";
+
 export const AUTH_MIN_PASSWORD_LENGTH = 8;
 
 /** Matches production Supabase strength policy (letters + digit + symbol). */
@@ -17,7 +19,7 @@ export type SignupValidationResult =
 export type PasswordValidationResult = { ok: true } | { ok: false; message: string };
 
 /**
- * Google OAuth for customers (Gmail-first UX).
+ * Google OAuth for customers (social-first UX).
  * Enabled by default when Supabase is configured; set VITE_GOOGLE_OAUTH_ENABLED=false to hide.
  * Provider credentials live in Supabase Auth (Google) — never in the frontend.
  */
@@ -26,11 +28,24 @@ export function isGoogleOAuthConfigured(): boolean {
   if (flag === "false" || flag === "0" || flag === "off") {
     return false;
   }
-  // Explicit enable, or default-on when flag unset.
   return flag === "true" || flag === "1" || flag === "on" || flag === undefined || flag === "";
 }
 
-export { getGoogleOAuthRedirectTo } from "@/lib/auth-redirect";
+/**
+ * Facebook OAuth for customers.
+ * Enabled by default when Supabase is configured; set VITE_FACEBOOK_OAUTH_ENABLED=false to hide.
+ * App credentials live in Supabase Auth (Facebook) — never in the frontend.
+ * Scopes are limited to public_profile + email (see auth-identity.ts).
+ */
+export function isFacebookOAuthConfigured(): boolean {
+  const flag = import.meta.env.VITE_FACEBOOK_OAUTH_ENABLED?.trim().toLowerCase();
+  if (flag === "false" || flag === "0" || flag === "off") {
+    return false;
+  }
+  return flag === "true" || flag === "1" || flag === "on" || flag === undefined || flag === "";
+}
+
+export { getGoogleOAuthRedirectTo, getOAuthRedirectTo } from "@/lib/auth-redirect";
 
 export function validatePasswordStrength(password: string): PasswordValidationResult {
   if (password.length < AUTH_MIN_PASSWORD_LENGTH) {
@@ -85,11 +100,20 @@ export type AuthIdentityUser = {
 
 /** True when the Supabase user has a Google OAuth identity linked. */
 export function hasGoogleIdentity(user: AuthIdentityUser): boolean {
+  return hasProviderIdentity(user, "google");
+}
+
+/** True when the Supabase user has a Facebook OAuth identity linked. */
+export function hasFacebookIdentity(user: AuthIdentityUser): boolean {
+  return hasProviderIdentity(user, "facebook");
+}
+
+function hasProviderIdentity(user: AuthIdentityUser, provider: string): boolean {
   if (!user) return false;
   const providers = user.app_metadata?.providers;
-  if (Array.isArray(providers) && providers.includes("google")) return true;
-  if (user.app_metadata?.provider === "google") return true;
-  if (Array.isArray(user.identities) && user.identities.some((entry) => entry.provider === "google")) {
+  if (Array.isArray(providers) && providers.includes(provider)) return true;
+  if (user.app_metadata?.provider === provider) return true;
+  if (Array.isArray(user.identities) && user.identities.some((entry) => entry.provider === provider)) {
     return true;
   }
   return false;
@@ -125,6 +149,9 @@ export function genericAuthErrorMessage(): string {
 }
 
 export function mapSupabaseAuthError(message: string | undefined): string {
+  const conflict = mapIdentityConflictMessage(message);
+  if (conflict) return conflict;
+
   const normalized = (message ?? "").toLowerCase();
 
   if (normalized.includes("email not confirmed")) {
@@ -172,7 +199,7 @@ export function mapSupabaseAuthError(message: string | undefined): string {
     normalized.includes("unsupported provider") ||
     normalized.includes("validation_failed")
   ) {
-    return "Google sign-in is not available right now. Please use email and password, or try again later.";
+    return "That sign-in method is not available right now. Please use another option, or try again later.";
   }
 
   // Secure password-change setting: current Telepizza password required (never Google password).
@@ -190,7 +217,7 @@ export function mapSupabaseAuthError(message: string | undefined): string {
     normalized.includes("session is not recent") ||
     normalized.includes("fresh authentication")
   ) {
-    return "For security, sign out and sign back in with Google, then set your password again.";
+    return "For security, sign out and sign back in with Google or Facebook, then set your password again.";
   }
 
   if (
@@ -251,12 +278,18 @@ export function mapSupabaseAuthError(message: string | undefined): string {
     normalized.includes("supabase") ||
     normalized.includes("jwt") ||
     normalized.includes("postgres") ||
-    normalized.includes("stack")
+    normalized.includes("stack") ||
+    normalized.includes("oauth") ||
+    normalized.includes("provider") ||
+    normalized.includes("identity") ||
+    normalized.includes("access_token") ||
+    normalized.includes("refresh_token")
   ) {
     return "Something went wrong. Please try again.";
   }
 
-  return message.trim();
+  // Never surface raw Supabase/provider messages — use generic copy.
+  return "Unable to sign in. Please try again.";
 }
 
 export type AuthMeResponse = {
