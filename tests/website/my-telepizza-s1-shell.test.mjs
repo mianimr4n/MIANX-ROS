@@ -62,7 +62,7 @@ test("S1: customer shell components exist and stay customer-only", () => {
   assert.match(shell, /CustomerDesktopNav/);
   assert.match(shell, /CustomerBottomNav/);
   assert.match(header, /avatarUrl|Email verified|phoneLabel/);
-  assert.match(hub, /Not verified/);
+  assert.match(hub, /Phone added|Add phone|Phone verified/);
   assert.match(account, /Personal details|Security|Notifications|Favorites|Help|Logout/);
   assert.match(hub, /CustomerShell/);
   assert.match(hub, /resolveDisplayName/);
@@ -74,11 +74,9 @@ test("S1: customer shell components exist and stay customer-only", () => {
 test("S1: customer errors hide schema/table internals", () => {
   const errors = read("apps/website/client/src/lib/customer-errors.ts");
   assert.match(errors, /toCustomerMessage/);
-  assert.match(errors, /We couldn'?t load your saved addresses right now/);
-  assert.match(errors, /We could not load all order details right now/);
+  assert.match(errors, /We're having trouble loading your information/);
   assert.match(errors, /Your session has expired/);
   assert.match(errors, /You appear to be offline/);
-  assert.match(errors, /This feature is temporarily unavailable/);
   assert.match(errors, /schema cache|42P01|relation/i);
   assert.doesNotMatch(errors, /customer_addresses table is missing for the operator/);
 });
@@ -97,19 +95,19 @@ test("S1: Orders and Favorites use safe customer error mapper", () => {
 test("S1: Home is quiet — no zero-value clutter, active order still supported", () => {
   const hub = read("apps/website/client/src/pages/MyTelepizza.tsx");
   assert.match(hub, /Ready for your next order\?/);
-  assert.match(hub, /Finish your basics/);
+  assert.match(hub, /Complete your account|Your account is ready/);
   assert.match(hub, /Add delivery address|Add phone/);
-  assert.match(hub, /Active order/);
-  assert.match(hub, /Browse the menu/);
+  assert.match(hub, /Current Order/);
+  assert.match(hub, /Browse the menu|Browse Menu/);
   assert.doesNotMatch(hub, /No active order right now/);
   assert.doesNotMatch(hub, /0 points|fake balance|1,?000 points/i);
-  assert.doesNotMatch(hub, /Profile completion/);
+  assert.match(hub, /profileCompletion/);
 });
 
 test("S1: Rewards page has no fake points", () => {
   const hub = read("apps/website/client/src/pages/MyTelepizza.tsx");
   assert.match(hub, /Rewards are coming soon/);
-  assert.match(hub, /Keep ordering to be ready when rewards launch/);
+  assert.match(hub, /Browse Menu/);
   assert.doesNotMatch(hub, /1,?000 points|Gold tier|member #/i);
 });
 

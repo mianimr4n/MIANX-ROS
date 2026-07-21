@@ -9,6 +9,7 @@ import { AuthPageShell } from "@/components/AuthPageShell";
 import { SocialAuthButtons } from "@/components/SocialAuthButtons";
 import {
   DEFAULT_AUTH_DESTINATION,
+  buildAuthHref,
   peekAuthNextFromLocationSearch,
   sanitizeAuthNextPath,
 } from "@/lib/auth-redirect";
@@ -84,6 +85,8 @@ export default function Login() {
   }
 
   const formDisabled = !isSupabaseConfigured || submitting;
+  const recoveryLink = buildAuthHref("/forgot-password", nextPath);
+  const registerHref = buildAuthHref("/register", nextPath);
 
   return (
     <AuthPageShell
@@ -108,9 +111,18 @@ export default function Login() {
           </p>
         ) : null}
 
+        <p className="text-center">
+          <Link
+            href={recoveryLink}
+            className="text-xs font-semibold text-brand-red hover:underline"
+          >
+            Forgot your password?
+          </Link>
+        </p>
+
         <div className="space-y-3">
-          <div className="flex items-center gap-3 text-xs text-muted-foreground" aria-hidden={!emailOpen}>
-            <div className="h-px flex-1 bg-border" />
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="h-px flex-1 bg-border" aria-hidden />
             <button
               type="button"
               className="inline-flex items-center gap-1.5 font-semibold text-brand-charcoal hover:text-brand-red"
@@ -127,7 +139,7 @@ export default function Login() {
                 aria-hidden
               />
             </button>
-            <div className="h-px flex-1 bg-border" />
+            <div className="h-px flex-1 bg-border" aria-hidden />
           </div>
 
           {emailOpen ? (
@@ -184,7 +196,7 @@ export default function Login() {
                 </div>
                 <div className="text-right">
                   <Link
-                    href="/forgot-password"
+                    href={recoveryLink}
                     className="text-xs font-semibold text-brand-red hover:underline"
                   >
                     Forgot password?
@@ -205,8 +217,8 @@ export default function Login() {
               </Button>
               <p className="text-xs text-muted-foreground text-center">
                 Created your account with Google or Facebook? Continue with that provider, or set a
-                Telepizza password from Account → Security. Never enter your social-network password
-                here.
+                Telepizza password from My Telepizza → Security. Never enter your social-network
+                password here.
               </p>
               <p className="text-xs text-muted-foreground text-center">
                 Just registered with email? Confirm your email before signing in — check inbox and
@@ -220,14 +232,7 @@ export default function Login() {
       <div className="mt-5 space-y-3 text-center text-sm text-muted-foreground">
         <p>
           New here?{" "}
-          <Link
-            href={
-              nextPath !== DEFAULT_AUTH_DESTINATION
-                ? `/register?next=${encodeURIComponent(nextPath)}`
-                : "/register"
-            }
-            className="text-brand-red font-semibold hover:underline"
-          >
+          <Link href={registerHref} className="text-brand-red font-semibold hover:underline">
             Create an account
           </Link>
         </p>

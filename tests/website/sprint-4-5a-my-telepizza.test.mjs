@@ -46,7 +46,7 @@ test("hub dashboard: active order empty state, quiet home, preferred branch", ()
   assert.match(support, /Need help/);
   assert.doesNotMatch(hub, /docs\/architecture/);
   assert.doesNotMatch(hub, /OWNER REVIEW REQUIRED/);
-  assert.doesNotMatch(hub, /Profile completion/);
+  assert.match(hub, /profileCompletion|Profile completion/);
 });
 
 test("addresses: cloud SoT enabled with device draft import honesty", () => {
@@ -85,7 +85,7 @@ test("loyalty and payments stay honest — no fake rewards or live wallets", () 
   const hub = read("apps/website/client/src/pages/MyTelepizza.tsx");
   const loyaltyFuture = read("docs/architecture/MY-TELEPIZZA-LOYALTY-FUTURE-ARCHITECTURE.md");
 
-  assert.match(hub, /Offers will appear here/);
+  assert.match(hub, /Rewards are coming soon/);
   assert.match(hub, /Coming soon/i);
   assert.match(hub, /JazzCash, EasyPaisa, and saved cards are/);
   assert.match(hub, /not live/i);

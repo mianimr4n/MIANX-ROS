@@ -26,6 +26,7 @@ const SAFE_AUTH_DESTINATION_PREFIXES = [
   "/track",
   "/order-success",
   "/reset-password",
+  "/forgot-password",
   "/branches",
   "/settings",
   "/favorites",
@@ -114,6 +115,15 @@ export function consumeAuthNextPath(fallback: string = DEFAULT_AUTH_DESTINATION)
   const stored = window.sessionStorage.getItem(AUTH_NEXT_STORAGE_KEY);
   window.sessionStorage.removeItem(AUTH_NEXT_STORAGE_KEY);
   return sanitizeAuthNextPath(stored, fallback);
+}
+
+/** Build an auth route href that preserves a safe post-login destination. */
+export function buildAuthHref(path: string, next?: string | null): string {
+  const safeNext = next && isSafeInternalAuthPath(next) ? next.trim() : null;
+  if (!safeNext || safeNext === DEFAULT_AUTH_DESTINATION) {
+    return path;
+  }
+  return `${path}?next=${encodeURIComponent(safeNext)}`;
 }
 
 export function peekAuthNextFromLocationSearch(search: string): string | null {

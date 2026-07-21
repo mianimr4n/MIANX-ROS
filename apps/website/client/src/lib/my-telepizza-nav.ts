@@ -144,3 +144,56 @@ export function resolveDisplayName(input: {
   if (email?.includes("@")) return email.split("@")[0] || "Customer";
   return "Customer";
 }
+
+export type ProfileCompletionInput = {
+  emailVerified: boolean;
+  hasName: boolean;
+  hasPhone: boolean;
+  hasAddress: boolean;
+};
+
+export type ProfileCompletionItem = {
+  id: "email" | "name" | "phone" | "address";
+  label: string;
+  done: boolean;
+};
+
+export type ProfileCompletion = {
+  percent: number;
+  items: ProfileCompletionItem[];
+  remaining: ProfileCompletionItem[];
+  complete: boolean;
+};
+
+/** Compact profile-completion score for My Telepizza welcome / basics cards. */
+export function computeProfileCompletion(input: ProfileCompletionInput): ProfileCompletion {
+  const items: ProfileCompletionItem[] = [
+    { id: "email", label: "Email verified", done: input.emailVerified },
+    { id: "name", label: "Name", done: input.hasName },
+    { id: "phone", label: "Phone", done: input.hasPhone },
+    { id: "address", label: "Address", done: input.hasAddress },
+  ];
+  const doneCount = items.filter((item) => item.done).length;
+  const percent = Math.round((doneCount / items.length) * 100);
+  return {
+    percent,
+    items,
+    remaining: items.filter((item) => !item.done),
+    complete: doneCount === items.length,
+  };
+}
+
+/** Phone status badge labels — never contradict a populated phone field. */
+export function phoneStatusLabel(input: {
+  phone: string | null | undefined;
+  phoneVerified?: boolean;
+}): { label: string; tone: "success" | "warning" | "neutral" } {
+  const trimmed = input.phone?.trim() ?? "";
+  if (!trimmed) {
+    return { label: "Add phone", tone: "neutral" };
+  }
+  if (input.phoneVerified) {
+    return { label: "Phone verified", tone: "success" };
+  }
+  return { label: "Phone added", tone: "warning" };
+}

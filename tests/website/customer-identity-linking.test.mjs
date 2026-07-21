@@ -35,7 +35,7 @@ test("Google password attach uses updateUser on current session only", () => {
   assert.match(authContext, /setPassword/);
   assert.match(authContext, /current_password:\s*current/);
   assert.match(account, /Set a Telepizza password|Update Telepizza password/);
-  assert.match(account, /You can now sign in using Google, Facebook, or email and password/);
+  assert.match(account, /Password created successfully|Password changed/);
   assert.match(account, /firstTimePassword/);
   assert.match(account, /showPassword/);
   assert.match(account, /if \(passwordBusy\) return/);
@@ -46,9 +46,10 @@ test("Login keeps social primary and safe social-account hint without enumeratio
   assert.match(login, /SocialAuthButtons/);
   assert.match(login, /Created your account with Google or Facebook\?/);
   assert.match(login, /Telepizza password/);
-  assert.match(login, /Account → Security|Account/);
-  assert.match(login, /Forgot password\?/);
-  assert.match(login, /href=["']\/forgot-password["']/);
+  assert.match(login, /My Telepizza → Security/);
+  assert.match(login, /Forgot your password\?/);
+  assert.match(login, /buildAuthHref\(["']\/forgot-password["']/);
+  assert.doesNotMatch(login, /aria-hidden=\{!emailOpen\}/);
   assert.doesNotMatch(login, /this email is registered|account exists/i);
 });
 
@@ -61,7 +62,7 @@ test("Account profile + sign-in methods UI and Coming Soon cards", () => {
   assert.match(account, /Open My Orders|Orders/);
   assert.doesNotMatch(account, /listNotifications|unreadNotifications/);
   assert.match(account, /Phone status:/);
-  assert.match(account, /Unverified/);
+  assert.match(account, /Phone added|Add phone|Phone verified/);
 });
 
 test("profile PATCH path is Bearer-only and strips privilege fields", () => {

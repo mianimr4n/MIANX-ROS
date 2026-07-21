@@ -1,11 +1,17 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthPageShell } from "@/components/AuthPageShell";
+import {
+  DEFAULT_AUTH_DESTINATION,
+  buildAuthHref,
+  peekAuthNextFromLocationSearch,
+  sanitizeAuthNextPath,
+} from "@/lib/auth-redirect";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 function isValidEmail(value: string): boolean {
@@ -16,11 +22,19 @@ function isValidEmail(value: string): boolean {
  * Password recovery request — never reveals whether the email exists.
  */
 export default function ForgotPassword() {
+  const [location] = useLocation();
   const { requestPasswordReset } = useAuth();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const search = typeof window !== "undefined" ? window.location.search : "";
+  const nextPath = sanitizeAuthNextPath(
+    peekAuthNextFromLocationSearch(search) ?? peekAuthNextFromLocationSearch(location),
+    DEFAULT_AUTH_DESTINATION,
+  );
+  const loginHref = buildAuthHref("/login", nextPath);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -60,11 +74,11 @@ export default function ForgotPassword() {
             time — request another if it no longer works.
           </p>
           <p className="text-sm text-muted-foreground">
-            Signed up with Google only? Use Continue with Google on the login page, then set a
-            Telepizza password from Account → Security.
+            Signed up with Google or Facebook only? Continue with that provider on the login page,
+            then set a Telepizza password from My Telepizza → Security.
           </p>
           <div className="flex flex-col gap-2">
-            <Link href="/login">
+            <Link href={loginHref}>
               <Button className="w-full rounded-2xl brand-gradient text-white font-bold py-6">
                 Back to login
               </Button>
@@ -91,7 +105,7 @@ export default function ForgotPassword() {
   return (
     <AuthPageShell
       title="Forgot password"
-      description="We’ll email a reset link for your Telepizza password — never your Google password."
+      description="We’ll email a reset link for your Telepizza password — never your Google or Facebook password."
       note={
         isSupabaseConfigured
           ? undefined
@@ -142,7 +156,7 @@ export default function ForgotPassword() {
       <div className="mt-5 space-y-3 text-center text-sm text-muted-foreground">
         <p>
           Remembered it?{" "}
-          <Link href="/login" className="text-brand-red font-semibold hover:underline">
+          <Link href={loginHref} className="text-brand-red font-semibold hover:underline">
             Back to login
           </Link>
         </p>

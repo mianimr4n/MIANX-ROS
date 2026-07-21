@@ -88,8 +88,8 @@ test("Account UI: Google set-password has no Current password field; change-pass
   assert.match(account, /isFirstTimePasswordAttach/);
   assert.match(account, /Current password/);
   assert.match(account, /firstTimePassword \? undefined : currentPassword/);
-  assert.match(account, /never asks for your Google password/i);
-  assert.match(account, /Never enter your Google password/i);
+  assert.match(account, /never asks for your social-login password/i);
+  assert.match(account, /Never enter your Google or Facebook password/i);
 
   // First-time path: updateUser({ password }) only — no current_password on that call site.
   assert.match(authContext, /updateUser\(\{\s*password:\s*input\.password\s*\}\)/);

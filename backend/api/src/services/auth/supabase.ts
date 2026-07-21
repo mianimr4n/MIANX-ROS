@@ -234,6 +234,34 @@ async function loadPrincipalFromDb(
   };
 }
 
+async function bootstrapCustomerProfile(
+  admin: SupabaseClient,
+  authUserId: string,
+  email: string | null,
+  fullNameHint?: string | null,
+): Promise<{ principal: AuthPrincipal; profile: { id: string; fullName: string; phone: string | null } }> {
+  const nameArg = fullNameHint?.trim() || email?.split("@")[0] || "Customer";
+  const { error: rpcError } = await admin.rpc("ensure_customer_profile_for_auth_user", {
+    p_auth_user_id: authUserId,
+    p_email: email,
+    p_full_name_meta: nameArg,
+  });
+
+  if (rpcError) {
+    throw rpcError;
+  }
+
+  const reloaded = await loadPrincipalFromDb(admin, authUserId, email);
+  if (!reloaded) {
+    throw new ApiError(
+      503,
+      "PROFILE_BOOTSTRAP_FAILED",
+      "We couldn't finish setting up your profile yet. Please try again.",
+    );
+  }
+  return reloaded;
+}
+
 export function createSupabaseAuthProfileRepository(
   envStatus: EnvironmentStatus,
 ): AuthPrincipalRepository {
@@ -241,24 +269,28 @@ export function createSupabaseAuthProfileRepository(
     async resolvePrincipal(authUserId: string, email: string | null) {
       const admin = createServiceClient(envStatus);
       const loaded = await loadPrincipalFromDb(admin, authUserId, email);
-      return loaded?.principal ?? null;
+      if (!loaded) {
+        const bootstrapped = await bootstrapCustomerProfile(admin, authUserId, email);
+        return bootstrapped.principal;
+      }
+      return loaded.principal;
     },
 
     async getMe(authUserId: string, email: string | null) {
       const admin = createServiceClient(envStatus);
-      const loaded = await loadPrincipalFromDb(admin, authUserId, email);
+      let loaded = await loadPrincipalFromDb(admin, authUserId, email);
       if (!loaded) {
-        return toSafeAuthMeData(authUserId, email, null, null);
+        loaded = await bootstrapCustomerProfile(admin, authUserId, email);
       }
       return toSafeAuthMeData(authUserId, email, loaded.principal, loaded.profile);
     },
 
     async updateOwnProfile(authUserId, email, input) {
       const admin = createServiceClient(envStatus);
-      const loaded = await loadPrincipalFromDb(admin, authUserId, email);
+      let loaded = await loadPrincipalFromDb(admin, authUserId, email);
 
       if (!loaded) {
-        throw new ApiError(404, "PROFILE_NOT_FOUND", "Profile was not found for this account.");
+        loaded = await bootstrapCustomerProfile(admin, authUserId, email);
       }
 
       if (!isAccountActive(loaded.principal.status)) {
@@ -327,7 +359,11 @@ export function createSupabaseAuthProfileRepository(
       }
 
       if (!updated) {
-        throw new ApiError(404, "PROFILE_NOT_FOUND", "Profile was not found for this account.");
+        throw new ApiError(
+          503,
+          "PROFILE_BOOTSTRAP_FAILED",
+          "We couldn't finish setting up your profile yet. Please try again.",
+        );
       }
 
       return {

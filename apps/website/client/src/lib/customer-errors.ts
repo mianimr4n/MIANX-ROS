@@ -17,12 +17,12 @@ export type CustomerErrorContext =
   | "generic";
 
 const CONTEXT_LOAD: Record<CustomerErrorContext, string> = {
-  addresses: "We couldn't load your saved addresses right now.",
-  orders: "We could not load all order details right now.",
-  favorites: "We could not load your favorites right now.",
-  reviews: "We could not load all order details right now.",
+  addresses: "We're having trouble loading your information. Please try again.",
+  orders: "We're having trouble loading your information. Please try again.",
+  favorites: "We're having trouble loading your information. Please try again.",
+  reviews: "We're having trouble loading your information. Please try again.",
   profile: "We could not update your profile right now. Please try again shortly.",
-  generic: "This feature is temporarily unavailable. Please try again shortly.",
+  generic: "We're having trouble loading your information. Please try again.",
 };
 
 /**
@@ -40,9 +40,7 @@ export function toCustomerMessage(
       return "This account cannot use My Telepizza right now. Please contact support.";
     }
     if (error.message && TABLE_OR_SCHEMA.test(error.message)) {
-      return context === "generic"
-        ? "This feature is temporarily unavailable. Please try again shortly."
-        : CONTEXT_LOAD[context];
+      return CONTEXT_LOAD[context];
     }
     if (error.statusCode === 404 || error.statusCode === 503) {
       return CONTEXT_LOAD[context];
@@ -65,9 +63,7 @@ export function toCustomerMessage(
 
   if (error instanceof Error) {
     if (TABLE_OR_SCHEMA.test(error.message)) {
-      return context === "generic"
-        ? "This feature is temporarily unavailable. Please try again shortly."
-        : CONTEXT_LOAD[context];
+      return CONTEXT_LOAD[context];
     }
     if (/failed to fetch|networkerror|load failed/i.test(error.message)) {
       return "You appear to be offline. Check your connection and try again.";

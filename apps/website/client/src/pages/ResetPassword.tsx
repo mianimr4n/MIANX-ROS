@@ -7,6 +7,12 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthPageShell } from "@/components/AuthPageShell";
 import { AUTH_PASSWORD_REQUIREMENTS_COPY } from "@/lib/auth-utils";
+import {
+  DEFAULT_AUTH_DESTINATION,
+  buildAuthHref,
+  peekAuthNextFromLocationSearch,
+  sanitizeAuthNextPath,
+} from "@/lib/auth-redirect";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 /**
@@ -14,7 +20,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
  * Requires an authenticated recovery session from `/auth/callback`.
  */
 export default function ResetPassword() {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { isAuthenticated, isLoading, completePasswordReset } = useAuth();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,6 +28,14 @@ export default function ResetPassword() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const search = typeof window !== "undefined" ? window.location.search : "";
+  const nextPath = sanitizeAuthNextPath(
+    peekAuthNextFromLocationSearch(search) ?? peekAuthNextFromLocationSearch(location),
+    DEFAULT_AUTH_DESTINATION,
+  );
+  const loginLink = buildAuthHref("/login", nextPath);
+  const requestNewLink = buildAuthHref("/forgot-password", nextPath);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -73,8 +87,8 @@ export default function ResetPassword() {
       >
         <div className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-4 text-center">
           <p className="text-sm text-muted-foreground">
-            If you also use Google on this account, both Google and email/password sign-in still
-            work.
+            If you also use Google or Facebook on this account, social and email/password sign-in
+            still work.
           </p>
           <Button
             className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
@@ -82,7 +96,7 @@ export default function ResetPassword() {
           >
             Go to My Telepizza
           </Button>
-          <Link href="/login">
+          <Link href={loginLink}>
             <Button variant="outline" className="w-full rounded-2xl py-6">
               Back to login
             </Button>
@@ -102,12 +116,12 @@ export default function ResetPassword() {
           <p className="text-sm text-brand-red" role="alert">
             {error ?? "This reset link is invalid or expired."}
           </p>
-          <Link href="/forgot-password">
+          <Link href={requestNewLink}>
             <Button className="w-full rounded-2xl brand-gradient text-white font-bold py-6">
               Request a new link
             </Button>
           </Link>
-          <Link href="/login">
+          <Link href={loginLink}>
             <Button variant="outline" className="w-full rounded-2xl py-6">
               Back to login
             </Button>
@@ -122,7 +136,7 @@ export default function ResetPassword() {
   return (
     <AuthPageShell
       title="Choose a new password"
-      description="Set a Telepizza password for email sign-in. Never enter your Google password."
+      description="Set a Telepizza password for email sign-in. Never enter your Google or Facebook password."
     >
       <form
         onSubmit={(event) => void handleSubmit(event)}

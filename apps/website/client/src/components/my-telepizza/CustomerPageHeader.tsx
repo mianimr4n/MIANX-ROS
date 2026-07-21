@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { LogOut } from "lucide-react";
+import { Bell, Gift, LogOut, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { ProfileCompletion } from "@/lib/my-telepizza-nav";
 
 type StatusTone = "success" | "warning" | "neutral";
 
@@ -28,6 +29,7 @@ type CustomerPageHeaderProps = {
   phoneLabel: string;
   phoneTone: StatusTone;
   phoneHint?: ReactNode;
+  profileCompletion?: ProfileCompletion | null;
   onLogout: () => void;
 };
 
@@ -40,6 +42,7 @@ export function CustomerPageHeader({
   phoneLabel,
   phoneTone,
   phoneHint,
+  profileCompletion,
   onLogout,
 }: CustomerPageHeaderProps) {
   const initial = (displayName.trim().charAt(0) || "T").toUpperCase();
@@ -48,7 +51,7 @@ export function CustomerPageHeader({
     <header className="overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-white via-brand-cream/50 to-white shadow-sm">
       <div className="h-1.5 brand-gradient" aria-hidden="true" />
       <div className="flex flex-wrap items-start justify-between gap-4 p-4 sm:p-6">
-        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+        <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
           {avatarUrl ? (
             <img
               src={avatarUrl}
@@ -64,12 +67,12 @@ export function CustomerPageHeader({
               {initial}
             </div>
           )}
-          <div className="min-w-0 space-y-3">
-            <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-brand-red">
+          <div className="min-w-0 flex-1 space-y-3.5">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-brand-red">
                 My Telepizza
               </p>
-              <h1 className="brand-heading mb-1 break-words text-2xl sm:text-3xl">
+              <h1 className="brand-heading break-words text-2xl leading-tight sm:text-3xl">
                 Welcome back, {displayName}
               </h1>
               {email ? <p className="break-all text-sm text-muted-foreground">{email}</p> : null}
@@ -82,6 +85,64 @@ export function CustomerPageHeader({
               />
               <StatusBadge label={phoneLabel} tone={phoneTone} />
             </div>
+
+            {profileCompletion ? (
+              <div className="max-w-md space-y-2" aria-label="Profile completion">
+                <div className="flex items-center justify-between gap-3 text-xs font-semibold text-brand-charcoal">
+                  <span>Profile completion</span>
+                  <span>{profileCompletion.percent}% complete</span>
+                </div>
+                <div
+                  className="h-2 overflow-hidden rounded-full bg-muted"
+                  role="progressbar"
+                  aria-valuenow={profileCompletion.percent}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`Profile ${profileCompletion.percent}% complete`}
+                >
+                  <div
+                    className="h-full rounded-full brand-gradient motion-safe:transition-[width] motion-reduce:transition-none"
+                    style={{ width: `${profileCompletion.percent}%` }}
+                  />
+                </div>
+                <ul className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
+                  {profileCompletion.items.map((item) => (
+                    <li key={item.id} className="flex items-center gap-1.5">
+                      <span
+                        className={
+                          item.done ? "font-semibold text-emerald-700" : "text-muted-foreground"
+                        }
+                        aria-hidden="true"
+                      >
+                        {item.done ? "✔" : "✖"}
+                      </span>
+                      <span className={item.done ? "text-brand-charcoal" : undefined}>
+                        {item.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            <div
+              className="flex flex-wrap items-center gap-2"
+              aria-label="Coming soon"
+            >
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/30 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                <Bell className="h-3 w-3" aria-hidden="true" />
+                Notifications · Coming soon
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/30 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                <Gift className="h-3 w-3" aria-hidden="true" />
+                Rewards · Coming soon
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/30 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                <Star className="h-3 w-3" aria-hidden="true" />
+                Membership · Coming soon
+              </span>
+            </div>
+
             <p className="text-[11px] text-muted-foreground">
               Telepizza Pakistan · Powered by Mianx.ai
             </p>

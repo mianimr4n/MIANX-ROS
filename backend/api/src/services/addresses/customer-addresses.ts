@@ -209,7 +209,7 @@ export function createCustomerAddressesDataSource(client: SupabaseLike | null): 
       .select("id", { count: "exact", head: true })
       .eq("user_id", authUserId)
       .eq("status", "active");
-    if (error) throw new ApiError(500, "ADDRESS_LOOKUP_FAILED", error.message);
+    if (error) throw new ApiError(500, "ADDRESS_LOOKUP_FAILED", "Could not look up addresses.");
     return count ?? 0;
   }
 
@@ -220,7 +220,7 @@ export function createCustomerAddressesDataSource(client: SupabaseLike | null): 
       .eq("user_id", authUserId)
       .eq("status", "active")
       .eq("is_default", true);
-    if (error) throw new ApiError(500, "ADDRESS_UPDATE_FAILED", error.message);
+    if (error) throw new ApiError(500, "ADDRESS_UPDATE_FAILED", "Could not update addresses.");
   }
 
   async function loadOwned(authUserId: string, addressId: string): Promise<AddressRow> {
@@ -230,7 +230,7 @@ export function createCustomerAddressesDataSource(client: SupabaseLike | null): 
       .eq("id", addressId)
       .eq("user_id", authUserId)
       .maybeSingle();
-    if (error) throw new ApiError(500, "ADDRESS_LOOKUP_FAILED", error.message);
+    if (error) throw new ApiError(500, "ADDRESS_LOOKUP_FAILED", "Could not look up that address.");
     if (!data) throw new ApiError(404, "ADDRESS_NOT_FOUND", "Address not found.");
     return data as AddressRow;
   }
@@ -243,7 +243,7 @@ export function createCustomerAddressesDataSource(client: SupabaseLike | null): 
       .eq("status", "active")
       .eq("is_default", true)
       .limit(1);
-    if (error) throw new ApiError(500, "ADDRESS_LOOKUP_FAILED", error.message);
+    if (error) throw new ApiError(500, "ADDRESS_LOOKUP_FAILED", "Could not look up addresses.");
     if (data && data.length > 0) return;
 
     const { data: latest, error: latestError } = await db
@@ -254,7 +254,7 @@ export function createCustomerAddressesDataSource(client: SupabaseLike | null): 
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (latestError) throw new ApiError(500, "ADDRESS_LOOKUP_FAILED", latestError.message);
+    if (latestError) throw new ApiError(500, "ADDRESS_LOOKUP_FAILED", "Could not look up addresses.");
     if (!latest) return;
 
     const { error: promoteError } = await db
@@ -262,7 +262,7 @@ export function createCustomerAddressesDataSource(client: SupabaseLike | null): 
       .update({ is_default: true })
       .eq("id", (latest as { id: string }).id)
       .eq("user_id", authUserId);
-    if (promoteError) throw new ApiError(500, "ADDRESS_UPDATE_FAILED", promoteError.message);
+    if (promoteError) throw new ApiError(500, "ADDRESS_UPDATE_FAILED", "Could not update addresses.");
   }
 
   return {
@@ -274,7 +274,7 @@ export function createCustomerAddressesDataSource(client: SupabaseLike | null): 
         .eq("status", "active")
         .order("is_default", { ascending: false })
         .order("updated_at", { ascending: false });
-      if (error) throw new ApiError(500, "ADDRESS_LIST_FAILED", error.message);
+      if (error) throw new ApiError(500, "ADDRESS_LIST_FAILED", "Could not load saved addresses.");
       return ((data ?? []) as AddressRow[]).map(mapRow);
     },
 
@@ -316,7 +316,7 @@ export function createCustomerAddressesDataSource(client: SupabaseLike | null): 
         if (String(error.message).toLowerCase().includes("preferred_branch")) {
           throw new ApiError(400, "VALIDATION_ERROR", "Preferred branch is invalid.");
         }
-        throw new ApiError(500, "ADDRESS_CREATE_FAILED", error.message);
+        throw new ApiError(500, "ADDRESS_CREATE_FAILED", "Could not save that address.");
       }
       return mapRow(data as AddressRow);
     },
@@ -351,7 +351,7 @@ export function createCustomerAddressesDataSource(client: SupabaseLike | null): 
         .select("*")
         .maybeSingle();
 
-      if (error) throw new ApiError(500, "ADDRESS_UPDATE_FAILED", error.message);
+      if (error) throw new ApiError(500, "ADDRESS_UPDATE_FAILED", "Could not update that address.");
       if (!data) throw new ApiError(404, "ADDRESS_NOT_FOUND", "Address not found.");
       if (!shouldDefault) await promoteDefaultIfNeeded(authUserId);
       return mapRow(data as AddressRow);
@@ -359,14 +359,14 @@ export function createCustomerAddressesDataSource(client: SupabaseLike | null): 
 
     async archiveAddress(authUserId, addressId) {
       await loadOwned(authUserId, addressId);
-      const { data, error } = await client
+      const { data, error } = await db
         .from("customer_addresses")
         .update({ is_default: false, status: "archived" })
         .eq("id", addressId)
         .eq("user_id", authUserId)
         .select("*")
         .maybeSingle();
-      if (error) throw new ApiError(500, "ADDRESS_ARCHIVE_FAILED", error.message);
+      if (error) throw new ApiError(500, "ADDRESS_ARCHIVE_FAILED", "Could not remove that address.");
       if (!data) throw new ApiError(404, "ADDRESS_NOT_FOUND", "Address not found.");
       await promoteDefaultIfNeeded(authUserId);
       return mapRow(data as AddressRow);

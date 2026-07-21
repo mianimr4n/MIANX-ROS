@@ -59,6 +59,8 @@ interface AuthContextType {
   isSuperAdmin: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
+  /** True when Supabase session is valid but `/auth/me` could not be loaded (API down). */
+  isProfileSyncDegraded: boolean;
   signUp: (input: { email: string; password: string; fullName?: string }) => Promise<SignUpResult>;
   signIn: (input: { email: string; password: string }) => Promise<SignInResult>;
   signInWithGoogle: (options?: { next?: string | null }) => Promise<SocialSignInResult>;
@@ -130,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [branchIds, setBranchIds] = useState<string[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProfileSyncDegraded, setIsProfileSyncDegraded] = useState(false);
   const profileRequestId = useRef(0);
   const appliedAccessToken = useRef<string | null>(null);
   const bootstrapped = useRef(false);
@@ -141,6 +144,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRoles([]);
+    setPermissions([]);
+    setBranchIds([]);
+    setIsSuperAdmin(false);
+    setIsProfileSyncDegraded(false);
+  }, []);
+
+  const applyMetadataFallbackProfile = useCallback((authUser: User) => {
+    setProfile({
+      id: authUser.id,
+      fullName: displayNameFromUser(authUser),
+      phone: null,
+      email: authUser.email ?? null,
+      phoneVerified: false,
+    });
+    setRoles(["customer"]);
     setPermissions([]);
     setBranchIds([]);
     setIsSuperAdmin(false);
@@ -181,35 +199,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!me) {
           // API optional — display-only fallback. Roles are never taken from Google metadata.
-          setProfile(
-            nextSession.user
-              ? {
-                  id: nextSession.user.id,
-                  fullName: displayNameFromUser(nextSession.user),
-                  phone: null,
-                  email: nextSession.user.email ?? null,
-                  phoneVerified: false,
-                }
-              : null,
-          );
-          setRoles(["customer"]);
-          setPermissions([]);
-          setBranchIds([]);
-          setIsSuperAdmin(false);
+          if (nextSession.user) {
+            applyMetadataFallbackProfile(nextSession.user);
+          } else {
+            setProfile(null);
+            setRoles([]);
+            setPermissions([]);
+            setBranchIds([]);
+            setIsSuperAdmin(false);
+          }
+          setIsProfileSyncDegraded(false);
           return;
         }
 
-        setProfile(
-          me.profile
-            ? {
-                id: me.profile.id,
-                fullName: me.profile.fullName,
-                phone: me.profile.phone,
-                email: me.email,
-                phoneVerified: false,
-              }
-            : null,
-        );
+        setIsProfileSyncDegraded(false);
+        if (me.profile) {
+          setProfile({
+            id: me.profile.id,
+            fullName: me.profile.fullName,
+            phone: me.profile.phone,
+            email: me.email,
+            phoneVerified: false,
+          });
+        } else if (nextSession.user) {
+          applyMetadataFallbackProfile(nextSession.user);
+          setIsProfileSyncDegraded(true);
+        } else {
+          setProfile(null);
+        }
         // Roles / branches / permissions come only from the API principal (DB), never metadata.
         setRoles(me.roles);
         setPermissions(me.permissions ?? []);
@@ -227,14 +244,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        setProfile(null);
-        setRoles([]);
-        setPermissions([]);
-        setBranchIds([]);
-        setIsSuperAdmin(false);
+        if (nextSession.user) {
+          applyMetadataFallbackProfile(nextSession.user);
+          setIsProfileSyncDegraded(true);
+        } else {
+          setProfile(null);
+          setRoles([]);
+          setPermissions([]);
+          setBranchIds([]);
+          setIsSuperAdmin(false);
+          setIsProfileSyncDegraded(false);
+        }
       }
     },
-    [clearLocalAuth],
+    [applyMetadataFallbackProfile, clearLocalAuth],
   );
 
   useEffect(() => {
@@ -614,7 +637,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return {
             ok: false,
             message:
-              "Could not attach a Telepizza password yet. Sign out, sign back in with Google, then try Set password again — never enter your Google password here.",
+              "Sign out and sign back in using your original sign-in method, then try again.",
           };
         }
         return { ok: false, message: mapped };
@@ -690,6 +713,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (error.code === "USER_ACCESS_DISABLED") {
             return { ok: false, message: "Access is disabled for this account." };
           }
+          if (
+            error.code === "PROFILE_NOT_FOUND" ||
+            error.code === "PROFILE_BOOTSTRAP_FAILED" ||
+            /profile was not found/i.test(error.message)
+          ) {
+            return {
+              ok: false,
+              message:
+                "We couldn't finish setting up your profile yet. Please try again.",
+            };
+          }
           return { ok: false, message: error.message || "Could not update profile." };
         }
         return { ok: false, message: "Could not update profile. Please try again." };
@@ -725,6 +759,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isSuperAdmin,
       isLoading,
       isAuthenticated: Boolean(session?.user),
+      isProfileSyncDegraded,
       signUp,
       signIn,
       signInWithGoogle,
@@ -747,6 +782,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       branchIds,
       isSuperAdmin,
       isLoading,
+      isProfileSyncDegraded,
       signUp,
       signIn,
       signInWithGoogle,
