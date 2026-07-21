@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthPageShell } from "@/components/AuthPageShell";
-import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { SocialAuthButtons } from "@/components/SocialAuthButtons";
 import {
   DEFAULT_AUTH_DESTINATION,
   peekAuthNextFromLocationSearch,
@@ -26,6 +26,8 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const emailPanelId = useId();
 
   const search = typeof window !== "undefined" ? window.location.search : "";
   const nextPath = sanitizeAuthNextPath(
@@ -86,101 +88,134 @@ export default function Login() {
   return (
     <AuthPageShell
       title="Welcome back"
-      description="Sign in with Google or email to manage orders and account details."
+      description="Continue with Google or Facebook — email is also available if you already use it."
       note={
         isSupabaseConfigured
           ? undefined
           : "Customer login is temporarily unavailable until authentication is configured."
       }
     >
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-4"
-        noValidate
-      >
-        <GoogleSignInButton
+      <div className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-5">
+        <SocialAuthButtons
           disabled={formDisabled}
           onError={(message) => setError(message)}
-          label="Continue with Google"
-          placement="primary"
-          dividerLabel="or sign in with email"
           next={nextPath}
         />
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            inputMode="email"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setError(null);
-            }}
-            className="rounded-2xl"
-            required
-            disabled={formDisabled}
-            placeholder="you@gmail.com"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError(null);
-              }}
-              className="rounded-2xl pr-12"
-              required
-              disabled={formDisabled}
-              placeholder="Your password"
-            />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 px-3 text-muted-foreground hover:text-brand-charcoal disabled:opacity-50"
-              onClick={() => setShowPassword((value) => !value)}
-              disabled={formDisabled}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-          <div className="text-right">
-            <Link
-              href="/forgot-password"
-              className="text-xs font-semibold text-brand-red hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
-        </div>
-        {error ? (
+
+        {error && !emailOpen ? (
           <p className="text-sm text-brand-red" role="alert">
             {error}
           </p>
         ) : null}
-        <Button
-          type="submit"
-          className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
-          disabled={formDisabled}
-        >
-          {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign in with email"}
-        </Button>
-        <p className="text-xs text-muted-foreground text-center">
-          Created your account with Google? Continue with Google, or set a Telepizza password from
-          Account → Security. Never enter your Google password here.
-        </p>
-        <p className="text-xs text-muted-foreground text-center">
-          Just registered with email? Confirm your email before signing in — check inbox and spam,
-          or use Resend on the registration screen.
-        </p>
-      </form>
+
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground" aria-hidden={!emailOpen}>
+            <div className="h-px flex-1 bg-border" />
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 font-semibold text-brand-charcoal hover:text-brand-red"
+              aria-expanded={emailOpen}
+              aria-controls={emailPanelId}
+              onClick={() => {
+                setEmailOpen((open) => !open);
+                setError(null);
+              }}
+            >
+              Use email instead
+              <ChevronDown
+                className={`h-3.5 w-3.5 transition-transform ${emailOpen ? "rotate-180" : ""}`}
+                aria-hidden
+              />
+            </button>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          {emailOpen ? (
+            <form
+              id={emailPanelId}
+              onSubmit={handleSubmit}
+              className="space-y-4 border-t border-border pt-4"
+              noValidate
+            >
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError(null);
+                  }}
+                  className="rounded-2xl"
+                  required
+                  disabled={formDisabled}
+                  placeholder="you@gmail.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setError(null);
+                    }}
+                    className="rounded-2xl pr-12"
+                    required
+                    disabled={formDisabled}
+                    placeholder="Your password"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 px-3 text-muted-foreground hover:text-brand-charcoal disabled:opacity-50"
+                    onClick={() => setShowPassword((value) => !value)}
+                    disabled={formDisabled}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <div className="text-right">
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs font-semibold text-brand-red hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+              </div>
+              {error ? (
+                <p className="text-sm text-brand-red" role="alert">
+                  {error}
+                </p>
+              ) : null}
+              <Button
+                type="submit"
+                className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
+                disabled={formDisabled}
+              >
+                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign in with email"}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Created your account with Google or Facebook? Continue with that provider, or set a
+                Telepizza password from Account → Security. Never enter your social-network password
+                here.
+              </p>
+              <p className="text-xs text-muted-foreground text-center">
+                Just registered with email? Confirm your email before signing in — check inbox and
+                spam, or use Resend on the registration screen.
+              </p>
+            </form>
+          ) : null}
+        </div>
+      </div>
 
       <div className="mt-5 space-y-3 text-center text-sm text-muted-foreground">
         <p>

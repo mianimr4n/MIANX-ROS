@@ -35,17 +35,17 @@ test("Google password attach uses updateUser on current session only", () => {
   assert.match(authContext, /setPassword/);
   assert.match(authContext, /current_password:\s*current/);
   assert.match(account, /Set a Telepizza password|Update Telepizza password/);
-  assert.match(account, /You can now sign in using Google or email and password/);
+  assert.match(account, /You can now sign in using Google, Facebook, or email and password/);
   assert.match(account, /firstTimePassword/);
   assert.match(account, /showPassword/);
   assert.match(account, /if \(passwordBusy\) return/);
 });
 
-test("Login keeps Google primary and safe Google-account hint without enumeration", () => {
+test("Login keeps social primary and safe social-account hint without enumeration", () => {
   const login = read("apps/website/client/src/pages/Login.tsx");
-  assert.match(login, /Continue with Google/);
-  assert.match(login, /Created your account with Google\?/);
-  assert.match(login, /set a Telepizza password from/);
+  assert.match(login, /SocialAuthButtons/);
+  assert.match(login, /Created your account with Google or Facebook\?/);
+  assert.match(login, /Telepizza password/);
   assert.match(login, /Account → Security|Account/);
   assert.match(login, /Forgot password\?/);
   assert.match(login, /href=["']\/forgot-password["']/);

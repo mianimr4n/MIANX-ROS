@@ -40,14 +40,14 @@ test("Google flow never requests a Google password", () => {
   const login = read("apps/website/client/src/pages/Login.tsx");
   const register = read("apps/website/client/src/pages/Register.tsx");
   const account = read("apps/website/client/src/pages/MyTelepizza.tsx");
-  const googleBtn = read("apps/website/client/src/components/GoogleSignInButton.tsx");
+  const social = read("apps/website/client/src/components/SocialAuthButtons.tsx");
 
-  assert.match(googleBtn, /Continue with Google|signInWithGoogle/);
+  assert.match(social, /Continue with Google|signInWithGoogle/);
   // Warning copy that says not to enter a Google password is allowed; do not add a Google-password field.
   assert.doesNotMatch(login, /id=["']googlePassword["']|Google password<\/Label>|type=["']password["'][^>]*google/i);
   assert.doesNotMatch(register, /id=["']googlePassword["']|Google password<\/Label>/i);
   assert.match(account, /never asks for your Google password|Never enter your Google password/i);
-  assert.match(login, /Never enter your Google password|Continue with Google/i);
+  assert.match(login, /Never enter your social-network password|Continue with Google|SocialAuthButtons/i);
 });
 
 test("logged-in Google user can set a Telepizza password via updateUser", () => {

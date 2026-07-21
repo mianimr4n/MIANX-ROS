@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Eye, EyeOff, Loader2, Mail } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthPageShell } from "@/components/AuthPageShell";
-import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { SocialAuthButtons } from "@/components/SocialAuthButtons";
 import {
   AUTH_MIN_PASSWORD_LENGTH,
   AUTH_PASSWORD_REQUIREMENTS_COPY,
@@ -31,6 +31,8 @@ export default function Register() {
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [resendBusy, setResendBusy] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const emailPanelId = useId();
   const signupCompletedRef = useRef(false);
 
   useEffect(() => {
@@ -137,7 +139,7 @@ export default function Register() {
       description={
         awaitingConfirmation
           ? "Confirm your email to finish signing up."
-          : "Continue with Google, or create an account with email."
+          : "Continue with Google or Facebook — or create an account with email."
       }
       note={
         isSupabaseConfigured
@@ -210,96 +212,136 @@ export default function Register() {
         </div>
       ) : (
         <>
-          <form
-            onSubmit={handleSubmit}
-            className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-4"
-            noValidate
-          >
-            <GoogleSignInButton
+          <div className="rounded-3xl border border-border bg-white/95 shadow-sm p-6 space-y-5">
+            <SocialAuthButtons
               disabled={formDisabled}
               onError={(message) => {
                 setInfo(null);
                 setError(message);
               }}
-              label="Continue with Google"
-              placement="primary"
-              dividerLabel="or continue with email"
               next={DEFAULT_AUTH_DESTINATION}
             />
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full name (optional)</Label>
-              <Input
-                id="fullName"
-                value={fullName}
-                onChange={(e) => {
-                  setFullName(e.target.value);
-                  setError(null);
-                }}
-                className="rounded-2xl"
-                disabled={formDisabled}
-                autoComplete="name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setError(null);
-                }}
-                className="rounded-2xl"
-                required
-                disabled={formDisabled}
-                placeholder="you@gmail.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setError(null);
-                  }}
-                  className="rounded-2xl pr-12"
-                  required
-                  minLength={AUTH_MIN_PASSWORD_LENGTH}
-                  disabled={formDisabled}
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 px-3 text-muted-foreground hover:text-brand-charcoal disabled:opacity-50"
-                  onClick={() => setShowPassword((value) => !value)}
-                  disabled={formDisabled}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              <p className="text-xs text-muted-foreground">{AUTH_PASSWORD_REQUIREMENTS_COPY}</p>
-            </div>
-            {error ? (
+
+            {error && !emailOpen ? (
               <p className="text-sm text-brand-red" role="alert">
                 {error}
               </p>
             ) : null}
-            {info ? <p className="text-sm text-emerald-700">{info}</p> : null}
-            <Button
-              type="submit"
-              className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
-              disabled={formDisabled}
-            >
-              {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create account with email"}
-            </Button>
-          </form>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="h-px flex-1 bg-border" />
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 font-semibold text-brand-charcoal hover:text-brand-red"
+                  aria-expanded={emailOpen}
+                  aria-controls={emailPanelId}
+                  onClick={() => {
+                    setEmailOpen((open) => !open);
+                    setError(null);
+                  }}
+                >
+                  Use email instead
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 transition-transform ${emailOpen ? "rotate-180" : ""}`}
+                    aria-hidden
+                  />
+                </button>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              {emailOpen ? (
+                <form
+                  id={emailPanelId}
+                  onSubmit={handleSubmit}
+                  className="space-y-4 border-t border-border pt-4"
+                  noValidate
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Full name (optional)</Label>
+                    <Input
+                      id="fullName"
+                      value={fullName}
+                      onChange={(e) => {
+                        setFullName(e.target.value);
+                        setError(null);
+                      }}
+                      className="rounded-2xl"
+                      disabled={formDisabled}
+                      autoComplete="name"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Optional for email signup. Google or Facebook will use the name from your
+                      provider — we won&apos;t ask again if it&apos;s already there.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setError(null);
+                      }}
+                      className="rounded-2xl"
+                      required
+                      disabled={formDisabled}
+                      placeholder="you@gmail.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="new-password"
+                        value={password}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          setError(null);
+                        }}
+                        className="rounded-2xl pr-12"
+                        required
+                        minLength={AUTH_MIN_PASSWORD_LENGTH}
+                        disabled={formDisabled}
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 px-3 text-muted-foreground hover:text-brand-charcoal disabled:opacity-50"
+                        onClick={() => setShowPassword((value) => !value)}
+                        disabled={formDisabled}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{AUTH_PASSWORD_REQUIREMENTS_COPY}</p>
+                  </div>
+                  {error ? (
+                    <p className="text-sm text-brand-red" role="alert">
+                      {error}
+                    </p>
+                  ) : null}
+                  {info ? <p className="text-sm text-emerald-700">{info}</p> : null}
+                  <Button
+                    type="submit"
+                    className="w-full rounded-2xl brand-gradient text-white font-bold py-6"
+                    disabled={formDisabled}
+                  >
+                    {submitting ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      "Create account with email"
+                    )}
+                  </Button>
+                </form>
+              ) : null}
+            </div>
+          </div>
           <p className="text-sm text-muted-foreground mt-4 text-center">
             Already registered?{" "}
             <Link href="/login" className="text-brand-red font-semibold hover:underline">

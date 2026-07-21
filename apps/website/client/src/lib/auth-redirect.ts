@@ -127,19 +127,24 @@ export function peekAuthNextFromLocationSearch(search: string): string | null {
  * OAuth redirectTo — always this website's `/auth/callback`.
  * Intended destination is carried via sessionStorage, not an open redirect.
  */
-export function getGoogleOAuthRedirectTo(): string {
+export function getOAuthRedirectTo(): string {
   if (typeof window === "undefined") {
     return AUTH_CALLBACK_PATH;
   }
   return `${window.location.origin}${AUTH_CALLBACK_PATH}`;
 }
 
+/** @deprecated Prefer getOAuthRedirectTo — kept for existing call sites/tests. */
+export function getGoogleOAuthRedirectTo(): string {
+  return getOAuthRedirectTo();
+}
+
 /**
- * Email confirmation + resend redirect — same callback as Google OAuth.
+ * Email confirmation + resend redirect — same callback as social OAuth.
  * Must be listed under Supabase Auth → Redirect URLs.
  */
 export function getEmailConfirmationRedirectTo(): string {
-  return getGoogleOAuthRedirectTo();
+  return getOAuthRedirectTo();
 }
 
 /**
@@ -147,17 +152,17 @@ export function getEmailConfirmationRedirectTo(): string {
  * Must be listed under Supabase Auth → Redirect URLs.
  */
 export function getPasswordRecoveryRedirectTo(): string {
-  return getGoogleOAuthRedirectTo();
+  return getOAuthRedirectTo();
 }
 
 export function getEmailChangeRedirectTo(): string {
-  return getGoogleOAuthRedirectTo();
+  return getOAuthRedirectTo();
 }
 
 export function mapOAuthCallbackError(raw: string | null | undefined): string {
   const normalized = (raw ?? "").toLowerCase();
   if (!normalized) {
-    return "Sign-in could not be completed. Please try again.";
+    return "Unable to sign in. Please try again.";
   }
   if (
     normalized.includes("otp_expired") ||
@@ -176,7 +181,7 @@ export function mapOAuthCallbackError(raw: string | null | undefined): string {
     return "This link is invalid or was already used. Request a new email if you still need access.";
   }
   if (normalized.includes("email_exists") || normalized.includes("already been registered")) {
-    return "Unable to complete this email change. Try a different address or sign in.";
+    return "This sign-in method is already linked to another Telepizza account. Sign in with that method, or use a different email.";
   }
   if (
     normalized.includes("access_denied") ||
@@ -184,7 +189,7 @@ export function mapOAuthCallbackError(raw: string | null | undefined): string {
     normalized.includes("user canceled") ||
     normalized.includes("consent")
   ) {
-    return "Google sign-in was cancelled. You can try again or use email.";
+    return "Login cancelled. You can try again or use email.";
   }
-  return "Sign-in could not be completed. Please try again.";
+  return "Unable to sign in. Please try again.";
 }
