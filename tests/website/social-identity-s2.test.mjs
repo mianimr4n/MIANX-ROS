@@ -274,7 +274,10 @@ test("S2 profile sync degraded state keeps session with metadata fallback", () =
   assert.match(authContext, /setIsProfileSyncDegraded\(true\)/);
   assert.match(authContext, /applyMetadataFallbackProfile/);
   assert.match(account, /isProfileSyncDegraded/);
-  assert.match(account, /Some account details could not be loaded right now/);
+  assert.match(
+    account,
+    /We couldn(?:'|\&apos;)t prepare your account details right now\. Please try again\./,
+  );
   assert.match(account, /refreshProfile/);
 });
 

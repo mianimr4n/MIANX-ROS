@@ -20,6 +20,7 @@ export function CustomerRetryCard({
     <div
       className={`rounded-2xl border border-border bg-muted/20 px-4 py-4 text-sm space-y-2 ${className}`}
       role="status"
+      aria-live="polite"
     >
       <p className="font-medium text-brand-charcoal">{title}</p>
       <p className="text-muted-foreground leading-relaxed">{description}</p>

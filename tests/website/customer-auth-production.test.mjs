@@ -43,7 +43,7 @@ test("secure email change uses same auth user and never Google password", () => 
   assert.match(authContext, /emailRedirectTo:\s*getEmailChangeRedirectTo/);
   assert.match(authContext, /hasEmailIdentity\(session\.user\)/);
   assert.match(account, /Change email/);
-  assert.match(account, /Never enter your Google password/);
+  assert.match(account, /Never enter your (?:Google password|social-login password)/);
   assert.match(account, /Send confirmation/);
   assert.match(account, /Email status:/);
   assert.match(account, /Provider:/);

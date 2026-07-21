@@ -46,7 +46,7 @@ test("Google flow never requests a Google password", () => {
   // Warning copy that says not to enter a Google password is allowed; do not add a Google-password field.
   assert.doesNotMatch(login, /id=["']googlePassword["']|Google password<\/Label>|type=["']password["'][^>]*google/i);
   assert.doesNotMatch(register, /id=["']googlePassword["']|Google password<\/Label>/i);
-  assert.match(account, /never asks for your Google password|Never enter your Google password/i);
+  assert.match(account, /never asks for your (?:Google|social-login) password|Never enter your Google password/i);
   assert.match(login, /Never enter your social-network password|Continue with Google|SocialAuthButtons/i);
 });
 
@@ -57,7 +57,7 @@ test("logged-in Google user can set a Telepizza password via updateUser", () => 
   assert.match(authContext, /supabase\.auth\.updateUser\(\{\s*password:/);
   assert.match(authContext, /current_password:\s*current/);
   assert.match(account, /Set a Telepizza password/);
-  assert.match(account, /does not create a second login|never asks for your Google password/i);
+  assert.match(account, /does not create a second login|never asks for your (?:Google|social-login) password/i);
 });
 
 test("email signup confirmation-required state is generic and safe", () => {

@@ -237,6 +237,8 @@ export default function MyTelepizza() {
   const usingCloudAddresses = Boolean(
     isAuthenticated && session?.access_token && cloudAddressesAvailable(),
   );
+  const addressSaveAvailable =
+    !cloudAddressesAvailable() || Boolean(session?.access_token);
   const usingCloudOrders = Boolean(
     isAuthenticated && session?.access_token && cloudOrdersAvailable,
   );
@@ -463,11 +465,15 @@ export default function MyTelepizza() {
   const firstTimePassword = isFirstTimePasswordAttach(user);
   const canSetPassword = Boolean(email);
   const emailVerified = Boolean(user.email_confirmed_at);
+  // Badge follows the visible field so a typed/persisted number never says "Add phone".
   const effectivePhone = (profile?.phone || phone.trim() || "").trim() || null;
   const phoneStatus = phoneStatusLabel({
     phone: effectivePhone,
     phoneVerified: profile?.phoneVerified,
   });
+  // Completion uses persisted account data only — never unsaved form drafts.
+  const persistedPhone = (profile?.phone ?? "").trim();
+  const persistedName = (profile?.fullName ?? "").trim();
   const phoneStatusTone: StatusTone = phoneStatus.tone;
   const phoneStatusBadgeLabel = phoneStatus.label;
   const passwordChecks = getPasswordRequirementChecks(password);
@@ -550,6 +556,10 @@ export default function MyTelepizza() {
 
   async function handleSaveAddress(event: FormEvent) {
     event.preventDefault();
+    if (!addressSaveAvailable) {
+      setAddressError("Saving addresses is temporarily unavailable. Please try again shortly.");
+      return;
+    }
     setAddressError(null);
     setAddressNotice(null);
 
@@ -706,12 +716,14 @@ export default function MyTelepizza() {
     usingCloudAddresses &&
     deviceDraftCount > 0 &&
     !hasCompletedAddressImport(ownerKey);
-  const needsBasics = !effectivePhone || displayedAddresses.length === 0;
+  const persistedAddresses =
+    usingCloudAddresses && !addressesError ? cloudAddresses : [];
+  const needsBasics = !persistedPhone || persistedAddresses.length === 0;
   const profileCompletion = computeProfileCompletion({
     emailVerified,
-    hasName: Boolean((fullName || profile?.fullName || "").trim()),
-    hasPhone: Boolean(effectivePhone),
-    hasAddress: displayedAddresses.length > 0,
+    hasName: Boolean(persistedName),
+    hasPhone: Boolean(persistedPhone),
+    hasAddress: persistedAddresses.length > 0,
   });
   const hasPastOrders =
     hubOrders.some((order) => bucketForOrderStatus(order.status) !== "active") ||
@@ -1133,9 +1145,10 @@ export default function MyTelepizza() {
                   <div
                     className="rounded-2xl border border-border bg-muted/20 px-4 py-4 text-sm space-y-2"
                     role="status"
+                    aria-live="polite"
                   >
                     <p className="font-medium text-brand-charcoal">
-                      Some account details could not be loaded right now.
+                      We couldn&apos;t prepare your account details right now. Please try again.
                     </p>
                     <p className="text-muted-foreground leading-relaxed">
                       You are still signed in. Profile edits may be unavailable until we reconnect.
@@ -1305,8 +1318,8 @@ export default function MyTelepizza() {
 
                 {!addressesLoading && addressesError ? (
                   <CustomerRetryCard
-                    title="We're having trouble loading your information."
-                    description="Please try again."
+                    title="We couldn't load your saved addresses."
+                    description="Your details below are safe. Try loading saved addresses again."
                     onRetry={reloadAddresses}
                     busy={addressesLoading}
                   />
@@ -1342,10 +1355,10 @@ export default function MyTelepizza() {
                 {displayedAddresses.length === 0 && !showAddressForm && !addressesError ? (
                   <CustomerEmptyState
                     icon={MapPin}
-                    title={usingCloudAddresses ? "No saved addresses yet" : "No address drafts yet"}
+                    title={usingCloudAddresses ? "No saved addresses yet." : "No address drafts yet."}
                     description={
                       usingCloudAddresses
-                        ? "Add a Multan delivery address for faster checkout."
+                        ? "Add your first delivery address to make checkout faster."
                         : "Add a Multan delivery draft for quicker checkout on this browser."
                     }
                     action={
@@ -1574,7 +1587,11 @@ export default function MyTelepizza() {
                       </p>
                     ) : null}
                     <div className="flex flex-wrap gap-2">
-                      <Button type="submit" className="rounded-2xl brand-gradient text-white font-semibold">
+                      <Button
+                        type="submit"
+                        className="rounded-2xl brand-gradient text-white font-semibold"
+                        disabled={!addressSaveAvailable}
+                      >
                         {editingAddressId ? "Update address" : "Save address"}
                       </Button>
                       <Button
@@ -1730,8 +1747,8 @@ export default function MyTelepizza() {
                     </h3>
                     <p className="text-xs text-muted-foreground">
                       {firstTimePassword
-                        ? "Attaches a Telepizza password to this same account — never asks for your Google password and does not create a second login."
-                        : "Enter your current Telepizza password to change it. Never enter your Google password here."}
+                        ? "Attaches a Telepizza password to this same account — never asks for your social-login password and does not create a second login."
+                        : "Enter your current Telepizza password to change it. Never enter your Google or Facebook password here."}
                     </p>
                     <div
                       className="rounded-2xl border border-border bg-muted/30 p-4 space-y-2"
@@ -1894,13 +1911,13 @@ export default function MyTelepizza() {
                         autoComplete="current-password"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Never enter your Google password — only the Telepizza password you set for
+                        Never enter your social-login password — only the Telepizza password you set for
                         this account.
                       </p>
                     </div>
                   ) : (
                     <p className="text-xs text-muted-foreground">
-                      Google-only accounts can request an email change while signed in; confirm both
+                      Social-only accounts can request an email change while signed in; confirm both
                       inboxes if Secure Email Change is on.
                     </p>
                   )}

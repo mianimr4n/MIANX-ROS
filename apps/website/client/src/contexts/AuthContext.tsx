@@ -637,7 +637,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return {
             ok: false,
             message:
-              "For your security, please sign in again with Google before creating a Telepizza password.",
+              "Sign out and sign back in using your original sign-in method, then try again.",
           };
         }
         return { ok: false, message: mapped };
