@@ -1,48 +1,84 @@
 # PROC-01 — Phase 1 Customer Migrations Inventory & Apply Plan
 
-**Agent:** C (Migration Governance)
-**Branch audited:** `origin/polish/my-telepizza-ux`
-**Governance branch:** `fix/phase-1-migration-governance`
-**Date:** 2026-07-19
-**Status:** **PROC-01 READY FOR REVIEW**
+**Agent:** Migration governance / prod reconcile
+**Working branch:** `fix/prod-db-customer-phase1-reconcile`
+**Base:** `main` @ `25e32ac` (and successors)
+**Date:** 2026-07-22
+**Status:** **RECONCILED — OWNER APPLY PENDING**
 **Apply status:** **Not applied to production by this agent.** Owner-gated apply only.
 
 ---
 
 ## Executive summary
 
-Three forward-only DDL migrations on `polish/my-telepizza-ux` add Phase 1 customer cloud tables (`customer_addresses`, `customer_favorites`, `order_reviews`). They are timestamp-ordered, git-tracked (commit `af33722`), free of secrets, and contain no row-level data rewrites. Notification preferences (CP-7) remain **device-local only** — no SQL migration exists or is required for Phase 1 scope.
+Three forward-only DDL migrations already in git add Phase 1 customer cloud tables (`customer_addresses`, `customer_favorites`, `order_reviews`). They match live API contracts (`/api/v1/me/addresses|favorites|reviews`). No new harden migration was required after contract diff.
 
-Production linked remote remains at Database V1 freeze head **`20260718171000`** per `docs/database/DATABASE-V1-FREEZE-DECLARATION.md`. All three Phase 1 migrations are **ahead of prod** and require explicit owner unfreeze / change-control before linked apply.
+**Production linked remote freeze head is still `20260718171000`.** Confirmed 2026-07-22 via `npx supabase migration list --linked` / `db push --linked --dry-run`. That explains production PostgREST:
+
+```text
+GET/HEAD/PATCH /rest/v1/customer_addresses → 404
+```
+
+(schema-missing — relation not in API cache). Applying the three `20260719*` migrations is the fix. Catalog content `20260718180000` is also pending but **must not** be bundled with CP DDL unless separately approved (it mutates menu rows).
+
+Notification preferences (CP-7) remain **device-local only**. Loyalty/rewards have **no** SQL migrations — intentional.
+
+---
+
+## Linked dry-run evidence (2026-07-22, read-only)
+
+```text
+Remote head applied through: 20260718171000
+Local-only / pending:
+ • 20260718180000_sync_canonical_menu_catalog.sql   ← OPTIONAL (catalog content)
+ • 20260719090000_customer_addresses.sql            ← REQUIRED (CP-1)
+ • 20260719100000_customer_favorites.sql            ← REQUIRED (CP-5)
+ • 20260719110000_order_reviews.sql                 ← REQUIRED (CP-6)
+```
+
+`ensure_customer_profile_for_auth_user` is already on remote (migration `20260716010000` applied).
 
 ---
 
 ## Migration inventory
 
-| # | File | CP | Objects | Type | Git | Prod applied |
-|---|------|----|---------|------|-----|--------------|
-| 1 | `supabase/migrations/20260719090000_customer_addresses.sql` | CP-1 | `customer_addresses` + indexes + trigger + 4 RLS policies | DDL (additive) | ✅ `af33722` on polish | ❌ Not by this agent |
-| 2 | `supabase/migrations/20260719100000_customer_favorites.sql` | CP-5 | `customer_favorites` + index + 3 RLS policies | DDL (additive) | ✅ `af33722` on polish | ❌ Not by this agent |
-| 3 | `supabase/migrations/20260719110000_order_reviews.sql` | CP-6 | `order_reviews` + index + trigger + 3 RLS policies | DDL (additive) | ✅ `af33722` on polish | ❌ Not by this agent |
+| # | File | CP | Objects | Type | Prod applied |
+|---|------|----|---------|------|--------------|
+| 1 | `supabase/migrations/20260719090000_customer_addresses.sql` | CP-1 | `customer_addresses` + indexes + trigger + 4 RLS policies | DDL (additive) | ❌ pending |
+| 2 | `supabase/migrations/20260719100000_customer_favorites.sql` | CP-5 | `customer_favorites` + index + 3 RLS policies | DDL (additive) | ❌ pending |
+| 3 | `supabase/migrations/20260719110000_order_reviews.sql` | CP-6 | `order_reviews` + index + trigger + 3 RLS policies | DDL (additive) | ❌ pending |
 
-**Out of Phase 1 scope (same branch, do not conflate):**
+**Out of Phase 1 customer scope:**
 
 | File | Notes |
 |------|-------|
-| `20260718180000_sync_canonical_menu_catalog.sql` | **Content-only** menu upsert/deactivate. Not a Phase 1 customer migration. Has its own owner-approval banner. Applies catalog row changes — not silent schema, but **does mutate menu data**. Separate apply decision from CP-1/5/6. |
+| `20260718180000_sync_canonical_menu_catalog.sql` | **Content-only** menu upsert/deactivate. Separate owner decision. |
 
-**CP-7 notification preferences:** No migration. Prefs live in browser `localStorage` via `apps/website/client/src/lib/customer-notification-prefs.ts` (`telepizza.customer.notification-prefs.*`). Future cloud prefs would need a new migration + CP-0 email readiness.
+**CP-7 notification preferences:** No migration. Prefs live in browser `localStorage` via `apps/website/client/src/lib/customer-notification-prefs.ts`.
+
+---
+
+## Contract reconciliation (2026-07-22)
+
+| Surface | API service | DDL match |
+|---------|-------------|-----------|
+| Addresses | `backend/api/src/services/addresses/customer-addresses.ts` | Columns + grants + RLS match `20260719090000` |
+| Favorites | `backend/api/src/services/favorites/customer-favorites.ts` | Columns + grants + RLS match `20260719100000` |
+| Reviews | `backend/api/src/services/reviews/customer-reviews.ts` | Columns + grants + RLS match `20260719110000` |
+| Profile bootstrap | `backend/api/src/services/auth/supabase.ts` | RPC already on prod |
+
+**New forward migration:** none required.
+
+Static coverage extended in `tests/database/cp1-cp6-customer-migrations.test.mjs` (API column ↔ DDL assertions; freeze ordering; no loyalty/notifications invent).
 
 ---
 
 ## Dependency order
 
-Apply strictly in filename (timestamp) order after all prior migrations through the chosen baseline.
-
 ```
 … (V1 freeze schema head)
-20260718171000_db_hash_column_privilege_harden.sql   ← prod linked head (2026-07-18 attestation)
-20260718180000_sync_canonical_menu_catalog.sql       ← optional content; not required for CP-1/5/6 DDL
+20260718171000_db_hash_column_privilege_harden.sql   ← prod linked head (confirmed 2026-07-22)
+20260718180000_sync_canonical_menu_catalog.sql       ← optional; EXCLUDE from CP apply by default
 20260719090000_customer_addresses.sql                ← CP-1
 20260719100000_customer_favorites.sql                ← CP-5
 20260719110000_order_reviews.sql                     ← CP-6
@@ -52,70 +88,92 @@ Apply strictly in filename (timestamp) order after all prior migrations through 
 
 | Migration | Requires |
 |-----------|----------|
-| `20260719090000` | `auth.users`; `public.branches`; `public.set_updated_at()` from `20260713190000_foundation_schema.sql` |
+| `20260719090000` | `auth.users`; `public.branches`; `public.set_updated_at()` |
 | `20260719100000` | `auth.users` |
-| `20260719110000` | `auth.users`; `public.orders` with `auth_user_id` + `status` check including `'completed'` from `20260716140000_sprint3_slice2d_order_branch_rls.sql` |
-
-### Soft / app-layer dependencies
-
-| Concern | Where enforced |
-|---------|----------------|
-| Max 20 active addresses | API (`MAX_ACTIVE_CUSTOMER_ADDRESSES` in `customer-addresses.ts`), not DB constraint |
-| Soft-archive (`status = 'archived'`) | API + column check; no hard-delete requirement |
-| Review 24h edit window | API (`EDIT_WINDOW_MS`); RLS allows update while order stays `completed` |
-| Favorites keyed by `menu_item_code` | Text code, not FK to `menu_items` — catalog drift is an app concern |
+| `20260719110000` | `auth.users`; `public.orders.auth_user_id` + `status` including `'completed'` |
 
 ---
 
-## Apply plan (linked remote — **do not run from audit**)
+## Local verification (2026-07-22)
 
-Per `docs/database/DATABASE-MIGRATION-WORKFLOW.md`. **This agent did not execute these commands.**
+`supabase start` on a **fresh** local project currently fails at `20260718130000` because it `REVOKE`s `public.handle_new_user()` which never existed in git (prod-drift only). That does **not** block production apply (P0 already applied on linked remote).
+
+Local CP verification used disposable Postgres + `scripts/local-verify-cp-migrations.mjs` (applies git migrations with local-only workarounds for the P0 revoke / empty `profiles` stub). Result:
+
+```text
+customer_addresses / customer_favorites / order_reviews → present
+relrowsecurity = true for all three
+service_role + authenticated SELECT on customer_addresses = true
+ensure_customer_profile_for_auth_user(uuid,text,text) present
+ALL_OK
+```
+
+Package validation on branch:
+
+- `pnpm test:db` — pass (290 tests)
+- `pnpm test:backend -- --pool=threads --no-file-parallelism` — pass
+- `pnpm check` — pass
+
+---
+
+## Apply plan (linked remote — **owner-gated only**)
+
+Per `docs/database/DATABASE-MIGRATION-WORKFLOW.md`. **Do not run from this PR alone.**
 
 ### Pre-apply gates
 
-1. Owner unfreeze / change-control ticket for customer-platform schema (V1 freeze currently locks prod schema expansion).
-2. CP-0 D1 addresses policy signed (`docs/team/CP-0-OWNER-DECISION-PACK.md`).
-3. Backup / PITR verified; on-call identified.
-4. Local branch matches reviewed commit (`af33722` or successor on merge target).
+1. Owner unfreeze / change-control ticket for customer-platform schema (V1 freeze).
+2. Backup / PITR verified; on-call identified.
+3. Explicit written decision: **exclude** `20260718180000` catalog sync from this release (default).
+4. Branch/PR tip SHA recorded.
+5. Re-run dry-run immediately before apply and confirm pending set.
 
 ### Read-only verification (safe)
 
 ```sh
-# From repo root — compare local vs linked history (no writes)
 npx supabase migration list --linked
-
-# Preview pending migrations (no writes)
 npx supabase db push --linked --dry-run
 ```
 
-Expected dry-run includes (at minimum) the three `20260719*` files if prod is still at `20260718171000`. If `20260718180000` is also pending, treat catalog content apply as a **separate owner decision**.
+### Preferred apply path when catalog must stay out
 
-### Apply (owner-approved release step only)
+If dry-run still lists `20260718180000` and owner has **not** approved catalog content:
+
+1. **Do not** run bare `db push --linked` (it would apply catalog + CP together).
+2. Apply only the three CP SQL files via approved linked SQL editor / `psql` with service credentials, then mark versions in `supabase_migrations.schema_migrations` using Supabase’s supported repair workflow — **or** temporarily move/hold the catalog file only with owner change-control (prefer repair after selective apply; never delete the migration from git).
+3. Capture transcripts for every command.
+
+If owner later approves catalog content, run a **second** change ticket for `20260718180000` alone.
+
+### Apply when dry-run shows **only** the three `20260719*` files
 
 ```sh
-# AFTER explicit owner approval — NOT part of PROC-01 audit
+# AFTER explicit owner approval
 npx supabase db push --linked
 ```
 
-### Post-apply verification
+### Post-apply proof (required before claiming fixed)
 
 ```sh
-pnpm test:db    # static migration matrix incl. tests/database/cp1-cp6-customer-migrations.test.mjs
-pnpm test:backend
+npx supabase migration list --linked
+# expect remote = local for 20260719090000, 20260719100000, 20260719110000
 ```
-
-SQL smoke (read-only):
 
 ```sql
 select to_regclass('public.customer_addresses');
 select to_regclass('public.customer_favorites');
 select to_regclass('public.order_reviews');
-
 select relname, relrowsecurity from pg_class
  where relname in ('customer_addresses','customer_favorites','order_reviews');
 ```
 
-API smoke (staging / linked): `GET/PATCH /api/v1/me/addresses`, favorites, reviews routes behind auth — see `backend/api/src/modules/me/routes.ts`.
+API / PostgREST smoke:
+
+- `HEAD /rest/v1/customer_addresses` is **not** 404 (401 without JWT is OK)
+- Authenticated `GET /api/v1/me/addresses` → `200` with `{ addresses: [] }` or rows (not schema-cache / relation errors)
+- Authenticated favorites + reviews list endpoints same expectation
+
+**No success claim without command transcripts.**
 
 ---
 
@@ -123,27 +181,11 @@ API smoke (staging / linked): `GET/PATCH /api/v1/me/addresses`, favorites, revie
 
 | Table | RLS | anon | authenticated | service_role | Policies |
 |-------|-----|------|---------------|--------------|----------|
-| `customer_addresses` | ON | none (revoked) | SELECT, INSERT, UPDATE, DELETE | ALL | select/insert/update/delete own (`user_id = auth.uid()`) |
-| `customer_favorites` | ON | none (revoked) | SELECT, INSERT, DELETE (no UPDATE grant) | ALL | select/insert/delete own (`user_id = auth.uid()`) |
-| `order_reviews` | ON | none (revoked) | SELECT, INSERT, UPDATE (no DELETE grant) | ALL | select/insert/update own; insert/update require linked `orders` row with `auth_user_id = auth.uid()` and `status = 'completed'` |
+| `customer_addresses` | ON | none | SELECT, INSERT, UPDATE, DELETE | ALL | own-row `user_id = auth.uid()` |
+| `customer_favorites` | ON | none | SELECT, INSERT, DELETE | ALL | own-row `user_id = auth.uid()` |
+| `order_reviews` | ON | none | SELECT, INSERT, UPDATE | ALL | own-row; insert/update require owned `completed` order |
 
-**Pattern:** Each migration follows post-`20260718130000` hardening style — explicit `REVOKE ALL` from client roles, least-privilege `GRANT` to `authenticated`, full access to `service_role`. Backend `/me/*` services use **service_role** (`customer-addresses.ts`, `customer-favorites.ts`, `customer-reviews.ts`).
-
-**P0 interaction:** `20260718130000_p0_harden_grants_and_definer_execute.sql` runs before these tables exist. New tables carry their own grant statements; no follow-up grant migration required for Phase 1 DDL.
-
----
-
-## Governance verification checklist
-
-| Check | Result | Evidence |
-|-------|--------|----------|
-| Tracked in git on polish | ✅ PASS | `git log origin/polish/my-telepizza-ux -- supabase/migrations/20260719*` → `af33722` |
-| Timestamp-ordered, no duplicate prefixes | ✅ PASS | Unique `20260719090000`, `100000`, `110000`; full folder scan shows no collisions |
-| No conflicting migrations (same table) | ✅ PASS | Single migration per table |
-| Forward-only / no prod data rewrite in CP-1/5/6 | ✅ PASS | `CREATE TABLE IF NOT EXISTS` + policies only; no `UPDATE`/`DELETE`/`TRUNCATE` on existing data |
-| No secrets in SQL | ✅ PASS | No passwords, JWTs, API keys, or connection strings |
-| Static test coverage | ✅ PASS | `tests/database/cp1-cp6-customer-migrations.test.mjs` |
-| Prod apply honesty | ✅ PASS | Not applied by Agent C; prod head documented as `20260718171000` |
+Backend `/me/*` uses **service_role**.
 
 ---
 
@@ -151,49 +193,26 @@ API smoke (staging / linked): `GET/PATCH /api/v1/me/addresses`, favorites, revie
 
 | ID | Severity | Risk | Mitigation |
 |----|----------|------|------------|
-| R-01 | **High** | V1 freeze locks prod schema; Phase 1 tables are post-freeze | Owner unfreeze + ticket before `db push --linked` |
-| R-02 | **High** | Features 503 until migrations applied in target env | Apply plan + post-apply API smoke; hub shows honest degraded state until then |
-| R-03 | **Medium** | `20260718180000` catalog content may appear in same dry-run | Split owner decision: schema (CP-1/5/6) vs catalog content |
-| R-04 | **Low** | `order_reviews` RLS update policy does not column-restrict `status`; direct PostgREST client could mutate moderation field | API uses service_role; moderation should stay server-side. Optional hardening: column-level trigger or narrow policy (Agent B if desired) |
-| R-05 | **Low** | Max-20-active addresses enforced in API only | Accept for Phase 1; document for future DB constraint if abuse seen |
-| R-06 | **Info** | CP-7 prefs are localStorage — no cross-device sync | By design until SMTP + cloud prefs migration |
-| R-07 | **Info** | `customer_addresses` duplicate `revoke … from anon` line | Cosmetic only; no apply blocker |
-
----
-
-## Findings table (PROC-01)
-
-| ID | Area | Finding | Severity | Action |
-|----|------|---------|----------|--------|
-| F-01 | Inventory | Three Phase 1 DDL migrations present and ordered on polish | — | Document only ✅ |
-| F-02 | CP-7 | No `notification_preferences` table; localStorage SoT | Info | Document only ✅ |
-| F-03 | Prod state | Linked prod at `20260718171000`; Phase 1 unapplied | High | Owner-gated apply plan (above) |
-| F-04 | Freeze policy | Customer tables expand schema post-V1-lock | High | Unfreeze ticket required before prod |
-| F-05 | Reviews RLS | No DELETE policy; `status` not column-guarded on UPDATE | Low | Document for Agent B; optional hardening |
-| F-06 | Addresses | Redundant anon revoke in SQL | Info | No change required (doc preferred) |
-| F-07 | Catalog | `20260718180000` is separate content migration | Medium | Do not bundle with CP-1 apply without review |
-| F-08 | Secrets | None found in migration files | — | ✅ |
-| F-09 | Data safety | No silent prod row rewrite in CP-1/5/6 | — | ✅ |
+| R-01 | **High** | V1 freeze locks prod schema | Owner unfreeze before apply |
+| R-02 | **High** | Addresses 404 until CP-1 applied | Apply `20260719090000`+ |
+| R-03 | **Medium** | Dry-run includes catalog content | Exclude `20260718180000` by default |
+| R-04 | **Low** | Fresh local `supabase start` fails on P0 `handle_new_user` revoke | Documented; prod already past P0; use `scripts/local-verify-cp-migrations.mjs` for local DDL proof |
+| R-05 | **Info** | CP-7 / loyalty not in SQL | By design |
 
 ---
 
 ## Related documents
 
-- `docs/architecture/PHASE-1-CUSTOMER-PLATFORM-COMPLETION-AUDIT.md`
-- `docs/architecture/PHASE-1-CUSTOMER-PLATFORM-COMPLETION-PROGRAM.md`
-- `docs/architecture/MY-TELEPIZZA-ADDRESSES-MIGRATION-PROPOSAL.md`
-- `docs/team/CP-0-OWNER-DECISION-PACK.md`
 - `docs/database/DATABASE-MIGRATION-WORKFLOW.md`
 - `docs/database/DATABASE-V1-FREEZE-DECLARATION.md`
-- `docs/team/database/SCHEMA-GOVERNANCE.md`
+- `docs/team/CP-0-OWNER-DECISION-PACK.md`
+- `scripts/local-verify-cp-migrations.mjs`
 
 ---
 
-## Agent C attestation
+## Attestation
 
-- **Migrations modified:** None (documentation only).
-- **`20260719110000_order_reviews.sql`:** Not edited (Agent B owns).
+- **Existing CP migrations modified:** None.
+- **New harden migration:** None (contracts already match).
 - **Production `db push`:** Not executed.
-- **Merge:** Not performed.
-
-**PROC-01 READY FOR REVIEW**
+- **Merge to main:** Not performed by this workstream (PR only).
