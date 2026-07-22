@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Bell,
@@ -39,7 +39,10 @@ function groupNav(items: AdminNavItem[]) {
 function pageTitle(path: string): string {
   if (path.startsWith("/admin/orders/")) return "Order detail";
   if (path.startsWith("/admin/orders")) return "Orders";
-  if (path.startsWith("/admin/dashboard")) return "Operations overview";
+  if (path.startsWith("/admin/kitchen-dashboard")) return "Kitchen Manager KDS";
+  if (path.startsWith("/admin/kitchen")) return "Kitchen Display";
+  if (path.startsWith("/admin/branch")) return "Branch dashboard";
+  if (path.startsWith("/admin/dashboard")) return "Executive dashboard";
   if (path.startsWith("/admin/unauthorized")) return "Unauthorized";
   const match = path.match(/^\/admin\/([^/]+)/);
   if (!match?.[1]) return "Admin";
@@ -75,15 +78,35 @@ export function AdminShell({
   } = useAdminBranch();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [branchMenuOpen, setBranchMenuOpen] = useState(false);
+  const [isLgUp, setIsLgUp] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   const principal = { roles, permissions, isSuperAdmin };
   const navItems = useMemo(() => filterVisibleAdminNav(principal), [roles, permissions, isSuperAdmin]);
   const grouped = useMemo(() => groupNav(navItems), [navItems]);
   const resolvedTitle = title ?? pageTitle(location);
+  /** Desktop sidebar is always expanded; mobile drawer only when open. */
+  const navExpanded = isLgUp || sidebarOpen;
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setIsLgUp(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     setSidebarOpen(false);
   }, [location]);
+
+  const wasSidebarOpen = useRef(false);
+  useEffect(() => {
+    if (wasSidebarOpen.current && !sidebarOpen) {
+      menuButtonRef.current?.focus();
+    }
+    wasSidebarOpen.current = sidebarOpen;
+  }, [sidebarOpen]);
 
   if (isLoading) {
     return (
@@ -109,6 +132,7 @@ export function AdminShell({
         >
           Admin login
         </Link>
+        <p className="text-xs text-[var(--admin-muted)]">Powered by Mianx.ai</p>
       </div>
     );
   }
@@ -137,9 +161,11 @@ export function AdminShell({
 
       <aside
         id="admin-sidebar"
+        aria-hidden={!navExpanded}
+        inert={!navExpanded ? true : undefined}
         className={`fixed inset-y-0 left-0 z-40 flex w-[17.5rem] flex-col border-r border-[var(--admin-border)] bg-[var(--admin-panel)] transition-transform duration-200 ease-out motion-reduce:transition-none lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        } ${navExpanded ? "" : "pointer-events-none max-lg:invisible"}`}
       >
         <div className="flex items-center justify-between gap-3 border-b border-[var(--admin-border)] px-4 py-4">
           <div>
@@ -168,15 +194,18 @@ export function AdminShell({
               <ul className="space-y-1">
                 {section.items.map((item) => {
                   const active =
-                    item.href === "/admin/dashboard"
-                      ? location === "/admin" || location.startsWith("/admin/dashboard")
-                      : location === item.href || location.startsWith(`${item.href}/`);
+                    item.href === "/admin/branch"
+                      ? location === "/admin/branch" || location.startsWith("/admin/branch/")
+                      : item.href === "/admin/dashboard"
+                        ? location === "/admin" || location.startsWith("/admin/dashboard")
+                        : location === item.href || location.startsWith(`${item.href}/`);
                   if (!item.available) {
                     return (
                       <li key={item.key}>
                         <span
                           className="flex cursor-not-allowed items-center justify-between rounded-lg px-3 py-2 text-sm text-[var(--admin-muted)] opacity-70"
                           title="Coming in a later release"
+                          aria-disabled="true"
                         >
                           <span>{item.label}</span>
                           <span className="text-[10px] uppercase tracking-wide">Soon</span>
@@ -210,7 +239,8 @@ export function AdminShell({
           <div className="flex flex-wrap items-center gap-3 px-4 py-3">
             <button
               type="button"
-              className="rounded-md p-2 hover:bg-[var(--admin-soft)] lg:hidden"
+              ref={menuButtonRef}
+              className="rounded-md p-2 hover:bg-[var(--admin-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-red)] lg:hidden"
               aria-label="Open sidebar"
               aria-controls="admin-sidebar"
               aria-expanded={sidebarOpen}
