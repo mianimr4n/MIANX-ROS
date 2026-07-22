@@ -95,6 +95,24 @@ test("CP-6 order_reviews: API columns match DDL", () => {
   assert.match(reviewsService, /order_id/);
 });
 
+test("CP-1 customer_addresses: one-default index and soft-archive status", () => {
+  assert.match(addresses, /customer_addresses_one_default_per_user/);
+  assert.match(addresses, /where is_default and status = 'active'/);
+  assert.match(addresses, /idx_customer_addresses_user_active/);
+  assert.match(addressService, /MAX_ACTIVE_CUSTOMER_ADDRESSES/);
+  assert.match(addressService, /status.*archived|archiveAddress/s);
+});
+
+test("ensure_customer_profile_for_auth_user precedes freeze head", () => {
+  const authFoundation = readMigration("20260716010000_sprint3_customer_auth_foundation.sql");
+  const p0 = readMigration("20260718130000_p0_harden_grants_and_definer_execute.sql");
+  assert.match(authFoundation, /ensure_customer_profile_for_auth_user/);
+  assert.match(p0, /ensure_customer_profile_for_auth_user/);
+  assert.match(p0, /grant execute[\s\S]*service_role/i);
+  const authService = readSource("backend/api/src/services/auth/supabase.ts");
+  assert.match(authService, /ensure_customer_profile_for_auth_user/);
+});
+
 test("Phase 1 CP migrations sit after V1 freeze head and before inventing loyalty/notifications", () => {
   const names = readdirSync(join(workspaceRoot, "supabase", "migrations"))
     .filter((name) => name.endsWith(".sql"))
