@@ -90,8 +90,8 @@ export default function Login() {
 
   return (
     <AuthPageShell
-      title="Welcome back"
-      description="Continue with Google or Facebook — email is also available if you already use it."
+      title="Your Telepizza, remembered."
+      description="Save addresses, follow orders and enjoy a faster checkout. Continue with Google or Facebook — email is also available if you already use it."
       note={
         isSupabaseConfigured
           ? undefined

@@ -65,7 +65,7 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-[var(--z-header)] transition-all duration-300 ${
         scrolled
           ? "bg-white/95 backdrop-blur-xl shadow-md shadow-brand-red/10 border-b border-brand-red/10"
           : "bg-transparent"
@@ -81,12 +81,12 @@ export default function Navbar() {
         />
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1" aria-label="Primary">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`relative font-[var(--font-accent)] font-semibold text-sm px-4 py-2 rounded-lg transition-all duration-200 active:scale-95 ${
+              className={`relative font-[var(--font-accent)] font-semibold text-sm px-4 py-2 rounded-lg transition-all duration-200 active:scale-95 focus-ring-brand ${
                 isNavActive(link.href)
                   ? "text-brand-red bg-brand-red/10"
                   : scrolled
@@ -103,12 +103,23 @@ export default function Navbar() {
         </nav>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <p
+            className={`hidden xl:block max-w-[11rem] text-[10px] leading-snug font-medium ${
+              scrolled ? "text-muted-foreground" : "text-white/55"
+            }`}
+          >
+            AI-powered ordering · Powered by Mianx.ai
+          </p>
           {/* Branch Selector */}
           <div ref={dropdownRef} className="relative hidden md:block">
             <button
+              type="button"
+              aria-expanded={branchDropdownOpen}
+              aria-haspopup="listbox"
+              aria-label="Select branch"
               onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
-              className={`flex items-center gap-2 text-sm font-[var(--font-accent)] font-medium transition-colors px-3 py-2 rounded-lg ${
+              className={`flex items-center gap-2 text-sm font-[var(--font-accent)] font-medium transition-colors px-3 py-2 rounded-lg focus-ring-brand ${
                 scrolled
                   ? "text-brand-charcoal hover:bg-brand-cream-dark"
                   : "text-white/80 hover:bg-white/10"
@@ -284,7 +295,9 @@ export default function Navbar() {
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <button
-                className={`md:hidden p-2.5 rounded-xl transition-all ${
+                type="button"
+                aria-label={mobileOpen ? "Close menu" : "Open menu"}
+                className={`md:hidden p-2.5 rounded-xl transition-all focus-ring-brand ${
                   scrolled
                     ? "bg-brand-cream-dark text-brand-charcoal"
                     : "bg-white/10 text-white"
@@ -293,7 +306,7 @@ export default function Navbar() {
                 {mobileOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
               </button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[min(100vw-1rem,20rem)] bg-brand-charcoal border-none p-0">
+            <SheetContent side="right" className="w-[min(100vw-1rem,20rem)] bg-brand-charcoal border-none p-0 pb-[env(safe-area-inset-bottom)]">
               <div className="flex flex-col h-full">
                 {/* Mobile Header */}
                 <div className="h-1 w-full brand-stripe" aria-hidden />
@@ -307,6 +320,9 @@ export default function Navbar() {
                     Telepizza
                   </span>
                 </div>
+                <p className="px-5 pt-3 text-[11px] text-white/45">
+                  AI-powered ordering · Powered by Mianx.ai
+                </p>
                 <nav className="flex-1 p-5 flex flex-col gap-1 overflow-y-auto">
                   {navLinks.map((link) => (
                     <Link

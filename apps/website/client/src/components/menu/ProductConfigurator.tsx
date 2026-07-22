@@ -151,6 +151,23 @@ export function ProductConfigurator({
       </div>
 
       <div className="space-y-5">
+        <ol
+          className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+          aria-label="Customization steps"
+        >
+          {["1. Choose size", "2. Customize", "3. Review", "4. Add to cart"].map((step, index) => (
+            <li
+              key={step}
+              className={`rounded-full border px-2.5 py-1 ${
+                index === 0
+                  ? "border-brand-red/30 bg-brand-red/5 text-brand-red"
+                  : "border-border bg-white"
+              }`}
+            >
+              {step}
+            </li>
+          ))}
+        </ol>
         {compact && <p className="text-sm leading-6 text-muted-foreground">{item.description}</p>}
         {item.variants?.length ? (
           <fieldset className="space-y-2">

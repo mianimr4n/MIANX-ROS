@@ -550,6 +550,17 @@ export default function Checkout() {
           <div className="lg:col-span-2">
             <div className="rounded-3xl border border-border bg-white p-6 sticky top-24 space-y-4">
               <h2 className="font-[var(--font-display)] font-bold text-xl">Order summary</h2>
+              <aside
+                className="rounded-2xl border border-brand-red/15 bg-brand-cream/70 p-4 space-y-2"
+                aria-label="Checkout trust"
+              >
+                <p className="text-sm font-semibold text-brand-charcoal">Secure checkout</p>
+                <ul className="text-xs text-muted-foreground space-y-1.5">
+                  <li>Order details reviewed before confirmation</li>
+                  <li>Live order tracking after confirmation</li>
+                  <li>Support available via phone and WhatsApp</li>
+                </ul>
+              </aside>
               <div className="space-y-3 max-h-72 overflow-y-auto">
                 {state.items.map((item, index) => {
                   const serverLine = serverQuoteItems?.[index];

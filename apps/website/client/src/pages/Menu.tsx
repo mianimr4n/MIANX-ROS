@@ -42,6 +42,9 @@ import { formatMenuPriceLabel } from "@/lib/menu-utils";
 
 import { ProductBadge } from "@/components/menu/ProductBadge";
 import { FavoriteHeartButton } from "@/components/menu/FavoriteHeartButton";
+import { MenuSmartDiscovery } from "@/components/menu/MenuSmartDiscovery";
+import { applyMenuQueryFromSearch } from "@/components/MianxAssist";
+import { useCart } from "@/contexts/CartContext";
 
 
 
@@ -83,13 +86,30 @@ export default function Menu() {
 
   const [activeCategory, setActiveCategory] = useState(initialCategory);
 
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [search, setSearch] = useState(() => applyMenuQueryFromSearch(searchString));
+  const [debouncedSearch, setDebouncedSearch] = useState(() => applyMenuQueryFromSearch(searchString));
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
 
   const addMenuItem = useAddMenuItem();
+  const { totalItems, totalPrice, toggleCart } = useCart();
+
+  const vegetarianAvailable = useMemo(
+    () =>
+      items.some((item) => {
+        const hay = `${item.name} ${item.description ?? ""} ${item.category}`.toLowerCase();
+        return hay.includes("veg") || hay.includes("vegetarian");
+      }),
+    [items],
+  );
+
+  useEffect(() => {
+    const fromUrl = applyMenuQueryFromSearch(searchString);
+    if (!fromUrl) return;
+    setSearch(fromUrl);
+    setDebouncedSearch(fromUrl);
+  }, [searchString]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 180);
@@ -144,7 +164,9 @@ export default function Menu() {
 
     const matchesCategory = activeCategory === "All" || item.category === activeCategory;
 
-    const matchesSearch = item.name.toLowerCase().includes(debouncedSearch.toLowerCase());
+    const query = debouncedSearch.toLowerCase();
+    const haystack = `${item.name} ${item.description ?? ""} ${item.category} ${(item as { tags?: string[] }).tags?.join(" ") ?? ""}`.toLowerCase();
+    const matchesSearch = !query || haystack.includes(query);
 
     return matchesCategory && matchesSearch;
 
@@ -378,7 +400,9 @@ export default function Menu() {
 
 
 
-      <section className="container py-8">
+      <section className="container py-8 pb-28 lg:pb-8">
+
+        <MenuSmartDiscovery vegetarianAvailable={vegetarianAvailable} />
 
         {isLoading ? (
 
@@ -622,6 +646,23 @@ export default function Menu() {
         )}
 
       </section>
+
+      {totalItems > 0 ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur lg:hidden">
+          <button
+            type="button"
+            onClick={toggleCart}
+            className="btn-press flex w-full items-center justify-between rounded-2xl brand-gradient px-4 py-3 text-white shadow-lg shadow-brand-red/25 focus-ring-brand"
+          >
+            <span className="font-[var(--font-accent)] font-bold">
+              View cart · {totalItems} item{totalItems === 1 ? "" : "s"}
+            </span>
+            <span className="font-[var(--font-accent)] font-extrabold">
+              Rs {totalPrice.toLocaleString()}
+            </span>
+          </button>
+        </div>
+      ) : null}
 
     </div>
 

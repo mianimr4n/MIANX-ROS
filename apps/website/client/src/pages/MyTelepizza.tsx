@@ -2102,6 +2102,20 @@ export default function MyTelepizza() {
                     Loyalty points and member offers
                   </p>
                 </div>
+                <div className="rounded-2xl border border-brand-gold/25 bg-gradient-to-br from-brand-cream via-white to-amber-50 p-5">
+                  <p className="text-xs font-bold uppercase tracking-wider text-brand-gold">Coming soon</p>
+                  <p className="mt-2 font-[var(--font-display)] font-bold text-xl text-brand-charcoal">
+                    Future Telepizza Rewards
+                  </p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Earn points on confirmed orders, unlock Multan member benefits, and redeem offers — launching later. No points balance is shown until then.
+                  </p>
+                  <ul className="mt-4 grid gap-2 sm:grid-cols-3 text-xs font-semibold text-brand-charcoal">
+                    <li className="rounded-xl bg-white/80 border border-border px-3 py-2">Order points</li>
+                    <li className="rounded-xl bg-white/80 border border-border px-3 py-2">Member deals</li>
+                    <li className="rounded-xl bg-white/80 border border-border px-3 py-2">Birthday treats</li>
+                  </ul>
+                </div>
                 <CustomerEmptyState
                   icon={Gift}
                   title="Rewards are coming soon."

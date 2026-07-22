@@ -55,16 +55,60 @@
   --color-brand-cream: #FFF7F3;
   --color-brand-cream-dark: #F5EBE4;
   --color-brand-orange: #FF6B35;
+  --color-brand-success: #1F8A4C;
+  --color-brand-warning: #D97706;
+  --color-brand-error: #B5121B;
+  --color-brand-muted: #6B6B6B;
 }
 
 :root {
-  /* Telepizza Brand Colors */
+  /* Telepizza Brand Colors — AI Kitchen Experience tokens */
   --brand-red: #E31E24;
   --brand-red-dark: #B5121B;
+  --brand-red-deep: #8E0E16;
+  --brand-orange: #FF6B35;
+  --brand-gold: #F5B800;
   --brand-cream: #FFF7F3;
   --brand-charcoal: #1F1F1F;
   --brand-white: #FFFFFF;
   --brand-gray: #F5F5F5;
+  --brand-success: #1F8A4C;
+  --brand-warning: #D97706;
+  --brand-error: #B5121B;
+  --brand-muted: #6B6B6B;
+
+  /* Surfaces & elevation */
+  --surface-cream: var(--brand-cream);
+  --surface-white: var(--brand-white);
+  --surface-glass: rgb(255 255 255 / 72%);
+  --border-soft: #EDE0D8;
+  --border-strong: #D9C8BC;
+  --shadow-soft: 0 8px 24px rgb(31 31 31 / 8%);
+  --shadow-lift: 0 16px 40px rgb(227 30 36 / 12%);
+  --shadow-glow-gold: 0 0 48px rgb(245 184 0 / 35%);
+  --blur-glass: 14px;
+  --blur-soft: 8px;
+
+  /* Spacing & radius extras */
+  --space-section: clamp(3rem, 6vw, 5rem);
+  --radius-pill: 999px;
+
+  /* Motion */
+  --motion-fast: 150ms;
+  --motion-base: 280ms;
+  --motion-slow: 520ms;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Z-index layers */
+  --z-base: 0;
+  --z-sticky: 40;
+  --z-header: 50;
+  --z-drawer: 60;
+  --z-modal: 70;
+  --z-toast: 80;
+  --z-assist: 90;
 
   --primary: var(--brand-red);
   --primary-foreground: var(--brand-white);
@@ -136,10 +180,21 @@
   --sidebar-ring: #F04B50;
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@media (prefers-reduced-motion: reduce) {
   :root {
-    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+
+  .motion-safe-only,
+  .xp-float,
+  .xp-steam,
+  .xp-rotate-slow,
+  .xp-pulse-ring,
+  .hero-kenburns-active {
+    animation: none !important;
+    transition: none !important;
   }
 }
 
@@ -231,6 +286,95 @@
   .text-brand-gold-strong {
     color: var(--color-brand-gold);
   }
+
+  .surface-glass {
+    background: var(--surface-glass);
+    backdrop-filter: blur(var(--blur-glass));
+    -webkit-backdrop-filter: blur(var(--blur-glass));
+  }
+
+  .card-lift {
+    transition: transform var(--motion-base) var(--ease-out),
+      box-shadow var(--motion-base) var(--ease-out);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .card-lift:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lift);
+    }
+
+    .btn-press:active {
+      transform: scale(0.97);
+    }
+  }
+
+  .focus-ring-brand:focus-visible {
+    outline: 2px solid var(--brand-red);
+    outline-offset: 2px;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -100%;
+    z-index: calc(var(--z-assist) + 1);
+    border-radius: 0.75rem;
+    background: var(--brand-charcoal);
+    color: white;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+  }
+
+  .skip-link:focus {
+    top: 1rem;
+  }
+
+  .xp-scene {
+    perspective: 900px;
+    transform-style: preserve-3d;
+  }
+
+  .xp-layer {
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--brand-cream-dark, #F5EBE4) 0%,
+      #fff 45%,
+      var(--brand-cream-dark, #F5EBE4) 100%
+    );
+    background-size: 200% 100%;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .skeleton-shimmer {
+      animation: skeleton-shimmer 1.4s ease-in-out infinite;
+    }
+
+    .xp-float {
+      animation: xp-float 4.5s var(--ease-in-out) infinite;
+    }
+
+    .xp-steam {
+      animation: xp-steam 3.2s var(--ease-in-out) infinite;
+    }
+
+    .xp-rotate-slow {
+      animation: xp-rotate-slow 28s linear infinite;
+    }
+
+    .xp-pulse-ring {
+      animation: xp-pulse-ring 2.4s var(--ease-out) infinite;
+    }
+
+    .hero-kenburns-active {
+      animation: hero-kenburns 14s ease-in-out infinite alternate;
+    }
+  }
 }
 
 @keyframes hero-kenburns {
@@ -239,6 +383,81 @@
   }
   to {
     transform: scale(1.12);
+  }
+}
+
+@keyframes xp-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes xp-steam {
+  0% {
+    opacity: 0.15;
+    transform: translateY(8px) scaleX(0.9);
+  }
+  50% {
+    opacity: 0.45;
+    transform: translateY(-12px) scaleX(1.05);
+  }
+  100% {
+    opacity: 0.1;
+    transform: translateY(-28px) scaleX(0.95);
+  }
+}
+
+@keyframes xp-rotate-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes xp-pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .page-enter {
+    animation: page-enter var(--motion-base) var(--ease-out) both;
   }
 }
 

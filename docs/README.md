@@ -74,6 +74,7 @@ docs/
 | Completion program | `architecture/PHASE-1-CUSTOMER-PLATFORM-COMPLETION-PROGRAM.md` |
 | Deployment readiness | `architecture/PHASE-1-ENGINEERING-DEPLOYMENT-READINESS.md` |
 | Migrations inventory | `architecture/PHASE-1-CUSTOMER-MIGRATIONS-INVENTORY.md` |
+| AI / 3D experience upgrade | [`customer/PHASE-1-AI-3D-EXPERIENCE.md`](customer/PHASE-1-AI-3D-EXPERIENCE.md) |
 
 **Do not claim Phase 1 PASS** until Founder closure checklist is signed.
 

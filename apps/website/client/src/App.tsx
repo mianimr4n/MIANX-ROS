@@ -36,6 +36,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CartDrawer from "./components/CartDrawer";
+import { MianxAssist } from "./components/MianxAssist";
 import { CartProvider } from "./contexts/CartContext";
 import { PizzaCustomizerProvider } from "./contexts/PizzaCustomizerContext";
 import { BranchProvider } from "./contexts/BranchContext";
@@ -107,15 +108,21 @@ function AppShell() {
 
   return (
     <>
+      {!ops ? (
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+      ) : null}
       {!ops ? <Navbar /> : null}
       <ScrollToTop />
-      <main className={ops ? "min-h-screen" : "min-h-screen pt-[72px]"}>
+      <main id="main-content" className={ops ? "min-h-screen" : "min-h-screen pt-[72px]"}>
         <Router />
       </main>
       {!ops ? (
         <>
           <Footer />
           <CartDrawer />
+          <MianxAssist />
         </>
       ) : null}
     </>

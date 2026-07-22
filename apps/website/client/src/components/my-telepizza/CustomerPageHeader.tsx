@@ -56,12 +56,12 @@ export function CustomerPageHeader({
             <img
               src={avatarUrl}
               alt=""
-              className="h-12 w-12 shrink-0 rounded-2xl object-cover shadow-sm sm:h-14 sm:w-14"
+              className="h-12 w-12 shrink-0 rounded-2xl object-cover shadow-sm ring-2 ring-brand-gold/25 sm:h-14 sm:w-14"
               referrerPolicy="no-referrer"
             />
           ) : (
             <div
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl brand-gradient text-lg font-bold text-white shadow-sm sm:h-14 sm:w-14 sm:text-xl"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl brand-gradient text-lg font-bold text-white shadow-sm ring-2 ring-brand-gold/25 sm:h-14 sm:w-14 sm:text-xl"
               aria-hidden="true"
             >
               {initial}

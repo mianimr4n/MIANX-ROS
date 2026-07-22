@@ -50,7 +50,7 @@ export function OrderStatusTimeline({
             "bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-sm";
         } else if (current) {
           stepClass =
-            "bg-brand-red text-white shadow-md ring-2 ring-brand-red/30 scale-[1.02]";
+            "relative bg-brand-red text-white shadow-md ring-2 ring-brand-red/30 scale-[1.02]";
         } else if (future) {
           stepClass =
             "bg-brand-cream/60 text-muted-foreground/80 ring-1 ring-inset ring-border/40";
@@ -63,7 +63,13 @@ export function OrderStatusTimeline({
             aria-current={current ? "step" : undefined}
             className={`rounded-xl px-2 ${compact ? "min-h-9 py-1 text-xs" : "min-h-10 py-1.5 text-xs"} text-center font-semibold capitalize motion-safe:transition-all motion-reduce:transition-none ${stepClass}`}
           >
-            {ORDER_STATUS_LABELS[step] ?? step}
+            {current ? (
+              <span
+                className="pointer-events-none absolute inset-0 rounded-xl border border-brand-gold/50 xp-pulse-ring"
+                aria-hidden
+              />
+            ) : null}
+            <span className="relative">{ORDER_STATUS_LABELS[step] ?? step}</span>
           </div>
         );
       })}
