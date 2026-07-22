@@ -147,3 +147,83 @@ export async function getAdminOrder(accessToken: string, orderId: string): Promi
     headers: authHeaders(accessToken),
   });
 }
+
+export type AdminOrderTransitionAction =
+  | "confirm"
+  | "reject"
+  | "preparing"
+  | "ready"
+  | "dispatch"
+  | "complete"
+  | "cancel";
+
+export async function transitionAdminOrder(
+  accessToken: string,
+  orderId: string,
+  action: AdminOrderTransitionAction,
+  body?: { reasonCode?: string; note?: string },
+): Promise<{ status: string; idempotentReplay: boolean }> {
+  return fetchApiData(`/admin/orders/${orderId}/${action}`, {
+    method: "POST",
+    headers: authHeaders(accessToken),
+    body: JSON.stringify(body ?? {}),
+  });
+}
+
+export type AdminRestaurantTable = {
+  id: string;
+  branchId: string;
+  tableNumber: string;
+  displayName: string | null;
+  capacity: number | null;
+  floorOrZone: string | null;
+  status: string;
+  qrVersion: number;
+  qrIssued: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** Requires branch.manage — cashiers without it cannot list tables. */
+export async function listAdminTables(
+  accessToken: string,
+  query?: { branchId?: string | null; status?: string; limit?: number },
+): Promise<AdminRestaurantTable[]> {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  if (query?.status) params.set("status", query.status);
+  params.set("limit", String(query?.limit ?? 100));
+  return fetchApiData<AdminRestaurantTable[]>(`/admin/tables?${params.toString()}`, {
+    headers: authHeaders(accessToken),
+  });
+}
+
+export type AdminStaffInvite = {
+  id: string;
+  email: string;
+  fullName: string;
+  phone: string | null;
+  roleCode: string;
+  branchId: string;
+  status: string;
+  expiresAt: string | null;
+  invitedBy: string | null;
+  acceptedUserId: string | null;
+  sendCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** Super-admin gated in backend — returns invites or throws on 403. */
+export async function listAdminStaffInvites(
+  accessToken: string,
+  query?: { status?: string },
+): Promise<AdminStaffInvite[]> {
+  const params = new URLSearchParams();
+  if (query?.status) params.set("status", query.status);
+  const qs = params.toString();
+  return fetchApiData<AdminStaffInvite[]>(`/admin/staff/invites${qs ? `?${qs}` : ""}`, {
+    headers: authHeaders(accessToken),
+  });
+}

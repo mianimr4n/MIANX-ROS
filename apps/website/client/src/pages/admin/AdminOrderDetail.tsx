@@ -1,46 +1,28 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useParams } from "wouter";
+import { Link, useParams } from "wouter";
 
+import { OrderTimeline } from "@/components/admin/orders/OrderTimeline";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import { canAccessAdminOrdersApi } from "@/lib/admin-access";
 import { getAdminOrder, type AdminOrderDetail } from "@/lib/admin-api";
+import { formatOrderDateTime, formatPkr } from "@/lib/admin-order-format";
 import { ApiRequestError } from "@/lib/api";
 import { AdminShell } from "./AdminShell";
-
-function formatPkr(value: number) {
-  return `Rs ${Math.round(value).toLocaleString("en-PK")}`;
-}
-
-function formatTime(iso: string) {
-  try {
-    return new Date(iso).toLocaleString("en-PK", {
-      hour: "2-digit",
-      minute: "2-digit",
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return iso;
-  }
-}
 
 export default function AdminOrderDetail() {
   const params = useParams<{ orderId: string }>();
   const orderId = params.orderId;
   const { session, permissions, isSuperAdmin, roles } = useAuth();
-  const [, setLocation] = useLocation();
   const [detail, setDetail] = useState<AdminOrderDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const allowed = canAccessAdminOrdersApi({ roles, permissions, isSuperAdmin });
+  const { gateReady } = useAdminAccessGate(allowed);
 
   useEffect(() => {
-    if (!allowed) {
-      setLocation("/admin/unauthorized");
-      return;
-    }
+    if (!gateReady) return;
     const token = session?.access_token;
     if (!token || !orderId) return;
 
@@ -66,7 +48,7 @@ export default function AdminOrderDetail() {
     return () => {
       cancelled = true;
     };
-  }, [allowed, orderId, session?.access_token, setLocation]);
+  }, [gateReady, orderId, session?.access_token]);
 
   return (
     <AdminShell title="Order detail">
@@ -104,10 +86,11 @@ export default function AdminOrderDetail() {
               </span>
             </div>
             <p className="mt-4 text-sm text-[var(--admin-muted)]">
-              Created {formatTime(detail.createdAt)} · Updated {formatTime(detail.updatedAt)}
+              Created {formatOrderDateTime(detail.createdAt)} · Updated{" "}
+              {formatOrderDateTime(detail.updatedAt)}
             </p>
             <p className="mt-2 text-xs text-[var(--admin-muted)]">
-              Status actions are intentionally disabled in S1 (read-only).
+              Use Orders Management drawer actions for supported status transitions.
             </p>
           </section>
 
@@ -208,28 +191,7 @@ export default function AdminOrderDetail() {
             </section>
           ) : null}
 
-          <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-5">
-            <h2 className="text-base font-semibold">Status timeline</h2>
-            {detail.statusHistory.length === 0 ? (
-              <p className="mt-3 text-sm text-[var(--admin-muted)]">No status history recorded.</p>
-            ) : (
-              <ol className="mt-4 space-y-3 border-l border-[var(--admin-border)] pl-4">
-                {detail.statusHistory.map((entry, index) => (
-                  <li key={`${entry.createdAt}-${index}`} className="relative text-sm">
-                    <span className="absolute -left-[1.3rem] top-1.5 h-2.5 w-2.5 rounded-full bg-[var(--brand-red)]" />
-                    <p className="font-semibold capitalize">
-                      {entry.fromStatus ? `${entry.fromStatus} → ${entry.toStatus}` : entry.toStatus}
-                    </p>
-                    <p className="text-[var(--admin-muted)]">
-                      {formatTime(entry.createdAt)} · {entry.actorType}
-                      {entry.reasonCode ? ` · ${entry.reasonCode}` : ""}
-                    </p>
-                    {entry.note ? <p className="mt-1">{entry.note}</p> : null}
-                  </li>
-                ))}
-              </ol>
-            )}
-          </section>
+          <OrderTimeline history={detail.statusHistory} />
         </div>
       ) : null}
     </AdminShell>

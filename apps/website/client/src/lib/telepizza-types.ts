@@ -93,7 +93,7 @@ export interface CreateOrderItemPayload {
 export interface CreateOrderPayload {
   branchCode: string;
   orderType: "delivery" | "pickup" | "dine-in";
-  orderSource: "website";
+  orderSource: "website" | "whatsapp" | "mobile" | "pos" | "admin";
   contactName: string;
   contactPhone: string;
   deliveryAddress?: string;

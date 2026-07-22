@@ -36,6 +36,22 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminIndexRedirect from "./pages/admin/AdminIndexRedirect";
 import AdminUnauthorized from "./pages/admin/AdminUnauthorized";
 import AdminComingSoon from "./pages/admin/AdminComingSoon";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminOrderDetail from "./pages/admin/AdminOrderDetail";
+import AdminKitchen from "./pages/admin/AdminKitchen";
+import AdminDelivery from "./pages/admin/AdminDelivery";
+import AdminPos from "./pages/admin/AdminPos";
+import AdminCrm from "./pages/admin/AdminCrm";
+import AdminLoyalty from "./pages/admin/AdminLoyalty";
+import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
+import AdminMenu from "./pages/admin/AdminMenu";
+import AdminInventory from "./pages/admin/AdminInventory";
+import AdminPurchasing from "./pages/admin/AdminPurchasing";
+import AdminFinance from "./pages/admin/AdminFinance";
+import AdminReports from "./pages/admin/AdminReports";
+import AdminHr from "./pages/admin/AdminHr";
+import AdminSettings from "./pages/admin/AdminSettings";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AdminBranchProvider } from "./contexts/AdminBranchContext";
 import Navbar from "./components/Navbar";
@@ -49,9 +65,8 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 
 /**
- * Commit B — Admin Foundation routing layer.
- * Business modules (Owner ERP / Branch Manager / Kitchen Manager) are placeholders
- * until later controlled commits wire real page imports.
+ * Commit C — Owner Admin ERP routing.
+ * Branch Manager and Kitchen Manager dashboards remain ComingSoon until Commits D/E.
  */
 
 function ScrollToTop() {
@@ -66,47 +81,14 @@ function isOpsChrome(path: string) {
   return path === "/staff/login" || path.startsWith("/ops") || path.startsWith("/admin");
 }
 
-function DashboardComingSoon() {
-  return <AdminComingSoon moduleName="Executive dashboard" />;
-}
-function OrdersComingSoon() {
-  return <AdminComingSoon moduleName="Orders" />;
-}
 function BranchManagerComingSoon() {
   return <AdminComingSoon moduleName="Branch Manager" />;
 }
 function KitchenManagerComingSoon() {
   return <AdminComingSoon moduleName="Kitchen Manager KDS" />;
 }
-function KitchenComingSoon() {
-  return <AdminComingSoon moduleName="Kitchen" />;
-}
-function DeliveryComingSoon() {
-  return <AdminComingSoon moduleName="Delivery" />;
-}
-function PosComingSoon() {
-  return <AdminComingSoon moduleName="POS" />;
-}
-function WhatsAppComingSoon() {
-  return <AdminComingSoon moduleName="WhatsApp Order Center" />;
-}
-function MenuComingSoon() {
-  return <AdminComingSoon moduleName="Menu" />;
-}
-function InventoryComingSoon() {
-  return <AdminComingSoon moduleName="Inventory" />;
-}
-function PurchasingComingSoon() {
-  return <AdminComingSoon moduleName="Purchasing & Suppliers" />;
-}
 function PromotionsComingSoon() {
   return <AdminComingSoon moduleName="Promotions" />;
-}
-function CrmComingSoon() {
-  return <AdminComingSoon moduleName="CRM" />;
-}
-function LoyaltyComingSoon() {
-  return <AdminComingSoon moduleName="Loyalty & Rewards" />;
 }
 function SupportComingSoon() {
   return <AdminComingSoon moduleName="Support" />;
@@ -114,23 +96,11 @@ function SupportComingSoon() {
 function BranchesComingSoon() {
   return <AdminComingSoon moduleName="Branches" />;
 }
-function HrComingSoon() {
-  return <AdminComingSoon moduleName="HR & Workforce" />;
-}
-function FinanceComingSoon() {
-  return <AdminComingSoon moduleName="Finance" />;
-}
-function ReportsComingSoon() {
-  return <AdminComingSoon moduleName="Reports" />;
-}
 function AiComingSoon() {
   return <AdminComingSoon moduleName="AI Command Center" />;
 }
 function IntegrationsComingSoon() {
   return <AdminComingSoon moduleName="Integrations" />;
-}
-function SettingsComingSoon() {
-  return <AdminComingSoon moduleName="Settings" />;
 }
 
 function Router() {
@@ -158,35 +128,37 @@ function Router() {
       <Route path="/ops/kitchen" component={OpsKitchen} />
       <Route path="/ops/dispatch" component={OpsDispatch} />
       <Route path="/ops" component={OpsDashboard} />
-      {/* Admin Foundation — real pages */}
+      {/* Admin Foundation */}
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/unauthorized" component={AdminUnauthorized} />
-      {/* Future role / module surfaces — Coming Soon until Commits C/D/E */}
-      <Route path="/admin/dashboard" component={DashboardComingSoon} />
-      <Route path="/admin/orders/:orderId" component={OrdersComingSoon} />
-      <Route path="/admin/orders" component={OrdersComingSoon} />
+      {/* Owner ERP modules (Commit C) */}
+      <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/orders/:orderId" component={AdminOrderDetail} />
+      <Route path="/admin/orders" component={AdminOrders} />
+      <Route path="/admin/kitchen" component={AdminKitchen} />
+      <Route path="/admin/delivery" component={AdminDelivery} />
+      <Route path="/admin/pos" component={AdminPos} />
+      <Route path="/admin/whatsapp" component={AdminWhatsApp} />
+      <Route path="/admin/menu" component={AdminMenu} />
+      <Route path="/admin/inventory" component={AdminInventory} />
+      <Route path="/admin/purchasing" component={AdminPurchasing} />
+      <Route path="/admin/crm" component={AdminCrm} />
+      <Route path="/admin/customers" component={AdminCrm} />
+      <Route path="/admin/loyalty" component={AdminLoyalty} />
+      <Route path="/admin/hr" component={AdminHr} />
+      <Route path="/admin/staff" component={AdminHr} />
+      <Route path="/admin/finance" component={AdminFinance} />
+      <Route path="/admin/reports" component={AdminReports} />
+      <Route path="/admin/settings" component={AdminSettings} />
+      {/* Future Commit D / E — keep ComingSoon */}
       <Route path="/admin/branch" component={BranchManagerComingSoon} />
       <Route path="/admin/kitchen-dashboard" component={KitchenManagerComingSoon} />
-      <Route path="/admin/kitchen" component={KitchenComingSoon} />
-      <Route path="/admin/delivery" component={DeliveryComingSoon} />
-      <Route path="/admin/pos" component={PosComingSoon} />
-      <Route path="/admin/whatsapp" component={WhatsAppComingSoon} />
-      <Route path="/admin/menu" component={MenuComingSoon} />
-      <Route path="/admin/inventory" component={InventoryComingSoon} />
-      <Route path="/admin/purchasing" component={PurchasingComingSoon} />
+      {/* Not yet implemented Owner surfaces */}
       <Route path="/admin/promotions" component={PromotionsComingSoon} />
-      <Route path="/admin/crm" component={CrmComingSoon} />
-      <Route path="/admin/customers" component={CrmComingSoon} />
-      <Route path="/admin/loyalty" component={LoyaltyComingSoon} />
       <Route path="/admin/support" component={SupportComingSoon} />
       <Route path="/admin/branches" component={BranchesComingSoon} />
-      <Route path="/admin/hr" component={HrComingSoon} />
-      <Route path="/admin/staff" component={HrComingSoon} />
-      <Route path="/admin/finance" component={FinanceComingSoon} />
-      <Route path="/admin/reports" component={ReportsComingSoon} />
       <Route path="/admin/ai-command-center" component={AiComingSoon} />
       <Route path="/admin/integrations" component={IntegrationsComingSoon} />
-      <Route path="/admin/settings" component={SettingsComingSoon} />
       <Route path="/admin" component={AdminIndexRedirect} />
       <Route path="/my-telepizza/orders" component={MyTelepizza} />
       <Route path="/my-telepizza/addresses" component={MyTelepizza} />
