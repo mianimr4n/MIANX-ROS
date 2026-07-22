@@ -13,7 +13,16 @@
     "catalog:dry-run": "node scripts/dry-run-canonical-menu-migration.mjs",
     "test:backend": "pnpm --filter @telepizza/api test",
     "check": "pnpm check:website && pnpm check:backend",
-    "test": "pnpm test:db && pnpm test:backend"
+    "test": "pnpm test:db && pnpm test:backend",
+    "local": "node scripts/local-up.mjs",
+    "local:guard": "node scripts/local-env-guard.mjs",
+    "local:health": "node scripts/local-health-check.mjs",
+    "local:env": "node scripts/write-local-env-from-supabase.mjs",
+    "local:seed": "node scripts/seed-local-enterprise.mjs",
+    "local:start": "node scripts/local-lifecycle.mjs start",
+    "local:stop": "node scripts/local-lifecycle.mjs stop",
+    "local:reset": "node scripts/local-lifecycle.mjs reset",
+    "local:status": "node scripts/local-lifecycle.mjs status"
   },
   "pnpm": {
     "overrides": {

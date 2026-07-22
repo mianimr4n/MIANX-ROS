@@ -15,28 +15,34 @@
 
 begin;
 
--- 1) Guard: refuse if unexpected data present
+-- 1) Guard: refuse if unexpected data present (skip when profiles never existed — fresh local)
 do $$
 declare
   n bigint;
 begin
+  if to_regclass('public.profiles') is null then
+    return;
+  end if;
   select count(*) into n from public.profiles;
   if n > 0 then
     raise exception 'P1-PROFILES-001 blocked: public.profiles has % rows — export and owner-approve merge before drop', n;
   end if;
 end $$;
 
--- 2) Remove policies
-drop policy if exists "Users can view own profile" on public.profiles;
-drop policy if exists "Users can update own profile" on public.profiles;
+-- 2) Remove policies (no-op when table absent)
+do $$
+begin
+  if to_regclass('public.profiles') is not null then
+    execute 'drop policy if exists "Users can view own profile" on public.profiles';
+    execute 'drop policy if exists "Users can update own profile" on public.profiles';
+    execute 'revoke all on table public.profiles from anon, authenticated, service_role, public';
+  end if;
+end $$;
 
--- 3) Revoke all client grants
-revoke all on table public.profiles from anon, authenticated, service_role, public;
-
--- 4) Drop dead bootstrap function
+-- 3) Drop dead bootstrap function
 drop function if exists public.handle_new_user();
 
--- 5) Drop unmanaged table
+-- 4) Drop unmanaged table
 drop table if exists public.profiles;
 
 commit;
