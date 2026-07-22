@@ -25,9 +25,51 @@ export interface BranchOrderListFilters {
   branchId?: string;
   status?: string;
   orderType?: string;
+  orderSource?: string;
+  /** Exact or partial order number match (case-insensitive). */
+  orderNumber?: string;
   limit: number;
   offset: number;
 }
+
+export const ORDER_SOURCES = ["website", "whatsapp", "mobile", "pos", "admin"] as const;
+export type OrderSource = (typeof ORDER_SOURCES)[number];
+
+export type AdminOperationalAlert = {
+  id: string;
+  severity: "info" | "warning" | "critical";
+  code: string;
+  message: string;
+  orderId?: string;
+  orderNumber?: string;
+};
+
+export type AdminOperationsDashboard = {
+  generatedAt: string;
+  timezone: "Asia/Karachi";
+  dayStart: string;
+  branchId: string | null;
+  kpis: {
+    todayOrders: number;
+    todayGrossSales: number;
+    activeOrders: number;
+    averageOrderValue: number | null;
+    kitchenWaiting: number;
+    activeDeliveries: number;
+  };
+  statusCounts: Record<string, number>;
+  sourceBreakdown: Array<{ source: string; count: number }>;
+  recentOrders: SafeBranchOrderListItem[];
+  branchPerformance: Array<{
+    branchId: string;
+    branchCode: string | null;
+    todayOrders: number;
+    todayGrossSales: number;
+    activeOrders: number;
+  }> | null;
+  alerts: AdminOperationalAlert[];
+  insights: string[];
+};
 
 export interface SafeBranchOrderListItem {
   id: string;
@@ -103,6 +145,10 @@ export interface BranchOrderManagementDataSource {
     filters: BranchOrderListFilters,
   ): Promise<SafeBranchOrderListResult>;
   getBranchOrderDetail(scope: BranchActorScope, orderId: string): Promise<SafeBranchOrderDetail>;
+  getOperationsDashboard(
+    scope: BranchActorScope,
+    filters: { branchId?: string },
+  ): Promise<AdminOperationsDashboard>;
   transitionOrder(params: {
     scope: BranchActorScope;
     orderId: string;
@@ -151,6 +197,228 @@ function assertBranchInScope(scope: BranchActorScope, branchId: string): void {
   if (!scope.branchIds.includes(branchId)) {
     throw new ApiError(403, "ORDER_ACCESS_DENIED", "Order belongs to another branch.");
   }
+}
+
+/** Calendar day start in Pakistan Standard Time (UTC+5), as ISO-8601. */
+export function startOfTodayKarachiIso(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Karachi",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const year = parts.find((p) => p.type === "year")?.value;
+  const month = parts.find((p) => p.type === "month")?.value;
+  const day = parts.find((p) => p.type === "day")?.value;
+  if (!year || !month || !day) {
+    throw new Error("Unable to resolve Asia/Karachi calendar day.");
+  }
+  return `${year}-${month}-${day}T00:00:00+05:00`;
+}
+
+const ACTIVE_STATUSES = new Set(["pending", "confirmed", "preparing", "ready", "dispatched"]);
+const PENDING_ALERT_MS = 15 * 60 * 1000;
+const PREPARING_ALERT_MS = 30 * 60 * 1000;
+const READY_ALERT_MS = 10 * 60 * 1000;
+
+function resolveScopedBranchIds(scope: BranchActorScope, branchId?: string): string[] | "all" | "none" {
+  if (scope.isSuperAdmin) {
+    if (branchId) return [branchId];
+    return "all";
+  }
+  if (scope.branchIds.length === 0) return "none";
+  if (branchId) {
+    assertBranchInScope(scope, branchId);
+    return [branchId];
+  }
+  return scope.branchIds;
+}
+
+function buildDashboardFromRows(
+  rows: Array<Record<string, unknown>>,
+  options: { branchId: string | null; includeBranchPerformance: boolean; now: Date },
+): AdminOperationsDashboard {
+  const dayStart = startOfTodayKarachiIso(options.now);
+  const dayStartMs = new Date(dayStart).getTime();
+  const nowMs = options.now.getTime();
+
+  const statusCounts: Record<string, number> = {
+    pending: 0,
+    confirmed: 0,
+    preparing: 0,
+    ready: 0,
+    dispatched: 0,
+    completed: 0,
+    cancelled: 0,
+  };
+  const sourceMap = new Map<string, number>();
+  const branchMap = new Map<
+    string,
+    { branchId: string; branchCode: string | null; todayOrders: number; todayGrossSales: number; activeOrders: number }
+  >();
+
+  let todayOrders = 0;
+  let todayGrossSales = 0;
+  let todayNonCancelled = 0;
+  let activeOrders = 0;
+  let kitchenWaiting = 0;
+  let activeDeliveries = 0;
+  const alerts: AdminOperationalAlert[] = [];
+
+  for (const row of rows) {
+    const status = String(row.status ?? "");
+    const createdAt = String(row.created_at ?? "");
+    const createdMs = new Date(createdAt).getTime();
+    const totalAmount = parseNumber(row.total_amount as number | string);
+    const branchId = String(row.branch_id ?? "");
+    const branchCode = branchCodeOf(row.branch);
+    const orderNumber = String(row.order_number ?? "");
+    const orderId = String(row.id ?? "");
+    const source = String(row.order_source ?? "unknown");
+
+    if (status in statusCounts) {
+      statusCounts[status] += 1;
+    }
+
+    sourceMap.set(source, (sourceMap.get(source) ?? 0) + 1);
+
+    if (!branchId) {
+      alerts.push({
+        id: `missing-branch-${orderId}`,
+        severity: "warning",
+        code: "MISSING_BRANCH_LINK",
+        message: `Order ${orderNumber || orderId} is missing branch linkage.`,
+        orderId,
+        orderNumber: orderNumber || undefined,
+      });
+    }
+
+    const isToday = Number.isFinite(createdMs) && createdMs >= dayStartMs;
+    if (isToday) {
+      todayOrders += 1;
+      if (status !== "cancelled") {
+        todayGrossSales += totalAmount;
+        todayNonCancelled += 1;
+      }
+    }
+
+    if (ACTIVE_STATUSES.has(status)) {
+      activeOrders += 1;
+    }
+    if (status === "confirmed" || status === "preparing") {
+      kitchenWaiting += 1;
+    }
+    if (status === "dispatched") {
+      activeDeliveries += 1;
+    }
+
+    if (options.includeBranchPerformance && branchId) {
+      const entry = branchMap.get(branchId) ?? {
+        branchId,
+        branchCode,
+        todayOrders: 0,
+        todayGrossSales: 0,
+        activeOrders: 0,
+      };
+      if (isToday) {
+        entry.todayOrders += 1;
+        if (status !== "cancelled") {
+          entry.todayGrossSales += totalAmount;
+        }
+      }
+      if (ACTIVE_STATUSES.has(status)) {
+        entry.activeOrders += 1;
+      }
+      branchMap.set(branchId, entry);
+    }
+
+    if (Number.isFinite(createdMs)) {
+      const age = nowMs - createdMs;
+      if (status === "pending" && age >= PENDING_ALERT_MS) {
+        alerts.push({
+          id: `pending-${orderId}`,
+          severity: age >= PENDING_ALERT_MS * 2 ? "critical" : "warning",
+          code: "PENDING_TOO_LONG",
+          message: `Order ${orderNumber} has been pending for more than 15 minutes.`,
+          orderId,
+          orderNumber,
+        });
+      }
+      if (status === "preparing" && age >= PREPARING_ALERT_MS) {
+        alerts.push({
+          id: `preparing-${orderId}`,
+          severity: "warning",
+          code: "PREPARING_TOO_LONG",
+          message: `Order ${orderNumber} has been preparing for more than 30 minutes.`,
+          orderId,
+          orderNumber,
+        });
+      }
+      if (status === "ready" && age >= READY_ALERT_MS) {
+        alerts.push({
+          id: `ready-${orderId}`,
+          severity: "warning",
+          code: "READY_AWAITING_DISPATCH",
+          message: `Order ${orderNumber} is ready and waiting for dispatch.`,
+          orderId,
+          orderNumber,
+        });
+      }
+    }
+  }
+
+  const recentOrders = [...rows]
+    .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+    .slice(0, 10)
+    .map(toListItem);
+
+  const insights: string[] = [];
+  const pendingCount = statusCounts.pending ?? 0;
+  if (pendingCount > 0) {
+    insights.push(`${pendingCount} pending order${pendingCount === 1 ? "" : "s"} require attention.`);
+  }
+  if (alerts.length === 0 && activeOrders === 0) {
+    insights.push("No active operational alerts in the current branch scope.");
+  } else if (alerts.length > 0) {
+    insights.push(`${alerts.length} operational alert${alerts.length === 1 ? "" : "s"} need review.`);
+  }
+
+  if (options.includeBranchPerformance && branchMap.size > 0) {
+    const top = [...branchMap.values()].sort((a, b) => b.activeOrders - a.activeOrders)[0];
+    if (top && top.activeOrders > 0) {
+      const label = top.branchCode ?? top.branchId;
+      insights.push(`${label} has the highest active order volume.`);
+    }
+  }
+
+  if (todayOrders === 0) {
+    insights.push("No orders recorded since the start of the Pakistan business day.");
+  }
+
+  return {
+    generatedAt: options.now.toISOString(),
+    timezone: "Asia/Karachi",
+    dayStart,
+    branchId: options.branchId,
+    kpis: {
+      todayOrders,
+      todayGrossSales,
+      activeOrders,
+      averageOrderValue: todayNonCancelled > 0 ? todayGrossSales / todayNonCancelled : null,
+      kitchenWaiting,
+      activeDeliveries,
+    },
+    statusCounts,
+    sourceBreakdown: [...sourceMap.entries()]
+      .map(([source, count]) => ({ source, count }))
+      .sort((a, b) => b.count - a.count),
+    recentOrders,
+    branchPerformance: options.includeBranchPerformance
+      ? [...branchMap.values()].sort((a, b) => b.todayOrders - a.todayOrders)
+      : null,
+    alerts: alerts.slice(0, 25),
+    insights: insights.slice(0, 5),
+  };
 }
 
 /**
@@ -230,23 +498,14 @@ export function createSupabaseBranchOrderManagementDataSource(
   return {
     async listBranchOrders(scope, filters) {
       const supabase = getClient();
+      const branchScope = resolveScopedBranchIds(scope, filters.branchId);
+      if (branchScope === "none") {
+        return { orders: [], pagination: { limit: filters.limit, offset: filters.offset, total: 0, returned: 0 } };
+      }
 
       let query = supabase.from("orders").select(LIST_COLUMNS, { count: "exact" });
-
-      if (scope.isSuperAdmin) {
-        if (filters.branchId) {
-          query = query.eq("branch_id", filters.branchId);
-        }
-      } else {
-        if (scope.branchIds.length === 0) {
-          return { orders: [], pagination: { limit: filters.limit, offset: filters.offset, total: 0, returned: 0 } };
-        }
-        if (filters.branchId) {
-          assertBranchInScope(scope, filters.branchId);
-          query = query.eq("branch_id", filters.branchId);
-        } else {
-          query = query.in("branch_id", scope.branchIds);
-        }
+      if (branchScope !== "all") {
+        query = branchScope.length === 1 ? query.eq("branch_id", branchScope[0]!) : query.in("branch_id", branchScope);
       }
 
       if (filters.status) {
@@ -254,6 +513,15 @@ export function createSupabaseBranchOrderManagementDataSource(
       }
       if (filters.orderType) {
         query = query.eq("order_type", filters.orderType);
+      }
+      if (filters.orderSource) {
+        query = query.eq("order_source", filters.orderSource);
+      }
+      if (filters.orderNumber) {
+        const term = filters.orderNumber.trim();
+        if (term) {
+          query = query.ilike("order_number", `%${term}%`);
+        }
       }
 
       query = query
@@ -275,6 +543,50 @@ export function createSupabaseBranchOrderManagementDataSource(
           returned: orders.length,
         },
       };
+    },
+
+    async getOperationsDashboard(scope, filters) {
+      const supabase = getClient();
+      const now = new Date();
+      const branchScope = resolveScopedBranchIds(scope, filters.branchId);
+      if (branchScope === "none") {
+        return buildDashboardFromRows([], {
+          branchId: filters.branchId ?? null,
+          includeBranchPerformance: Boolean(scope.isSuperAdmin && !filters.branchId),
+          now,
+        });
+      }
+
+      let query = supabase
+        .from("orders")
+        .select(
+          "id, order_number, status, order_type, order_source, branch_id, contact_name, contact_phone, payment_status, total_amount, created_at, updated_at, branch:branches(branch_code), items:order_items(count)",
+        );
+      if (branchScope !== "all") {
+        query = branchScope.length === 1 ? query.eq("branch_id", branchScope[0]!) : query.in("branch_id", branchScope);
+      }
+
+      // S1 bound: recent window covers active ops + today's volume without N+1 queries.
+      query = query.order("created_at", { ascending: false }).limit(500);
+
+      const { data, error } = await query;
+      if (error) {
+        throw new ApiError(500, "DASHBOARD_LOAD_FAILED", error.message);
+      }
+
+      const dayStartMs = new Date(startOfTodayKarachiIso(now)).getTime();
+      const rows = ((data ?? []) as Array<Record<string, unknown>>).filter((row) => {
+        const status = String(row.status ?? "");
+        if (ACTIVE_STATUSES.has(status)) return true;
+        const createdMs = new Date(String(row.created_at ?? "")).getTime();
+        return Number.isFinite(createdMs) && createdMs >= dayStartMs;
+      });
+
+      return buildDashboardFromRows(rows, {
+        branchId: filters.branchId ?? null,
+        includeBranchPerformance: Boolean(scope.isSuperAdmin && !filters.branchId),
+        now,
+      });
     },
 
     async getBranchOrderDetail(scope, orderId) {
@@ -485,6 +797,9 @@ export function createUnavailableBranchOrderManagementDataSource(): BranchOrderM
       return unavailable();
     },
     async getBranchOrderDetail() {
+      return unavailable();
+    },
+    async getOperationsDashboard() {
       return unavailable();
     },
     async transitionOrder() {

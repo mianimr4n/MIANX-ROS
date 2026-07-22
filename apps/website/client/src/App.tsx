@@ -32,7 +32,15 @@ import OpsDashboard from "./pages/ops/OpsDashboard";
 import OpsOrders from "./pages/ops/OpsOrders";
 import OpsKitchen from "./pages/ops/OpsKitchen";
 import OpsDispatch from "./pages/ops/OpsDispatch";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminIndexRedirect from "./pages/admin/AdminIndexRedirect";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminOrderDetail from "./pages/admin/AdminOrderDetail";
+import AdminUnauthorized from "./pages/admin/AdminUnauthorized";
+import AdminComingSoon from "./pages/admin/AdminComingSoon";
 import { AuthProvider } from "./contexts/AuthContext";
+import { AdminBranchProvider } from "./contexts/AdminBranchContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CartDrawer from "./components/CartDrawer";
@@ -52,7 +60,50 @@ function ScrollToTop() {
 }
 
 function isOpsChrome(path: string) {
-  return path === "/staff/login" || path.startsWith("/ops");
+  return path === "/staff/login" || path.startsWith("/ops") || path.startsWith("/admin");
+}
+
+function KitchenComingSoon() {
+  return <AdminComingSoon moduleName="Kitchen" />;
+}
+function DeliveryComingSoon() {
+  return <AdminComingSoon moduleName="Delivery" />;
+}
+function MenuComingSoon() {
+  return <AdminComingSoon moduleName="Menu" />;
+}
+function InventoryComingSoon() {
+  return <AdminComingSoon moduleName="Inventory" />;
+}
+function PromotionsComingSoon() {
+  return <AdminComingSoon moduleName="Promotions" />;
+}
+function CustomersComingSoon() {
+  return <AdminComingSoon moduleName="Customers" />;
+}
+function SupportComingSoon() {
+  return <AdminComingSoon moduleName="Support" />;
+}
+function BranchesComingSoon() {
+  return <AdminComingSoon moduleName="Branches" />;
+}
+function StaffComingSoon() {
+  return <AdminComingSoon moduleName="Staff" />;
+}
+function FinanceComingSoon() {
+  return <AdminComingSoon moduleName="Finance" />;
+}
+function ReportsComingSoon() {
+  return <AdminComingSoon moduleName="Reports" />;
+}
+function AiComingSoon() {
+  return <AdminComingSoon moduleName="AI Command Center" />;
+}
+function IntegrationsComingSoon() {
+  return <AdminComingSoon moduleName="Integrations" />;
+}
+function SettingsComingSoon() {
+  return <AdminComingSoon moduleName="Settings" />;
 }
 
 function Router() {
@@ -80,6 +131,26 @@ function Router() {
       <Route path="/ops/kitchen" component={OpsKitchen} />
       <Route path="/ops/dispatch" component={OpsDispatch} />
       <Route path="/ops" component={OpsDashboard} />
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/unauthorized" component={AdminUnauthorized} />
+      <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/orders/:orderId" component={AdminOrderDetail} />
+      <Route path="/admin/orders" component={AdminOrders} />
+      <Route path="/admin/kitchen" component={KitchenComingSoon} />
+      <Route path="/admin/delivery" component={DeliveryComingSoon} />
+      <Route path="/admin/menu" component={MenuComingSoon} />
+      <Route path="/admin/inventory" component={InventoryComingSoon} />
+      <Route path="/admin/promotions" component={PromotionsComingSoon} />
+      <Route path="/admin/customers" component={CustomersComingSoon} />
+      <Route path="/admin/support" component={SupportComingSoon} />
+      <Route path="/admin/branches" component={BranchesComingSoon} />
+      <Route path="/admin/staff" component={StaffComingSoon} />
+      <Route path="/admin/finance" component={FinanceComingSoon} />
+      <Route path="/admin/reports" component={ReportsComingSoon} />
+      <Route path="/admin/ai-command-center" component={AiComingSoon} />
+      <Route path="/admin/integrations" component={IntegrationsComingSoon} />
+      <Route path="/admin/settings" component={SettingsComingSoon} />
+      <Route path="/admin" component={AdminIndexRedirect} />
       <Route path="/my-telepizza/orders" component={MyTelepizza} />
       <Route path="/my-telepizza/addresses" component={MyTelepizza} />
       <Route path="/my-telepizza/rewards" component={MyTelepizza} />
@@ -132,9 +203,11 @@ function App() {
             <CartProvider>
               <MenuCatalogProvider>
                 <BranchProvider>
-                  <PizzaCustomizerProvider>
-                    <AppShell />
-                  </PizzaCustomizerProvider>
+                  <AdminBranchProvider>
+                    <PizzaCustomizerProvider>
+                      <AppShell />
+                    </PizzaCustomizerProvider>
+                  </AdminBranchProvider>
                 </BranchProvider>
               </MenuCatalogProvider>
             </CartProvider>

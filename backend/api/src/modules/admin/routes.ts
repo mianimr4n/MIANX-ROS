@@ -14,6 +14,7 @@ import type { RestaurantBillsService } from "../../services/bills/restaurant-bil
 import { createAdminOrdersRouter } from "./orders.js";
 import { createAdminTablesRouter } from "./tables.js";
 import { createAdminBillsRouter } from "./bills.js";
+import { createAdminDashboardRouter } from "./dashboard.js";
 import {
   assertCanReadInvites,
   type InviteAuditContext,
@@ -97,6 +98,16 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   router.use(
     "/orders",
     createAdminOrdersRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      branchOrderManagement: dependencies.branchOrderManagement,
+    }),
+  );
+
+  // Admin ERP S1 — operations overview dashboard.
+  router.use(
+    "/dashboard",
+    createAdminDashboardRouter({
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       branchOrderManagement: dependencies.branchOrderManagement,

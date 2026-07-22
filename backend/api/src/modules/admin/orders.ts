@@ -15,9 +15,10 @@ import {
   ORDER_TYPES,
   type BranchOrderAction,
 } from "../../services/orders/transitions.js";
-import type {
-  BranchActorScope,
-  BranchOrderManagementDataSource,
+import {
+  ORDER_SOURCES,
+  type BranchActorScope,
+  type BranchOrderManagementDataSource,
 } from "../../services/orders/management.js";
 
 export interface AdminOrdersRouterDependencies {
@@ -30,6 +31,8 @@ const listQuerySchema = z.object({
   branchId: z.string().uuid().optional(),
   status: z.enum(ORDER_STATUSES).optional(),
   orderType: z.enum(ORDER_TYPES).optional(),
+  orderSource: z.enum(ORDER_SOURCES).optional(),
+  orderNumber: z.string().trim().min(1).max(64).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   offset: z.coerce.number().int().min(0).optional(),
 });
@@ -73,6 +76,8 @@ export function createAdminOrdersRouter(deps: AdminOrdersRouterDependencies) {
         branchId: parsed.data.branchId,
         status: parsed.data.status,
         orderType: parsed.data.orderType,
+        orderSource: parsed.data.orderSource,
+        orderNumber: parsed.data.orderNumber,
         limit: parsed.data.limit ?? 20,
         offset: parsed.data.offset ?? 0,
       });
