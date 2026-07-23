@@ -52,6 +52,7 @@ import AdminFinance from "./pages/admin/AdminFinance";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminHr from "./pages/admin/AdminHr";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminBranchManager from "./pages/admin/AdminBranchManager";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AdminBranchProvider } from "./contexts/AdminBranchContext";
 import Navbar from "./components/Navbar";
@@ -65,8 +66,8 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 
 /**
- * Commit C — Owner Admin ERP routing.
- * Branch Manager and Kitchen Manager dashboards remain ComingSoon until Commits D/E.
+ * Commit D — Branch Manager route wiring on Owner Admin ERP.
+ * Kitchen Manager dashboard remains ComingSoon until Commit E.
  */
 
 function ScrollToTop() {
@@ -81,9 +82,6 @@ function isOpsChrome(path: string) {
   return path === "/staff/login" || path.startsWith("/ops") || path.startsWith("/admin");
 }
 
-function BranchManagerComingSoon() {
-  return <AdminComingSoon moduleName="Branch Manager" />;
-}
 function KitchenManagerComingSoon() {
   return <AdminComingSoon moduleName="Kitchen Manager KDS" />;
 }
@@ -150,8 +148,9 @@ function Router() {
       <Route path="/admin/finance" component={AdminFinance} />
       <Route path="/admin/reports" component={AdminReports} />
       <Route path="/admin/settings" component={AdminSettings} />
-      {/* Future Commit D / E — keep ComingSoon */}
-      <Route path="/admin/branch" component={BranchManagerComingSoon} />
+      {/* Commit D — Branch Manager home */}
+      <Route path="/admin/branch" component={AdminBranchManager} />
+      {/* Future Commit E — keep ComingSoon */}
       <Route path="/admin/kitchen-dashboard" component={KitchenManagerComingSoon} />
       {/* Not yet implemented Owner surfaces */}
       <Route path="/admin/promotions" component={PromotionsComingSoon} />
