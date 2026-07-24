@@ -27,6 +27,17 @@ describe("Admin ERP Foundation S1 (static)", () => {
   it("keeps reserved modules honest as coming soon", () => {
     const app = read("apps/website/client/src/App.tsx");
     assert.match(app, /\/admin\/kitchen/);
+    assert.match(app, /AdminKitchen/);
+    assert.match(app, /\/admin\/delivery/);
+    assert.match(app, /AdminDelivery/);
+    assert.match(app, /\/admin\/pos/);
+    assert.match(app, /AdminPos/);
+    assert.match(app, /\/admin\/crm/);
+    assert.match(app, /AdminCrm/);
+    assert.match(app, /\/admin\/loyalty/);
+    assert.match(app, /AdminLoyalty/);
+    assert.match(app, /\/admin\/whatsapp/);
+    assert.match(app, /AdminWhatsApp/);
     assert.match(app, /\/admin\/ai-command-center/);
     assert.match(app, /AdminComingSoon/);
     const soon = read("apps/website/client/src/pages/admin/AdminComingSoon.tsx");
@@ -65,15 +76,18 @@ describe("Admin ERP Foundation S1 (static)", () => {
   it("admin login is separate from customer marketing chrome", () => {
     const login = read("apps/website/client/src/pages/admin/AdminLogin.tsx");
     assert.match(login, /Telepizza Admin/);
-    assert.match(login, /Powered by Mianx\.ai/);
+    assert.match(login, /Sign in to ERP/);
+    assert.match(login, /authorized staff only/i);
     assert.doesNotMatch(login, /Google|Facebook|SSO/);
+    assert.doesNotMatch(login, /Add to Cart|Browse Menu|Customer/);
   });
 
-  it("orders module remains read-only in S1 UI", () => {
+  it("order detail page stays action-free; transitions live on orders workspace", () => {
     const detail = read("apps/website/client/src/pages/admin/AdminOrderDetail.tsx");
-    assert.match(detail, /read-only/i);
-    assert.doesNotMatch(detail, /transitionOpsOrder|confirm\(|preparing\(/);
+    assert.doesNotMatch(detail, /transitionAdminOrder|transitionOpsOrder/);
+    assert.match(detail, /drawer actions/i);
     const list = read("apps/website/client/src/pages/admin/AdminOrders.tsx");
-    assert.match(list, /Read-only/);
+    assert.match(list, /transitionAdminOrder/);
+    assert.match(list, /canManageOrders|canTransition/);
   });
 });

@@ -169,7 +169,7 @@ test("Login page validates email, blocks double submit, and keeps OTP out of sco
 test("AuthContext restores session, cleans listener, calls /auth/me with bearer, logout clears identity only", () => {
   const authContext = read("apps/website/client/src/contexts/AuthContext.tsx");
 
-  assert.match(authContext, /getSession\(/);
+  // Session bootstrap uses onAuthStateChange (serialized); getSession() is not required.
   assert.match(authContext, /onAuthStateChange/);
   assert.match(authContext, /subscription\.unsubscribe\(/);
   assert.match(authContext, /Authorization:\s*`Bearer \$\{accessToken\}`/);
