@@ -207,7 +207,7 @@ Governance documents define engineering authority.
 
 Documentation must never overstate implementation status.
 
-Current delivery honesty for Executive Dashboard v1 is recorded in [`docs/00-governance/REPOSITORY_STATUS.md`](docs/00-governance/REPOSITORY_STATUS.md). Do not describe it as merged, deployed, or released until those records change.
+Current delivery honesty for Executive Dashboard v1 is recorded in [`docs/00-governance/REPOSITORY_STATUS.md`](docs/00-governance/REPOSITORY_STATUS.md). D1 is **Released** on production (`f685599` / PR #100) with acceptance still **PASS WITH LIMITATIONS**.
 
 ---
 

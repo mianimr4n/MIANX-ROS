@@ -49,7 +49,7 @@ Future platform capabilities are tracked through the roadmap and architecture do
 
 > This section reflects repository governance and does **not** imply production release, merge, deployment, or Founder sign-off.
 >
-> Executive Dashboard v1 current honesty: Architecture PASS · Implementation PASS · Repository verification PASS · Acceptance PASS WITH LIMITATIONS · Release Candidate READY · Commit/PR/Merge Pending · Release Not Released.
+> Executive Dashboard v1 current honesty: Architecture PASS · Implementation PASS · Repository verification PASS · Acceptance PASS WITH LIMITATIONS · **Released** (merge `f685599` / PR #100). Known AV1 limitations remain documented in [`docs/00-governance/REPOSITORY_STATUS.md`](docs/00-governance/REPOSITORY_STATUS.md).
 
 ---
 
