@@ -52,17 +52,25 @@ These states must never be treated as equivalent.
 | Repository Verification | PASS |
 | Acceptance | PASS WITH LIMITATIONS |
 | Release Candidate | READY |
-| Commit | Pending |
-| Pull Request | Pending |
-| Merge | Pending |
-| Release | Not Released |
+| Commit | Complete (`abc7b46` tip; merge `f685599`) |
+| Pull Request | Complete ([#100](https://github.com/mianimr4n/telepizza/pull/100)) |
+| Merge | Complete |
+| Release | **Released** (production website + API deploy success for `f685599`) |
 
-Executive Dashboard v1 must **not** be described as merged, deployed, released, or production complete while Commit/PR/Merge remain Pending and Release remains Not Released.
+Executive Dashboard v1 is **Released** to production as of merge commit `f685599` (2026-07-24). Acceptance remains **PASS WITH LIMITATIONS** — known limitations below are still open and must not be erased by release status.
+
+### Production verification evidence (post-deploy)
+
+- Website Production deploy: success (`f685599`) → `https://telepizza-website.vercel.app`
+- API Production deploy: success (`f685599`) → Render `telepizza-api` (`/healthz` 200)
+- Production bundle markers confirmed: Active Orders, Kitchen Queue, Average Order Value, Active Deliveries, Mianx.ai Operations Insights, Loading insights, D1 operations grid copy
+- `/admin/login` returns HTTP 200
+- Authenticated live KPI browser session was not re-run in this post-deploy pass (gate remains login-protected)
 
 ### Accepted verification limitations
 
 - Customer-session RBAC browser proof was unavailable (no local customer fixture).
-- Live API error state was not induced during AV1.
+- Live API error state was not induced during AV1 (code now prefers KPI `error` over stale payload; production induction still pending).
 - Planned/disabled module cards are represented in Admin shell navigation rather than the D1 operations grid.
 
 ---
