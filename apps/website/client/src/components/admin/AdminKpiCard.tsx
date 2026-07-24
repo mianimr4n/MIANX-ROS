@@ -1,15 +1,28 @@
 import type { ReactNode } from "react";
 
-import { AdminSparkline } from "@/components/admin/AdminSparkline";
 import { cn } from "@/lib/utils";
 
 export type AdminKpiSource = "LIVE" | "DERIVED" | "PARTIAL" | "FOUNDATION" | "UNAVAILABLE";
 
+export type AdminKpiState =
+  | "available"
+  | "loading"
+  | "empty"
+  | "unavailable"
+  | "error"
+  | "planned";
+
 export type AdminKpiCardProps = {
   title: string;
-  value: string;
+  /** Primary metric. Prefer null over inventing zero when data is missing. */
+  value?: string | null;
+  secondary?: string;
   source: AdminKpiSource;
+  lastUpdated?: string | null;
+  state?: AdminKpiState;
   detail?: string;
+  action?: ReactNode;
+  /** @deprecated Prefer `state="unavailable"`. Kept for existing Admin modules. */
   unavailable?: boolean;
   className?: string;
 };
@@ -22,49 +35,99 @@ const SOURCE_STYLES: Record<AdminKpiSource, string> = {
   UNAVAILABLE: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
 };
 
+const STATE_LABEL: Record<AdminKpiState, string> = {
+  available: "Available",
+  loading: "Loading",
+  empty: "Empty",
+  unavailable: "Unavailable",
+  error: "Error",
+  planned: "Planned",
+};
+
+function resolveDisplayValue(value: string | null | undefined, state: AdminKpiState): string {
+  if (state === "loading") return "…";
+  if (state === "unavailable" || state === "planned" || state === "error" || state === "empty") {
+    return "—";
+  }
+  if (value == null || value === "") return "—";
+  return value;
+}
+
 export function AdminKpiCard({
   title,
-  value,
+  value = null,
+  secondary,
   source,
+  lastUpdated = null,
+  state,
   detail,
+  action,
   unavailable = false,
   className,
 }: AdminKpiCardProps) {
+  const resolvedState: AdminKpiState = state ?? (unavailable ? "unavailable" : "available");
+  const display = resolveDisplayValue(value, resolvedState);
+  const showAsMuted = resolvedState !== "available";
+
   return (
     <article
       className={cn(
-        "rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4 shadow-[0_1px_2px_rgba(31,31,31,0.04)]",
+        "flex h-full flex-col rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4 shadow-[0_1px_2px_rgba(31,31,31,0.04)]",
         className,
       )}
+      aria-busy={resolvedState === "loading" || undefined}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-xs font-medium uppercase tracking-[0.08em] text-[var(--admin-muted)]">{title}</p>
-            <span
-              className={cn(
-                "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                SOURCE_STYLES[source],
-              )}
-            >
-              {source === "UNAVAILABLE" ? "Unavailable" : source.toLowerCase()}
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <p className="text-xs font-medium uppercase tracking-[0.08em] text-[var(--admin-muted)]">{title}</p>
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+              SOURCE_STYLES[source],
+            )}
+          >
+            {source === "UNAVAILABLE" ? "Unavailable" : source.toLowerCase()}
+          </span>
+          {resolvedState !== "available" ? (
+            <span className="rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+              {STATE_LABEL[resolvedState]}
             </span>
-          </div>
-          <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-[var(--admin-ink)]">
-            {unavailable ? "—" : value}
-          </p>
+          ) : null}
         </div>
-        <AdminSparkline decorative />
       </div>
-      <p className="mt-3 text-xs text-[var(--admin-muted)]">
-        {unavailable ? (detail ?? "Not available yet") : (detail ?? "From operations API")}
+
+      <p
+        className={cn(
+          "mt-2 text-2xl font-semibold tabular-nums tracking-tight",
+          showAsMuted ? "text-[var(--admin-muted)]" : "text-[var(--admin-ink)]",
+        )}
+      >
+        {display}
       </p>
+
+      {secondary ? <p className="mt-1 text-xs text-[var(--admin-muted)]">{secondary}</p> : null}
+
+      <div className="mt-auto space-y-2 pt-3">
+        {detail ? (
+          <p className="text-xs text-[var(--admin-muted)]">
+            {resolvedState === "unavailable" || resolvedState === "planned"
+              ? (detail ?? "Not available yet")
+              : detail}
+          </p>
+        ) : null}
+        {lastUpdated ? (
+          <p className="text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">
+            Updated {lastUpdated}
+          </p>
+        ) : null}
+        {action ? <div className="pt-1">{action}</div> : null}
+      </div>
     </article>
   );
 }
 
 export function AdminKpiSkeleton() {
-  return <div className="h-[7.25rem] animate-pulse rounded-2xl bg-[var(--admin-soft)]" aria-hidden />;
+  return <div className="h-[8.5rem] animate-pulse rounded-2xl bg-[var(--admin-soft)]" aria-hidden />;
 }
 
 export function AdminSectionTitle({

@@ -54,10 +54,10 @@ export function ExecutiveFilterBar({
     <form
       className="grid gap-3 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4 md:grid-cols-2 xl:grid-cols-6"
       onSubmit={(event) => event.preventDefault()}
-      aria-label="Global dashboard filters"
+      aria-label="Global dashboard context"
     >
       <label className="text-xs font-medium text-[var(--admin-muted)]">
-        Branch
+        Branch scope
         <select
           className="mt-1.5 w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm text-[var(--admin-ink)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-red)]"
           aria-label="Filter by branch"
@@ -81,14 +81,17 @@ export function ExecutiveFilterBar({
       <label className="text-xs font-medium text-[var(--admin-muted)]">
         Date range
         <select
-          className="mt-1.5 w-full cursor-not-allowed rounded-lg border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2 text-sm text-[var(--admin-muted)]"
+          className="mt-1.5 w-full cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2 text-sm text-[var(--admin-muted)]"
           aria-label="Date range unavailable"
+          aria-disabled="true"
           disabled
           value="today"
         >
           <option value="today">Today (API scope)</option>
         </select>
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Foundation</span>
+        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">
+          Disabled · Foundation
+        </span>
       </label>
 
       <label className="text-xs font-medium text-[var(--admin-muted)]">

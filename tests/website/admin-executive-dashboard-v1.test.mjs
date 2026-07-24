@@ -1,5 +1,5 @@
 /**
- * Executive Admin Dashboard v1 — reusable foundation wiring (static).
+ * Executive Admin Dashboard v1 — D1 polish static contract.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -22,30 +22,47 @@ describe("Executive Admin Dashboard v1 (static)", () => {
     assert.match(dashboard, /AiInsightsPanel/);
     assert.match(dashboard, /LiveActivityPanel/);
     assert.match(dashboard, /fetchAdminOperationsDashboard/);
+    assert.match(dashboard, /buildMianxInsightItems/);
   });
 
-  it("keeps unavailable KPIs honest without inventing inventory or CSAT", () => {
+  it("keeps the approved KPI contract without inventing inventory or CSAT", () => {
     const dashboard = read("apps/website/client/src/pages/admin/AdminDashboard.tsx");
-    assert.match(dashboard, /Inventory alerts/);
-    assert.match(dashboard, /Customer satisfaction/);
-    assert.match(dashboard, /UNAVAILABLE/);
-    assert.match(dashboard, /source="LIVE"|source=\{/);
+    assert.match(dashboard, /Today’s Orders/);
+    assert.match(dashboard, /Today’s Sales/);
+    assert.match(dashboard, /Active Orders/);
+    assert.match(dashboard, /Kitchen Queue/);
+    assert.match(dashboard, /Active Deliveries/);
+    assert.match(dashboard, /Average Order Value/);
+    assert.doesNotMatch(dashboard, /Inventory alerts/);
+    assert.doesNotMatch(dashboard, /Customer satisfaction/);
     assert.doesNotMatch(dashboard, /percentageLabel|trendLabel/);
+    assert.match(dashboard, /formatCount|formatPkr/);
   });
 
-  it("labels AI foundation insights separately from live signals", () => {
+  it("labels Mianx insights as deterministic rule summaries with structured fields", () => {
     const widgets = read("apps/website/client/src/components/admin/dashboard/ExecutiveWidgets.tsx");
     assert.match(widgets, /Mianx\.ai Operations Insights/);
-    assert.match(widgets, /Rule-based summary/);
-    assert.doesNotMatch(widgets, /demand predicted|autonomous|LLM/i);
+    assert.match(widgets, /Rule ID/);
+    assert.match(widgets, /Recommended action/);
+    assert.match(widgets, /buildMianxInsightItems/);
+    assert.match(widgets, /Loading insights/);
+    assert.doesNotMatch(widgets, /demand predicted|autonomous|generative model/i);
   });
 
-  it("registers POS and WhatsApp reserved routes without removing existing admin routes", () => {
-    const app = read("apps/website/client/src/App.tsx");
-    assert.match(app, /\/admin\/dashboard/);
-    assert.match(app, /\/admin\/orders/);
-    assert.match(app, /\/admin\/pos/);
-    assert.match(app, /\/admin\/whatsapp/);
+  it("prefers KPI error state over stale prior payload", () => {
+    const dashboard = read("apps/website/client/src/pages/admin/AdminDashboard.tsx");
+    assert.match(dashboard, /if \(args\.error\) return "error"/);
+    assert.match(dashboard, /loading=\{loading && !data\}/);
+  });
+
+  it("limits operations grid to D1-supported cards with existing routes", () => {
+    const grid = read("apps/website/client/src/components/admin/dashboard/OperationsModuleGrid.tsx");
+    assert.match(grid, /title: "Orders"/);
+    assert.match(grid, /title: "Employees"/);
+    assert.match(grid, /moduleState/);
+    assert.doesNotMatch(grid, /title: "WhatsApp"/);
+    assert.doesNotMatch(grid, /title: "Loyalty"/);
+    assert.doesNotMatch(grid, /\/admin\/ai-command-center/);
   });
 
   it("does not change auth or introduce migrations in this slice", () => {

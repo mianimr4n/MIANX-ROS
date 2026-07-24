@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 
-import { AdminKpiCard, AdminKpiSkeleton, AdminSectionTitle } from "@/components/admin/AdminKpiCard";
+import { AdminKpiCard, AdminKpiSkeleton, AdminSectionTitle, type AdminKpiState } from "@/components/admin/AdminKpiCard";
 import {
   DEFAULT_EXECUTIVE_FILTERS,
   ExecutiveFilterBar,
@@ -18,8 +18,10 @@ import {
   BranchPerformancePanel,
   ExecutiveAside,
   LiveActivityPanel,
-  buildAiInsightItems,
+  SourceBreakdownPanel,
+  StatusBreakdownPanel,
   buildLiveActivity,
+  buildMianxInsightItems,
 } from "@/components/admin/dashboard/ExecutiveWidgets";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
@@ -34,8 +36,13 @@ import { ApiRequestError, isApiConfigured } from "@/lib/api";
 import { AdminShell } from "@/pages/admin/AdminShell";
 
 function formatPkr(value: number | null | undefined) {
-  if (value == null || Number.isNaN(value)) return "—";
+  if (value == null || Number.isNaN(value)) return null;
   return `Rs ${Math.round(value).toLocaleString("en-PK")}`;
+}
+
+function formatCount(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) return null;
+  return String(value);
 }
 
 function greetingForNow(now = new Date()) {
@@ -62,6 +69,19 @@ function formatHeaderDate(now = new Date()) {
   }).format(now);
 }
 
+function formatUpdatedAt(iso: string | undefined) {
+  if (!iso) return null;
+  try {
+    return new Date(iso).toLocaleTimeString("en-PK", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  } catch {
+    return null;
+  }
+}
+
 function applyClientFilters(
   orders: AdminOrderListItem[],
   filters: ExecutiveDashboardFilters,
@@ -72,6 +92,22 @@ function applyClientFilters(
     if (filters.deliveryType && order.orderType !== filters.deliveryType) return false;
     return true;
   });
+}
+
+function kpiState(args: {
+  loading: boolean;
+  error: string | null;
+  data: AdminOperationsDashboard | null;
+  empty?: boolean;
+  unavailable?: boolean;
+}): AdminKpiState {
+  if (args.loading && !args.data) return "loading";
+  // Prefer error over stale prior payload so KPIs do not look LIVE while refresh failed.
+  if (args.error) return "error";
+  if (!args.data) return "unavailable";
+  if (args.unavailable) return "unavailable";
+  if (args.empty) return "empty";
+  return "available";
 }
 
 export default function AdminDashboard() {
@@ -123,15 +159,17 @@ export default function AdminDashboard() {
     return applyClientFilters(data.recentOrders, filters);
   }, [data, filters]);
 
-  const aiItems = useMemo(() => buildAiInsightItems(data), [data]);
+  const mianxItems = useMemo(
+    () => buildMianxInsightItems(data, branchLabel),
+    [branchLabel, data],
+  );
   const activity = useMemo(
     () => buildLiveActivity(filteredOrders, data?.alerts ?? []),
     [data?.alerts, filteredOrders],
   );
 
-  const whatsappEntry = data?.sourceBreakdown.find((row) => row.source === "whatsapp");
-  const whatsappCount = whatsappEntry?.count;
   const dataReady = Boolean(data) && !error;
+  const updated = formatUpdatedAt(data?.generatedAt);
   const liveLabel = !isApiConfigured
     ? "API not configured"
     : error
@@ -142,10 +180,12 @@ export default function AdminDashboard() {
           ? "Loading…"
           : "Idle";
 
+  const baseState = { loading, error, data };
+
   return (
     <AdminShell title="Executive dashboard">
       <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">
             Telepizza ROS
           </p>
@@ -153,7 +193,16 @@ export default function AdminDashboard() {
             {greetingForNow(now)}, {profile?.fullName?.split(" ")[0] || roleLabel}
           </p>
           <p className="mt-1 text-sm text-[var(--admin-muted)]">
-            {roleLabel} · {branchLabel} · {formatHeaderDate(now)}
+            <span className="font-medium text-[var(--admin-ink)]">{profile?.fullName ?? "Staff"}</span>
+            {" · "}
+            {roleLabel}
+            {" · "}
+            {branchLabel}
+            {" · "}
+            {formatHeaderDate(now)}
+          </p>
+          <p className="mt-1 text-xs text-[var(--admin-muted)]">
+            Search and notifications remain disabled in the Admin shell until those services ship.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -171,11 +220,7 @@ export default function AdminDashboard() {
               aria-hidden
             />
             {liveLabel}
-            {data ? (
-              <span className="font-normal opacity-80">
-                {new Date(data.generatedAt).toLocaleTimeString("en-PK")}
-              </span>
-            ) : null}
+            {updated ? <span className="font-normal opacity-80">{updated}</span> : null}
           </span>
           <button
             type="button"
@@ -195,7 +240,7 @@ export default function AdminDashboard() {
         />
         <p className="mt-2 text-xs text-[var(--admin-muted)]">
           Branch reloads KPI data from the API. Status, channel, and type refine the recent-orders list only.
-          Date range beyond today is foundation-disabled until analytics endpoints exist.
+          Date range beyond today stays foundation-disabled until analytics endpoints exist.
         </p>
       </div>
 
@@ -216,75 +261,91 @@ export default function AdminDashboard() {
         <AdminSectionTitle
           eyebrow="Health"
           title="Executive KPIs"
-          description="Classified as live, derived, foundation, or unavailable. No fabricated trends."
+          description="Approved live and derived metrics only. Missing values stay honest — never fabricated."
         />
         {loading && !data ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-busy="true" aria-live="polite">
-            {Array.from({ length: 8 }).map((_, index) => (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-live="polite">
+            {Array.from({ length: 6 }).map((_, index) => (
               <AdminKpiSkeleton key={index} />
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <AdminKpiCard
-              title="Today’s sales"
-              value={formatPkr(data?.kpis.todayGrossSales)}
+              title="Today’s Orders"
+              value={formatCount(data?.kpis.todayOrders)}
+              secondary="Asia/Karachi business day"
               source="LIVE"
+              state={kpiState(baseState)}
+              lastUpdated={updated}
+              detail="Order count for today’s non-cancelled and cancelled rows in scope"
+              action={
+                <Link href="/admin/orders" className="text-xs font-semibold text-[var(--brand-red)]">
+                  Open orders
+                </Link>
+              }
+            />
+            <AdminKpiCard
+              title="Today’s Sales"
+              value={formatPkr(data?.kpis.todayGrossSales)}
+              secondary="Gross sales"
+              source="LIVE"
+              state={kpiState(baseState)}
+              lastUpdated={updated}
               detail="Gross sales from today’s non-cancelled orders"
             />
             <AdminKpiCard
-              title="Today’s orders"
-              value={String(data?.kpis.todayOrders ?? 0)}
-              source="LIVE"
-              detail="Order count for Asia/Karachi business day"
+              title="Active Orders"
+              value={formatCount(data?.kpis.activeOrders)}
+              secondary="In-flight pipeline"
+              source="DERIVED"
+              state={kpiState(baseState)}
+              lastUpdated={updated}
+              detail="Orders not yet completed or cancelled"
             />
             <AdminKpiCard
-              title="Average order value"
-              value={formatPkr(data?.kpis.averageOrderValue)}
-              source={data?.kpis.averageOrderValue == null ? "UNAVAILABLE" : "DERIVED"}
-              unavailable={data?.kpis.averageOrderValue == null}
-              detail={
-                data?.kpis.averageOrderValue == null
-                  ? "Needs non-cancelled orders today"
-                  : "Sales ÷ non-cancelled orders today"
+              title="Kitchen Queue"
+              value={formatCount(data?.kpis.kitchenWaiting)}
+              secondary="Confirmed + preparing"
+              source="DERIVED"
+              state={kpiState(baseState)}
+              lastUpdated={updated}
+              detail="Status-derived queue — not a live KDS ticket count"
+              action={
+                <Link href="/admin/kitchen" className="text-xs font-semibold text-[var(--brand-red)]">
+                  Open kitchen
+                </Link>
               }
             />
             <AdminKpiCard
-              title="Active deliveries"
-              value={String(data?.kpis.activeDeliveries ?? 0)}
+              title="Active Deliveries"
+              value={formatCount(data?.kpis.activeDeliveries)}
+              secondary="Dispatched"
               source="DERIVED"
+              state={kpiState(baseState)}
+              lastUpdated={updated}
               detail="Orders currently in dispatched status"
-            />
-            <AdminKpiCard
-              title="Kitchen queue"
-              value={String(data?.kpis.kitchenWaiting ?? 0)}
-              source="DERIVED"
-              detail="Confirmed + preparing — not a KDS ticket count"
-            />
-            <AdminKpiCard
-              title="WhatsApp-attributed orders"
-              value={whatsappCount != null ? String(whatsappCount) : "—"}
-              source={whatsappCount == null ? "UNAVAILABLE" : "DERIVED"}
-              unavailable={whatsappCount == null}
-              detail={
-                whatsappCount == null
-                  ? "No WhatsApp-sourced orders in the dashboard window"
-                  : "Count of WhatsApp-sourced orders in window"
+              action={
+                <Link href="/admin/delivery" className="text-xs font-semibold text-[var(--brand-red)]">
+                  Open delivery
+                </Link>
               }
             />
             <AdminKpiCard
-              title="Inventory alerts"
-              value="—"
-              source="UNAVAILABLE"
-              unavailable
-              detail="Inventory module not live"
-            />
-            <AdminKpiCard
-              title="Customer satisfaction"
-              value="—"
-              source="UNAVAILABLE"
-              unavailable
-              detail="Reviews analytics not live"
+              title="Average Order Value"
+              value={formatPkr(data?.kpis.averageOrderValue)}
+              secondary="Sales ÷ non-cancelled orders"
+              source={data?.kpis.averageOrderValue == null ? "UNAVAILABLE" : "DERIVED"}
+              state={kpiState({
+                ...baseState,
+                unavailable: data != null && data.kpis.averageOrderValue == null,
+              })}
+              lastUpdated={updated}
+              detail={
+                data != null && data.kpis.averageOrderValue == null
+                  ? "Needs non-cancelled orders today"
+                  : "Derived from today’s gross sales"
+              }
             />
           </div>
         )}
@@ -314,13 +375,21 @@ export default function AdminDashboard() {
       </section>
 
       <section className="mb-8" aria-label="Business analytics">
-        <AdminSectionTitle eyebrow="Analytics" title="Branch performance" />
-        <BranchPerformancePanel rows={data?.branchPerformance ?? null} />
+        <AdminSectionTitle
+          eyebrow="Analytics"
+          title="Business analytics"
+          description="Verified breakdowns only. Insufficient data shows an honest empty state."
+        />
+        <div className="grid gap-4 xl:grid-cols-3">
+          <StatusBreakdownPanel counts={data?.statusCounts ?? null} ready={dataReady} />
+          <SourceBreakdownPanel rows={data?.sourceBreakdown ?? null} ready={dataReady} />
+          <BranchPerformancePanel rows={data?.branchPerformance ?? null} />
+        </div>
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]">
         <div className="space-y-6">
-          <AiInsightsPanel items={aiItems} />
+          <AiInsightsPanel items={mianxItems} loading={loading && !data} />
           <LiveActivityPanel items={activity} />
         </div>
         <ExecutiveAside alertCount={data?.alerts.length ?? 0} />
