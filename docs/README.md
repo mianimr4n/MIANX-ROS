@@ -123,6 +123,8 @@ docs/
 | --- | --- |
 | Repository governance | [`00-governance/`](00-governance/) |
 | Current repository status | [`00-governance/REPOSITORY_STATUS.md`](00-governance/REPOSITORY_STATUS.md) |
+| ROS architecture blueprint (target) | [`architecture/RESTAURANT_OPERATING_SYSTEM_BLUEPRINT.md`](architecture/RESTAURANT_OPERATING_SYSTEM_BLUEPRINT.md) |
+| ROS current-state assessment | [`architecture/assessments/ROS_CURRENT_STATE_ASSESSMENT_2026-07-25.md`](architecture/assessments/ROS_CURRENT_STATE_ASSESSMENT_2026-07-25.md) |
 | Master roadmap (locked sequence) | [`14-phases/TELEPIZZA-MASTER-ROADMAP.md`](14-phases/TELEPIZZA-MASTER-ROADMAP.md) |
 | Milestone companion | [`14-phases/PROJECT-MILESTONE-AND-ROADMAP.md`](14-phases/PROJECT-MILESTONE-AND-ROADMAP.md) |
 | Architecture | [`architecture/`](architecture/) · nav alias [`01-architecture/`](01-architecture/) |
