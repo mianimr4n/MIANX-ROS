@@ -45,7 +45,14 @@ describe("Executive Admin Dashboard v1 (static)", () => {
     assert.match(widgets, /Rule ID/);
     assert.match(widgets, /Recommended action/);
     assert.match(widgets, /buildMianxInsightItems/);
+    assert.match(widgets, /Loading insights/);
     assert.doesNotMatch(widgets, /demand predicted|autonomous|generative model/i);
+  });
+
+  it("prefers KPI error state over stale prior payload", () => {
+    const dashboard = read("apps/website/client/src/pages/admin/AdminDashboard.tsx");
+    assert.match(dashboard, /if \(args\.error\) return "error"/);
+    assert.match(dashboard, /loading=\{loading && !data\}/);
   });
 
   it("limits operations grid to D1-supported cards with existing routes", () => {

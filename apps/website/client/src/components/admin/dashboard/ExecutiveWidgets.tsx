@@ -136,8 +136,10 @@ export function buildAiInsightItems(data: AdminOperationsDashboard | null) {
 
 export function AiInsightsPanel({
   items,
+  loading = false,
 }: {
   items: MianxInsightItem[];
+  loading?: boolean;
 }) {
   return (
     <AdminSurface
@@ -152,7 +154,9 @@ export function AiInsightsPanel({
         <h3 id="ai-insights-heading" className="sr-only">
           Mianx.ai Operations Insights
         </h3>
-        {items.length === 0 ? (
+        {loading && items.length === 0 ? (
+          <p className="text-sm text-[var(--admin-muted)]">Loading insights…</p>
+        ) : items.length === 0 ? (
           <p className="text-sm text-[var(--admin-muted)]">Not available yet</p>
         ) : (
           <ul className="space-y-3">

@@ -102,7 +102,8 @@ function kpiState(args: {
   unavailable?: boolean;
 }): AdminKpiState {
   if (args.loading && !args.data) return "loading";
-  if (args.error && !args.data) return "error";
+  // Prefer error over stale prior payload so KPIs do not look LIVE while refresh failed.
+  if (args.error) return "error";
   if (!args.data) return "unavailable";
   if (args.unavailable) return "unavailable";
   if (args.empty) return "empty";
@@ -388,7 +389,7 @@ export default function AdminDashboard() {
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]">
         <div className="space-y-6">
-          <AiInsightsPanel items={mianxItems} />
+          <AiInsightsPanel items={mianxItems} loading={loading && !data} />
           <LiveActivityPanel items={activity} />
         </div>
         <ExecutiveAside alertCount={data?.alerts.length ?? 0} />
