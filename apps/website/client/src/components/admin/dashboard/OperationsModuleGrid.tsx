@@ -1,163 +1,120 @@
 import {
   Banknote,
   Bike,
-  BookOpen,
   ClipboardList,
   CookingPot,
-  Gift,
-  MessageSquare,
   Package,
   Settings,
   ShoppingBag,
-  ShoppingCart,
   Users,
   UtensilsCrossed,
   Wallet,
 } from "lucide-react";
 
-import { AdminModuleCard } from "@/components/admin/AdminModuleCard";
+import { AdminModuleCard, type AdminModuleState } from "@/components/admin/AdminModuleCard";
 import { AdminSectionTitle } from "@/components/admin/AdminKpiCard";
 
-const MODULES = [
+type ModuleDef = {
+  title: string;
+  description: string;
+  href: string;
+  icon: typeof ClipboardList;
+  moduleState: AdminModuleState;
+  actionLabel: string;
+  navigable: boolean;
+};
+
+/** D1-supported operations cards only. Routes must exist; planned cards stay disabled. */
+const MODULES: ModuleDef[] = [
   {
     title: "Orders",
     description: "Live queue, detail, and payment state.",
     href: "/admin/orders",
     icon: ClipboardList,
-    statusLabel: "Live",
-    statusTone: "live" as const,
+    moduleState: "operational",
     actionLabel: "Open orders",
-    available: true,
-  },
-  {
-    title: "POS",
-    description: "Counter sales and dine-in billing.",
-    href: "/admin/pos",
-    icon: ShoppingBag,
-    statusLabel: "Live",
-    statusTone: "live" as const,
-    actionLabel: "Open POS",
-    available: true,
+    navigable: true,
   },
   {
     title: "Kitchen",
-    description: "Prep queue, ready tickets, delays.",
+    description: "Prep queue, ready tickets, and delays.",
     href: "/admin/kitchen",
     icon: CookingPot,
-    statusLabel: "Live",
-    statusTone: "live" as const,
+    moduleState: "operational",
     actionLabel: "Open kitchen",
-    available: true,
+    navigable: true,
   },
   {
     title: "Delivery",
     description: "Dispatch queue, riders, and delivery status.",
     href: "/admin/delivery",
     icon: Bike,
-    statusLabel: "Live",
-    statusTone: "live" as const,
+    moduleState: "operational",
     actionLabel: "Open delivery",
-    available: true,
+    navigable: true,
   },
   {
-    title: "WhatsApp",
-    description: "WhatsApp-attributed order operations queue.",
-    href: "/admin/whatsapp",
-    icon: MessageSquare,
-    statusLabel: "Derived",
-    statusTone: "ready" as const,
-    actionLabel: "Open WhatsApp",
-    available: true,
+    title: "POS",
+    description: "Counter sales and dine-in billing.",
+    href: "/admin/pos",
+    icon: ShoppingBag,
+    moduleState: "limited",
+    actionLabel: "Open POS",
+    navigable: true,
   },
   {
     title: "CRM",
     description: "Customer intelligence from live order history.",
     href: "/admin/crm",
     icon: Users,
-    statusLabel: "Live",
-    statusTone: "live" as const,
+    moduleState: "limited",
     actionLabel: "Open CRM",
-    available: true,
-  },
-  {
-    title: "Loyalty",
-    description: "Repeat-customer intelligence — points ledger pending.",
-    href: "/admin/loyalty",
-    icon: Gift,
-    statusLabel: "Derived",
-    statusTone: "ready" as const,
-    actionLabel: "Open loyalty",
-    available: true,
-  },
-  {
-    title: "Menu",
-    description: "Master catalog browser — write APIs pending.",
-    href: "/admin/menu",
-    icon: BookOpen,
-    statusLabel: "Live",
-    statusTone: "live" as const,
-    actionLabel: "Open menu",
-    available: true,
+    navigable: true,
   },
   {
     title: "Inventory",
-    description: "Stock control foundation — ledger and recipes pending.",
+    description: "Stock control foundation — ledger pending.",
     href: "/admin/inventory",
     icon: Package,
-    statusLabel: "Foundation",
-    statusTone: "soon" as const,
+    moduleState: "limited",
     actionLabel: "Open inventory",
-    available: true,
-  },
-  {
-    title: "Purchasing",
-    description: "Supplier and PO foundation — procurement backend pending.",
-    href: "/admin/purchasing",
-    icon: ShoppingCart,
-    statusLabel: "Foundation",
-    statusTone: "soon" as const,
-    actionLabel: "Open purchasing",
-    available: true,
+    navigable: true,
   },
   {
     title: "Finance",
-    description: "Sales, taxes, cash, and ledger foundation.",
+    description: "Sales and ledger foundation — GL pending.",
     href: "/admin/finance",
     icon: Wallet,
-    statusLabel: "Foundation",
-    statusTone: "soon" as const,
+    moduleState: "limited",
     actionLabel: "Open finance",
-    available: true,
+    navigable: true,
   },
   {
-    title: "HR & Workforce",
-    description: "Workforce foundation — directory, attendance, payroll pending.",
+    title: "Employees",
+    description: "Workforce foundation — directory and payroll pending.",
     href: "/admin/hr",
     icon: UtensilsCrossed,
-    statusLabel: "Foundation",
-    statusTone: "soon" as const,
-    actionLabel: "Open HR",
-    available: true,
+    moduleState: "limited",
+    actionLabel: "Open employees",
+    navigable: true,
   },
   {
     title: "Reports",
     description: "Executive BI — live today data, trends pending.",
     href: "/admin/reports",
     icon: Banknote,
-    statusLabel: "Partial",
-    statusTone: "ready" as const,
+    moduleState: "limited",
     actionLabel: "Open reports",
-    available: true,
+    navigable: true,
   },
   {
     title: "Settings",
     description: "Governance foundation — verified read-only config.",
     href: "/admin/settings",
     icon: Settings,
-    statusLabel: "Foundation",
-    statusTone: "soon" as const,
+    moduleState: "limited",
     actionLabel: "Open settings",
-    available: true,
+    navigable: true,
   },
 ];
 
@@ -167,12 +124,12 @@ export function OperationsModuleGrid() {
       <AdminSectionTitle
         eyebrow="Operations"
         title="Command modules"
-        description="Enterprise entry points for the Restaurant Operating System."
+        description="Verified Admin ERP entry points. Planned modules stay disabled."
       />
       <h2 id="operations-grid-heading" className="sr-only">
         Operations modules
       </h2>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {MODULES.map((module) => (
           <AdminModuleCard key={module.title} {...module} />
         ))}

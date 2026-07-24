@@ -1,77 +1,179 @@
-# Telepizza Platform
+# Telepizza ROS
 
 Official digital platform for **Telepizza Pakistan** (Powered by Mianx.ai).
 
 ---
 
-## What ships today
+## Project Overview
+
+Telepizza ROS (Restaurant Operating System) is the enterprise platform for Telepizza Pakistan.
+
+The repository contains customer-facing applications, operational systems, backend services, documentation, and the engineering foundation required to evolve into a complete restaurant operating system.
+
+---
+
+## What Ships Today
 
 | Surface | Location | Notes |
-|---|---|---|
-| Customer website | `apps/website` | React + Vite · menu, cart, checkout, account (Phase 1 under Founder review) |
+| --- | --- | --- |
+| Customer website | `apps/website` | React + Vite · menu, cart, checkout, account |
 | Backend API | `backend/api` | Express · Supabase/Postgres |
 | Database | `supabase/migrations` | Forward-only SQL migrations |
 | Canonical menu data | `data/catalog/` | Manifest + generated website fallback |
 
-**Not production-claimed without Founder sign-off:** Admin ERP, POS, mobile apps, franchise portal, full AI workforce.
+**Repository evidence determines implemented capability.**
 
 ---
 
-## Branches (product)
+## Repository Focus
 
-- Royal Orchard (operating)
-- Northern Bypass (coming soon in product data)
+Current engineering workstreams:
+
+- Customer Platform
+- Admin ERP Foundation
+- Executive Dashboard workstream
+
+Future platform capabilities are tracked through the roadmap and architecture documents.
 
 ---
 
-## Quick start
+## Repository Status
+
+| Area | Status |
+| ------ | -------- |
+| Architecture | Approved |
+| Requirements | Maintained |
+| Implementation | Repository evidence defines implemented capability |
+| Current Delivery Slice | D1 – Executive Dashboard v1 |
+| Verification | See [`docs/00-governance/REPOSITORY_STATUS.md`](docs/00-governance/REPOSITORY_STATUS.md) |
+
+> This section reflects repository governance and does **not** imply production release, merge, deployment, or Founder sign-off.
+>
+> Executive Dashboard v1 current honesty: Architecture PASS · Implementation PASS · Repository verification PASS · Acceptance PASS WITH LIMITATIONS · Release Candidate READY · Commit/PR/Merge Pending · Release Not Released.
+
+---
+
+## Product Branches
+
+- Royal Orchard (Operating)
+- Northern Bypass (Planned)
+
+---
+
+## Quick Start
 
 ```bash
 pnpm install
-pnpm dev:website          # http://localhost:3000
-pnpm --filter @telepizza/api dev   # http://localhost:4000
+
+pnpm dev:website
+
+pnpm --filter @telepizza/api dev
 ```
 
-See `AGENTS.md` for Supabase local stack notes.
+Website:
+
+```text
+http://localhost:3000
+```
+
+API:
+
+```text
+http://localhost:4000
+```
+
+See [`AGENTS.md`](AGENTS.md) for local development, Supabase, Docker, testing, and runtime instructions.
 
 ---
 
 ## Documentation
 
-**Start here:** [`docs/README.md`](docs/README.md) — Documentation Map (ACTIVE / REFERENCE / ARCHIVE).
-
-| Topic | Path |
-|---|---|
-| Master roadmap | [`docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md`](docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md) |
-| Architecture | [`docs/architecture/`](docs/architecture/) |
-| Database | [`docs/database/`](docs/database/) |
-| Agent / Cloud ops | [`AGENTS.md`](AGENTS.md) |
-
-Historical audits and template packs live under [`docs/18-reference/archive/`](docs/18-reference/archive/).
-
----
-
-## Repository layout
+Documentation starts here:
 
 ```text
-apps/website     Customer web app
-backend/api      REST API
-data/catalog     Canonical menu manifest
-docs/            TEAS documentation tree
-scripts/         Tooling
-supabase/        Migrations & local DB
-tests/           Static + contract tests
+docs/README.md
 ```
 
+Key documentation:
+
+| Area | Location |
+| ------ | ---------- |
+| Documentation Portal | [`docs/README.md`](docs/README.md) |
+| Governance | [`docs/00-governance/`](docs/00-governance/) |
+| Architecture | [`docs/architecture/`](docs/architecture/) |
+| Database | [`docs/database/`](docs/database/) |
+| Operations | [`docs/operations/`](docs/operations/) |
+| Agent Runtime | [`AGENTS.md`](AGENTS.md) |
+
+Historical material remains under the repository archive and reference structure.
+
+Deprecated root planning files (`ROADMAP.md`, `PROJECT_STRUCTURE.md`, `PROJECT_MASTER_PLAN.md`) are **not** canonical authority.
+
 ---
 
-## Deploy config
+## Repository Layout
 
-- Website: `vercel.json`
-- API: `render.yaml`
+```text
+apps/
+backend/
+data/
+docs/
+scripts/
+supabase/
+tests/
+```
+
+The repository structure is intentionally modular to support future operational modules while preserving stable implementation boundaries.
 
 ---
 
-## Powered by
+## Deployment
+
+Current deployment configuration:
+
+- Website → `vercel.json`
+- API → `render.yaml`
+
+Deployment readiness is governed by repository evidence and acceptance records.
+
+---
+
+## Governance Summary
+
+Repository Governance v1 separates planning, implementation, and verification.
+
+Engineering lifecycle:
+
+```text
+Architecture Decision (ADR)
+        ↓
+Requirements
+        ↓
+Repository Evidence
+        ↓
+Acceptance Gate
+        ↓
+Verified Delivery
+```
+
+Implementation is never considered verified until the acceptance gate has been completed.
+
+---
+
+## Repository Truth
+
+The repository is the authoritative implementation source.
+
+- Architecture defines approved direction.
+- Requirements define intended capability.
+- Repository evidence defines implemented capability.
+- Acceptance gates define verified delivery.
+- Planning documents, roadmaps, mockups, and architecture proposals are **not** implementation evidence.
+
+No individual, document, or discussion overrides repository evidence.
+
+---
+
+## Powered By
 
 Mianx.ai

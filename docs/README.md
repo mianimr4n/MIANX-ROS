@@ -6,10 +6,75 @@
 
 ---
 
+## Repository Governance
+
+This repository follows **Repository Governance v1**.
+
+Documentation is organized to clearly separate:
+
+- Architecture
+- Requirements
+- Repository Evidence
+- Acceptance
+- Release
+
+Authority chain:
+
+```text
+README.md
+        ↓
+AGENTS.md
+        ↓
+docs/README.md
+        ↓
+docs/00-governance/
+        ↓
+Architecture
+        ↓
+Requirements
+        ↓
+Repository Evidence
+        ↓
+Acceptance Records
+        ↓
+Release Records
+```
+
+### Documentation Authority
+
+| Document | Purpose |
+| ---------- | --------- |
+| [README.md](../README.md) | Repository overview and onboarding |
+| [AGENTS.md](../AGENTS.md) | Engineering constitution and runtime guidance |
+| [docs/README.md](./README.md) | Documentation navigation |
+| [docs/00-governance/](./00-governance/) | Governance authority |
+| Architecture | Approved technical direction |
+| Requirements | Intended capability |
+| Repository evidence | Implemented capability |
+| Acceptance | Verified delivery |
+
+### Repository Truth
+
+Repository evidence is the authoritative implementation source.
+
+- Architecture defines approved direction.
+- Requirements define intended capability.
+- Repository evidence defines implemented capability.
+- Acceptance gates define verified delivery.
+- Release records define released capability.
+
+Planning documents, roadmaps, proposals, mockups, and design discussions are **not** implementation evidence.
+
+Documentation must accurately reflect repository evidence and must never overstate implementation status.
+
+Current delivery status lives in [`00-governance/REPOSITORY_STATUS.md`](./00-governance/REPOSITORY_STATUS.md).
+
+---
+
 ## How to use this tree
 
 | Class | Meaning |
-|---|---|
+| --- | --- |
 | **ACTIVE** | Current source of truth — start here |
 | **REFERENCE** | Valid for future phases; not daily SoT |
 | **ARCHIVE** | Historical evidence — do not treat as current |
@@ -25,7 +90,7 @@ Numbered TEAS folders (`00-governance` … `18-reference`) are the **enterprise 
 Living ACTIVE content is stored under **stable classic paths** so existing tests and deep links keep working:
 
 | TEAS slot | Classic path (files live here) |
-|---|---|
+| --- | --- |
 | `01-architecture/` | `architecture/` |
 | `03-data/` | `database/` |
 | `15-runbooks/` | `operations/` |
@@ -55,7 +120,9 @@ docs/
 ## ACTIVE documents (start here)
 
 | Area | Path |
-|---|---|
+| --- | --- |
+| Repository governance | [`00-governance/`](00-governance/) |
+| Current repository status | [`00-governance/REPOSITORY_STATUS.md`](00-governance/REPOSITORY_STATUS.md) |
 | Master roadmap (locked sequence) | [`14-phases/TELEPIZZA-MASTER-ROADMAP.md`](14-phases/TELEPIZZA-MASTER-ROADMAP.md) |
 | Milestone companion | [`14-phases/PROJECT-MILESTONE-AND-ROADMAP.md`](14-phases/PROJECT-MILESTONE-AND-ROADMAP.md) |
 | Architecture | [`architecture/`](architecture/) · nav alias [`01-architecture/`](01-architecture/) |
@@ -69,7 +136,7 @@ docs/
 ### Phase 1 (customer platform) — still under Founder review
 
 | Doc | Path |
-|---|---|
+| --- | --- |
 | Completion audit | `architecture/PHASE-1-CUSTOMER-PLATFORM-COMPLETION-AUDIT.md` |
 | Completion program | `architecture/PHASE-1-CUSTOMER-PLATFORM-COMPLETION-PROGRAM.md` |
 | Deployment readiness | `architecture/PHASE-1-ENGINEERING-DEPLOYMENT-READINESS.md` |
@@ -82,7 +149,7 @@ docs/
 ## REFERENCE
 
 | Area | Path |
-|---|---|
+| --- | --- |
 | Curated AI workforce templates (archived bulk) | `18-reference/archive/template-enterprise/00-ai-workforce/` |
 | Future requirements packs | `18-reference/archive/template-enterprise/02-requirements/` |
 
@@ -93,7 +160,7 @@ Promote to ACTIVE only via ADR + Founder approval.
 ## ARCHIVE (historical — recoverable)
 
 | Bundle | Path | Contents |
-|---|---|---|
+| --- | --- | --- |
 | Root legacy | [`18-reference/archive/root-legacy/`](18-reference/archive/root-legacy/) | Old `ROADMAP.md`, `PROJECT_*`, `REAL-MENU-EXTRACTION.md` |
 | Template enterprise library | [`18-reference/archive/template-enterprise/`](18-reference/archive/template-enterprise/) | Former `docs/00–05` packs (~500 files) |
 | Repository cleanup 2026-07-12 | [`18-reference/archive/repository-cleanup-20260712/`](18-reference/archive/repository-cleanup-20260712/) | CSV/TXT audits + completion report |
@@ -111,7 +178,7 @@ if tooling still expects the old root path. Content is never deleted — only re
 ## Deprecated / superseded
 
 | Former location | Superseded by |
-|---|---|
+| --- | --- |
 | Root `ROADMAP.md` | `14-phases/TELEPIZZA-MASTER-ROADMAP.md` |
 | Root `PROJECT_STRUCTURE.md` | This map + real `apps/`, `backend/`, `supabase/` |
 | Root `PROJECT_MASTER_PLAN.md` | Master roadmap + TEAS slots |
@@ -120,9 +187,11 @@ if tooling still expects the old root path. Content is never deleted — only re
 
 ---
 
-## FUTURE (empty TEAS slots)
+## FUTURE (empty or reserved TEAS slots)
 
-`00-governance`, `02-domains`, `04-api` … `13-adr`, `11-ai`, `12-quality`, `17-releases` — reserved for Enterprise Architecture Standards filings. Each contains a placeholder `README.md`.
+`02-domains`, `04-api` … `13-adr`, `11-ai`, `12-quality`, `17-releases` — reserved for Enterprise Architecture Standards filings. Each contains a placeholder `README.md`.
+
+`00-governance/` is **ACTIVE** (Repository Governance v1). Do not treat it as an empty FUTURE slot.
 
 ---
 
