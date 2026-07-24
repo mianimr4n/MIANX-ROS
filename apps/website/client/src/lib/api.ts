@@ -28,6 +28,14 @@ export class ApiRequestError extends Error {
 }
 
 export async function fetchApiData<T>(path: string, init?: RequestInit): Promise<T> {
+  const envelope = await fetchApiEnvelope<T>(path, init);
+  return envelope.data;
+}
+
+export async function fetchApiEnvelope<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<{ data: T; meta?: Record<string, unknown> }> {
   const headers: Record<string, string> = {
     Accept: "application/json",
     ...(init?.headers as Record<string, string> | undefined),
@@ -69,5 +77,6 @@ export async function fetchApiData<T>(path: string, init?: RequestInit): Promise
     throw new ApiRequestError(message, response.status, code);
   }
 
-  return (payload as unknown as { data: T }).data;
+  const body = payload as { data: T; meta?: Record<string, unknown> };
+  return { data: body.data, meta: body.meta };
 }

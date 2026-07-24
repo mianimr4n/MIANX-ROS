@@ -113,8 +113,14 @@ grant execute on function public.current_user_branch_ids() to authenticated, ser
 grant execute on function public.current_user_has_branch_access(uuid) to authenticated, service_role;
 grant execute on function public.current_customer_owns_order(uuid) to authenticated, service_role;
 
--- Dead legacy function (profiles writer) — revoke everyone; drop in P1 / DB-R1
-revoke all on function public.handle_new_user() from public, anon, authenticated, service_role;
+-- Dead legacy function (profiles writer) — revoke when present; drop in P1 / DB-R1.
+-- Fresh local installs never created handle_new_user(); unconditional REVOKE aborts migrate.
+do $$
+begin
+  if to_regprocedure('public.handle_new_user()') is not null then
+    revoke all on function public.handle_new_user() from public, anon, authenticated, service_role;
+  end if;
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- G) Default privileges — stop future tables inheriting over-broad grants

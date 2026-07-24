@@ -1,6 +1,23 @@
+/**
+ * WARNING: This helper writes CLOUD / live backend env for the hosted Telepizza project.
+ * It hardcodes SUPABASE_URL to *.supabase.co and production CORS.
+ *
+ * For LOCAL development, DO NOT use this script.
+ * Use instead:
+ *   npx supabase status -o env > .tmp/supabase.local.env
+ *   node scripts/write-local-env-from-supabase.mjs .tmp/supabase.local.env
+ *   node scripts/local-env-guard.mjs
+ */
 import { readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+if (process.env.TELEPIZZA_ALLOW_CLOUD_ENV_WRITE !== "1") {
+  console.error(
+    "REFUSED: write-backend-env.mjs targets cloud Supabase. Set TELEPIZZA_ALLOW_CLOUD_ENV_WRITE=1 to override, or use scripts/write-local-env-from-supabase.mjs",
+  );
+  process.exit(2);
+}
 
 const keysPath = join(tmpdir(), "supabase-keys.json");
 const payload = JSON.parse(readFileSync(keysPath, "utf8"));

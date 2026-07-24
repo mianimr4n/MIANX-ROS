@@ -13,7 +13,21 @@
     "catalog:dry-run": "node scripts/dry-run-canonical-menu-migration.mjs",
     "test:backend": "pnpm --filter @telepizza/api test",
     "check": "pnpm check:website && pnpm check:backend",
-    "test": "pnpm test:db && pnpm test:backend"
+    "test": "pnpm test:db && pnpm test:backend",
+    "local": "node scripts/local-up.mjs",
+    "local:guard": "node scripts/local-env-guard.mjs",
+    "local:health": "node scripts/local-health-check.mjs",
+    "local:env": "node scripts/write-local-env-from-supabase.mjs",
+    "local:seed": "node scripts/seed-local-enterprise.mjs",
+    "local:start": "node scripts/local-lifecycle.mjs start",
+    "local:stop": "node scripts/local-lifecycle.mjs stop",
+    "local:reset": "node scripts/local-lifecycle.mjs reset",
+    "local:status": "node scripts/local-lifecycle.mjs status",
+    "rc1:gate": "node scripts/rc1-quality-gate.mjs",
+    "rc1:test:static": "node --test tests/website/admin-erp-foundation-s1.test.mjs tests/website/admin-crm-v1.test.mjs tests/website/admin-delivery-management-v1.test.mjs tests/website/admin-executive-dashboard-v1.test.mjs tests/website/admin-finance-accounting-v1.test.mjs tests/website/admin-hr-workforce-management-v1.test.mjs tests/website/admin-inventory-management-v1.test.mjs tests/website/admin-kitchen-display-v1.test.mjs tests/website/admin-kitchen-manager-dashboard-v1.test.mjs tests/website/admin-loyalty-rewards-v1.test.mjs tests/website/admin-menu-management-v1.test.mjs tests/website/admin-orders-management-v1.test.mjs tests/website/admin-pos-v1.test.mjs tests/website/admin-purchasing-suppliers-v1.test.mjs tests/website/admin-reports-business-intelligence-v1.test.mjs tests/website/admin-settings-configuration-v1.test.mjs tests/website/admin-whatsapp-order-center-v1.test.mjs",
+    "rc1:test:auth": "node scripts/rc1/auth-branch-matrix.mjs",
+    "rc1:test:kds": "node scripts/rc1/kds-auth.mjs",
+    "rc1:test:browser": "node scripts/rc1/bm-landing.mjs"
   },
   "pnpm": {
     "overrides": {

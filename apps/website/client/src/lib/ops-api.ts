@@ -87,6 +87,8 @@ export type DeliveryAssignment = {
   assignedAt: string | null;
   pickedUpAt: string | null;
   deliveredAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type RiderRosterItem = {
@@ -141,11 +143,13 @@ export async function transitionOpsOrder(
 
 export async function listKitchenTickets(
   accessToken: string,
-  query?: { status?: string; limit?: number },
+  query?: { status?: string; branchId?: string | null; limit?: number; offset?: number },
 ): Promise<KitchenTicket[]> {
   const params = new URLSearchParams();
   if (query?.status) params.set("status", query.status);
+  if (query?.branchId) params.set("branchId", query.branchId);
   params.set("limit", String(query?.limit ?? 50));
+  if (query?.offset) params.set("offset", String(query.offset));
   return fetchApiData<KitchenTicket[]>(`/kitchen/tickets?${params.toString()}`, {
     headers: authHeaders(accessToken),
   });
@@ -165,18 +169,26 @@ export async function patchKitchenTicketStatus(
 
 export async function listDeliveryAssignments(
   accessToken: string,
-  query?: { status?: string; limit?: number },
+  query?: { status?: string; branchId?: string | null; limit?: number; offset?: number },
 ): Promise<DeliveryAssignment[]> {
   const params = new URLSearchParams();
   if (query?.status) params.set("status", query.status);
+  if (query?.branchId) params.set("branchId", query.branchId);
   params.set("limit", String(query?.limit ?? 50));
+  if (query?.offset) params.set("offset", String(query.offset));
   return fetchApiData<DeliveryAssignment[]>(`/riders/assignments?${params.toString()}`, {
     headers: authHeaders(accessToken),
   });
 }
 
-export async function listRiderRoster(accessToken: string): Promise<RiderRosterItem[]> {
-  return fetchApiData<RiderRosterItem[]>(`/riders/roster`, {
+export async function listRiderRoster(
+  accessToken: string,
+  query?: { branchId?: string | null },
+): Promise<RiderRosterItem[]> {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<RiderRosterItem[]>(`/riders/roster${qs ? `?${qs}` : ""}`, {
     headers: authHeaders(accessToken),
   });
 }

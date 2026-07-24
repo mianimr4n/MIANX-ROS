@@ -99,6 +99,14 @@
   --sidebar-accent-foreground: #1F1F1F;
   --sidebar-border: #EDE0D8;
   --sidebar-ring: var(--brand-red);
+
+  /* Admin ERP operational canvas */
+  --admin-canvas: #f3f1ef;
+  --admin-panel: #ffffff;
+  --admin-soft: #ece8e4;
+  --admin-border: #ddd6cf;
+  --admin-ink: #1f1f1f;
+  --admin-muted: #6b6560;
 }
 
 .dark {
@@ -269,5 +277,23 @@
   .ops-print-ticket * {
     color: #111 !important;
     border-color: #ccc !important;
+  }
+}
+
+.admin-shell {
+  font-family: var(--font-body), "DM Sans", sans-serif;
+  color: var(--admin-ink);
+}
+
+.admin-shell h1,
+.admin-shell h2 {
+  font-family: var(--font-display), "Poppins", sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-shell * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

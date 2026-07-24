@@ -1,6 +1,8 @@
-﻿node_modules/
+node_modules/
 .env
 .env.*
+!.env.example
+!.env.*.example
 dist/
 build/
 coverage/
@@ -24,6 +26,8 @@ apps/website/dist/
 apps/website/.manus-logs/
 apps/website/.env
 apps/website/.env.*
+!apps/website/.env.example
+!apps/website/.env.*.example
 apps/website/package-lock.json
 
 # Supabase CLI local state (not project source)
@@ -48,3 +52,21 @@ telepizza/
 .restore-phase1.mjs
 .test-out*.txt
 .test-final.txt
+
+# Local staff password handover (never commit)
+scripts/.tmp_pw/
+
+# Local infra scratch (supabase status dumps, cloud env backups)
+.tmp/
+
+# Accidental npm lockfile at monorepo root (pnpm is packageManager)
+/package-lock.json
+
+# Local one-off acceptance / provisioning scripts (never commit)
+scripts/_tmp_*.mjs
+
+# Playwright local run artifacts (if generated)
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

@@ -43,7 +43,15 @@ export function createApp(
         port: envStatus.config.port,
         corsOrigin: envStatus.config.corsOrigin,
         supabaseUrl: envStatus.config.supabaseUrl,
+        envClass: envStatus.config.envClass,
+        integrations: {
+          email: envStatus.config.emailMode,
+          whatsapp: envStatus.config.whatsappMode,
+          payment: envStatus.config.paymentMode,
+          webhook: envStatus.config.webhookMode,
+        },
       },
+      safetyBlockers: envStatus.safetyBlockers,
       issues: envStatus.issues,
     });
   });

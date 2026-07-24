@@ -269,26 +269,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let cancelled = false;
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (cancelled) return;
-      void applySession(data.session).finally(() => {
-        if (!cancelled) {
-          bootstrapped.current = true;
-          setIsLoading(false);
-        }
-      });
-    });
+    // Serialize auth updates so getSession/onAuthStateChange races cannot apply a
+    // customer fallback over a successful /auth/me principal (hard-refresh C1).
+    let chain: Promise<void> = Promise.resolve();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      void applySession(nextSession).finally(() => {
-        if (!cancelled) {
-          bootstrapped.current = true;
-          setIsLoading(false);
-        }
-      });
+      chain = chain
+        .then(async () => {
+          if (cancelled) return;
+          await applySession(nextSession);
+        })
+        .finally(() => {
+          if (!cancelled) {
+            bootstrapped.current = true;
+            setIsLoading(false);
+          }
+        });
     });
 
     return () => {

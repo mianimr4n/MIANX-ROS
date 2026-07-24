@@ -32,7 +32,30 @@ import OpsDashboard from "./pages/ops/OpsDashboard";
 import OpsOrders from "./pages/ops/OpsOrders";
 import OpsKitchen from "./pages/ops/OpsKitchen";
 import OpsDispatch from "./pages/ops/OpsDispatch";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminIndexRedirect from "./pages/admin/AdminIndexRedirect";
+import AdminUnauthorized from "./pages/admin/AdminUnauthorized";
+import AdminComingSoon from "./pages/admin/AdminComingSoon";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminOrderDetail from "./pages/admin/AdminOrderDetail";
+import AdminKitchen from "./pages/admin/AdminKitchen";
+import AdminDelivery from "./pages/admin/AdminDelivery";
+import AdminPos from "./pages/admin/AdminPos";
+import AdminCrm from "./pages/admin/AdminCrm";
+import AdminLoyalty from "./pages/admin/AdminLoyalty";
+import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
+import AdminMenu from "./pages/admin/AdminMenu";
+import AdminInventory from "./pages/admin/AdminInventory";
+import AdminPurchasing from "./pages/admin/AdminPurchasing";
+import AdminFinance from "./pages/admin/AdminFinance";
+import AdminReports from "./pages/admin/AdminReports";
+import AdminHr from "./pages/admin/AdminHr";
+import AdminSettings from "./pages/admin/AdminSettings";
+import AdminBranchManager from "./pages/admin/AdminBranchManager";
+import AdminKitchenDashboard from "./pages/admin/AdminKitchenDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
+import { AdminBranchProvider } from "./contexts/AdminBranchContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CartDrawer from "./components/CartDrawer";
@@ -43,6 +66,11 @@ import { MenuCatalogProvider } from "./contexts/MenuCatalogContext";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 
+/**
+ * Commit E — Kitchen Manager KDS route wiring on Admin ERP.
+ * Branch Manager /admin/branch remains Commit D; Owner /admin/kitchen remains Commit C.
+ */
+
 function ScrollToTop() {
   const [location] = useLocation();
   useEffect(() => {
@@ -52,7 +80,23 @@ function ScrollToTop() {
 }
 
 function isOpsChrome(path: string) {
-  return path === "/staff/login" || path.startsWith("/ops");
+  return path === "/staff/login" || path.startsWith("/ops") || path.startsWith("/admin");
+}
+
+function PromotionsComingSoon() {
+  return <AdminComingSoon moduleName="Promotions" />;
+}
+function SupportComingSoon() {
+  return <AdminComingSoon moduleName="Support" />;
+}
+function BranchesComingSoon() {
+  return <AdminComingSoon moduleName="Branches" />;
+}
+function AiComingSoon() {
+  return <AdminComingSoon moduleName="AI Command Center" />;
+}
+function IntegrationsComingSoon() {
+  return <AdminComingSoon moduleName="Integrations" />;
 }
 
 function Router() {
@@ -80,6 +124,39 @@ function Router() {
       <Route path="/ops/kitchen" component={OpsKitchen} />
       <Route path="/ops/dispatch" component={OpsDispatch} />
       <Route path="/ops" component={OpsDashboard} />
+      {/* Admin Foundation */}
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/unauthorized" component={AdminUnauthorized} />
+      {/* Owner ERP modules (Commit C) */}
+      <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/orders/:orderId" component={AdminOrderDetail} />
+      <Route path="/admin/orders" component={AdminOrders} />
+      <Route path="/admin/kitchen" component={AdminKitchen} />
+      <Route path="/admin/delivery" component={AdminDelivery} />
+      <Route path="/admin/pos" component={AdminPos} />
+      <Route path="/admin/whatsapp" component={AdminWhatsApp} />
+      <Route path="/admin/menu" component={AdminMenu} />
+      <Route path="/admin/inventory" component={AdminInventory} />
+      <Route path="/admin/purchasing" component={AdminPurchasing} />
+      <Route path="/admin/crm" component={AdminCrm} />
+      <Route path="/admin/customers" component={AdminCrm} />
+      <Route path="/admin/loyalty" component={AdminLoyalty} />
+      <Route path="/admin/hr" component={AdminHr} />
+      <Route path="/admin/staff" component={AdminHr} />
+      <Route path="/admin/finance" component={AdminFinance} />
+      <Route path="/admin/reports" component={AdminReports} />
+      <Route path="/admin/settings" component={AdminSettings} />
+      {/* Commit D — Branch Manager home */}
+      <Route path="/admin/branch" component={AdminBranchManager} />
+      {/* Commit E — Kitchen Manager KDS */}
+      <Route path="/admin/kitchen-dashboard" component={AdminKitchenDashboard} />
+      {/* Not yet implemented Owner surfaces */}
+      <Route path="/admin/promotions" component={PromotionsComingSoon} />
+      <Route path="/admin/support" component={SupportComingSoon} />
+      <Route path="/admin/branches" component={BranchesComingSoon} />
+      <Route path="/admin/ai-command-center" component={AiComingSoon} />
+      <Route path="/admin/integrations" component={IntegrationsComingSoon} />
+      <Route path="/admin" component={AdminIndexRedirect} />
       <Route path="/my-telepizza/orders" component={MyTelepizza} />
       <Route path="/my-telepizza/addresses" component={MyTelepizza} />
       <Route path="/my-telepizza/rewards" component={MyTelepizza} />
@@ -132,9 +209,11 @@ function App() {
             <CartProvider>
               <MenuCatalogProvider>
                 <BranchProvider>
-                  <PizzaCustomizerProvider>
-                    <AppShell />
-                  </PizzaCustomizerProvider>
+                  <AdminBranchProvider>
+                    <PizzaCustomizerProvider>
+                      <AppShell />
+                    </PizzaCustomizerProvider>
+                  </AdminBranchProvider>
                 </BranchProvider>
               </MenuCatalogProvider>
             </CartProvider>
