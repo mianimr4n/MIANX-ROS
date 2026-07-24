@@ -3,7 +3,8 @@
 **Product:** Telepizza Pakistan Platform  
 **Powered by:** Mianx.ai  
 **Release:** RC1  
-**Documented tip:** `533887cbecda1525ad21f7d5b6b863657d0d2f1c`
+**Product + quality tip (Commit F):** `533887cbecda1525ad21f7d5b6b863657d0d2f1c`  
+**Documentation / release tip (Commit G):** `4d1297c2190d4bc272563efee83148ad731ff0fd`
 
 ## Summary
 
@@ -41,7 +42,7 @@ RC1 delivers a controlled local enterprise foundation for Telepizza as the first
 
 ## Upgrade / install notes
 
-1. Use branch `feature/admin-erp-foundation-s1` tip at Commit F (or later G docs tip).
+1. Use branch `feature/admin-erp-foundation-s1`. Runtime/product behavior tips at Commit **F**; RC1 release documentation tips at Commit **G** (and any docs-only follow-ups such as G.1).
 2. Local: Docker Desktop → `pnpm local:start` → apply current migration-based grants (do **not** re-apply obsolete blanket anon write grants from stale operator notes).
 3. API: prefer `node --env-file=.env.local --import tsx src/main.ts` from `backend/api` so `.env.local` loads.
 4. Website: `pnpm dev:website`

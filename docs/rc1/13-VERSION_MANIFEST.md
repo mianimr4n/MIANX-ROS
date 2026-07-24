@@ -10,7 +10,14 @@
 | Codename | Controlled Admin ERP Foundation |
 | Documentation package | Commit G (`docs/rc1/`) |
 
-## Git tip (product + quality)
+## Git tips (distinguish product vs documentation)
+
+| Tip | SHA | Meaning |
+| --- | --- | --- |
+| **Product + quality tip** | `533887cbecda1525ad21f7d5b6b863657d0d2f1c` | Commit **F** — last product/quality commit (A–F frozen) |
+| **Documentation / release tip** | `4d1297c2190d4bc272563efee83148ad731ff0fd` | Commit **G** — RC1 `docs/rc1/` release package |
+
+### Controlled history (A–F)
 
 | Ref | SHA |
 | --- | --- |

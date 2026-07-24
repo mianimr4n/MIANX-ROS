@@ -10,7 +10,7 @@
 | D — Branch Manager ERP | `08dd85d12d0c834b7e324423fbe4df57550191ce` | feat(branch): Branch Manager ERP workspace | ✅ Founder Accepted — Frozen |
 | E — Kitchen Manager / KDS | `52e71798ea6396e766e6ba5254f7e4e1adb68896` | feat(kitchen): Kitchen Manager workspace and KDS | ✅ Founder Accepted — Frozen (PARTIAL) |
 | F — Tests / Security / Quality | `533887cbecda1525ad21f7d5b6b863657d0d2f1c` | test(rc1): finalize quality gates… | ✅ Founder Accepted — Frozen Forever |
-| G — Documentation / Release | *(this commit)* | docs(rc1): finalize release documentation… | 🟡 Created by Commit G |
+| G — Documentation / Release | `4d1297c2190d4bc272563efee83148ad731ff0fd` | docs(rc1): finalize release documentation… | 🟡 Created — Awaiting Founder Acceptance |
 
 ## Rules
 
