@@ -25,8 +25,9 @@ describe("Point of Sale V1 (static)", () => {
     assert.match(page, /PaymentPanel/);
     assert.match(page, /POSInsights/);
     assert.match(page, /quoteOrder/);
-    assert.match(page, /createOrderWithIdempotency/);
-    assert.match(page, /orderSource: "pos"/);
+    assert.match(page, /createAdminPosOrder/);
+    assert.doesNotMatch(page, /createOrderWithIdempotency/);
+    assert.match(page, /operating/);
   });
 
   it("keeps payment capture and print as Foundation", () => {

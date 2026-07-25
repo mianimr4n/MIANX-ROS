@@ -20,6 +20,8 @@ import {
   type AdminOrderTransitionAction,
 } from "@/lib/admin-api";
 import { ApiRequestError } from "@/lib/api";
+import { useOperationalData } from "@/lib/op-status";
+import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
 import { AdminShell } from "./AdminShell";
 
 const PAGE_SIZE = 20;
@@ -69,13 +71,6 @@ export default function AdminOrders() {
   const search = useSearch();
   const urlState = useMemo(() => readFilters(search), [search]);
 
-  const [orders, setOrders] = useState<AdminOrderListItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [kpiSnapshot, setKpiSnapshot] = useState<OrderKpiSnapshot | null>(null);
-  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
-  const [kpiLoading, setKpiLoading] = useState(true);
   const [orderNumberDraft, setOrderNumberDraft] = useState(urlState.orderNumber);
   const [sortKey, setSortKey] = useState<OrderSortKey>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -114,62 +109,63 @@ export default function AdminOrders() {
     [setLocation, urlState],
   );
 
-  const loadList = useCallback(async () => {
-    const token = session?.access_token;
-    if (!token || !allowed) return;
-    setLoading(true);
-    try {
-      const result = await listAdminOrders(token, {
-        branchId: branchIdFilter,
-        status: urlState.status || undefined,
-        orderType: urlState.orderType || undefined,
-        orderSource: urlState.orderSource || undefined,
-        orderNumber: urlState.orderNumber || undefined,
-        limit: PAGE_SIZE,
-        offset: urlState.offset,
-      });
-      setOrders(result.orders);
-      setTotal(result.pagination.total);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Failed to load orders");
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    allowed,
-    branchIdFilter,
-    session?.access_token,
-    urlState.status,
-    urlState.orderType,
-    urlState.orderSource,
-    urlState.orderNumber,
-    urlState.offset,
-  ]);
+  const token = session?.access_token;
 
-  const loadKpis = useCallback(async () => {
-    const token = session?.access_token;
-    if (!token || !allowed) return;
-    setKpiLoading(true);
-    try {
-      const dashboard = await fetchAdminOperationsDashboard(token, { branchId: branchIdFilter });
-      setStatusCounts(dashboard.statusCounts);
-      setKpiSnapshot({
-        todayOrders: dashboard.kpis.todayOrders,
-        pending: dashboard.statusCounts.pending ?? 0,
-        preparing: dashboard.statusCounts.preparing ?? 0,
-        ready: dashboard.statusCounts.ready ?? 0,
-        dispatched: dashboard.statusCounts.dispatched ?? 0,
-        completed: dashboard.statusCounts.completed ?? 0,
-        cancelled: dashboard.statusCounts.cancelled ?? 0,
-      });
-    } catch {
-      setKpiSnapshot(null);
-      setStatusCounts({});
-    } finally {
-      setKpiLoading(false);
-    }
-  }, [allowed, branchIdFilter, session?.access_token]);
+  const listOp = useOperationalData(
+    ({ signal, correlationId }) =>
+      listAdminOrders(
+        token!,
+        {
+          branchId: branchIdFilter,
+          status: urlState.status || undefined,
+          orderType: urlState.orderType || undefined,
+          orderSource: urlState.orderSource || undefined,
+          orderNumber: urlState.orderNumber || undefined,
+          limit: PAGE_SIZE,
+          offset: urlState.offset,
+        },
+        { signal, correlationId },
+      ),
+    [
+      token,
+      branchIdFilter,
+      urlState.status,
+      urlState.orderType,
+      urlState.orderSource,
+      urlState.orderNumber,
+      urlState.offset,
+    ],
+    {
+      enabled: Boolean(token) && allowed && gateReady,
+      isEmpty: (result) => result.orders.length === 0,
+    },
+  );
+
+  const kpiOp = useOperationalData(
+    ({ signal, correlationId }) =>
+      fetchAdminOperationsDashboard(token!, { branchId: branchIdFilter }, { signal, correlationId }),
+    [token, branchIdFilter],
+    { enabled: Boolean(token) && allowed && gateReady },
+  );
+
+  const orders = listOp.data?.orders ?? [];
+  const total = listOp.data?.pagination.total ?? 0;
+  const loading = listOp.state === "LOADING";
+  // Inline grid error only when there is no data at all; STALE keeps rows visible.
+  const error = listOp.data == null ? listOp.error : null;
+  const statusCounts = kpiOp.data?.statusCounts ?? {};
+  const kpiSnapshot: OrderKpiSnapshot | null = kpiOp.data
+    ? {
+        todayOrders: kpiOp.data.kpis.todayOrders,
+        pending: kpiOp.data.statusCounts.pending ?? 0,
+        preparing: kpiOp.data.statusCounts.preparing ?? 0,
+        ready: kpiOp.data.statusCounts.ready ?? 0,
+        dispatched: kpiOp.data.statusCounts.dispatched ?? 0,
+        completed: kpiOp.data.statusCounts.completed ?? 0,
+        cancelled: kpiOp.data.statusCounts.cancelled ?? 0,
+      }
+    : null;
+  const kpiLoading = kpiOp.state === "LOADING";
 
   const loadDetail = useCallback(
     async (orderId: string) => {
@@ -189,12 +185,6 @@ export default function AdminOrders() {
     },
     [session?.access_token],
   );
-
-  useEffect(() => {
-    if (!gateReady) return;
-    void loadList();
-    void loadKpis();
-  }, [gateReady, loadList, loadKpis]);
 
   useEffect(() => {
     setOrderNumberDraft(urlState.orderNumber);
@@ -248,7 +238,9 @@ export default function AdminOrders() {
         action,
         needsReason ? { reasonCode: "staff_cancelled" } : undefined,
       );
-      await Promise.all([loadList(), loadKpis(), loadDetail(selectedId)]);
+      listOp.retry();
+      kpiOp.retry();
+      await loadDetail(selectedId);
     } catch (err) {
       setDetailError(err instanceof ApiRequestError ? err.message : "Transition failed");
     } finally {
@@ -278,8 +270,8 @@ export default function AdminOrders() {
           <button
             type="button"
             onClick={() => {
-              void loadList();
-              void loadKpis();
+              listOp.retry();
+              kpiOp.retry();
             }}
             className="rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm font-semibold hover:bg-[var(--admin-soft)]"
           >
@@ -320,6 +312,16 @@ export default function AdminOrders() {
         </div>
       </header>
 
+      <OperationalStatusBanner
+        state={listOp.state}
+        error={listOp.error}
+        lastSuccessAt={listOp.lastSuccessAt}
+        onRetry={listOp.retry}
+        correlationId={listOp.correlationId}
+        showTechnicalDetail={isSuperAdmin}
+        className="mb-4"
+      />
+
       <OrderKPIs snapshot={kpiSnapshot} loading={kpiLoading} />
 
       <OrderFilters
@@ -343,7 +345,7 @@ export default function AdminOrders() {
           sortKey={sortKey}
           sortDir={sortDir}
           onSort={onSort}
-          onRetry={() => void loadList()}
+          onRetry={listOp.retry}
           onView={openDrawer}
           onOpenFullPage={(orderId) => setLocation(`/admin/orders/${orderId}`)}
           pageStart={pageStart}

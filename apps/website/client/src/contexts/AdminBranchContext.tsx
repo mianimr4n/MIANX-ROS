@@ -10,7 +10,7 @@ import {
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranch } from "@/contexts/BranchContext";
-import { canViewAllBranches } from "@/lib/admin-access";
+import { canViewMultipleAssignedBranches } from "@/lib/admin-access";
 import type { Branch } from "@/lib/telepizza-types";
 
 const STORAGE_KEY = "telepizza.admin.branchScope";
@@ -51,7 +51,14 @@ function readStoredSelection(): AdminBranchSelection | null {
 export function AdminBranchProvider({ children }: { children: ReactNode }) {
   const { allBranches, isLoading } = useBranch();
   const { branchIds, isSuperAdmin, permissions, roles } = useAuth();
-  const canSelectAll = canViewAllBranches({ roles, permissions, isSuperAdmin });
+  // Aggregate mode sends branchIdFilter=null; the server uses principal.branchIds
+  // (or all branches for super-admin). The client never sends an explicit ID list.
+  const canSelectAll = canViewMultipleAssignedBranches({
+    roles,
+    permissions,
+    isSuperAdmin,
+    branchIds,
+  });
 
   const allowedBranches = useMemo(() => {
     if (isSuperAdmin) return allBranches;
@@ -94,13 +101,16 @@ export function AdminBranchProvider({ children }: { children: ReactNode }) {
   const branchIdFilter = selection.mode === "branch" ? selection.branchId : null;
 
   const label = useMemo(() => {
-    if (selection.mode === "all") return "All Branches";
+    if (selection.mode === "all") {
+      // Super-admin sees every branch; multi-branch staff see only their assigned set.
+      return isSuperAdmin ? "All Branches" : "Assigned Branches";
+    }
     return (
       allowedBranches.find((b) => b.id === selection.branchId)?.shortName ??
       allowedBranches.find((b) => b.id === selection.branchId)?.name ??
       "Branch"
     );
-  }, [allowedBranches, selection]);
+  }, [allowedBranches, isSuperAdmin, selection]);
 
   const value = useMemo(
     () => ({

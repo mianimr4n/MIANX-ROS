@@ -1,0 +1,78 @@
+{
+  "ok": true,
+  "passed": 14,
+  "failed": 0,
+  "results": [
+    {
+      "name": "successful pickup order transaction",
+      "ok": true,
+      "detail": "{\"status\":0,\"out\":\"BEGIN\\n{\\\"id\\\": \\\"b533de8a-8819-483f-b95e-7bdaf7ed5f04\\\", \\\"status\\\": \\\"confirmed\\\", \\\"subtotal\\\": 1000.00, \\\"createdAt\\\": \\\"2026-07-24T23:53:55.018315+00:00\\\", \\\"taxAmount\\\": 0.00, \\\"deliveryFee\\\": 0.00, \\\"orderNumber\\\":\",\"counts\":{\"orders\":1,\"items\":1,\"mods\":1,\"tickets\":1,\"deliveries\":0,\"payments\":1,\"logs\":1}}"
+    },
+    {
+      "name": "successful delivery order transaction",
+      "ok": true,
+      "detail": "{\"status\":0,\"out\":\"BEGIN\\n{\\\"id\\\": \\\"be874525-9c11-4be9-a742-9f781ac3dd7d\\\", \\\"status\\\": \\\"confirmed\\\", \\\"subtotal\\\": 1000.00, \\\"createdAt\\\": \\\"2026-07-24T23:53:55.979435+00:00\\\", \\\"taxAmount\\\": 0\",\"counts\":{\"orders\":1,\"items\":1,\"mods\":1,\"tickets\":1,\"deliveries\":1,\"payments\":1,\"logs\":1}}"
+    },
+    {
+      "name": "failed order-item insert rollback",
+      "ok": true,
+      "detail": "status=3 err=ERROR:  D2_FORCE_FAIL_ORDER_ITEM\nCONTEXT:  PL/pgSQL function create_order_atomic(text,text,uuid,jsonb,jsonb,boolean,json"
+    },
+    {
+      "name": "failed modifier insert rollback",
+      "ok": true,
+      "detail": "status=3 err=ERROR:  D2_FORCE_FAIL_MODIFIER\nCONTEXT:  PL/pgSQL function create_order_atomic(text,text,uuid,jsonb,jsonb,boolean,jsonb,"
+    },
+    {
+      "name": "failed kitchen-ticket insert rollback",
+      "ok": true,
+      "detail": "status=3 err=ERROR:  D2_FORCE_FAIL_KITCHEN\nCONTEXT:  PL/pgSQL function create_order_atomic(text,text,uuid,jsonb,jsonb,boolean,jsonb,b"
+    },
+    {
+      "name": "failed delivery insert rollback",
+      "ok": true,
+      "detail": "status=3 err=ERROR:  D2_FORCE_FAIL_DELIVERY\nCONTEXT:  PL/pgSQL function create_order_atomic(text,text,uuid,jsonb,jsonb,boolean,jsonb,"
+    },
+    {
+      "name": "invalid menu item rejection",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "invalid modifier rejection",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "unknown branch rejection",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "coming-soon branch rejection",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "duplicate same idempotency request",
+      "ok": true,
+      "detail": "{\"r2\":\"BEGIN\\n{\\\"id\\\": \\\"9e83fbc4-4b52-4d84-9be6-d4df06f7a938\\\", \\\"status\\\": \\\"confirmed\\\", \\\"subtotal\\\": 1000.00, \\\"createdAt\\\": \\\"2026-07-24T23:54:02.975903+00:00\\\", \\\"taxAmount\\\": 0.00, \\\"deliveryFee\\\": 0.00, \\\"orderNumber\\\":\",\"counts\":{\"orders\":1,\"items\":1,\"mods\":1,\"tickets\":1,\"deliveries\":0,\"payments\":1,\"logs\":1}}"
+    },
+    {
+      "name": "duplicate changed payload conflict",
+      "ok": true,
+      "detail": "{\"r2status\":3,\"err\":\"ERROR:  IDEMPOTENCY_CONFLICT\\nCONTEXT:  PL/pgSQL function create_order_atomic(text,text,uuid,jsonb,jsonb,boolean,jsonb,boolean,boolean,text,uuid) line 60 at RAIS\",\"counts\":{\"orders\":1,\"items\":1,\"mods\":1,\"tickets\":1,\"deliveries\":0,\"payments\":1,\"logs\":1}}"
+    },
+    {
+      "name": "concurrent order-number generation",
+      "ok": true,
+      "detail": "unique=20"
+    },
+    {
+      "name": "server-side total persistence (API-priced snapshot)",
+      "ok": true,
+      "detail": "9999.00"
+    }
+  ],
+  "at": "2026-07-24T23:54:05.179Z"
+}

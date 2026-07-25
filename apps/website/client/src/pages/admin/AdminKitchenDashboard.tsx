@@ -21,8 +21,10 @@ import {
   elapsedMinutes,
   ticketTimerStartIso,
 } from "@/lib/admin-kitchen";
-import { getAdminOrder, listAdminOrders, type AdminOrderDetail, type AdminOrderListItem } from "@/lib/admin-api";
+import { getAdminOrder, listAdminOrders, type AdminOrderDetail } from "@/lib/admin-api";
 import { ApiRequestError } from "@/lib/api";
+import { useOperationalData } from "@/lib/op-status";
+import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
 import {
   listKitchenTickets,
   patchKitchenTicketStatus,
@@ -71,14 +73,7 @@ export default function AdminKitchenDashboard() {
   const search = useSearch();
   const urlState = useMemo(() => readState(search), [search]);
 
-  const [tickets, setTickets] = useState<KitchenTicket[]>([]);
-  const [orders, setOrders] = useState<AdminOrderListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [live, setLive] = useState(true);
-  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [searchDraft, setSearchDraft] = useState(urlState.search);
   const [busyTicketId, setBusyTicketId] = useState<string | null>(null);
@@ -119,49 +114,38 @@ export default function AdminKitchenDashboard() {
     [setLocation, urlState],
   );
 
-  const loadTickets = useCallback(
-    async (opts?: { soft?: boolean }) => {
-      const token = session?.access_token;
-      if (!token || !allowed) return;
-      if (opts?.soft) setRefreshing(true);
-      else setLoading(true);
-      try {
-        const data = await listKitchenTickets(token, {
-          branchId: branchIdFilter,
-          limit: 100,
-        });
-        setTickets(data);
-        setError(null);
-        setLive(true);
-        setLastUpdatedAt(new Date());
-      } catch (err) {
-        setError(err instanceof ApiRequestError ? err.message : "Failed to load kitchen tickets");
-        setLive(false);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
+  const token = session?.access_token;
+
+  const ticketsOp = useOperationalData(
+    ({ signal, correlationId }) =>
+      listKitchenTickets(token!, { branchId: branchIdFilter, limit: 100 }, { signal, correlationId }),
+    [token, branchIdFilter],
+    {
+      enabled: Boolean(token) && allowed && gateReady,
+      pollMs: 8_000,
+      isEmpty: (data) => data.length === 0,
     },
-    [allowed, branchIdFilter, session?.access_token],
   );
 
-  const loadOrderEnrichment = useCallback(async () => {
-    const token = session?.access_token;
-    if (!token || !canEnrichOrders) {
-      setOrders([]);
-      return;
-    }
-    try {
-      const result = await listAdminOrders(token, {
-        branchId: branchIdFilter,
-        limit: 100,
-        offset: 0,
-      });
-      setOrders(result.orders);
-    } catch {
-      setOrders([]);
-    }
-  }, [branchIdFilter, canEnrichOrders, session?.access_token]);
+  const enrichOp = useOperationalData(
+    ({ signal, correlationId }) =>
+      listAdminOrders(
+        token!,
+        { branchId: branchIdFilter, limit: 100, offset: 0 },
+        { signal, correlationId },
+      ),
+    [token, branchIdFilter],
+    { enabled: Boolean(token) && canEnrichOrders && gateReady },
+  );
+
+  const tickets = ticketsOp.data ?? [];
+  const orders = enrichOp.data?.orders ?? [];
+  const loading = ticketsOp.state === "LOADING";
+  const refreshing = ticketsOp.refreshing;
+  // Inline error only with no prior data; STALE keeps the last board visible.
+  const error = ticketsOp.data == null ? ticketsOp.error : null;
+  const live = ticketsOp.state === "LIVE" || ticketsOp.state === "EMPTY";
+  const lastUpdatedAt = ticketsOp.lastSuccessAt ? new Date(ticketsOp.lastSuccessAt) : null;
 
   const loadDetail = useCallback(
     async (orderId: string) => {
@@ -189,21 +173,11 @@ export default function AdminKitchenDashboard() {
   );
 
   useEffect(() => {
-    if (!gateReady) return;
-    void loadTickets();
-    void loadOrderEnrichment();
-  }, [gateReady, loadTickets, loadOrderEnrichment]);
-
-  useEffect(() => {
     const tick = window.setInterval(() => setNowMs(Date.now()), 15_000);
-    const poll = window.setInterval(() => {
-      void loadTickets({ soft: true });
-    }, 8_000);
     return () => {
       window.clearInterval(tick);
-      window.clearInterval(poll);
     };
-  }, [loadTickets]);
+  }, []);
 
   useEffect(() => {
     setSearchDraft(urlState.search);
@@ -272,7 +246,7 @@ export default function AdminKitchenDashboard() {
     setActionError(null);
     try {
       await patchKitchenTicketStatus(token, ticket.id, toStatus);
-      await loadTickets({ soft: true });
+      ticketsOp.retry();
       if (selectedTicket?.id === ticket.id) {
         const refreshed = (
           await listKitchenTickets(token, { branchId: branchIdFilter, limit: 100 })
@@ -310,14 +284,18 @@ export default function AdminKitchenDashboard() {
     }
   }, [urlState.selected, tickets, loadDetail]);
 
-  const syncTone = !live ? "failed" : refreshing ? "refreshing" : "live";
-  const syncLabel = !live
-    ? "Sync failed"
-    : refreshing
-      ? "Refreshing"
-      : lastUpdatedAt
-        ? `Live · ${lastUpdatedAt.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
-        : "Live";
+  const stale = ticketsOp.state === "STALE";
+  const syncTone = !live && !stale ? "failed" : refreshing ? "refreshing" : "live";
+  const syncLabel =
+    !live && !stale
+      ? "Sync failed"
+      : stale
+        ? `Stale · last good ${lastUpdatedAt?.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) ?? "—"}`
+        : refreshing
+          ? "Refreshing"
+          : lastUpdatedAt
+            ? `Live · ${lastUpdatedAt.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+            : "Live";
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -352,10 +330,20 @@ export default function AdminKitchenDashboard() {
       syncTone={syncTone}
       refreshing={refreshing || loading}
       onRefresh={() => {
-        void loadTickets({ soft: true });
-        void loadOrderEnrichment();
+        ticketsOp.retry();
+        enrichOp.retry();
       }}
     >
+      <OperationalStatusBanner
+        state={ticketsOp.state}
+        error={ticketsOp.error}
+        lastSuccessAt={ticketsOp.lastSuccessAt}
+        onRetry={ticketsOp.retry}
+        correlationId={ticketsOp.correlationId}
+        showTechnicalDetail={isSuperAdmin}
+        className="mb-4"
+      />
+
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <AdminSectionTitle
@@ -491,7 +479,7 @@ export default function AdminKitchenDashboard() {
           busyTicketId={busyTicketId}
           canAct={allowed}
           selectedTicketId={selectedTicket?.id ?? null}
-          onRetry={() => void loadTickets()}
+          onRetry={ticketsOp.retry}
           onView={openTicket}
           onTransition={onTransition}
         />

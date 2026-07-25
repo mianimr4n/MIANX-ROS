@@ -208,8 +208,11 @@ export function AiInsightsPanel({
 
 export function BranchPerformancePanel({
   rows,
+  onSelectBranch,
 }: {
   rows: NonNullable<AdminOperationsDashboard["branchPerformance"]> | null;
+  /** D2 drill-down: focus this branch and open its Branch dashboard. */
+  onSelectBranch?: (branchId: string) => void;
 }) {
   return (
     <AdminSurface aria-labelledby="branch-performance-heading">
@@ -237,7 +240,20 @@ export function BranchPerformancePanel({
             <tbody>
               {rows.map((row) => (
                 <tr key={row.branchId} className="border-b border-[var(--admin-border)]/70">
-                  <td className="py-3 pr-3 font-medium">{row.branchCode ?? row.branchId}</td>
+                  <td className="py-3 pr-3 font-medium">
+                    {onSelectBranch ? (
+                      <button
+                        type="button"
+                        onClick={() => onSelectBranch(row.branchId)}
+                        className="font-medium text-[var(--brand-red)] underline-offset-2 hover:underline"
+                        title="Open branch dashboard scoped to this branch"
+                      >
+                        {row.branchCode ?? row.branchId}
+                      </button>
+                    ) : (
+                      (row.branchCode ?? row.branchId)
+                    )}
+                  </td>
                   <td className="py-3 pr-3 tabular-nums">
                     Rs {Math.round(row.todayGrossSales).toLocaleString("en-PK")}
                   </td>

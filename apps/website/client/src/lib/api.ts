@@ -27,28 +27,80 @@ export class ApiRequestError extends Error {
   }
 }
 
-export async function fetchApiData<T>(path: string, init?: RequestInit): Promise<T> {
+/** Shared Authorization header builder for authenticated staff/admin requests. */
+export function bearerHeaders(accessToken: string): Record<string, string> {
+  return { Authorization: `Bearer ${accessToken}` };
+}
+
+export type ApiRequestOptions = RequestInit & {
+  /** Bounded request timeout in milliseconds. No timeout when omitted. */
+  timeoutMs?: number;
+  /** Client-generated correlation id, sent as `X-Client-Request-Id`. */
+  correlationId?: string;
+};
+
+export async function fetchApiData<T>(path: string, init?: ApiRequestOptions): Promise<T> {
   const envelope = await fetchApiEnvelope<T>(path, init);
   return envelope.data;
 }
 
 export async function fetchApiEnvelope<T>(
   path: string,
-  init?: RequestInit,
+  init?: ApiRequestOptions,
 ): Promise<{ data: T; meta?: Record<string, unknown> }> {
+  const { timeoutMs, correlationId, ...requestInit } = init ?? {};
+
   const headers: Record<string, string> = {
     Accept: "application/json",
-    ...(init?.headers as Record<string, string> | undefined),
+    ...(requestInit.headers as Record<string, string> | undefined),
   };
 
-  if (init?.body && !headers["Content-Type"]) {
+  if (requestInit.body && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
   }
 
-  const response = await fetch(resolveApiUrl(path), {
-    ...init,
-    headers,
-  });
+  if (correlationId) {
+    headers["X-Client-Request-Id"] = correlationId;
+  }
+
+  // Compose the caller's cancellation signal with an optional bounded timeout.
+  const callerSignal = requestInit.signal ?? null;
+  let signal = callerSignal ?? undefined;
+  let timedOut = false;
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+
+  if (typeof timeoutMs === "number" && timeoutMs > 0) {
+    const controller = new AbortController();
+    if (callerSignal) {
+      if (callerSignal.aborted) controller.abort();
+      else callerSignal.addEventListener("abort", () => controller.abort(), { once: true });
+    }
+    timeoutHandle = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
+    signal = controller.signal;
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(resolveApiUrl(path), {
+      ...requestInit,
+      headers,
+      signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      if (timedOut) {
+        throw new ApiRequestError("The API request timed out.", 0, "TIMEOUT");
+      }
+      // Deliberate cancellation by the caller: propagate untouched.
+      throw error;
+    }
+    throw new ApiRequestError("The API could not be reached.", 0, "NETWORK");
+  } finally {
+    if (timeoutHandle !== undefined) clearTimeout(timeoutHandle);
+  }
 
   let payload: unknown;
 

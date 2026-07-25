@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { ApiError } from "../../common/http.js";
 import type { EnvironmentStatus } from "../../config/env.js";
+import { assertBranchIdOperational } from "../branches/lookup.js";
 import {
   KITCHEN_TICKET_STATUSES,
   planKitchenTicketTransition,
@@ -371,6 +372,7 @@ export function createSupabaseKitchenTicketsService(
         status: string;
       };
       assertBranchInScope(scope, row.branch_id);
+      await assertBranchIdOperational(supabase, row.branch_id);
 
       const plan = planKitchenTicketTransition({
         currentStatus: row.status,

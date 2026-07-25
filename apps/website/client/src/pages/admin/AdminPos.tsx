@@ -30,10 +30,10 @@ import {
   type PosCartLine,
   type PosChannelMode,
 } from "@/lib/admin-pos";
-import { listAdminTables, transitionAdminOrder, type AdminRestaurantTable } from "@/lib/admin-api";
+import { createAdminPosOrder, listAdminTables, transitionAdminOrder, type AdminRestaurantTable } from "@/lib/admin-api";
 import { ApiRequestError, isApiConfigured } from "@/lib/api";
 import { normalizePhoneE164 } from "@/lib/phone";
-import { createOrderWithIdempotency, quoteOrder } from "@/lib/telepizza-api";
+import { quoteOrder } from "@/lib/telepizza-api";
 import type { MenuItem, QuoteOrderResponse } from "@/lib/telepizza-types";
 import { AdminShell } from "./AdminShell";
 
@@ -241,6 +241,15 @@ export default function AdminPos() {
 
   async function placeOrder() {
     if (!isApiConfigured || !branchCode || !quote || lines.length === 0) return;
+    const token = session?.access_token;
+    if (!token) {
+      setPlaceError("Sign in is required to place a POS order.");
+      return;
+    }
+    if (activeBranch?.status && activeBranch.status !== "operating") {
+      setPlaceError("This branch is not operationally active. Live POS orders are blocked.");
+      return;
+    }
     const name = customerName.trim();
     const phone = customerPhone.trim();
     if (name.length < 2 || phone.length < 7) {
@@ -259,11 +268,11 @@ export default function AdminPos() {
         paymentMethod ? `Payment intent=${paymentMethod} (Foundation label)` : "",
         tableNote,
       ].filter(Boolean);
-      const created = await createOrderWithIdempotency(
+      const created = await createAdminPosOrder(
+        token,
         {
           branchCode,
           orderType: channelToOrderType(channel),
-          orderSource: "pos",
           contactName: name,
           contactPhone: normalizePhoneE164(phone),
           deliveryAddress: needsAddress ? address.trim() : undefined,
@@ -284,7 +293,6 @@ export default function AdminPos() {
           })),
         },
         `pos-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-        session?.access_token,
       );
       setLastOrderNumber(created.orderNumber);
       setLastOrderId(created.id);

@@ -1,4 +1,7 @@
-import { fetchApiData } from "@/lib/api";
+import { bearerHeaders, fetchApiData } from "@/lib/api";
+import { ADMIN_READ_TIMEOUT_MS, ADMIN_WRITE_TIMEOUT_MS, type AdminReadOptions } from "@/lib/admin-api";
+
+export type OpsReadOptions = AdminReadOptions;
 
 export type OpsOrderListItem = {
   id: string;
@@ -100,32 +103,35 @@ export type RiderRosterItem = {
   status: string;
 };
 
-function authHeaders(accessToken: string): HeadersInit {
+function readInit(accessToken: string, opts?: OpsReadOptions) {
   return {
-    Authorization: `Bearer ${accessToken}`,
-    Accept: "application/json",
-    "Content-Type": "application/json",
+    headers: bearerHeaders(accessToken),
+    signal: opts?.signal,
+    correlationId: opts?.correlationId,
+    timeoutMs: opts?.timeoutMs ?? ADMIN_READ_TIMEOUT_MS,
   };
 }
 
 export async function listOpsOrders(
   accessToken: string,
-  query?: { status?: string; orderType?: string; limit?: number },
+  query?: { status?: string; orderType?: string; branchId?: string | null; limit?: number },
+  opts?: OpsReadOptions,
 ): Promise<OpsOrderListItem[]> {
   const params = new URLSearchParams();
   if (query?.status) params.set("status", query.status);
   if (query?.orderType) params.set("orderType", query.orderType);
+  if (query?.branchId) params.set("branchId", query.branchId);
   params.set("limit", String(query?.limit ?? 50));
   const qs = params.toString();
-  return fetchApiData<OpsOrderListItem[]>(`/admin/orders?${qs}`, {
-    headers: authHeaders(accessToken),
-  });
+  return fetchApiData<OpsOrderListItem[]>(`/admin/orders?${qs}`, readInit(accessToken, opts));
 }
 
-export async function getOpsOrder(accessToken: string, orderId: string): Promise<OpsOrderDetail> {
-  return fetchApiData<OpsOrderDetail>(`/admin/orders/${orderId}`, {
-    headers: authHeaders(accessToken),
-  });
+export async function getOpsOrder(
+  accessToken: string,
+  orderId: string,
+  opts?: OpsReadOptions,
+): Promise<OpsOrderDetail> {
+  return fetchApiData<OpsOrderDetail>(`/admin/orders/${orderId}`, readInit(accessToken, opts));
 }
 
 export async function transitionOpsOrder(
@@ -136,23 +142,26 @@ export async function transitionOpsOrder(
 ): Promise<{ status: string; idempotentReplay: boolean }> {
   return fetchApiData(`/admin/orders/${orderId}/${action}`, {
     method: "POST",
-    headers: authHeaders(accessToken),
+    headers: bearerHeaders(accessToken),
     body: JSON.stringify(body ?? {}),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }
 
 export async function listKitchenTickets(
   accessToken: string,
   query?: { status?: string; branchId?: string | null; limit?: number; offset?: number },
+  opts?: OpsReadOptions,
 ): Promise<KitchenTicket[]> {
   const params = new URLSearchParams();
   if (query?.status) params.set("status", query.status);
   if (query?.branchId) params.set("branchId", query.branchId);
   params.set("limit", String(query?.limit ?? 50));
   if (query?.offset) params.set("offset", String(query.offset));
-  return fetchApiData<KitchenTicket[]>(`/kitchen/tickets?${params.toString()}`, {
-    headers: authHeaders(accessToken),
-  });
+  return fetchApiData<KitchenTicket[]>(
+    `/kitchen/tickets?${params.toString()}`,
+    readInit(accessToken, opts),
+  );
 }
 
 export async function patchKitchenTicketStatus(
@@ -162,35 +171,40 @@ export async function patchKitchenTicketStatus(
 ): Promise<unknown> {
   return fetchApiData(`/kitchen/tickets/${ticketId}/status`, {
     method: "PATCH",
-    headers: authHeaders(accessToken),
+    headers: bearerHeaders(accessToken),
     body: JSON.stringify({ status }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }
 
 export async function listDeliveryAssignments(
   accessToken: string,
   query?: { status?: string; branchId?: string | null; limit?: number; offset?: number },
+  opts?: OpsReadOptions,
 ): Promise<DeliveryAssignment[]> {
   const params = new URLSearchParams();
   if (query?.status) params.set("status", query.status);
   if (query?.branchId) params.set("branchId", query.branchId);
   params.set("limit", String(query?.limit ?? 50));
   if (query?.offset) params.set("offset", String(query.offset));
-  return fetchApiData<DeliveryAssignment[]>(`/riders/assignments?${params.toString()}`, {
-    headers: authHeaders(accessToken),
-  });
+  return fetchApiData<DeliveryAssignment[]>(
+    `/riders/assignments?${params.toString()}`,
+    readInit(accessToken, opts),
+  );
 }
 
 export async function listRiderRoster(
   accessToken: string,
   query?: { branchId?: string | null },
+  opts?: OpsReadOptions,
 ): Promise<RiderRosterItem[]> {
   const params = new URLSearchParams();
   if (query?.branchId) params.set("branchId", query.branchId);
   const qs = params.toString();
-  return fetchApiData<RiderRosterItem[]>(`/riders/roster${qs ? `?${qs}` : ""}`, {
-    headers: authHeaders(accessToken),
-  });
+  return fetchApiData<RiderRosterItem[]>(
+    `/riders/roster${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
 }
 
 export async function assignDeliveryRider(
@@ -200,8 +214,9 @@ export async function assignDeliveryRider(
 ): Promise<unknown> {
   return fetchApiData(`/riders/deliveries/${deliveryId}/assign`, {
     method: "POST",
-    headers: authHeaders(accessToken),
+    headers: bearerHeaders(accessToken),
     body: JSON.stringify({ riderId }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }
 
@@ -212,7 +227,8 @@ export async function updateDeliveryStatus(
 ): Promise<unknown> {
   return fetchApiData(`/riders/deliveries/${deliveryId}/status`, {
     method: "POST",
-    headers: authHeaders(accessToken),
+    headers: bearerHeaders(accessToken),
     body: JSON.stringify({ status }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }

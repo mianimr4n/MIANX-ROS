@@ -55,7 +55,7 @@ describe("WhatsApp Order Center V1 (static)", () => {
 
   it("does not fabricate whatsapp order source in POS and keeps builder Foundation", () => {
     const pos = read("apps/website/client/src/pages/admin/AdminPos.tsx");
-    assert.match(pos, /orderSource: "pos"/);
+    assert.match(pos, /createAdminPosOrder/);
     const builder = read("apps/website/client/src/components/admin/whatsapp/WhatsAppOrderBuilder.tsx");
     assert.match(builder, /Foundation/);
     assert.match(builder, /orderSource=whatsapp/);

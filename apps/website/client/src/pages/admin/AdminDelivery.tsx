@@ -31,7 +31,9 @@ import {
   isKarachiToday,
   isOnlineRiderStatus,
 } from "@/lib/admin-delivery";
-import { getAdminOrder, listAdminOrders, type AdminOrderDetail, type AdminOrderListItem } from "@/lib/admin-api";
+import { getAdminOrder, listAdminOrders, type AdminOrderDetail } from "@/lib/admin-api";
+import { useOperationalData } from "@/lib/op-status";
+import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
 import { ApiRequestError } from "@/lib/api";
 import {
   assignDeliveryRider,
@@ -72,13 +74,7 @@ export default function AdminDelivery() {
   const search = useSearch();
   const urlState = useMemo(() => readFilters(search), [search]);
 
-  const [assignments, setAssignments] = useState<DeliveryAssignment[]>([]);
-  const [riders, setRiders] = useState<RiderRosterItem[]>([]);
-  const [ridersLive, setRidersLive] = useState(false);
-  const [orders, setOrders] = useState<AdminOrderListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [live, setLive] = useState(true);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [searchDraft, setSearchDraft] = useState(urlState.search);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -117,62 +113,49 @@ export default function AdminDelivery() {
     [setLocation, urlState],
   );
 
-  const loadAssignments = useCallback(async () => {
-    const token = session?.access_token;
-    if (!token || !allowed) return;
-    setLoading(true);
-    try {
-      const data = await listDeliveryAssignments(token, {
-        branchId: branchIdFilter,
-        status: urlState.status || undefined,
-        limit: 100,
-      });
-      setAssignments(data);
-      setError(null);
-      setLive(true);
-    } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Failed to load deliveries");
-      setLive(false);
-    } finally {
-      setLoading(false);
-    }
-  }, [allowed, branchIdFilter, session?.access_token, urlState.status]);
+  const token = session?.access_token;
 
-  const loadRiders = useCallback(async () => {
-    const token = session?.access_token;
-    if (!token || !canAssign) {
-      setRiders([]);
-      setRidersLive(false);
-      return;
-    }
-    try {
-      const roster = await listRiderRoster(token, { branchId: branchIdFilter });
-      setRiders(roster);
-      setRidersLive(true);
-    } catch {
-      setRiders([]);
-      setRidersLive(false);
-    }
-  }, [branchIdFilter, canAssign, session?.access_token]);
+  const assignmentsOp = useOperationalData(
+    ({ signal, correlationId }) =>
+      listDeliveryAssignments(
+        token!,
+        { branchId: branchIdFilter, status: urlState.status || undefined, limit: 100 },
+        { signal, correlationId },
+      ),
+    [token, branchIdFilter, urlState.status],
+    {
+      enabled: Boolean(token) && allowed && gateReady,
+      pollMs: 8_000,
+      isEmpty: (data) => data.length === 0,
+    },
+  );
 
-  const loadOrderEnrichment = useCallback(async () => {
-    const token = session?.access_token;
-    if (!token || !canEnrichOrders) {
-      setOrders([]);
-      return;
-    }
-    try {
-      const result = await listAdminOrders(token, {
-        branchId: branchIdFilter,
-        orderType: "delivery",
-        limit: 100,
-        offset: 0,
-      });
-      setOrders(result.orders);
-    } catch {
-      setOrders([]);
-    }
-  }, [branchIdFilter, canEnrichOrders, session?.access_token]);
+  const ridersOp = useOperationalData(
+    ({ signal, correlationId }) =>
+      listRiderRoster(token!, { branchId: branchIdFilter }, { signal, correlationId }),
+    [token, branchIdFilter],
+    { enabled: Boolean(token) && canAssign && gateReady },
+  );
+
+  const enrichOp = useOperationalData(
+    ({ signal, correlationId }) =>
+      listAdminOrders(
+        token!,
+        { branchId: branchIdFilter, orderType: "delivery", limit: 100, offset: 0 },
+        { signal, correlationId },
+      ),
+    [token, branchIdFilter],
+    { enabled: Boolean(token) && canEnrichOrders && gateReady },
+  );
+
+  const assignments = assignmentsOp.data ?? [];
+  const riders = ridersOp.data ?? [];
+  const ridersLive = ridersOp.state === "LIVE" || ridersOp.state === "EMPTY";
+  const orders = enrichOp.data?.orders ?? [];
+  const loading = assignmentsOp.state === "LOADING";
+  // Inline error only when nothing was ever loaded; STALE keeps the queue visible.
+  const error = assignmentsOp.data == null ? assignmentsOp.error : actionError;
+  const live = assignmentsOp.state === "LIVE" || assignmentsOp.state === "EMPTY";
 
   const loadDetail = useCallback(
     async (orderId: string) => {
@@ -198,22 +181,11 @@ export default function AdminDelivery() {
   );
 
   useEffect(() => {
-    if (!gateReady) return;
-    void loadAssignments();
-    void loadRiders();
-    void loadOrderEnrichment();
-  }, [gateReady, loadAssignments, loadRiders, loadOrderEnrichment]);
-
-  useEffect(() => {
     const tick = window.setInterval(() => setNowMs(Date.now()), 30_000);
-    const poll = window.setInterval(() => {
-      void loadAssignments();
-    }, 8_000);
     return () => {
       window.clearInterval(tick);
-      window.clearInterval(poll);
     };
-  }, [loadAssignments]);
+  }, []);
 
   useEffect(() => {
     setSearchDraft(urlState.search);
@@ -293,15 +265,16 @@ export default function AdminDelivery() {
     const token = session?.access_token;
     const riderId = selectedRiderByDelivery[deliveryId];
     if (!token || !riderId || busyId) {
-      if (!riderId) setError("Select a rider first.");
+      if (!riderId) setActionError("Select a rider first.");
       return;
     }
     setBusyId(deliveryId);
     try {
       await assignDeliveryRider(token, deliveryId, riderId);
-      await loadAssignments();
+      setActionError(null);
+      assignmentsOp.retry();
     } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Assign failed");
+      setActionError(err instanceof ApiRequestError ? err.message : "Assign failed");
     } finally {
       setBusyId(null);
     }
@@ -313,7 +286,8 @@ export default function AdminDelivery() {
     setBusyId(deliveryId);
     try {
       await updateDeliveryStatus(token, deliveryId, status);
-      await loadAssignments();
+      setActionError(null);
+      assignmentsOp.retry();
       if (selected?.id === deliveryId) {
         const refreshed = (
           await listDeliveryAssignments(token, { branchId: branchIdFilter, limit: 100 })
@@ -321,7 +295,7 @@ export default function AdminDelivery() {
         if (refreshed) setSelected(refreshed);
       }
     } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Status update failed");
+      setActionError(err instanceof ApiRequestError ? err.message : "Status update failed");
     } finally {
       setBusyId(null);
     }
@@ -374,14 +348,14 @@ export default function AdminDelivery() {
             aria-live="polite"
           >
             <span className={`h-2 w-2 rounded-full ${live ? "bg-emerald-600" : "bg-red-600"}`} aria-hidden />
-            {live ? "Live" : "Offline"}
+            {assignmentsOp.state === "STALE" ? "Stale" : live ? "Live" : "Offline"}
           </span>
           <button
             type="button"
             onClick={() => {
-              void loadAssignments();
-              void loadRiders();
-              void loadOrderEnrichment();
+              assignmentsOp.retry();
+              ridersOp.retry();
+              enrichOp.retry();
             }}
             className="min-h-11 rounded-lg border border-[var(--admin-border)] bg-white px-4 text-sm font-semibold hover:bg-[var(--admin-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-red)]"
           >
@@ -422,6 +396,16 @@ export default function AdminDelivery() {
         </div>
       </header>
 
+      <OperationalStatusBanner
+        state={assignmentsOp.state}
+        error={assignmentsOp.error}
+        lastSuccessAt={assignmentsOp.lastSuccessAt}
+        onRetry={assignmentsOp.retry}
+        correlationId={assignmentsOp.correlationId}
+        showTechnicalDetail={isSuperAdmin}
+        className="mb-4"
+      />
+
       <DeliveryKPIs snapshot={kpiSnapshot} loading={loading} ridersLive={ridersLive} />
 
       <DeliveryFilters
@@ -452,7 +436,7 @@ export default function AdminDelivery() {
         }
         onAssign={(deliveryId) => void onAssign(deliveryId)}
         onView={openDrawer}
-        onRetry={() => void loadAssignments()}
+        onRetry={assignmentsOp.retry}
       />
 
       <DeliveryCards

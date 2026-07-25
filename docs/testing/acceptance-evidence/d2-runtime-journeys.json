@@ -1,0 +1,380 @@
+{
+  "at": "2026-07-24T23:59:23.013Z",
+  "services": {
+    "apiHealth": 200,
+    "apiReady": 200,
+    "website": 200,
+    "supabaseHost": "127.0.0.1"
+  },
+  "journeys": {
+    "A": {
+      "ok": true,
+      "steps": [
+        {
+          "step": "sign-in",
+          "ok": true,
+          "roles": [
+            "cashier",
+            "customer"
+          ],
+          "requestId": "858a0c12-d215-4e94-980b-afa1c0ba01a7"
+        },
+        {
+          "step": "authorized-branch-royal-orchard",
+          "ok": true,
+          "branchIds": [
+            "380b6efe-33d0-47b4-909c-e36d184da34b"
+          ]
+        },
+        {
+          "step": "load-menu",
+          "ok": true,
+          "requestId": "72290999-b937-45a3-a7df-46fdfffe08a2"
+        },
+        {
+          "step": "pos-create",
+          "ok": true,
+          "status": 201,
+          "orderId": "ba4f74e2-ed1e-4a99-b265-245e96f7b681",
+          "orderNumber": "TP-260724-000063",
+          "requestId": "6b1b9703-a410-4632-aa84-46352a73dc11"
+        },
+        {
+          "step": "persist-order-items-ticket",
+          "ok": true,
+          "orderId": "ba4f74e2-ed1e-4a99-b265-245e96f7b681",
+          "itemCount": 1,
+          "ticketId": "3c9b340b-721f-4b83-b8e7-3a91d744294d",
+          "ticketStatus": "queued"
+        },
+        {
+          "step": "kds-list",
+          "ok": true,
+          "ticketId": "3c9b340b-721f-4b83-b8e7-3a91d744294d",
+          "requestId": "37e10e18-2723-4aa8-b7ee-9d26c3fa9e9f"
+        },
+        {
+          "step": "kitchen-transitions",
+          "ok": true,
+          "transitions": [
+            {
+              "status": "accepted",
+              "http": 200,
+              "requestId": "a9879065-3a7f-42a7-bf32-095d3355297c",
+              "code": null
+            },
+            {
+              "status": "preparing",
+              "http": 200,
+              "requestId": "ec053daa-dee0-4417-a4e9-330623e51c55",
+              "code": null
+            },
+            {
+              "status": "ready",
+              "http": 200,
+              "requestId": "d189e3b9-1bb7-42ad-a7d0-91fc0a6efc78",
+              "code": null
+            },
+            {
+              "status": "completed",
+              "http": 200,
+              "requestId": "9c6ab9a6-7f4b-459b-a2da-dd38f5955294",
+              "code": null
+            }
+          ]
+        },
+        {
+          "step": "orders-list",
+          "ok": true,
+          "requestId": "35eed507-9143-4bbc-ae08-a679e4091840"
+        },
+        {
+          "step": "order-complete-or-synced",
+          "ok": true,
+          "status": 200,
+          "requestId": "03cde09c-6dc3-4b9b-8934-6b5131920bc4",
+          "code": null
+        },
+        {
+          "step": "dashboard",
+          "ok": true,
+          "requestId": "0b74b037-e480-4ee1-a408-99bba5165c45"
+        },
+        {
+          "step": "persist-after-reload",
+          "ok": true,
+          "status": "completed"
+        }
+      ]
+    },
+    "B": {
+      "ok": true,
+      "steps": [
+        {
+          "step": "pos-create-northern",
+          "ok": true,
+          "orderId": "255aa0d8-6a30-4cfe-bf30-6c97bcfd4528",
+          "requestId": "a81869e5-462f-447c-a997-d4e2ed77ebfb",
+          "orderNumber": "TP-260724-000064"
+        },
+        {
+          "step": "branch-is-northern",
+          "ok": true,
+          "branchId": "d3403e15-4850-4927-b5ca-f414bd43fd77"
+        },
+        {
+          "step": "isolation-orders-a-no-leak",
+          "ok": true,
+          "requestId": "b2f3a1ba-46d5-4c4e-8c46-abc8be7b53c5"
+        },
+        {
+          "step": "isolation-order-detail-a-denied",
+          "ok": true,
+          "status": 403,
+          "code": "ORDER_ACCESS_DENIED",
+          "requestId": "be575c24-ff65-4261-b9b2-9d1678319c64"
+        },
+        {
+          "step": "isolation-kds-a-no-leak",
+          "ok": true,
+          "requestId": "3b6625aa-7062-46f2-a4b5-3b3501f508eb"
+        },
+        {
+          "step": "kds-b-sees-ticket",
+          "ok": true,
+          "ticketId": "53822776-ecd6-42cf-9992-2c1d0a4b640f"
+        },
+        {
+          "step": "multi-manager-dashboard",
+          "ok": true,
+          "requestId": "15de529b-6549-4902-bd42-77ba1158411f"
+        },
+        {
+          "step": "fixture-northern-operating-in-test",
+          "ok": true,
+          "status": "operating"
+        }
+      ]
+    },
+    "C": {
+      "ok": true,
+      "steps": [
+        {
+          "step": "delivery-create",
+          "ok": true,
+          "orderId": "f53ef891-7cf6-4ad1-a8c6-b4512aa1a51c",
+          "requestId": "d34a69e8-1df1-42f0-96a8-bfba3e06d081"
+        },
+        {
+          "step": "delivery-row",
+          "ok": true,
+          "deliveryId": "02aaeeff-7af5-42d3-8f53-2a6fdfde25d1",
+          "status": "pending"
+        },
+        {
+          "step": "kitchen-ready-complete",
+          "ok": true,
+          "ticketId": "4867fbe5-1688-4d5a-9504-c17a1ac6bceb"
+        },
+        {
+          "step": "cross-branch-rider-rejected",
+          "ok": true,
+          "status": 400,
+          "code": "VALIDATION_ERROR",
+          "requestId": "3c6a178e-1bfd-49c9-9e85-c8acc319e30c"
+        },
+        {
+          "step": "assign-same-branch-rider",
+          "ok": true,
+          "requestId": "ce130a0a-8c4d-480e-b6fa-68438988fa55"
+        },
+        {
+          "step": "picked-up-and-delivered",
+          "ok": true,
+          "requestIds": [
+            "4b3b4737-b265-4ca0-b90b-5cec3b5f65cb",
+            "7134b416-ade6-402d-a128-d2f7a12e7552"
+          ]
+        },
+        {
+          "step": "dashboard",
+          "ok": true,
+          "requestId": "7e5bd7e7-8cc4-400b-8ca5-80b08b5fbea4"
+        }
+      ]
+    },
+    "D": {
+      "ok": true,
+      "steps": [
+        {
+          "step": "all-attacks-rejected",
+          "ok": true,
+          "attacks": [
+            {
+              "name": "forged-branch-code",
+              "expected": "fail",
+              "status": 404,
+              "code": "BRANCH_NOT_FOUND",
+              "requestId": "4e0febf0-bb09-4e95-b5f2-44244cd6da17"
+            },
+            {
+              "name": "unknown-branch",
+              "expected": "fail",
+              "status": 404,
+              "code": "BRANCH_NOT_FOUND",
+              "requestId": "85a75c8f-76b7-44bb-a298-90cfda58efe4"
+            },
+            {
+              "name": "cashier-a-create-branch-b",
+              "expected": "fail",
+              "status": 403,
+              "code": "BRANCH_ACCESS_DENIED",
+              "requestId": "e5fdb4fa-097f-4737-bdd3-d3aea336ea76"
+            },
+            {
+              "name": "cashier-a-read-branch-b-order",
+              "expected": "fail",
+              "status": 403,
+              "code": "ORDER_ACCESS_DENIED",
+              "requestId": "20dfb467-74a0-4878-9e6b-ede914502c51"
+            },
+            {
+              "name": "kitchen-a-update-branch-b-ticket",
+              "expected": "fail",
+              "status": 403,
+              "code": "KITCHEN_ACCESS_DENIED",
+              "requestId": "4cc0844b-99bd-40c0-8484-028986ce2ad7"
+            },
+            {
+              "name": "omitted-branch-filter-no-b-leak",
+              "expected": "no-leak",
+              "status": 200,
+              "leaked": false,
+              "requestId": "ce3494e6-6e8c-4596-919f-c6b94ac0ecf9"
+            },
+            {
+              "name": "spoofed-branch-query",
+              "expected": "fail-or-empty",
+              "status": 403,
+              "code": "ORDER_ACCESS_DENIED",
+              "count": null,
+              "requestId": "d3618394-0426-40d2-b74e-9df7b4bf06e6"
+            },
+            {
+              "name": "public-pos-bypass",
+              "expected": "fail",
+              "status": 403,
+              "code": "POS_AUTH_REQUIRED",
+              "requestId": "9ad5795f-490d-4e5c-a119-9ffd8a09a420"
+            }
+          ]
+        }
+      ]
+    },
+    "E": {
+      "ok": true,
+      "steps": [
+        {
+          "step": "op-status-canonical-states",
+          "ok": true
+        },
+        {
+          "step": "successful-dataset",
+          "ok": true,
+          "requestId": "408081b3-f576-4a53-9079-c18aacf02df8",
+          "hasData": true
+        },
+        {
+          "step": "empty-or-list-success",
+          "ok": true,
+          "count": 1,
+          "requestId": "f01cccfd-7355-4aad-8a69-ebc786778d13"
+        },
+        {
+          "step": "401-unauthorized",
+          "ok": true,
+          "requestId": "fd52e1df-40d1-4a2a-9f57-ea8ea87572dd"
+        },
+        {
+          "step": "403-or-denied",
+          "ok": true,
+          "status": 403,
+          "code": "BRANCH_ACCESS_DENIED",
+          "requestId": "344dcf44-ae78-4f54-bf31-7fec9b91d558"
+        },
+        {
+          "step": "error-category-contract",
+          "ok": true
+        }
+      ]
+    },
+    "readiness": {
+      "ok": true,
+      "steps": [
+        {
+          "step": "recorded",
+          "ok": true,
+          "royalHttp": 200,
+          "northernHttp": 200
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "Journey E induced 5xx/timeout/offline used contract verification + live 401/403; full browser disconnect not automated in this harness."
+  ],
+  "readiness": {
+    "royalOrchard": {
+      "status": 200,
+      "requestId": "7b81e818-f3f4-4c11-a7f1-216676f6459c",
+      "body": {
+        "branchId": "380b6efe-33d0-47b4-909c-e36d184da34b",
+        "branchCode": "royal-orchard",
+        "name": "Royal Orchard Branch",
+        "status": "operating",
+        "operationallyActive": true,
+        "blockers": [],
+        "checks": {
+          "phone": true,
+          "operatingHours": true,
+          "branchManagerAssigned": true,
+          "cashierAssigned": true,
+          "kitchenAssigned": true,
+          "riderAssigned": true,
+          "statusOperating": true
+        }
+      }
+    },
+    "northernBypass": {
+      "status": 200,
+      "requestId": "4e49a450-ed73-416d-ad10-e11eef3000aa",
+      "body": {
+        "branchId": "d3403e15-4850-4927-b5ca-f414bd43fd77",
+        "branchCode": "northern-bypass",
+        "name": "Northern Bypass Road Branch",
+        "status": "operating",
+        "operationallyActive": true,
+        "blockers": [
+          {
+            "code": "PHONE_MISSING",
+            "message": "Branch phone number is required."
+          },
+          {
+            "code": "HOURS_MISSING",
+            "message": "Real operating hours are required (placeholder Coming Soon is not valid)."
+          }
+        ],
+        "checks": {
+          "phone": false,
+          "operatingHours": false,
+          "branchManagerAssigned": true,
+          "cashierAssigned": true,
+          "kitchenAssigned": true,
+          "riderAssigned": true,
+          "statusOperating": true
+        }
+      }
+    }
+  },
+  "ok": true
+}

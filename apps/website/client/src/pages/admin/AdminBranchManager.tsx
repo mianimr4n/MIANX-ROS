@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   Bike,
@@ -29,13 +29,21 @@ import {
   canAccessAdminOrdersApi,
   primaryRoleLabel,
 } from "@/lib/admin-access";
-import {
-  fetchAdminOperationsDashboard,
-  type AdminOperationsDashboard,
-} from "@/lib/admin-api";
+import { fetchAdminOperationsDashboard } from "@/lib/admin-api";
 import { listRiderRoster } from "@/lib/ops-api";
-import { ApiRequestError, isApiConfigured } from "@/lib/api";
+import { isApiConfigured } from "@/lib/api";
+import { useOperationalData, type OperationalState } from "@/lib/op-status";
+import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
 import { AdminShell } from "@/pages/admin/AdminShell";
+
+/** Map the canonical D2 state onto the KPI card state model. */
+function branchKpiState(opState: OperationalState): "available" | "loading" | "error" | "stale" | "unavailable" {
+  if (opState === "LOADING") return "loading";
+  if (opState === "ERROR" || opState === "OFFLINE") return "error";
+  if (opState === "STALE") return "stale";
+  if (opState === "UNAVAILABLE" || opState === "FOUNDATION") return "unavailable";
+  return "available";
+}
 
 function formatPkr(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return "—";
@@ -70,12 +78,6 @@ export default function AdminBranchManager() {
   const { session, permissions, isSuperAdmin, roles, profile, branchIds } = useAuth();
   const { branchIdFilter, label: branchLabel, allowedBranches, selection, setSelection, canSelectAll } =
     useAdminBranch();
-  const [data, setData] = useState<AdminOperationsDashboard | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [riderAvailable, setRiderAvailable] = useState<number | null>(null);
-  const [riderTotal, setRiderTotal] = useState<number | null>(null);
-  const [ridersError, setRidersError] = useState(false);
   const [now] = useState(() => new Date());
 
   const principal = { roles, permissions, isSuperAdmin, branchIds };
@@ -97,50 +99,30 @@ export default function AdminBranchManager() {
   }, [allowedBranches, branchIdFilter, branchIds, gateReady, selection.mode, setSelection]);
 
   const scopedBranchId = branchIdFilter;
+  const token = session?.access_token;
 
-  const load = useCallback(async () => {
-    const token = session?.access_token;
-    if (!token || !ordersApi || !scopedBranchId) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const next = await fetchAdminOperationsDashboard(token, { branchId: scopedBranchId });
-      setData(next);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Failed to load branch dashboard");
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [ordersApi, scopedBranchId, session?.access_token]);
+  const dashboardOp = useOperationalData(
+    ({ signal, correlationId }) =>
+      fetchAdminOperationsDashboard(token!, { branchId: scopedBranchId }, { signal, correlationId }),
+    [token, scopedBranchId],
+    { enabled: Boolean(token) && ordersApi && Boolean(scopedBranchId) && gateReady },
+  );
 
-  const loadRiders = useCallback(async () => {
-    const token = session?.access_token;
-    if (!token || !deliveryApi || !scopedBranchId) {
-      setRiderAvailable(null);
-      setRiderTotal(null);
-      return;
-    }
-    try {
-      const roster = await listRiderRoster(token, { branchId: scopedBranchId });
-      setRiderTotal(roster.length);
-      setRiderAvailable(roster.filter((r) => r.status === "available" || r.status === "active").length);
-      setRidersError(false);
-    } catch {
-      setRiderAvailable(null);
-      setRiderTotal(null);
-      setRidersError(true);
-    }
-  }, [deliveryApi, scopedBranchId, session?.access_token]);
+  const ridersOp = useOperationalData(
+    ({ signal, correlationId }) =>
+      listRiderRoster(token!, { branchId: scopedBranchId }, { signal, correlationId }),
+    [token, scopedBranchId],
+    { enabled: Boolean(token) && deliveryApi && Boolean(scopedBranchId) && gateReady },
+  );
 
-  useEffect(() => {
-    if (!gateReady) return;
-    void load();
-    void loadRiders();
-  }, [gateReady, load, loadRiders]);
+  const data = dashboardOp.data;
+  const error = dashboardOp.error;
+  const loading = dashboardOp.state === "LOADING";
+  const kpiCardState = branchKpiState(dashboardOp.state);
+  const riderTotal = ridersOp.data?.length ?? null;
+  const riderAvailable =
+    ridersOp.data?.filter((r) => r.status === "available" || r.status === "active").length ?? null;
+  const ridersError = ridersOp.state === "ERROR" || ridersOp.state === "OFFLINE";
 
   const status = data?.statusCounts ?? {};
   const pending = status.pending ?? 0;
@@ -236,20 +218,24 @@ export default function AdminBranchManager() {
             />
             {!isApiConfigured
               ? "API not configured"
-              : error
-                ? "Data unavailable"
-                : dataReady
-                  ? "Live branch data"
-                  : loading
-                    ? "Loading…"
-                    : "Select a branch"}
+              : dashboardOp.state === "STALE"
+                ? "Stale branch data"
+                : dashboardOp.state === "OFFLINE"
+                  ? "Offline"
+                  : error
+                    ? "Data unavailable"
+                    : dataReady
+                      ? "Live branch data"
+                      : loading
+                        ? "Loading…"
+                        : "Select a branch"}
           </span>
 
           <button
             type="button"
             onClick={() => {
-              void load();
-              void loadRiders();
+              dashboardOp.retry();
+              ridersOp.retry();
             }}
             className="rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm font-semibold hover:bg-[var(--admin-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-red)]"
           >
@@ -264,18 +250,15 @@ export default function AdminBranchManager() {
         </div>
       ) : null}
 
-      {error ? (
-        <div
-          className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-          role="alert"
-          aria-live="assertive"
-        >
-          <p>{error}</p>
-          <button type="button" className="mt-2 font-semibold underline" onClick={() => void load()}>
-            Retry
-          </button>
-        </div>
-      ) : null}
+      <OperationalStatusBanner
+        state={dashboardOp.state}
+        error={error}
+        lastSuccessAt={dashboardOp.lastSuccessAt}
+        onRetry={dashboardOp.retry}
+        correlationId={dashboardOp.correlationId}
+        showTechnicalDetail={isSuperAdmin}
+        className="mb-6"
+      />
 
       <section aria-label="Branch KPIs" className="mb-8">
         <AdminSectionTitle
@@ -293,50 +276,58 @@ export default function AdminBranchManager() {
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <AdminKpiCard
               title="Today's orders"
-              value={String(data?.kpis.todayOrders ?? 0)}
+              value={data ? String(data.kpis.todayOrders) : null}
               source="LIVE"
+              state={kpiCardState}
               detail="Non-cancelled orders today (branch scope)"
             />
             <AdminKpiCard
               title="Today's sales"
-              value={formatPkr(data?.kpis.todayGrossSales)}
+              value={data ? formatPkr(data.kpis.todayGrossSales) : null}
               source="LIVE"
+              state={kpiCardState}
               detail="Gross sales from today’s non-cancelled orders"
             />
             <AdminKpiCard
               title="Pending orders"
-              value={String(pending)}
+              value={data ? String(pending) : null}
               source="DERIVED"
+              state={kpiCardState}
               detail="Orders currently in pending status"
             />
             <AdminKpiCard
               title="Kitchen queue"
-              value={String(data?.kpis.kitchenWaiting ?? 0)}
+              value={data ? String(data.kpis.kitchenWaiting) : null}
               source="DERIVED"
+              state={kpiCardState}
               detail="Confirmed + preparing — not a KDS ticket count"
             />
             <AdminKpiCard
               title="Ready orders"
-              value={String(ready)}
+              value={data ? String(ready) : null}
               source="DERIVED"
+              state={kpiCardState}
               detail="Orders in ready status"
             />
             <AdminKpiCard
               title="Dispatch queue"
-              value={String(data?.kpis.activeDeliveries ?? 0)}
+              value={data ? String(data.kpis.activeDeliveries) : null}
               source="DERIVED"
+              state={kpiCardState}
               detail="Orders currently dispatched"
             />
             <AdminKpiCard
               title="Cancelled orders"
-              value={String(cancelled)}
+              value={data ? String(cancelled) : null}
               source="DERIVED"
+              state={kpiCardState}
               detail="Cancelled count in today’s status map"
             />
             <AdminKpiCard
               title="Customer waiting"
-              value={String(customerWaiting)}
+              value={data ? String(customerWaiting) : null}
               source="DERIVED"
+              state={kpiCardState}
               detail="Pending + confirmed (proxy wait queue — not CSAT)"
             />
             <AdminKpiCard

@@ -14,6 +14,7 @@ This numbered folder is the TEAS navigation slot. Content is stored under the st
 | --- | --- | --- |
 | ROS Product Architecture Blueprint | [`../architecture/RESTAURANT_OPERATING_SYSTEM_BLUEPRINT.md`](../architecture/RESTAURANT_OPERATING_SYSTEM_BLUEPRINT.md) | Approved target architecture — not implementation evidence |
 | Current-state assessment (2026-07-25) | [`../architecture/assessments/ROS_CURRENT_STATE_ASSESSMENT_2026-07-25.md`](../architecture/assessments/ROS_CURRENT_STATE_ASSESSMENT_2026-07-25.md) | Point-in-time repository assessment |
+| D2 — Multi-Branch Opening Readiness | [`../architecture/d2/`](../architecture/d2/) | Authorized reliability slice — Implementation In Progress |
 | Architecture directory | [`../architecture/`](../architecture/) | Classic path for all architecture files |
 
 Master roadmap: [`../14-phases/TELEPIZZA-MASTER-ROADMAP.md`](../14-phases/TELEPIZZA-MASTER-ROADMAP.md)  

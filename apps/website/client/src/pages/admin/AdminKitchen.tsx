@@ -26,8 +26,10 @@ import {
   ticketTimerStartIso,
   timerTone,
 } from "@/lib/admin-kitchen";
-import { getAdminOrder, listAdminOrders, type AdminOrderDetail, type AdminOrderListItem } from "@/lib/admin-api";
+import { getAdminOrder, listAdminOrders, type AdminOrderDetail } from "@/lib/admin-api";
 import { ApiRequestError } from "@/lib/api";
+import { useOperationalData } from "@/lib/op-status";
+import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
 import {
   listKitchenTickets,
   patchKitchenTicketStatus,
@@ -66,11 +68,7 @@ export default function AdminKitchen() {
   const search = useSearch();
   const urlState = useMemo(() => readFilters(search), [search]);
 
-  const [tickets, setTickets] = useState<KitchenTicket[]>([]);
-  const [orders, setOrders] = useState<AdminOrderListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [live, setLive] = useState(true);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [searchDraft, setSearchDraft] = useState(urlState.search);
   const [busyTicketId, setBusyTicketId] = useState<string | null>(null);
@@ -109,43 +107,36 @@ export default function AdminKitchen() {
     [setLocation, urlState],
   );
 
-  const loadTickets = useCallback(async () => {
-    const token = session?.access_token;
-    if (!token || !allowed) return;
-    setLoading(true);
-    try {
-      const data = await listKitchenTickets(token, {
-        branchId: branchIdFilter,
-        limit: 100,
-      });
-      setTickets(data);
-      setError(null);
-      setLive(true);
-    } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Failed to load kitchen tickets");
-      setLive(false);
-    } finally {
-      setLoading(false);
-    }
-  }, [allowed, branchIdFilter, session?.access_token]);
+  const token = session?.access_token;
 
-  const loadOrderEnrichment = useCallback(async () => {
-    const token = session?.access_token;
-    if (!token || !canEnrichOrders) {
-      setOrders([]);
-      return;
-    }
-    try {
-      const result = await listAdminOrders(token, {
-        branchId: branchIdFilter,
-        limit: 100,
-        offset: 0,
-      });
-      setOrders(result.orders);
-    } catch {
-      setOrders([]);
-    }
-  }, [branchIdFilter, canEnrichOrders, session?.access_token]);
+  const ticketsOp = useOperationalData(
+    ({ signal, correlationId }) =>
+      listKitchenTickets(token!, { branchId: branchIdFilter, limit: 100 }, { signal, correlationId }),
+    [token, branchIdFilter],
+    {
+      enabled: Boolean(token) && allowed && gateReady,
+      pollMs: 8_000,
+      isEmpty: (data) => data.length === 0,
+    },
+  );
+
+  const enrichOp = useOperationalData(
+    ({ signal, correlationId }) =>
+      listAdminOrders(
+        token!,
+        { branchId: branchIdFilter, limit: 100, offset: 0 },
+        { signal, correlationId },
+      ),
+    [token, branchIdFilter],
+    { enabled: Boolean(token) && canEnrichOrders && gateReady },
+  );
+
+  const tickets = ticketsOp.data ?? [];
+  const orders = enrichOp.data?.orders ?? [];
+  const loading = ticketsOp.state === "LOADING";
+  // Inline board error only with no prior data; STALE keeps the board visible.
+  const error = ticketsOp.data == null ? ticketsOp.error : actionError;
+  const live = ticketsOp.state === "LIVE" || ticketsOp.state === "EMPTY";
 
   const loadDetail = useCallback(
     async (orderId: string) => {
@@ -171,21 +162,11 @@ export default function AdminKitchen() {
   );
 
   useEffect(() => {
-    if (!gateReady) return;
-    void loadTickets();
-    void loadOrderEnrichment();
-  }, [gateReady, loadTickets, loadOrderEnrichment]);
-
-  useEffect(() => {
     const tick = window.setInterval(() => setNowMs(Date.now()), 30_000);
-    const poll = window.setInterval(() => {
-      void loadTickets();
-    }, 8_000);
     return () => {
       window.clearInterval(tick);
-      window.clearInterval(poll);
     };
-  }, [loadTickets]);
+  }, []);
 
   useEffect(() => {
     setSearchDraft(urlState.search);
@@ -263,7 +244,8 @@ export default function AdminKitchen() {
     setBusyTicketId(ticket.id);
     try {
       await patchKitchenTicketStatus(token, ticket.id, toStatus);
-      await loadTickets();
+      setActionError(null);
+      ticketsOp.retry();
       if (selectedTicket?.id === ticket.id) {
         const refreshed = (await listKitchenTickets(token, { branchId: branchIdFilter, limit: 100 })).find(
           (t) => t.id === ticket.id,
@@ -271,7 +253,7 @@ export default function AdminKitchen() {
         if (refreshed) setSelectedTicket(refreshed);
       }
     } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Kitchen status update failed");
+      setActionError(err instanceof ApiRequestError ? err.message : "Kitchen status update failed");
     } finally {
       setBusyTicketId(null);
     }
@@ -327,13 +309,13 @@ export default function AdminKitchen() {
               className={`h-2 w-2 rounded-full ${live ? "bg-emerald-600" : "bg-red-600"}`}
               aria-hidden
             />
-            {live ? "Live" : "Offline"}
+            {ticketsOp.state === "STALE" ? "Stale" : live ? "Live" : "Offline"}
           </span>
           <button
             type="button"
             onClick={() => {
-              void loadTickets();
-              void loadOrderEnrichment();
+              ticketsOp.retry();
+              enrichOp.retry();
             }}
             className="min-h-12 rounded-lg border border-[var(--admin-border)] bg-white px-4 text-sm font-semibold hover:bg-[var(--admin-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-red)]"
           >
@@ -366,6 +348,16 @@ export default function AdminKitchen() {
         </div>
       </header>
 
+      <OperationalStatusBanner
+        state={ticketsOp.state}
+        error={ticketsOp.error}
+        lastSuccessAt={ticketsOp.lastSuccessAt}
+        onRetry={ticketsOp.retry}
+        correlationId={ticketsOp.correlationId}
+        showTechnicalDetail={isSuperAdmin}
+        className="mb-4"
+      />
+
       <KitchenKPIs snapshot={kpiSnapshot} loading={loading} />
 
       <KitchenFilters
@@ -389,7 +381,7 @@ export default function AdminKitchen() {
         busyTicketId={busyTicketId}
         canAct={allowed}
         selectedTicketId={selectedTicket?.id ?? null}
-        onRetry={() => void loadTickets()}
+        onRetry={ticketsOp.retry}
         onView={openTicket}
         onTransition={(ticket, toStatus) => void onTransition(ticket, toStatus)}
       />

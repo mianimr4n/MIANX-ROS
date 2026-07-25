@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 
 import { AdminKpiCard, AdminKpiSkeleton, AdminSectionTitle, type AdminKpiState } from "@/components/admin/AdminKpiCard";
@@ -26,13 +26,21 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
-import { canAccessAdminOrdersApi, isBranchManagerOnly, isKitchenOnly, primaryRoleLabel } from "@/lib/admin-access";
+import {
+  canAccessAdminOrdersApi,
+  isBranchManagerOnly,
+  isCashierOnly,
+  isKitchenOnly,
+  isRiderOnly,
+  primaryRoleLabel,
+} from "@/lib/admin-access";
 import {
   fetchAdminOperationsDashboard,
-  type AdminOperationsDashboard,
   type AdminOrderListItem,
 } from "@/lib/admin-api";
-import { ApiRequestError, isApiConfigured } from "@/lib/api";
+import { isApiConfigured } from "@/lib/api";
+import { useOperationalData, type OperationalState } from "@/lib/op-status";
+import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
 import { AdminShell } from "@/pages/admin/AdminShell";
 
 function formatPkr(value: number | null | undefined) {
@@ -94,29 +102,21 @@ function applyClientFilters(
   });
 }
 
-function kpiState(args: {
-  loading: boolean;
-  error: string | null;
-  data: AdminOperationsDashboard | null;
-  empty?: boolean;
-  unavailable?: boolean;
-}): AdminKpiState {
-  if (args.loading && !args.data) return "loading";
-  // Prefer error over stale prior payload so KPIs do not look LIVE while refresh failed.
-  if (args.error) return "error";
-  if (!args.data) return "unavailable";
-  if (args.unavailable) return "unavailable";
-  if (args.empty) return "empty";
+/** Map the canonical D2 state onto the KPI card state model. */
+function kpiState(opState: OperationalState, unavailable?: boolean): AdminKpiState {
+  if (opState === "LOADING") return "loading";
+  if (opState === "ERROR" || opState === "OFFLINE") return "error";
+  if (opState === "STALE") return "stale";
+  if (opState === "UNAVAILABLE" || opState === "FOUNDATION") return "unavailable";
+  if (unavailable) return "unavailable";
+  if (opState === "EMPTY") return "empty";
   return "available";
 }
 
 export default function AdminDashboard() {
   const { session, permissions, isSuperAdmin, roles, profile } = useAuth();
-  const { branchIdFilter, label: branchLabel } = useAdminBranch();
+  const { branchIdFilter, label: branchLabel, setSelection } = useAdminBranch();
   const [, setLocation] = useLocation();
-  const [data, setData] = useState<AdminOperationsDashboard | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<ExecutiveDashboardFilters>(DEFAULT_EXECUTIVE_FILTERS);
   const [now] = useState(() => new Date());
 
@@ -131,28 +131,27 @@ export default function AdminDashboard() {
     }
     if (isBranchManagerOnly({ roles, permissions, isSuperAdmin })) {
       setLocation("/admin/branch");
+      return;
+    }
+    // D2: staff role homes — Executive dashboard stays Owner/Admin only.
+    if (isCashierOnly({ roles, permissions, isSuperAdmin })) {
+      setLocation("/admin/pos");
+      return;
+    }
+    if (isRiderOnly({ roles, permissions, isSuperAdmin })) {
+      setLocation("/admin/delivery");
     }
   }, [isSuperAdmin, permissions, roles, setLocation]);
 
-  const load = useCallback(async () => {
-    const token = session?.access_token;
-    if (!token || !allowed) return;
-    setLoading(true);
-    try {
-      const next = await fetchAdminOperationsDashboard(token, { branchId: branchIdFilter });
-      setData(next);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Failed to load dashboard");
-    } finally {
-      setLoading(false);
-    }
-  }, [allowed, branchIdFilter, session?.access_token]);
-
-  useEffect(() => {
-    if (!gateReady) return;
-    void load();
-  }, [gateReady, load]);
+  const token = session?.access_token;
+  const dashboard = useOperationalData(
+    ({ signal, correlationId }) =>
+      fetchAdminOperationsDashboard(token!, { branchId: branchIdFilter }, { signal, correlationId }),
+    [token, branchIdFilter],
+    { enabled: Boolean(token) && allowed && gateReady },
+  );
+  const { data, error, state: opState, lastSuccessAt, retry } = dashboard;
+  const loading = opState === "LOADING";
 
   const filteredOrders = useMemo(() => {
     if (!data) return [];
@@ -172,15 +171,17 @@ export default function AdminDashboard() {
   const updated = formatUpdatedAt(data?.generatedAt);
   const liveLabel = !isApiConfigured
     ? "API not configured"
-    : error
-      ? "Data unavailable"
-      : dataReady
-        ? "Live operations"
-        : loading
-          ? "Loading…"
-          : "Idle";
-
-  const baseState = { loading, error, data };
+    : opState === "OFFLINE"
+      ? "Offline"
+      : opState === "STALE"
+        ? "Stale data"
+        : error
+          ? "Data unavailable"
+          : dataReady
+            ? "Live operations"
+            : loading
+              ? "Loading…"
+              : "Idle";
 
   return (
     <AdminShell title="Executive dashboard">
@@ -224,7 +225,7 @@ export default function AdminDashboard() {
           </span>
           <button
             type="button"
-            onClick={() => void load()}
+            onClick={retry}
             className="rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm font-semibold hover:bg-[var(--admin-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-red)]"
           >
             Refresh
@@ -244,18 +245,16 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      {error ? (
-        <div
-          className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-          role="alert"
-          aria-live="assertive"
-        >
-          <p>{error}</p>
-          <button type="button" className="mt-2 font-semibold underline" onClick={() => void load()}>
-            Retry
-          </button>
-        </div>
-      ) : null}
+      <OperationalStatusBanner
+        state={opState}
+        error={error}
+        lastSuccessAt={lastSuccessAt}
+        onRetry={retry}
+        correlationId={dashboard.correlationId}
+        showTechnicalDetail={isSuperAdmin}
+        className="mb-6"
+      />
+
 
       <section aria-label="Key performance indicators" className="mb-8">
         <AdminSectionTitle
@@ -276,7 +275,7 @@ export default function AdminDashboard() {
               value={formatCount(data?.kpis.todayOrders)}
               secondary="Asia/Karachi business day"
               source="LIVE"
-              state={kpiState(baseState)}
+              state={kpiState(opState)}
               lastUpdated={updated}
               detail="Order count for today’s non-cancelled and cancelled rows in scope"
               action={
@@ -290,7 +289,7 @@ export default function AdminDashboard() {
               value={formatPkr(data?.kpis.todayGrossSales)}
               secondary="Gross sales"
               source="LIVE"
-              state={kpiState(baseState)}
+              state={kpiState(opState)}
               lastUpdated={updated}
               detail="Gross sales from today’s non-cancelled orders"
             />
@@ -299,7 +298,7 @@ export default function AdminDashboard() {
               value={formatCount(data?.kpis.activeOrders)}
               secondary="In-flight pipeline"
               source="DERIVED"
-              state={kpiState(baseState)}
+              state={kpiState(opState)}
               lastUpdated={updated}
               detail="Orders not yet completed or cancelled"
             />
@@ -308,7 +307,7 @@ export default function AdminDashboard() {
               value={formatCount(data?.kpis.kitchenWaiting)}
               secondary="Confirmed + preparing"
               source="DERIVED"
-              state={kpiState(baseState)}
+              state={kpiState(opState)}
               lastUpdated={updated}
               detail="Status-derived queue — not a live KDS ticket count"
               action={
@@ -322,7 +321,7 @@ export default function AdminDashboard() {
               value={formatCount(data?.kpis.activeDeliveries)}
               secondary="Dispatched"
               source="DERIVED"
-              state={kpiState(baseState)}
+              state={kpiState(opState)}
               lastUpdated={updated}
               detail="Orders currently in dispatched status"
               action={
@@ -336,10 +335,7 @@ export default function AdminDashboard() {
               value={formatPkr(data?.kpis.averageOrderValue)}
               secondary="Sales ÷ non-cancelled orders"
               source={data?.kpis.averageOrderValue == null ? "UNAVAILABLE" : "DERIVED"}
-              state={kpiState({
-                ...baseState,
-                unavailable: data != null && data.kpis.averageOrderValue == null,
-              })}
+              state={kpiState(opState, data != null && data.kpis.averageOrderValue == null)}
               lastUpdated={updated}
               detail={
                 data != null && data.kpis.averageOrderValue == null
@@ -383,7 +379,14 @@ export default function AdminDashboard() {
         <div className="grid gap-4 xl:grid-cols-3">
           <StatusBreakdownPanel counts={data?.statusCounts ?? null} ready={dataReady} />
           <SourceBreakdownPanel rows={data?.sourceBreakdown ?? null} ready={dataReady} />
-          <BranchPerformancePanel rows={data?.branchPerformance ?? null} />
+          <BranchPerformancePanel
+            rows={data?.branchPerformance ?? null}
+            onSelectBranch={(branchId) => {
+              // D2 drill-down: scope the workspace to the branch, then open its dashboard.
+              setSelection({ mode: "branch", branchId });
+              setLocation("/admin/branch");
+            }}
+          />
         </div>
       </section>
 
