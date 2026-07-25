@@ -1,0 +1,13 @@
+{
+  "journey": "K",
+  "result": "PASS",
+  "statuses": {
+    "floorRead": 403,
+    "resList": 403,
+    "waitlist": 403,
+    "walkIn": 403,
+    "floorState": 403
+  },
+  "note": "Server-side denial verified; northern-bypass remains coming-soon in production truth.",
+  "recordedAt": "2026-07-25T03:56:30.064Z"
+}

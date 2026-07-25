@@ -30,10 +30,11 @@ describe("Point of Sale V1 (static)", () => {
     assert.match(page, /operating/);
   });
 
-  it("keeps payment capture and print as Foundation", () => {
+  it("exposes opening-ready payment methods without claiming an online gateway", () => {
     const payment = read("apps/website/client/src/components/admin/pos/PaymentPanel.tsx");
-    assert.match(payment, /Foundation/);
-    assert.match(payment, /No POS payment capture API/);
+    assert.match(payment, /cash|card_terminal|bank_manual|complimentary/);
+    assert.match(payment, /No online card gateway/i);
+    assert.doesNotMatch(payment, /No POS payment capture API/);
     const actions = read("apps/website/client/src/components/admin/pos/POSActions.tsx");
     assert.match(actions, /Save draft · Foundation/);
     assert.match(actions, /Print receipt · Foundation/);

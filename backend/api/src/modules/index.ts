@@ -9,6 +9,7 @@ import { createKitchenRouter } from "./kitchen/routes.js";
 import { createMeRouter } from "./me/routes.js";
 import { createMenuRouter } from "./menu/routes.js";
 import { createOrdersRouter } from "./orders/routes.js";
+import { createPublicBookingRouter } from "./public-booking/routes.js";
 import { createRidersRouter } from "./riders/routes.js";
 
 export interface ApiModuleDescriptor {
@@ -47,6 +48,11 @@ export const apiModules: ApiModuleDescriptor[] = [
     name: "dine-in",
     basePath: "/api/v1/dine-in",
     summary: "Public dine-in session resolve (table QR) and session state by public token.",
+  },
+  {
+    name: "reservations",
+    basePath: "/api/v1/reservations",
+    summary: "Public restaurant reservation booking, availability, cancel, and status (rate-limited).",
   },
   {
     name: "kitchen",
@@ -97,6 +103,12 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
     }),
   );
   app.use(
+    "/api/v1/reservations",
+    createPublicBookingRouter({
+      publicBooking: dependencies.publicBooking,
+    }),
+  );
+  app.use(
     "/api/v1/kitchen",
     createKitchenRouter({
       authTokenVerifier: dependencies.authTokenVerifier,
@@ -122,6 +134,13 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
       restaurantTables: dependencies.restaurantTables,
       restaurantBills: dependencies.restaurantBills,
       ordersDataSource: dependencies.ordersDataSource,
+      floorConfiguration: dependencies.floorConfiguration,
+      reservations: dependencies.reservations,
+      tableService: dependencies.tableService,
+      paymentSettlement: dependencies.paymentSettlement,
+      deposits: dependencies.deposits,
+      outboxWorker: dependencies.outboxWorker,
+      manualContact: dependencies.manualContact,
       envStatus: dependencies.envStatus,
       inviteAppOrigin: dependencies.inviteAppOrigin,
     }),

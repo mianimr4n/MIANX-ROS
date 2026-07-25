@@ -1,0 +1,12 @@
+{
+  "journey": "H",
+  "result": "PASS",
+  "reservationId": "d78fda1c-7a6f-44e0-88cb-66ed53d00292",
+  "sessionId": "044916c2-87ff-4bf3-8a40-bd992c6b94c8",
+  "tables": [
+    "E2E-C",
+    "E2E-D"
+  ],
+  "unapprovedStatus": 409,
+  "recordedAt": "2026-07-25T03:56:15.056Z"
+}

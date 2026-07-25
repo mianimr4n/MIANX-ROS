@@ -54,6 +54,38 @@ import {
   createCustomerReviewsFromEnv,
   type CustomerReviewsDataSource,
 } from "./services/reviews/customer-reviews.js";
+import {
+  createFloorConfigurationService,
+  type FloorConfigurationService,
+} from "./services/floor/configuration.js";
+import {
+  createReservationsService,
+  type ReservationsService,
+} from "./services/reservations/management.js";
+import {
+  createPublicBookingService,
+  type PublicBookingService,
+} from "./services/reservations/public-booking.js";
+import {
+  createTableServiceOperations,
+  type TableServiceOperations,
+} from "./services/dine-in/table-service.js";
+import {
+  createPaymentSettlementService,
+  type PaymentSettlementService,
+} from "./services/payments/settlement.js";
+import {
+  createDepositService,
+  type DepositService,
+} from "./services/reservations/deposits.js";
+import {
+  createOutboxWorker,
+  type OutboxWorker,
+} from "./services/notifications/outbox-worker.js";
+import {
+  createManualContactService,
+  type ManualContactService,
+} from "./services/notifications/manual-contact.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -72,6 +104,14 @@ export interface AppDependencies {
   customerOrders: CustomerOrdersDataSource;
   customerFavorites: CustomerFavoritesDataSource;
   customerReviews: CustomerReviewsDataSource;
+  floorConfiguration: FloorConfigurationService;
+  reservations: ReservationsService;
+  publicBooking: PublicBookingService;
+  tableService: TableServiceOperations;
+  paymentSettlement: PaymentSettlementService;
+  deposits: DepositService;
+  outboxWorker: OutboxWorker;
+  manualContact: ManualContactService;
   inviteAppOrigin: string;
   envStatus: EnvironmentStatus;
 }
@@ -95,6 +135,14 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     customerOrders: createCustomerOrdersDataSourceFromEnv(envStatus),
     customerFavorites: createCustomerFavoritesFromEnv(envStatus),
     customerReviews: createCustomerReviewsFromEnv(envStatus),
+    floorConfiguration: createFloorConfigurationService(envStatus),
+    reservations: createReservationsService(envStatus),
+    publicBooking: createPublicBookingService(envStatus),
+    tableService: createTableServiceOperations(envStatus),
+    paymentSettlement: createPaymentSettlementService(envStatus),
+    deposits: createDepositService(envStatus),
+    outboxWorker: createOutboxWorker(envStatus),
+    manualContact: createManualContactService(envStatus),
     inviteAppOrigin: envStatus.config.corsOrigin,
     envStatus,
   };

@@ -1,4 +1,5 @@
 import { createApp } from "./app.js";
+import { startNotificationWorker } from "./services/notifications/outbox-worker.js";
 
 const { app, envStatus } = createApp();
 const isProduction = process.env.NODE_ENV === "production";
@@ -42,4 +43,7 @@ app.listen(envStatus.config.port, () => {
   console.log(
     `Integrations: email=${envStatus.config.emailMode} whatsapp=${envStatus.config.whatsappMode} payment=${envStatus.config.paymentMode} webhook=${envStatus.config.webhookMode}`,
   );
+
+  // Start notification outbox worker for mock|sandbox (not production unless TELEPIZZA_NOTIFICATION_WORKER=1).
+  startNotificationWorker(envStatus, 15_000);
 });

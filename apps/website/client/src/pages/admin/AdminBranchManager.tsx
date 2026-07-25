@@ -19,6 +19,7 @@ import {
   KitchenStatusPanel,
   RecentOrdersPanel,
 } from "@/components/admin/dashboard/LiveOperationsPanels";
+import { TableServiceSummary } from "@/components/admin/dashboard/TableServiceSummary";
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
@@ -27,6 +28,7 @@ import {
   canAccessBranchManagerDashboard,
   canAccessAdminDelivery,
   canAccessAdminOrdersApi,
+  canAccessTableService,
   primaryRoleLabel,
 } from "@/lib/admin-access";
 import { fetchAdminOperationsDashboard } from "@/lib/admin-api";
@@ -359,6 +361,13 @@ export default function AdminBranchManager() {
           </div>
         )}
       </section>
+
+      <TableServiceSummary
+        token={token}
+        branchId={scopedBranchId}
+        enabled={gateReady && canAccessTableService(principal)}
+        showTechnicalDetail={isSuperAdmin}
+      />
 
       <section className="mb-8" aria-label="Branch operations modules">
         <AdminSectionTitle

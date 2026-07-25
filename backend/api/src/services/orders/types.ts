@@ -84,6 +84,11 @@ export interface CreateOrderInput {
   idempotencyKey: string;
   /** Optional Sprint 4.2 signed quote — never bypasses Idempotency-Key. */
   quoteId?: string;
+  /**
+   * D3 — optional active dining session for dine-in POS orders.
+   * Validated server-side in create_order_atomic (existence, branch, active).
+   */
+  diningSessionId?: string;
 }
 
 export interface CreatedOrderSummary {

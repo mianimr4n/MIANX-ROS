@@ -19,8 +19,10 @@ import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 import {
   canAccessAdminPos,
+  canAccessTableService,
   canManageOrders,
 } from "@/lib/admin-access";
+import { listActiveSessions, type DiningSessionRecord } from "@/lib/table-service-api";
 import {
   channelToOrderType,
   defaultVariant,
@@ -79,6 +81,10 @@ export default function AdminPos() {
   const [kitchenBusy, setKitchenBusy] = useState(false);
   const [tables, setTables] = useState<AdminRestaurantTable[]>([]);
   const [tablesLive, setTablesLive] = useState(false);
+  // D3 — active dining sessions for dine-in order attachment.
+  const [diningSessions, setDiningSessions] = useState<DiningSessionRecord[]>([]);
+  const [diningSessionId, setDiningSessionId] = useState("");
+  const canLoadSessions = canAccessTableService(principal);
 
   const activeBranch = useMemo(() => {
     if (selection.mode === "branch") {
@@ -122,6 +128,27 @@ export default function AdminPos() {
       cancelled = true;
     };
   }, [branchIdFilter, canLoadTables, session?.access_token]);
+
+  useEffect(() => {
+    const token = session?.access_token;
+    if (!token || !canLoadSessions || !branchIdFilter || channel !== "dine-in") {
+      setDiningSessions([]);
+      setDiningSessionId("");
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const rows = await listActiveSessions(token, branchIdFilter);
+        if (!cancelled) setDiningSessions(rows);
+      } catch {
+        if (!cancelled) setDiningSessions([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [branchIdFilter, canLoadSessions, channel, session?.access_token]);
 
   const bucketCounts = useMemo(() => {
     const counts: Record<string, number> = { All: items.length };
@@ -279,6 +306,8 @@ export default function AdminPos() {
           notes: notesParts.join(" · ") || undefined,
           couponCode: couponCode.trim() || undefined,
           quoteId: quote.quoteId,
+          diningSessionId:
+            channel === "dine-in" && diningSessionId ? diningSessionId : undefined,
           items: lines.map((line) => ({
             menuItemSlug: line.menuItemSlug,
             variantLabel: line.variantLabel,
@@ -434,6 +463,31 @@ export default function AdminPos() {
             tables={tables}
             tablesLive={tablesLive}
           />
+          {channel === "dine-in" && canLoadSessions ? (
+            <div className="rounded-xl border p-3">
+              <label className="flex flex-col gap-1 text-xs font-medium">
+                Dining session (D3 — attaches this order to a seated table)
+                <select
+                  className="rounded-md border px-2 py-1.5 text-sm font-normal"
+                  value={diningSessionId}
+                  onChange={(e) => setDiningSessionId(e.target.value)}
+                >
+                  <option value="">No session — plain dine-in order</option>
+                  {diningSessions.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.sessionNumber ?? s.id.slice(0, 8)} · {s.guestName ?? "Guest"} · party of{" "}
+                      {s.partySize ?? "?"} · {s.serviceStatus}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {diningSessions.length === 0 ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  No active dining sessions. Seat guests from the Live floor console first.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           <OrderSummary
             channel={channel}
             branchLabel={activeBranch ? activeBranch.shortName || activeBranch.name : branchLabel}

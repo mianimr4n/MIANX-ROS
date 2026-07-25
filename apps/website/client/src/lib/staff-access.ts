@@ -7,6 +7,9 @@ const STAFF_ROLES = new Set([
   "cashier",
   "rider",
   "customer-support",
+  // D3 — table service roles
+  "host",
+  "waiter",
 ]);
 
 export function isStaffPrincipal(input: {
@@ -21,7 +24,10 @@ export function isStaffPrincipal(input: {
       p.startsWith("order.") ||
       p.startsWith("delivery.") ||
       p.startsWith("staff.") ||
-      p.startsWith("menu."),
+      p.startsWith("menu.") ||
+      p.startsWith("reservation.") ||
+      p.startsWith("dinein.") ||
+      p.startsWith("floor."),
   );
 }
 

@@ -16,8 +16,22 @@ import { createAdminTablesRouter } from "./tables.js";
 import { createAdminBillsRouter } from "./bills.js";
 import { createAdminDashboardRouter } from "./dashboard.js";
 import { createAdminPosRouter } from "./pos.js";
+import { createAdminFloorRouter } from "./floor.js";
+import {
+  createAdminReservationsRouter,
+  createAdminWaitlistRouter,
+} from "./reservations.js";
+import { createAdminTableSessionsRouter } from "./table-sessions.js";
+import { createAdminPaymentsRouter } from "./payments.js";
+import type { FloorConfigurationService } from "../../services/floor/configuration.js";
+import type { ReservationsService } from "../../services/reservations/management.js";
+import type { TableServiceOperations } from "../../services/dine-in/table-service.js";
+import type { PaymentSettlementService } from "../../services/payments/settlement.js";
+import type { DepositService } from "../../services/reservations/deposits.js";
 import type { OrdersDataSource } from "../../services/orders/types.js";
 import type { EnvironmentStatus } from "../../config/env.js";
+import type { OutboxWorker } from "../../services/notifications/outbox-worker.js";
+import type { ManualContactService } from "../../services/notifications/manual-contact.js";
 import {
   createBranchReadinessService,
   type BranchReadinessService,
@@ -39,6 +53,22 @@ const createInviteSchema = z.object({
   expiresInHours: z.number().int().optional(),
 });
 
+const processOutboxSchema = z
+  .object({
+    limit: z.number().int().min(1).max(100).optional(),
+  })
+  .strict();
+
+const manualContactSchema = z
+  .object({
+    branchId: z.string().uuid(),
+    reservationId: z.string().uuid().optional().nullable(),
+    waitlistId: z.string().uuid().optional().nullable(),
+    note: z.string().trim().max(1000).optional().nullable(),
+    channel: z.enum(["manual", "whatsapp", "sms", "email"]).optional(),
+  })
+  .strict();
+
 export interface AdminRouterDependencies {
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
@@ -47,6 +77,13 @@ export interface AdminRouterDependencies {
   restaurantTables: RestaurantTablesDataSource;
   restaurantBills: RestaurantBillsService;
   ordersDataSource: OrdersDataSource;
+  floorConfiguration: FloorConfigurationService;
+  reservations: ReservationsService;
+  tableService: TableServiceOperations;
+  paymentSettlement: PaymentSettlementService;
+  deposits: DepositService;
+  outboxWorker: OutboxWorker;
+  manualContact: ManualContactService;
   envStatus: EnvironmentStatus;
   branchReadiness?: BranchReadinessService;
   inviteAppOrigin: string;
@@ -94,7 +131,7 @@ function auditFromRequest(req: { ip?: string; headers: Record<string, unknown> }
 
 export function createAdminRouter(dependencies: AdminRouterDependencies) {
   const router = Router();
-  const { requireAuthenticatedUser, requireSuperAdmin } = createAuthorizationHelpers(
+  const { requireAuthenticatedUser, requireSuperAdmin, requirePermission } = createAuthorizationHelpers(
     dependencies.authTokenVerifier,
     dependencies.authProfileRepository,
   );
@@ -141,6 +178,57 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       restaurantBills: dependencies.restaurantBills,
+    }),
+  );
+
+  // D3 — floor plan configuration (floors, areas, table layout, combinations).
+  router.use(
+    "/floor",
+    createAdminFloorRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      floorConfiguration: dependencies.floorConfiguration,
+    }),
+  );
+
+  // D3 — reservations lifecycle + availability engine.
+  router.use(
+    "/reservations",
+    createAdminReservationsRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      reservations: dependencies.reservations,
+    }),
+  );
+
+  // D3 — waitlist lifecycle.
+  router.use(
+    "/waitlist",
+    createAdminWaitlistRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      reservations: dependencies.reservations,
+    }),
+  );
+
+  // D3 — dining sessions (walk-in, transfer, bill request, close) + live floor state.
+  router.use(
+    "/table-service",
+    createAdminTableSessionsRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      tableService: dependencies.tableService,
+    }),
+  );
+
+  // D3 corrective — payment settlement, splits, deposits.
+  router.use(
+    "/payments",
+    createAdminPaymentsRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      paymentSettlement: dependencies.paymentSettlement,
+      depositService: dependencies.deposits,
     }),
   );
 
@@ -311,6 +399,54 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
           req.params.branchId,
         );
         return res.json({ ok: true, data: report });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  // D3 — notification outbox: manual process trigger (honest provider status).
+  router.post(
+    "/notifications/process-outbox",
+    requireAuthenticatedUser,
+    requirePermission("reservation.manage"),
+    validateBody(processOutboxSchema),
+    async (req, res, next) => {
+      try {
+        const body = req.body as z.infer<typeof processOutboxSchema>;
+        const result = await dependencies.outboxWorker.processOutboxBatch(body.limit ?? 25);
+        return res.status(200).json({
+          ok: true,
+          data: {
+            ...result,
+            emailMode: dependencies.envStatus.config.emailMode,
+          },
+        });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/notifications/manual-contact",
+    requireAuthenticatedUser,
+    requirePermission("reservation.manage"),
+    validateBody(manualContactSchema),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const body = req.body as z.infer<typeof manualContactSchema>;
+        const result = await dependencies.manualContact.markGuestContacted(
+          {
+            userId: principal.userId,
+            isSuperAdmin: principal.isSuperAdmin,
+            roles: principal.roles,
+            branchIds: principal.branchIds,
+          },
+          body,
+        );
+        return res.status(201).json({ ok: true, data: result });
       } catch (error) {
         return next(error);
       }

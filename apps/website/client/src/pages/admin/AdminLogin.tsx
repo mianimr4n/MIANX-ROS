@@ -2,23 +2,53 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { canAccessAdmin, isBranchManagerOnly, isKitchenOnly } from "@/lib/admin-access";
+import {
+  canAccessAdmin,
+  isBranchManagerOnly,
+  isCashierOnly,
+  isHostOnly,
+  isKitchenOnly,
+  isRiderOnly,
+  isWaiterOnly,
+} from "@/lib/admin-access";
 
-function staffHome(isBmOnly: boolean, isKitchenStaffOnly: boolean): string {
-  if (isKitchenStaffOnly) return "/admin/kitchen-dashboard";
-  if (isBmOnly) return "/admin/branch";
+function staffHome(principal: {
+  roles: string[];
+  permissions: string[];
+  isSuperAdmin: boolean;
+}): string {
+  if (isKitchenOnly(principal)) return "/admin/kitchen-dashboard";
+  if (isBranchManagerOnly(principal)) return "/admin/branch";
+  if (isCashierOnly(principal)) return "/admin/pos";
+  if (isRiderOnly(principal)) return "/admin/delivery";
+  if (isHostOnly(principal)) return "/admin/reservations";
+  if (isWaiterOnly(principal)) return "/admin/floor";
   return "/admin/dashboard";
 }
 
-function safeAdminNext(raw: string | null, isBmOnly: boolean, isKitchenStaffOnly: boolean): string {
-  const fallback = staffHome(isBmOnly, isKitchenStaffOnly);
+function safeAdminNext(
+  raw: string | null,
+  principal: { roles: string[]; permissions: string[]; isSuperAdmin: boolean },
+): string {
+  const fallback = staffHome(principal);
   if (!raw) return fallback;
   if (!raw.startsWith("/admin")) return fallback;
   if (raw.startsWith("/admin/login")) return fallback;
-  if (isKitchenStaffOnly && (raw === "/admin" || raw.startsWith("/admin/dashboard") || raw.startsWith("/admin/branch"))) {
+  if (isKitchenOnly(principal) && (raw === "/admin" || raw.startsWith("/admin/dashboard") || raw.startsWith("/admin/branch"))) {
     return "/admin/kitchen-dashboard";
   }
-  if (isBmOnly && (raw === "/admin" || raw.startsWith("/admin/dashboard"))) return "/admin/branch";
+  if (isBranchManagerOnly(principal) && (raw === "/admin" || raw.startsWith("/admin/dashboard"))) {
+    return "/admin/branch";
+  }
+  if (isHostOnly(principal) && (raw === "/admin" || raw.startsWith("/admin/dashboard"))) {
+    return "/admin/reservations";
+  }
+  if (isWaiterOnly(principal) && (raw === "/admin" || raw.startsWith("/admin/dashboard"))) {
+    return "/admin/floor";
+  }
+  if (isCashierOnly(principal) && (raw === "/admin" || raw.startsWith("/admin/dashboard"))) {
+    return "/admin/pos";
+  }
   return raw;
 }
 
@@ -29,9 +59,7 @@ export default function AdminLogin() {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
   const reason = params.get("reason");
   const principal = { roles, permissions, isSuperAdmin };
-  const bmOnly = isBranchManagerOnly(principal);
-  const kitchenStaffOnly = isKitchenOnly(principal);
-  const next = safeAdminNext(params.get("next"), bmOnly, kitchenStaffOnly);
+  const next = safeAdminNext(params.get("next"), principal);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
