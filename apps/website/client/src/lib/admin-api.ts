@@ -203,6 +203,8 @@ export function createAdminPosOrder(
     notes?: string;
     couponCode?: string;
     quoteId?: string;
+    /** D3 — attach a dine-in order to an active dining session (dine-in only). */
+    diningSessionId?: string;
     items: Array<{
       menuItemSlug: string;
       variantLabel?: string;

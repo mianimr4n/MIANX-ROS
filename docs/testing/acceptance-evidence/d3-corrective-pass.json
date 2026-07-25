@@ -1,0 +1,66 @@
+{
+  "slice": "D3-browser-acceptance-closeout",
+  "branch": "feature/aug14-dinein-table-reservations",
+  "baseCommit": "3106b3577388226b58dc2f5873c51d9f3fb63ce5",
+  "dependsOnD2": true,
+  "d2Pr": 104,
+  "d3PrMustNotMergeBeforeD2": true,
+  "generatedAt": "2026-07-25T04:10:00Z",
+  "runtime": {
+    "supabase": "healthy (local 127.0.0.1:54321) — restarted after Docker Desktop recovery",
+    "apiHealthz": 200,
+    "apiReadyz": 200,
+    "website": 200,
+    "adminLogin": 200,
+    "publicBook": 200,
+    "corsOrigin": "http://localhost:3000",
+    "apiStartCommand": "node --env-file=.env.local --import tsx src/main.ts (from backend/api)",
+    "websiteCommand": "pnpm dev:website",
+    "playwrightCommand": "pnpm exec playwright test --config=playwright.d3.config.ts"
+  },
+  "verification": {
+    "typecheck": "PASS",
+    "buildWebsite": "PASS",
+    "testDb": { "pass": 470, "fail": 0 },
+    "backendTests": { "files": 40, "passed": 310, "failed": 0 },
+    "pnpmTest": "PASS (db + backend)",
+    "playwrightBrowserJourneysFK": "PASS (full suite 10/10 earlier; journeys F–K + public + failure + NB PASS)",
+    "playwrightPublicBooking": "PASS",
+    "failureStateBrowser": "PASS",
+    "northernBypassIsolatedBrowser": "PASS",
+    "dashboardSmoke": "PASS_WITH_LIMITATIONS (reconfirmed PASS after stack restart)",
+    "gitDiffCheck": "PASS (CRLF warnings only)"
+  },
+  "journeyEvidence": {
+    "F": "docs/testing/acceptance-evidence/d3-journey-f.json",
+    "G": "docs/testing/acceptance-evidence/d3-journey-g.json",
+    "H": "docs/testing/acceptance-evidence/d3-journey-h.json",
+    "I": "docs/testing/acceptance-evidence/d3-journey-i.json",
+    "J": "docs/testing/acceptance-evidence/d3-journey-j.json",
+    "K": "docs/testing/acceptance-evidence/d3-journey-k.json",
+    "publicBooking": "docs/testing/acceptance-evidence/d3-public-booking.json",
+    "failureStates": "docs/testing/acceptance-evidence/d3-failure-states.json",
+    "northernBypassIsolated": "docs/testing/acceptance-evidence/d3-northern-bypass-isolated.json",
+    "dashboardSmoke": "docs/testing/acceptance-evidence/d3-dashboard-smoke.json",
+    "playwrightJson": "docs/testing/acceptance-evidence/d3-playwright-results.json"
+  },
+  "productFixesThisPass": [
+    "AdminLogin role homes for host/waiter/cashier/rider",
+    "POS dine-in order attach to bill after create",
+    "payments settle maps billId → restaurantBillId",
+    "public booking branches.branch_code lookup",
+    "public booking idempotent replay before availability re-check",
+    "fixture staff user_type=staff on conflict"
+  ],
+  "productionTruth": {
+    "royalOrchard": "operating",
+    "northernBypass": "coming-soon (restored after isolated E2E)"
+  },
+  "decision": "READY FOR FOUNDER AND ARCHITECT REVIEW",
+  "notes": [
+    "Future D3 PR must not merge before D2 PR #104.",
+    "Do not commit or push in this pass.",
+    "Northern Bypass remains NOT production-ready.",
+    "D4 dashboard KPI architecture not started."
+  ]
+}

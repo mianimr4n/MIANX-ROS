@@ -54,6 +54,11 @@ import AdminHr from "./pages/admin/AdminHr";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminBranchManager from "./pages/admin/AdminBranchManager";
 import AdminKitchenDashboard from "./pages/admin/AdminKitchenDashboard";
+import AdminFloorConsole from "./pages/admin/AdminFloorConsole";
+import AdminFloorPlan from "./pages/admin/AdminFloorPlan";
+import AdminReservations from "./pages/admin/AdminReservations";
+import AdminWaitlist from "./pages/admin/AdminWaitlist";
+import PublicBooking from "./pages/PublicBooking";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AdminBranchProvider } from "./contexts/AdminBranchContext";
 import Navbar from "./components/Navbar";
@@ -108,6 +113,8 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/contact" component={Contact} />
       <Route path="/branches" component={Branches} />
+      <Route path="/book/cancel" component={PublicBooking} />
+      <Route path="/book" component={PublicBooking} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/order-success/:orderNumber" component={OrderSuccess} />
       <Route path="/track/:orderNumber" component={TrackOrder} />
@@ -150,6 +157,11 @@ function Router() {
       <Route path="/admin/branch" component={AdminBranchManager} />
       {/* Commit E — Kitchen Manager KDS */}
       <Route path="/admin/kitchen-dashboard" component={AdminKitchenDashboard} />
+      {/* D3 — floor, dine-in, reservations */}
+      <Route path="/admin/floor" component={AdminFloorConsole} />
+      <Route path="/admin/floor-plan" component={AdminFloorPlan} />
+      <Route path="/admin/reservations" component={AdminReservations} />
+      <Route path="/admin/waitlist" component={AdminWaitlist} />
       {/* Not yet implemented Owner surfaces */}
       <Route path="/admin/promotions" component={PromotionsComingSoon} />
       <Route path="/admin/support" component={SupportComingSoon} />

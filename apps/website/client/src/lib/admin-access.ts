@@ -129,6 +129,31 @@ export function canAccessAdminSettings(input: AdminPrincipalInput): boolean {
   return input.isSuperAdmin || input.permissions.includes("admin.access");
 }
 
+/** D3 — table service reads (live floor, reservations, waitlist): reservation.read. */
+export function canAccessTableService(input: AdminPrincipalInput): boolean {
+  return (
+    input.isSuperAdmin ||
+    input.permissions.includes("reservation.read") ||
+    input.permissions.includes("reservation.manage") ||
+    input.permissions.includes("dinein.manage")
+  );
+}
+
+/** D3 — create/edit reservations, waitlist, blackouts: reservation.manage. */
+export function canManageReservations(input: AdminPrincipalInput): boolean {
+  return input.isSuperAdmin || input.permissions.includes("reservation.manage");
+}
+
+/** D3 — seat guests, transfer tables, request bill, close sessions: dinein.manage. */
+export function canSeatGuests(input: AdminPrincipalInput): boolean {
+  return input.isSuperAdmin || input.permissions.includes("dinein.manage");
+}
+
+/** D3 — floor/area/table/combination configuration: floor.manage. */
+export function canManageFloorConfiguration(input: AdminPrincipalInput): boolean {
+  return input.isSuperAdmin || input.permissions.includes("floor.manage");
+}
+
 /**
  * Whether the admin branch selector may use aggregate mode (`branchIdFilter = null`).
  *
@@ -193,6 +218,29 @@ export function isRiderOnly(input: AdminPrincipalInput): boolean {
   );
 }
 
+/** D3 — host/front-desk staff without manager roles: Reservations is their home. */
+export function isHostOnly(input: AdminPrincipalInput): boolean {
+  return (
+    !input.isSuperAdmin &&
+    input.roles.includes("host") &&
+    !input.roles.includes("branch-manager") &&
+    !input.roles.includes("kitchen") &&
+    !input.roles.includes("cashier")
+  );
+}
+
+/** D3 — waiter staff without manager roles: the Live floor console is their home. */
+export function isWaiterOnly(input: AdminPrincipalInput): boolean {
+  return (
+    !input.isSuperAdmin &&
+    input.roles.includes("waiter") &&
+    !input.roles.includes("host") &&
+    !input.roles.includes("branch-manager") &&
+    !input.roles.includes("kitchen") &&
+    !input.roles.includes("cashier")
+  );
+}
+
 export function primaryRoleLabel(roles: string[], isSuperAdmin: boolean): string {
   if (isSuperAdmin || roles.includes("super-admin")) return "Super Admin";
   if (roles.includes("branch-manager")) return "Branch Manager";
@@ -211,6 +259,10 @@ export type AdminNavKey =
   | "kitchen"
   | "delivery"
   | "pos"
+  | "floor-console"
+  | "reservations"
+  | "waitlist"
+  | "floor-plan"
   | "menu"
   | "inventory"
   | "purchasing"
@@ -251,6 +303,8 @@ const NAV_BLUEPRINT: Array<
     requiresReports?: boolean;
     requiresHr?: boolean;
     requiresSettings?: boolean;
+    requiresTableService?: boolean;
+    requiresFloorConfig?: boolean;
     ownerOnly?: boolean;
   }
 > = [
@@ -261,6 +315,10 @@ const NAV_BLUEPRINT: Array<
   { key: "kitchen", label: "Kitchen (ERP)", href: "/admin/kitchen", group: "Operations", requiresKitchen: true },
   { key: "delivery", label: "Delivery", href: "/admin/delivery", group: "Operations", requiresDelivery: true },
   { key: "pos", label: "POS", href: "/admin/pos", group: "Operations", requiresPos: true },
+  { key: "floor-console", label: "Live floor", href: "/admin/floor", group: "Operations", requiresTableService: true },
+  { key: "reservations", label: "Reservations", href: "/admin/reservations", group: "Operations", requiresTableService: true },
+  { key: "waitlist", label: "Waitlist", href: "/admin/waitlist", group: "Operations", requiresTableService: true },
+  { key: "floor-plan", label: "Floor plan", href: "/admin/floor-plan", group: "Management", requiresFloorConfig: true },
   { key: "whatsapp", label: "WhatsApp Order Center", href: "/admin/whatsapp", group: "Operations", requiresOrdersApi: true, ownerOnly: true },
   { key: "menu", label: "Menu", href: "/admin/menu", group: "Commerce", requiresMenu: true, ownerOnly: true },
   { key: "inventory", label: "Inventory", href: "/admin/inventory", group: "Commerce", requiresInventory: true },
@@ -292,6 +350,8 @@ export function getAdminNavItems(input: AdminPrincipalInput): AdminNavItem[] {
   const reportsApi = canAccessAdminReports(input);
   const hrApi = canAccessAdminHr(input);
   const settingsApi = canAccessAdminSettings(input);
+  const tableServiceApi = canAccessTableService(input);
+  const floorConfigApi = canManageFloorConfiguration(input);
   const bmOnly = isBranchManagerOnly(input);
   const kitchenOnly = isKitchenOnly(input);
 
@@ -317,7 +377,9 @@ export function getAdminNavItems(input: AdminPrincipalInput): AdminNavItem[] {
           (item.requiresFinance && financeApi) ||
           (item.requiresReports && reportsApi) ||
           (item.requiresHr && hrApi) ||
-          (item.requiresSettings && settingsApi),
+          (item.requiresSettings && settingsApi) ||
+          (item.requiresTableService && tableServiceApi) ||
+          (item.requiresFloorConfig && floorConfigApi),
       ),
     };
   });
@@ -351,9 +413,11 @@ export function filterVisibleAdminNav(input: AdminPrincipalInput): AdminNavItem[
 
     if (cashierOnly) {
       // D2 staff shell: cashier home is POS — no Owner dashboards or financial metrics.
-      const allowed: AdminNavKey[] = ["pos", "orders"];
+      // D3: cashiers may also see the live floor to attach dine-in orders to sessions.
+      const allowed: AdminNavKey[] = ["pos", "orders", "floor-console"];
       if (!allowed.includes(item.key)) return false;
       if (item.key === "pos") return posApi;
+      if (item.key === "floor-console") return canAccessTableService(input);
       return ordersApi;
     }
 
@@ -361,6 +425,19 @@ export function filterVisibleAdminNav(input: AdminPrincipalInput): AdminNavItem[
       // D2 staff shell: rider home is Delivery — assigned deliveries and status actions only.
       const allowed: AdminNavKey[] = ["delivery"];
       return allowed.includes(item.key) && deliveryApi;
+    }
+
+    if (isHostOnly(input)) {
+      // D3 staff shell: host works the front desk — reservations, waitlist, live floor only.
+      const allowed: AdminNavKey[] = ["reservations", "waitlist", "floor-console"];
+      return allowed.includes(item.key) && canAccessTableService(input);
+    }
+
+    if (isWaiterOnly(input)) {
+      // D3 staff shell: waiter serves tables — live floor plus orders they may manage.
+      if (item.key === "floor-console") return canAccessTableService(input);
+      if (item.key === "orders") return ordersApi;
+      return false;
     }
 
     if (bmOnly && item.key !== "branch-home") {
@@ -372,6 +449,10 @@ export function filterVisibleAdminNav(input: AdminPrincipalInput): AdminNavItem[
         "kitchen",
         "delivery",
         "pos",
+        "floor-console",
+        "reservations",
+        "waitlist",
+        "floor-plan",
         "customers",
         "inventory",
         "staff",
@@ -401,6 +482,10 @@ export function filterVisibleAdminNav(input: AdminPrincipalInput): AdminNavItem[
     if (item.key === "reports") return reportsApi;
     if (item.key === "staff") return hrApi;
     if (item.key === "settings") return settingsApi;
+    if (item.key === "floor-console" || item.key === "reservations" || item.key === "waitlist") {
+      return canAccessTableService(input);
+    }
+    if (item.key === "floor-plan") return canManageFloorConfiguration(input);
     // Coming soon / reserved — Owner shell only
     return !bmOnly && !kitchenOnly;
   });

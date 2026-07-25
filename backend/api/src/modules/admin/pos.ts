@@ -57,6 +57,8 @@ const createPosOrderSchema = z.object({
   notes: z.string().max(500).optional(),
   couponCode: z.string().max(50).optional(),
   quoteId: z.string().max(4096).optional(),
+  /** D3 — attach the order to an active dining session (dine-in only). */
+  diningSessionId: z.string().uuid().optional(),
   items: z.array(orderItemSchema).min(1).max(50),
 });
 
@@ -114,6 +116,13 @@ export function createAdminPosRouter(deps: AdminPosRouterDependencies) {
             400,
             "DELIVERY_ADDRESS_REQUIRED",
             "Delivery address is required for delivery orders.",
+          );
+        }
+        if (body.diningSessionId && body.orderType !== "dine-in") {
+          throw new ApiError(
+            400,
+            "DINE_IN_SESSION_ORDER_TYPE_MISMATCH",
+            "diningSessionId is only valid for dine-in orders.",
           );
         }
 

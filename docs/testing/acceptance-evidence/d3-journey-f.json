@@ -1,0 +1,23 @@
+{
+  "journey": "F",
+  "result": "PASS",
+  "branch": "royal-orchard",
+  "reservationNumber": "RES-260725-000031",
+  "reservationId": "0f13c017-ab55-4ceb-8784-2c634ce4c480",
+  "sessionId": "742b1ed2-af7e-4a07-8576-5b5b53ee366e",
+  "sessionNumber": "DS-260725-000050",
+  "orderId": "eea39b6c-c365-4c50-9a20-28c5f2e67e3f",
+  "orderNumber": "TP-260725-000074",
+  "paymentId": "f4b482fa-4fb2-4e69-b41f-e5909e795993",
+  "table": "E2E-A",
+  "tableId": "b2649d22-ba3c-4c72-858f-4e34a55506a7",
+  "closeStatus": 200,
+  "availabilityOk": true,
+  "requestIds": {
+    "create": null,
+    "seat": null,
+    "order": null,
+    "close": null
+  },
+  "recordedAt": "2026-07-25T03:55:57.053Z"
+}

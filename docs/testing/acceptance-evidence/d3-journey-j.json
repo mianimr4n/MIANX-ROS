@@ -1,0 +1,9 @@
+{
+  "journey": "J",
+  "result": "PASS",
+  "idempotentReplay": true,
+  "changedPayloadStatus": 409,
+  "doubleSeatStatus": 409,
+  "reservationId": "59107bd0-5c08-45ea-b8c5-0a522c809a57",
+  "recordedAt": "2026-07-25T03:56:25.506Z"
+}

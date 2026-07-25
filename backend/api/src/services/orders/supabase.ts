@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { EnvironmentStatus } from "../../config/env.js";
 import { ApiError } from "../../common/http.js";
 import { assertBranchOperational } from "../branches/operational-status.js";
+import { attachConfirmedDineInOrderToBill } from "../bills/restaurant-bills.js";
 import {
   collectCatalogSlugs,
   hashIdempotencyPayload,
@@ -58,6 +59,10 @@ function mapAtomicCreateError(error: { message?: string; code?: string; details?
     "IDEMPOTENCY_KEY_REQUIRED",
     "IDEMPOTENCY_HASH_REQUIRED",
     "ORDER_ITEMS_REQUIRED",
+    "DINE_IN_SESSION_NOT_FOUND",
+    "DINE_IN_SESSION_BRANCH_MISMATCH",
+    "DINE_IN_SESSION_NOT_ACTIVE",
+    "DINE_IN_SESSION_ORDER_TYPE_MISMATCH",
   ] as const;
   for (const code of known) {
     if (raw.includes(code)) {
@@ -68,7 +73,11 @@ function mapAtomicCreateError(error: { message?: string; code?: string; details?
             ? code === "BRANCH_NOT_FOUND"
               ? 404
               : 409
-            : 400;
+            : code === "DINE_IN_SESSION_NOT_FOUND"
+              ? 404
+              : code.startsWith("DINE_IN_SESSION_")
+                ? 409
+                : 400;
       throw new ApiError(
         status,
         code,
@@ -80,7 +89,15 @@ function mapAtomicCreateError(error: { message?: string; code?: string; details?
               ? "This branch is inactive."
               : code === "BRANCH_NOT_FOUND"
                 ? "Branch was not found."
-                : "Order create validation failed.",
+                : code === "DINE_IN_SESSION_NOT_FOUND"
+                  ? "Dining session was not found."
+                  : code === "DINE_IN_SESSION_BRANCH_MISMATCH"
+                    ? "Dining session belongs to another branch."
+                    : code === "DINE_IN_SESSION_NOT_ACTIVE"
+                      ? "Dining session is not active."
+                      : code === "DINE_IN_SESSION_ORDER_TYPE_MISMATCH"
+                        ? "A dining session requires orderType dine-in."
+                        : "Order create validation failed.",
       );
     }
   }
@@ -571,6 +588,9 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         p_create_payment_pending: isPos,
         p_actor_type: isPos ? "staff" : "guest",
         p_actor_user_id: null,
+        p_dine_in: input.diningSessionId
+          ? { dine_in_session_id: input.diningSessionId }
+          : {},
       });
 
       if (atomicError) {
@@ -592,6 +612,11 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
 
       if (!row?.id) {
         throw new ApiError(500, "ORDER_CREATE_FAILED", "Atomic order create returned no row.");
+      }
+
+      // Dine-in POS creates confirmed orders atomically; attach to session bill (idempotent).
+      if (isPos && input.diningSessionId && input.orderType === "dine-in" && !row.idempotentReplay) {
+        await attachConfirmedDineInOrderToBill(getClient(), row.id);
       }
 
       return {

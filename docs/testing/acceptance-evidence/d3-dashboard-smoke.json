@@ -1,0 +1,72 @@
+{
+  "result": "PASS_WITH_LIMITATIONS",
+  "matrix": [
+    {
+      "role": "super_admin",
+      "path": "/admin",
+      "result": "PASS",
+      "note": "page rendered"
+    },
+    {
+      "role": "owner",
+      "path": "/admin",
+      "result": "PASS",
+      "note": "page rendered"
+    },
+    {
+      "role": "branch_manager_ro",
+      "path": "/admin/branch",
+      "result": "PASS",
+      "note": "page rendered"
+    },
+    {
+      "role": "host",
+      "path": "/admin/reservations",
+      "result": "PASS",
+      "note": "page rendered"
+    },
+    {
+      "role": "waiter",
+      "path": "/admin/floor",
+      "result": "PASS",
+      "note": "page rendered"
+    },
+    {
+      "role": "kitchen",
+      "path": "/admin/kitchen",
+      "result": "PASS",
+      "note": "page rendered"
+    },
+    {
+      "role": "cashier",
+      "path": "/admin/pos",
+      "result": "PASS",
+      "note": "page rendered"
+    },
+    {
+      "role": "delivery",
+      "path": "/admin/delivery",
+      "result": "NOT_VERIFIED",
+      "note": "delivery.manager fixture not in local seed; deferred"
+    },
+    {
+      "role": "assigned_branches",
+      "path": "/admin",
+      "result": "NOT_VERIFIED",
+      "note": "assigned-branches manager fixture not in local seed"
+    },
+    {
+      "role": "branch_manager_nb",
+      "path": "/admin/branch-manager",
+      "result": "NOT_VERIFIED",
+      "note": "Northern Bypass BM fixture intentionally absent while NB is coming-soon"
+    }
+  ],
+  "d4Gaps": [
+    "Dedicated reservation/table KPI widgets on Executive/Owner dashboards",
+    "Unified multi-branch floor occupancy strip",
+    "Host/Waiter home KPI redesign (D4)",
+    "Assigned-branches and delivery-manager smoke fixtures"
+  ],
+  "recordedAt": "2026-07-25T04:14:27.569Z"
+}

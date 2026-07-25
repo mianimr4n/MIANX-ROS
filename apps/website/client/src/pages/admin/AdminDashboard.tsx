@@ -28,12 +28,14 @@ import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import {
   canAccessAdminOrdersApi,
+  canAccessTableService,
   isBranchManagerOnly,
   isCashierOnly,
   isKitchenOnly,
   isRiderOnly,
   primaryRoleLabel,
 } from "@/lib/admin-access";
+import { TableServiceSummary } from "@/components/admin/dashboard/TableServiceSummary";
 import {
   fetchAdminOperationsDashboard,
   type AdminOrderListItem,
@@ -350,6 +352,21 @@ export default function AdminDashboard() {
       <div className="mb-8">
         <OperationsModuleGrid />
       </div>
+
+      {/* D3 — table service summary is branch-scoped; aggregate mode stays honest. */}
+      {branchIdFilter ? (
+        <TableServiceSummary
+          token={token}
+          branchId={branchIdFilter}
+          enabled={gateReady && canAccessTableService({ roles, permissions, isSuperAdmin })}
+          showTechnicalDetail={isSuperAdmin}
+        />
+      ) : canAccessTableService({ roles, permissions, isSuperAdmin }) ? (
+        <p className="mb-8 rounded-xl border bg-[var(--admin-soft)] px-4 py-3 text-sm text-[var(--admin-muted)]">
+          Table service KPIs are per-branch. Select a branch to see reservations, covers, and live
+          floor occupancy.
+        </p>
+      ) : null}
 
       <section className="mb-8" aria-label="Live operations">
         <AdminSectionTitle

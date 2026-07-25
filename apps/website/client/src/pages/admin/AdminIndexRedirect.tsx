@@ -1,7 +1,14 @@
 import { Redirect } from "wouter";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { isBranchManagerOnly, isCashierOnly, isKitchenOnly, isRiderOnly } from "@/lib/admin-access";
+import {
+  isBranchManagerOnly,
+  isCashierOnly,
+  isHostOnly,
+  isKitchenOnly,
+  isRiderOnly,
+  isWaiterOnly,
+} from "@/lib/admin-access";
 
 export default function AdminIndexRedirect() {
   const { roles, permissions, isSuperAdmin, isLoading } = useAuth();
@@ -27,6 +34,13 @@ export default function AdminIndexRedirect() {
   }
   if (isRiderOnly(principal)) {
     return <Redirect to="/admin/delivery" />;
+  }
+  // D3 staff dashboards: host works the front desk; waiter works the live floor.
+  if (isHostOnly(principal)) {
+    return <Redirect to="/admin/reservations" />;
+  }
+  if (isWaiterOnly(principal)) {
+    return <Redirect to="/admin/floor" />;
   }
 
   return <Redirect to="/admin/dashboard" />;

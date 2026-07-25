@@ -1,0 +1,10 @@
+{
+  "result": "PASS",
+  "reservationNumber": "RES-260725-000034",
+  "idempotentReplay": true,
+  "changedPayloadStatus": 409,
+  "invalidTokenStatus": "[redacted]",
+  "cancelStatus": 200,
+  "reuseTokenStatus": "[redacted]",
+  "recordedAt": "2026-07-25T03:56:39.452Z"
+}
