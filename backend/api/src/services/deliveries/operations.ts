@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { ApiError } from "../../common/http.js";
 import type { EnvironmentStatus } from "../../config/env.js";
+import { assertBranchIdOperational } from "../branches/lookup.js";
 import { planTransition } from "../orders/transitions.js";
 
 /**
@@ -338,6 +339,7 @@ export function createSupabaseDeliveryOperationsDataSource(
       const supabase = getClient();
       const delivery = await loadDelivery(supabase, deliveryId);
       assertBranchInScope(scope, delivery.branch_id);
+      await assertBranchIdOperational(supabase, delivery.branch_id);
 
       if (delivery.status === "assigned" && delivery.rider_id === riderId) {
         const { data: order } = await supabase.from("orders").select("status").eq("id", delivery.order_id).maybeSingle();
@@ -420,6 +422,7 @@ export function createSupabaseDeliveryOperationsDataSource(
       const supabase = getClient();
       const delivery = await loadDelivery(supabase, deliveryId);
       assertBranchInScope(scope, delivery.branch_id);
+      await assertBranchIdOperational(supabase, delivery.branch_id);
 
       if (isRiderOnly(scope)) {
         const { data: riderRows, error: riderError } = await supabase

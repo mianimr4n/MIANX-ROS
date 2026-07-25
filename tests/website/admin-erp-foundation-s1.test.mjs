@@ -50,7 +50,7 @@ describe("Admin ERP Foundation S1 (static)", () => {
     assert.match(access, /canAccessAdmin/);
     assert.match(access, /canAccessAdminOrdersApi/);
     assert.match(access, /order\.manage/);
-    assert.match(access, /canViewAllBranches/);
+    assert.match(access, /canViewMultipleAssignedBranches/);
     assert.doesNotMatch(access, /@gmail\.com|email\.includes/);
   });
 

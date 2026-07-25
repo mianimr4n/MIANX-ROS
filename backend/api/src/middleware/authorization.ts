@@ -149,6 +149,16 @@ export function requireAnyPermission(permissionCodes: string[]) {
   };
 }
 
+/**
+ * @deprecated NON-CANONICAL — do not mount on production routes.
+ *
+ * Retained only for unit tests and experimental defense-in-depth experiments.
+ * Canonical branch isolation lives in the service layer
+ * (`assertBranchInScope` / `resolveScopedBranchIds` and domain equivalents).
+ * Those services must remain secure when called outside a normal HTTP route.
+ *
+ * Presence of this helper is NOT evidence that routes are gated.
+ */
 export function requireBranchAccess(resolveBranchId: BranchIdResolver) {
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {

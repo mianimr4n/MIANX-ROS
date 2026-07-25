@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { EnvironmentStatus } from "../../config/env.js";
 import { ApiError } from "../../common/http.js";
+import { assertBranchOperational } from "../branches/operational-status.js";
 import {
   collectCatalogSlugs,
   hashIdempotencyPayload,
@@ -47,9 +48,43 @@ interface BranchRow {
   status: string;
 }
 
-function generateOrderNumber() {
-  const suffix = Math.floor(1000 + Math.random() * 9000);
-  return `TP-${Date.now().toString(36).toUpperCase()}-${suffix}`;
+function mapAtomicCreateError(error: { message?: string; code?: string; details?: string }): never {
+  const raw = `${error.message ?? ""} ${error.details ?? ""}`;
+  const known = [
+    "IDEMPOTENCY_CONFLICT",
+    "BRANCH_NOT_FOUND",
+    "BRANCH_INACTIVE",
+    "BRANCH_NOT_OPERATIONAL",
+    "IDEMPOTENCY_KEY_REQUIRED",
+    "IDEMPOTENCY_HASH_REQUIRED",
+    "ORDER_ITEMS_REQUIRED",
+  ] as const;
+  for (const code of known) {
+    if (raw.includes(code)) {
+      const status =
+        code === "IDEMPOTENCY_CONFLICT"
+          ? 409
+          : code.startsWith("BRANCH_")
+            ? code === "BRANCH_NOT_FOUND"
+              ? 404
+              : 409
+            : 400;
+      throw new ApiError(
+        status,
+        code,
+        code === "IDEMPOTENCY_CONFLICT"
+          ? "Idempotency-Key was reused with a different order payload."
+          : code === "BRANCH_NOT_OPERATIONAL"
+            ? "This branch is not operationally active."
+            : code === "BRANCH_INACTIVE"
+              ? "This branch is inactive."
+              : code === "BRANCH_NOT_FOUND"
+                ? "Branch was not found."
+                : "Order create validation failed.",
+      );
+    }
+  }
+  throw new ApiError(500, "ORDER_CREATE_FAILED", "Atomic order create failed.");
 }
 
 export class OrdersServiceConfigurationError extends Error {
@@ -87,11 +122,10 @@ async function loadOperatingBranch(
     throw new ApiError(404, "BRANCH_NOT_FOUND", `Branch '${branchCode}' was not found.`);
   }
   if (branch.status !== "operating") {
-    throw new ApiError(
-      400,
-      options.quoteContext ? "QUOTE_BRANCH_UNAVAILABLE" : "BRANCH_UNAVAILABLE",
-      "Selected branch is not accepting orders.",
-    );
+    if (options.quoteContext) {
+      throw new ApiError(400, "QUOTE_BRANCH_UNAVAILABLE", "Selected branch is not accepting orders.");
+    }
+    assertBranchOperational(branch.status);
   }
   return branch;
 }
@@ -471,22 +505,49 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
       const modifiersByKey = await loadModifiersMap(supabase, input.items);
       const priced = priceOrderLines({ lines: input.items, menuBySlug, modifiersByKey });
 
-      const orderNumber = generateOrderNumber();
       const notes = [input.notes?.trim(), input.couponCode?.trim() ? `Promo code: ${input.couponCode.trim()}` : null]
         .filter(Boolean)
         .join("\n");
 
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          order_number: orderNumber,
-          customer_id: input.customerId ?? null,
-          // Slice 2D ownership link — null for guests; never from client role claims.
-          auth_user_id: input.authUserId?.trim() || null,
-          branch_id: branch.id,
+      const isPos = input.orderSource === "pos" || input.orderSource === "admin";
+      const itemsPayload = priced.lines.map((line) => ({
+        menu_item_id: line.menuItemId,
+        variant_id: line.variantId,
+        product_name: line.productName,
+        variant_name: line.variantName,
+        quantity: line.quantity,
+        unit_price: line.lineUnitPrice,
+        total_price: line.lineTotal,
+        food_unit_price: line.foodUnitPrice,
+        extras_snapshot: line.extrasSnapshot,
+        instructions: line.instructions,
+        modifiers_snapshot: line.modifiers.map((m) => ({
+          group: m.groupName,
+          option: m.optionName,
+          quantity: 1,
+        })),
+        modifiers: line.modifiers.map((modifier) => ({
+          modifier_option_id: modifier.modifierOptionId,
+          group_code: modifier.groupCode,
+          group_name: modifier.groupName,
+          option_code: modifier.optionCode,
+          option_name: modifier.optionName,
+          price_delta: modifier.priceDelta,
+          unit_price: modifier.priceDelta,
+          total_price: modifier.priceDelta,
+          quantity: 1,
+          sort_order: modifier.sortOrder,
+        })),
+      }));
+
+      const { data: atomic, error: atomicError } = await supabase.rpc("create_order_atomic", {
+        p_idempotency_key: input.idempotencyKey.trim(),
+        p_idempotency_request_hash: requestHash,
+        p_branch_id: branch.id,
+        p_order: {
           order_type: input.orderType,
           order_source: input.orderSource,
-          status: "pending",
+          status: isPos ? "confirmed" : "pending",
           subtotal: priced.subtotal,
           discount_amount: priced.discountAmount,
           tax_amount: priced.taxAmount,
@@ -498,132 +559,52 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
           contact_phone_e164: contactPhoneE164,
           delivery_address: deliveryAddress ?? null,
           notes: notes || null,
-          idempotency_key: input.idempotencyKey.trim(),
-          idempotency_request_hash: requestHash,
           pricing_snapshot: priced.pricingSnapshot,
-        })
-        .select(
-          "id, order_number, status, subtotal, discount_amount, tax_amount, delivery_fee, total_amount, created_at",
-        )
-        .single();
-
-      if (orderError || !order) {
-        if (orderError?.code === "23505") {
-          // Unique race on idempotency_key — reload
-          const { data: raced } = await supabase
-            .from("orders")
-            .select("id, order_number, status, subtotal, discount_amount, tax_amount, delivery_fee, total_amount, created_at, idempotency_request_hash")
-            .eq("idempotency_key", input.idempotencyKey.trim())
-            .maybeSingle();
-          if (raced) {
-            if (raced.idempotency_request_hash && raced.idempotency_request_hash !== requestHash) {
-              throw new ApiError(
-                409,
-                "IDEMPOTENCY_CONFLICT",
-                "Idempotency-Key was reused with a different order payload.",
-              );
-            }
-            return {
-              id: raced.id,
-              orderNumber: raced.order_number,
-              status: raced.status,
-              subtotal: parseNumber(raced.subtotal),
-              discountAmount: parseNumber(raced.discount_amount),
-              taxAmount: parseNumber(raced.tax_amount),
-              deliveryFee: parseNumber(raced.delivery_fee),
-              totalAmount: parseNumber(raced.total_amount),
-              createdAt: raced.created_at,
-              idempotentReplay: true,
-            };
-          }
-        }
-        throw new ApiError(500, "ORDER_CREATE_FAILED", orderError?.message ?? "Order insert failed.");
-      }
-
-      const { data: insertedItems, error: itemsError } = await supabase
-        .from("order_items")
-        .insert(
-          priced.lines.map((line) => ({
-            order_id: order.id,
-            menu_item_id: line.menuItemId,
-            variant_id: line.variantId,
-            product_name: line.productName,
-            variant_name: line.variantName,
-            quantity: line.quantity,
-            unit_price: line.lineUnitPrice,
-            total_price: line.lineTotal,
-            food_unit_price: line.foodUnitPrice,
-            extras_snapshot: line.extrasSnapshot,
-            instructions: line.instructions,
-          })),
-        )
-        .select("id");
-
-      if (itemsError || !insertedItems) {
-        await supabase.from("orders").delete().eq("id", order.id);
-        throw new ApiError(500, "ORDER_ITEMS_CREATE_FAILED", itemsError?.message ?? "Order items insert failed.");
-      }
-
-      const modifierRows = priced.lines.flatMap((line, index) => {
-        const orderItemId = insertedItems[index]?.id;
-        if (!orderItemId) return [];
-        return line.modifiers.map((modifier) => ({
-          order_item_id: orderItemId,
-          modifier_option_id: modifier.modifierOptionId,
-          group_code: modifier.groupCode,
-          group_name: modifier.groupName,
-          option_code: modifier.optionCode,
-          option_name: modifier.optionName,
-          price_delta: modifier.priceDelta,
-          unit_price: modifier.priceDelta,
-          total_price: modifier.priceDelta,
-          quantity: 1,
-          sort_order: modifier.sortOrder,
-        }));
+          auth_user_id: input.authUserId?.trim() || null,
+          customer_id: input.customerId ?? null,
+          payment_method: "cash",
+        },
+        p_items: itemsPayload,
+        p_create_delivery: input.orderType === "delivery" && Boolean(deliveryAddress),
+        p_delivery: { delivery_address: deliveryAddress ?? null },
+        p_create_kitchen_ticket: isPos,
+        p_create_payment_pending: isPos,
+        p_actor_type: isPos ? "staff" : "guest",
+        p_actor_user_id: null,
       });
 
-      if (modifierRows.length > 0) {
-        const { error: modifiersError } = await supabase
-          .from("order_item_modifiers")
-          .insert(modifierRows);
-        if (modifiersError) {
-          await supabase.from("orders").delete().eq("id", order.id);
-          throw new ApiError(500, "ORDER_MODIFIERS_CREATE_FAILED", modifiersError.message);
-        }
+      if (atomicError) {
+        mapAtomicCreateError(atomicError);
       }
 
-      if (input.orderType === "delivery" && deliveryAddress) {
-        const { error: deliveryError } = await supabase.from("deliveries").insert({
-          order_id: order.id,
-          branch_id: branch.id,
-          delivery_address: deliveryAddress,
-          status: "pending",
-        });
-        if (deliveryError) {
-          await supabase.from("orders").delete().eq("id", order.id);
-          throw new ApiError(500, "DELIVERY_CREATE_FAILED", deliveryError.message);
-        }
-      }
+      const row = atomic as {
+        id: string;
+        orderNumber: string;
+        status: string;
+        subtotal: number | string;
+        discountAmount: number | string;
+        taxAmount: number | string;
+        deliveryFee: number | string;
+        totalAmount: number | string;
+        createdAt: string;
+        idempotentReplay?: boolean;
+      };
 
-      await supabase.from("order_status_logs").insert({
-        order_id: order.id,
-        from_status: null,
-        to_status: "pending",
-        actor_type: "guest",
-        reason_code: "created",
-        note: null,
-      });
+      if (!row?.id) {
+        throw new ApiError(500, "ORDER_CREATE_FAILED", "Atomic order create returned no row.");
+      }
 
       return {
-        id: order.id,
-        orderNumber: order.order_number,
-        status: order.status,
-        subtotal: parseNumber(order.subtotal),
-        discountAmount: parseNumber(order.discount_amount),
-        taxAmount: parseNumber(order.tax_amount),
-        deliveryFee: parseNumber(order.delivery_fee),
-        totalAmount: parseNumber(order.total_amount),
-        createdAt: order.created_at,
+        id: row.id,
+        orderNumber: row.orderNumber,
+        status: row.status,
+        subtotal: parseNumber(row.subtotal),
+        discountAmount: parseNumber(row.discountAmount),
+        taxAmount: parseNumber(row.taxAmount),
+        deliveryFee: parseNumber(row.deliveryFee),
+        totalAmount: parseNumber(row.totalAmount),
+        createdAt: row.createdAt,
+        idempotentReplay: Boolean(row.idempotentReplay),
       };
     },
 

@@ -129,9 +129,19 @@ export function canAccessAdminSettings(input: AdminPrincipalInput): boolean {
   return input.isSuperAdmin || input.permissions.includes("admin.access");
 }
 
-export function canViewAllBranches(input: AdminPrincipalInput): boolean {
-  // Global "All Branches" is Owner-only. branch.manage does not imply cross-branch aggregate scope.
-  return input.isSuperAdmin;
+/**
+ * Whether the admin branch selector may use aggregate mode (`branchIdFilter = null`).
+ *
+ * - Super-admin: organization-wide (every branch in the tenant).
+ * - Other staff: only when they hold **more than one** verified `branchIds` membership.
+ *   Aggregate then means those assigned branches only — never the full system.
+ *
+ * Renamed from `canViewAllBranches` because that name implied system-wide access for
+ * every caller. Browser filtering is convenience only; the API still enforces scope.
+ */
+export function canViewMultipleAssignedBranches(input: AdminPrincipalInput): boolean {
+  if (input.isSuperAdmin) return true;
+  return (input.branchIds?.length ?? 0) > 1;
 }
 
 /** Branch Manager operational home (`/admin/branch`). Owner (super-admin) may also enter. */
@@ -159,6 +169,27 @@ export function isKitchenOnly(input: AdminPrincipalInput): boolean {
     !input.isSuperAdmin &&
     input.roles.includes("kitchen") &&
     !input.roles.includes("branch-manager")
+  );
+}
+
+/** Cashier-role staff without manager/kitchen roles — POS is their home (D2 staff dashboard). */
+export function isCashierOnly(input: AdminPrincipalInput): boolean {
+  return (
+    !input.isSuperAdmin &&
+    input.roles.includes("cashier") &&
+    !input.roles.includes("branch-manager") &&
+    !input.roles.includes("kitchen")
+  );
+}
+
+/** Rider-role staff without other operational roles — Delivery is their home (D2 staff dashboard). */
+export function isRiderOnly(input: AdminPrincipalInput): boolean {
+  return (
+    !input.isSuperAdmin &&
+    input.roles.includes("rider") &&
+    !input.roles.includes("branch-manager") &&
+    !input.roles.includes("kitchen") &&
+    !input.roles.includes("cashier")
   );
 }
 
@@ -309,11 +340,27 @@ export function filterVisibleAdminNav(input: AdminPrincipalInput): AdminNavItem[
   const settingsApi = canAccessAdminSettings(input);
   const bmOnly = isBranchManagerOnly(input);
   const kitchenOnly = isKitchenOnly(input);
+  const cashierOnly = isCashierOnly(input);
+  const riderOnly = isRiderOnly(input);
 
   return getAdminNavItems(input).filter((item) => {
     if (kitchenOnly) {
       const allowed: AdminNavKey[] = ["kitchen-home"];
       return allowed.includes(item.key) && kitchenHome;
+    }
+
+    if (cashierOnly) {
+      // D2 staff shell: cashier home is POS — no Owner dashboards or financial metrics.
+      const allowed: AdminNavKey[] = ["pos", "orders"];
+      if (!allowed.includes(item.key)) return false;
+      if (item.key === "pos") return posApi;
+      return ordersApi;
+    }
+
+    if (riderOnly) {
+      // D2 staff shell: rider home is Delivery — assigned deliveries and status actions only.
+      const allowed: AdminNavKey[] = ["delivery"];
+      return allowed.includes(item.key) && deliveryApi;
     }
 
     if (bmOnly && item.key !== "branch-home") {

@@ -1,4 +1,16 @@
-import { fetchApiData, fetchApiEnvelope } from "@/lib/api";
+import { bearerHeaders, fetchApiData, fetchApiEnvelope } from "@/lib/api";
+
+/** Shared reliability options for admin reads (D2). */
+export type AdminReadOptions = {
+  signal?: AbortSignal;
+  correlationId?: string;
+  timeoutMs?: number;
+};
+
+/** Bounded default timeout for idempotent admin reads. */
+export const ADMIN_READ_TIMEOUT_MS = 15_000;
+/** Bounded default timeout for admin writes (never auto-retried). */
+export const ADMIN_WRITE_TIMEOUT_MS = 20_000;
 
 export type AdminOrderListItem = {
   id: string;
@@ -90,24 +102,27 @@ export type AdminOrderListResult = {
   pagination: { limit: number; offset: number; total: number; returned: number };
 };
 
-function authHeaders(accessToken: string): HeadersInit {
+function readInit(accessToken: string, opts?: AdminReadOptions) {
   return {
-    Authorization: `Bearer ${accessToken}`,
-    Accept: "application/json",
-    "Content-Type": "application/json",
+    headers: bearerHeaders(accessToken),
+    signal: opts?.signal,
+    correlationId: opts?.correlationId,
+    timeoutMs: opts?.timeoutMs ?? ADMIN_READ_TIMEOUT_MS,
   };
 }
 
 export async function fetchAdminOperationsDashboard(
   accessToken: string,
   query?: { branchId?: string | null },
+  opts?: AdminReadOptions,
 ): Promise<AdminOperationsDashboard> {
   const params = new URLSearchParams();
   if (query?.branchId) params.set("branchId", query.branchId);
   const qs = params.toString();
-  return fetchApiData<AdminOperationsDashboard>(`/admin/dashboard/operations${qs ? `?${qs}` : ""}`, {
-    headers: authHeaders(accessToken),
-  });
+  return fetchApiData<AdminOperationsDashboard>(
+    `/admin/dashboard/operations${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
 }
 
 export async function listAdminOrders(
@@ -121,6 +136,7 @@ export async function listAdminOrders(
     limit?: number;
     offset?: number;
   },
+  opts?: AdminReadOptions,
 ): Promise<AdminOrderListResult> {
   const params = new URLSearchParams();
   if (query?.branchId) params.set("branchId", query.branchId);
@@ -130,9 +146,10 @@ export async function listAdminOrders(
   if (query?.orderNumber) params.set("orderNumber", query.orderNumber);
   params.set("limit", String(query?.limit ?? 20));
   params.set("offset", String(query?.offset ?? 0));
-  const envelope = await fetchApiEnvelope<AdminOrderListItem[]>(`/admin/orders?${params.toString()}`, {
-    headers: authHeaders(accessToken),
-  });
+  const envelope = await fetchApiEnvelope<AdminOrderListItem[]>(
+    `/admin/orders?${params.toString()}`,
+    readInit(accessToken, opts),
+  );
   const pagination = (envelope.meta?.pagination ?? {
     limit: query?.limit ?? 20,
     offset: query?.offset ?? 0,
@@ -142,10 +159,12 @@ export async function listAdminOrders(
   return { orders: envelope.data, pagination };
 }
 
-export async function getAdminOrder(accessToken: string, orderId: string): Promise<AdminOrderDetail> {
-  return fetchApiData<AdminOrderDetail>(`/admin/orders/${orderId}`, {
-    headers: authHeaders(accessToken),
-  });
+export async function getAdminOrder(
+  accessToken: string,
+  orderId: string,
+  opts?: AdminReadOptions,
+): Promise<AdminOrderDetail> {
+  return fetchApiData<AdminOrderDetail>(`/admin/orders/${orderId}`, readInit(accessToken, opts));
 }
 
 export type AdminOrderTransitionAction =
@@ -163,11 +182,71 @@ export async function transitionAdminOrder(
   action: AdminOrderTransitionAction,
   body?: { reasonCode?: string; note?: string },
 ): Promise<{ status: string; idempotentReplay: boolean }> {
+  // Writes are never auto-retried; a bounded timeout still applies.
   return fetchApiData(`/admin/orders/${orderId}/${action}`, {
     method: "POST",
-    headers: authHeaders(accessToken),
+    headers: bearerHeaders(accessToken),
     body: JSON.stringify(body ?? {}),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
+}
+
+/** Authenticated POS create — membership + operating branch enforced server-side. */
+export function createAdminPosOrder(
+  accessToken: string,
+  payload: {
+    branchCode: string;
+    orderType: "delivery" | "pickup" | "dine-in";
+    contactName: string;
+    contactPhone: string;
+    deliveryAddress?: string;
+    notes?: string;
+    couponCode?: string;
+    quoteId?: string;
+    items: Array<{
+      menuItemSlug: string;
+      variantLabel?: string;
+      quantity: number;
+      unitPrice?: number;
+      productName?: string;
+      instructions?: string;
+      modifiers?: Array<{ groupCode: string; optionCode: string }>;
+    }>;
+  },
+  idempotencyKey: string,
+) {
+  return fetchApiData<{
+    id: string;
+    orderNumber: string;
+    status: string;
+    subtotal: number;
+    discountAmount: number;
+    taxAmount: number;
+    deliveryFee: number;
+    totalAmount: number;
+    createdAt: string;
+    idempotentReplay?: boolean;
+  }>("/admin/pos/orders", {
+    method: "POST",
+    headers: {
+      ...bearerHeaders(accessToken),
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify(payload),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function fetchBranchReadiness(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<{
+    branchId: string;
+    branchCode: string;
+    name: string;
+    status: string;
+    operationallyActive: boolean;
+    blockers: Array<{ code: string; message: string }>;
+    checks: Record<string, boolean>;
+  }>(`/admin/branches/${branchId}/readiness`, readInit(accessToken, opts));
 }
 
 export type AdminRestaurantTable = {
@@ -189,14 +268,16 @@ export type AdminRestaurantTable = {
 export async function listAdminTables(
   accessToken: string,
   query?: { branchId?: string | null; status?: string; limit?: number },
+  opts?: AdminReadOptions,
 ): Promise<AdminRestaurantTable[]> {
   const params = new URLSearchParams();
   if (query?.branchId) params.set("branchId", query.branchId);
   if (query?.status) params.set("status", query.status);
   params.set("limit", String(query?.limit ?? 100));
-  return fetchApiData<AdminRestaurantTable[]>(`/admin/tables?${params.toString()}`, {
-    headers: authHeaders(accessToken),
-  });
+  return fetchApiData<AdminRestaurantTable[]>(
+    `/admin/tables?${params.toString()}`,
+    readInit(accessToken, opts),
+  );
 }
 
 export type AdminStaffInvite = {
@@ -219,11 +300,13 @@ export type AdminStaffInvite = {
 export async function listAdminStaffInvites(
   accessToken: string,
   query?: { status?: string },
+  opts?: AdminReadOptions,
 ): Promise<AdminStaffInvite[]> {
   const params = new URLSearchParams();
   if (query?.status) params.set("status", query.status);
   const qs = params.toString();
-  return fetchApiData<AdminStaffInvite[]>(`/admin/staff/invites${qs ? `?${qs}` : ""}`, {
-    headers: authHeaders(accessToken),
-  });
+  return fetchApiData<AdminStaffInvite[]>(
+    `/admin/staff/invites${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
 }

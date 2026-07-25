@@ -15,6 +15,13 @@ import { createAdminOrdersRouter } from "./orders.js";
 import { createAdminTablesRouter } from "./tables.js";
 import { createAdminBillsRouter } from "./bills.js";
 import { createAdminDashboardRouter } from "./dashboard.js";
+import { createAdminPosRouter } from "./pos.js";
+import type { OrdersDataSource } from "../../services/orders/types.js";
+import type { EnvironmentStatus } from "../../config/env.js";
+import {
+  createBranchReadinessService,
+  type BranchReadinessService,
+} from "../../services/branches/readiness.js";
 import {
   assertCanReadInvites,
   type InviteAuditContext,
@@ -39,6 +46,9 @@ export interface AdminRouterDependencies {
   branchOrderManagement: BranchOrderManagementDataSource;
   restaurantTables: RestaurantTablesDataSource;
   restaurantBills: RestaurantBillsService;
+  ordersDataSource: OrdersDataSource;
+  envStatus: EnvironmentStatus;
+  branchReadiness?: BranchReadinessService;
   inviteAppOrigin: string;
 }
 
@@ -267,6 +277,40 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
           auditFromRequest(req),
         );
         return res.json({ ok: true, data: toSafeInvite(invite) });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  // D2 — authenticated POS order create (membership + operating branch required).
+  router.use(
+    "/pos",
+    createAdminPosRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      ordersDataSource: dependencies.ordersDataSource,
+      envStatus: dependencies.envStatus,
+    }),
+  );
+
+  const readiness =
+    dependencies.branchReadiness ?? createBranchReadinessService(dependencies.envStatus);
+
+  router.get(
+    "/branches/:branchId/readiness",
+    requireAuthenticatedUser,
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const report = await readiness.getBranchReadiness(
+          {
+            isSuperAdmin: principal.isSuperAdmin,
+            branchIds: principal.branchIds,
+          },
+          req.params.branchId,
+        );
+        return res.json({ ok: true, data: report });
       } catch (error) {
         return next(error);
       }

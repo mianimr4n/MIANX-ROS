@@ -73,6 +73,7 @@ export interface AppDependencies {
   customerFavorites: CustomerFavoritesDataSource;
   customerReviews: CustomerReviewsDataSource;
   inviteAppOrigin: string;
+  envStatus: EnvironmentStatus;
 }
 
 export function createAppDependencies(envStatus: EnvironmentStatus): AppDependencies {
@@ -95,5 +96,6 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     customerFavorites: createCustomerFavoritesFromEnv(envStatus),
     customerReviews: createCustomerReviewsFromEnv(envStatus),
     inviteAppOrigin: envStatus.config.corsOrigin,
+    envStatus,
   };
 }

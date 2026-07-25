@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { BranchComparison } from "@/components/admin/reports/BranchComparison";
 import { BusinessInsights } from "@/components/admin/reports/BusinessInsights";
@@ -29,8 +29,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { canAccessAdminReports, primaryRoleLabel } from "@/lib/admin-access";
-import { fetchAdminOperationsDashboard, type AdminOperationsDashboard } from "@/lib/admin-api";
-import { ApiRequestError } from "@/lib/api";
+import { fetchAdminOperationsDashboard } from "@/lib/admin-api";
+import { useOperationalData } from "@/lib/op-status";
+import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
 import {
   buildBusinessInsights,
   buildCustomerReportSnapshot,
@@ -49,34 +50,20 @@ export default function AdminReports() {
   const { gateReady } = useAdminAccessGate(allowed);
   const roleLabel = primaryRoleLabel(roles, isSuperAdmin);
 
-  const [data, setData] = useState<AdminOperationsDashboard | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<ExecutiveDashboardFilters>(DEFAULT_EXECUTIVE_FILTERS);
 
   const checks = useMemo(() => integrationChecks(), []);
   const groups = useMemo(() => readinessGroups(), []);
 
-  const load = useCallback(async () => {
-    const token = session?.access_token;
-    if (!token || !allowed) return;
-    setLoading(true);
-    try {
-      const next = await fetchAdminOperationsDashboard(token, { branchId: branchIdFilter });
-      setData(next);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : "Failed to load reports data");
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [allowed, branchIdFilter, session?.access_token]);
-
-  useEffect(() => {
-    if (!gateReady) return;
-    void load();
-  }, [gateReady, load]);
+  const token = session?.access_token;
+  const reportsOp = useOperationalData(
+    ({ signal, correlationId }) =>
+      fetchAdminOperationsDashboard(token!, { branchId: branchIdFilter }, { signal, correlationId }),
+    [token, branchIdFilter],
+    { enabled: Boolean(token) && allowed && gateReady },
+  );
+  const { data, error, retry } = reportsOp;
+  const loading = reportsOp.state === "LOADING";
 
   const filteredOrders = useMemo(() => {
     if (!data) return [];
@@ -92,24 +79,21 @@ export default function AdminReports() {
       <ReportsHeader
         branchLabel={branchLabel}
         roleLabel={roleLabel}
-        onRefresh={() => void load()}
+        onRefresh={retry}
         generatedAt={data?.generatedAt ?? null}
       />
 
       <ReportsStatusBanner />
 
-      {error ? (
-        <div
-          className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-          role="alert"
-          aria-live="assertive"
-        >
-          <p>{error}</p>
-          <button type="button" className="mt-2 font-semibold underline" onClick={() => void load()}>
-            Retry
-          </button>
-        </div>
-      ) : null}
+      <OperationalStatusBanner
+        state={reportsOp.state}
+        error={error}
+        lastSuccessAt={reportsOp.lastSuccessAt}
+        onRetry={retry}
+        correlationId={reportsOp.correlationId}
+        showTechnicalDetail={isSuperAdmin}
+        className="mb-6"
+      />
 
       <ReportsFilters
         filters={filters}
@@ -125,10 +109,13 @@ export default function AdminReports() {
 
       <CustomerReport snapshot={customerSnapshot} />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <KitchenReport kitchenWaiting={data?.kpis.kitchenWaiting ?? 0} />
-        <DeliveryReport activeDeliveries={data?.kpis.activeDeliveries ?? 0} />
-      </div>
+      {data ? (
+        // D2: only render live queue counts from a successful payload — never zeros from a failed load.
+        <div className="grid gap-4 lg:grid-cols-2">
+          <KitchenReport kitchenWaiting={data.kpis.kitchenWaiting} />
+          <DeliveryReport activeDeliveries={data.kpis.activeDeliveries} />
+        </div>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <InventoryReport />

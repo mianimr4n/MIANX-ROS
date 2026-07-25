@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { ApiError } from "../../common/http.js";
 import type { EnvironmentStatus } from "../../config/env.js";
+import { assertBranchIdOperational } from "../branches/lookup.js";
 import { attachConfirmedDineInOrderToBill } from "../bills/restaurant-bills.js";
 import {
   cancelKitchenTicketForOrder,
@@ -549,10 +550,16 @@ export function createSupabaseBranchOrderManagementDataSource(
       const supabase = getClient();
       const now = new Date();
       const branchScope = resolveScopedBranchIds(scope, filters.branchId);
+      // D2: cross-branch comparison is authorized for super-admins and for staff
+      // whose verified unique membership span is more than one branch.
+      // Duplicate IDs in the scope array must not inflate the count.
+      const uniqueAssignedBranches = new Set(scope.branchIds).size;
+      const includeBranchPerformance =
+        !filters.branchId && (scope.isSuperAdmin || uniqueAssignedBranches > 1);
       if (branchScope === "none") {
         return buildDashboardFromRows([], {
           branchId: filters.branchId ?? null,
-          includeBranchPerformance: Boolean(scope.isSuperAdmin && !filters.branchId),
+          includeBranchPerformance,
           now,
         });
       }
@@ -584,7 +591,7 @@ export function createSupabaseBranchOrderManagementDataSource(
 
       return buildDashboardFromRows(rows, {
         branchId: filters.branchId ?? null,
-        includeBranchPerformance: Boolean(scope.isSuperAdmin && !filters.branchId),
+        includeBranchPerformance,
         now,
       });
     },
@@ -664,6 +671,7 @@ export function createSupabaseBranchOrderManagementDataSource(
       const order = await loadOrderScope(supabase, orderId);
 
       assertBranchInScope(scope, order.branch_id);
+      await assertBranchIdOperational(supabase, order.branch_id);
 
       const plan = planTransition({
         action,

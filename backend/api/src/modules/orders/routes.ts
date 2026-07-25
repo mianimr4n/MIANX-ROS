@@ -78,6 +78,16 @@ async function handleCreateOrder(
   ordersDataSource: OrdersDataSource,
 ) {
   const body = req.body as z.infer<typeof createOrderSchema>;
+
+  // POS/admin sources must use authenticated admin POS routes — never guest intake.
+  if (body.orderSource === "pos" || body.orderSource === "admin") {
+    throw new ApiError(
+      403,
+      "POS_AUTH_REQUIRED",
+      "POS and admin orders must be created via authenticated /api/v1/admin/pos/orders.",
+    );
+  }
+
   if (body.orderType === "delivery" && !body.deliveryAddress?.trim()) {
     throw new ApiError(
       400,

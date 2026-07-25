@@ -49,9 +49,10 @@ describe("Executive Admin Dashboard v1 (static)", () => {
     assert.doesNotMatch(widgets, /demand predicted|autonomous|generative model/i);
   });
 
-  it("prefers KPI error state over stale prior payload", () => {
+  it("maps canonical D2 states onto KPI cards (error and stale stay distinct)", () => {
     const dashboard = read("apps/website/client/src/pages/admin/AdminDashboard.tsx");
-    assert.match(dashboard, /if \(args\.error\) return "error"/);
+    assert.match(dashboard, /if \(opState === "ERROR" \|\| opState === "OFFLINE"\) return "error"/);
+    assert.match(dashboard, /if \(opState === "STALE"\) return "stale"/);
     assert.match(dashboard, /loading=\{loading && !data\}/);
   });
 

@@ -87,6 +87,14 @@ class FakeQuery {
     return this.resolve().then(res, rej);
   }
   private resolve(): Promise<{ data: unknown; error: unknown; count?: number }> {
+    if (this.table === "branches") {
+      const idEq = this.filters.find((f) => f[0] === "eq" && f[1] === "id");
+      const id = typeof idEq?.[2] === "string" ? idEq[2] : "00000000-0000-4000-8000-000000000000";
+      return Promise.resolve({
+        data: { id, branch_code: "test-branch", status: "operating", name: "Test Branch" },
+        error: null,
+      });
+    }
     if (this.table === "order_status_logs" && this.op === "insert") {
       state.logs.push(this.payload as Record<string, unknown>);
       return Promise.resolve({ data: null, error: null });

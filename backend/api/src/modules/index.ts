@@ -121,6 +121,8 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
       branchOrderManagement: dependencies.branchOrderManagement,
       restaurantTables: dependencies.restaurantTables,
       restaurantBills: dependencies.restaurantBills,
+      ordersDataSource: dependencies.ordersDataSource,
+      envStatus: dependencies.envStatus,
       inviteAppOrigin: dependencies.inviteAppOrigin,
     }),
   );

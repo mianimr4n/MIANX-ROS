@@ -10,6 +10,8 @@ export type AdminKpiState =
   | "empty"
   | "unavailable"
   | "error"
+  /** Last successful value kept visible while the current refresh fails. */
+  | "stale"
   | "planned";
 
 export type AdminKpiCardProps = {
@@ -41,6 +43,7 @@ const STATE_LABEL: Record<AdminKpiState, string> = {
   empty: "Empty",
   unavailable: "Unavailable",
   error: "Error",
+  stale: "Stale",
   planned: "Planned",
 };
 
@@ -49,6 +52,7 @@ function resolveDisplayValue(value: string | null | undefined, state: AdminKpiSt
   if (state === "unavailable" || state === "planned" || state === "error" || state === "empty") {
     return "—";
   }
+  // "stale" keeps the last successful value visible, muted and badged.
   if (value == null || value === "") return "—";
   return value;
 }
