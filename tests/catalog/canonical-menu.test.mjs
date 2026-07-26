@@ -121,8 +121,10 @@ test("generated website fallback matches canonical sellable codes", () => {
 
 test("every generated fallback SKU carries exactly one price", () => {
   const menuData = read("apps/website/client/src/data/menu-data.ts");
-  const skuBlocks = menuData.split(/\n  \{\n/).slice(1);
-  assert.ok(skuBlocks.length > 0);
+  // Normalize CRLF so Windows checkouts match the LF object-literal contract.
+  const normalized = menuData.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const skuBlocks = normalized.split(/\n  \{\n/).slice(1);
+  assert.ok(skuBlocks.length > 0, "expected SKU object literals in the fallback");
   for (const block of skuBlocks) {
     const prices = block.match(/^    price: \d+(?:\.\d+)?,$/gm) ?? [];
     assert.equal(prices.length, 1, `expected one price per SKU, saw ${prices.length}`);

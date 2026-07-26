@@ -1,0 +1,5 @@
+# Keep the authoritative freeze catalog as LF so Windows/CI share one byte stream.
+data/catalog/telepizza-canonical-menu.json text eol=lf
+
+# Generated offline fallback stays LF for stable SOURCE_CHECKSUM comments.
+apps/website/client/src/data/menu-data.ts text eol=lf
