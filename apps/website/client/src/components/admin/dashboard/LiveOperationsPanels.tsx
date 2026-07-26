@@ -71,13 +71,39 @@ export function RecentOrdersPanel({ orders }: { orders: AdminOrderListItem[] }) 
   );
 }
 
-export function KitchenStatusPanel({ counts }: { counts: Record<string, number> }) {
+export function KitchenStatusPanel({
+  counts,
+  failed = false,
+}: {
+  /** Null when ops data failed/unavailable — never invent zeros. */
+  counts: Record<string, number> | null;
+  failed?: boolean;
+}) {
   const rows = [
     { key: "preparing", label: "Preparing", tone: "bg-amber-50 text-amber-950" },
     { key: "ready", label: "Ready", tone: "bg-emerald-50 text-emerald-900" },
     { key: "confirmed", label: "Confirmed", tone: "bg-sky-50 text-sky-950" },
     { key: "pending", label: "Pending", tone: "bg-orange-50 text-orange-950" },
   ];
+
+  if (failed || counts == null) {
+    return (
+      <AdminSurface aria-labelledby="kitchen-status-heading">
+        <AdminSurfaceHeader
+          title="Kitchen status"
+          description="Derived from current order statuses. Not a live KDS feed."
+        />
+        <AdminSurfaceBody>
+          <h3 id="kitchen-status-heading" className="sr-only">
+            Kitchen status
+          </h3>
+          <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-800" role="status">
+            ERROR — kitchen status unavailable. Counts are not shown as zero.
+          </p>
+        </AdminSurfaceBody>
+      </AdminSurface>
+    );
+  }
 
   return (
     <AdminSurface aria-labelledby="kitchen-status-heading">
@@ -106,11 +132,34 @@ export function DeliveryStatusPanel({
   activeDeliveries,
   readyCount,
   completedCount,
+  failed = false,
 }: {
-  activeDeliveries: number;
-  readyCount: number;
-  completedCount: number;
+  activeDeliveries: number | null;
+  readyCount: number | null;
+  completedCount: number | null;
+  failed?: boolean;
 }) {
+  const unavailable = failed || activeDeliveries == null || readyCount == null || completedCount == null;
+
+  if (unavailable) {
+    return (
+      <AdminSurface aria-labelledby="delivery-status-heading">
+        <AdminSurfaceHeader
+          title="Delivery status"
+          description="Derived from current order statuses. No GPS or ETA prediction."
+        />
+        <AdminSurfaceBody>
+          <h3 id="delivery-status-heading" className="sr-only">
+            Delivery status
+          </h3>
+          <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-800" role="status">
+            ERROR — delivery status unavailable. Counts are not shown as zero.
+          </p>
+        </AdminSurfaceBody>
+      </AdminSurface>
+    );
+  }
+
   const rows = [
     {
       label: "Dispatched",

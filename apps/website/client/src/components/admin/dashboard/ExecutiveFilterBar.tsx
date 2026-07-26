@@ -1,3 +1,4 @@
+import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
 
 export type ExecutiveDashboardFilters = {
@@ -49,6 +50,8 @@ export function ExecutiveFilterBar({
   onReset: () => void;
 }) {
   const { selection, setSelection, allowedBranches, canSelectAll, label } = useAdminBranch();
+  const { isSuperAdmin } = useAuth();
+  const aggregateLabel = isSuperAdmin ? "All Branches" : "Assigned Branches";
 
   return (
     <form
@@ -68,7 +71,7 @@ export function ExecutiveFilterBar({
             else setSelection({ mode: "branch", branchId: value });
           }}
         >
-          {canSelectAll ? <option value="all">All Branches</option> : null}
+          {canSelectAll ? <option value="all">{aggregateLabel}</option> : null}
           {allowedBranches.map((branch) => (
             <option key={branch.id} value={branch.id}>
               {branch.shortName || branch.name}

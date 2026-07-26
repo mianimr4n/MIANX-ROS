@@ -2,63 +2,30 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  canAccessAdmin,
-  isBranchManagerOnly,
-  isCashierOnly,
-  isHostOnly,
-  isKitchenOnly,
-  isRiderOnly,
-  isWaiterOnly,
-} from "@/lib/admin-access";
-
-function staffHome(principal: {
-  roles: string[];
-  permissions: string[];
-  isSuperAdmin: boolean;
-}): string {
-  if (isKitchenOnly(principal)) return "/admin/kitchen-dashboard";
-  if (isBranchManagerOnly(principal)) return "/admin/branch";
-  if (isCashierOnly(principal)) return "/admin/pos";
-  if (isRiderOnly(principal)) return "/admin/delivery";
-  if (isHostOnly(principal)) return "/admin/reservations";
-  if (isWaiterOnly(principal)) return "/admin/floor";
-  return "/admin/dashboard";
-}
+import { canAccessAdmin, resolveStaffHome } from "@/lib/admin-access";
 
 function safeAdminNext(
   raw: string | null,
-  principal: { roles: string[]; permissions: string[]; isSuperAdmin: boolean },
+  principal: { roles: string[]; permissions: string[]; isSuperAdmin: boolean; branchIds?: string[] },
 ): string {
-  const fallback = staffHome(principal);
+  const fallback = resolveStaffHome(principal);
   if (!raw) return fallback;
   if (!raw.startsWith("/admin")) return fallback;
   if (raw.startsWith("/admin/login")) return fallback;
-  if (isKitchenOnly(principal) && (raw === "/admin" || raw.startsWith("/admin/dashboard") || raw.startsWith("/admin/branch"))) {
-    return "/admin/kitchen-dashboard";
-  }
-  if (isBranchManagerOnly(principal) && (raw === "/admin" || raw.startsWith("/admin/dashboard"))) {
-    return "/admin/branch";
-  }
-  if (isHostOnly(principal) && (raw === "/admin" || raw.startsWith("/admin/dashboard"))) {
-    return "/admin/reservations";
-  }
-  if (isWaiterOnly(principal) && (raw === "/admin" || raw.startsWith("/admin/dashboard"))) {
-    return "/admin/floor";
-  }
-  if (isCashierOnly(principal) && (raw === "/admin" || raw.startsWith("/admin/dashboard"))) {
-    return "/admin/pos";
+  // Role homes: bounce generic executive/owner surfaces back to the specialized home.
+  if (raw === "/admin" || raw === "/admin/dashboard") {
+    return fallback;
   }
   return raw;
 }
 
 export default function AdminLogin() {
-  const { signIn, isAuthenticated, roles, permissions, isSuperAdmin, isLoading } = useAuth();
+  const { signIn, isAuthenticated, roles, permissions, isSuperAdmin, isLoading, branchIds } = useAuth();
   const [, setLocation] = useLocation();
   const search = useSearch();
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
   const reason = params.get("reason");
-  const principal = { roles, permissions, isSuperAdmin };
+  const principal = { roles, permissions, isSuperAdmin, branchIds };
   const next = safeAdminNext(params.get("next"), principal);
 
   const [email, setEmail] = useState("");

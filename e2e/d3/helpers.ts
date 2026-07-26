@@ -46,6 +46,8 @@ export function d3Account(key: "host" | "waiter") {
 /** Sign in through the real Admin ERP login page. */
 export async function browserLogin(page: Page, email: string, password: string) {
   await page.goto("/admin/login");
+  // Avoid filling while AuthContext is still on "Checking session…".
+  await page.getByLabel(/^Email$/i).waitFor({ state: "visible", timeout: 60_000 });
   await page.getByLabel(/^Email$/i).fill(email);
   await page.getByLabel(/^Password$/i).fill(password);
   await page.getByRole("button", { name: /^Sign in$/i }).click();

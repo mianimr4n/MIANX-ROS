@@ -1,0 +1,21 @@
+{
+  "rows": [
+    {
+      "viewport": "mobile",
+      "overflowX": false,
+      "result": "PASS"
+    },
+    {
+      "viewport": "tablet",
+      "overflowX": false,
+      "result": "PASS"
+    },
+    {
+      "viewport": "desktop",
+      "overflowX": false,
+      "result": "PASS"
+    }
+  ],
+  "accessibilityNote": "Focus/contrast manual follow-up required for full a11y gate.",
+  "recordedAt": "2026-07-26T06:56:20.779Z"
+}

@@ -1,17 +1,10 @@
 import { Redirect } from "wouter";
 
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  isBranchManagerOnly,
-  isCashierOnly,
-  isHostOnly,
-  isKitchenOnly,
-  isRiderOnly,
-  isWaiterOnly,
-} from "@/lib/admin-access";
+import { resolveStaffHome } from "@/lib/admin-access";
 
 export default function AdminIndexRedirect() {
-  const { roles, permissions, isSuperAdmin, isLoading } = useAuth();
+  const { roles, permissions, isSuperAdmin, isLoading, branchIds } = useAuth();
 
   if (isLoading) {
     return (
@@ -21,27 +14,6 @@ export default function AdminIndexRedirect() {
     );
   }
 
-  const principal = { roles, permissions, isSuperAdmin };
-  if (isKitchenOnly(principal)) {
-    return <Redirect to="/admin/kitchen-dashboard" />;
-  }
-  if (isBranchManagerOnly(principal)) {
-    return <Redirect to="/admin/branch" />;
-  }
-  // D2 staff dashboards: role-specific operational homes, no Owner metrics.
-  if (isCashierOnly(principal)) {
-    return <Redirect to="/admin/pos" />;
-  }
-  if (isRiderOnly(principal)) {
-    return <Redirect to="/admin/delivery" />;
-  }
-  // D3 staff dashboards: host works the front desk; waiter works the live floor.
-  if (isHostOnly(principal)) {
-    return <Redirect to="/admin/reservations" />;
-  }
-  if (isWaiterOnly(principal)) {
-    return <Redirect to="/admin/floor" />;
-  }
-
-  return <Redirect to="/admin/dashboard" />;
+  const home = resolveStaffHome({ roles, permissions, isSuperAdmin, branchIds });
+  return <Redirect to={home} />;
 }

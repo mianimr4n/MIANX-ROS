@@ -128,40 +128,19 @@ export function KitchenDetailsPanel({
             ) : null}
 
             {detail ? (
-              <>
-                <section>
-                  <h3 className="text-sm font-semibold">Customer</h3>
-                  <dl className="mt-2 space-y-1 text-sm">
-                    <div className="flex justify-between gap-3">
-                      <dt className="text-[var(--admin-muted)]">Name</dt>
-                      <dd>{detail.contactName || "—"}</dd>
-                    </div>
-                    <div className="flex justify-between gap-3">
-                      <dt className="text-[var(--admin-muted)]">Phone</dt>
-                      <dd>{detail.contactPhone || "—"}</dd>
-                    </div>
-                  </dl>
-                </section>
-                <section>
-                  <h3 className="text-sm font-semibold">Delivery method & payment</h3>
-                  <dl className="mt-2 space-y-1 text-sm">
-                    <div className="flex justify-between gap-3">
-                      <dt className="text-[var(--admin-muted)]">Method</dt>
-                      <dd className="capitalize">{detail.orderType}</dd>
-                    </div>
-                    <div className="flex justify-between gap-3">
-                      <dt className="text-[var(--admin-muted)]">Payment</dt>
-                      <dd className="capitalize">{detail.paymentStatus}</dd>
-                    </div>
-                  </dl>
-                </section>
-                {detail.notes ? (
-                  <section>
-                    <h3 className="text-sm font-semibold">Notes</h3>
-                    <p className="mt-2 text-sm">{detail.notes}</p>
-                  </section>
-                ) : null}
-              </>
+              <section>
+                <h3 className="text-sm font-semibold">Order type & payment</h3>
+                <dl className="mt-2 space-y-1 text-sm">
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-[var(--admin-muted)]">Method</dt>
+                    <dd className="capitalize">{detail.orderType}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-[var(--admin-muted)]">Payment</dt>
+                    <dd className="capitalize">{detail.paymentStatus}</dd>
+                  </div>
+                </dl>
+              </section>
             ) : !detailLoading && !detailError ? (
               <p className="text-sm text-[var(--admin-muted)]">
                 Order enrichment unavailable for this principal — showing ticket data only.

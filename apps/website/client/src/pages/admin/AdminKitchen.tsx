@@ -177,9 +177,8 @@ export default function AdminKitchen() {
     for (const order of orders) {
       map[order.id] = {
         orderNumber: order.orderNumber,
-        contactName: order.contactName,
+        contactName: null,
         orderType: order.orderType,
-        notes: null,
       };
     }
     return map;

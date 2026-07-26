@@ -1,0 +1,94 @@
+{
+  "result": "PASS",
+  "matrix": [
+    {
+      "role": "super_admin",
+      "path": "/admin/dashboard",
+      "result": "PASS",
+      "note": "rendered"
+    },
+    {
+      "role": "owner",
+      "path": "/admin/dashboard",
+      "result": "PASS",
+      "note": "rendered"
+    },
+    {
+      "role": "configuration",
+      "path": "/admin/home/config",
+      "result": "PASS",
+      "note": "rendered"
+    },
+    {
+      "role": "assigned_branches_manager",
+      "path": "/admin/branch",
+      "result": "PASS",
+      "note": "rendered"
+    },
+    {
+      "role": "branch_manager_ro",
+      "path": "/admin/branch",
+      "result": "PASS",
+      "note": "rendered"
+    },
+    {
+      "role": "northern_bypass_bm",
+      "path": "/admin/branch",
+      "result": "PASS",
+      "note": "rendered"
+    },
+    {
+      "role": "cashier",
+      "path": "/admin/home/cashier",
+      "result": "PASS",
+      "note": "rendered"
+    },
+    {
+      "role": "host",
+      "path": "/admin/home/host",
+      "result": "PASS",
+      "note": "rendered"
+    },
+    {
+      "role": "waiter",
+      "path": "/admin/home/waiter",
+      "result": "PASS",
+      "note": "rendered"
+    },
+    {
+      "role": "kitchen",
+      "path": "/admin/kitchen-dashboard",
+      "result": "PASS",
+      "note": "rendered"
+    },
+    {
+      "role": "delivery",
+      "path": "/admin/home/delivery",
+      "result": "PASS",
+      "note": "rendered"
+    },
+    {
+      "role": "general_staff",
+      "path": "/admin/home/staff",
+      "result": "PASS",
+      "note": "rendered"
+    },
+    {
+      "role": "forged_branch_denial",
+      "path": "/api/v1/admin/dashboard/opening-readiness?branchId=aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "result": "PASS",
+      "note": "status=403"
+    },
+    {
+      "role": "northern_bypass_status",
+      "path": "/api/v1/branches",
+      "result": "PASS",
+      "note": "northern-bypass=coming-soon"
+    }
+  ],
+  "northernBypass": "coming-soon",
+  "forgedBranchDenied": true,
+  "kitchenPiiAbsent": true,
+  "commitAuthorization": "[redacted]",
+  "recordedAt": "2026-07-26T06:58:02.239Z"
+}

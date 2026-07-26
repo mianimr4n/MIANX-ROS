@@ -20,6 +20,7 @@ import {
   RecentOrdersPanel,
 } from "@/components/admin/dashboard/LiveOperationsPanels";
 import { TableServiceSummary } from "@/components/admin/dashboard/TableServiceSummary";
+import { OpeningReadinessSummary } from "@/components/admin/dashboard/OpeningReadinessSummary";
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
@@ -89,32 +90,67 @@ export default function AdminBranchManager() {
   const deliveryApi = canAccessAdminDelivery(principal);
   const roleLabel = primaryRoleLabel(roles, isSuperAdmin);
 
-  // Branch managers (and Owner on this page) must operate a concrete branch — never global aggregate.
+  // Single-branch membership stays pinned. Multi-branch managers may use Assigned Branches aggregate.
   useEffect(() => {
     if (!gateReady) return;
     if (selection.mode === "branch" && branchIdFilter) return;
+    if (canSelectAll && selection.mode === "all" && (isSuperAdmin || branchIds.length > 1)) {
+      return;
+    }
     const preferred =
       allowedBranches.find((b) => branchIds.includes(b.id)) ?? allowedBranches[0] ?? null;
     if (preferred) {
       setSelection({ mode: "branch", branchId: preferred.id });
     }
-  }, [allowedBranches, branchIdFilter, branchIds, gateReady, selection.mode, setSelection]);
+  }, [
+    allowedBranches,
+    branchIdFilter,
+    branchIds,
+    canSelectAll,
+    gateReady,
+    isSuperAdmin,
+    selection.mode,
+    setSelection,
+  ]);
 
   const scopedBranchId = branchIdFilter;
+  const isAggregateScope = scopedBranchId == null && canSelectAll && (isSuperAdmin || branchIds.length > 1);
   const token = session?.access_token;
+  const selectedBranch = scopedBranchId
+    ? allowedBranches.find((b) => b.id === scopedBranchId)
+    : null;
+  const comingSoonBranch = selectedBranch?.status === "coming-soon";
 
   const dashboardOp = useOperationalData(
     ({ signal, correlationId }) =>
-      fetchAdminOperationsDashboard(token!, { branchId: scopedBranchId }, { signal, correlationId }),
+      fetchAdminOperationsDashboard(
+        token!,
+        { branchId: scopedBranchId },
+        { signal, correlationId },
+      ),
     [token, scopedBranchId],
-    { enabled: Boolean(token) && ordersApi && Boolean(scopedBranchId) && gateReady },
+    {
+      enabled:
+        Boolean(token) &&
+        ordersApi &&
+        gateReady &&
+        !comingSoonBranch &&
+        (Boolean(scopedBranchId) || isAggregateScope),
+    },
   );
 
   const ridersOp = useOperationalData(
     ({ signal, correlationId }) =>
       listRiderRoster(token!, { branchId: scopedBranchId }, { signal, correlationId }),
     [token, scopedBranchId],
-    { enabled: Boolean(token) && deliveryApi && Boolean(scopedBranchId) && gateReady },
+    {
+      enabled:
+        Boolean(token) &&
+        deliveryApi &&
+        Boolean(scopedBranchId) &&
+        gateReady &&
+        !comingSoonBranch,
+    },
   );
 
   const data = dashboardOp.data;
@@ -125,14 +161,19 @@ export default function AdminBranchManager() {
   const riderAvailable =
     ridersOp.data?.filter((r) => r.status === "available" || r.status === "active").length ?? null;
   const ridersError = ridersOp.state === "ERROR" || ridersOp.state === "OFFLINE";
+  const opsFailed = Boolean(error) || (!data && (dashboardOp.state === "ERROR" || dashboardOp.state === "OFFLINE"));
 
-  const status = data?.statusCounts ?? {};
-  const pending = status.pending ?? 0;
-  const ready = status.ready ?? 0;
-  const cancelled = status.cancelled ?? 0;
-  const customerWaiting = pending + (status.confirmed ?? 0);
+  const status = data?.statusCounts ?? null;
+  const pending = status?.pending ?? null;
+  const ready = status?.ready ?? null;
+  const cancelled = status?.cancelled ?? null;
+  const customerWaiting =
+    status == null ? null : (status.pending ?? 0) + (status.confirmed ?? 0);
 
   const branchName = useMemo(() => {
+    if (isAggregateScope) {
+      return isSuperAdmin ? "All Branches" : "Assigned Branches";
+    }
     if (selection.mode === "branch") {
       return (
         allowedBranches.find((b) => b.id === selection.branchId)?.name ??
@@ -141,9 +182,17 @@ export default function AdminBranchManager() {
       );
     }
     return branchLabel;
-  }, [allowedBranches, branchLabel, selection]);
+  }, [allowedBranches, branchLabel, isAggregateScope, isSuperAdmin, selection]);
 
   const dataReady = Boolean(data) && !error;
+
+  // Per-branch comparison cards when aggregate and operations payload has branchPerformance.
+  const assignedComparison = useMemo(() => {
+    if (!isAggregateScope || !data?.branchPerformance) return [];
+    return data.branchPerformance.filter((row) =>
+      isSuperAdmin ? true : branchIds.includes(row.branchId),
+    );
+  }, [branchIds, data?.branchPerformance, isAggregateScope, isSuperAdmin]);
 
   if (isAuthLoading) {
     return (
@@ -171,23 +220,27 @@ export default function AdminBranchManager() {
             {profile?.fullName ?? "Manager"} · {roleLabel} · {shiftLabel(now)} · {formatHeaderDate(now)}
           </p>
           <p className="mt-1 text-xs text-[var(--admin-muted)]">
-            Scoped to this branch only. No organization-wide or Super Admin controls on this surface.
+            {isAggregateScope
+              ? "Assigned Branches aggregate — operations scoped to your memberships. No Super Admin platform controls here."
+              : "Scoped to this branch only. No organization-wide or Super Admin controls on this surface."}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {isSuperAdmin && canSelectAll && allowedBranches.length > 1 ? (
+          {canSelectAll && allowedBranches.length > 1 ? (
             <label className="text-xs font-medium text-[var(--admin-muted)]">
-              Owner branch preview
+              {isSuperAdmin ? "Owner branch preview" : "Branch scope"}
               <select
                 className="mt-1 block min-w-[12rem] rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm text-[var(--admin-ink)]"
-                value={scopedBranchId ?? ""}
+                value={scopedBranchId ?? "all"}
                 onChange={(event) => {
                   const id = event.target.value;
-                  if (id) setSelection({ mode: "branch", branchId: id });
+                  if (id === "all") setSelection({ mode: "all" });
+                  else setSelection({ mode: "branch", branchId: id });
                 }}
-                aria-label="Select branch for Owner preview"
+                aria-label="Select branch scope"
               >
+                <option value="all">{isSuperAdmin ? "All Branches" : "Assigned Branches"}</option>
                 {allowedBranches.map((branch) => (
                   <option key={branch.id} value={branch.id}>
                     {branch.shortName || branch.name}
@@ -246,15 +299,22 @@ export default function AdminBranchManager() {
         </div>
       </header>
 
-      {!scopedBranchId ? (
+      {!scopedBranchId && !isAggregateScope ? (
         <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="status">
           No branch is assigned to this account. Ask the Owner to assign a branch before live KPIs can load.
         </div>
       ) : null}
 
+      {isAggregateScope ? (
+        <div className="mb-6 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-3 text-sm text-[var(--admin-muted)]" role="status">
+          Viewing <span className="font-semibold text-[var(--admin-ink)]">Assigned Branches</span> aggregate.
+          Select a single branch for rider roster and per-branch table-service detail.
+        </div>
+      ) : null}
+
       <OperationalStatusBanner
-        state={dashboardOp.state}
-        error={error}
+        state={comingSoonBranch ? "LIVE" : dashboardOp.state}
+        error={comingSoonBranch ? null : error}
         lastSuccessAt={dashboardOp.lastSuccessAt}
         onRetry={dashboardOp.retry}
         correlationId={dashboardOp.correlationId}
@@ -262,6 +322,21 @@ export default function AdminBranchManager() {
         className="mb-6"
       />
 
+      <OpeningReadinessSummary
+        token={token}
+        branchId={scopedBranchId}
+        enabled={gateReady && Boolean(scopedBranchId)}
+        showTechnicalDetail={isSuperAdmin}
+      />
+
+      {comingSoonBranch ? (
+        <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          This branch is coming soon. Complete opening readiness before treating sales or table KPIs as
+          live. Primary action: Complete Opening Readiness.
+        </div>
+      ) : null}
+
+      {!comingSoonBranch ? (
       <section aria-label="Branch KPIs" className="mb-8">
         <AdminSectionTitle
           eyebrow="Today"
@@ -292,7 +367,7 @@ export default function AdminBranchManager() {
             />
             <AdminKpiCard
               title="Pending orders"
-              value={data ? String(pending) : null}
+              value={data && pending != null ? String(pending) : null}
               source="DERIVED"
               state={kpiCardState}
               detail="Orders currently in pending status"
@@ -306,7 +381,7 @@ export default function AdminBranchManager() {
             />
             <AdminKpiCard
               title="Ready orders"
-              value={data ? String(ready) : null}
+              value={data && ready != null ? String(ready) : null}
               source="DERIVED"
               state={kpiCardState}
               detail="Orders in ready status"
@@ -320,14 +395,14 @@ export default function AdminBranchManager() {
             />
             <AdminKpiCard
               title="Cancelled orders"
-              value={data ? String(cancelled) : null}
+              value={data && cancelled != null ? String(cancelled) : null}
               source="DERIVED"
               state={kpiCardState}
               detail="Cancelled count in today’s status map"
             />
             <AdminKpiCard
               title="Customer waiting"
-              value={data ? String(customerWaiting) : null}
+              value={data && customerWaiting != null ? String(customerWaiting) : null}
               source="DERIVED"
               state={kpiCardState}
               detail="Pending + confirmed (proxy wait queue — not CSAT)"
@@ -361,13 +436,51 @@ export default function AdminBranchManager() {
           </div>
         )}
       </section>
+      ) : null}
 
+      {isAggregateScope && assignedComparison.length > 0 ? (
+        <section className="mb-8" aria-label="Assigned branch comparison">
+          <AdminSectionTitle
+            eyebrow="Assigned Branches"
+            title="Branch comparison"
+            description="Today’s orders and sales per assigned branch from the operations API."
+          />
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {assignedComparison.map((row) => (
+              <AdminSurface key={row.branchId}>
+                <AdminSurfaceHeader
+                  title={
+                    row.branchCode ??
+                    allowedBranches.find((b) => b.id === row.branchId)?.shortName ??
+                    row.branchId.slice(0, 8)
+                  }
+                  description={`${row.activeOrders} active · ${formatPkr(row.todayGrossSales)}`}
+                />
+                <AdminSurfaceBody>
+                  <p className="text-2xl font-semibold tabular-nums">{row.todayOrders}</p>
+                  <p className="text-xs text-[var(--admin-muted)]">Orders today</p>
+                  <button
+                    type="button"
+                    className="mt-3 text-sm font-semibold text-[var(--brand-red)]"
+                    onClick={() => setSelection({ mode: "branch", branchId: row.branchId })}
+                  >
+                    Open branch →
+                  </button>
+                </AdminSurfaceBody>
+              </AdminSurface>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {!comingSoonBranch && !isAggregateScope ? (
       <TableServiceSummary
         token={token}
         branchId={scopedBranchId}
         enabled={gateReady && canAccessTableService(principal)}
         showTechnicalDetail={isSuperAdmin}
       />
+      ) : null}
 
       <section className="mb-8" aria-label="Branch operations modules">
         <AdminSectionTitle
@@ -469,11 +582,15 @@ export default function AdminBranchManager() {
           <div className="xl:col-span-1">
             <RecentOrdersPanel orders={data?.recentOrders ?? []} />
           </div>
-          <KitchenStatusPanel counts={status} />
+          <KitchenStatusPanel
+            counts={dataReady ? status : null}
+            failed={opsFailed}
+          />
           <DeliveryStatusPanel
-            activeDeliveries={data?.kpis.activeDeliveries ?? 0}
-            readyCount={ready}
-            completedCount={status.completed ?? 0}
+            activeDeliveries={dataReady ? (data?.kpis.activeDeliveries ?? null) : null}
+            readyCount={dataReady ? ready : null}
+            completedCount={dataReady ? (status?.completed ?? null) : null}
+            failed={opsFailed}
           />
         </div>
       </section>

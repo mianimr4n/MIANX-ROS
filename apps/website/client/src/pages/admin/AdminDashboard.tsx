@@ -29,21 +29,22 @@ import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import {
   canAccessAdminOrdersApi,
   canAccessTableService,
-  isBranchManagerOnly,
-  isCashierOnly,
-  isKitchenOnly,
-  isRiderOnly,
   primaryRoleLabel,
+  resolveStaffHome,
 } from "@/lib/admin-access";
 import { TableServiceSummary } from "@/components/admin/dashboard/TableServiceSummary";
+import { OpeningReadinessSummary } from "@/components/admin/dashboard/OpeningReadinessSummary";
 import {
   fetchAdminOperationsDashboard,
+  fetchSystemHealth,
+  fetchTableServiceDashboard,
   type AdminOrderListItem,
 } from "@/lib/admin-api";
 import { isApiConfigured } from "@/lib/api";
 import { useOperationalData, type OperationalState } from "@/lib/op-status";
 import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
 import { AdminShell } from "@/pages/admin/AdminShell";
+import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
 
 function formatPkr(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return null;
@@ -116,44 +117,73 @@ function kpiState(opState: OperationalState, unavailable?: boolean): AdminKpiSta
 }
 
 export default function AdminDashboard() {
-  const { session, permissions, isSuperAdmin, roles, profile } = useAuth();
-  const { branchIdFilter, label: branchLabel, setSelection } = useAdminBranch();
+  const { session, permissions, isSuperAdmin, roles, profile, branchIds } = useAuth();
+  const { branchIdFilter, label: branchLabel, setSelection, allowedBranches } = useAdminBranch();
   const [, setLocation] = useLocation();
   const [filters, setFilters] = useState<ExecutiveDashboardFilters>(DEFAULT_EXECUTIVE_FILTERS);
   const [now] = useState(() => new Date());
 
-  const allowed = canAccessAdminOrdersApi({ roles, permissions, isSuperAdmin });
+  const principal = { roles, permissions, isSuperAdmin, branchIds };
+  const allowed = canAccessAdminOrdersApi(principal);
   const { gateReady } = useAdminAccessGate(allowed);
   const roleLabel = primaryRoleLabel(roles, isSuperAdmin);
 
   useEffect(() => {
-    if (isKitchenOnly({ roles, permissions, isSuperAdmin })) {
-      setLocation("/admin/kitchen-dashboard");
-      return;
-    }
-    if (isBranchManagerOnly({ roles, permissions, isSuperAdmin })) {
-      setLocation("/admin/branch");
-      return;
-    }
-    // D2: staff role homes — Executive dashboard stays Owner/Admin only.
-    if (isCashierOnly({ roles, permissions, isSuperAdmin })) {
-      setLocation("/admin/pos");
-      return;
-    }
-    if (isRiderOnly({ roles, permissions, isSuperAdmin })) {
-      setLocation("/admin/delivery");
-    }
-  }, [isSuperAdmin, permissions, roles, setLocation]);
+    const home = resolveStaffHome(principal);
+    if (home !== "/admin/dashboard") setLocation(home);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- principal fields listed below
+  }, [isSuperAdmin, permissions, roles, branchIds, setLocation]);
+
+  const selectedBranch = branchIdFilter
+    ? allowedBranches.find((b) => b.id === branchIdFilter)
+    : null;
+  const comingSoonBranch = selectedBranch?.status === "coming-soon";
 
   const token = session?.access_token;
   const dashboard = useOperationalData(
     ({ signal, correlationId }) =>
       fetchAdminOperationsDashboard(token!, { branchId: branchIdFilter }, { signal, correlationId }),
     [token, branchIdFilter],
-    { enabled: Boolean(token) && allowed && gateReady },
+    { enabled: Boolean(token) && allowed && gateReady && !comingSoonBranch },
   );
+  const healthOp = useOperationalData(
+    ({ signal, correlationId }) => fetchSystemHealth(token!, { signal, correlationId }),
+    [token],
+    { enabled: Boolean(token) && isSuperAdmin && gateReady && isApiConfigured, pollMs: 120_000 },
+  );
+
+  // Owner/SA occupancy comparison: API requires a branchId anchor; comparison fills occupancyByBranch for multi-branch principals.
+  const occupancyAnchorBranchId =
+    branchIdFilter ?? branchIds[0] ?? allowedBranches[0]?.id ?? null;
+  const wantOccupancyComparison =
+    isSuperAdmin || branchIds.length > 1 || (!branchIdFilter && allowedBranches.length > 1);
+  const tableServiceOp = useOperationalData(
+    ({ signal, correlationId }) =>
+      fetchTableServiceDashboard(
+        token!,
+        {
+          branchId: occupancyAnchorBranchId!,
+          includeOccupancyComparison: wantOccupancyComparison,
+        },
+        { signal, correlationId },
+      ),
+    [token, occupancyAnchorBranchId, wantOccupancyComparison],
+    {
+      enabled:
+        Boolean(token) &&
+        Boolean(occupancyAnchorBranchId) &&
+        gateReady &&
+        !comingSoonBranch &&
+        canAccessTableService({ roles, permissions, isSuperAdmin }) &&
+        isApiConfigured,
+      pollMs: 30_000,
+    },
+  );
+
   const { data, error, state: opState, lastSuccessAt, retry } = dashboard;
   const loading = opState === "LOADING";
+  const opsFailed = Boolean(error) || (!data && (opState === "ERROR" || opState === "OFFLINE"));
+  const occupancyByBranch = tableServiceOp.data?.occupancyByBranch ?? null;
 
   const filteredOrders = useMemo(() => {
     if (!data) return [];
@@ -248,8 +278,8 @@ export default function AdminDashboard() {
       </div>
 
       <OperationalStatusBanner
-        state={opState}
-        error={error}
+        state={comingSoonBranch ? "LIVE" : opState}
+        error={comingSoonBranch ? null : error}
         lastSuccessAt={lastSuccessAt}
         onRetry={retry}
         correlationId={dashboard.correlationId}
@@ -257,7 +287,14 @@ export default function AdminDashboard() {
         className="mb-6"
       />
 
+      {comingSoonBranch ? (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          This branch is coming soon. Opening readiness is shown below — live sales and order KPIs stay
+          hidden until the branch is operating.
+        </div>
+      ) : null}
 
+      {!comingSoonBranch ? (
       <section aria-label="Key performance indicators" className="mb-8">
         <AdminSectionTitle
           eyebrow="Health"
@@ -348,26 +385,166 @@ export default function AdminDashboard() {
           </div>
         )}
       </section>
+      ) : null}
 
+      {!comingSoonBranch ? (
       <div className="mb-8">
         <OperationsModuleGrid />
       </div>
+      ) : null}
 
-      {/* D3 — table service summary is branch-scoped; aggregate mode stays honest. */}
+      {/* D3/D4 — table service + opening readiness (branch-scoped). */}
       {branchIdFilter ? (
-        <TableServiceSummary
-          token={token}
-          branchId={branchIdFilter}
-          enabled={gateReady && canAccessTableService({ roles, permissions, isSuperAdmin })}
-          showTechnicalDetail={isSuperAdmin}
-        />
-      ) : canAccessTableService({ roles, permissions, isSuperAdmin }) ? (
+        <>
+          <OpeningReadinessSummary
+            token={token}
+            branchId={branchIdFilter}
+            enabled={gateReady}
+            showTechnicalDetail={isSuperAdmin}
+          />
+          {!comingSoonBranch ? (
+            <TableServiceSummary
+              token={token}
+              branchId={branchIdFilter}
+              enabled={gateReady && canAccessTableService({ roles, permissions, isSuperAdmin })}
+              showTechnicalDetail={isSuperAdmin}
+            />
+          ) : null}
+        </>
+      ) : !comingSoonBranch && canAccessTableService({ roles, permissions, isSuperAdmin }) ? (
         <p className="mb-8 rounded-xl border bg-[var(--admin-soft)] px-4 py-3 text-sm text-[var(--admin-muted)]">
-          Table service KPIs are per-branch. Select a branch to see reservations, covers, and live
-          floor occupancy.
+          Per-branch reservation KPIs need a selected branch. Occupancy comparison below uses an assigned
+          branch as the API anchor when multi-branch scope is active.
         </p>
       ) : null}
 
+      {!comingSoonBranch && occupancyByBranch && occupancyByBranch.length > 0 ? (
+        <section className="mb-8" aria-label="Occupancy by branch">
+          <AdminSectionTitle
+            eyebrow="Dine-in"
+            title="Occupancy by branch"
+            description="Live floor occupied / available / waitlist per branch. Null averages stay unavailable — never shown as zero."
+          />
+          <div className="mb-4 grid gap-3 sm:grid-cols-2">
+            <AdminKpiCard
+              title="Avg wait (min)"
+              value={
+                tableServiceOp.data?.averages.averageWaitMinutes == null
+                  ? null
+                  : String(tableServiceOp.data.averages.averageWaitMinutes)
+              }
+              source="FOUNDATION"
+              state={
+                tableServiceOp.data?.averages.averageWaitMinutes == null ? "unavailable" : "available"
+              }
+              detail={tableServiceOp.data?.averages.note}
+            />
+            <AdminKpiCard
+              title="Avg table turn (min)"
+              value={
+                tableServiceOp.data?.averages.averageTableTurnMinutes == null
+                  ? null
+                  : String(tableServiceOp.data.averages.averageTableTurnMinutes)
+              }
+              source="FOUNDATION"
+              state={
+                tableServiceOp.data?.averages.averageTableTurnMinutes == null
+                  ? "unavailable"
+                  : "available"
+              }
+              detail={tableServiceOp.data?.averages.note}
+            />
+          </div>
+          <AdminSurface>
+            <AdminSurfaceHeader title="Branch floor comparison" description="From table-service includeOccupancyComparison." />
+            <AdminSurfaceBody className="overflow-x-auto pt-0">
+              <table className="min-w-full text-left text-sm">
+                <thead className="text-[var(--admin-muted)]">
+                  <tr className="border-b border-[var(--admin-border)]">
+                    <th className="py-3 pr-3 font-medium">Branch</th>
+                    <th className="py-3 pr-3 font-medium">Occupied</th>
+                    <th className="py-3 pr-3 font-medium">Available</th>
+                    <th className="py-3 font-medium">Waitlist</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {occupancyByBranch.map((row) => (
+                    <tr key={row.branchId} className="border-b border-[var(--admin-border)]/70">
+                      <td className="py-3 pr-3 font-medium">
+                        {row.branchCode ??
+                          allowedBranches.find((b) => b.id === row.branchId)?.shortName ??
+                          row.branchId.slice(0, 8)}
+                      </td>
+                      <td className="py-3 pr-3 tabular-nums">{row.occupiedTables}</td>
+                      <td className="py-3 pr-3 tabular-nums">{row.availableTables}</td>
+                      <td className="py-3 tabular-nums">{row.waitlistCount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </AdminSurfaceBody>
+          </AdminSurface>
+        </section>
+      ) : null}
+
+      {isSuperAdmin ? (
+        <section className="mb-8" aria-label="System health">
+          <AdminSectionTitle
+            eyebrow="Platform"
+            title="System health"
+            description="Technical roles only. No stack traces or credentials."
+          />
+          <OperationalStatusBanner
+            state={healthOp.state}
+            error={healthOp.error}
+            lastSuccessAt={healthOp.lastSuccessAt}
+            onRetry={healthOp.retry}
+            correlationId={healthOp.correlationId}
+            showTechnicalDetail
+          />
+          {healthOp.data ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <AdminKpiCard
+                title="API"
+                value={healthOp.data.api.status}
+                source="LIVE"
+                detail={healthOp.data.api.supabaseConfigured ? "Supabase configured" : "Supabase not configured"}
+              />
+              <AdminKpiCard title="Database" value={healthOp.data.database.status} source="LIVE" detail={healthOp.data.database.note} />
+              <AdminKpiCard
+                title="Outbox pending"
+                value={
+                  healthOp.data.notifications.pendingOutboxSample == null
+                    ? null
+                    : String(healthOp.data.notifications.pendingOutboxSample)
+                }
+                source="LIVE"
+                state={healthOp.data.notifications.pendingOutboxSample == null ? "unavailable" : "available"}
+                detail={`Email mode: ${healthOp.data.notifications.emailMode}`}
+              />
+              <AdminKpiCard
+                title="Config warnings"
+                value={String(healthOp.data.configurationWarnings.length)}
+                source="DERIVED"
+                detail={healthOp.data.configurationWarnings[0] ?? "None"}
+              />
+            </div>
+          ) : null}
+          <div className="mt-4 flex flex-wrap gap-3 text-sm">
+            <Link href="/admin/settings" className="font-semibold text-red-700 underline-offset-2 hover:underline">
+              Open Settings
+            </Link>
+            <Link href="/admin/hr" className="font-semibold text-red-700 underline-offset-2 hover:underline">
+              Manage Users / Roles
+            </Link>
+            <Link href="/admin/branch" className="font-semibold text-red-700 underline-offset-2 hover:underline">
+              Open Branch Readiness
+            </Link>
+          </div>
+        </section>
+      ) : null}
+
+      {!comingSoonBranch ? (
       <section className="mb-8" aria-label="Live operations">
         <AdminSectionTitle
           eyebrow="Live"
@@ -378,15 +555,21 @@ export default function AdminDashboard() {
           <div className="xl:col-span-1">
             <RecentOrdersPanel orders={filteredOrders} />
           </div>
-          <KitchenStatusPanel counts={data?.statusCounts ?? {}} />
+          <KitchenStatusPanel
+            counts={dataReady ? (data?.statusCounts ?? {}) : null}
+            failed={opsFailed}
+          />
           <DeliveryStatusPanel
-            activeDeliveries={data?.kpis.activeDeliveries ?? 0}
-            readyCount={data?.statusCounts.ready ?? 0}
-            completedCount={data?.statusCounts.completed ?? 0}
+            activeDeliveries={dataReady ? (data?.kpis.activeDeliveries ?? null) : null}
+            readyCount={dataReady ? (data?.statusCounts.ready ?? null) : null}
+            completedCount={dataReady ? (data?.statusCounts.completed ?? null) : null}
+            failed={opsFailed}
           />
         </div>
       </section>
+      ) : null}
 
+      {!comingSoonBranch ? (
       <section className="mb-8" aria-label="Business analytics">
         <AdminSectionTitle
           eyebrow="Analytics"
@@ -406,7 +589,9 @@ export default function AdminDashboard() {
           />
         </div>
       </section>
+      ) : null}
 
+      {!comingSoonBranch ? (
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]">
         <div className="space-y-6">
           <AiInsightsPanel items={mianxItems} loading={loading && !data} />
@@ -414,6 +599,7 @@ export default function AdminDashboard() {
         </div>
         <ExecutiveAside alertCount={data?.alerts.length ?? 0} />
       </div>
+      ) : null}
     </AdminShell>
   );
 }
