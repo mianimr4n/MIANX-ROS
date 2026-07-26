@@ -1,6 +1,5 @@
-import { displayPrice } from "@/lib/admin-pos";
 import { formatPkr } from "@/lib/admin-order-format";
-import { isLikelyOutOfStock, itemSku, modifierGroupCount, variantCount, type MenuCatalogItemView } from "@/lib/admin-menu";
+import { isLikelyOutOfStock, itemSku, modifierGroupCount, type MenuCatalogItemView } from "@/lib/admin-menu";
 
 export function MenuProductCard({
   product,
@@ -9,10 +8,9 @@ export function MenuProductCard({
   product: MenuCatalogItemView;
   onOpen: () => void;
 }) {
-  const price = displayPrice(product);
+  const price = product.price;
   const outOfStock = isLikelyOutOfStock(product);
   const mods = modifierGroupCount(product);
-  const variants = variantCount(product);
 
   return (
     <article
@@ -32,7 +30,7 @@ export function MenuProductCard({
         ) : null}
         {outOfStock ? (
           <span className="absolute right-2 top-2 rounded-full bg-red-600 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
-            No price
+            Unavailable
           </span>
         ) : null}
       </div>
@@ -41,23 +39,25 @@ export function MenuProductCard({
         <p className="mt-1 text-xs text-[var(--admin-muted)]">
           {product.category} · SKU {itemSku(product)}
         </p>
-        <p className="mt-2 text-base font-semibold tabular-nums">{outOfStock ? "—" : formatPkr(price)}</p>
+        <p className="mt-2 text-base font-semibold tabular-nums">{formatPkr(price)}</p>
         <dl className="mt-2 grid grid-cols-2 gap-1 text-[11px] text-[var(--admin-muted)]">
           <div>
             <dt className="inline">Availability: </dt>
-            <dd className="inline font-medium text-emerald-800">In catalog</dd>
+            <dd className={`inline font-medium ${outOfStock ? "text-red-800" : "text-emerald-800"}`}>
+              {outOfStock ? "Unavailable" : "Available"}
+            </dd>
           </div>
           <div>
-            <dt className="inline">Visibility: </dt>
-            <dd className="inline font-medium text-[var(--admin-muted)]">Read API only</dd>
+            <dt className="inline">Size: </dt>
+            <dd className="inline font-medium">{product.sizeLabel ?? "Single"}</dd>
           </div>
           <div>
             <dt className="inline">Modifiers: </dt>
             <dd className="inline tabular-nums">{mods}</dd>
           </div>
           <div>
-            <dt className="inline">Variants: </dt>
-            <dd className="inline tabular-nums">{variants}</dd>
+            <dt className="inline">Family: </dt>
+            <dd className="inline">{product.productGroupSlug ?? "—"}</dd>
           </div>
         </dl>
         <button

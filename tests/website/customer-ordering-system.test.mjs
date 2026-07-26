@@ -25,7 +25,9 @@ test("product detail reuses catalog data and shared configurator", () => {
   assert.match(detail, /ProductConfigurator/);
   assert.match(configurator, /item\.image/);
   assert.match(configurator, /item\.description/);
-  assert.match(configurator, /item\.variants/);
+  // Sizes are sibling SKUs in the product family, not a variant array on one item.
+  assert.match(configurator, /group\.options/);
+  assert.doesNotMatch(configurator, /item\.variants/);
   assert.match(configurator, /quantity/);
   assert.match(configurator, /Special instructions/);
   assert.match(configurator, /getModifierGroupsForItem/);

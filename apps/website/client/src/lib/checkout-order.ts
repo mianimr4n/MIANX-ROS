@@ -15,6 +15,7 @@ export interface QuoteRequestInput {
 /** Canonical cart lines for quote/create — client money fields included but server ignores them. */
 export function buildQuoteItemsFromCart(
   items: Array<{
+    menuItemId?: string;
     menuSlug: string;
     variant?: string;
     quantity: number;
@@ -31,6 +32,7 @@ export function buildQuoteItemsFromCart(
   }>,
 ): CartLineInput[] {
   return items.map((item) => ({
+    menuItemId: item.menuItemId,
     menuItemSlug: item.menuSlug,
     variantLabel: item.variant,
     quantity: item.quantity,
@@ -84,6 +86,7 @@ export function checkoutAttemptFingerprint(input: {
     deliveryAddress: input.deliveryAddress?.trim() || null,
     couponCode: input.couponCode?.trim() || null,
     items: input.items.map((item) => ({
+      menuItemId: item.menuItemId ?? null,
       menuItemSlug: item.menuItemSlug,
       variantLabel: item.variantLabel ?? null,
       quantity: item.quantity,

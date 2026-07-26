@@ -53,6 +53,8 @@ export function quoteOrder(payload: {
   couponCode?: string;
   contactPhone?: string;
   items: Array<{
+    /** Preferred: exact sellable SKU id. */
+    menuItemId?: string;
     menuItemSlug: string;
     variantLabel?: string;
     quantity: number;

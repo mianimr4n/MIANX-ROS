@@ -59,6 +59,10 @@ import {
   type FloorConfigurationService,
 } from "./services/floor/configuration.js";
 import {
+  createMenuManagementService,
+  type MenuManagementService,
+} from "./services/menu/management.js";
+import {
   createReservationsService,
   type ReservationsService,
 } from "./services/reservations/management.js";
@@ -105,6 +109,7 @@ export interface AppDependencies {
   customerFavorites: CustomerFavoritesDataSource;
   customerReviews: CustomerReviewsDataSource;
   floorConfiguration: FloorConfigurationService;
+  menuManagement: MenuManagementService;
   reservations: ReservationsService;
   publicBooking: PublicBookingService;
   tableService: TableServiceOperations;
@@ -136,6 +141,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     customerFavorites: createCustomerFavoritesFromEnv(envStatus),
     customerReviews: createCustomerReviewsFromEnv(envStatus),
     floorConfiguration: createFloorConfigurationService(envStatus),
+    menuManagement: createMenuManagementService(envStatus),
     reservations: createReservationsService(envStatus),
     publicBooking: createPublicBookingService(envStatus),
     tableService: createTableServiceOperations(envStatus),

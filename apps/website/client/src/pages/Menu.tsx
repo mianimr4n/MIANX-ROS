@@ -34,9 +34,9 @@ import {
 
 import { handleImageError } from "@/lib/image-fallback";
 
-import type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
+import type { MenuItem, MenuProductGroup } from "@/lib/telepizza-types";
 
-import { isPizzaItem } from "@/data/cart-config";
+import { isPizzaFamily } from "@/data/cart-config";
 
 import { formatMenuPriceLabel } from "@/lib/menu-utils";
 
@@ -51,7 +51,7 @@ export default function Menu() {
 
   const {
 
-    items,
+    groups,
 
     availableCategories,
 
@@ -87,7 +87,8 @@ export default function Menu() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
+  /** Selected sellable SKU id per product family — sizes are separate SKUs, not a price matrix. */
+  const [selectedSkus, setSelectedSkus] = useState<Record<string, string>>({});
 
   const addMenuItem = useAddMenuItem();
 
@@ -104,47 +105,37 @@ export default function Menu() {
 
 
 
-  const getSelectedVariant = (item: MenuItem): MenuVariant | undefined => {
+  const getSelectedSku = (group: MenuProductGroup): MenuItem | undefined => {
 
-    if (!item.variants?.length) return undefined;
+    const selectedId = selectedSkus[group.productGroupSlug];
 
-
-
-    const selectedLabel = selectedVariants[item.id];
-
-
-
-    return (
-
-      item.variants.find((variant) => variant.label === selectedLabel) ??
-
-      item.variants[0]
-
-    );
+    return group.options.find((option) => option.id === selectedId) ?? group.options[0];
 
   };
 
 
 
-  const getItemPrice = (item: MenuItem): number | undefined =>
+  const getGroupPrice = (group: MenuProductGroup): number | undefined =>
 
-    getSelectedVariant(item)?.price ?? item.price;
+    getSelectedSku(group)?.price;
 
 
 
-  const handleAddItem = (item: MenuItem) => {
+  const handleAddGroup = (group: MenuProductGroup) => {
 
-    addMenuItem(item, getSelectedVariant(item)?.label);
+    const sku = getSelectedSku(group);
+
+    if (sku) addMenuItem(sku);
 
   };
 
 
 
-  const filteredItems = items.filter((item) => {
+  const filteredGroups = groups.filter((group) => {
 
-    const matchesCategory = activeCategory === "All" || item.category === activeCategory;
+    const matchesCategory = activeCategory === "All" || group.category === activeCategory;
 
-    const matchesSearch = item.name.toLowerCase().includes(debouncedSearch.toLowerCase());
+    const matchesSearch = group.name.toLowerCase().includes(debouncedSearch.toLowerCase());
 
     return matchesCategory && matchesSearch;
 
@@ -260,10 +251,10 @@ export default function Menu() {
 
           <p className="sr-only" aria-live="polite">
             {debouncedSearch
-              ? filteredItems.length === 0
+              ? filteredGroups.length === 0
                 ? `No menu items match ${debouncedSearch}.`
-                : `${filteredItems.length} menu item${filteredItems.length === 1 ? "" : "s"} match ${debouncedSearch}.`
-              : `${filteredItems.length} menu item${filteredItems.length === 1 ? "" : "s"} shown.`}
+                : `${filteredGroups.length} menu item${filteredGroups.length === 1 ? "" : "s"} match ${debouncedSearch}.`
+              : `${filteredGroups.length} menu item${filteredGroups.length === 1 ? "" : "s"} shown.`}
           </p>
 
 
@@ -322,7 +313,7 @@ export default function Menu() {
 
             <p className="mt-3 text-xs text-brand-charcoal/70 font-[var(--font-accent)]">
 
-              Live menu loaded from Supabase ({items.length} items)
+              Live menu loaded from Supabase ({groups.length} products)
 
             </p>
 
@@ -390,7 +381,7 @@ export default function Menu() {
 
           </div>
 
-        ) : filteredItems.length === 0 ? (
+        ) : filteredGroups.length === 0 ? (
 
           <Empty className="border border-dashed border-border bg-white py-20">
 
@@ -450,13 +441,13 @@ export default function Menu() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            {filteredItems.map((item, i) => (
+            {filteredGroups.map((group, i) => (
 
               <motion.div
 
-                key={item.id}
+                key={group.productGroupSlug}
 
-                initial={{ opacity: 0, y: 20 }}
+   initial={{ opacity: 0, y: 20 }}
 
                 animate={{ opacity: 1, y: 0 }}
 
@@ -470,9 +461,9 @@ export default function Menu() {
 
                   <img
 
-                    src={item.image}
+                    src={group.image}
 
-                    alt={item.name}
+                    alt={group.name}
 
                     onError={handleImageError}
 
@@ -482,12 +473,12 @@ export default function Menu() {
 
                   <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
 
-                    {item.badge && <ProductBadge badge={item.badge} />}
+                    {group.badge && <ProductBadge badge={group.badge} />}
 
                   </div>
 
                   <div className="absolute top-3 right-3">
-                    <FavoriteHeartButton item={item} />
+                    <FavoriteHeartButton item={getSelectedSku(group) ?? group.options[0]} />
                   </div>
 
                 </div>
@@ -496,35 +487,33 @@ export default function Menu() {
 
                   <p className="text-[11px] uppercase tracking-wider text-brand-red font-[var(--font-accent)] font-bold mb-1">
 
-                    {item.category}
+                    {group.category}
 
                   </p>
 
-                  <Link href={`/menu/${encodeURIComponent(item.slug ?? item.id)}`}>
+                  <Link href={`/menu/${encodeURIComponent(group.productGroupSlug)}`}>
                     <h3 className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal mb-1 hover:text-brand-red">
 
-                      {item.name}
+                      {group.name}
 
                     </h3>
                   </Link>
 
                   <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
 
-                    {item.description}
+                    {group.description}
 
                   </p>
 
 
 
-                  {item.variants && item.variants.length > 0 && (
+                  {group.options.length > 1 && (
 
                     <div className="flex flex-wrap gap-2 mb-4">
 
-                      {item.variants.map((variant) => {
+                      {group.options.map((option) => {
 
-                        const selectedVariant = getSelectedVariant(item);
-
-                        const isSelected = selectedVariant?.label === variant.label;
+                        const isSelected = getSelectedSku(group)?.id === option.id;
 
 
 
@@ -532,23 +521,25 @@ export default function Menu() {
 
                           <button
 
-                            key={variant.label}
+                            key={option.id}
 
                             type="button"
 
+                            disabled={option.available === false}
+
                             onClick={() =>
 
-                              setSelectedVariants((current) => ({
+                              setSelectedSkus((current) => ({
 
                                 ...current,
 
-                                [item.id]: variant.label,
+                                [group.productGroupSlug]: option.id,
 
                               }))
 
                             }
 
-                            className={`rounded-lg border px-3 py-2 text-xs font-[var(--font-accent)] font-semibold transition-all ${
+                            className={`rounded-lg border px-3 py-2 text-xs font-[var(--font-accent)] font-semibold transition-all disabled:opacity-40 ${
 
                               isSelected
 
@@ -560,11 +551,11 @@ export default function Menu() {
 
                           >
 
-                            {variant.label}
+                            {option.sizeLabel ?? option.name}
 
                             <span className="ml-1 opacity-80">
 
-                              Rs {variant.price.toLocaleString()}
+                              Rs {(option.price ?? 0).toLocaleString()}
 
                             </span>
 
@@ -582,19 +573,19 @@ export default function Menu() {
 
                     <span className="font-[var(--font-accent)] font-bold text-xl text-brand-red">
 
-                      {formatMenuPriceLabel(item, getItemPrice(item))}
+                      {formatMenuPriceLabel(group, getGroupPrice(group))}
 
                     </span>
 
                     <div className="flex items-center gap-2">
-                    <Link href={`/menu/${encodeURIComponent(item.slug ?? item.id)}`}>
+                    <Link href={`/menu/${encodeURIComponent(group.productGroupSlug)}`}>
                       <Button variant="ghost" size="sm" className="rounded-xl text-brand-red">
                         View
                       </Button>
                     </Link>
                     <Button
 
-                      onClick={() => handleAddItem(item)}
+                      onClick={() => handleAddGroup(group)}
 
                       size="sm"
 
@@ -604,7 +595,7 @@ export default function Menu() {
 
                       <Plus className="w-4 h-4 mr-1" />
 
-                      {isPizzaItem(item) ? "Customize" : "Add"}
+                      {isPizzaFamily(group) ? "Customize" : "Add"}
 
                     </Button>
                     </div>

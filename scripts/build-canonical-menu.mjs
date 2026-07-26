@@ -3,6 +3,12 @@
  * Sources: prod API export (optional), owner sync migration, REAL_MENU_EXTRACTED,
  * BFR-001 hybrid decision. Does NOT invent SKUs or prices.
  *
+ * This is a SOURCE BUILDER for the freeze JSON, not a runtime catalog.
+ * Runtime channels must load GET /api/v1/menu/catalog (or the generated SKU fallback).
+ *
+ * DO NOT RUN IN PRODUCTION — HISTORICAL/SOURCE BUILDER ONLY.
+ * Never apply its output with TRUNCATE/CASCADE seed scripts.
+ *
  * Usage:
  *   node scripts/build-canonical-menu.mjs
  *   node scripts/build-canonical-menu.mjs --from-prod   # enrich evidence stamp from live API

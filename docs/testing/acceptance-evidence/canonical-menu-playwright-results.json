@@ -1,0 +1,172 @@
+{
+  "config": {
+    "configFile": "D:\\projects\\telepizza\\playwright.menu.config.ts",
+    "rootDir": "D:/projects/telepizza/e2e/menu",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/testing/acceptance-evidence/canonical-menu-playwright-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/projects/telepizza/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "D:/projects/telepizza/e2e/menu",
+        "testIgnore": [],
+        "testMatch": [
+          "/canonical-menu-price-journey\\.spec\\.ts/"
+        ],
+        "timeout": 420000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.52.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "canonical-menu-price-journey.spec.ts",
+      "file": "canonical-menu-price-journey.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Canonical menu price journey",
+          "file": "canonical-menu-price-journey.spec.ts",
+          "line": 38,
+          "column": 15,
+          "specs": [
+            {
+              "title": "owner price change propagates through browser and API channels",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 480000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 486830,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 480000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 480000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 480000ms exceeded.\u001b[39m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-25T12:59:13.179Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\projects\\telepizza\\test-results\\canonical-menu-price-journ-2c467-gh-browser-and-API-channels-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\projects\\telepizza\\test-results\\canonical-menu-price-journ-2c467-gh-browser-and-API-channels-chromium\\trace.zip"
+                        }
+                      ]
+                    },
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 485424,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 480000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 480000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 480000ms exceeded.\u001b[39m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-07-25T13:07:38.578Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\projects\\telepizza\\test-results\\canonical-menu-price-journ-2c467-gh-browser-and-API-channels-chromium-retry1\\test-failed-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\projects\\telepizza\\test-results\\canonical-menu-price-journ-2c467-gh-browser-and-API-channels-chromium-retry1\\trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "0619d03f1751251cfed8-4f76a7221c18f6c700e7",
+              "file": "canonical-menu-price-journey.spec.ts",
+              "line": 41,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-07-25T12:59:11.428Z",
+    "duration": 998644.564,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

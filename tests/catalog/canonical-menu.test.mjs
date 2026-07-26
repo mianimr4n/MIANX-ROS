@@ -81,11 +81,18 @@ test("owner gaps are inactive and not sellable", () => {
   }
 });
 
-test("completion status is blocked until owner board images land", () => {
+test("completion status records founder expand price lock", () => {
   const catalog = readJson("data/catalog/telepizza-canonical-menu.json");
-  assert.match(catalog.completionStatus, /BLOCKED/);
-  const boards = catalog.evidenceRank.find((e) => e.source === "owner-menu-board-images");
-  assert.equal(boards.status, "MISSING_FROM_REPO");
+  assert.match(catalog.completionStatus, /OWNER_PRICES_LOCKED_EXPAND_20260725120000/);
+  assert.ok(catalog.founderPriceDecision?.rule);
+  assert.equal(catalog.founderPriceDecision.examples["tele-special-medium"], 1250);
+  const tele = catalog.items.find((item) => item.code === "tele-special");
+  assert.equal(tele.variants.find((v) => v.sizeCode === "small").pricePkr, 620);
+  assert.equal(tele.variants.find((v) => v.sizeCode === "medium").pricePkr, 1250);
+  assert.equal(tele.variants.find((v) => v.sizeCode === "large").pricePkr, 1890);
+  for (const item of catalog.items) {
+    assert.equal((item.flags ?? []).includes("OWNER_CONFIRMATION_REQUIRED"), false);
+  }
 });
 
 test("canonical sync migration is forward-only (no destructive delete)", () => {
@@ -102,26 +109,51 @@ test("generated website fallback matches canonical sellable codes", () => {
   const menuData = read("apps/website/client/src/data/menu-data.ts");
   assert.match(menuData, /GENERATED FILE/);
   assert.match(menuData, /telepizza-canonical-menu\.json/);
-  const sellableCodes = catalog.items.filter((i) => i.lifecycle === "sellable").map((i) => i.code);
-  for (const code of sellableCodes) {
-    assert.match(menuData, new RegExp(`id: "${code}"`));
+  // Each canonical product is a product family; each independently priced size is its own SKU.
+  const sellable = catalog.items.filter((i) => i.lifecycle === "sellable");
+  for (const item of sellable) {
+    assert.match(menuData, new RegExp(`productGroupSlug: "${item.code}"`));
   }
   assert.equal(/id: "quarter-broast"/.test(menuData), false);
   assert.equal(/category: "Broast"/.test(menuData), false);
+  assert.equal(/variants: \[/.test(menuData), false, "fallback must not carry a variant price matrix");
+});
+
+test("every generated fallback SKU carries exactly one price", () => {
+  const menuData = read("apps/website/client/src/data/menu-data.ts");
+  const skuBlocks = menuData.split(/\n  \{\n/).slice(1);
+  assert.ok(skuBlocks.length > 0);
+  for (const block of skuBlocks) {
+    const prices = block.match(/^    price: \d+(?:\.\d+)?,$/gm) ?? [];
+    assert.equal(prices.length, 1, `expected one price per SKU, saw ${prices.length}`);
+  }
+});
+
+test("generated fallback SKU count matches canonical variant expansion", () => {
+  const catalog = readJson("data/catalog/telepizza-canonical-menu.json");
+  const menuData = read("apps/website/client/src/data/menu-data.ts");
+  const expected = catalog.items
+    .filter((item) => item.lifecycle === "sellable" || item.lifecycle === "modifier-only")
+    .reduce((sum, item) => sum + Math.max(1, item.variants?.length ?? 0), 0);
+  const actual = (menuData.match(/^    productGroupSlug: /gm) ?? []).length;
+  assert.equal(actual, expected);
 });
 
 test("static modifier linked SKU deltas align to canonical drink/fries/slice prices", () => {
   const modifiers = read("apps/website/client/src/data/modifier-catalog.ts");
   assert.match(modifiers, /extra-cheese-slice[\s\S]*priceDelta: 60/);
-  assert.match(modifiers, /drink-500ml[\s\S]*priceDelta: 110/);
-  assert.match(modifiers, /drink-1l[\s\S]*priceDelta: 170/);
-  assert.match(modifiers, /drink-1-5l[\s\S]*priceDelta: 210/);
-  assert.match(modifiers, /family-fries[\s\S]*priceDelta: 350/);
-  assert.match(modifiers, /loaded-fries[\s\S]*priceDelta: 650/);
+  assert.match(modifiers, /drink-500ml[\s\S]*priceDelta: 140/);
+  assert.match(modifiers, /drink-1l[\s\S]*priceDelta: 200/);
+  assert.match(modifiers, /drink-1-5l[\s\S]*priceDelta: 250/);
+  assert.match(modifiers, /family-fries[\s\S]*priceDelta: 390/);
+  assert.match(modifiers, /loaded-fries[\s\S]*priceDelta: 790/);
 });
 
-test("website loader documents DB-first + generated canonical fallback", () => {
+test("website loader documents the single runtime source of truth", () => {
   const loader = read("apps/website/client/src/lib/menu-catalog.ts");
-  assert.match(loader, /Preferred source: live Supabase/);
+  // Only the database via the canonical Menu API is authoritative at runtime.
+  assert.match(loader, /Runtime source of truth: database via GET \/api\/v1\/menu\/catalog/);
+  assert.match(loader, /Bootstrap catalog: data\/catalog\/telepizza-canonical-menu\.json/);
+  assert.match(loader, /NON-AUTHORITATIVE/);
   assert.match(loader, /telepizza-canonical-menu\.json/);
 });

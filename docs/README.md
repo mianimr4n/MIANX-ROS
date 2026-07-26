@@ -131,6 +131,7 @@ docs/
 | Database freeze & workflow | [`database/`](database/) · nav alias [`03-data/`](03-data/) |
 | Catalog docs | [`catalog/`](catalog/) |
 | Canonical menu data | [`../data/catalog/telepizza-canonical-menu.json`](../data/catalog/telepizza-canonical-menu.json) |
+| Canonical single-price menu domain | [`architecture/CANONICAL-MENU-DOMAIN.md`](architecture/CANONICAL-MENU-DOMAIN.md) |
 | Founder decisions (CP-0, CP-7) | [`team/`](team/) · nav alias [`16-decisions/`](16-decisions/) |
 | Auth email runbook | [`operations/AUTH-EMAIL-DELIVERY-RUNBOOK.md`](operations/AUTH-EMAIL-DELIVERY-RUNBOOK.md) |
 | Agent ops | [`../AGENTS.md`](../AGENTS.md) |

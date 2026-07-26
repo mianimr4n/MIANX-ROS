@@ -29,15 +29,40 @@ describe("Menu Management V1 (static)", () => {
     assert.match(page, /mergeCatalogProducts/);
   });
 
-  it("drawer includes modifier, variant, pricing, availability, and publishing panels", () => {
+  it("drawer includes modifier, SKU family, pricing, availability, and publishing panels", () => {
     const drawer = read("apps/website/client/src/components/admin/menu/ProductDrawer.tsx");
     assert.match(drawer, /ModifierManager/);
-    assert.match(drawer, /VariantManager/);
+    assert.match(drawer, /SkuFamilyPanel/);
     assert.match(drawer, /PricingPanel/);
     assert.match(drawer, /AvailabilityPanel/);
     assert.match(drawer, /PublishingPanel/);
     assert.match(drawer, /Escape/);
-    assert.match(drawer, /read-only/i);
+    assert.doesNotMatch(drawer, /VariantManager/);
+  });
+
+  it("owner price editing is a single Price (PKR) field, never a variant matrix", () => {
+    const pricing = read("apps/website/client/src/components/admin/menu/PricingPanel.tsx");
+    assert.match(pricing, /Price \(PKR\)/);
+    assert.match(pricing, /canWrite/);
+    assert.match(pricing, /menu\.write/);
+    assert.match(pricing, /audit trail/i);
+    assert.doesNotMatch(pricing, /product\.variants|variantId|menu_item_variants/);
+  });
+
+  it("admin menu writes go through menu.write endpoints with an audit read", () => {
+    const api = read("apps/website/client/src/lib/admin-menu-api.ts");
+    assert.match(api, /\/admin\/menu\/categories/);
+    assert.match(api, /\/admin\/menu\/products/);
+    assert.match(api, /\/admin\/menu\/audit/);
+    assert.doesNotMatch(api, /\/variants|variantId|menu_item_variants/);
+
+    const page = read("apps/website/client/src/pages/admin/AdminMenu.tsx");
+    assert.match(page, /updateMenuSku/);
+    assert.match(page, /createMenuSku/);
+    assert.match(page, /createMenuCategory/);
+    assert.match(page, /updateMenuCategory/);
+    assert.match(page, /listMenuAuditEvents/);
+    assert.match(page, /menu\.write/);
   });
 
   it("labels unavailable KPIs and disabled bulk actions honestly", () => {
@@ -67,7 +92,7 @@ describe("Menu Management V1 (static)", () => {
     assert.doesNotMatch(insights, /\bLLM\b|AI pricing|recommendation engine/i);
     const helper = read("apps/website/client/src/lib/admin-menu.ts");
     assert.match(helper, /buildMenuInsights/);
-    assert.match(helper, /read-only/i);
+    assert.match(helper, /one sellable SKU with exactly one price/i);
   });
 
   it("gates /admin/menu with canAccessAdminMenu (menu.write)", () => {

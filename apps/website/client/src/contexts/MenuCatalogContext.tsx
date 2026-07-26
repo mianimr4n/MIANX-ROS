@@ -13,12 +13,14 @@ import {
   loadMenuCatalog,
   type MenuCatalogSource,
 } from "@/lib/menu-catalog";
-import type { MenuCategory, MenuItem } from "@/lib/telepizza-types";
+import type { MenuCategory, MenuItem, MenuProductGroup } from "@/lib/telepizza-types";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 interface MenuCatalogContextValue {
-  /** Public browseable products only (no topping SKUs). */
+  /** Public browseable sellable SKUs � one price each (no topping SKUs). */
   items: MenuItem[];
+  /** Presentation-only families grouping sibling size SKUs. */
+  groups: MenuProductGroup[];
   /** Internal topping SKUs for Pizza Customizer. */
   toppings: MenuItem[];
   categories: MenuCategory[];
@@ -36,6 +38,7 @@ const staticCatalog = getStaticMenuCatalog();
 
 export function MenuCatalogProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<MenuItem[]>(staticCatalog.items);
+  const [groups, setGroups] = useState<MenuProductGroup[]>(staticCatalog.groups);
   const [toppings, setToppings] = useState<MenuItem[]>(staticCatalog.toppings);
   const [categories, setCategories] = useState<MenuCategory[]>(staticCatalog.categories);
   const [isLoading, setIsLoading] = useState(isSupabaseConfigured);
@@ -46,11 +49,13 @@ export function MenuCatalogProvider({ children }: { children: ReactNode }) {
   const applyCatalog = useCallback(
     (catalog: {
       items: MenuItem[];
+      groups: MenuProductGroup[];
       toppings: MenuItem[];
       categories: MenuCategory[];
       source: MenuCatalogSource;
     }) => {
       setItems(catalog.items);
+      setGroups(catalog.groups);
       setToppings(catalog.toppings);
       setCategories(catalog.categories);
       setSource(catalog.source);
@@ -104,6 +109,7 @@ export function MenuCatalogProvider({ children }: { children: ReactNode }) {
     <MenuCatalogContext.Provider
       value={{
         items,
+        groups,
         toppings,
         categories,
         availableCategories,

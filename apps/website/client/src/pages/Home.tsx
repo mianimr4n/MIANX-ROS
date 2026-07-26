@@ -17,7 +17,7 @@ import {
 import { Link } from "wouter";
 import { useBranch } from "@/contexts/BranchContext";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
-import { getDisplayPrice, getItemsByIds } from "@/lib/menu-utils";
+import { getDefaultSku, getGroupsByIds, getItemsByIds } from "@/lib/menu-utils";
 import { Button } from "@/components/ui/button";
 import { DealCard } from "@/components/menu/DealCard";
 import { ProductCard } from "@/components/menu/ProductCard";
@@ -50,13 +50,14 @@ const FEATURED_PASTA_SIDES_IDS = [
 const CUSTOMER_FAVORITE_IDS = ["tele-special", "zinger-burger", "behari-roll"];
 
 export default function Home() {
-  const { items } = useMenuCatalog();
+  const { items, groups } = useMenuCatalog();
   const { selectedBranch, allBranches } = useBranch();
 
+  // Deals are single-price SKUs; favourites are product families that may offer several sizes.
   const todaysDeals = useMemo(() => getItemsByIds(items, [...VERIFIED_DEAL_IDS]), [items]);
   const customerFavorites = useMemo(
-    () => getItemsByIds(items, CUSTOMER_FAVORITE_IDS),
-    [items],
+    () => getGroupsByIds(groups, CUSTOMER_FAVORITE_IDS),
+    [groups],
   );
   const operatingBranches = allBranches.filter((branch) => branch.status === "operating");
   const comingSoonBranches = allBranches.filter((branch) => branch.status === "coming-soon");
@@ -142,8 +143,8 @@ export default function Home() {
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {customerFavorites.map((item, index) => (
-            <ProductCard key={item.id} item={item} index={index} />
+          {customerFavorites.map((group, index) => (
+            <ProductCard key={group.productGroupSlug} group={group} index={index} />
           ))}
         </div>
       </section>
@@ -322,20 +323,20 @@ export default function Home() {
                     <div className="text-white font-bold text-sm">{mockupDeal.name}</div>
                     <div className="text-white/70 text-[10px] mt-1 line-clamp-2">{mockupDeal.description}</div>
                     <div className="text-white font-extrabold text-lg mt-2">
-                      Rs {mockupDeal.price?.toLocaleString()}
+                      Rs {mockupDeal.price.toLocaleString()}
                     </div>
                   </div>
                 )}
                 <div className="space-y-2">
-                  {mockupItems.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3 bg-white/5 rounded-xl p-3">
+                  {mockupItems.map((group) => (
+                    <div key={group.productGroupSlug} className="flex items-center gap-3 bg-white/5 rounded-xl p-3">
                       <div className="w-10 h-10 bg-brand-red/20 rounded-lg flex items-center justify-center">
                         <Flame className="w-4 h-4 text-brand-red" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-white text-[11px] font-semibold truncate">{item.name}</div>
+                        <div className="text-white text-[11px] font-semibold truncate">{group.name}</div>
                         <div className="text-brand-gold text-[10px] font-bold">
-                          Rs {getDisplayPrice(item)?.toLocaleString()}
+                          Rs {getDefaultSku(group)?.price.toLocaleString()}
                         </div>
                       </div>
                       <div className="w-5 h-5 bg-brand-red rounded-full flex items-center justify-center">

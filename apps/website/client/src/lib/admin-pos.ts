@@ -1,6 +1,6 @@
 /** POS helpers — map UX modes to supported order types; no invented payments. */
 
-import type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
+import type { MenuItem, MenuProductGroup } from "@/lib/telepizza-types";
 
 export type PosChannelMode = "dine-in" | "takeaway" | "phone" | "walk-in" | "delivery";
 
@@ -8,6 +8,8 @@ export type PosOrderType = "delivery" | "pickup" | "dine-in";
 
 export type PosCartLine = {
   key: string;
+  /** Exact sellable SKU id the server must price. */
+  menuItemId: string;
   menuItemSlug: string;
   productName: string;
   variantLabel?: string;
@@ -43,25 +45,26 @@ export function channelLabel(channel: PosChannelMode): string {
   return map[channel];
 }
 
-export function defaultVariant(item: MenuItem): MenuVariant | null {
-  if (!item.variants || item.variants.length === 0) return null;
-  return item.variants.find((v) => v.isDefault) ?? item.variants[0] ?? null;
+/** The SKU a POS tile represents by default: the family's first (smallest/lowest sort) option. */
+export function defaultSku(group: MenuProductGroup): MenuItem | null {
+  return group.options[0] ?? null;
 }
 
-export function displayPrice(item: MenuItem): number {
-  const variant = defaultVariant(item);
-  if (variant) return variant.price;
-  return item.price ?? 0;
+export function displayPrice(group: MenuProductGroup): number {
+  return defaultSku(group)?.price ?? 0;
 }
 
 export function itemHasModifiers(item: MenuItem): boolean {
   return Boolean(item.modifierGroups && item.modifierGroups.length > 0);
 }
 
-export function itemNeedsConfiguration(item: MenuItem): boolean {
-  const multiVariant = (item.variants?.length ?? 0) > 1;
-  const requiredMods = (item.modifierGroups ?? []).some((g) => g.isRequired || g.minSelect > 0);
-  return multiVariant || requiredMods;
+/** A tile opens the configurator when the cashier must pick a SKU or a required modifier. */
+export function itemNeedsConfiguration(group: MenuProductGroup): boolean {
+  const multipleSkus = group.options.length > 1;
+  const requiredMods = group.options.some((sku) =>
+    (sku.modifierGroups ?? []).some((g) => g.isRequired || g.minSelect > 0),
+  );
+  return multipleSkus || requiredMods;
 }
 
 export function lineUnitPrice(line: PosCartLine): number {

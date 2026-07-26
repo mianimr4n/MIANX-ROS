@@ -49,53 +49,60 @@ export function findCatalogItemBySlug(
   return catalogItems.find((entry) => entry.id === slug || entry.slug === slug);
 }
 
+/** All sellable SKUs that belong to the same product family as `slug`. */
+export function findCatalogFamily(catalogItems: MenuItem[], slug: string): MenuItem[] {
+  const direct = findCatalogItemBySlug(catalogItems, slug);
+  const groupSlug = direct?.productGroupSlug ?? slug;
+  return catalogItems.filter((entry) => (entry.productGroupSlug ?? entry.slug ?? entry.id) === groupSlug);
+}
+
 /**
  * Resolve topping price from shared catalog only.
- * Returns null when the SKU is missing or the requested tier/price is unavailable —
- * callers must disable the option (never invent a price in UI business logic).
+ *
+ * Size-scaled toppings are sibling SKUs in one family; the tier selects the exact SKU.
+ * Returns null when the SKU is missing or the requested tier is unavailable — callers must
+ * disable the option (never invent a price in UI business logic).
  */
 export function resolveCatalogToppingPrice(
-  item: MenuItem | undefined,
+  family: MenuItem[] | MenuItem | undefined,
   tier: ToppingSizeTier,
 ): number | null {
-  if (!item) {
+  const options = Array.isArray(family) ? family : family ? [family] : [];
+  if (options.length === 0) {
     return null;
   }
 
-  if (item.variants && item.variants.length > 0) {
-    const bySizeCode = item.variants.find((variant) => variant.sizeCode === tier);
-    if (bySizeCode && typeof bySizeCode.price === "number") {
-      return bySizeCode.price;
-    }
-
-    const labelMatch = item.variants.find((variant) => {
-      const label = variant.label.toLowerCase();
-      if (tier === "large") return label.includes("large");
-      if (tier === "medium") return label.includes("medium");
-      return label.includes("small");
-    });
-    if (labelMatch && typeof labelMatch.price === "number") {
-      return labelMatch.price;
-    }
-
-    // Size-tier toppings must not fall back to an unrelated variant/base price.
-    return null;
+  if (options.length === 1) {
+    return typeof options[0].price === "number" ? options[0].price : null;
   }
 
-  if (typeof item.price === "number") {
-    return item.price;
+  const bySizeCode = options.find((option) => option.sizeCode === tier);
+  if (bySizeCode && typeof bySizeCode.price === "number") {
+    return bySizeCode.price;
   }
 
+  const byLabel = options.find((option) => (option.sizeLabel ?? "").toLowerCase().includes(tier));
+  if (byLabel && typeof byLabel.price === "number") {
+    return byLabel.price;
+  }
+
+  // Size-tier toppings must not fall back to an unrelated sibling SKU price.
   return null;
 }
 
-/** Pizzas with size variants open the customizer. Flat / starting-price SKUs do not. */
-export function isPizzaItem(item: MenuItem): boolean {
-  if (!isCustomerBrowseItem(item)) {
+/** Pizza families with more than one size SKU open the customizer. */
+export function isPizzaFamily(group: { category: string; options: MenuItem[] }): boolean {
+  const first = group.options[0];
+  if (!first || !isCustomerBrowseItem(first)) {
     return false;
   }
 
-  return item.category.includes("Pizza") && Boolean(item.variants?.length);
+  return group.category.includes("Pizza") && group.options.length > 1;
+}
+
+/** A single SKU opens the customizer only when it carries configurable modifiers. */
+export function isConfigurableSku(item: MenuItem): boolean {
+  return isCustomerBrowseItem(item) && Boolean(item.modifierGroups?.length);
 }
 
 /** Internal topping SKUs are never standalone cart products. */

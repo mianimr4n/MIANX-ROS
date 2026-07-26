@@ -13,6 +13,8 @@ export interface CartExtra {
 
 export interface CartItem {
   id: string;
+  /** Exact sellable SKU id; the server prices from this when present. */
+  menuItemId?: string;
   menuSlug: string;
   name: string;
   price: number;

@@ -1,0 +1,108 @@
+{
+  "result": "PASS",
+  "role": "admin@telepizza.pk",
+  "controlledSku": {
+    "id": "6084476c-e045-4630-8918-d9bf6e20d1a3",
+    "slug": "tele-special-medium",
+    "originalPrice": 1250,
+    "raisedPrice": 1267,
+    "restoredPrice": 1250
+  },
+  "orderId": "TP-260726-000118",
+  "raiseAuditId": "fa48bf42-6888-4435-ad76-05825830cc2d",
+  "restoreAuditId": "76fa3fb9-3f56-494e-b19c-34443037243c",
+  "steps": [
+    {
+      "step": "1_owner_login",
+      "result": "PASS"
+    },
+    {
+      "step": "2_admin_menu_open",
+      "result": "PASS",
+      "note": "LIVE_OR_LOADED"
+    },
+    {
+      "step": "3_select_controlled_sku",
+      "result": "PASS",
+      "note": "tele-special-medium @ 1250"
+    },
+    {
+      "step": "3b_admin_search_ui",
+      "result": "PASS"
+    },
+    {
+      "step": "5_price_update",
+      "result": "PASS",
+      "note": "1267"
+    },
+    {
+      "step": "6_audit_event",
+      "result": "PASS",
+      "note": "fa48bf42-6888-4435-ad76-05825830cc2d"
+    },
+    {
+      "step": "6b_idempotent_replay",
+      "result": "PASS"
+    },
+    {
+      "step": "7_customer_menu_ui",
+      "result": "PASS"
+    },
+    {
+      "step": "8_customer_menu_price",
+      "result": "PASS",
+      "note": "1267"
+    },
+    {
+      "step": "9_pos_ui",
+      "result": "PASS"
+    },
+    {
+      "step": "10_pos_same_price",
+      "result": "PASS"
+    },
+    {
+      "step": "13_server_quote",
+      "result": "PASS",
+      "note": "1267"
+    },
+    {
+      "step": "14_order_create",
+      "result": "PASS",
+      "note": "TP-260726-000118"
+    },
+    {
+      "step": "16_kitchen_ui",
+      "result": "PASS",
+      "note": "skip to content\n\ntelepizza\n\nadmin erp\n\npowered by mianx.ai\n\noverview\n\nkitchen bo"
+    },
+    {
+      "step": "17_reports_ui",
+      "result": "PASS",
+      "note": "reports route loaded; sales use order-line snapshots"
+    },
+    {
+      "step": "18_restore_price",
+      "result": "PASS",
+      "note": "1250"
+    },
+    {
+      "step": "19_second_audit",
+      "result": "PASS",
+      "note": "76fa3fb9-3f56-494e-b19c-34443037243c"
+    },
+    {
+      "step": "20_restored_customer_pos",
+      "result": "PASS"
+    },
+    {
+      "step": "unauthorized_denied",
+      "result": "PASS",
+      "note": "status=403"
+    }
+  ],
+  "note": "Browser UI visited for Admin Menu, Customer Menu, POS, Kitchen, Reports. Price mutate/verify via authenticated Admin Menu API (atomic audit RPC). Quote proves client price ignored.",
+  "commitGate": "NOT AUTHORIZED",
+  "productionGate": "NOT AUTHORIZED",
+  "recordedAt": "2026-07-26T06:17:31.088Z"
+}

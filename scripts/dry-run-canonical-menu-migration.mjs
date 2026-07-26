@@ -1,7 +1,11 @@
 /**
- * Dry-run helper for the canonical catalog sync migration.
- * Prints verification SQL and asserts the migration file is non-destructive.
- * Does NOT connect to or apply against production.
+ * DEPRECATED — superseded by the canonical single-price menu domain (2026-07-25).
+ *
+ * This helper checks the 2026-07-18 catalog SYNC migration, which still used the
+ * `menu_item_variants` price matrix. It is retained only so that migration's contract stays
+ * verifiable. For the current model use tests/database/canonical-single-price-menu.test.mjs.
+ *
+ * DO NOT RUN IN PRODUCTION. File-level checks only; never connects to a database.
  *
  * Usage: node scripts/dry-run-canonical-menu-migration.mjs
  */
@@ -29,8 +33,8 @@ const checks = [
   { name: "no TRUNCATE", ok: !/\btruncate\b/i.test(sql) },
   { name: "owner approval banner", ok: /OWNER APPROVAL REQUIRED/i.test(sql) },
   {
-    name: "canonical blocked status acknowledged",
-    ok: catalog.completionStatus.includes("BLOCKED"),
+    name: "founder price lock status acknowledged",
+    ok: catalog.completionStatus.includes("OWNER_PRICES_LOCKED_EXPAND_20260725120000"),
   },
 ];
 
@@ -47,23 +51,28 @@ for (const check of checks) {
 }
 
 console.log(`
-Recommended verification SQL (run manually against a non-prod DB after apply):
+Verification SQL for the CURRENT canonical single-price model
+(run manually against a non-prod DB after apply):
 
   select count(*) as public_categories
   from menu_categories where is_active and slug <> 'toppings';
 
-  select count(*) as browse_items
+  select count(*) as sellable_skus
   from menu_items where is_available and product_type <> 'topping';
 
-  select count(*) as toppings
+  select count(distinct product_group_slug) as product_families
+  from menu_items where is_available and product_type <> 'topping';
+
+  select count(*) as topping_skus
   from menu_items where product_type = 'topping' and is_available;
 
-  select count(*) as variants
-  from menu_item_variants v
-  join menu_items i on i.id = v.menu_item_id
-  where v.is_available and i.is_available;
+  select count(*) as skus_without_one_price
+  from menu_items where price is null or price < 0;   -- must be 0
 
-Expect freeze baseline: 13 / 58 / 3 / 40 (variants include topping size rows).
+  select count(*) as unmapped_variants
+  from menu_item_variants v
+  left join menu_variant_sku_mappings m on m.old_variant_id = v.id
+  where m.old_variant_id is null;                     -- must be 0
 
 DO NOT apply to production without owner approval.
 `);

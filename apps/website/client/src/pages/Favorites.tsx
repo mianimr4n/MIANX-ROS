@@ -143,7 +143,7 @@ export default function Favorites() {
                     <FavoriteHeartButton item={item} size="sm" />
                   </div>
                   <p className="text-sm font-semibold text-brand-red">
-                    {formatMenuPriceLabel(item, item.price ?? item.variants?.[0]?.price)}
+                    {formatMenuPriceLabel(item, item.price)}
                   </p>
                   <Link href={`/menu/${encodeURIComponent(item.slug ?? item.id)}`}>
                     <Button size="sm" variant="outline" className="rounded-2xl min-h-11">

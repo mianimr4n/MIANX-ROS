@@ -8,12 +8,7 @@ import { handleImageError } from "@/lib/image-fallback";
 
 const CURATED_CATEGORY_PREVIEWS = [
   { menuCategory: "Signature Pizzas", label: "Signature Pizzas", accent: "Pizza" },
-  {
-    menuCategory: "Wings",
-    label: "Wings",
-    accent: "Wings",
-    priceHint: "From Rs 549",
-  },
+  { menuCategory: "Wings", label: "Wings", accent: "Wings" },
   { menuCategory: "Burgers", label: "Burgers", accent: "Burgers" },
   { menuCategory: "Pasta", label: "Pasta", accent: "Pasta" },
   { menuCategory: "Fries", label: "Fries", accent: "Sides" },
@@ -21,21 +16,29 @@ const CURATED_CATEGORY_PREVIEWS = [
 ] as const;
 
 export function CategoryStrip() {
-  const { availableCategories } = useMenuCatalog();
+  const { availableCategories, items } = useMenuCatalog();
 
   const categories = useMemo(() => {
     const available = new Set(availableCategories);
 
     return CURATED_CATEGORY_PREVIEWS.filter((preview) => available.has(preview.menuCategory)).map(
-      (preview) => ({
-        name: preview.label,
-        menuCategory: preview.menuCategory,
-        image: getCategoryPlaceholderImage(preview.menuCategory),
-        accent: preview.accent,
-        priceHint: "priceHint" in preview ? preview.priceHint : undefined,
-      }),
+      (preview) => {
+        // Price hints come from the canonical catalog, never from a hard-coded figure.
+        const prices = items
+          .filter((item) => item.category === preview.menuCategory && item.available !== false)
+          .map((item) => item.price);
+        const from = prices.length > 0 ? Math.min(...prices) : null;
+
+        return {
+          name: preview.label,
+          menuCategory: preview.menuCategory,
+          image: getCategoryPlaceholderImage(preview.menuCategory),
+          accent: preview.accent,
+          priceHint: from === null ? undefined : `From Rs ${from.toLocaleString()}`,
+        };
+      },
     );
-  }, [availableCategories]);
+  }, [availableCategories, items]);
 
   if (categories.length === 0) {
     return null;

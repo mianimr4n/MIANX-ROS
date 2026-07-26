@@ -1,10 +1,10 @@
 /**
  * Menu catalog loader.
  *
- * Preferred source: live Supabase / API (DB = operational source of truth).
- * Fallback: generated copy of data/catalog/telepizza-canonical-menu.json via menu-data.ts
- * (explicit offline control — regenerate with scripts/generate-menu-fallback-from-canonical.mjs).
- * Do not maintain a second hand-edited price list.
+ * Runtime source of truth: database via GET /api/v1/menu/catalog (preferred) / Supabase.
+ * Bootstrap catalog: data/catalog/telepizza-canonical-menu.json (import board only).
+ * Generated derivative: menu-data.ts offline fallback — NON-AUTHORITATIVE; never overrides a
+ * successful API result. Regenerate with scripts/generate-menu-fallback-from-canonical.mjs.
  */
 import {
   menuCategories as fallbackMenuCategories,
@@ -22,18 +22,71 @@ import {
   isCustomerBrowseItem,
 } from "@/lib/menu-visibility";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
-import type { MenuCategory, MenuItem, MenuVariant, ModifierGroup } from "@/lib/telepizza-types";
+import type {
+  MenuCategory,
+  MenuItem,
+  MenuProductGroup,
+  MenuSizeCode,
+  ModifierGroup,
+} from "@/lib/telepizza-types";
 
 export type MenuCatalogSource = "supabase" | "static";
 
 export interface MenuCatalogResult {
-  /** Public customer categories only (13). */
+  /** Public customer categories only. */
   categories: MenuCategory[];
-  /** Public browseable products only. */
+  /** Public browseable sellable SKUs — one price each. */
   items: MenuItem[];
+  /** Presentation-only families grouping sibling size SKUs. */
+  groups: MenuProductGroup[];
   /** Internal topping SKUs for Pizza Customizer / Admin / POS. */
   toppings: MenuItem[];
   source: MenuCatalogSource;
+}
+
+/** Derive the family display name by stripping the SKU's size suffix. */
+export function deriveFamilyName(name: string, sizeLabel?: string): string {
+  if (!sizeLabel) return name;
+  const suffix = ` — ${sizeLabel}`;
+  return name.endsWith(suffix) ? name.slice(0, -suffix.length) : name;
+}
+
+/** Group sellable SKUs into presentation-only product families. */
+export function groupSkusIntoFamilies(skus: MenuItem[]): MenuProductGroup[] {
+  const groups = new Map<string, MenuProductGroup>();
+
+  for (const sku of skus) {
+    const groupSlug = sku.productGroupSlug ?? sku.slug ?? sku.id;
+    const existing = groups.get(groupSlug);
+    if (existing) {
+      existing.options.push(sku);
+      existing.featured = existing.featured || sku.featured;
+      continue;
+    }
+
+    groups.set(groupSlug, {
+      productGroupSlug: groupSlug,
+      name: deriveFamilyName(sku.name, sku.sizeLabel),
+      category: sku.category,
+      categorySlug: sku.categorySlug,
+      description: sku.description,
+      image: sku.image,
+      badge: sku.badge,
+      productType: sku.productType,
+      featured: sku.featured,
+      options: [sku],
+    });
+  }
+
+  const families = Array.from(groups.values());
+  for (const group of families) {
+    group.options.sort(
+      (left: MenuItem, right: MenuItem) =>
+        (left.sortOrder ?? 0) - (right.sortOrder ?? 0) || (left.price ?? 0) - (right.price ?? 0),
+    );
+  }
+
+  return families;
 }
 
 interface SupabaseMenuCategoryRow {
@@ -48,16 +101,6 @@ interface SupabaseMenuCategoryJoin {
   slug: string;
 }
 
-interface SupabaseMenuVariantRow {
-  id: number | string;
-  label: string;
-  price: number | string;
-  size_code: string | null;
-  sort_order: number;
-  is_default: boolean;
-  is_available: boolean;
-}
-
 interface SupabaseMenuItemRow {
   id: number | string;
   slug: string;
@@ -65,11 +108,15 @@ interface SupabaseMenuItemRow {
   description: string | null;
   image_url: string | null;
   badge: string | null;
-  base_price: number | string | null;
+  price: number | string;
+  product_group_slug: string | null;
+  size_label: string | null;
+  size_code: string | null;
+  sort_order: number | null;
   product_type: string;
+  is_available: boolean;
   is_featured: boolean;
   category: SupabaseMenuCategoryJoin | SupabaseMenuCategoryJoin[] | null;
-  variants: SupabaseMenuVariantRow[] | null;
 }
 
 /** Re-export for category previews and Supabase fallbacks. */
@@ -128,35 +175,23 @@ function mapMenuItemRow(row: SupabaseMenuItemRow, modifierGroups?: ModifierGroup
   const categoryName = category?.name ?? "Uncategorized";
   const categorySlug = category?.slug ?? "uncategorized";
 
-  const variants: MenuVariant[] = (row.variants ?? [])
-    .filter((variant) => variant.is_available !== false)
-    .sort((left, right) => left.sort_order - right.sort_order)
-    .map((variant) => ({
-      id: String(variant.id),
-      label: variant.label,
-      price: parseNumber(variant.price),
-      sizeCode: variant.size_code ?? undefined,
-      isDefault: variant.is_default,
-    }));
-
   return {
-    id: row.slug,
+    id: String(row.id),
     slug: row.slug,
     name: row.name,
+    productGroupSlug: row.product_group_slug ?? row.slug,
+    sizeLabel: row.size_label ?? undefined,
+    sizeCode: (row.size_code as MenuSizeCode | null) ?? undefined,
     category: categoryName,
     categorySlug,
     description: row.description ?? "",
     image: resolveMenuItemImage(row.slug, categoryName, row.image_url),
     badge: row.badge ?? undefined,
-    price:
-      variants.length > 0
-        ? undefined
-        : row.base_price != null
-          ? parseNumber(row.base_price)
-          : undefined,
+    price: parseNumber(row.price),
+    available: row.is_available,
+    sortOrder: row.sort_order ?? 0,
     productType: row.product_type,
     featured: row.is_featured,
-    variants: variants.length > 0 ? variants : undefined,
     modifierGroups:
       modifierGroups && modifierGroups.length > 0
         ? modifierGroups
@@ -273,9 +308,12 @@ function splitCatalog(
   allItems: MenuItem[],
   source: MenuCatalogSource,
 ): MenuCatalogResult {
+  const items = getCustomerBrowseItems(allItems);
+
   return {
     categories: getCustomerBrowseCategories(categories),
-    items: getCustomerBrowseItems(allItems),
+    items,
+    groups: groupSkusIntoFamilies(items),
     toppings: allItems.filter((item) => !isCustomerBrowseItem(item)),
     source,
   };
@@ -315,7 +353,7 @@ export async function fetchMenuCatalogFromSupabase(): Promise<MenuCatalogResult>
     supabase
       .from("menu_items")
       .select(
-        "id, slug, name, description, image_url, base_price, badge, product_type, is_featured, category:menu_categories(name, slug), variants:menu_item_variants(id, label, price, size_code, sort_order, is_default, is_available)",
+        "id, slug, name, description, image_url, price, product_group_slug, size_label, size_code, sort_order, badge, product_type, is_available, is_featured, category:menu_categories(name, slug)",
       )
       .eq("is_available", true)
       .order("name", { ascending: true }),

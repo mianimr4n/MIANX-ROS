@@ -5,11 +5,14 @@ import { ApiError } from "../../common/http.js";
 import { assertBranchOperational } from "../branches/operational-status.js";
 import { attachConfirmedDineInOrderToBill } from "../bills/restaurant-bills.js";
 import {
+  buildCatalogLookup,
+  collectCatalogSkuIds,
   collectCatalogSlugs,
   hashIdempotencyPayload,
   normalizePhoneE164,
   parseNumber,
   priceOrderLines,
+  type CatalogLookup,
   type CatalogMenuItem,
 } from "./pricing.js";
 import {
@@ -147,54 +150,80 @@ async function loadOperatingBranch(
   return branch;
 }
 
+/** Minimal shape of the chained PostgREST filter builder used by the catalog loader. */
+interface PostgrestFilterLike {
+  in(column: string, values: readonly string[]): PostgrestFilterLike;
+  then: Promise<{ data: unknown[] | null; error: { message: string } | null }>["then"];
+}
+
+const CANONICAL_SKU_COLUMNS =
+  "id, slug, name, price, product_group_slug, size_label, size_code, sort_order, product_type, is_available";
+
+/**
+ * Load the canonical SKU rows needed to price one order.
+ *
+ * Slugs are matched both as SKU slugs and as product-family slugs so pre-SKU clients
+ * (which send a family slug plus a size label) keep working, and so size-scaled toppings
+ * can resolve their sibling SKUs.
+ */
 async function loadCatalogMap(
   supabase: SupabaseClient,
   lines: QuoteOrderInput["items"] | CreateOrderInput["items"],
-): Promise<Map<string, CatalogMenuItem>> {
+): Promise<CatalogLookup> {
   const knownSlugs = collectCatalogSlugs(lines);
-  // Also load common addon names by fetching all non-topping? For label match of drinks/fries,
-  // expand slug set is not enough — load candidates by name when extras have bare labels.
+  const knownSkuIds = collectCatalogSkuIds(lines);
+  // Bare extra labels (drinks/fries addons) still resolve by menu item name.
   const needsNameLookup = lines.some((line) =>
     (line.extras ?? []).some((extra) => !extra.slug && extra.label && !extra.label.toLowerCase().includes("extra chicken") && !extra.label.toLowerCase().includes("extra cheese")),
   );
 
-  let menuItems: CatalogMenuItem[] = [];
+  const menuItems: CatalogMenuItem[] = [];
 
-  if (knownSlugs.length > 0) {
-    const { data, error } = await supabase
-      .from("menu_items")
-      .select(
-        "id, slug, name, base_price, product_type, is_available, variants:menu_item_variants(id, label, price, is_available, size_code)",
-      )
-      .in("slug", knownSlugs);
+  const collect = async (apply: (query: PostgrestFilterLike) => PostgrestFilterLike) => {
+    const { data, error } = await apply(
+      supabase.from("menu_items").select(CANONICAL_SKU_COLUMNS) as unknown as PostgrestFilterLike,
+    );
     if (error) {
       throw new ApiError(500, "MENU_LOOKUP_FAILED", error.message);
     }
-    menuItems = (data ?? []) as CatalogMenuItem[];
+    menuItems.push(...((data ?? []) as CatalogMenuItem[]));
+  };
+
+  if (knownSkuIds.length > 0) {
+    await collect((query) => query.in("id", knownSkuIds));
+  }
+
+  if (knownSlugs.length > 0) {
+    await collect((query) => query.in("slug", knownSlugs));
+    await collect((query) => query.in("product_group_slug", knownSlugs));
   }
 
   if (needsNameLookup) {
     const labels = lines
       .flatMap((line) => (line.extras ?? []).map((extra) => extra.label?.trim()).filter(Boolean) as string[]);
     if (labels.length) {
-      const { data, error } = await supabase
-        .from("menu_items")
-        .select(
-          "id, slug, name, base_price, product_type, is_available, variants:menu_item_variants(id, label, price, is_available, size_code)",
-        )
-        .in("name", labels);
-      if (error) {
-        throw new ApiError(500, "MENU_LOOKUP_FAILED", error.message);
-      }
-      menuItems = [...menuItems, ...((data ?? []) as CatalogMenuItem[])];
+      await collect((query) => query.in("name", labels));
     }
   }
 
-  const map = new Map<string, CatalogMenuItem>();
-  for (const item of menuItems) {
-    map.set(item.slug, item);
+  // Size-scaled toppings live in the same family as the referenced SKU.
+  const familySlugs = [
+    ...new Set(
+      menuItems
+        .filter((item) => item.product_type === "topping")
+        .map((item) => item.product_group_slug ?? item.slug),
+    ),
+  ].filter((slug) => !knownSlugs.includes(slug));
+  if (familySlugs.length > 0) {
+    await collect((query) => query.in("product_group_slug", familySlugs));
   }
-  return map;
+
+  const deduped = new Map<string, CatalogMenuItem>();
+  for (const item of menuItems) {
+    deduped.set(item.id, item);
+  }
+
+  return buildCatalogLookup(deduped.values());
 }
 
 async function loadModifiersMap(
@@ -351,9 +380,9 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
       const supabase = getClient();
       const signingSecret = envStatus.config.jwtSecret;
       const branch = await loadOperatingBranch(supabase, input.branchCode);
-      const menuBySlug = await loadCatalogMap(supabase, input.items);
+      const catalog = await loadCatalogMap(supabase, input.items);
       const modifiersByKey = await loadModifiersMap(supabase, input.items);
-      const priced = priceOrderLines({ lines: input.items, menuBySlug, modifiersByKey });
+      const priced = priceOrderLines({ lines: input.items, catalog, modifiersByKey });
 
       const cartCanon = buildQuoteCartCanon(input.items);
       const cartHash = hashQuoteCart(cartCanon);
@@ -363,8 +392,8 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         taxAmount: priced.taxAmount,
         deliveryFee: priced.deliveryFee,
         totalAmount: priced.totalAmount,
-        lines: priced.lines.map((line, index) => ({
-          menuItemSlug: input.items[index]?.menuItemSlug ?? "",
+        lines: priced.lines.map((line) => ({
+          menuItemSlug: line.menuItemSlug,
           foodUnitPrice: line.foodUnitPrice,
           lineUnitPrice: line.lineUnitPrice,
           lineTotal: line.lineTotal,
@@ -401,8 +430,9 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
           code: branch.branch_code,
           orderType: input.orderType,
         },
-        items: priced.lines.map((line, index) => ({
-          menuItemSlug: input.items[index]?.menuItemSlug ?? "",
+        items: priced.lines.map((line) => ({
+          menuItemId: line.menuItemId,
+          menuItemSlug: line.menuItemSlug,
           productName: line.productName,
           variantName: line.variantName,
           quantity: line.quantity,
@@ -469,7 +499,8 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         couponCode: input.couponCode?.trim() ?? null,
         quoteId: input.quoteId?.trim() || null,
         items: input.items.map((item) => ({
-          menuItemSlug: item.menuItemSlug,
+          menuItemId: item.menuItemId ?? null,
+          menuItemSlug: item.menuItemSlug ?? null,
           variantLabel: item.variantLabel ?? null,
           quantity: item.quantity,
           toppings: item.toppings ?? [],
@@ -518,9 +549,9 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
       }
 
       const branch = await loadOperatingBranch(supabase, input.branchCode);
-      const menuBySlug = await loadCatalogMap(supabase, input.items);
+      const catalog = await loadCatalogMap(supabase, input.items);
       const modifiersByKey = await loadModifiersMap(supabase, input.items);
-      const priced = priceOrderLines({ lines: input.items, menuBySlug, modifiersByKey });
+      const priced = priceOrderLines({ lines: input.items, catalog, modifiersByKey });
 
       const notes = [input.notes?.trim(), input.couponCode?.trim() ? `Promo code: ${input.couponCode.trim()}` : null]
         .filter(Boolean)

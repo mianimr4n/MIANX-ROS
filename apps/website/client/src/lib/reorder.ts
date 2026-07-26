@@ -37,46 +37,37 @@ function catalogKey(item: MenuItem): string {
   return (item.slug || item.id || "").trim().toLowerCase();
 }
 
-function resolveMenuItem(catalog: MenuItem[], slug: string | undefined): MenuItem | null {
+/**
+ * Resolve a stored order line to an exact sellable SKU.
+ *
+ * Historical lines were captured before sizes became their own SKUs, so their slug may be a
+ * product-family slug qualified by `variantName`. Those still resolve; `skuExact` reports
+ * whether the original size was found so the customer can be warned.
+ */
+function resolveSku(
+  catalog: MenuItem[],
+  slug: string | undefined,
+  variantName: string | undefined,
+): { sku: MenuItem; skuExact: boolean } | null {
   if (!slug?.trim()) return null;
   const needle = slug.trim().toLowerCase();
-  return (
-    catalog.find((item) => catalogKey(item) === needle) ??
-    catalog.find((item) => item.id.toLowerCase() === needle) ??
-    null
-  );
-}
 
-function resolveVariantPrice(
-  menuItem: MenuItem,
-  variantName: string | undefined,
-): { price: number; variantLabel: string | undefined; variantOk: boolean } {
-  const variants = menuItem.variants ?? [];
-  if (variants.length === 0) {
-    return {
-      price: menuItem.price ?? 0,
-      variantLabel: variantName,
-      variantOk: !variantName,
-    };
-  }
+  const direct =
+    catalog.find((item) => catalogKey(item) === needle) ??
+    catalog.find((item) => item.id.toLowerCase() === needle);
+  if (direct) return { sku: direct, skuExact: true };
+
+  const family = catalog.filter((item) => (item.productGroupSlug ?? "").toLowerCase() === needle);
+  if (family.length === 0) return null;
 
   if (variantName?.trim()) {
-    const match = variants.find(
-      (variant) => variant.label.trim().toLowerCase() === variantName.trim().toLowerCase(),
-    );
-    if (match) {
-      return { price: match.price, variantLabel: match.label, variantOk: true };
-    }
-    const fallback = variants.find((variant) => variant.isDefault) ?? variants[0];
-    return {
-      price: fallback.price,
-      variantLabel: fallback.label,
-      variantOk: false,
-    };
+    const wanted = variantName.trim().toLowerCase();
+    const match = family.find((item) => (item.sizeLabel ?? "").trim().toLowerCase() === wanted);
+    if (match) return { sku: match, skuExact: true };
+    return { sku: family[0]!, skuExact: false };
   }
 
-  const preferred = variants.find((variant) => variant.isDefault) ?? variants[0];
-  return { price: preferred.price, variantLabel: preferred.label, variantOk: true };
+  return { sku: family[0]!, skuExact: family.length === 1 };
 }
 
 function refreshExtras(
@@ -149,8 +140,8 @@ export function buildReorderPreview(
       };
     }
 
-    const menuItem = resolveMenuItem(catalog, source.menuItemSlug);
-    if (!menuItem) {
+    const resolved = resolveSku(catalog, source.menuItemSlug, source.variantName);
+    if (!resolved) {
       return {
         source,
         available: false,
@@ -162,16 +153,16 @@ export function buildReorderPreview(
       };
     }
 
+    const menuItem = resolved.sku;
     const warnings: ReorderLineWarning[] = [];
-    const variant = resolveVariantPrice(menuItem, source.variantName);
-    if (!variant.variantOk && source.variantName) {
+    if (!resolved.skuExact) {
       warnings.push("variant_unavailable");
     }
 
     const { extras, adjusted } = refreshExtras(menuItem, source.extras);
     if (adjusted) warnings.push("extras_adjusted");
 
-    const basePrice = variant.price;
+    const basePrice = menuItem.price;
     const extrasTotal = extras.reduce((sum, extra) => sum + extra.price, 0);
     const refreshedUnitPrice = basePrice + extrasTotal;
     if (refreshedUnitPrice !== previousUnitPrice) {
@@ -179,13 +170,14 @@ export function buildReorderPreview(
     }
 
     const cartItem: CartItem = {
-      id: `${catalogKey(menuItem)}-${variant.variantLabel ?? "standard"}-${extras.map((e) => e.optionCode ?? e.slug ?? e.label).join("|") || "plain"}`,
+      id: `${catalogKey(menuItem)}-${extras.map((e) => e.optionCode ?? e.slug ?? e.label).join("|") || "plain"}`,
+      menuItemId: menuItem.id,
       menuSlug: menuItem.slug || menuItem.id,
       name: menuItem.name,
       price: basePrice,
       quantity: source.quantity,
       category: menuItem.category,
-      variant: variant.variantLabel,
+      variant: menuItem.sizeLabel,
       image: menuItem.image,
       description: menuItem.description,
       extras: extras.length ? extras : undefined,
@@ -195,7 +187,7 @@ export function buildReorderPreview(
     const messages: string[] = [];
     if (warnings.includes("variant_unavailable")) {
       messages.push(
-        `Size/variant "${source.variantName}" is unavailable — using ${variant.variantLabel ?? "standard"} instead (review before adding).`,
+        `Size "${source.variantName ?? "as ordered"}" is unavailable — using ${menuItem.sizeLabel ?? menuItem.name} instead (review before adding).`,
       );
     }
     if (warnings.includes("extras_adjusted")) {

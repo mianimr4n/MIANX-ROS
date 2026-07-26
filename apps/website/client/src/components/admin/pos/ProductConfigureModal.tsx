@@ -1,66 +1,66 @@
 import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 
-import { defaultVariant, type PosCartLine } from "@/lib/admin-pos";
+import { defaultSku, type PosCartLine } from "@/lib/admin-pos";
 import { formatPkr } from "@/lib/admin-order-format";
-import type { MenuItem } from "@/lib/telepizza-types";
+import type { MenuProductGroup } from "@/lib/telepizza-types";
 
 export function ProductConfigureModal({
-  item,
+  group,
   open,
   onClose,
   onAdd,
 }: {
-  item: MenuItem | null;
+  /** Product family; the cashier picks one of its sellable SKUs. */
+  group: MenuProductGroup | null;
   open: boolean;
   onClose: () => void;
   onAdd: (line: Omit<PosCartLine, "key">) => void;
 }) {
-  const variants = item?.variants ?? [];
-  const [variantLabel, setVariantLabel] = useState("");
+  const options = group?.options ?? [];
+  const [skuId, setSkuId] = useState("");
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
 
+  const sku = options.find((option) => option.id === skuId) ?? (group ? defaultSku(group) : null);
+
   useEffect(() => {
-    if (!item) return;
-    const def = defaultVariant(item);
-    setVariantLabel(def?.label ?? "");
+    if (!group) return;
+    setSkuId(defaultSku(group)?.id ?? "");
+    setQuantity(1);
+  }, [group]);
+
+  useEffect(() => {
     const defaults: Record<string, string> = {};
-    for (const group of item.modifierGroups ?? []) {
-      const defOpt = group.options.find((o) => o.isDefault) ?? group.options[0];
-      if ((group.isRequired || group.minSelect > 0) && defOpt) {
-        defaults[group.code] = defOpt.code;
+    for (const modifierGroup of sku?.modifierGroups ?? []) {
+      const defOpt = modifierGroup.options.find((o) => o.isDefault) ?? modifierGroup.options[0];
+      if ((modifierGroup.isRequired || modifierGroup.minSelect > 0) && defOpt) {
+        defaults[modifierGroup.code] = defOpt.code;
       }
     }
     setSelectedOptions(defaults);
-    setQuantity(1);
-  }, [item]);
+  }, [sku]);
 
-  const unitPrice = useMemo(() => {
-    if (!item) return 0;
-    const variant = variants.find((v) => v.label === variantLabel) ?? defaultVariant(item);
-    return variant?.price ?? item.price ?? 0;
-  }, [item, variantLabel, variants]);
+  const unitPrice = sku?.price ?? 0;
 
   const modifiers = useMemo(() => {
-    if (!item) return [];
-    const rows: PosCartLine["modifiers"] = [];
-    for (const group of item.modifierGroups ?? []) {
-      const code = selectedOptions[group.code];
+    const rows: NonNullable<PosCartLine["modifiers"]> = [];
+    for (const modifierGroup of sku?.modifierGroups ?? []) {
+      const code = selectedOptions[modifierGroup.code];
       if (!code) continue;
-      const opt = group.options.find((o) => o.code === code);
+      const opt = modifierGroup.options.find((o) => o.code === code);
       if (!opt) continue;
-      rows!.push({
-        groupCode: group.code,
+      rows.push({
+        groupCode: modifierGroup.code,
         optionCode: opt.code,
-        label: `${group.name}: ${opt.name}`,
+        label: `${modifierGroup.name}: ${opt.name}`,
         priceDelta: opt.priceDelta,
       });
     }
     return rows;
-  }, [item, selectedOptions]);
+  }, [sku, selectedOptions]);
 
-  if (!open || !item) return null;
+  if (!open || !group) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="presentation">
@@ -68,12 +68,12 @@ export function ProductConfigureModal({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={`Configure ${item.name}`}
+        aria-label={`Configure ${group.name}`}
         className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-5 shadow-xl sm:rounded-2xl"
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold">{item.name}</h3>
+            <h3 className="text-lg font-semibold">{group.name}</h3>
             <p className="text-sm text-[var(--admin-muted)]">{formatPkr(unitPrice)}</p>
           </div>
           <button type="button" className="rounded-md p-2 hover:bg-[var(--admin-soft)]" aria-label="Close" onClick={onClose}>
@@ -81,42 +81,43 @@ export function ProductConfigureModal({
           </button>
         </div>
 
-        {variants.length > 0 ? (
+        {options.length > 1 ? (
           <fieldset className="mt-4">
             <legend className="text-sm font-semibold">Size / variant</legend>
             <div className="mt-2 flex flex-wrap gap-2">
-              {variants.map((variant) => (
+              {options.map((option) => (
                 <button
-                  key={variant.label}
+                  key={option.id}
                   type="button"
-                  onClick={() => setVariantLabel(variant.label)}
-                  className={`min-h-11 rounded-xl px-3 text-sm font-semibold ${
-                    variantLabel === variant.label
+                  disabled={option.available === false}
+                  onClick={() => setSkuId(option.id)}
+                  className={`min-h-11 rounded-xl px-3 text-sm font-semibold disabled:opacity-40 ${
+                    sku?.id === option.id
                       ? "bg-[var(--brand-red)] text-white"
                       : "border border-[var(--admin-border)]"
                   }`}
                 >
-                  {variant.label} · {formatPkr(variant.price)}
+                  {option.sizeLabel ?? option.name} · {formatPkr(option.price)}
                 </button>
               ))}
             </div>
           </fieldset>
         ) : null}
 
-        {(item.modifierGroups ?? []).map((group) => (
-          <fieldset key={group.code} className="mt-4">
+        {(sku?.modifierGroups ?? []).map((modifierGroup) => (
+          <fieldset key={modifierGroup.code} className="mt-4">
             <legend className="text-sm font-semibold">
-              {group.name}
-              {group.isRequired || group.minSelect > 0 ? " *" : ""}
+              {modifierGroup.name}
+              {modifierGroup.isRequired || modifierGroup.minSelect > 0 ? " *" : ""}
             </legend>
             <div className="mt-2 space-y-2">
-              {group.options.map((opt) => (
+              {modifierGroup.options.map((opt) => (
                 <label key={opt.code} className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--admin-border)] px-3 text-sm">
                   <input
                     type="radio"
-                    name={group.code}
-                    checked={selectedOptions[group.code] === opt.code}
-                    onChange={() => setSelectedOptions((prev) => ({ ...prev, [group.code]: opt.code }))}
+                    name={modifierGroup.code}
+                    checked={selectedOptions[modifierGroup.code] === opt.code}
+                    onChange={() => setSelectedOptions((prev) => ({ ...prev, [modifierGroup.code]: opt.code }))}
                   />
                   <span className="flex-1">{opt.name}</span>
                   <span className="tabular-nums text-[var(--admin-muted)]">
@@ -142,17 +143,19 @@ export function ProductConfigureModal({
 
         <button
           type="button"
-          className="mt-5 min-h-12 w-full rounded-xl bg-[var(--brand-red)] text-sm font-semibold text-white"
+          disabled={!sku || sku.available === false}
+          className="mt-5 min-h-12 w-full rounded-xl bg-[var(--brand-red)] text-sm font-semibold text-white disabled:opacity-40"
           onClick={() => {
-            if (!item.slug) return;
+            if (!sku) return;
             onAdd({
-              menuItemSlug: item.slug,
-              productName: item.name,
-              variantLabel: variantLabel || undefined,
+              menuItemId: sku.id,
+              menuItemSlug: sku.slug ?? sku.id,
+              productName: sku.name,
+              variantLabel: sku.sizeLabel,
               unitPrice,
               quantity,
               modifiers,
-              image: item.image,
+              image: sku.image,
             });
             onClose();
           }}

@@ -179,10 +179,10 @@ export const STATIC_MODIFIER_GROUPS: ModifierGroupDef[] = [
     isRequired: false,
     sortOrder: 70,
     options: [
-      { code: "drink-345ml", name: "Drink 345ml", priceDelta: 70, linkedMenuItemSlug: "drink-345ml", sortOrder: 1 },
-      { code: "drink-500ml", name: "Drink 500ml", priceDelta: 110, linkedMenuItemSlug: "drink-500ml", sortOrder: 2 },
-      { code: "drink-1l", name: "Drink 1L", priceDelta: 170, linkedMenuItemSlug: "drink-1l", sortOrder: 3 },
-      { code: "drink-1-5l", name: "Drink 1.5L", priceDelta: 210, linkedMenuItemSlug: "drink-1-5l", sortOrder: 4 },
+      { code: "drink-345ml", name: "Drink 345ml", priceDelta: 90, linkedMenuItemSlug: "drink-345ml", sortOrder: 1 },
+      { code: "drink-500ml", name: "Drink 500ml", priceDelta: 140, linkedMenuItemSlug: "drink-500ml", sortOrder: 2 },
+      { code: "drink-1l", name: "Drink 1L", priceDelta: 200, linkedMenuItemSlug: "drink-1l", sortOrder: 3 },
+      { code: "drink-1-5l", name: "Drink 1.5L", priceDelta: 250, linkedMenuItemSlug: "drink-1-5l", sortOrder: 4 },
     ],
   },
   {
@@ -194,9 +194,9 @@ export const STATIC_MODIFIER_GROUPS: ModifierGroupDef[] = [
     isRequired: false,
     sortOrder: 80,
     options: [
-      { code: "french-fries", name: "French Fries", priceDelta: 199, linkedMenuItemSlug: "french-fries", sortOrder: 1 },
-      { code: "family-fries", name: "Family Fries", priceDelta: 350, linkedMenuItemSlug: "family-fries", sortOrder: 2 },
-      { code: "loaded-fries", name: "Loaded Fries", priceDelta: 650, linkedMenuItemSlug: "loaded-fries", sortOrder: 3 },
+      { code: "french-fries", name: "French Fries", priceDelta: 250, linkedMenuItemSlug: "french-fries", sortOrder: 1 },
+      { code: "family-fries", name: "Family Fries", priceDelta: 390, linkedMenuItemSlug: "family-fries", sortOrder: 2 },
+      { code: "loaded-fries", name: "Loaded Fries", priceDelta: 790, linkedMenuItemSlug: "loaded-fries", sortOrder: 3 },
     ],
   },
 ];

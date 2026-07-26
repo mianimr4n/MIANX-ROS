@@ -17,6 +17,7 @@ export function AvailabilityPanel({ product }: { product: MenuCatalogItemView })
       <ul className="mt-3 space-y-2 text-sm">
         {AVAILABILITY_ROWS.map((row) => {
           const showLive = row.key === "available";
+          const availableNow = product.available !== false;
           return (
             <li
               key={row.key}
@@ -24,8 +25,12 @@ export function AvailabilityPanel({ product }: { product: MenuCatalogItemView })
             >
               <span>{row.label}</span>
               {showLive ? (
-                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">
-                  Live — visible
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                    availableNow ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-800"
+                  }`}
+                >
+                  {availableNow ? "Live — visible" : "Unavailable"}
                 </span>
               ) : (
                 <span className="rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
@@ -37,7 +42,8 @@ export function AvailabilityPanel({ product }: { product: MenuCatalogItemView })
         })}
       </ul>
       <p className="mt-3 text-xs text-[var(--admin-muted)]">
-        Read catalog returns only active, available rows for {product.name}. Hidden inventory states require admin menu APIs.
+        Availability for {product.name} is edited in the Pricing panel and applies globally to every
+        branch. Time-based and per-branch schedules remain foundation-only.
       </p>
     </section>
   );

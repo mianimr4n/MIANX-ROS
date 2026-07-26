@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Link } from "wouter";
 import { ChevronRight } from "lucide-react";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
-import { getItemsByCategory, getItemsByIds } from "@/lib/menu-utils";
+import { getGroupsByIds, getItemsByCategory } from "@/lib/menu-utils";
 import { ProductCard } from "@/components/menu/ProductCard";
 
 type MenuSectionRowProps = {
@@ -26,16 +26,16 @@ export function MenuSectionRow({
   viewAllCategory,
   dark = false,
 }: MenuSectionRowProps) {
-  const { items: catalogItems } = useMenuCatalog();
+  const { groups: catalogGroups } = useMenuCatalog();
 
   const items = useMemo(
     () =>
       itemIds
-        ? getItemsByIds(catalogItems, itemIds)
+        ? getGroupsByIds(catalogGroups, itemIds)
         : category
-          ? getItemsByCategory(catalogItems, category).slice(0, limit)
+          ? getItemsByCategory(catalogGroups, category).slice(0, limit)
           : [],
-    [catalogItems, category, itemIds, limit],
+    [catalogGroups, category, itemIds, limit],
   );
 
   if (items.length === 0) {
@@ -70,8 +70,8 @@ export function MenuSectionRow({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {items.map((item, index) => (
-            <ProductCard key={item.id} item={item} index={index} />
+          {items.map((group, index) => (
+            <ProductCard key={group.productGroupSlug} group={group} index={index} />
           ))}
         </div>
       </div>

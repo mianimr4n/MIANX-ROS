@@ -55,6 +55,8 @@ export interface CreateWebsiteOrderPayload {
   notes?: string;
   couponCode?: string;
   items: Array<{
+    /** Preferred: exact sellable SKU id. Slug stays for legacy carts persisted before SKUs. */
+    menuItemId?: string;
     menuItemSlug: string;
     variantLabel?: string;
     quantity: number;

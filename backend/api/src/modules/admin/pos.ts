@@ -18,35 +18,44 @@ import type { OrdersDataSource } from "../../services/orders/types.js";
 import { createClient } from "@supabase/supabase-js";
 import type { EnvironmentStatus } from "../../config/env.js";
 
-const orderItemSchema = z.object({
-  menuItemSlug: z.string().min(1).max(100),
-  variantLabel: z.string().max(100).optional(),
-  quantity: z.number().int().positive().max(20),
-  unitPrice: z.number().nonnegative().optional(),
-  productName: z.string().min(1).max(150).optional(),
-  variantName: z.string().max(100).optional(),
-  instructions: z.string().max(250).optional(),
-  toppings: z.array(z.object({ slug: z.string().min(1).max(100) })).max(20).optional(),
-  extras: z
-    .array(
-      z.object({
-        label: z.string().min(1).max(100).optional(),
-        slug: z.string().min(1).max(100).optional(),
-        price: z.number().nonnegative().optional(),
-      }),
-    )
-    .max(20)
-    .optional(),
-  modifiers: z
-    .array(
-      z.object({
-        groupCode: z.string().min(1).max(80),
-        optionCode: z.string().min(1).max(80),
-      }),
-    )
-    .max(40)
-    .optional(),
-});
+const orderItemSchema = z
+  .object({
+    /** Preferred: exact sellable SKU. */
+    menuItemId: z.string().uuid().optional(),
+    /** Canonical SKU slug, or a legacy product-family slug. */
+    menuItemSlug: z.string().min(1).max(100).optional(),
+    /** LEGACY size hint; not required for new orders. */
+    variantLabel: z.string().max(100).optional(),
+    quantity: z.number().int().positive().max(20),
+    unitPrice: z.number().nonnegative().optional(),
+    productName: z.string().min(1).max(150).optional(),
+    variantName: z.string().max(100).optional(),
+    instructions: z.string().max(250).optional(),
+    toppings: z.array(z.object({ slug: z.string().min(1).max(100) })).max(20).optional(),
+    extras: z
+      .array(
+        z.object({
+          label: z.string().min(1).max(100).optional(),
+          slug: z.string().min(1).max(100).optional(),
+          price: z.number().nonnegative().optional(),
+        }),
+      )
+      .max(20)
+      .optional(),
+    modifiers: z
+      .array(
+        z.object({
+          groupCode: z.string().min(1).max(80),
+          optionCode: z.string().min(1).max(80),
+        }),
+      )
+      .max(40)
+      .optional(),
+  })
+  .refine((item) => Boolean(item.menuItemId ?? item.menuItemSlug), {
+    message: "Each item requires menuItemId or menuItemSlug.",
+    path: ["menuItemId"],
+  });
 
 const createPosOrderSchema = z.object({
   branchCode: z.string().min(2).max(100),

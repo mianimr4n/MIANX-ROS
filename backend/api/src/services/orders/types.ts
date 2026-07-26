@@ -6,7 +6,11 @@ export interface OrderLineExtra {
 }
 
 export interface CreateOrderItemInput {
-  menuItemSlug: string;
+  /** Preferred: the canonical sellable SKU id. */
+  menuItemId?: string;
+  /** Canonical SKU slug, or a legacy product-family slug. */
+  menuItemSlug?: string;
+  /** LEGACY size hint for pre-SKU clients; resolved against sibling SKU size labels. */
   variantLabel?: string;
   quantity: number;
   /** Ignored by server. */
@@ -42,8 +46,11 @@ export interface QuoteOrderResult {
     orderType: string;
   };
   items: Array<{
+    /** The exact sellable SKU the server priced. */
+    menuItemId: string;
     menuItemSlug: string;
     productName: string;
+    /** Size/option label of the priced SKU. */
     variantName: string | null;
     quantity: number;
     foodUnitPrice: number;
