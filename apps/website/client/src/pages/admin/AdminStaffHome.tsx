@@ -1,3 +1,4 @@
+import { AdminSectionTitle } from "@/components/admin/AdminKpiCard";
 import {
   DashboardActionCard,
   DashboardActionGrid,
@@ -33,13 +34,39 @@ export default function AdminStaffHome() {
   }
   if (!allowed) return null;
 
-  const entries = filterVisibleAdminNav(principal).filter((item) => item.available);
+  // Rank day-to-day work surfaces first: operational modules before overview/management entries.
+  const groupRank = (group: string) => {
+    const rank = ["Operations", "Commerce", "Customers", "Overview", "Management", "Intelligence", "System"].indexOf(group);
+    return rank === -1 ? Number.MAX_SAFE_INTEGER : rank;
+  };
+  const entries = filterVisibleAdminNav(principal)
+    .filter((item) => item.available)
+    .sort((a, b) => groupRank(a.group) - groupRank(b.group));
+  const [firstEntry, ...restEntries] = entries;
 
   return (
     <RoleHomeShell
       title="Staff home"
       subtitle={`${profile?.fullName ?? "Staff"} · ${primaryRoleLabel(roles, isSuperAdmin)} · ${branchLabel}`}
       state="LIVE"
+      primaryAction={
+        firstEntry ? (
+          <DashboardActionCard
+            title={`Open ${firstEntry.label}`}
+            description={firstEntry.group}
+            href={firstEntry.href}
+            primary
+          />
+        ) : null
+      }
+      secondaryActions={restEntries.slice(0, 3).map((item) => (
+        <DashboardActionCard
+          key={item.key}
+          title={`Open ${item.label}`}
+          description={item.group}
+          href={item.href}
+        />
+      ))}
     >
       <div className="mb-8 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">Account</p>
@@ -58,30 +85,35 @@ export default function AdminStaffHome() {
             <dt className="text-xs text-[var(--admin-muted)]">Branch</dt>
             <dd className="text-sm font-semibold text-[var(--admin-ink)]">{branchLabel}</dd>
           </div>
-          <div>
-            <dt className="text-xs text-[var(--admin-muted)]">Roles (codes)</dt>
-            <dd className="text-sm font-semibold text-[var(--admin-ink)]">
-              {roles.length ? roles.join(", ") : "—"}
-            </dd>
-          </div>
         </dl>
         <p className="mt-4 text-sm text-[var(--admin-muted)]">
-          This home shows only modules your permissions unlock. Operational KPI boards are not shown
-          here.
+          You only see the areas your account can open. There are no performance numbers on this page.
         </p>
       </div>
 
-      <DashboardActionGrid>
-        {entries.length === 0 ? (
-          <p className="text-sm text-[var(--admin-muted)] sm:col-span-2 lg:col-span-3">
-            No permitted admin modules for this account. Ask an Owner to assign roles or permissions.
-          </p>
-        ) : (
-          entries.map((item) => (
-            <DashboardActionCard key={item.key} title={item.label} href={item.href} description={item.group} />
-          ))
-        )}
-      </DashboardActionGrid>
+      {entries.length === 0 ? (
+        <p className="text-sm text-[var(--admin-muted)]">
+          Your account has no work areas yet. Ask an Owner to assign your role or permissions.
+        </p>
+      ) : restEntries.length > 3 ? (
+        <>
+          <AdminSectionTitle
+            eyebrow="More"
+            title="Other areas you can open"
+            description="Everything else your account has access to."
+          />
+          <DashboardActionGrid>
+            {restEntries.slice(3).map((item) => (
+              <DashboardActionCard
+                key={item.key}
+                title={`Open ${item.label}`}
+                href={item.href}
+                description={item.group}
+              />
+            ))}
+          </DashboardActionGrid>
+        </>
+      ) : null}
     </RoleHomeShell>
   );
 }

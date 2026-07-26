@@ -1,8 +1,5 @@
 import { AdminKpiCard, AdminKpiSkeleton, AdminSectionTitle } from "@/components/admin/AdminKpiCard";
-import {
-  DashboardActionCard,
-  DashboardActionGrid,
-} from "@/components/admin/dashboard/DashboardActionCard";
+import { DashboardActionCard } from "@/components/admin/dashboard/DashboardActionCard";
 import { RoleHomeShell } from "@/components/admin/dashboard/RoleHomeShell";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
@@ -94,19 +91,34 @@ export default function AdminCashierHome() {
       }}
       correlationId={opsOp.correlationId ?? tableOp.correlationId}
       showTechnicalDetail={isSuperAdmin}
-      actions={
-        <DashboardActionCard title="Open POS" description="Primary cashier workstation" href="/admin/pos" primary />
+      primaryAction={
+        <DashboardActionCard
+          title="Open POS"
+          description="Take orders and payments"
+          href="/admin/pos"
+          primary
+        />
+      }
+      secondaryActions={
+        <>
+          {canOps ? (
+            <DashboardActionCard title="Review orders" description="Today's order list" href="/admin/orders" />
+          ) : null}
+          {canTable ? (
+            <DashboardActionCard title="Open live floor" description="Tables and bills" href="/admin/floor" />
+          ) : null}
+        </>
       }
     >
       <AdminSectionTitle
         eyebrow="Today"
         title="Counter work"
-        description="Assigned branch only. No owner finance totals."
+        description="Your branch only. Pickups and bills that need you come first."
       />
 
       {!canOps && !canTable ? (
         <p className="mb-6 text-sm text-[var(--admin-muted)]">
-          No operational metrics permitted for this account. Use Open POS to start selling.
+          No counter numbers are available for this account. Use Open POS to start selling.
         </p>
       ) : null}
 
@@ -120,32 +132,13 @@ export default function AdminCashierHome() {
           </>
         ) : null}
         {canOps && opsOp.data ? (
-          <>
-            <AdminKpiCard
-              title="Active orders"
-              value={String(opsOp.data.kpis.activeOrders)}
-              source="LIVE"
-              state={opsKpi}
-            />
-            <AdminKpiCard
-              title="Pending"
-              value={String(opsOp.data.statusCounts.pending ?? 0)}
-              source="LIVE"
-              state={opsKpi}
-            />
-            <AdminKpiCard
-              title="Ready pickup"
-              value={String(opsOp.data.statusCounts.ready ?? 0)}
-              source="LIVE"
-              state={opsKpi}
-            />
-            <AdminKpiCard
-              title="Completed (loaded)"
-              value={String(opsOp.data.statusCounts.completed ?? 0)}
-              source="LIVE"
-              state={opsKpi}
-            />
-          </>
+          <AdminKpiCard
+            title="Ready for pickup"
+            value={String(opsOp.data.statusCounts.ready ?? 0)}
+            source="LIVE"
+            state={opsKpi}
+            detail="Orders waiting at the counter"
+          />
         ) : null}
         {canTable && tableOp.data ? (
           <>
@@ -165,13 +158,30 @@ export default function AdminCashierHome() {
             />
           </>
         ) : null}
+        {canOps && opsOp.data ? (
+          <>
+            <AdminKpiCard
+              title="Active orders"
+              value={String(opsOp.data.kpis.activeOrders)}
+              source="LIVE"
+              state={opsKpi}
+            />
+            <AdminKpiCard
+              title="Pending"
+              value={String(opsOp.data.statusCounts.pending ?? 0)}
+              source="LIVE"
+              state={opsKpi}
+            />
+            <AdminKpiCard
+              title="Completed so far"
+              value={String(opsOp.data.statusCounts.completed ?? 0)}
+              source="LIVE"
+              state={opsKpi}
+              detail="Completed orders in the loaded list"
+            />
+          </>
+        ) : null}
       </div>
-
-      <DashboardActionGrid>
-        <DashboardActionCard title="Open POS" href="/admin/pos" primary />
-        {canOps ? <DashboardActionCard title="Orders" href="/admin/orders" /> : null}
-        {canTable ? <DashboardActionCard title="Live floor" href="/admin/floor" /> : null}
-      </DashboardActionGrid>
     </RoleHomeShell>
   );
 }

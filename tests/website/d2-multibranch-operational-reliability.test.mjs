@@ -141,31 +141,33 @@ describe("D2 — dashboards never render failure as zero", () => {
   it("KPI card supports a distinct stale state that keeps the last value visible", () => {
     const src = read("apps/website/client/src/components/admin/AdminKpiCard.tsx");
     assert.match(src, /\| "stale"/);
-    assert.match(src, /stale: "Stale"/);
+    assert.match(src, /stale: "Earlier data"/);
   });
 });
 
 describe("D2 — role dashboards and staff homes", () => {
   it("cashier-only staff land on POS, rider-only staff on Delivery", () => {
     const redirect = read("apps/website/client/src/pages/admin/AdminIndexRedirect.tsx");
-    assert.match(redirect, /isCashierOnly/);
-    assert.match(redirect, /isRiderOnly/);
-    assert.match(redirect, /\/admin\/pos/);
-    assert.match(redirect, /\/admin\/delivery/);
+    const access = read("apps/website/client/src/lib/admin-access.ts");
+    assert.match(redirect, /resolveStaffHome/);
+    assert.match(access, /isCashierOnly/);
+    assert.match(access, /isRiderOnly/);
+    assert.match(access, /\/admin\/home\/cashier/);
+    assert.match(access, /\/admin\/home\/delivery/);
   });
 
   it("Executive dashboard redirects staff-only roles away from owner metrics", () => {
     const dashboard = read("apps/website/client/src/pages/admin/AdminDashboard.tsx");
-    assert.match(dashboard, /isCashierOnly/);
-    assert.match(dashboard, /isRiderOnly/);
+    assert.match(dashboard, /resolveStaffHome/);
+    assert.match(dashboard, /home !== "\/admin\/dashboard"/);
   });
 
   it("staff shells hide owner modules for cashier-only and rider-only roles", () => {
     const access = read("apps/website/client/src/lib/admin-access.ts");
     assert.match(access, /export function isCashierOnly/);
     assert.match(access, /export function isRiderOnly/);
-    assert.match(access, /cashier home is POS/);
-    assert.match(access, /rider home is Delivery/);
+    assert.match(access, /D4 cashier home is `\/admin\/home\/cashier`/);
+    assert.match(access, /D4 rider home is `\/admin\/home\/delivery`/);
   });
 
   it("owner cross-branch drill-down opens the scoped branch dashboard", () => {

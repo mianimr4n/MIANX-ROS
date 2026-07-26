@@ -1,8 +1,5 @@
 import { AdminKpiCard, AdminKpiSkeleton, AdminSectionTitle } from "@/components/admin/AdminKpiCard";
-import {
-  DashboardActionCard,
-  DashboardActionGrid,
-} from "@/components/admin/dashboard/DashboardActionCard";
+import { DashboardActionCard } from "@/components/admin/dashboard/DashboardActionCard";
 import { RoleHomeShell } from "@/components/admin/dashboard/RoleHomeShell";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
@@ -57,6 +54,14 @@ export default function AdminHostHome() {
           ? ("stale" as const)
           : ("available" as const);
 
+  const canSeat = canSeatGuests(principal);
+  const canReserve = canManageReservations(principal);
+  const quietDay =
+    d != null &&
+    d.reservations.todayTotal === 0 &&
+    d.floor.upcomingArrivals === 0 &&
+    d.floor.waitlistCount === 0;
+
   return (
     <RoleHomeShell
       title="Host / Front desk"
@@ -67,16 +72,48 @@ export default function AdminHostHome() {
       onRetry={tableOp.retry}
       correlationId={tableOp.correlationId}
       showTechnicalDetail={isSuperAdmin}
+      primaryAction={
+        canSeat ? (
+          <DashboardActionCard
+            title="Seat a guest"
+            description="Open the live floor"
+            href="/admin/floor"
+            primary
+          />
+        ) : (
+          <DashboardActionCard
+            title="Open live floor"
+            description="Tables and seating"
+            href="/admin/floor"
+            primary
+          />
+        )
+      }
+      secondaryActions={
+        canReserve ? (
+          <>
+            <DashboardActionCard title="Create reservation" description="Book a table" href="/admin/reservations" />
+            <DashboardActionCard title="Add to waitlist" description="Walk-in guests" href="/admin/waitlist" />
+          </>
+        ) : null
+      }
     >
       <AdminSectionTitle
         eyebrow="Today"
-        title="Reservations & seating"
-        description="Stored reservation and live floor metrics for your assigned branch."
+        title="Arrivals & seating"
+        description="Who is arriving, who is waiting, and which tables are free at your branch."
       />
 
       {!branchId ? (
         <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          Select an assigned branch to load table-service KPIs.
+          Select an assigned branch to see today's arrivals and tables.
+        </p>
+      ) : null}
+
+      {quietDay ? (
+        <p className="mb-6 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-3 text-sm text-[var(--admin-muted)]">
+          No reservations or waitlist entries yet today.{" "}
+          {canReserve ? "A good next step: create a reservation for an expected party." : "Walk-ins can be seated from the live floor."}
         </p>
       ) : null}
 
@@ -91,12 +128,12 @@ export default function AdminHostHome() {
         ) : null}
         {d ? (
           <>
-            <AdminKpiCard title="Reservations today" value={String(d.reservations.todayTotal)} source="LIVE" state={kpi} />
             <AdminKpiCard title="Upcoming arrivals" value={String(d.floor.upcomingArrivals)} source="LIVE" state={kpi} />
-            <AdminKpiCard title="Unconfirmed" value={String(d.reservations.pending)} source="LIVE" state={kpi} />
-            <AdminKpiCard title="Arrived" value={String(d.reservations.arrived)} source="LIVE" state={kpi} />
             <AdminKpiCard title="Waitlist" value={String(d.floor.waitlistCount)} source="LIVE" state={kpi} />
             <AdminKpiCard title="Available tables" value={String(d.floor.availableTables)} source="LIVE" state={kpi} />
+            <AdminKpiCard title="Reservations today" value={String(d.reservations.todayTotal)} source="LIVE" state={kpi} />
+            <AdminKpiCard title="Unconfirmed" value={String(d.reservations.pending)} source="LIVE" state={kpi} />
+            <AdminKpiCard title="Arrived" value={String(d.reservations.arrived)} source="LIVE" state={kpi} />
             <AdminKpiCard title="Seating conflicts" value={String(d.floor.seatingConflicts)} source="LIVE" state={kpi} />
             <AdminKpiCard title="No-shows" value={String(d.reservations.noShows)} source="LIVE" state={kpi} />
             <AdminKpiCard
@@ -109,24 +146,6 @@ export default function AdminHostHome() {
           </>
         ) : null}
       </div>
-
-      <DashboardActionGrid>
-        {canManageReservations(principal) ? (
-          <DashboardActionCard
-            title="Create reservation"
-            href="/admin/reservations"
-            primary
-            description="Open reservations workspace"
-          />
-        ) : null}
-        {canManageReservations(principal) ? (
-          <DashboardActionCard title="Add to waitlist" href="/admin/waitlist" />
-        ) : null}
-        {canSeatGuests(principal) ? (
-          <DashboardActionCard title="Seat guest" href="/admin/floor" description="Live floor seating" />
-        ) : null}
-        <DashboardActionCard title="Open live floor" href="/admin/floor" />
-      </DashboardActionGrid>
     </RoleHomeShell>
   );
 }

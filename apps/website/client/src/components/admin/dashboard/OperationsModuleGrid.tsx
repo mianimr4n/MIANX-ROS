@@ -37,11 +37,11 @@ const MODULES: ModuleDef[] = [
   },
   {
     title: "Kitchen",
-    description: "Prep queue, ready tickets, and delays.",
-    href: "/admin/kitchen",
+    description: "Live kitchen display — tickets, prep, and delays.",
+    href: "/admin/kitchen-dashboard",
     icon: CookingPot,
     moduleState: "operational",
-    actionLabel: "Open kitchen",
+    actionLabel: "Open kitchen display",
     navigable: true,
   },
   {
@@ -73,7 +73,7 @@ const MODULES: ModuleDef[] = [
   },
   {
     title: "Inventory",
-    description: "Stock control foundation — ledger pending.",
+    description: "Stock records — automatic alerts arrive later.",
     href: "/admin/inventory",
     icon: Package,
     moduleState: "limited",
@@ -82,7 +82,7 @@ const MODULES: ModuleDef[] = [
   },
   {
     title: "Finance",
-    description: "Sales and ledger foundation — GL pending.",
+    description: "Sales records — full ledger arrives later.",
     href: "/admin/finance",
     icon: Wallet,
     moduleState: "limited",
@@ -91,7 +91,7 @@ const MODULES: ModuleDef[] = [
   },
   {
     title: "Employees",
-    description: "Workforce foundation — directory and payroll pending.",
+    description: "Staff directory — payroll arrives later.",
     href: "/admin/hr",
     icon: UtensilsCrossed,
     moduleState: "limited",
@@ -100,7 +100,7 @@ const MODULES: ModuleDef[] = [
   },
   {
     title: "Reports",
-    description: "Executive BI — live today data, trends pending.",
+    description: "Today's sales and orders — trends arrive later.",
     href: "/admin/reports",
     icon: Banknote,
     moduleState: "limited",
@@ -109,7 +109,7 @@ const MODULES: ModuleDef[] = [
   },
   {
     title: "Settings",
-    description: "Governance foundation — verified read-only config.",
+    description: "Branch and system configuration.",
     href: "/admin/settings",
     icon: Settings,
     moduleState: "limited",
@@ -120,15 +120,12 @@ const MODULES: ModuleDef[] = [
 
 export function OperationsModuleGrid() {
   return (
-    <section aria-labelledby="operations-grid-heading">
+    <section aria-label="Operations modules">
       <AdminSectionTitle
         eyebrow="Operations"
         title="Command modules"
-        description="Verified Admin ERP entry points. Planned modules stay disabled."
+        description="Everything you can open today. Modules that aren't ready stay disabled."
       />
-      <h2 id="operations-grid-heading" className="sr-only">
-        Operations modules
-      </h2>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {MODULES.map((module) => (
           <AdminModuleCard key={module.title} {...module} />

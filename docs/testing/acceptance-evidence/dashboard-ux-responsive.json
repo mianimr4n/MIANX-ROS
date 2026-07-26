@@ -1,0 +1,526 @@
+{
+  "generatedAt": "2026-07-26T21:03:08.992Z",
+  "exitCode": 0,
+  "rows": [
+    {
+      "persona": "super-admin",
+      "viewport": "mobile-360",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 6,
+      "result": "PASS"
+    },
+    {
+      "persona": "super-admin",
+      "viewport": "mobile-390",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 19,
+      "result": "PASS"
+    },
+    {
+      "persona": "super-admin",
+      "viewport": "tablet-768",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 6,
+      "result": "PASS"
+    },
+    {
+      "persona": "super-admin",
+      "viewport": "laptop-1024",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 6,
+      "result": "PASS"
+    },
+    {
+      "persona": "super-admin",
+      "viewport": "desktop-1440",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 6,
+      "result": "PASS"
+    },
+    {
+      "persona": "owner",
+      "viewport": "mobile-360",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 19,
+      "result": "PASS"
+    },
+    {
+      "persona": "owner",
+      "viewport": "mobile-390",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 6,
+      "result": "PASS"
+    },
+    {
+      "persona": "owner",
+      "viewport": "tablet-768",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 6,
+      "result": "PASS"
+    },
+    {
+      "persona": "owner",
+      "viewport": "laptop-1024",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 6,
+      "result": "PASS"
+    },
+    {
+      "persona": "owner",
+      "viewport": "desktop-1440",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 6,
+      "result": "PASS"
+    },
+    {
+      "persona": "configuration",
+      "viewport": "mobile-360",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "configuration",
+      "viewport": "mobile-390",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "configuration",
+      "viewport": "tablet-768",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "configuration",
+      "viewport": "laptop-1024",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "configuration",
+      "viewport": "desktop-1440",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "assigned-manager",
+      "viewport": "mobile-360",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 5,
+      "result": "PASS"
+    },
+    {
+      "persona": "assigned-manager",
+      "viewport": "mobile-390",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 5,
+      "result": "PASS"
+    },
+    {
+      "persona": "assigned-manager",
+      "viewport": "tablet-768",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 13,
+      "result": "PASS"
+    },
+    {
+      "persona": "assigned-manager",
+      "viewport": "laptop-1024",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 13,
+      "result": "PASS"
+    },
+    {
+      "persona": "assigned-manager",
+      "viewport": "desktop-1440",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 5,
+      "result": "PASS"
+    },
+    {
+      "persona": "branch-manager",
+      "viewport": "mobile-360",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 2,
+      "result": "PASS"
+    },
+    {
+      "persona": "branch-manager",
+      "viewport": "mobile-390",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 2,
+      "result": "PASS"
+    },
+    {
+      "persona": "branch-manager",
+      "viewport": "tablet-768",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 2,
+      "result": "PASS"
+    },
+    {
+      "persona": "branch-manager",
+      "viewport": "laptop-1024",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 2,
+      "result": "PASS"
+    },
+    {
+      "persona": "branch-manager",
+      "viewport": "desktop-1440",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 2,
+      "result": "PASS"
+    },
+    {
+      "persona": "cashier",
+      "viewport": "mobile-360",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "cashier",
+      "viewport": "mobile-390",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "cashier",
+      "viewport": "tablet-768",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "cashier",
+      "viewport": "laptop-1024",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "cashier",
+      "viewport": "desktop-1440",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "host",
+      "viewport": "mobile-360",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "host",
+      "viewport": "mobile-390",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "host",
+      "viewport": "tablet-768",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "host",
+      "viewport": "laptop-1024",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "host",
+      "viewport": "desktop-1440",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "waiter",
+      "viewport": "mobile-360",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "waiter",
+      "viewport": "mobile-390",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "waiter",
+      "viewport": "tablet-768",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "waiter",
+      "viewport": "laptop-1024",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "waiter",
+      "viewport": "desktop-1440",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "kitchen",
+      "viewport": "mobile-360",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "kitchen",
+      "viewport": "mobile-390",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "kitchen",
+      "viewport": "tablet-768",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "kitchen",
+      "viewport": "laptop-1024",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "kitchen",
+      "viewport": "desktop-1440",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "delivery",
+      "viewport": "mobile-360",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "delivery",
+      "viewport": "mobile-390",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "delivery",
+      "viewport": "tablet-768",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "delivery",
+      "viewport": "laptop-1024",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "delivery",
+      "viewport": "desktop-1440",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "general-staff",
+      "viewport": "mobile-360",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "general-staff",
+      "viewport": "mobile-390",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "general-staff",
+      "viewport": "tablet-768",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "general-staff",
+      "viewport": "laptop-1024",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "general-staff",
+      "viewport": "desktop-1440",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 0,
+      "result": "PASS"
+    },
+    {
+      "persona": "northern-bypass-manager",
+      "viewport": "mobile-360",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 2,
+      "result": "PASS"
+    },
+    {
+      "persona": "northern-bypass-manager",
+      "viewport": "mobile-390",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 2,
+      "result": "PASS"
+    },
+    {
+      "persona": "northern-bypass-manager",
+      "viewport": "tablet-768",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 2,
+      "result": "PASS"
+    },
+    {
+      "persona": "northern-bypass-manager",
+      "viewport": "laptop-1024",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 2,
+      "result": "PASS"
+    },
+    {
+      "persona": "northern-bypass-manager",
+      "viewport": "desktop-1440",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 2,
+      "result": "PASS"
+    },
+    {
+      "persona": "operations-command-center",
+      "viewport": "mobile-360",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 5,
+      "result": "PASS"
+    },
+    {
+      "persona": "operations-command-center",
+      "viewport": "mobile-390",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 5,
+      "result": "PASS"
+    },
+    {
+      "persona": "operations-command-center",
+      "viewport": "tablet-768",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 5,
+      "result": "PASS"
+    },
+    {
+      "persona": "operations-command-center",
+      "viewport": "laptop-1024",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 5,
+      "result": "PASS"
+    },
+    {
+      "persona": "operations-command-center",
+      "viewport": "desktop-1440",
+      "overflowX": false,
+      "clippedControls": 0,
+      "controlsUnder40px": 5,
+      "result": "PASS"
+    }
+  ]
+}

@@ -21,6 +21,10 @@ import {
 } from "@/components/admin/dashboard/LiveOperationsPanels";
 import { TableServiceSummary } from "@/components/admin/dashboard/TableServiceSummary";
 import { OpeningReadinessSummary } from "@/components/admin/dashboard/OpeningReadinessSummary";
+import {
+  DashboardActionCard,
+  DashboardActionGrid,
+} from "@/components/admin/dashboard/DashboardActionCard";
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
@@ -210,7 +214,7 @@ export default function AdminBranchManager() {
     <AdminShell title="Branch dashboard">
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-red-dark)]">
             Branch dashboard
           </p>
           <h2 className="mt-1 truncate text-2xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-3xl">
@@ -324,91 +328,136 @@ export default function AdminBranchManager() {
 
       <OpeningReadinessSummary
         token={token}
-        branchId={scopedBranchId}
-        enabled={gateReady && Boolean(scopedBranchId)}
+        branchId={scopedBranchId ?? allowedBranches[0]?.id ?? null}
+        enabled={gateReady && Boolean(scopedBranchId ?? allowedBranches[0]?.id)}
         showTechnicalDetail={isSuperAdmin}
       />
+      {!scopedBranchId && allowedBranches[0]?.id ? (
+        <p className="mb-6 -mt-4 text-sm text-[var(--admin-muted)]">
+          Opening readiness uses your first assigned branch as an anchor. Select a branch to focus
+          setup blockers.
+        </p>
+      ) : null}
 
       {comingSoonBranch ? (
-        <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          This branch is coming soon. Complete opening readiness before treating sales or table KPIs as
-          live. Primary action: Complete Opening Readiness.
-        </div>
+        <section className="mb-8" aria-label="Start here">
+          <AdminSectionTitle
+            eyebrow="Start here"
+            title="Complete opening readiness"
+            description="This branch is coming soon. Finish setup before treating sales or table KPIs as live."
+          />
+          <DashboardActionGrid>
+            <DashboardActionCard
+              primary
+              title="Complete opening readiness"
+              description="Open branch and system settings"
+              href="/admin/settings"
+            />
+            <DashboardActionCard
+              title="Review readiness checklist"
+              description="See blockers on this page"
+              href="/admin/branch"
+            />
+          </DashboardActionGrid>
+          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            Coming soon — no live order or sales board until the branch is operating.
+          </div>
+        </section>
       ) : null}
 
       {!comingSoonBranch ? (
-      <section aria-label="Branch KPIs" className="mb-8">
+      <section aria-label="Needs attention" className="mb-8">
         <AdminSectionTitle
-          eyebrow="Today"
-          title="Branch KPIs"
-          description="Classified from the operations API for this branch. No fabricated trends."
+          eyebrow="Now"
+          title="Needs attention"
+          description="Orders and queues that need action right now. Missing data shows as — never as zero."
         />
         {loading && !data ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5" aria-busy="true">
-            {Array.from({ length: 10 }).map((_, index) => (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
+            {Array.from({ length: 6 }).map((_, index) => (
               <AdminKpiSkeleton key={index} />
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <AdminKpiCard
-              title="Today's orders"
-              value={data ? String(data.kpis.todayOrders) : null}
-              source="LIVE"
-              state={kpiCardState}
-              detail="Non-cancelled orders today (branch scope)"
-            />
-            <AdminKpiCard
-              title="Today's sales"
-              value={data ? formatPkr(data.kpis.todayGrossSales) : null}
-              source="LIVE"
-              state={kpiCardState}
-              detail="Gross sales from today’s non-cancelled orders"
-            />
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <AdminKpiCard
               title="Pending orders"
               value={data && pending != null ? String(pending) : null}
               source="DERIVED"
               state={kpiCardState}
-              detail="Orders currently in pending status"
+              detail="New orders waiting to be confirmed"
             />
             <AdminKpiCard
               title="Kitchen queue"
               value={data ? String(data.kpis.kitchenWaiting) : null}
               source="DERIVED"
               state={kpiCardState}
-              detail="Confirmed + preparing — not a KDS ticket count"
+              detail="Orders confirmed or being prepared"
             />
             <AdminKpiCard
               title="Ready orders"
               value={data && ready != null ? String(ready) : null}
               source="DERIVED"
               state={kpiCardState}
-              detail="Orders in ready status"
+              detail="Waiting for pickup or dispatch"
             />
             <AdminKpiCard
-              title="Dispatch queue"
+              title="Out for delivery"
               value={data ? String(data.kpis.activeDeliveries) : null}
               source="DERIVED"
               state={kpiCardState}
               detail="Orders currently dispatched"
             />
             <AdminKpiCard
-              title="Cancelled orders"
-              value={data && cancelled != null ? String(cancelled) : null}
-              source="DERIVED"
-              state={kpiCardState}
-              detail="Cancelled count in today’s status map"
-            />
-            <AdminKpiCard
-              title="Customer waiting"
+              title="Customers waiting"
               value={data && customerWaiting != null ? String(customerWaiting) : null}
               source="DERIVED"
               state={kpiCardState}
-              detail="Pending + confirmed (proxy wait queue — not CSAT)"
+              detail="Pending plus confirmed orders"
             />
             <AdminKpiCard
-              title="Driver availability"
+              title="Cancelled today"
+              value={data && cancelled != null ? String(cancelled) : null}
+              source="DERIVED"
+              state={kpiCardState}
+              detail="Cancelled orders so far today"
+            />
+          </div>
+        )}
+      </section>
+      ) : null}
+
+      {!comingSoonBranch ? (
+      <section aria-label="Today so far" className="mb-8">
+        <AdminSectionTitle
+          eyebrow="Today"
+          title="Today so far"
+          description="Totals for this branch's business day."
+        />
+        {loading && !data ? (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <AdminKpiSkeleton key={index} />
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <AdminKpiCard
+              title="Today's orders"
+              value={data ? String(data.kpis.todayOrders) : null}
+              source="LIVE"
+              state={kpiCardState}
+              detail="Orders placed today (not counting cancelled)"
+            />
+            <AdminKpiCard
+              title="Today's sales"
+              value={data ? formatPkr(data.kpis.todayGrossSales) : null}
+              source="LIVE"
+              state={kpiCardState}
+              detail="Gross sales from today's orders"
+            />
+            <AdminKpiCard
+              title="Riders available"
               value={
                 riderAvailable == null
                   ? "—"
@@ -420,18 +469,11 @@ export default function AdminBranchManager() {
               unavailable={ridersError || riderAvailable == null}
               detail={
                 ridersError
-                  ? "Rider roster API unavailable for this session"
+                  ? "Rider list could not load for this session"
                   : riderAvailable == null
-                    ? "Roster not loaded"
-                    : "Available/active riders on branch roster"
+                    ? "Rider list not loaded"
+                    : "Available riders on this branch's roster"
               }
-            />
-            <AdminKpiCard
-              title="Inventory alerts"
-              value="—"
-              source="UNAVAILABLE"
-              unavailable
-              detail="Inventory alert engine not live"
             />
           </div>
         )}
@@ -500,13 +542,13 @@ export default function AdminBranchManager() {
             available={ordersApi}
           />
           <AdminModuleCard
-            title="Kitchen"
-            description="Monitor prep queue and load for this branch."
-            href="/admin/kitchen"
+            title="Kitchen display"
+            description="Live ticket queue, prep, and delays for this branch."
+            href="/admin/kitchen-dashboard"
             icon={CookingPot}
             statusLabel="Live"
             statusTone="live"
-            actionLabel="Open kitchen"
+            actionLabel="Open kitchen display"
             available
           />
           <AdminModuleCard
@@ -541,20 +583,20 @@ export default function AdminBranchManager() {
           />
           <AdminModuleCard
             title="Inventory"
-            description="Stock readiness — ledger alerts pending."
+            description="Stock records — automatic alerts arrive later."
             href="/admin/inventory"
             icon={Package}
-            statusLabel="Foundation"
+            statusLabel="Basic"
             statusTone="soon"
             actionLabel="Open inventory"
             available
           />
           <AdminModuleCard
             title="Staff schedule"
-            description="Attendance and shift foundation."
+            description="Staff directory — live attendance arrives later."
             href="/admin/hr"
             icon={UserRound}
-            statusLabel="Foundation"
+            statusLabel="Basic"
             statusTone="soon"
             actionLabel="Open staff"
             available
@@ -578,20 +620,24 @@ export default function AdminBranchManager() {
           title="Operations board"
           description="Recent orders and status-derived kitchen / delivery panels for this branch."
         />
-        <div className="grid gap-4 xl:grid-cols-3">
-          <div className="xl:col-span-1">
+        <div className="grid min-w-0 gap-4 xl:grid-cols-3">
+          <div className="min-w-0 xl:col-span-1">
             <RecentOrdersPanel orders={data?.recentOrders ?? []} />
           </div>
-          <KitchenStatusPanel
-            counts={dataReady ? status : null}
-            failed={opsFailed}
-          />
-          <DeliveryStatusPanel
-            activeDeliveries={dataReady ? (data?.kpis.activeDeliveries ?? null) : null}
-            readyCount={dataReady ? ready : null}
-            completedCount={dataReady ? (status?.completed ?? null) : null}
-            failed={opsFailed}
-          />
+          <div className="min-w-0">
+            <KitchenStatusPanel
+              counts={dataReady ? status : null}
+              failed={opsFailed}
+            />
+          </div>
+          <div className="min-w-0">
+            <DeliveryStatusPanel
+              activeDeliveries={dataReady ? (data?.kpis.activeDeliveries ?? null) : null}
+              readyCount={dataReady ? ready : null}
+              completedCount={dataReady ? (status?.completed ?? null) : null}
+              failed={opsFailed}
+            />
+          </div>
         </div>
       </section>
 
@@ -603,14 +649,11 @@ export default function AdminBranchManager() {
           />
           <AdminSurfaceBody>
             <p className="text-sm text-[var(--admin-muted)]">
-              <span className="font-semibold uppercase tracking-wide text-[10px] text-[var(--admin-muted)]">
-                Foundation
-              </span>
-              <br />
-              Current shift label above is approximate clock banding only. Live attendance is not wired.
+              Live attendance isn't connected yet. The shift shown above is an estimate based on the
+              time of day.
             </p>
-            <Link href="/admin/hr" className="mt-4 inline-flex text-sm font-semibold text-[var(--brand-red)]">
-              Open staff foundation →
+            <Link href="/admin/hr" className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-[var(--brand-red)]">
+              Open staff directory →
             </Link>
           </AdminSurfaceBody>
         </AdminSurface>
@@ -622,11 +665,11 @@ export default function AdminBranchManager() {
           />
           <AdminSurfaceBody>
             <ul className="space-y-2 text-sm text-[var(--admin-muted)]">
-              <li>Today’s sales / orders — available via Reports (Partial BI)</li>
-              <li>Hourly trend / top products / refunds — Foundation until analytics endpoints exist</li>
-              <li>Branch comparison — Unavailable on this surface (Owner only)</li>
+              <li>Today's sales and orders — available in Reports</li>
+              <li>Hourly trends, top products, and refunds — arrive in a later release</li>
+              <li>Branch comparison — Owner view only</li>
             </ul>
-            <Link href="/admin/reports" className="mt-4 inline-flex text-sm font-semibold text-[var(--brand-red)]">
+            <Link href="/admin/reports" className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-[var(--brand-red)]">
               Open reports →
             </Link>
           </AdminSurfaceBody>

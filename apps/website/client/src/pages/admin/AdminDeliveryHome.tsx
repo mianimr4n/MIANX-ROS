@@ -1,8 +1,5 @@
 import { AdminKpiCard, AdminKpiSkeleton, AdminSectionTitle } from "@/components/admin/AdminKpiCard";
-import {
-  DashboardActionCard,
-  DashboardActionGrid,
-} from "@/components/admin/dashboard/DashboardActionCard";
+import { DashboardActionCard } from "@/components/admin/dashboard/DashboardActionCard";
 import { RoleHomeShell } from "@/components/admin/dashboard/RoleHomeShell";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
@@ -79,14 +76,24 @@ export default function AdminDeliveryHome() {
       onRetry={assignmentsOp.retry}
       correlationId={assignmentsOp.correlationId}
       showTechnicalDetail={isSuperAdmin}
-      actions={
-        <DashboardActionCard title="Open delivery console" href="/admin/delivery" primary />
+      primaryAction={
+        <DashboardActionCard
+          title="Open delivery console"
+          description="Assign and track deliveries"
+          href="/admin/delivery"
+          primary
+        />
+      }
+      secondaryActions={
+        canOpenOpsDispatch ? (
+          <DashboardActionCard title="Open rider dispatch" description="Assign riders to orders" href="/ops/dispatch" />
+        ) : null
       }
     >
       <AdminSectionTitle
         eyebrow="Dispatch"
         title="Your branch deliveries"
-        description="Assignment queue from the delivery API. Cross-branch requests are rejected server-side."
+        description="Deliveries for your branch only. Orders waiting for a rider come first."
       />
 
       <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -102,22 +109,38 @@ export default function AdminDeliveryHome() {
         ) : null}
         {hasData ? (
           <>
-            <AdminKpiCard title="Waiting assignment" value={String(waiting.length)} source="LIVE" state={kpi} />
+            <AdminKpiCard
+              title="Waiting for a rider"
+              value={String(waiting.length)}
+              source="LIVE"
+              state={kpi}
+              detail="Ready or pending orders with no rider yet"
+            />
             <AdminKpiCard title="Assigned" value={String(assigned.length)} source="LIVE" state={kpi} />
-            <AdminKpiCard title="Picked up / in transit" value={String(inTransit.length)} source="LIVE" state={kpi} />
-            <AdminKpiCard title="Delivered (loaded)" value={String(delivered.length)} source="LIVE" state={kpi} />
-            <AdminKpiCard title="Exceptions / failed" value={String(exceptions.length)} source="LIVE" state={kpi} />
-            <AdminKpiCard title="Loaded assignments" value={String(rows.length)} source="LIVE" state={kpi} />
+            <AdminKpiCard title="On the road" value={String(inTransit.length)} source="LIVE" state={kpi} />
+            <AdminKpiCard
+              title="Problems / failed"
+              value={String(exceptions.length)}
+              source="LIVE"
+              state={kpi}
+              detail="Failed, cancelled, or returned deliveries"
+            />
+            <AdminKpiCard
+              title="Delivered so far"
+              value={String(delivered.length)}
+              source="LIVE"
+              state={kpi}
+              detail="Delivered orders in the loaded list"
+            />
+            <AdminKpiCard
+              title="All loaded deliveries"
+              value={String(rows.length)}
+              source="LIVE"
+              state={kpi}
+            />
           </>
         ) : null}
       </div>
-
-      <DashboardActionGrid>
-        <DashboardActionCard title="Open delivery console" href="/admin/delivery" primary />
-        {canOpenOpsDispatch ? (
-          <DashboardActionCard title="Ops dispatch" href="/ops/dispatch" />
-        ) : null}
-      </DashboardActionGrid>
     </RoleHomeShell>
   );
 }

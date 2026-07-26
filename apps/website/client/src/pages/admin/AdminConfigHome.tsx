@@ -64,6 +64,29 @@ export default function AdminConfigHome() {
       onRetry={isSuperAdmin ? healthOp.retry : undefined}
       correlationId={isSuperAdmin ? healthOp.correlationId : null}
       showTechnicalDetail={isSuperAdmin}
+      primaryAction={
+        canAccessAdminSettings(principal) ? (
+          <DashboardActionCard
+            title="Continue setup"
+            description="Branch & system settings"
+            href="/admin/settings"
+            primary
+          />
+        ) : null
+      }
+      secondaryActions={
+        <>
+          {canManageMenu(principal) ? (
+            <DashboardActionCard title="Update menu" description="Items, prices, availability" href="/admin/menu" />
+          ) : null}
+          {canManageFloorConfiguration(principal) ? (
+            <DashboardActionCard title="Edit floor plan" description="Floors, areas, tables" href="/admin/floor-plan" />
+          ) : null}
+          {canAccessAdminHr(principal) ? (
+            <DashboardActionCard title="Manage staff" description="People and roles" href="/admin/hr" />
+          ) : null}
+        </>
+      }
     >
       <OpeningReadinessSummary
         token={token}
@@ -92,19 +115,13 @@ export default function AdminConfigHome() {
       ) : null}
 
       <DashboardActionGrid>
-        {canAccessAdminSettings(principal) ? (
-          <DashboardActionCard title="Settings" href="/admin/settings" primary description="Branch & system settings" />
-        ) : null}
-        {canManageMenu(principal) ? (
-          <DashboardActionCard title="Menu" href="/admin/menu" description="Catalog configuration" />
-        ) : null}
-        {canManageFloorConfiguration(principal) ? (
-          <DashboardActionCard title="Floor plan" href="/admin/floor-plan" description="Floors, areas, tables" />
-        ) : null}
-        {canAccessAdminHr(principal) ? (
-          <DashboardActionCard title="Staff / HR" href="/admin/hr" description="Workforce foundation" />
-        ) : null}
-        <DashboardActionCard title="Branches" href="/admin/branches" description="Branch directory (foundation)" />
+        <DashboardActionCard
+          title="Branches"
+          href="/admin/branches"
+          description="Branch directory"
+          disabled
+          disabledReason="Coming in a later release"
+        />
       </DashboardActionGrid>
     </RoleHomeShell>
   );

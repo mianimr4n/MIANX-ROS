@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 
 import { cn } from "@/lib/utils";
 
 export type DashboardActionCardProps = {
+  /** Verb-first action label, e.g. "Open POS", "Create reservation". */
   title: string;
   description?: string;
   href: string;
@@ -15,7 +17,8 @@ export type DashboardActionCardProps = {
 
 /**
  * Operational action entry — links to an existing admin/ops surface.
- * Primary actions visually dominate; disabled actions stay honest.
+ * Primary actions visually dominate; disabled actions stay honest and
+ * visibly non-interactive (no hover affordance, no arrow).
  */
 export function DashboardActionCard({
   title,
@@ -26,32 +29,18 @@ export function DashboardActionCard({
   disabledReason,
   className,
 }: DashboardActionCardProps) {
-  const body = (
-    <>
-      <p className={cn("text-sm font-semibold", primary ? "text-white" : "text-[var(--admin-ink)]")}>
-        {title}
-      </p>
-      {description ? (
-        <p className={cn("mt-1 text-xs", primary ? "text-white/80" : "text-[var(--admin-muted)]")}>
-          {description}
-        </p>
-      ) : null}
-      {disabled && disabledReason ? (
-        <p className="mt-2 text-xs text-amber-800">{disabledReason}</p>
-      ) : null}
-    </>
-  );
-
   if (disabled) {
     return (
       <div
         className={cn(
-          "rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-soft)] p-4 opacity-70",
+          "min-h-11 cursor-not-allowed rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] p-4 opacity-70",
           className,
         )}
         aria-disabled="true"
       >
-        {body}
+        <p className="text-sm font-semibold text-[var(--admin-muted)]">{title}</p>
+        {description ? <p className="mt-1 text-xs text-[var(--admin-muted)]">{description}</p> : null}
+        {disabledReason ? <p className="mt-2 text-xs text-amber-800">{disabledReason}</p> : null}
       </div>
     );
   }
@@ -60,18 +49,34 @@ export function DashboardActionCard({
     <Link
       href={href}
       className={cn(
-        "block rounded-2xl border p-4 transition hover:brightness-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--admin-accent)]",
+        "group flex min-h-11 items-center justify-between gap-3 rounded-2xl border p-4 transition hover:brightness-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--admin-accent)] motion-reduce:transition-none",
         primary
-          ? "border-red-700 bg-red-600 text-white shadow-sm"
+          ? "border-[var(--brand-red-dark)] bg-[var(--brand-red-dark)] text-white shadow-sm"
           : "border-[var(--admin-border)] bg-[var(--admin-panel)] text-[var(--admin-ink)]",
         className,
       )}
     >
-      {body}
+      <span className="min-w-0">
+        <span className={cn("block text-sm font-semibold", primary ? "text-white" : "text-[var(--admin-ink)]")}>
+          {title}
+        </span>
+        {description ? (
+          <span className={cn("mt-1 block text-xs", primary ? "text-white" : "text-[var(--admin-muted)]")}>
+            {description}
+          </span>
+        ) : null}
+      </span>
+      <ArrowRight
+        aria-hidden
+        className={cn(
+          "h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5 group-focus-visible:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0",
+          primary ? "text-white" : "text-[var(--admin-muted)]",
+        )}
+      />
     </Link>
   );
 }
 
 export function DashboardActionGrid({ children }: { children: ReactNode }) {
-  return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
+  return <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
 }

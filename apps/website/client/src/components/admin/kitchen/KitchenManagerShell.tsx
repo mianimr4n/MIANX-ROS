@@ -112,7 +112,7 @@ export function KitchenManagerShell({
       <header className="border-b border-[var(--admin-border)] bg-[var(--admin-panel)]">
         <div className="mx-auto flex max-w-[1920px] flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-red)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-red-dark)]">
               Telepizza · Kitchen Display System
             </p>
             <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">
