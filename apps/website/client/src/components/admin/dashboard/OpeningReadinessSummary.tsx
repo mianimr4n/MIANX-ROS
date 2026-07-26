@@ -12,6 +12,46 @@ const GRADE_STYLES: Record<string, string> = {
   NOT_VERIFIED: "bg-[var(--admin-soft)] text-[var(--admin-muted)] border-[var(--admin-border)]",
 };
 
+const GRADE_LABELS: Record<string, string> = {
+  READY: "Ready to open",
+  READY_WITH_LIMITATIONS: "Ready with limitations",
+  BLOCKED: "Setup needed",
+  NOT_VERIFIED: "Not verified yet",
+};
+
+/** Plain-language titles for known launch-blocker codes. */
+const BLOCKER_LABELS: Record<string, string> = {
+  STATUS_NOT_OPERATING: "Branch not switched to operating",
+  PHONE_MISSING: "Phone number missing",
+  HOURS_MISSING: "Opening hours missing",
+  MANAGER_MISSING: "Branch manager not assigned",
+  CASHIER_MISSING: "Cashier not assigned",
+  KITCHEN_MISSING: "Kitchen staff not assigned",
+  RIDER_MISSING: "Delivery rider not assigned",
+  HOST_MISSING: "Host not assigned",
+  WAITER_MISSING: "Waiter not assigned",
+  FLOOR_MISSING: "Floor plan and tables missing",
+  BOOKING_POLICY_MISSING: "Booking policy not set",
+  PAYMENT_NOT_VERIFIED: "Payment setup not verified",
+  NOTIFICATION_NOT_VERIFIED: "Notifications not set up",
+  DEVICE_NOT_VERIFIED: "On-site devices not verified",
+  PROBE_FAILED: "Readiness check could not run",
+};
+
+function blockerTitle(code: string): string {
+  if (BLOCKER_LABELS[code]) return BLOCKER_LABELS[code];
+  const words = code.toLowerCase().replaceAll("_", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function statusLabel(status: string): string {
+  const normalized = status.toLowerCase();
+  if (normalized === "coming-soon") return "Coming soon";
+  if (normalized === "operating" || normalized === "active") return "Operating";
+  const words = normalized.replaceAll("-", " ").replaceAll("_", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 function checkEntries(checks: Record<string, boolean>) {
   return Object.entries(checks).map(([key, ok]) => ({
     key,
@@ -55,8 +95,8 @@ export function OpeningReadinessSummary({
         title="Opening readiness"
         description={
           comingSoon
-            ? "This branch is coming soon. Complete configuration blockers before live service — no fabricated sales KPIs."
-            : "Staffing, phone, hours, floor, booking, and device verification for launch."
+            ? "This branch is coming soon. Finish the setup steps below before live service — no live sales are shown until it opens."
+            : "Staffing, phone, hours, floor, booking, and device checks for launch."
         }
       />
       <OperationalStatusBanner
@@ -69,7 +109,7 @@ export function OpeningReadinessSummary({
       />
 
       {op.state === "LOADING" && !data ? (
-        <div className="h-28 animate-pulse rounded-2xl bg-[var(--admin-soft)]" aria-hidden />
+        <div className="h-28 animate-pulse rounded-2xl bg-[var(--admin-soft)] motion-reduce:animate-none" aria-hidden />
       ) : null}
 
       {data ? (
@@ -80,30 +120,28 @@ export function OpeningReadinessSummary({
                 {data.name}{" "}
                 <span className="font-normal text-[var(--admin-muted)]">({data.branchCode})</span>
               </p>
-              <p className="mt-1 text-xs uppercase tracking-wide text-[var(--admin-muted)]">
-                Status: {data.status}
-              </p>
+              <p className="mt-1 text-xs text-[var(--admin-muted)]">Status: {statusLabel(String(data.status))}</p>
             </div>
             <span
-              className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${GRADE_STYLES[grade] ?? GRADE_STYLES.NOT_VERIFIED}`}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold ${GRADE_STYLES[grade] ?? GRADE_STYLES.NOT_VERIFIED}`}
             >
-              {String(grade).replaceAll("_", " ")}
+              {GRADE_LABELS[grade] ?? blockerTitle(String(grade))}
             </span>
           </div>
 
           {data.blockers.length > 0 ? (
-            <ul className="mt-4 space-y-2" aria-label="Launch blockers">
+            <ul className="mt-4 space-y-2" aria-label="Setup steps before opening">
               {data.blockers.map((b) => (
                 <li
                   key={b.code}
                   className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
                 >
-                  <span className="font-medium">{b.code}</span> — {b.message}
+                  <span className="font-medium">{blockerTitle(b.code)}</span> — {b.message}
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-4 text-sm text-emerald-800">No launch blockers reported for stored checks.</p>
+            <p className="mt-4 text-sm text-emerald-800">All stored opening checks are complete.</p>
           )}
 
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -114,7 +152,7 @@ export function OpeningReadinessSummary({
               >
                 <span className="text-[var(--admin-muted)]">{c.label}</span>
                 <span className={c.ok ? "font-semibold text-emerald-700" : "font-semibold text-red-700"}>
-                  {c.ok ? "OK" : "Missing"}
+                  {c.ok ? "Done" : "Missing"}
                 </span>
               </div>
             ))}
@@ -123,9 +161,9 @@ export function OpeningReadinessSummary({
           <div className="mt-5">
             <Link
               href="/admin/settings"
-              className="inline-flex rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
+              className="inline-flex min-h-11 items-center rounded-xl bg-[var(--brand-red-dark)] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red-dark)] motion-reduce:transition-none"
             >
-              Complete Opening Readiness
+              Complete opening readiness
             </Link>
           </div>
         </div>

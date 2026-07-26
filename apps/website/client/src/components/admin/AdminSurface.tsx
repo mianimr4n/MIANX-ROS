@@ -17,7 +17,7 @@ export function AdminSurface({
   return (
     <Tag
       className={cn(
-        "rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] shadow-[0_1px_2px_rgba(31,31,31,0.04)]",
+        "min-w-0 max-w-full overflow-hidden rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] shadow-[0_1px_2px_rgba(31,31,31,0.04)]",
         className,
       )}
       {...props}

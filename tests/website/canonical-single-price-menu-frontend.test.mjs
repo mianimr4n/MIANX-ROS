@@ -201,10 +201,10 @@ describe("canonical single-price menu — offline fallback", () => {
 
     assert.doesNotMatch(menuData, /variants: \[/, "the fallback carries no variant price matrix");
 
-    const skuBlocks = menuData.match(/^ {2}\{\n(?: {4}.*\n)+ {2}\},$/gm) ?? [];
+    const skuBlocks = menuData.match(/^ {2}\{\r?\n(?: {4}.*\r?\n)+ {2}\},$/gm) ?? [];
     assert.ok(skuBlocks.length > 0, "expected SKU object literals in the fallback");
     for (const block of skuBlocks) {
-      const prices = block.match(/^ {4}price: \d+(?:\.\d+)?,$/gm) ?? [];
+      const prices = block.match(/^ {4}price: \d+(?:\.\d+)?,\r?$/gm) ?? [];
       assert.equal(prices.length, 1, `expected exactly one price per SKU, saw ${prices.length}`);
     }
   });

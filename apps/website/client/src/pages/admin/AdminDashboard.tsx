@@ -125,14 +125,17 @@ export default function AdminDashboard() {
 
   const principal = { roles, permissions, isSuperAdmin, branchIds };
   const allowed = canAccessAdminOrdersApi(principal);
-  const { gateReady } = useAdminAccessGate(allowed);
+  const { gateReady, isAuthLoading } = useAdminAccessGate(allowed);
   const roleLabel = primaryRoleLabel(roles, isSuperAdmin);
 
   useEffect(() => {
+    // Wait for AuthContext hydration — empty roles before /auth/me would falsely
+    // bounce Super Admin / Owner to /admin/home/staff.
+    if (isAuthLoading) return;
     const home = resolveStaffHome(principal);
     if (home !== "/admin/dashboard") setLocation(home);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- principal fields listed below
-  }, [isSuperAdmin, permissions, roles, branchIds, setLocation]);
+  }, [isAuthLoading, isSuperAdmin, permissions, roles, branchIds, setLocation]);
 
   const selectedBranch = branchIdFilter
     ? allowedBranches.find((b) => b.id === branchIdFilter)
@@ -219,7 +222,7 @@ export default function AdminDashboard() {
     <AdminShell title="Executive dashboard">
       <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-red-dark)]">
             Telepizza ROS
           </p>
           <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-3xl">
@@ -234,11 +237,14 @@ export default function AdminDashboard() {
             {" · "}
             {formatHeaderDate(now)}
           </p>
-          <p className="mt-1 text-xs text-[var(--admin-muted)]">
-            Search and notifications remain disabled in the Admin shell until those services ship.
-          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin/branch"
+            className="inline-flex min-h-11 items-center rounded-lg bg-[var(--brand-red)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--brand-red-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)] motion-reduce:transition-none"
+          >
+            Review branch health
+          </Link>
           <span
             className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${
               dataReady
@@ -258,7 +264,7 @@ export default function AdminDashboard() {
           <button
             type="button"
             onClick={retry}
-            className="rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm font-semibold hover:bg-[var(--admin-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-red)]"
+            className="min-h-11 rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm font-semibold hover:bg-[var(--admin-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-red)]"
           >
             Refresh
           </button>
@@ -272,8 +278,7 @@ export default function AdminDashboard() {
           onReset={() => setFilters(DEFAULT_EXECUTIVE_FILTERS)}
         />
         <p className="mt-2 text-xs text-[var(--admin-muted)]">
-          Branch reloads KPI data from the API. Status, channel, and type refine the recent-orders list only.
-          Date range beyond today stays foundation-disabled until analytics endpoints exist.
+          Branch changes the numbers below. Status, channel, and type filter the recent-orders list only.
         </p>
       </div>
 
@@ -299,7 +304,7 @@ export default function AdminDashboard() {
         <AdminSectionTitle
           eyebrow="Health"
           title="Executive KPIs"
-          description="Approved live and derived metrics only. Missing values stay honest — never fabricated."
+          description="Today's headline numbers. Anything unavailable shows as — rather than zero."
         />
         {loading && !data ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-live="polite">
@@ -348,10 +353,10 @@ export default function AdminDashboard() {
               source="DERIVED"
               state={kpiState(opState)}
               lastUpdated={updated}
-              detail="Status-derived queue — not a live KDS ticket count"
+              detail="Calculated from order statuses — the kitchen display shows live tickets"
               action={
-                <Link href="/admin/kitchen" className="text-xs font-semibold text-[var(--brand-red)]">
-                  Open kitchen
+                <Link href="/admin/kitchen-dashboard" className="text-xs font-semibold text-[var(--brand-red)]">
+                  Open kitchen display
                 </Link>
               }
             />
@@ -393,7 +398,7 @@ export default function AdminDashboard() {
       </div>
       ) : null}
 
-      {/* D3/D4 — table service + opening readiness (branch-scoped). */}
+      {/* D3/D4 — table service + opening readiness (branch-scoped; aggregate uses an assigned anchor). */}
       {branchIdFilter ? (
         <>
           <OpeningReadinessSummary
@@ -409,6 +414,25 @@ export default function AdminDashboard() {
               enabled={gateReady && canAccessTableService({ roles, permissions, isSuperAdmin })}
               showTechnicalDetail={isSuperAdmin}
             />
+          ) : null}
+        </>
+      ) : occupancyAnchorBranchId ? (
+        <>
+          <p className="mb-3 rounded-xl border bg-[var(--admin-soft)] px-4 py-3 text-sm text-[var(--admin-muted)]">
+            Opening readiness below is for one assigned branch anchor. Select a branch to focus setup
+            blockers and table-service KPIs.
+          </p>
+          <OpeningReadinessSummary
+            token={token}
+            branchId={occupancyAnchorBranchId}
+            enabled={gateReady}
+            showTechnicalDetail={isSuperAdmin}
+          />
+          {!comingSoonBranch && canAccessTableService({ roles, permissions, isSuperAdmin }) ? (
+            <p className="mb-8 rounded-xl border bg-[var(--admin-soft)] px-4 py-3 text-sm text-[var(--admin-muted)]">
+              Per-branch reservation KPIs need a selected branch. Occupancy comparison below uses an
+              assigned branch as the API anchor when multi-branch scope is active.
+            </p>
           ) : null}
         </>
       ) : !comingSoonBranch && canAccessTableService({ roles, permissions, isSuperAdmin }) ? (
@@ -487,12 +511,79 @@ export default function AdminDashboard() {
         </section>
       ) : null}
 
+      {!comingSoonBranch ? (
+      <section className="mb-8" aria-label="Live operations">
+        <AdminSectionTitle
+          eyebrow="Live"
+          title="Operations board"
+          description="Recent orders use API data. Kitchen and delivery panels are status-derived."
+        />
+        <div className="grid min-w-0 gap-4 xl:grid-cols-3">
+          <div className="min-w-0 xl:col-span-1">
+            <RecentOrdersPanel orders={filteredOrders} />
+          </div>
+          <div className="min-w-0">
+            <KitchenStatusPanel
+              counts={dataReady ? (data?.statusCounts ?? {}) : null}
+              failed={opsFailed}
+            />
+          </div>
+          <div className="min-w-0">
+            <DeliveryStatusPanel
+              activeDeliveries={dataReady ? (data?.kpis.activeDeliveries ?? null) : null}
+              readyCount={dataReady ? (data?.statusCounts.ready ?? null) : null}
+              completedCount={dataReady ? (data?.statusCounts.completed ?? null) : null}
+              failed={opsFailed}
+            />
+          </div>
+        </div>
+      </section>
+      ) : null}
+
+      {!comingSoonBranch ? (
+      <section className="mb-8" aria-label="Business analytics">
+        <AdminSectionTitle
+          eyebrow="Analytics"
+          title="Business analytics"
+          description="Verified breakdowns only. Insufficient data shows an honest empty state."
+        />
+        <div className="grid min-w-0 gap-4 xl:grid-cols-3">
+          <div className="min-w-0">
+            <StatusBreakdownPanel counts={data?.statusCounts ?? null} ready={dataReady} />
+          </div>
+          <div className="min-w-0">
+            <SourceBreakdownPanel rows={data?.sourceBreakdown ?? null} ready={dataReady} />
+          </div>
+          <div className="min-w-0">
+            <BranchPerformancePanel
+              rows={data?.branchPerformance ?? null}
+              onSelectBranch={(branchId) => {
+                // D2 drill-down: scope the workspace to the branch, then open its dashboard.
+                setSelection({ mode: "branch", branchId });
+                setLocation("/admin/branch");
+              }}
+            />
+          </div>
+        </div>
+      </section>
+      ) : null}
+
+      {!comingSoonBranch ? (
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]">
+        <div className="space-y-6">
+          <AiInsightsPanel items={mianxItems} loading={loading && !data} />
+          <LiveActivityPanel items={activity} />
+        </div>
+        <ExecutiveAside alertCount={data?.alerts.length ?? 0} />
+      </div>
+      ) : null}
+
       {isSuperAdmin ? (
-        <section className="mb-8" aria-label="System health">
+        <section className="mt-8" aria-label="System health">
           <AdminSectionTitle
             eyebrow="Platform"
             title="System health"
-            description="Technical roles only. No stack traces or credentials."
+            description="Technical detail for platform admins only."
           />
           <OperationalStatusBanner
             state={healthOp.state}
@@ -531,74 +622,26 @@ export default function AdminDashboard() {
             </div>
           ) : null}
           <div className="mt-4 flex flex-wrap gap-3 text-sm">
-            <Link href="/admin/settings" className="font-semibold text-red-700 underline-offset-2 hover:underline">
-              Open Settings
+            <Link
+              href="/admin/settings"
+              className="inline-flex min-h-11 items-center font-semibold text-red-700 underline-offset-2 hover:underline"
+            >
+              Open settings
             </Link>
-            <Link href="/admin/hr" className="font-semibold text-red-700 underline-offset-2 hover:underline">
-              Manage Users / Roles
+            <Link
+              href="/admin/hr"
+              className="inline-flex min-h-11 items-center font-semibold text-red-700 underline-offset-2 hover:underline"
+            >
+              Manage users & roles
             </Link>
-            <Link href="/admin/branch" className="font-semibold text-red-700 underline-offset-2 hover:underline">
-              Open Branch Readiness
+            <Link
+              href="/admin/branch"
+              className="inline-flex min-h-11 items-center font-semibold text-red-700 underline-offset-2 hover:underline"
+            >
+              Open branch readiness
             </Link>
           </div>
         </section>
-      ) : null}
-
-      {!comingSoonBranch ? (
-      <section className="mb-8" aria-label="Live operations">
-        <AdminSectionTitle
-          eyebrow="Live"
-          title="Operations board"
-          description="Recent orders use API data. Kitchen and delivery panels are status-derived."
-        />
-        <div className="grid gap-4 xl:grid-cols-3">
-          <div className="xl:col-span-1">
-            <RecentOrdersPanel orders={filteredOrders} />
-          </div>
-          <KitchenStatusPanel
-            counts={dataReady ? (data?.statusCounts ?? {}) : null}
-            failed={opsFailed}
-          />
-          <DeliveryStatusPanel
-            activeDeliveries={dataReady ? (data?.kpis.activeDeliveries ?? null) : null}
-            readyCount={dataReady ? (data?.statusCounts.ready ?? null) : null}
-            completedCount={dataReady ? (data?.statusCounts.completed ?? null) : null}
-            failed={opsFailed}
-          />
-        </div>
-      </section>
-      ) : null}
-
-      {!comingSoonBranch ? (
-      <section className="mb-8" aria-label="Business analytics">
-        <AdminSectionTitle
-          eyebrow="Analytics"
-          title="Business analytics"
-          description="Verified breakdowns only. Insufficient data shows an honest empty state."
-        />
-        <div className="grid gap-4 xl:grid-cols-3">
-          <StatusBreakdownPanel counts={data?.statusCounts ?? null} ready={dataReady} />
-          <SourceBreakdownPanel rows={data?.sourceBreakdown ?? null} ready={dataReady} />
-          <BranchPerformancePanel
-            rows={data?.branchPerformance ?? null}
-            onSelectBranch={(branchId) => {
-              // D2 drill-down: scope the workspace to the branch, then open its dashboard.
-              setSelection({ mode: "branch", branchId });
-              setLocation("/admin/branch");
-            }}
-          />
-        </div>
-      </section>
-      ) : null}
-
-      {!comingSoonBranch ? (
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]">
-        <div className="space-y-6">
-          <AiInsightsPanel items={mianxItems} loading={loading && !data} />
-          <LiveActivityPanel items={activity} />
-        </div>
-        <ExecutiveAside alertCount={data?.alerts.length ?? 0} />
-      </div>
       ) : null}
     </AdminShell>
   );

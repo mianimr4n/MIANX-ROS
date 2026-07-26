@@ -182,7 +182,7 @@ export function DeliveryStatusPanel({
     {
       label: "Late deliveries",
       value: "—",
-      tone: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
+      tone: "bg-[var(--admin-soft)] text-[var(--admin-ink)]",
       note: "Unavailable — no ETA tracking yet",
     },
   ];
@@ -202,7 +202,7 @@ export function DeliveryStatusPanel({
             <li key={row.label} className={`flex items-center justify-between rounded-xl px-3 py-3 text-sm ${row.tone}`}>
               <span className="font-medium">
                 {row.label}
-                <span className="mt-0.5 block text-[11px] font-normal opacity-80">{row.note}</span>
+                <span className="mt-0.5 block text-[11px] font-normal text-[var(--admin-ink)]/80">{row.note}</span>
               </span>
               <span className="text-lg font-semibold tabular-nums">{row.value}</span>
             </li>

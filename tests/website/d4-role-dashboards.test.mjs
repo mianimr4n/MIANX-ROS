@@ -114,7 +114,7 @@ describe("D4 role dashboards (static)", () => {
 
     assert.match(readiness, /READY_WITH_LIMITATIONS|BLOCKED|NOT_VERIFIED/);
 
-    assert.match(readiness, /Complete Opening Readiness/);
+    assert.match(readiness, /Complete opening readiness/i);
 
     assert.doesNotMatch(readiness, /todayGrossSales|fake sales/i);
 
@@ -180,9 +180,9 @@ describe("D4 role dashboards (static)", () => {
 
     const waiter = read("apps/website/client/src/pages/admin/AdminWaiterHome.tsx");
 
-    assert.match(waiter, /Your assigned sessions/);
+    assert.match(waiter, /Your assigned tables/);
 
-    assert.match(waiter, /No sessions assigned to you as primary server/);
+    assert.match(waiter, /No tables are assigned to you right now/);
 
     assert.match(waiter, /primaryServerUserId === userId/);
 

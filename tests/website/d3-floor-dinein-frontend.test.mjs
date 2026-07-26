@@ -99,6 +99,6 @@ describe("D3 admin access + routes (static)", () => {
     assert.match(access, /canAccessTableService|canManageReservations|canSeatGuests|canManageFloorConfiguration/);
     assert.match(access, /isHostOnly|isWaiterOnly/);
     const redirect = read("apps/website/client/src/pages/admin/AdminIndexRedirect.tsx");
-    assert.match(redirect, /isHostOnly|isWaiterOnly/);
+    assert.match(redirect, /resolveStaffHome/);
   });
 });

@@ -109,6 +109,12 @@
   --admin-muted: #6b6560;
 }
 
+/* Admin canvases need a darker brand red for WCAG AA small-text contrast. */
+.admin-shell {
+  --brand-red: #b5121b;
+  --brand-red-dark: #8f0e15;
+}
+
 .dark {
   --primary: #E31E24;
   --primary-foreground: #FFFFFF;

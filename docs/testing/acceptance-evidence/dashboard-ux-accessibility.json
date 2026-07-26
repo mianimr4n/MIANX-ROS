@@ -1,0 +1,111 @@
+{
+  "generatedAt": "2026-07-26T21:03:08.992Z",
+  "automatedLimitations": "Axe and keyboard smoke cannot replace assistive-technology or real-user testing.",
+  "exitCode": 0,
+  "rows": [
+    {
+      "persona": "super-admin",
+      "criticalOrSeriousViolations": [],
+      "focusedTag": "A",
+      "focusVisible": true,
+      "reducedMotion": "reduce",
+      "result": "PASS"
+    },
+    {
+      "persona": "owner",
+      "criticalOrSeriousViolations": [],
+      "focusedTag": "A",
+      "focusVisible": true,
+      "reducedMotion": "reduce",
+      "result": "PASS"
+    },
+    {
+      "persona": "configuration",
+      "criticalOrSeriousViolations": [],
+      "focusedTag": "A",
+      "focusVisible": true,
+      "reducedMotion": "reduce",
+      "result": "PASS"
+    },
+    {
+      "persona": "assigned-manager",
+      "criticalOrSeriousViolations": [],
+      "focusedTag": "A",
+      "focusVisible": true,
+      "reducedMotion": "reduce",
+      "result": "PASS"
+    },
+    {
+      "persona": "branch-manager",
+      "criticalOrSeriousViolations": [],
+      "focusedTag": "A",
+      "focusVisible": true,
+      "reducedMotion": "reduce",
+      "result": "PASS"
+    },
+    {
+      "persona": "cashier",
+      "criticalOrSeriousViolations": [],
+      "focusedTag": "A",
+      "focusVisible": true,
+      "reducedMotion": "reduce",
+      "result": "PASS"
+    },
+    {
+      "persona": "host",
+      "criticalOrSeriousViolations": [],
+      "focusedTag": "A",
+      "focusVisible": true,
+      "reducedMotion": "reduce",
+      "result": "PASS"
+    },
+    {
+      "persona": "waiter",
+      "criticalOrSeriousViolations": [],
+      "focusedTag": "A",
+      "focusVisible": true,
+      "reducedMotion": "reduce",
+      "result": "PASS"
+    },
+    {
+      "persona": "kitchen",
+      "criticalOrSeriousViolations": [],
+      "focusedTag": "BUTTON",
+      "focusVisible": true,
+      "reducedMotion": "reduce",
+      "result": "PASS"
+    },
+    {
+      "persona": "delivery",
+      "criticalOrSeriousViolations": [],
+      "focusedTag": "A",
+      "focusVisible": true,
+      "reducedMotion": "reduce",
+      "result": "PASS"
+    },
+    {
+      "persona": "general-staff",
+      "criticalOrSeriousViolations": [],
+      "focusedTag": "A",
+      "focusVisible": true,
+      "reducedMotion": "reduce",
+      "result": "PASS"
+    },
+    {
+      "persona": "northern-bypass-manager",
+      "criticalOrSeriousViolations": [],
+      "focusedTag": "A",
+      "focusVisible": true,
+      "reducedMotion": "reduce",
+      "result": "PASS"
+    },
+    {
+      "persona": "operations-command-center",
+      "criticalOrSeriousViolations": [],
+      "focusedTag": "A",
+      "focusVisible": true,
+      "reducedMotion": "reduce",
+      "result": "PASS"
+    }
+  ]
+}

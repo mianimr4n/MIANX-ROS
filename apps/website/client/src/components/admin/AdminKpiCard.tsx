@@ -37,13 +37,25 @@ const SOURCE_STYLES: Record<AdminKpiSource, string> = {
   UNAVAILABLE: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
 };
 
+/**
+ * Human labels for data provenance. LIVE is the expected default and renders
+ * no badge; non-live sources keep an honest, plain-language label.
+ */
+const SOURCE_LABEL: Record<AdminKpiSource, string | null> = {
+  LIVE: null,
+  DERIVED: "Calculated",
+  PARTIAL: "Partial data",
+  FOUNDATION: "Setup only",
+  UNAVAILABLE: "Not available",
+};
+
 const STATE_LABEL: Record<AdminKpiState, string> = {
   available: "Available",
   loading: "Loading",
-  empty: "Empty",
-  unavailable: "Unavailable",
-  error: "Error",
-  stale: "Stale",
+  empty: "No data yet",
+  unavailable: "Not available",
+  error: "Couldn't load",
+  stale: "Earlier data",
   planned: "Planned",
 };
 
@@ -84,16 +96,18 @@ export function AdminKpiCard({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <p className="text-xs font-medium uppercase tracking-[0.08em] text-[var(--admin-muted)]">{title}</p>
         <div className="flex flex-wrap items-center justify-end gap-1.5">
-          <span
-            className={cn(
-              "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-              SOURCE_STYLES[source],
-            )}
-          >
-            {source === "UNAVAILABLE" ? "Unavailable" : source.toLowerCase()}
-          </span>
-          {resolvedState !== "available" ? (
-            <span className="rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+          {SOURCE_LABEL[source] ? (
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide",
+                SOURCE_STYLES[source],
+              )}
+            >
+              {SOURCE_LABEL[source]}
+            </span>
+          ) : null}
+          {resolvedState !== "available" && STATE_LABEL[resolvedState] !== SOURCE_LABEL[source] ? (
+            <span className="rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[var(--admin-muted)]">
               {STATE_LABEL[resolvedState]}
             </span>
           ) : null}
@@ -131,7 +145,12 @@ export function AdminKpiCard({
 }
 
 export function AdminKpiSkeleton() {
-  return <div className="h-[8.5rem] animate-pulse rounded-2xl bg-[var(--admin-soft)]" aria-hidden />;
+  return (
+    <div
+      className="h-[8.5rem] animate-pulse rounded-2xl bg-[var(--admin-soft)] motion-reduce:animate-none"
+      aria-hidden
+    />
+  );
 }
 
 export function AdminSectionTitle({

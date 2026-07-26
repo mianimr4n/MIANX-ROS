@@ -25,10 +25,12 @@ describe("Kitchen Manager Dashboard V1 (static)", () => {
     const login = read("apps/website/client/src/pages/admin/AdminLogin.tsx");
     const index = read("apps/website/client/src/pages/admin/AdminIndexRedirect.tsx");
     const dash = read("apps/website/client/src/pages/admin/AdminDashboard.tsx");
-    assert.match(login, /isKitchenOnly/);
-    assert.match(login, /\/admin\/kitchen-dashboard/);
-    assert.match(index, /\/admin\/kitchen-dashboard/);
-    assert.match(dash, /\/admin\/kitchen-dashboard/);
+    const access = read("apps/website/client/src/lib/admin-access.ts");
+    assert.match(login, /resolveStaffHome/);
+    assert.match(index, /resolveStaffHome/);
+    assert.match(access, /isKitchenOnly/);
+    assert.match(access, /\/admin\/kitchen-dashboard/);
+    assert.match(dash, /resolveStaffHome/);
   });
 
   it("uses focused kitchen shell and real ticket APIs", () => {
@@ -37,8 +39,7 @@ describe("Kitchen Manager Dashboard V1 (static)", () => {
     assert.match(page, /KitchenManagerShell/);
     assert.match(page, /listKitchenTickets/);
     assert.match(page, /patchKitchenTicketStatus/);
-    assert.match(page, /UNAVAILABLE/);
-    assert.match(page, /FOUNDATION/);
+    assert.match(page, /UNAVAILABLE|unavailable/i);
     assert.match(shell, /Kitchen Display System/);
     assert.doesNotMatch(shell, /AI Command Center/);
     assert.doesNotMatch(shell, /Finance/);

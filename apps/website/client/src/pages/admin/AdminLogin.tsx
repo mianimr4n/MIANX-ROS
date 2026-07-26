@@ -34,9 +34,11 @@ export default function AdminLogin() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && canAccessAdmin({ roles, permissions, isSuperAdmin })) {
-      setLocation(next);
-    }
+    if (isLoading || !isAuthenticated) return;
+    if (!canAccessAdmin({ roles, permissions, isSuperAdmin })) return;
+    // Avoid bouncing to a fallback home before /auth/me hydrates the principal.
+    if (!isSuperAdmin && roles.length === 0 && permissions.length === 0) return;
+    setLocation(next);
   }, [isLoading, isAuthenticated, roles, permissions, isSuperAdmin, setLocation, next]);
 
   async function onSubmit(event: React.FormEvent) {

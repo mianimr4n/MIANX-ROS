@@ -1,10 +1,7 @@
 import { Link } from "wouter";
 
 import { AdminKpiCard, AdminKpiSkeleton, AdminSectionTitle } from "@/components/admin/AdminKpiCard";
-import {
-  DashboardActionCard,
-  DashboardActionGrid,
-} from "@/components/admin/dashboard/DashboardActionCard";
+import { DashboardActionCard } from "@/components/admin/dashboard/DashboardActionCard";
 import { RoleHomeShell } from "@/components/admin/dashboard/RoleHomeShell";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
@@ -21,6 +18,25 @@ import { getLiveFloorState } from "@/lib/table-service-api";
 import { isApiConfigured } from "@/lib/api";
 import { useOperationalData } from "@/lib/op-status";
 import { AdminShell } from "@/pages/admin/AdminShell";
+
+/** Translate raw service statuses into plain guest-service language. */
+const SERVICE_STATUS_LABELS: Record<string, string> = {
+  seated: "Just seated",
+  ordering: "Waiting to order",
+  ordered: "Order placed",
+  served: "Food served",
+  bill_requested: "Bill requested",
+  payment_pending: "Payment pending",
+  completed: "Finished",
+};
+
+function serviceStatusLabel(status: string | null | undefined): string {
+  if (!status) return "Status unknown";
+  const known = SERVICE_STATUS_LABELS[status];
+  if (known) return known;
+  const words = status.replaceAll("_", " ").replaceAll("-", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
 
 export default function AdminWaiterHome() {
   const { session, permissions, isSuperAdmin, roles, profile, branchIds } = useAuth();
@@ -102,20 +118,33 @@ export default function AdminWaiterHome() {
       }}
       correlationId={floorOp.correlationId}
       showTechnicalDetail={isSuperAdmin}
+      primaryAction={
+        <DashboardActionCard
+          title="Open live floor"
+          description="Your assigned tables"
+          href="/admin/floor"
+          primary
+        />
+      }
+      secondaryActions={
+        canAccessAdminPos(principal) ? (
+          <DashboardActionCard title="Open POS" description="Orders for seated guests" href="/admin/pos" />
+        ) : null
+      }
     >
       <AdminSectionTitle
         eyebrow="Floor"
-        title="Your assigned sessions"
+        title="Your assigned tables"
         description={
           assignmentFilterReady
-            ? "Sessions where you are the primary server. Branch-wide sessions are never shown here."
-            : "Profile id unavailable — assignment filter cannot run. No sessions listed."
+            ? "Only tables where you are the serving waiter. Other waiters' tables are never shown here."
+            : "Your staff profile could not be matched, so no tables are listed."
         }
       />
 
       {!assignmentFilterReady ? (
         <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="status">
-          Assignment filter unavailable without a profile id. Ask an admin to refresh your staff profile.
+          We can't match tables to your account right now. Ask an admin to refresh your staff profile.
         </p>
       ) : null}
 
@@ -131,11 +160,11 @@ export default function AdminWaiterHome() {
         {floorReady && assignmentFilterReady ? (
           <>
             <AdminKpiCard
-              title="Assigned sessions"
+              title="Your tables"
               value={String(visible.length)}
               source="LIVE"
               state={kpi}
-              detail="Tables/sessions where you are primary server"
+              detail="Tables where you are the serving waiter"
             />
             <AdminKpiCard title="Waiting to order" value={String(waitingToOrder.length)} source="LIVE" state={kpi} />
             <AdminKpiCard title="Bill requests" value={String(billRequests.length)} source="LIVE" state={kpi} />
@@ -144,16 +173,16 @@ export default function AdminWaiterHome() {
         ) : null}
         {tableOp.data && assignmentFilterReady ? (
           <AdminKpiCard
-            title="Occupied tables (branch)"
+            title="Occupied tables (whole branch)"
             value={String(tableOp.data.floor.occupiedTables)}
             source="DERIVED"
             state={kpi}
-            detail="Branch floor occupancy from table-service summary (context only)."
+            detail="Branch-wide total, for context only"
           />
         ) : null}
       </div>
 
-      <ul className="mb-8 space-y-2" aria-label="Assigned sessions">
+      <ul className="mb-8 space-y-2" aria-label="Your assigned tables">
         {visible.slice(0, 12).map((s) => (
           <li
             key={s.id}
@@ -162,37 +191,39 @@ export default function AdminWaiterHome() {
             <span>
               <span className="font-medium">{s.sessionNumber ?? s.id.slice(0, 8)}</span>
               {" · "}
-              {s.partySize ?? "?"} covers · {s.serviceStatus ?? "unknown"}
+              {s.partySize ?? "?"} covers · {serviceStatusLabel(s.serviceStatus)}
             </span>
-            <span className="flex flex-wrap gap-2 text-xs font-semibold">
+            <span className="flex flex-wrap gap-1 text-xs font-semibold">
               {canAccessAdminPos(principal) ? (
-                <Link href="/admin/pos" className="text-[var(--brand-red)] hover:underline">
-                  POS
+                <Link
+                  href="/admin/pos"
+                  className="inline-flex min-h-11 items-center rounded-lg px-3 text-[var(--brand-red)] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)]"
+                  aria-label={`Open POS for table ${s.sessionNumber ?? s.id.slice(0, 8)}`}
+                >
+                  Open POS
                 </Link>
               ) : null}
-              <Link href="/admin/floor" className="text-[var(--brand-red)] hover:underline">
-                Floor
+              <Link
+                href="/admin/floor"
+                className="inline-flex min-h-11 items-center rounded-lg px-3 text-[var(--brand-red)] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)]"
+                aria-label={`Open live floor for table ${s.sessionNumber ?? s.id.slice(0, 8)}`}
+              >
+                Open floor
               </Link>
             </span>
           </li>
         ))}
         {assignmentFilterReady && floorReady && visible.length === 0 ? (
           <li className="text-sm text-[var(--admin-muted)]">
-            No sessions assigned to you as primary server.
+            No tables are assigned to you right now. New seatings will appear here.
           </li>
         ) : null}
         {!assignmentFilterReady ? (
-          <li className="text-sm text-[var(--admin-muted)]">No sessions listed — assignment filter unavailable.</li>
+          <li className="text-sm text-[var(--admin-muted)]">
+            No tables listed — your account could not be matched to floor assignments.
+          </li>
         ) : null}
       </ul>
-
-      <DashboardActionGrid>
-        {canAccessAdminPos(principal) ? (
-          <DashboardActionCard title="Open POS" href="/admin/pos" primary description="Orders for seated guests" />
-        ) : null}
-        <DashboardActionCard title="Open live floor" href="/admin/floor" />
-        <DashboardActionCard title="Transfer / seat" href="/admin/floor" description="Table transfer on live floor" />
-      </DashboardActionGrid>
     </RoleHomeShell>
   );
 }

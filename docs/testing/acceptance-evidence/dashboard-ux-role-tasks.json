@@ -1,0 +1,359 @@
+{
+  "generatedAt": "2026-07-26T21:03:08.991Z",
+  "name": "TASK-BASED UX ACCEPTANCE",
+  "requiredPersonas": 13,
+  "exitCode": 0,
+  "rows": [
+    {
+      "persona": "super-admin",
+      "task": "Review branch health",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "super-admin",
+      "task": "Open orders",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "super-admin",
+      "task": "Open system health",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "owner",
+      "task": "Review branch health",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "owner",
+      "task": "Open kitchen display",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "owner",
+      "task": "Review readiness",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "configuration",
+      "task": "Continue setup",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "configuration",
+      "task": "Review readiness",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "configuration",
+      "task": "Find setup shortcuts",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "assigned-manager",
+      "task": "Review needs attention",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "assigned-manager",
+      "task": "Open orders",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "assigned-manager",
+      "task": "Review readiness",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "branch-manager",
+      "task": "Find top issue",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "branch-manager",
+      "task": "Open orders",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "branch-manager",
+      "task": "Open kitchen display",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "cashier",
+      "task": "Open POS",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "cashier",
+      "task": "Find ready pickup",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "cashier",
+      "task": "Identify payment pending",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "host",
+      "task": "Seat guest",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "host",
+      "task": "Create reservation",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "host",
+      "task": "Add to waitlist",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "waiter",
+      "task": "Open assigned table area",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "waiter",
+      "task": "Find bill requests",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "waiter",
+      "task": "Confirm assigned-only scope",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "kitchen",
+      "task": "Identify delayed work",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "kitchen",
+      "task": "Open KDS",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "kitchen",
+      "task": "Find ready count",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "delivery",
+      "task": "Open delivery console",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "delivery",
+      "task": "Find waiting assignment",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "delivery",
+      "task": "Find delivery problems",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "general-staff",
+      "task": "Confirm identity",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "general-staff",
+      "task": "Confirm role",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "general-staff",
+      "task": "Find permitted entry points",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "northern-bypass-manager",
+      "task": "Identify blocker",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "northern-bypass-manager",
+      "task": "Open setup",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "northern-bypass-manager",
+      "task": "Confirm coming-soon",
+      "interactions": 0,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "operations-command-center",
+      "task": "Open orders",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "operations-command-center",
+      "task": "Open kitchen",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    },
+    {
+      "persona": "operations-command-center",
+      "task": "Open dispatch",
+      "interactions": 1,
+      "result": "PASS",
+      "branchContextRetained": true,
+      "keyboardPossible": true,
+      "mobileChecked": true
+    }
+  ]
+}

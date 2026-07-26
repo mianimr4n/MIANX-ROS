@@ -169,7 +169,7 @@ export function AdminShell({
       >
         <div className="flex items-center justify-between gap-3 border-b border-[var(--admin-border)] px-4 py-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-red)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-red-dark)]">
               Telepizza
             </p>
             <p className="text-sm font-semibold">Admin ERP</p>
@@ -234,9 +234,9 @@ export function AdminShell({
         </nav>
       </aside>
 
-      <div className="lg:pl-[17.5rem]">
+      <div className="min-w-0 lg:pl-[17.5rem]">
         <header className="sticky top-0 z-20 border-b border-[var(--admin-border)] bg-[var(--admin-panel)]/95 backdrop-blur">
-          <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-3 px-4 py-3">
             <button
               type="button"
               ref={menuButtonRef}
@@ -348,7 +348,7 @@ export function AdminShell({
           </div>
         </header>
 
-        <main id="admin-main" className="px-4 py-6 sm:px-6">
+        <main id="admin-main" className="min-w-0 overflow-x-clip px-4 py-6 sm:px-6">
           {children}
         </main>
       </div>

@@ -49,19 +49,28 @@ export default function OpsDashboard() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold">Restaurant dashboard</h1>
-          <p className="text-zinc-400">
-            Operations API · last successful refresh {refreshLabel ?? "—"}
+          <p className="text-zinc-400" role="status" aria-live="polite">
+            {refreshLabel ? `Last updated ${refreshLabel}` : "Not updated yet"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/ops/orders" className="rounded-lg bg-red-600 px-4 py-3 font-semibold hover:bg-red-500">
-            Orders
+          <Link
+            href="/ops/orders"
+            className="min-h-11 rounded-lg bg-red-600 px-4 py-3 font-semibold hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+          >
+            Work the order queue
           </Link>
-          <Link href="/ops/kitchen" className="rounded-lg bg-zinc-800 px-4 py-3 font-semibold hover:bg-zinc-700">
-            Kitchen
+          <Link
+            href="/ops/kitchen"
+            className="min-h-11 rounded-lg bg-zinc-800 px-4 py-3 font-semibold hover:bg-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+          >
+            Open kitchen queue
           </Link>
-          <Link href="/ops/dispatch" className="rounded-lg bg-zinc-800 px-4 py-3 font-semibold hover:bg-zinc-700">
-            Dispatch
+          <Link
+            href="/ops/dispatch"
+            className="min-h-11 rounded-lg bg-zinc-800 px-4 py-3 font-semibold hover:bg-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+          >
+            Dispatch riders
           </Link>
         </div>
       </div>
@@ -83,17 +92,17 @@ export default function OpsDashboard() {
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Active orders", value: kpis ? String(kpis.activeOrders) : "—" },
-          { label: "Pending", value: data ? String(status.pending ?? 0) : "—" },
-          { label: "Preparing", value: data ? String(status.preparing ?? 0) : "—" },
-          { label: "Ready", value: data ? String(status.ready ?? 0) : "—" },
-          { label: "Dispatched", value: data ? String(status.dispatched ?? 0) : "—" },
+          { label: "Pending (needs action)", value: data ? String(status.pending ?? 0) : "—" },
           { label: "Kitchen waiting", value: kpis ? String(kpis.kitchenWaiting) : "—" },
+          { label: "Ready (hand over)", value: data ? String(status.ready ?? 0) : "—" },
+          { label: "Dispatched", value: data ? String(status.dispatched ?? 0) : "—" },
+          { label: "Preparing", value: data ? String(status.preparing ?? 0) : "—" },
+          { label: "Active orders", value: kpis ? String(kpis.activeOrders) : "—" },
+          { label: "Today orders", value: kpis ? String(kpis.todayOrders) : "—" },
           {
-            label: "Today sales (ops)",
+            label: "Today sales",
             value: kpis ? `Rs ${Math.round(kpis.todayGrossSales).toLocaleString("en-PK")}` : "—",
           },
-          { label: "Today orders", value: kpis ? String(kpis.todayOrders) : "—" },
         ].map((card) => (
           <div key={card.label} className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
             <p className="text-sm text-zinc-400">{card.label}</p>
@@ -159,24 +168,24 @@ export default function OpsDashboard() {
         </section>
       ) : null}
 
-      <nav className="flex flex-wrap gap-3 text-sm" aria-label="Ops shortcuts">
-        <Link href="/ops/orders" className="rounded-lg bg-zinc-800 px-3 py-2 font-semibold hover:bg-zinc-700">
-          /ops/orders
+      <nav className="flex flex-wrap gap-3 text-sm" aria-label="Table service shortcuts">
+        <Link
+          href="/admin/reservations"
+          className="min-h-11 rounded-lg bg-zinc-800 px-3 py-2 font-semibold hover:bg-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+        >
+          Manage reservations
         </Link>
-        <Link href="/ops/kitchen" className="rounded-lg bg-zinc-800 px-3 py-2 font-semibold hover:bg-zinc-700">
-          /ops/kitchen
+        <Link
+          href="/admin/waitlist"
+          className="min-h-11 rounded-lg bg-zinc-800 px-3 py-2 font-semibold hover:bg-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+        >
+          Open waitlist
         </Link>
-        <Link href="/ops/dispatch" className="rounded-lg bg-zinc-800 px-3 py-2 font-semibold hover:bg-zinc-700">
-          /ops/dispatch
-        </Link>
-        <Link href="/admin/reservations" className="rounded-lg bg-zinc-800 px-3 py-2 font-semibold hover:bg-zinc-700">
-          Reservations
-        </Link>
-        <Link href="/admin/waitlist" className="rounded-lg bg-zinc-800 px-3 py-2 font-semibold hover:bg-zinc-700">
-          Waitlist
-        </Link>
-        <Link href="/admin/floor" className="rounded-lg bg-zinc-800 px-3 py-2 font-semibold hover:bg-zinc-700">
-          Live floor
+        <Link
+          href="/admin/floor"
+          className="min-h-11 rounded-lg bg-zinc-800 px-3 py-2 font-semibold hover:bg-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+        >
+          Open live floor
         </Link>
       </nav>
     </OpsShell>

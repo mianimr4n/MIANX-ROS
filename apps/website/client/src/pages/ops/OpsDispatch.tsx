@@ -109,6 +109,7 @@ export default function OpsDispatch() {
                         className="min-h-12 rounded-xl bg-zinc-800 px-3 text-sm"
                         value={selectedRider[row.id] ?? ""}
                         disabled={busyId === row.id}
+                        aria-label={`Select rider for order ${row.orderNumber}`}
                         onChange={(e) =>
                           setSelectedRider((prev) => ({ ...prev, [row.id]: e.target.value }))
                         }

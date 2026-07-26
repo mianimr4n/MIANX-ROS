@@ -1,0 +1,215 @@
+{
+  "generatedAt": "2026-07-26T21:03:08.993Z",
+  "localDeterministicFixturesOnly": true,
+  "exitCode": 0,
+  "rows": [
+    {
+      "persona": "super-admin",
+      "viewport": 390,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/super-admin-390.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "super-admin",
+      "viewport": 1440,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/super-admin-1440.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "owner",
+      "viewport": 390,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/owner-390.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "owner",
+      "viewport": 1440,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/owner-1440.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "configuration",
+      "viewport": 390,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/configuration-390.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "configuration",
+      "viewport": 1440,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/configuration-1440.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "assigned-manager",
+      "viewport": 390,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/assigned-manager-390.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "assigned-manager",
+      "viewport": 1440,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/assigned-manager-1440.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "branch-manager",
+      "viewport": 390,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/branch-manager-390.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "branch-manager",
+      "viewport": 1440,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/branch-manager-1440.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "cashier",
+      "viewport": 390,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/cashier-390.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "cashier",
+      "viewport": 1440,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/cashier-1440.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "host",
+      "viewport": 390,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/host-390.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "host",
+      "viewport": 1440,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/host-1440.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "waiter",
+      "viewport": 390,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/waiter-390.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "waiter",
+      "viewport": 1440,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/waiter-1440.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "kitchen",
+      "viewport": 390,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/kitchen-390.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "kitchen",
+      "viewport": 1440,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/kitchen-1440.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "delivery",
+      "viewport": 390,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/delivery-390.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "delivery",
+      "viewport": 1440,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/delivery-1440.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "general-staff",
+      "viewport": 390,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/general-staff-390.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "general-staff",
+      "viewport": 1440,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/general-staff-1440.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "northern-bypass-manager",
+      "viewport": 390,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/northern-bypass-manager-390.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "northern-bypass-manager",
+      "viewport": 1440,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/northern-bypass-manager-1440.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "operations-command-center",
+      "viewport": 390,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/operations-command-center-390.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    },
+    {
+      "persona": "operations-command-center",
+      "viewport": 1440,
+      "screenshot": "docs/testing/acceptance-evidence/dashboard-ux-screenshots/operations-command-center-1440.png",
+      "pii": false,
+      "credentials": false,
+      "result": "CAPTURED"
+    }
+  ]
+}

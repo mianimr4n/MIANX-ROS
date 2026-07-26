@@ -352,9 +352,8 @@ export default function AdminKitchenDashboard() {
             description={`${roleLabel} · ${branchLabel}${kitchenOnly ? " · Branch scope enforced" : ""}`}
           />
           <p className="mt-1 text-xs text-[var(--admin-muted)]">
-            Stages map to live ticket statuses: New (queued) → Accepted → Preparing → Ready. Quality Check is{" "}
-            <span className="font-semibold">UNAVAILABLE</span> (no backend status). Delay threshold{" "}
-            {PREP_TARGET_MINUTES}m is <span className="font-semibold">DERIVED</span>, not a contractual SLA.
+            Tickets move New → Accepted → Preparing → Ready. Tickets older than {PREP_TARGET_MINUTES}{" "}
+            minutes are flagged as delayed (a guide, not a contractual target).
           </p>
         </div>
         <form
@@ -436,7 +435,7 @@ export default function AdminKitchenDashboard() {
               title="Avg prep (min)"
               value={summary.avgPrep != null ? String(summary.avgPrep) : "—"}
               source={summary.avgPrep != null ? "PARTIAL" : "UNAVAILABLE"}
-              detail="Needs started_at + ready_at"
+              detail="Shown once prep start and ready times are recorded"
               unavailable={summary.avgPrep == null}
             />
             <AdminKpiCard
@@ -451,15 +450,9 @@ export default function AdminKitchenDashboard() {
 
       <div className="mb-4 rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-3 text-xs text-[var(--admin-muted)]">
         <p>
-          <span className="font-semibold text-[var(--admin-ink)]">Quality Check:</span> UNAVAILABLE — not in
-          kitchen ticket state machine.{" "}
-          <span className="font-semibold text-[var(--admin-ink)]">Item prep toggles:</span> FOUNDATION —
-          `is_completed` exists on rows but no PATCH API.{" "}
-          <span className="font-semibold text-[var(--admin-ink)]">Stations / sound / shifts:</span> FOUNDATION
-          or UNAVAILABLE.{" "}
-          <span className="font-semibold text-[var(--admin-ink)]">Ready handoff:</span> ticket → ready mirrors
-          order.status to ready (API-SUPPORTED); delivery/POS visibility depends on those modules reading ready
-          orders.
+          Quality check, per-item prep ticks, station routing, sounds, and shifts aren't available yet.
+          Marking a ticket <span className="font-semibold text-[var(--admin-ink)]">Ready</span> also marks
+          the order ready for pickup, delivery, and POS.
         </p>
       </div>
 
@@ -490,7 +483,7 @@ export default function AdminKitchenDashboard() {
               {error}
             </div>
           ) : null}
-          {loading ? <div className="h-40 animate-pulse rounded-2xl bg-[var(--admin-soft)]" /> : null}
+          {loading ? <div className="h-40 animate-pulse rounded-2xl bg-[var(--admin-soft)] motion-reduce:animate-none" /> : null}
           {!loading && filteredTickets.length === 0 ? (
             <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-8 text-center text-sm text-[var(--admin-muted)]">
               No tickets for this view and filters.
