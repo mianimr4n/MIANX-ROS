@@ -1,0 +1,129 @@
+{
+  "title": "Canonical Menu Corrective Acceptance Evidence",
+  "generatedAt": "2026-07-25T11:30:00.000Z",
+  "environment": {
+    "branch": "feature/aug14-role-dashboards-completion",
+    "baseCommit": "6377b7ecdc75d01bec7389f1b07ceaffbaecbc2d",
+    "os": "win32",
+    "node": "local",
+    "website": "http://localhost:3000",
+    "api": "http://127.0.0.1:4000",
+    "database": "local supabase postgres (not production)"
+  },
+  "commands": [
+    { "command": "pnpm check", "exitCode": 0 },
+    { "command": "pnpm build:website", "exitCode": 0 },
+    { "command": "pnpm test", "exitCode": 0, "notes": "514 static + 353 backend after corrective fixes" },
+    { "command": "pnpm test:backend", "exitCode": 0, "tests": 353 },
+    { "command": "node scripts/reconcile-canonical-menu-counts.mjs --db", "exitCode": 0 },
+    { "command": "pnpm exec playwright test --config=playwright.menu.config.ts", "exitCode": "0 then 1", "notes": "First run PASS_WITH_LIMITATIONS; re-run failed at owner login timeout (45s). Traces retained under test-results/." }
+  ],
+  "sourceChecksum": {
+    "path": "data/catalog/telepizza-canonical-menu.json",
+    "sha256": "b296967f5309904033a52ceea58e3e57dcfe78a4d2d73a940b50a0b08f87b10e",
+    "completionStatus": "BLOCKED_OWNER_EVIDENCE_REQUIRED"
+  },
+  "countDefinitions": {
+    "freeze_json": "Owner freeze board powering offline menu-data.ts only (NON-AUTHORITATIVE).",
+    "scratch_db_menu_canon": "Production-shaped dump + expand + SKU migration used for early local proofs.",
+    "live_local_postgres": "Local Supabase runtime DB after SKU conversion (20260725130000) + atomic audit (20260725140000). Expand migration NOT applied here.",
+    "why_129_vs_58": "58 = freeze JSON sellable families. 129 = distinct product_group_slug on expanded scratch DB. Not a counting bug. Live local after SKU-only conversion has 67 families (one per pre-existing item)."
+  },
+  "deterministicCounts": {
+    "freeze_json": {
+      "categories_total": 15,
+      "browse_categories": 14,
+      "product_families_total": 61,
+      "browse_product_families": 58,
+      "sellable_skus_total": 87,
+      "browse_sellable_skus": 80,
+      "topping_skus": 7,
+      "unavailable_skus": 0,
+      "modifier_groups": 7,
+      "modifier_options": 24
+    },
+    "scratch_db_menu_canon": {
+      "categories_total": 27,
+      "browse_categories": 26,
+      "product_families_total": 129,
+      "browse_product_families": 126,
+      "sellable_skus_total": 157,
+      "browse_sellable_skus": 149,
+      "topping_skus": 7,
+      "unavailable_skus": 1,
+      "modifier_groups": 8,
+      "modifier_options": 27
+    },
+    "live_local_postgres_after_sku_migration": {
+      "categories_total": 15,
+      "sellable_skus_total": 93,
+      "product_families_total": 67,
+      "variant_mappings": 40,
+      "legacy_variants_retained": 40,
+      "null_or_negative_price": 0,
+      "order_items": 33,
+      "item_modifier_groups": 259,
+      "modifier_options": 27,
+      "modifier_groups": 8
+    }
+  },
+  "transactionalAuditProof": {
+    "rpc": "public.update_menu_item_price_atomic",
+    "behavior": "FOR UPDATE lock → validate → update menu_items.price → insert menu_audit_events → single transaction",
+    "idempotentReplay": true,
+    "unchangedPriceNoAudit": true,
+    "variantWriteBlocked": true,
+    "backendServiceUsesRpc": true
+  },
+  "historicalOrderProof": {
+    "order_items_preserved_on_live_local": 33,
+    "variant_id_column_retained": true,
+    "menu_item_variants_not_dropped": true
+  },
+  "modifierPreservationProof": {
+    "modifier_groups": 8,
+    "modifier_options": 27,
+    "item_modifier_groups_after_sku_mirror": 259
+  },
+  "playwright": {
+    "config": "playwright.menu.config.ts",
+    "firstRun": "PASS_WITH_LIMITATIONS",
+    "secondRun": "FAIL (login timeout)",
+    "orderCreate": "SKIP on first run (POS_AUTH_REQUIRED via public orders; POS path added later but re-run flaked at login)",
+    "evidence": [
+      "docs/testing/acceptance-evidence/canonical-menu-playwright-journey.json",
+      "docs/testing/acceptance-evidence/canonical-menu-playwright-results.json"
+    ]
+  },
+  "representativeSkuMatrixLiveLocal": [
+    { "slug": "tele-special-small", "family": "tele-special", "size": "6 inch Small", "category": "Signature Pizzas", "price": 499, "available": true },
+    { "slug": "tele-special-medium", "family": "tele-special", "size": "9 inch Medium", "category": "Signature Pizzas", "price": 950, "available": true },
+    { "slug": "tele-special-large", "family": "tele-special", "size": "12 inch Large", "category": "Signature Pizzas", "price": 1570, "available": true },
+    { "slug": "chicken-supreme-small", "family": "chicken-supreme", "size": "6 inch Small", "category": "Classic Pizzas", "price": 470, "available": true },
+    { "slug": "chicken-supreme-medium", "family": "chicken-supreme", "size": "9 inch Medium", "category": "Classic Pizzas", "price": 890, "available": true },
+    { "slug": "chicken-supreme-large", "family": "chicken-supreme", "size": "12 inch Large", "category": "Classic Pizzas", "price": 1470, "available": true },
+    { "slug": "chicago-extreme-medium", "family": "chicago-extreme", "size": "Medium", "category": "Specialty Pizzas", "price": 1199, "available": true },
+    { "slug": "chicago-extreme-large", "family": "chicago-extreme", "size": "Large", "category": "Specialty Pizzas", "price": 1899, "available": true },
+    { "slug": "quarter-broast", "family": "quarter-broast", "size": null, "category": "Broast", "price": 750, "available": false },
+    { "slug": "zinger-burger", "family": "zinger-burger", "size": null, "category": "Burgers", "price": 450, "available": true },
+    { "slug": "loaded-fries", "family": "loaded-fries", "size": null, "category": "Fries", "price": 650, "available": true },
+    { "slug": "family-deal", "family": "family-deal", "size": null, "category": "Deals", "price": 2250, "available": true }
+  ],
+  "missingOnLiveLocal": ["mint-margarita", "classic-mojito", "molten-lava-cake"],
+  "priceBoardNote": "Founder board examples (Tele Special 620/1250/1890) come from expand/freeze board. Live local SKU conversion preserved prior catalog prices (499/950/1570) because expand migration was not applied to local postgres in this pass.",
+  "productionMigrationPreview": {
+    "baseline": { "categories": 15, "items": 67, "variants": 40, "order_items": 1, "item_modifier_groups": 105, "modifier_options": 27, "modifier_groups": 8 },
+    "expectedAfter25130000": "variants become SKUs; mappings=40; order_items unchanged; modifiers not reduced; menu_item_variants retained deprecated",
+    "appliedToProduction": false
+  },
+  "knownLimitations": [
+    "Playwright journey not deterministic (login timeout on re-run)",
+    "Order→Kitchen→Report not fully closed in browser",
+    "Live local prices not yet board-aligned without expand migration",
+    "Freeze JSON still BLOCKED_OWNER_EVIDENCE_REQUIRED",
+    "menu_item_variants not dropped (by design)"
+  ],
+  "commitAuthorization": "NOT AUTHORIZED",
+  "productionAuthorization": "NOT AUTHORIZED",
+  "finalDecision": "CORRECTIVE CHANGES REQUIRED"
+}

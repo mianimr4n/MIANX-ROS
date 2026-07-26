@@ -17,6 +17,7 @@ import { createAdminBillsRouter } from "./bills.js";
 import { createAdminDashboardRouter } from "./dashboard.js";
 import { createAdminPosRouter } from "./pos.js";
 import { createAdminFloorRouter } from "./floor.js";
+import { createAdminMenuRouter } from "./menu.js";
 import {
   createAdminReservationsRouter,
   createAdminWaitlistRouter,
@@ -24,6 +25,7 @@ import {
 import { createAdminTableSessionsRouter } from "./table-sessions.js";
 import { createAdminPaymentsRouter } from "./payments.js";
 import type { FloorConfigurationService } from "../../services/floor/configuration.js";
+import type { MenuManagementService } from "../../services/menu/management.js";
 import type { ReservationsService } from "../../services/reservations/management.js";
 import type { TableServiceOperations } from "../../services/dine-in/table-service.js";
 import type { PaymentSettlementService } from "../../services/payments/settlement.js";
@@ -78,6 +80,7 @@ export interface AdminRouterDependencies {
   restaurantBills: RestaurantBillsService;
   ordersDataSource: OrdersDataSource;
   floorConfiguration: FloorConfigurationService;
+  menuManagement: MenuManagementService;
   reservations: ReservationsService;
   tableService: TableServiceOperations;
   paymentSettlement: PaymentSettlementService;
@@ -188,6 +191,16 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       floorConfiguration: dependencies.floorConfiguration,
+    }),
+  );
+
+  // Canonical single-price Admin Menu management.
+  router.use(
+    "/menu",
+    createAdminMenuRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      menuManagement: dependencies.menuManagement,
     }),
   );
 

@@ -1,0 +1,39 @@
+{
+  "generatedAt": "2026-07-25T11:18:51.460Z",
+  "definitions": {
+    "freeze_json": "Owner freeze board. Incomplete (completionStatus may be BLOCKED). Powers offline menu-data.ts only.",
+    "scratch_db": "Local menu_canon after expand migration + 20260725130000 SKU conversion. Runtime authority for acceptance against production-shaped data.",
+    "why_129_vs_58": "58 = freeze JSON sellable families. 129 = distinct product_group_slug in scratch DB after full real-menu expand (includes one-SKU products across all categories). Not a counting bug."
+  },
+  "freeze": {
+    "layer": "freeze_json",
+    "path": "data/catalog/telepizza-canonical-menu.json",
+    "checksumSha256": "b296967f5309904033a52ceea58e3e57dcfe78a4d2d73a940b50a0b08f87b10e",
+    "completionStatus": "BLOCKED_OWNER_EVIDENCE_REQUIRED",
+    "generatedAt": "2026-07-18",
+    "categories_total": 15,
+    "browse_categories": 14,
+    "product_families_total": 61,
+    "browse_product_families": 58,
+    "sellable_skus_total": 87,
+    "browse_sellable_skus": 80,
+    "topping_skus": 7,
+    "unavailable_skus": 0,
+    "modifier_groups": 7,
+    "modifier_options": 24
+  },
+  "database": {
+    "layer": "scratch_db_menu_canon",
+    "source": "production-shaped + expand + SKU migration",
+    "categories_total": 27,
+    "browse_categories": 26,
+    "product_families_total": 129,
+    "browse_product_families": 126,
+    "sellable_skus_total": 157,
+    "browse_sellable_skus": 149,
+    "topping_skus": 7,
+    "unavailable_skus": 1,
+    "modifier_groups": 8,
+    "modifier_options": 27
+  }
+}

@@ -206,6 +206,8 @@ export function createAdminPosOrder(
     /** D3 — attach a dine-in order to an active dining session (dine-in only). */
     diningSessionId?: string;
     items: Array<{
+      /** Preferred: the exact sellable SKU the server must price. */
+      menuItemId?: string;
       menuItemSlug: string;
       variantLabel?: string;
       quantity: number;
@@ -239,16 +241,104 @@ export function createAdminPosOrder(
   });
 }
 
+export type BranchReadinessReport = {
+  branchId: string;
+  branchCode: string;
+  name: string;
+  status: string;
+  operationallyActive: boolean;
+  readinessGrade?: "READY" | "READY_WITH_LIMITATIONS" | "BLOCKED" | "NOT_VERIFIED";
+  blockers: Array<{ code: string; message: string }>;
+  checks: Record<string, boolean>;
+};
+
 export function fetchBranchReadiness(accessToken: string, branchId: string, opts?: AdminReadOptions) {
-  return fetchApiData<{
+  return fetchApiData<BranchReadinessReport>(
+    `/admin/branches/${branchId}/readiness`,
+    readInit(accessToken, opts),
+  );
+}
+
+/** D4 — same readiness payload via dashboard contract. */
+export function fetchOpeningReadiness(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  const params = new URLSearchParams({ branchId });
+  return fetchApiData<BranchReadinessReport>(
+    `/admin/dashboard/opening-readiness?${params.toString()}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export type TableServiceDashboardSummary = {
+  generatedAt: string;
+  branchId: string;
+  branchCode: string | null;
+  branchStatus: string;
+  definitions: Record<string, string>;
+  reservations: {
+    todayTotal: number;
+    confirmed: number;
+    pending: number;
+    arrived: number;
+    noShows: number;
+    cancellations: number;
+    seatedCovers: number;
+    coversBooked: number;
+  };
+  floor: {
+    availableTables: number;
+    occupiedTables: number;
+    cleaningTables: number;
+    totalActiveTables: number;
+    seatedCovers: number;
+    billRequests: number;
+    paymentPending: number;
+    activeSessions: number;
+    waitlistCount: number;
+    seatingConflicts: number;
+    upcomingArrivals: number;
+  };
+  averages: {
+    averageWaitMinutes: number | null;
+    averageTableTurnMinutes: number | null;
+    note: string;
+  };
+  occupancyByBranch: Array<{
     branchId: string;
-    branchCode: string;
-    name: string;
-    status: string;
-    operationallyActive: boolean;
-    blockers: Array<{ code: string; message: string }>;
-    checks: Record<string, boolean>;
-  }>(`/admin/branches/${branchId}/readiness`, readInit(accessToken, opts));
+    branchCode: string | null;
+    occupiedTables: number;
+    availableTables: number;
+    waitlistCount: number;
+  }> | null;
+};
+
+export function fetchTableServiceDashboard(
+  accessToken: string,
+  query: { branchId: string; includeOccupancyComparison?: boolean },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams({ branchId: query.branchId });
+  if (query.includeOccupancyComparison) params.set("includeOccupancyComparison", "true");
+  return fetchApiData<TableServiceDashboardSummary>(
+    `/admin/dashboard/table-service?${params.toString()}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export type SystemHealthSummary = {
+  generatedAt: string;
+  api: { status: "ok" | "degraded"; supabaseConfigured: boolean };
+  database: { status: "ready" | "unavailable"; note: string };
+  notifications: {
+    emailMode: string;
+    workerReachable: boolean;
+    pendingOutboxSample: number | null;
+  };
+  configurationWarnings: string[];
+  correlationHint: string;
+};
+
+export function fetchSystemHealth(accessToken: string, opts?: AdminReadOptions) {
+  return fetchApiData<SystemHealthSummary>(`/admin/dashboard/system-health`, readInit(accessToken, opts));
 }
 
 export type AdminRestaurantTable = {

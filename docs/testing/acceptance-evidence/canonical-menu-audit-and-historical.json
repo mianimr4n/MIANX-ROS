@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-07-26T06:13:32.075Z",
+  "scope": "LOCAL ONLY — production data untouched",
+  "database": "postgres",
+  "priceAuditAtomicity": {
+    "rpcPresent": true,
+    "sqlFile": "scripts/sql/prove-menu-price-audit-rollback.sql",
+    "exitCode": 0,
+    "sawInducedFailure": true,
+    "priceUnchanged": true,
+    "auditRowsWritten": 0,
+    "transactionRolledBack": true
+  },
+  "historicalCompatibility": {
+    "orderItemsTotal": 40,
+    "orderItemsWithVariantId": 27,
+    "orderItemsWithMenuItem": 40,
+    "orphanedOrderItems": 0,
+    "orderItemsWithNullSnapshotName": 0,
+    "orderItemsWithNullUnitPrice": 0,
+    "orderItemModifiers": 13,
+    "orphanedModifiers": 0,
+    "danglingVariantIds": 0,
+    "variantSkuMappings": 40,
+    "variantsWithoutSkuMapping": 0,
+    "menuItemsNullPrice": 0,
+    "menuItemsNegativePrice": 0,
+    "duplicateSkuSlugs": 0,
+    "duplicateSemanticProducts": 0,
+    "branchOverridesActive": 0,
+    "northernBypassStatus": "coming-soon",
+    "operatingBranches": [
+      "northern-bypass=coming-soon",
+      "royal-orchard=operating"
+    ]
+  },
+  "gate": "PASS"
+}

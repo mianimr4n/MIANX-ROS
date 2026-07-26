@@ -1,0 +1,97 @@
+{
+  "generatedAt": "2026-07-26T06:13:26.650Z",
+  "scope": "LOCAL SCRATCH ONLY — production migration NOT APPLIED",
+  "database": "menu_canon",
+  "staticReview": [
+    {
+      "migration": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "note": "SQL comments stripped before scanning so documentation of the rule is not a violation",
+      "forbiddenFound": []
+    },
+    {
+      "migration": "supabase/migrations/20260725140000_canonical_menu_price_audit_atomic.sql",
+      "note": "SQL comments stripped before scanning so documentation of the rule is not a violation",
+      "forbiddenFound": []
+    }
+  ],
+  "before": {
+    "categories": 27,
+    "items": 157,
+    "mappings": 43,
+    "variants": 43,
+    "orders": 1,
+    "orderItems": 1,
+    "orderModifiers": 0,
+    "nullPrices": 0,
+    "negativePrices": 0,
+    "distinctSlugs": 157
+  },
+  "firstReapply": [
+    {
+      "pass": "reapply-1",
+      "migration": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "exitCode": 0,
+      "stderrTail": "cal_single_price_menu_domain.sql:107: NOTICE:  relation \"branch_menu_item_overrides\" already exists, skipping\npsql:/tmp/20260725130000_canonical_single_price_menu_domain.sql:249: NOTICE:  relation \"menu_items_product_group_slug_idx\" already exists, skipping\npsql:/tmp/20260725130000_canonical_single_price_menu_domain.sql:251: NOTICE:  relation \"menu_items_category_sort_idx\" already exists, skipping"
+    },
+    {
+      "pass": "reapply-1",
+      "migration": "supabase/migrations/20260725140000_canonical_menu_price_audit_atomic.sql",
+      "exitCode": 0,
+      "stderrTail": "psql:/tmp/20260725140000_canonical_menu_price_audit_atomic.sql:12: NOTICE:  column \"correlation_id\" of relation \"menu_audit_events\" already exists, skipping\npsql:/tmp/20260725140000_canonical_menu_price_audit_atomic.sql:19: NOTICE:  relation \"menu_audit_events_correlation_uidx\" already exists, skipping"
+    }
+  ],
+  "afterFirst": {
+    "categories": 27,
+    "items": 157,
+    "mappings": 43,
+    "variants": 43,
+    "orders": 1,
+    "orderItems": 1,
+    "orderModifiers": 0,
+    "nullPrices": 0,
+    "negativePrices": 0,
+    "distinctSlugs": 157
+  },
+  "secondReapply": [
+    {
+      "pass": "reapply-2",
+      "migration": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "exitCode": 0,
+      "stderrTail": "cal_single_price_menu_domain.sql:107: NOTICE:  relation \"branch_menu_item_overrides\" already exists, skipping\npsql:/tmp/20260725130000_canonical_single_price_menu_domain.sql:249: NOTICE:  relation \"menu_items_product_group_slug_idx\" already exists, skipping\npsql:/tmp/20260725130000_canonical_single_price_menu_domain.sql:251: NOTICE:  relation \"menu_items_category_sort_idx\" already exists, skipping"
+    },
+    {
+      "pass": "reapply-2",
+      "migration": "supabase/migrations/20260725140000_canonical_menu_price_audit_atomic.sql",
+      "exitCode": 0,
+      "stderrTail": "psql:/tmp/20260725140000_canonical_menu_price_audit_atomic.sql:12: NOTICE:  column \"correlation_id\" of relation \"menu_audit_events\" already exists, skipping\npsql:/tmp/20260725140000_canonical_menu_price_audit_atomic.sql:19: NOTICE:  relation \"menu_audit_events_correlation_uidx\" already exists, skipping"
+    }
+  ],
+  "afterSecond": {
+    "categories": 27,
+    "items": 157,
+    "mappings": 43,
+    "variants": 43,
+    "orders": 1,
+    "orderItems": 1,
+    "orderModifiers": 0,
+    "nullPrices": 0,
+    "negativePrices": 0,
+    "distinctSlugs": 157
+  },
+  "idempotent": true,
+  "noDataLoss": true,
+  "priceIntegrity": {
+    "nullPrices": 0,
+    "negativePrices": 0,
+    "duplicateSlugs": 0
+  },
+  "inducedFailure": {
+    "exitCode": 1,
+    "sawInducedError": true,
+    "probeColumnPresent": false,
+    "countsUnchanged": true,
+    "priceSum": 133315
+  },
+  "productionApplied": false,
+  "gate": "PASS"
+}

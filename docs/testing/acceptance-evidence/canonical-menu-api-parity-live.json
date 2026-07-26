@@ -1,0 +1,83 @@
+{
+  "generatedAt": "2026-07-26T06:13:33.345Z",
+  "scope": "LOCAL ONLY — read-only catalog comparison plus quote sampling (no orders created)",
+  "api": "http://127.0.0.1:4000",
+  "runtimeSourceOfTruth": "local database through the canonical Menu API",
+  "counts": {
+    "customerCategories": 13,
+    "customerSkus": 80,
+    "customerToppings": 7,
+    "adminFamilies": 67,
+    "adminOptions": 93
+  },
+  "categoryOrderIdentical": true,
+  "mismatches": [],
+  "quoteChecks": [
+    {
+      "id": "7820e55a-fe6f-4eb0-8dec-8d3e17835158",
+      "slug": "tele-special-small",
+      "catalogPrice": 620,
+      "quotedPrice": 620,
+      "matches": true,
+      "status": 200
+    },
+    {
+      "id": "c39d2ea4-6aa8-4038-83cb-603df3a0e4d0",
+      "slug": "bihari-kabab-small",
+      "catalogPrice": 620,
+      "quotedPrice": 620,
+      "matches": true,
+      "status": 200
+    },
+    {
+      "id": "179cec59-eca1-4704-9a0b-2d763361c32c",
+      "slug": "bihari-kabab-medium",
+      "catalogPrice": 1250,
+      "quotedPrice": 1250,
+      "matches": true,
+      "status": 200
+    },
+    {
+      "id": "3a9d9e31-520a-4709-86da-b952a6ebce34",
+      "slug": "bihari-kabab-large",
+      "catalogPrice": 1890,
+      "quotedPrice": 1890,
+      "matches": true,
+      "status": 200
+    },
+    {
+      "id": "20f70920-b50c-48db-9bb8-4ab1feb908f5",
+      "slug": "kababish-small",
+      "catalogPrice": 620,
+      "quotedPrice": 620,
+      "matches": true,
+      "status": 200
+    },
+    {
+      "id": "8424ee97-a2b0-453f-ba3c-0f94e0dc6f04",
+      "slug": "kababish-medium",
+      "catalogPrice": 1250,
+      "quotedPrice": 1250,
+      "matches": true,
+      "status": 200
+    },
+    {
+      "id": "70726279-62d8-47ff-b19b-45865374d114",
+      "slug": "kababish-large",
+      "catalogPrice": 1890,
+      "quotedPrice": 1890,
+      "matches": true,
+      "status": 200
+    },
+    {
+      "id": "306288c6-58ba-4142-ae6a-9ae7bcdaae52",
+      "slug": "peri-peri-small",
+      "catalogPrice": 620,
+      "quotedPrice": 620,
+      "matches": true,
+      "status": 200
+    }
+  ],
+  "channelSpecificPricingTransforms": "NONE — Customer, POS and Admin read the same rows",
+  "gate": "PASS"
+}

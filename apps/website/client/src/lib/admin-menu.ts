@@ -1,6 +1,5 @@
-/** Menu Management helpers — read-only catalog browser; no invented CRUD. */
+/** Menu Management helpers — every row is one sellable SKU with exactly one price. */
 
-import { displayPrice } from "@/lib/admin-pos";
 import type { MenuCategory, MenuItem } from "@/lib/telepizza-types";
 
 export type MenuCatalogItemView = MenuItem & {
@@ -14,7 +13,8 @@ export type MenuKpiSnapshot = {
   internalSkus: number;
   deals: number;
   modifierGroups: number;
-  variants: number;
+  /** Distinct product families across the loaded SKUs (presentation grouping only). */
+  productFamilies: number;
   averagePrice: number | null;
   withModifiers: number;
   missingImages: number;
@@ -46,23 +46,21 @@ export function itemSku(item: MenuItem): string {
 }
 
 export function isLikelyOutOfStock(item: MenuItem): boolean {
-  const price = displayPrice(item);
-  return price <= 0;
+  return item.available === false || item.price <= 0;
 }
 
 export function modifierGroupCount(item: MenuItem): number {
   return item.modifierGroups?.length ?? 0;
 }
 
-export function variantCount(item: MenuItem): number {
-  return item.variants?.length ?? 0;
+export function familyKey(item: MenuItem): string {
+  return item.productGroupSlug ?? item.slug ?? item.id;
 }
 
 export function buildMenuKpis(products: MenuCatalogItemView[]): MenuKpiSnapshot {
   const browse = products.filter((p) => p.catalogScope === "browse");
   const modifierGroups = products.reduce((sum, p) => sum + modifierGroupCount(p), 0);
-  const variants = products.reduce((sum, p) => sum + variantCount(p), 0);
-  const prices = browse.map((p) => displayPrice(p)).filter((n) => n > 0);
+  const prices = browse.map((p) => p.price).filter((n) => n > 0);
   const categories = new Set(browse.map((p) => p.categorySlug ?? p.category)).size;
 
   return {
@@ -72,7 +70,7 @@ export function buildMenuKpis(products: MenuCatalogItemView[]): MenuKpiSnapshot 
     internalSkus: products.length - browse.length,
     deals: browse.filter((p) => p.productType === "deal").length,
     modifierGroups,
-    variants,
+    productFamilies: new Set(browse.map(familyKey)).size,
     averagePrice:
       prices.length > 0 ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : null,
     withModifiers: products.filter((p) => modifierGroupCount(p) > 0).length,
@@ -156,9 +154,9 @@ export function buildMenuInsights(products: MenuCatalogItemView[]): MenuInsightI
   }
 
   items.push({
-    id: "read-only",
-    title: "Menu Management is read-only — no admin write API exists yet.",
-    detail: "Create, update, publish, and branch overrides require menu.write backend endpoints.",
+    id: "one-price-rule",
+    title: "Every row is one sellable SKU with exactly one price.",
+    detail: "Sizes are separate SKUs grouped for display; menu_item_variants is deprecated.",
     source: "foundation",
   });
 
@@ -170,7 +168,7 @@ export function buildMenuInsights(products: MenuCatalogItemView[]): MenuInsightI
         detail: "Mianx.ai surfaces rule-based summaries as gaps appear.",
         source: "foundation",
       },
-      items.find((i) => i.id === "read-only")!,
+      items.find((i) => i.id === "one-price-rule")!,
     ];
   }
 

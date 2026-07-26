@@ -1,5 +1,5 @@
 import type { MenuItem } from "@/lib/telepizza-types";
-import { isPizzaItem, isStandalonePurchasable } from "@/data/cart-config";
+import { isConfigurableSku, isStandalonePurchasable } from "@/data/cart-config";
 import { buildCartItemPayload } from "@/lib/menu-utils";
 import { useCart } from "@/contexts/CartContext";
 import { usePizzaCustomizer } from "@/contexts/PizzaCustomizerContext";
@@ -9,23 +9,19 @@ export function useAddMenuItem() {
   const { addItem } = useCart();
   const { openCustomizer } = usePizzaCustomizer();
 
-  return (item: MenuItem, initialVariantLabel?: string) => {
+  /** `item` is always an exact sellable SKU — sizes are separate SKUs, not options of one. */
+  return (item: MenuItem) => {
     if (!isStandalonePurchasable(item)) {
       toast.error("This item is only available as a pizza topping.");
       return;
     }
 
-    if (isPizzaItem(item)) {
-      openCustomizer(item, initialVariantLabel);
+    if (isConfigurableSku(item)) {
+      openCustomizer(item);
       return;
     }
 
-    const payload = buildCartItemPayload(
-      item,
-      initialVariantLabel
-        ? item.variants?.find((variant) => variant.label === initialVariantLabel)
-        : undefined,
-    );
+    const payload = buildCartItemPayload(item);
     if (payload) addItem(payload);
   };
 }

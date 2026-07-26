@@ -21,28 +21,55 @@ export interface MenuCatalogCategory {
   sortOrder: number;
 }
 
-export interface MenuCatalogVariant {
-  id: string;
-  label: string;
-  price: number;
-  sizeCode?: string;
-  isDefault: boolean;
-}
-
-export interface MenuCatalogItem {
+/**
+ * A sellable SKU with exactly one current selling price.
+ *
+ * This is the only pricing unit in the canonical menu domain: Customer Website, Admin,
+ * POS, Orders, Kitchen and Reports all reference `id`. `menu_item_variants` is deprecated
+ * and is never exposed here.
+ */
+export interface MenuCatalogSku {
   id: string;
   slug: string;
+  /** Full SKU name including its size/option suffix, e.g. `Tele Special — 10 inch Medium`. */
+  name: string;
+  /** Presentation-only family key shared by sibling SKUs. */
+  productGroupSlug: string;
+  /** Human-readable option label, e.g. `10 inch Medium`. Absent for single-option products. */
+  sizeLabel?: string;
+  /** Machine size tier used to match size-scaled modifier pricing. */
+  sizeCode?: string;
+  /** The single selling price of this SKU (PKR). */
+  price: number;
+  available: boolean;
+  sortOrder: number;
+  category: string;
+  categorySlug: string;
+  description: string;
+  image: string;
+  badge?: string;
+  productType: string;
+  featured: boolean;
+  modifierGroups?: MenuCatalogModifierGroup[];
+}
+
+/**
+ * Presentation grouping of sibling SKUs. Carries no price of its own — grouping is
+ * metadata, never pricing indirection.
+ */
+export interface MenuCatalogProductGroup {
+  productGroupSlug: string;
+  /** Family name without the size suffix, e.g. `Tele Special`. */
   name: string;
   category: string;
   categorySlug: string;
   description: string;
   image: string;
   badge?: string;
-  price?: number;
   productType: string;
   featured: boolean;
-  variants?: MenuCatalogVariant[];
-  modifierGroups?: MenuCatalogModifierGroup[];
+  /** Every option is a real sellable SKU with one price. */
+  options: MenuCatalogSku[];
 }
 
 export interface MenuCatalogModifierOption {
@@ -68,13 +95,18 @@ export interface MenuCatalogModifierGroup {
   options: MenuCatalogModifierOption[];
 }
 
+export interface MenuCatalogCategoryView extends MenuCatalogCategory {
+  /** Product families in this category; each option inside is a sellable SKU. */
+  items: MenuCatalogProductGroup[];
+}
+
 export interface MenuCatalog {
-  /** Customer browse categories only (excludes internal groupings like Toppings). */
-  categories: MenuCatalogCategory[];
-  /** Customer browse items only (excludes product_type topping / internal SKUs). */
-  items: MenuCatalogItem[];
-  /** Shared topping SKUs for customizer / Admin / POS / Kitchen (not a browse category). */
-  toppings: MenuCatalogItem[];
+  /** Customer browse categories with their grouped product families. */
+  categories: MenuCatalogCategoryView[];
+  /** Flat browse SKUs — same data as categories[].items[].options, for search and POS. */
+  skus: MenuCatalogSku[];
+  /** Internal SKUs (toppings) available to customizer / Admin / POS, not a browse category. */
+  toppings: MenuCatalogSku[];
 }
 
 export interface CatalogDataSource {

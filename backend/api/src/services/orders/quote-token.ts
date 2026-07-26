@@ -16,7 +16,8 @@ export const QUOTE_TOKEN_VERSION = 1 as const;
 const QUOTE_PREFIX = "tpq1";
 
 export interface QuoteCartLineCanon {
-  menuItemSlug: string;
+  menuItemId: string | null;
+  menuItemSlug: string | null;
   variantLabel: string | null;
   quantity: number;
   toppings: Array<{ slug: string }>;
@@ -78,7 +79,8 @@ function signaturesEqual(a: string, b: string): boolean {
 /** Canonical cart for quote binding — excludes all client money fields. */
 export function buildQuoteCartCanon(
   items: Array<{
-    menuItemSlug: string;
+    menuItemId?: string;
+    menuItemSlug?: string;
     variantLabel?: string;
     quantity: number;
     toppings?: Array<{ slug: string }>;
@@ -88,7 +90,8 @@ export function buildQuoteCartCanon(
   }>,
 ): QuoteCartLineCanon[] {
   return items.map((item) => ({
-    menuItemSlug: item.menuItemSlug,
+    menuItemId: item.menuItemId ?? null,
+    menuItemSlug: item.menuItemSlug ?? null,
     variantLabel: item.variantLabel ?? null,
     quantity: item.quantity,
     toppings: (item.toppings ?? []).map((t) => ({ slug: t.slug })).sort((a, b) => a.slug.localeCompare(b.slug)),

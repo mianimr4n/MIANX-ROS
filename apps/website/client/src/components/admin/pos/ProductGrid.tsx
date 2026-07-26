@@ -1,28 +1,28 @@
 import { displayPrice, itemHasModifiers } from "@/lib/admin-pos";
 import { formatPkr } from "@/lib/admin-order-format";
-import type { MenuItem } from "@/lib/telepizza-types";
+import type { MenuProductGroup } from "@/lib/telepizza-types";
 
 export function ProductCard({
-  item,
+  group,
   onAdd,
   onConfigure,
 }: {
-  item: MenuItem;
+  group: MenuProductGroup;
   onAdd: () => void;
   onConfigure: () => void;
 }) {
-  const price = displayPrice(item);
-  const outOfStock = price <= 0 && (!item.variants || item.variants.length === 0);
-  const hasMods = itemHasModifiers(item);
+  const price = displayPrice(group);
+  const outOfStock = group.options.every((sku) => sku.available === false) || group.options.length === 0;
+  const hasMods = group.options.some(itemHasModifiers);
 
   return (
     <article
       className="flex flex-col overflow-hidden rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] shadow-[0_1px_2px_rgba(31,31,31,0.04)]"
-      aria-label={item.name}
+      aria-label={group.name}
     >
       <div className="relative aspect-[4/3] bg-[var(--admin-soft)]">
-        {item.image ? (
-          <img src={item.image} alt="" className="h-full w-full object-cover" loading="lazy" />
+        {group.image ? (
+          <img src={group.image} alt="" className="h-full w-full object-cover" loading="lazy" />
         ) : (
           <div className="flex h-full items-center justify-center text-xs text-[var(--admin-muted)]">No image</div>
         )}
@@ -38,9 +38,16 @@ export function ProductCard({
         ) : null}
       </div>
       <div className="flex flex-1 flex-col p-3">
-        <h3 className="text-sm font-semibold leading-snug text-[var(--admin-ink)]">{item.name}</h3>
-        <p className="mt-1 text-xs text-[var(--admin-muted)]">{item.category}</p>
-        <p className="mt-2 text-base font-semibold tabular-nums">{outOfStock ? "—" : formatPkr(price)}</p>
+        <h3 className="text-sm font-semibold leading-snug text-[var(--admin-ink)]">{group.name}</h3>
+        <p className="mt-1 text-xs text-[var(--admin-muted)]">{group.category}</p>
+        <p className="mt-2 text-base font-semibold tabular-nums">
+          {outOfStock ? "—" : formatPkr(price)}
+          {group.options.length > 1 ? (
+            <span className="ml-2 text-xs font-normal text-[var(--admin-muted)]">
+              {group.options.length} SKUs
+            </span>
+          ) : null}
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <button
             type="button"
@@ -65,17 +72,17 @@ export function ProductCard({
 }
 
 export function ProductGrid({
-  items,
+  groups,
   loading,
   emptyMessage,
   onQuickAdd,
   onConfigure,
 }: {
-  items: MenuItem[];
+  groups: MenuProductGroup[];
   loading: boolean;
   emptyMessage: string;
-  onQuickAdd: (item: MenuItem) => void;
-  onConfigure: (item: MenuItem) => void;
+  onQuickAdd: (group: MenuProductGroup) => void;
+  onConfigure: (group: MenuProductGroup) => void;
 }) {
   if (loading) {
     return (
@@ -87,7 +94,7 @@ export function ProductGrid({
     );
   }
 
-  if (items.length === 0) {
+  if (groups.length === 0) {
     return (
       <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-8 text-center text-sm text-[var(--admin-muted)]">
         {emptyMessage}
@@ -97,12 +104,12 @@ export function ProductGrid({
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="Product grid">
-      {items.map((item) => (
+      {groups.map((group) => (
         <ProductCard
-          key={item.id || item.slug || item.name}
-          item={item}
-          onAdd={() => onQuickAdd(item)}
-          onConfigure={() => onConfigure(item)}
+          key={group.productGroupSlug}
+          group={group}
+          onAdd={() => onQuickAdd(group)}
+          onConfigure={() => onConfigure(group)}
         />
       ))}
     </div>

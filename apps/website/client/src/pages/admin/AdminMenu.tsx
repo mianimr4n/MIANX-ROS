@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useSearch } from "wouter";
 
+import { CategoryManager } from "@/components/admin/menu/CategoryManager";
 import { CategoryTree } from "@/components/admin/menu/CategoryTree";
+import { CreateSkuDialog } from "@/components/admin/menu/CreateSkuDialog";
 import { MenuCatalogBanner } from "@/components/admin/menu/MenuCatalogBanner";
 import { MenuFiltersWithCategories } from "@/components/admin/menu/MenuFilters";
 import { MenuHeader } from "@/components/admin/menu/MenuHeader";
@@ -18,11 +20,25 @@ import {
   buildMenuInsights,
   buildMenuKpis,
   categoryTreeEntries,
+  familyKey,
   filterMenuProducts,
   mergeCatalogProducts,
   type MenuCatalogItemView,
   type MenuFilterState,
 } from "@/lib/admin-menu";
+import {
+  createMenuCategory,
+  createMenuSku,
+  listMenuAuditEvents,
+  listMenuCategories,
+  updateMenuCategory,
+  updateMenuSku,
+  type AdminMenuAuditEvent,
+  type AdminMenuCategory,
+  type CreateMenuSkuBody,
+  type UpdateMenuSkuBody,
+} from "@/lib/admin-menu-api";
+import { ApiRequestError, isApiConfigured } from "@/lib/api";
 import { AdminShell } from "./AdminShell";
 
 function readFilters(search: string): MenuFilterState & { selected: string } {
@@ -37,8 +53,13 @@ function readFilters(search: string): MenuFilterState & { selected: string } {
   };
 }
 
+function errorMessage(error: unknown): string {
+  if (error instanceof ApiRequestError) return error.message;
+  return error instanceof Error ? error.message : "Request failed.";
+}
+
 export default function AdminMenu() {
-  const { permissions, isSuperAdmin, roles } = useAuth();
+  const { session, permissions, isSuperAdmin, roles } = useAuth();
   const { label: branchLabel } = useAdminBranch();
   const { items, toppings, categories, isLoading, error, source, usingFallback, reloadCatalog } =
     useMenuCatalog();
@@ -49,9 +70,20 @@ export default function AdminMenu() {
   const allowed = canAccessAdminMenu({ roles, permissions, isSuperAdmin });
   useAdminAccessGate(allowed);
   const roleLabel = primaryRoleLabel(roles, isSuperAdmin);
+  const accessToken = session?.access_token ?? null;
+  const canWrite = Boolean(
+    accessToken && isApiConfigured && (isSuperAdmin || permissions.includes("menu.write")),
+  );
 
   const [searchDraft, setSearchDraft] = useState(urlState.search);
   const [drawerProduct, setDrawerProduct] = useState<MenuCatalogItemView | null>(null);
+  const [adminCategories, setAdminCategories] = useState<AdminMenuCategory[]>([]);
+  const [auditEvents, setAuditEvents] = useState<AdminMenuAuditEvent[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [categoryBusy, setCategoryBusy] = useState(false);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const products = useMemo(() => mergeCatalogProducts(items, toppings), [items, toppings]);
 
@@ -68,10 +100,35 @@ export default function AdminMenu() {
   const insights = useMemo(() => buildMenuInsights(products), [products]);
   const treeEntries = useMemo(() => categoryTreeEntries(categories, products), [categories, products]);
 
+  const drawerFamily = useMemo(() => {
+    if (!drawerProduct) return [];
+    const key = familyKey(drawerProduct);
+    return products.filter((product) => familyKey(product) === key);
+  }, [drawerProduct, products]);
+
   const categoryOptions = useMemo(
     () => categories.map((category) => ({ slug: category.slug ?? category.name, name: category.name })),
     [categories],
   );
+
+  const drawerCategoryOptions = useMemo(
+    () => adminCategories.map((category) => ({ id: category.id, name: category.name, slug: category.slug })),
+    [adminCategories],
+  );
+
+  const loadAdminCategories = useCallback(async () => {
+    if (!accessToken || !isApiConfigured) return;
+    try {
+      setAdminCategories(await listMenuCategories(accessToken));
+      setCategoryError(null);
+    } catch (err) {
+      setCategoryError(errorMessage(err));
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    void loadAdminCategories();
+  }, [loadAdminCategories]);
 
   const writeUrl = useCallback(
     (next: Partial<ReturnType<typeof readFilters>>) => {
@@ -102,6 +159,27 @@ export default function AdminMenu() {
     setDrawerProduct(match ?? null);
   }, [products, urlState.selected]);
 
+  // Audit trail is per-SKU: reload it whenever the drawer targets a different item.
+  useEffect(() => {
+    const skuId = drawerProduct?.id;
+    if (!skuId || !accessToken || !isApiConfigured) {
+      setAuditEvents([]);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const rows = await listMenuAuditEvents(accessToken, { resourceId: skuId, limit: 20 });
+        if (!cancelled) setAuditEvents(rows);
+      } catch {
+        if (!cancelled) setAuditEvents([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, drawerProduct?.id]);
+
   const sourceLabel =
     source === "supabase"
       ? "Supabase / GET /api/v1/menu/catalog"
@@ -110,12 +188,76 @@ export default function AdminMenu() {
         : "Static catalog";
 
   const openProduct = (product: MenuCatalogItemView) => {
+    setSaveError(null);
     writeUrl({ selected: product.slug ?? product.id });
   };
 
   const closeDrawer = () => {
+    setSaveError(null);
     writeUrl({ selected: "" });
   };
+
+  async function saveSku(patch: UpdateMenuSkuBody) {
+    if (!accessToken || !drawerProduct) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await updateMenuSku(accessToken, drawerProduct.id, patch);
+      await reloadCatalog();
+      const rows = await listMenuAuditEvents(accessToken, { resourceId: drawerProduct.id, limit: 20 });
+      setAuditEvents(rows);
+    } catch (err) {
+      setSaveError(errorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveCategory(id: string, patch: { name?: string; sortOrder?: number; isActive?: boolean }) {
+    if (!accessToken) return;
+    setCategoryBusy(true);
+    setCategoryError(null);
+    try {
+      await updateMenuCategory(accessToken, id, patch);
+      await loadAdminCategories();
+      await reloadCatalog();
+    } catch (err) {
+      setCategoryError(errorMessage(err));
+    } finally {
+      setCategoryBusy(false);
+    }
+  }
+
+  async function addCategory(input: { name: string; slug: string; sortOrder: number }) {
+    if (!accessToken) return;
+    setCategoryBusy(true);
+    setCategoryError(null);
+    try {
+      await createMenuCategory(accessToken, input);
+      await loadAdminCategories();
+      await reloadCatalog();
+    } catch (err) {
+      setCategoryError(errorMessage(err));
+    } finally {
+      setCategoryBusy(false);
+    }
+  }
+
+  async function addSku(body: CreateMenuSkuBody) {
+    if (!accessToken) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await createMenuSku(accessToken, body);
+      await reloadCatalog();
+      await loadAdminCategories();
+      setCreateOpen(false);
+    } catch (err) {
+      setSaveError(errorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <AdminShell title="Menu Management">
@@ -138,6 +280,15 @@ export default function AdminMenu() {
         sourceNote={usingFallback ? "Static fallback catalog" : "Live catalog"}
       />
 
+      <CategoryManager
+        categories={adminCategories}
+        canWrite={canWrite}
+        busy={categoryBusy}
+        error={categoryError}
+        onCreate={(input) => void addCategory(input)}
+        onUpdate={(id, patch) => void saveCategory(id, patch)}
+      />
+
       <MenuFiltersWithCategories
         filters={filters}
         onChange={(next) => writeUrl(next)}
@@ -158,9 +309,20 @@ export default function AdminMenu() {
         <div>
           <div className="sticky top-0 z-10 mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)]/95 px-4 py-3 backdrop-blur">
             <p className="text-sm font-semibold">
-              {filtered.length} product{filtered.length === 1 ? "" : "s"}
+              {filtered.length} sellable SKU{filtered.length === 1 ? "" : "s"}
             </p>
-            <p className="text-xs text-[var(--admin-muted)]">Read-only grid · Select a card for detail drawer</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-[var(--admin-muted)]">One price per SKU · select a card to edit</p>
+              {canWrite ? (
+                <button
+                  type="button"
+                  onClick={() => setCreateOpen(true)}
+                  className="min-h-9 rounded-lg bg-[var(--brand-red)] px-3 text-xs font-semibold text-white"
+                >
+                  New SKU
+                </button>
+              ) : null}
+            </div>
           </div>
           <MenuProductGrid
             products={filtered}
@@ -174,7 +336,28 @@ export default function AdminMenu() {
 
       <MenuInsights items={insights} />
 
-      <ProductDrawer open={Boolean(drawerProduct)} product={drawerProduct} onClose={closeDrawer} />
+      <ProductDrawer
+        open={Boolean(drawerProduct)}
+        product={drawerProduct}
+        family={drawerFamily}
+        categories={drawerCategoryOptions}
+        canWrite={canWrite}
+        saving={saving}
+        saveError={saveError}
+        auditEvents={auditEvents}
+        onSave={(patch) => void saveSku(patch)}
+        onOpenSibling={openProduct}
+        onClose={closeDrawer}
+      />
+
+      <CreateSkuDialog
+        open={createOpen}
+        categories={adminCategories}
+        busy={saving}
+        error={saveError}
+        onCreate={(body) => void addSku(body)}
+        onClose={() => setCreateOpen(false)}
+      />
     </AdminShell>
   );
 }

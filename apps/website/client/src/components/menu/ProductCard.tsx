@@ -4,21 +4,22 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { handleImageError } from "@/lib/image-fallback";
 import { useAddMenuItem } from "@/hooks/useAddMenuItem";
-import { isPizzaItem } from "@/data/cart-config";
-import { getDefaultVariant, getDisplayPrice, formatMenuPriceLabel } from "@/lib/menu-utils";
-import type { MenuItem } from "@/lib/telepizza-types";
+import { isPizzaFamily } from "@/data/cart-config";
+import { getDefaultSku, formatMenuPriceLabel } from "@/lib/menu-utils";
+import type { MenuProductGroup } from "@/lib/telepizza-types";
 import { ProductBadge } from "./ProductBadge";
 
 type ProductCardProps = {
-  item: MenuItem;
+  /** A product family; the card advertises its first sellable SKU. */
+  group: MenuProductGroup;
   index?: number;
   compact?: boolean;
 };
 
-export function ProductCard({ item, index = 0, compact = false }: ProductCardProps) {
+export function ProductCard({ group, index = 0, compact = false }: ProductCardProps) {
   const addMenuItem = useAddMenuItem();
-  const defaultVariant = getDefaultVariant(item);
-  const displayPrice = getDisplayPrice(item);
+  const defaultSku = getDefaultSku(group);
+  const href = `/menu/${encodeURIComponent(group.productGroupSlug)}`;
 
   return (
     <motion.div
@@ -32,53 +33,55 @@ export function ProductCard({ item, index = 0, compact = false }: ProductCardPro
 
       <div className="relative overflow-hidden aspect-[4/3]">
         <img
-          src={item.image}
-          alt={item.name}
+          src={group.image}
+          alt={group.name}
           onError={handleImageError}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-charcoal/55 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
-          {item.badge && <ProductBadge badge={item.badge} />}
+          {group.badge && <ProductBadge badge={group.badge} />}
         </div>
       </div>
 
       <div className={`flex flex-col flex-1 ${compact ? "p-3.5 sm:p-4" : "p-4 sm:p-5"}`}>
         <p className="text-[11px] uppercase tracking-wider text-brand-red font-[var(--font-accent)] font-bold mb-1">
-          {item.category}
+          {group.category}
         </p>
-        <Link href={`/menu/${encodeURIComponent(item.slug ?? item.id)}`}>
+        <Link href={href}>
           <h3 className="font-[var(--font-display)] font-bold text-base sm:text-lg text-brand-charcoal mb-1 line-clamp-1 hover:text-brand-red">
-            {item.name}
+            {group.name}
           </h3>
         </Link>
-        {!compact && item.description && (
-          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{item.description}</p>
+        {!compact && group.description && (
+          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{group.description}</p>
         )}
-        {defaultVariant && (
+        {defaultSku?.sizeLabel && (
           <p className="text-xs text-muted-foreground mb-2 font-[var(--font-accent)]">
-            {defaultVariant.label}
+            {defaultSku.sizeLabel}
+            {group.options.length > 1 ? ` · ${group.options.length} sizes` : ""}
           </p>
         )}
         <div className="mt-auto flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div className="inline-flex w-fit items-center justify-center rounded-2xl bg-brand-gold/15 border border-brand-gold/40 px-3 py-2">
             <span className="font-[var(--font-accent)] font-extrabold text-base sm:text-lg text-brand-red">
-              {formatMenuPriceLabel(item, displayPrice)}
+              {formatMenuPriceLabel(group, defaultSku?.price)}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Link href={`/menu/${encodeURIComponent(item.slug ?? item.id)}`} className="flex-1 sm:flex-none">
+            <Link href={href} className="flex-1 sm:flex-none">
               <Button variant="ghost" size="sm" className="w-full sm:w-auto rounded-2xl text-brand-red hover:bg-brand-red/10">
                 View
               </Button>
             </Link>
             <Button
-              onClick={() => addMenuItem(item, defaultVariant?.label)}
+              onClick={() => defaultSku && addMenuItem(defaultSku)}
+              disabled={!defaultSku}
               size="sm"
               className="flex-1 sm:flex-none rounded-2xl bg-brand-red hover:bg-brand-red-dark text-white font-[var(--font-accent)] font-semibold shadow-lg shadow-brand-red/25 transition-all active:scale-95"
             >
               <Plus className="w-4 h-4 mr-1" />
-              {isPizzaItem(item) ? "Customize" : "Add"}
+              {isPizzaFamily(group) ? "Customize" : "Add"}
             </Button>
           </div>
         </div>

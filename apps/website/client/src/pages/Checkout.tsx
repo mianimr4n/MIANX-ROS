@@ -67,6 +67,7 @@ export default function Checkout() {
   const cartItems = useMemo(
     () =>
       state.items.map((item) => ({
+        menuItemId: item.menuItemId,
         menuSlug: item.menuSlug,
         variant: item.variant,
         quantity: item.quantity,
@@ -81,6 +82,7 @@ export default function Checkout() {
   const orderPayloadItems = useMemo(
     () =>
       cartItems.map((item) => ({
+        menuItemId: item.menuItemId,
         menuItemSlug: item.menuSlug,
         variantLabel: item.variant,
         quantity: item.quantity,

@@ -17,11 +17,12 @@ const favoritesApi = read("apps/website/client/src/lib/customer-favorites-api.ts
 
 test("FAV-01 ProductDetail and Menu share FavoriteHeartButton near product title", () => {
   assert.match(productDetail, /import \{ FavoriteHeartButton \} from "@\/components\/menu\/FavoriteHeartButton"/);
-  assert.match(productDetail, /<FavoriteHeartButton item=\{item\} \/>/);
+  // The heart favourites an exact sellable SKU, so both pages pass the selected SKU.
+  assert.match(productDetail, /<FavoriteHeartButton item=\{favouriteSku\} \/>/);
   assert.match(productDetail, /<h1[\s\S]*?<\/h1>[\s\S]*?<FavoriteHeartButton/);
 
   assert.match(menu, /import \{ FavoriteHeartButton \} from "@\/components\/menu\/FavoriteHeartButton"/);
-  assert.match(menu, /<FavoriteHeartButton item=\{item\}/);
+  assert.match(menu, /<FavoriteHeartButton item=\{getSelectedSku\(group\)/);
 });
 
 test("FAV-01 FavoriteHeartButton loads cloud favorites for authenticated users", () => {

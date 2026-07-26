@@ -1,42 +1,80 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildCatalogLookup,
+  getToppingTierFromSku,
   getToppingTierFromVariantLabel,
   hashIdempotencyPayload,
   inferToppingSlugFromLabel,
   normalizePhoneE164,
   priceOrderLines,
+  resolveSku,
   type CatalogMenuItem,
 } from "../src/services/orders/pricing.js";
 import { priceModifierSelections } from "../src/services/orders/modifiers.js";
 
-const pizza: CatalogMenuItem = {
-  id: "pizza-1",
-  slug: "tele-special",
-  name: "Tele Special",
-  base_price: null,
-  product_type: "pizza",
-  is_available: true,
-  variants: [
-    { id: "v-s", label: "6 inch Small", price: 499, is_available: true, size_code: "small" },
-    { id: "v-m", label: "10 inch Medium", price: 899, is_available: true, size_code: "medium" },
-  ],
-};
+function sku(partial: CatalogMenuItem): CatalogMenuItem {
+  return { product_type: "pizza", is_available: true, ...partial };
+}
 
-const cheese: CatalogMenuItem = {
-  id: "top-1",
-  slug: "extra-cheese",
+const pizzaSmall = sku({
+  id: "pizza-small",
+  slug: "tele-special-small",
+  name: "Tele Special — 6 inch Small",
+  product_group_slug: "tele-special",
+  size_label: "6 inch Small",
+  size_code: "small",
+  sort_order: 1,
+  price: 499,
+});
+
+const pizzaMedium = sku({
+  id: "pizza-medium",
+  slug: "tele-special-medium",
+  name: "Tele Special — 10 inch Medium",
+  product_group_slug: "tele-special",
+  size_label: "10 inch Medium",
+  size_code: "medium",
+  sort_order: 2,
+  price: 899,
+});
+
+const cheeseSmall = sku({
+  id: "cheese-small",
+  slug: "extra-cheese-small",
   name: "Extra Cheese",
-  base_price: null,
+  product_group_slug: "extra-cheese",
+  size_label: "Small",
+  size_code: "small",
+  sort_order: 1,
   product_type: "topping",
-  is_available: true,
-  variants: [
-    { id: "tc-s", label: "Small", price: 50, is_available: true, size_code: "small" },
-    { id: "tc-m", label: "Medium", price: 100, is_available: true, size_code: "medium" },
-  ],
-};
+  price: 50,
+});
 
-describe("orders pricing engine (Sprint 4.1)", () => {
+const cheeseMedium = sku({
+  id: "cheese-medium",
+  slug: "extra-cheese-medium",
+  name: "Extra Cheese",
+  product_group_slug: "extra-cheese",
+  size_label: "Medium",
+  size_code: "medium",
+  sort_order: 2,
+  product_type: "topping",
+  price: 100,
+});
+
+const burger = sku({
+  id: "burger-1",
+  slug: "zinger-burger",
+  name: "Zinger Burger",
+  product_group_slug: "zinger-burger",
+  product_type: "burger",
+  price: 550,
+});
+
+const fullCatalog = buildCatalogLookup([pizzaSmall, pizzaMedium, cheeseSmall, cheeseMedium, burger]);
+
+describe("orders pricing engine (canonical single-price SKUs)", () => {
   it("normalizes Pakistan phones to E.164", () => {
     expect(normalizePhoneE164("0304-1110495")).toBe("+923041110495");
     expect(normalizePhoneE164("+92 304 1110495")).toBe("+923041110495");
@@ -48,50 +86,97 @@ describe("orders pricing engine (Sprint 4.1)", () => {
     expect(getToppingTierFromVariantLabel("12 inch Large")).toBe("large");
   });
 
+  it("prefers the SKU size code over label heuristics for the tier", () => {
+    expect(getToppingTierFromSku(pizzaMedium)).toBe("medium");
+    expect(getToppingTierFromSku({ ...pizzaMedium, size_code: null })).toBe("medium");
+    expect(getToppingTierFromSku(burger)).toBe("small");
+  });
+
   it("infers topping slugs from legacy extra labels", () => {
     expect(inferToppingSlugFromLabel("Extra Cheese (6 inch Small)")).toBe("extra-cheese");
     expect(inferToppingSlugFromLabel("Extra Chicken (Medium)")).toBe("extra-chicken");
   });
 
-  it("prices from catalog and ignores client money fields", () => {
-    const menuBySlug = new Map([
-      ["tele-special", pizza],
-      ["extra-cheese", cheese],
-    ]);
-
+  it("prices a single-price SKU by id and ignores client money fields", () => {
     const priced = priceOrderLines({
-      menuBySlug,
+      catalog: fullCatalog,
+      lines: [{ menuItemId: "burger-1", quantity: 2, unitPrice: 1, productName: "HACKED" }],
+    });
+
+    expect(priced.lines[0]?.productName).toBe("Zinger Burger");
+    expect(priced.lines[0]?.menuItemSlug).toBe("zinger-burger");
+    expect(priced.lines[0]?.variantId).toBeNull();
+    expect(priced.lines[0]?.foodUnitPrice).toBe(550);
+    expect(priced.subtotal).toBe(1100);
+  });
+
+  it("prices a size SKU by id and scales toppings from its size code", () => {
+    const priced = priceOrderLines({
+      catalog: fullCatalog,
       lines: [
         {
-          menuItemSlug: "tele-special",
-          variantLabel: "6 inch Small",
+          menuItemId: "pizza-small",
           quantity: 2,
           unitPrice: 1,
-          productName: "HACKED",
           extras: [{ label: "Extra Cheese (6 inch Small)", price: 9999 }],
         },
       ],
     });
 
-    expect(priced.lines[0]?.productName).toBe("Tele Special");
+    expect(priced.lines[0]?.productName).toBe("Tele Special — 6 inch Small");
+    expect(priced.lines[0]?.variantName).toBe("6 inch Small");
     expect(priced.lines[0]?.foodUnitPrice).toBe(499);
     expect(priced.lines[0]?.extras[0]?.price).toBe(50);
     expect(priced.lines[0]?.lineUnitPrice).toBe(549);
     expect(priced.subtotal).toBe(1098);
-    expect(priced.totalAmount).toBe(1098);
   });
 
-  it("rejects unavailable variants", () => {
-    const unavailable = {
-      ...pizza,
-      variants: [{ id: "v-x", label: "Gone", price: 100, is_available: false, size_code: "small" }],
-    };
+  it("resolves a legacy family slug plus size label to the exact SKU", () => {
+    const resolved = resolveSku(fullCatalog, {
+      menuItemSlug: "tele-special",
+      variantLabel: "10 inch Medium",
+      quantity: 1,
+    });
+
+    expect(resolved.id).toBe("pizza-medium");
+    expect(resolved.price).toBe(899);
+  });
+
+  it("requires an exact SKU when a family slug is ambiguous", () => {
     expect(() =>
       priceOrderLines({
-        menuBySlug: new Map([["tele-special", unavailable]]),
+        catalog: fullCatalog,
+        lines: [{ menuItemSlug: "tele-special", quantity: 1 }],
+      }),
+    ).toThrow(/multiple sellable options/i);
+  });
+
+  it("rejects an unknown size label for a family slug", () => {
+    expect(() =>
+      priceOrderLines({
+        catalog: fullCatalog,
         lines: [{ menuItemSlug: "tele-special", variantLabel: "Gone", quantity: 1 }],
       }),
-    ).toThrow(/not available/i);
+    ).toThrow(/was not found/i);
+  });
+
+  it("rejects an unavailable SKU", () => {
+    const catalog = buildCatalogLookup([{ ...burger, is_available: false }]);
+    expect(() =>
+      priceOrderLines({
+        catalog,
+        lines: [{ menuItemId: "burger-1", quantity: 1 }],
+      }),
+    ).toThrow(/currently unavailable/i);
+  });
+
+  it("rejects ordering a topping SKU as a standalone line", () => {
+    expect(() =>
+      priceOrderLines({
+        catalog: fullCatalog,
+        lines: [{ menuItemId: "cheese-small", quantity: 1 }],
+      }),
+    ).toThrow(/cannot be ordered as a standalone line/i);
   });
 
   it("hashes idempotency payloads stably", () => {
@@ -144,12 +229,11 @@ describe("orders pricing engine (Sprint 4.1)", () => {
     expect(pricedModifiers.map((entry) => entry.priceDelta)).toEqual([0, 100]);
 
     const priced = priceOrderLines({
-      menuBySlug: new Map([["tele-special", pizza]]),
+      catalog: fullCatalog,
       modifiersByKey: optionsByKey,
       lines: [
         {
-          menuItemSlug: "tele-special",
-          variantLabel: "10 inch Medium",
+          menuItemId: "pizza-medium",
           quantity: 1,
           unitPrice: 1,
           modifiers: [

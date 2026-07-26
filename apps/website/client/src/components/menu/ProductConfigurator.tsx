@@ -8,53 +8,59 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCart, type CartExtra } from "@/contexts/CartContext";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 import { handleImageError } from "@/lib/image-fallback";
-import { getDefaultVariant, getVariantId } from "@/lib/menu-utils";
+import { getDefaultSku } from "@/lib/menu-utils";
 import {
   buildSelectedModifiers,
   defaultSelectionsForGroups,
   getModifierGroupsForItem,
   resolveOptionPriceForTier,
-  sizeTierFromVariantLabel,
+  sizeTierFromSku,
   toggleGroupOption,
   validateModifierSelections,
   type ModifierGroupDef,
 } from "@/lib/modifiers";
-import type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
+import type { MenuItem, MenuProductGroup } from "@/lib/telepizza-types";
 
 type ProductConfiguratorProps = {
-  item: MenuItem;
-  initialVariantLabel?: string;
+  /** A product family; every option is an exact sellable SKU with one price. */
+  group: MenuProductGroup;
+  /** Preselect one SKU inside the family. */
+  initialSkuId?: string;
   compact?: boolean;
   onAdded?: () => void;
 };
 
 export function ProductConfigurator({
-  item,
-  initialVariantLabel,
+  group,
+  initialSkuId,
   compact = false,
   onAdded,
 }: ProductConfiguratorProps) {
   const { addItem } = useCart();
   const { items: catalogItems, toppings } = useMenuCatalog();
-  const [selectedVariantLabel, setSelectedVariantLabel] = useState("");
+  const [selectedSkuId, setSelectedSkuId] = useState("");
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [instructions, setInstructions] = useState("");
   const [quantity, setQuantity] = useState(1);
 
+  const item =
+    group.options.find((option) => option.id === selectedSkuId) ??
+    getDefaultSku(group) ??
+    group.options[0]!;
   const modifierGroups = useMemo(() => getModifierGroupsForItem(item), [item]);
   const priceCatalog = useMemo(() => [...catalogItems, ...toppings], [catalogItems, toppings]);
 
   useEffect(() => {
-    setSelectedVariantLabel(initialVariantLabel ?? getDefaultVariant(item)?.label ?? "");
-    setSelections(defaultSelectionsForGroups(modifierGroups));
+    setSelectedSkuId(initialSkuId ?? getDefaultSku(group)?.id ?? "");
     setInstructions("");
     setQuantity(1);
-  }, [item, initialVariantLabel, modifierGroups]);
+  }, [group, initialSkuId]);
 
-  const selectedVariant =
-    item.variants?.find((variant) => variant.label === selectedVariantLabel) ??
-    getDefaultVariant(item);
-  const sizeTier = sizeTierFromVariantLabel(selectedVariant?.label);
+  useEffect(() => {
+    setSelections(defaultSelectionsForGroups(modifierGroups));
+  }, [modifierGroups]);
+
+  const sizeTier = sizeTierFromSku(item);
   const selectedModifiers = buildSelectedModifiers({
     groups: modifierGroups,
     selections,
@@ -70,7 +76,7 @@ export function ProductConfigurator({
     optionCode: modifier.optionCode,
   }));
 
-  const basePrice = selectedVariant?.price ?? item.price;
+  const basePrice = item.price;
   const extrasTotal = extras.reduce((sum, extra) => sum + extra.price, 0);
   const lineTotal = (basePrice ?? 0) * quantity + extrasTotal * quantity;
 
@@ -87,7 +93,7 @@ export function ProductConfigurator({
   };
 
   const handleAdd = () => {
-    if (basePrice == null) {
+    if (!item.available) {
       toast.error("This item is not available to order right now.");
       return;
     }
@@ -98,8 +104,6 @@ export function ProductConfigurator({
       return;
     }
 
-    const variant = selectedVariant as MenuVariant | undefined;
-    const variantId = variant ? getVariantId(variant) : null;
     const optionKey = extras
       .map((extra) => `${extra.groupCode ?? "x"}-${extra.optionCode ?? extra.label}`)
       .join("-")
@@ -108,16 +112,17 @@ export function ProductConfigurator({
     const noteKey = instructions.trim()
       ? instructions.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32)
       : null;
-    const cartId = [item.id, variantId, optionKey || null, noteKey].filter(Boolean).join("--");
+    const cartId = [item.id, optionKey || null, noteKey].filter(Boolean).join("--");
 
     addItem({
       id: cartId,
+      menuItemId: item.id,
       menuSlug: item.slug ?? item.id,
       name: item.name,
       price: basePrice,
       quantity,
       category: item.category,
-      variant: variant?.label,
+      variant: item.sizeLabel,
       image: item.image,
       description: item.description,
       extras,
@@ -152,25 +157,27 @@ export function ProductConfigurator({
 
       <div className="space-y-5">
         {compact && <p className="text-sm leading-6 text-muted-foreground">{item.description}</p>}
-        {item.variants?.length ? (
+        {group.options.length > 1 ? (
           <fieldset className="space-y-2">
             <legend className="font-[var(--font-accent)] font-semibold">Choose a size or variant</legend>
             <div className="flex flex-wrap gap-2">
-              {item.variants.map((variant) => {
-                const selected = selectedVariant?.label === variant.label;
+              {group.options.map((option) => {
+                const selected = item.id === option.id;
                 return (
                   <button
-                    key={variant.label}
+                    key={option.id}
                     type="button"
                     aria-pressed={selected}
-                    onClick={() => setSelectedVariantLabel(variant.label)}
-                    className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
+                    disabled={!option.available}
+                    onClick={() => setSelectedSkuId(option.id)}
+                    className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red focus-visible:ring-offset-2 ${
                       selected
                         ? "border-brand-red bg-brand-red text-white"
                         : "border-border bg-white hover:border-brand-red/50"
                     }`}
                   >
-                    {variant.label} <span className="opacity-80">· Rs {variant.price.toLocaleString()}</span>
+                    {option.sizeLabel ?? option.name}{" "}
+                    <span className="opacity-80">· Rs {option.price.toLocaleString()}</span>
                   </button>
                 );
               })}
@@ -227,7 +234,7 @@ export function ProductConfigurator({
         <Button
           type="button"
           onClick={handleAdd}
-          disabled={basePrice == null}
+          disabled={!item.available}
           className="w-full rounded-2xl brand-gradient py-6 font-bold text-white"
         >
           <ShoppingBag className="mr-2 h-4 w-4" />

@@ -2,32 +2,20 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 import type { MenuItem } from "@/lib/telepizza-types";
 import { PizzaCustomizerDialog } from "@/components/menu/PizzaCustomizerDialog";
 
-interface PizzaCustomizerState {
-  item: MenuItem;
-  initialVariantLabel?: string;
-}
-
 interface PizzaCustomizerContextType {
-  openCustomizer: (item: MenuItem, initialVariantLabel?: string) => void;
+  /** Opens the configurator on an exact sellable SKU; siblings come from its product family. */
+  openCustomizer: (sku: MenuItem) => void;
 }
 
 const PizzaCustomizerContext = createContext<PizzaCustomizerContextType | null>(null);
 
 export function PizzaCustomizerProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<PizzaCustomizerState | null>(null);
+  const [sku, setSku] = useState<MenuItem | null>(null);
 
   return (
-    <PizzaCustomizerContext.Provider
-      value={{
-        openCustomizer: (item, initialVariantLabel) => setState({ item, initialVariantLabel }),
-      }}
-    >
+    <PizzaCustomizerContext.Provider value={{ openCustomizer: setSku }}>
       {children}
-      <PizzaCustomizerDialog
-        item={state?.item ?? null}
-        initialVariantLabel={state?.initialVariantLabel}
-        onClose={() => setState(null)}
-      />
+      <PizzaCustomizerDialog sku={sku} onClose={() => setSku(null)} />
     </PizzaCustomizerContext.Provider>
   );
 }

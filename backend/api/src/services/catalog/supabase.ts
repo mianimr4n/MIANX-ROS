@@ -6,9 +6,8 @@ import type {
   CatalogDataSource,
   MenuCatalog,
   MenuCatalogCategory,
-  MenuCatalogItem,
   MenuCatalogModifierGroup,
-  MenuCatalogVariant,
+  MenuCatalogSku,
 } from "./types.js";
 import { splitMenuCatalogForCustomer } from "./visibility.js";
 
@@ -32,25 +31,20 @@ interface MenuCategoryRow {
   sort_order: number;
 }
 
-interface MenuVariantRow {
-  id: string;
-  label: string;
-  price: number | string;
-  size_code: string | null;
-  sort_order: number;
-  is_default: boolean;
-  is_available: boolean;
-}
-
 interface MenuItemRow {
   id: string;
   slug: string;
   name: string;
   description: string | null;
   image_url: string | null;
-  base_price: number | string | null;
+  price: number | string;
+  product_group_slug: string | null;
+  size_label: string | null;
+  size_code: string | null;
+  sort_order: number;
   badge: string | null;
   product_type: string;
+  is_available: boolean;
   is_featured: boolean;
   category:
     | {
@@ -62,7 +56,6 @@ interface MenuItemRow {
         slug: string;
       }[]
     | null;
-  variants: MenuVariantRow[] | null;
 }
 
 function getCategory(
@@ -75,22 +68,12 @@ function getCategory(
   return category;
 }
 
-interface NormalizedMenuItemRow {
-  id: string;
-  slug: string;
-  name: string;
-  description: string | null;
-  image_url: string | null;
-  base_price: number | string | null;
-  badge: string | null;
-  product_type: string;
-  is_featured: boolean;
+type NormalizedMenuItemRow = Omit<MenuItemRow, "category"> & {
   category: {
     name: string;
     slug: string;
   } | null;
-  variants: MenuVariantRow[] | null;
-}
+};
 
 export class ServiceConfigurationError extends Error {
   constructor(message: string) {
@@ -318,7 +301,7 @@ async function fetchMenuCatalog(client: SupabaseClient): Promise<MenuCatalog> {
     client
       .from("menu_items")
       .select(
-        "id, slug, name, description, image_url, base_price, badge, product_type, is_featured, category:menu_categories(name, slug), variants:menu_item_variants(id, label, price, size_code, sort_order, is_default, is_available)",
+        "id, slug, name, description, image_url, price, product_group_slug, size_label, size_code, sort_order, badge, product_type, is_available, is_featured, category:menu_categories(name, slug)",
       )
       .eq("is_available", true)
       .order("name", { ascending: true }),
@@ -342,42 +325,36 @@ async function fetchMenuCatalog(client: SupabaseClient): Promise<MenuCatalog> {
     }),
   );
 
-  const items = (((itemsResult.data ?? []) as unknown as MenuItemRow[]).map<NormalizedMenuItemRow>(
+  const skus = (((itemsResult.data ?? []) as unknown as MenuItemRow[]).map<NormalizedMenuItemRow>(
     (item) => ({
       ...item,
       category: getCategory(item.category),
     }),
   ))
-    .map<MenuCatalogItem>((item) => {
-      const variants = (item.variants ?? [])
-        .filter((variant) => variant.is_available)
-        .sort((left, right) => left.sort_order - right.sort_order)
-        .map<MenuCatalogVariant>((variant) => ({
-          id: variant.id,
-          label: variant.label,
-          price: parseNumber(variant.price),
-          sizeCode: variant.size_code ?? undefined,
-          isDefault: variant.is_default,
-        }));
-
-      return {
-        id: item.id,
-        slug: item.slug,
-        name: item.name,
-        category: item.category?.name ?? "Uncategorized",
-        categorySlug: item.category?.slug ?? "uncategorized",
-        description: item.description ?? "",
-        image: item.image_url ?? getFallbackImage(item.product_type),
-        badge: item.badge ?? undefined,
-        price: item.base_price === null ? undefined : parseNumber(item.base_price),
-        productType: item.product_type,
-        featured: item.is_featured,
-        variants: variants.length > 0 ? variants : undefined,
-        modifierGroups: modifiersBySlug.get(item.slug),
-      };
-    })
+    .map<MenuCatalogSku>((item) => ({
+      id: item.id,
+      slug: item.slug,
+      name: item.name,
+      productGroupSlug: item.product_group_slug ?? item.slug,
+      sizeLabel: item.size_label ?? undefined,
+      sizeCode: item.size_code ?? undefined,
+      price: parseNumber(item.price),
+      available: item.is_available,
+      sortOrder: item.sort_order ?? 0,
+      category: item.category?.name ?? "Uncategorized",
+      categorySlug: item.category?.slug ?? "uncategorized",
+      description: item.description ?? "",
+      image: item.image_url ?? getFallbackImage(item.product_type),
+      badge: item.badge ?? undefined,
+      productType: item.product_type,
+      featured: item.is_featured,
+      modifierGroups: modifiersBySlug.get(item.slug),
+    }))
     .sort((left, right) => {
-      if (left.category === right.category) {
+      if (left.categorySlug === right.categorySlug) {
+        if (left.productGroupSlug === right.productGroupSlug) {
+          return left.sortOrder - right.sortOrder || left.price - right.price;
+        }
         if (left.featured !== right.featured) {
           return left.featured ? -1 : 1;
         }
@@ -392,7 +369,7 @@ async function fetchMenuCatalog(client: SupabaseClient): Promise<MenuCatalog> {
 
   return splitMenuCatalogForCustomer({
     categories,
-    items,
+    skus,
   });
 }
 

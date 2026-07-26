@@ -9,22 +9,52 @@ import {
 
 export type ToppingSizeTier = "small" | "medium" | "large";
 
-export interface CatalogVariant {
-  id: string;
-  label: string;
-  price: number | string;
-  is_available: boolean;
-  size_code?: string | null;
-}
-
+/**
+ * A canonical sellable SKU row. Exactly one price per row — `menu_item_variants` is
+ * deprecated and is never consulted for pricing.
+ */
 export interface CatalogMenuItem {
   id: string;
   slug: string;
   name: string;
-  base_price: number | string | null;
+  price: number | string;
+  product_group_slug?: string | null;
+  size_label?: string | null;
+  size_code?: string | null;
+  sort_order?: number | null;
   product_type?: string | null;
   is_available?: boolean | null;
-  variants: CatalogVariant[] | null;
+}
+
+/** Slug/ID lookups over the canonical SKU rows loaded for one quote. */
+export interface CatalogLookup {
+  /** Keyed by menu_items.id. */
+  bySkuId: Map<string, CatalogMenuItem>;
+  /** Keyed by menu_items.slug. */
+  bySkuSlug: Map<string, CatalogMenuItem>;
+  /** Keyed by menu_items.product_group_slug — legacy clients still send family slugs. */
+  byGroupSlug: Map<string, CatalogMenuItem[]>;
+}
+
+export function buildCatalogLookup(rows: Iterable<CatalogMenuItem>): CatalogLookup {
+  const bySkuId = new Map<string, CatalogMenuItem>();
+  const bySkuSlug = new Map<string, CatalogMenuItem>();
+  const byGroupSlug = new Map<string, CatalogMenuItem[]>();
+
+  for (const row of rows) {
+    bySkuId.set(row.id, row);
+    bySkuSlug.set(row.slug, row);
+    const groupSlug = row.product_group_slug ?? row.slug;
+    const siblings = byGroupSlug.get(groupSlug) ?? [];
+    siblings.push(row);
+    byGroupSlug.set(groupSlug, siblings);
+  }
+
+  for (const siblings of byGroupSlug.values()) {
+    siblings.sort((left, right) => (left.sort_order ?? 0) - (right.sort_order ?? 0));
+  }
+
+  return { bySkuId, bySkuSlug, byGroupSlug };
 }
 
 export interface QuoteToppingInput {
@@ -40,7 +70,14 @@ export interface QuoteModifierInput {
 }
 
 export interface QuoteLineInput {
-  menuItemSlug: string;
+  /** Preferred: the canonical sellable SKU id. */
+  menuItemId?: string;
+  /** Canonical SKU slug, or a legacy product-family slug. */
+  menuItemSlug?: string;
+  /**
+   * LEGACY size hint from pre-SKU clients. Resolved against sibling SKU `size_label`.
+   * New clients send `menuItemId` and omit this.
+   */
   variantLabel?: string;
   quantity: number;
   instructions?: string;
@@ -79,9 +116,13 @@ export interface PricedModifierLine {
 }
 
 export interface PricedOrderLine {
+  /** The exact sellable SKU that was priced. */
   menuItemId: string;
+  menuItemSlug: string;
+  /** Deprecated snapshot column — always null for SKU-priced orders. */
   variantId: string | null;
   productName: string;
+  /** Size/option label snapshot (previously the variant label). */
   variantName: string | null;
   quantity: number;
   foodUnitPrice: number;
@@ -144,6 +185,15 @@ export function normalizePhoneE164(phone: string): string {
   throw new ApiError(400, "INVALID_CONTACT_PHONE", "Contact phone is invalid.");
 }
 
+/** Resolve the size tier from the SKU's machine size code, falling back to its label. */
+export function getToppingTierFromSku(sku: CatalogMenuItem): ToppingSizeTier {
+  const code = sku.size_code?.toLowerCase();
+  if (code === "large" || code === "medium" || code === "small") {
+    return code;
+  }
+  return sku.size_label ? getToppingTierFromVariantLabel(sku.size_label) : "small";
+}
+
 export function getToppingTierFromVariantLabel(label: string): ToppingSizeTier {
   const normalized = label.toLowerCase();
   if (normalized.includes("12 inch") || normalized.includes('12"') || normalized === "large") {
@@ -176,55 +226,93 @@ export function hashIdempotencyPayload(payload: unknown): string {
   return createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
-function resolveVariant(
-  menuItem: CatalogMenuItem,
-  variantLabel: string | undefined,
-): CatalogVariant | null {
-  const variants = menuItem.variants ?? [];
-  if (variantLabel) {
-    const match = variants.find((entry) => entry.label === variantLabel);
-    return match ?? null;
+/**
+ * Resolve the exact sellable SKU for an order line.
+ *
+ * Preferred path is `menuItemId`. Slugs still resolve for compatibility: first as a SKU
+ * slug, then as a product-family slug narrowed by the legacy `variantLabel` hint.
+ */
+export function resolveSku(catalog: CatalogLookup, line: QuoteLineInput): CatalogMenuItem {
+  if (line.menuItemId) {
+    const bySkuId = catalog.bySkuId.get(line.menuItemId);
+    if (!bySkuId) {
+      throw new ApiError(
+        400,
+        "MENU_ITEM_NOT_FOUND",
+        `Menu item '${line.menuItemId}' is not available for ordering.`,
+      );
+    }
+    return bySkuId;
   }
-  return variants.find((entry) => entry.is_available) ?? variants[0] ?? null;
+
+  const reference = line.menuItemSlug;
+  if (!reference) {
+    throw new ApiError(400, "VALIDATION_ERROR", "Each order line requires menuItemId or menuItemSlug.");
+  }
+
+  const bySlug = catalog.bySkuSlug.get(reference);
+  if (bySlug) {
+    return bySlug;
+  }
+
+  const siblings = catalog.byGroupSlug.get(reference) ?? [];
+  if (siblings.length === 0) {
+    throw new ApiError(
+      400,
+      "MENU_ITEM_NOT_FOUND",
+      `Menu item '${reference}' is not available for online ordering.`,
+    );
+  }
+
+  if (line.variantLabel) {
+    const needle = line.variantLabel.trim().toLowerCase();
+    const match = siblings.find((sku) => (sku.size_label ?? "").trim().toLowerCase() === needle);
+    if (!match) {
+      throw new ApiError(
+        400,
+        "SKU_NOT_FOUND",
+        `Option '${line.variantLabel}' for '${reference}' was not found.`,
+      );
+    }
+    return match;
+  }
+
+  if (siblings.length > 1) {
+    throw new ApiError(
+      400,
+      "SKU_SELECTION_REQUIRED",
+      `'${reference}' has multiple sellable options; submit the exact menuItemId.`,
+    );
+  }
+
+  return siblings[0]!;
 }
 
+/** Pick the topping SKU that matches the base item's size tier. */
 function resolveToppingPrice(
+  catalog: CatalogLookup,
   topping: CatalogMenuItem,
   tier: ToppingSizeTier,
-): { variant: CatalogVariant; price: number } {
-  const variants = topping.variants ?? [];
-  const bySize = variants.find((entry) => entry.size_code === tier && entry.is_available);
+): { sku: CatalogMenuItem; price: number } {
+  const groupSlug = topping.product_group_slug ?? topping.slug;
+  const siblings = catalog.byGroupSlug.get(groupSlug) ?? [topping];
+  const available = siblings.filter((sku) => sku.is_available !== false);
+  const candidates = available.length > 0 ? available : siblings;
+
+  const bySize = candidates.find((sku) => (sku.size_code ?? "").toLowerCase() === tier);
   if (bySize) {
-    return { variant: bySize, price: parseNumber(bySize.price) };
+    return { sku: bySize, price: parseNumber(bySize.price) };
   }
 
-  const byLabel = variants.find((entry) => {
-    const label = entry.label.toLowerCase();
-    if (!entry.is_available) return false;
-    if (tier === "large") return label.includes("large");
-    if (tier === "medium") return label.includes("medium");
-    return label.includes("small");
-  });
+  const byLabel = candidates.find((sku) => (sku.size_label ?? "").toLowerCase().includes(tier));
   if (byLabel) {
-    return { variant: byLabel, price: parseNumber(byLabel.price) };
+    return { sku: byLabel, price: parseNumber(byLabel.price) };
   }
 
-  // Single-price toppings (e.g. cheese slice) — any available variant or base.
-  const any = variants.find((entry) => entry.is_available) ?? variants[0];
-  if (any) {
-    return { variant: any, price: parseNumber(any.price) };
-  }
-  if (topping.base_price !== null) {
-    return {
-      variant: {
-        id: topping.id,
-        label: "default",
-        price: parseNumber(topping.base_price),
-        is_available: true,
-        size_code: tier,
-      },
-      price: parseNumber(topping.base_price),
-    };
+  // Single-price toppings (e.g. cheese slice) have exactly one SKU in the family.
+  const single = candidates[0];
+  if (single) {
+    return { sku: single, price: parseNumber(single.price) };
   }
 
   throw new ApiError(
@@ -253,7 +341,7 @@ function collectExtraRefs(line: QuoteLineInput): Array<{ slug?: string; label?: 
  */
 export function priceOrderLines(input: {
   lines: QuoteLineInput[];
-  menuBySlug: Map<string, CatalogMenuItem>;
+  catalog: CatalogLookup;
   /** Optional relational modifiers keyed by groupCode::optionCode */
   modifiersByKey?: Map<string, ModifierOptionRow>;
 }): OrderPricingResult {
@@ -272,64 +360,33 @@ export function priceOrderLines(input: {
       throw new ApiError(400, "VALIDATION_ERROR", "Item quantity must be between 1 and 20.");
     }
 
-    const menuItem = input.menuBySlug.get(line.menuItemSlug);
-    if (!menuItem) {
-      throw new ApiError(
-        400,
-        "MENU_ITEM_NOT_FOUND",
-        `Menu item '${line.menuItemSlug}' is not available for online ordering.`,
-      );
-    }
+    const menuItem = resolveSku(input.catalog, line);
+    const reference = line.menuItemId ?? line.menuItemSlug ?? menuItem.slug;
+
     if (menuItem.product_type === "topping") {
       throw new ApiError(
         400,
         "MENU_ITEM_NOT_FOUND",
-        `Topping SKU '${line.menuItemSlug}' cannot be ordered as a standalone line.`,
+        `Topping SKU '${menuItem.slug}' cannot be ordered as a standalone line.`,
       );
     }
     if (menuItem.is_available === false) {
       throw new ApiError(
         400,
         "CATALOG_ITEM_UNAVAILABLE",
-        `Menu item '${line.menuItemSlug}' is currently unavailable.`,
+        `Menu item '${reference}' is currently unavailable.`,
       );
     }
 
-    const variant = resolveVariant(menuItem, line.variantLabel);
-    if (line.variantLabel && !variant) {
-      throw new ApiError(
-        400,
-        "VARIANT_NOT_FOUND",
-        `Variant '${line.variantLabel}' for '${line.menuItemSlug}' was not found.`,
-      );
-    }
-    if (variant && !variant.is_available) {
-      throw new ApiError(
-        400,
-        "CATALOG_ITEM_UNAVAILABLE",
-        `Variant '${variant.label}' for '${line.menuItemSlug}' is not available.`,
-      );
+    const foodUnitPrice = parseNumber(menuItem.price);
+    if (!Number.isFinite(foodUnitPrice) || foodUnitPrice < 0) {
+      throw new ApiError(400, "PRICE_UNAVAILABLE", `No server price available for '${reference}'.`);
     }
 
-    let foodUnitPrice = 0;
-    let variantId: string | null = null;
-    let variantName: string | null = null;
-    let tier: ToppingSizeTier = "small";
-
-    if (variant) {
-      variantId = variant.id;
-      variantName = variant.label;
-      foodUnitPrice = parseNumber(variant.price);
-      tier = getToppingTierFromVariantLabel(variant.label);
-    } else if (menuItem.base_price !== null) {
-      foodUnitPrice = parseNumber(menuItem.base_price);
-    } else {
-      throw new ApiError(
-        400,
-        "PRICE_UNAVAILABLE",
-        `No server price available for '${line.menuItemSlug}'.`,
-      );
-    }
+    // Historical snapshot columns keep their meaning: variant_id is null for SKU orders.
+    const variantId: string | null = null;
+    const variantName: string | null = menuItem.size_label ?? null;
+    const tier: ToppingSizeTier = getToppingTierFromSku(menuItem);
 
     const modifierSelections = line.modifiers ?? [];
     let pricedModifiers: PricedModifierSnapshot[] = [];
@@ -362,10 +419,11 @@ export function priceOrderLines(input: {
       for (const ref of collectExtraRefs(line)) {
         let catalogItem: CatalogMenuItem | undefined;
         if (ref.slug) {
-          catalogItem = input.menuBySlug.get(ref.slug);
+          catalogItem =
+            input.catalog.bySkuSlug.get(ref.slug) ?? input.catalog.byGroupSlug.get(ref.slug)?.[0];
         } else if (ref.label) {
           const needle = ref.label.trim().toLowerCase();
-          for (const candidate of input.menuBySlug.values()) {
+          for (const candidate of input.catalog.bySkuSlug.values()) {
             if (candidate.name.trim().toLowerCase() === needle) {
               catalogItem = candidate;
               break;
@@ -389,29 +447,18 @@ export function priceOrderLines(input: {
         }
 
         if (catalogItem.product_type === "topping") {
-          const priced = resolveToppingPrice(catalogItem, tier);
+          const priced = resolveToppingPrice(input.catalog, catalogItem, tier);
           extras.push({
-            slug: catalogItem.slug,
+            slug: priced.sku.slug,
             label: catalogItem.name,
             price: priced.price,
             kind: "topping",
           });
         } else {
-          const addonVariant = resolveVariant(catalogItem, undefined);
-          const price = addonVariant
-            ? parseNumber(addonVariant.price)
-            : parseNumber(catalogItem.base_price);
-          if (!price && catalogItem.base_price === null && !addonVariant) {
-            throw new ApiError(
-              400,
-              "PRICE_UNAVAILABLE",
-              `No server price available for addon '${catalogItem.slug}'.`,
-            );
-          }
           extras.push({
             slug: catalogItem.slug,
             label: catalogItem.name,
-            price,
+            price: parseNumber(catalogItem.price),
             kind: "addon",
           });
         }
@@ -425,6 +472,7 @@ export function priceOrderLines(input: {
 
     pricedLines.push({
       menuItemId: menuItem.id,
+      menuItemSlug: menuItem.slug,
       variantId,
       productName: menuItem.name,
       variantName,
@@ -473,7 +521,7 @@ export function priceOrderLines(input: {
 export function collectCatalogSlugs(lines: QuoteLineInput[]): string[] {
   const slugs = new Set<string>();
   for (const line of lines) {
-    slugs.add(line.menuItemSlug);
+    if (line.menuItemSlug) slugs.add(line.menuItemSlug);
     for (const topping of line.toppings ?? []) {
       slugs.add(topping.slug);
     }
@@ -483,4 +531,13 @@ export function collectCatalogSlugs(lines: QuoteLineInput[]): string[] {
     }
   }
   return [...slugs];
+}
+
+/** Canonical SKU ids referenced directly by the submitted lines. */
+export function collectCatalogSkuIds(lines: QuoteLineInput[]): string[] {
+  const ids = new Set<string>();
+  for (const line of lines) {
+    if (line.menuItemId) ids.add(line.menuItemId);
+  }
+  return [...ids];
 }

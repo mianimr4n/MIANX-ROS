@@ -14,13 +14,7 @@ export interface Branch {
   status: "operating" | "coming-soon" | "inactive";
 }
 
-export interface MenuVariant {
-  id?: string;
-  label: string;
-  price: number;
-  sizeCode?: string;
-  isDefault?: boolean;
-}
+export type MenuSizeCode = "small" | "medium" | "large";
 
 export interface ModifierOption {
   code: string;
@@ -45,21 +39,53 @@ export interface ModifierGroup {
   options: ModifierOption[];
 }
 
+/**
+ * A sellable SKU with exactly one current selling price.
+ *
+ * Sizes are separate SKUs grouped for display by `productGroupSlug`. There is no variant
+ * price matrix: `price` is the one price, and `id` is the exact item the server prices.
+ */
 export interface MenuItem {
   id: string;
   slug?: string;
+  name: string;
+  /** Presentation-only family key shared by sibling size SKUs. */
+  productGroupSlug?: string;
+  /** Human-readable option label, e.g. `10 inch Medium`. Absent for single-option products. */
+  sizeLabel?: string;
+  /** Machine size tier used to match size-scaled modifier pricing. */
+  sizeCode?: MenuSizeCode;
+  category: string;
+  categorySlug?: string;
+  description: string;
+  image: string;
+  badge?: string;
+  /** The single selling price of this SKU (PKR). */
+  price: number;
+  available?: boolean;
+  sortOrder?: number;
+  productType?: string;
+  featured?: boolean;
+  /** Relational modifier groups (DB or static fallback). */
+  modifierGroups?: ModifierGroup[];
+}
+
+/**
+ * Presentation grouping of sibling SKUs. Carries no price of its own — the customer picks
+ * an option, and that option is the exact sellable SKU sent to the server.
+ */
+export interface MenuProductGroup {
+  productGroupSlug: string;
+  /** Family name without the size suffix, e.g. `Tele Special`. */
   name: string;
   category: string;
   categorySlug?: string;
   description: string;
   image: string;
   badge?: string;
-  price?: number;
   productType?: string;
   featured?: boolean;
-  variants?: MenuVariant[];
-  /** Relational modifier groups (DB or static fallback). */
-  modifierGroups?: ModifierGroup[];
+  options: MenuItem[];
 }
 
 export interface MenuCategory {
@@ -70,7 +96,10 @@ export interface MenuCategory {
 }
 
 export interface CreateOrderItemPayload {
+  /** Preferred: the exact sellable SKU id. */
+  menuItemId?: string;
   menuItemSlug: string;
+  /** Size/option label snapshot for display; the server prices from the SKU. */
   variantLabel?: string;
   quantity: number;
   unitPrice: number;

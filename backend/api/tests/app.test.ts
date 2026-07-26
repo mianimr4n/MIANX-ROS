@@ -32,40 +32,64 @@ const catalogDataSource: CatalogDataSource = {
     ];
   },
   async getMenuCatalog() {
+    const teleSpecialSmall = {
+      id: "item-1",
+      slug: "tele-special-small",
+      name: "Tele Special — 6 inch Small",
+      productGroupSlug: "tele-special",
+      sizeLabel: "6 inch Small",
+      sizeCode: "small",
+      price: 499,
+      available: true,
+      sortOrder: 1,
+      category: "Signature Pizzas",
+      categorySlug: "signature-pizzas",
+      description: "Signature Telepizza item.",
+      image: "/images/menu-pizza_f729e710.jpg",
+      productType: "pizza",
+      featured: true,
+    };
+
     return {
       categories: [
-        { id: "cat-1", name: "Signature Pizzas", slug: "signature-pizzas", sortOrder: 10 },
-      ],
-      items: [
         {
-          id: "item-1",
-          slug: "tele-special",
-          name: "Tele Special",
-          category: "Signature Pizzas",
-          categorySlug: "signature-pizzas",
-          description: "Signature Telepizza item.",
-          image: "/images/menu-pizza_f729e710.jpg",
-          productType: "pizza",
-          featured: true,
-          variants: [
-            { id: "variant-1", label: "Small", price: 499, sizeCode: "small", isDefault: true },
+          id: "cat-1",
+          name: "Signature Pizzas",
+          slug: "signature-pizzas",
+          sortOrder: 10,
+          items: [
+            {
+              productGroupSlug: "tele-special",
+              name: "Tele Special",
+              category: "Signature Pizzas",
+              categorySlug: "signature-pizzas",
+              description: "Signature Telepizza item.",
+              image: "/images/menu-pizza_f729e710.jpg",
+              productType: "pizza",
+              featured: true,
+              options: [teleSpecialSmall],
+            },
           ],
         },
       ],
+      skus: [teleSpecialSmall],
       toppings: [
         {
           id: "topping-1",
-          slug: "extra-cheese",
+          slug: "extra-cheese-small",
           name: "Extra Cheese",
+          productGroupSlug: "extra-cheese",
+          sizeLabel: "Small",
+          sizeCode: "small",
+          price: 50,
+          available: true,
+          sortOrder: 1,
           category: "Toppings",
           categorySlug: "toppings",
           description: "Internal topping SKU.",
           image: "/images/menu-pizza.jpg",
           productType: "topping",
           featured: false,
-          variants: [
-            { id: "tv-1", label: "Small", price: 50, sizeCode: "small", isDefault: true },
-          ],
         },
       ],
     };
@@ -81,8 +105,9 @@ const ordersDataSource: OrdersDataSource = {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
       branch: { code: input.branchCode, orderType: input.orderType },
       items: input.items.map((item) => ({
-        menuItemSlug: item.menuItemSlug,
-        productName: item.productName ?? item.menuItemSlug,
+        menuItemId: item.menuItemId ?? "item-1",
+        menuItemSlug: item.menuItemSlug ?? "tele-special-small",
+        productName: item.productName ?? item.menuItemSlug ?? "Tele Special",
         variantName: item.variantLabel ?? null,
         quantity: item.quantity,
         foodUnitPrice: 499,
@@ -226,10 +251,15 @@ describe("Telepizza API app", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data.categories[0].slug).toBe("signature-pizzas");
-    expect(response.body.data.items[0].variants[0].price).toBe(499);
-    expect(response.body.data.toppings[0].slug).toBe("extra-cheese");
+    expect(response.body.data.categories[0].items[0].productGroupSlug).toBe("tele-special");
+    expect(response.body.data.categories[0].items[0].options[0].price).toBe(499);
+    expect(response.body.data.skus[0].id).toBe("item-1");
+    expect(response.body.data.toppings[0].slug).toBe("extra-cheese-small");
+    expect(response.body.meta.contract).toBe("canonical-single-price-v1");
     expect(response.body.meta.toppingCount).toBe(1);
-    expect(response.body.meta.variantCount).toBe(2);
+    expect(response.body.meta.productGroupCount).toBe(1);
+    expect(response.body.meta.skuCount).toBe(1);
+    expect(response.body.meta.variantCount).toBeUndefined();
     expect(response.body.meta.dealCount).toBe(0);
     expect(response.body.data.categories.some((category: { slug: string }) => category.slug === "toppings")).toBe(
       false,

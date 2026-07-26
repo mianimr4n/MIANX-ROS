@@ -5,7 +5,7 @@ import {
   type ModifierOptionDef,
   type ModifierSizeTier,
 } from "@/data/modifier-catalog";
-import { getToppingTierFromVariantLabel } from "@/data/cart-config";
+import { findCatalogFamily, getToppingTierFromVariantLabel } from "@/data/cart-config";
 import type { MenuItem } from "@/lib/telepizza-types";
 
 export type { ModifierGroupDef, ModifierOptionDef, ModifierSizeTier };
@@ -33,27 +33,26 @@ export function resolveOptionPriceForTier(
   catalogItems: MenuItem[] = [],
 ): number {
   if (option.linkedMenuItemSlug) {
-    const linked = catalogItems.find(
-      (entry) => entry.id === option.linkedMenuItemSlug || entry.slug === option.linkedMenuItemSlug,
-    );
-    if (linked?.variants?.length) {
-      const byCode = linked.variants.find((variant) => variant.sizeCode === sizeTier);
-      if (byCode) return byCode.price;
-      const byLabel = linked.variants.find((variant) =>
-        variant.label.toLowerCase().includes(sizeTier),
-      );
-      if (byLabel) return byLabel.price;
-      if (!option.priceDeltaBySize && linked.price != null) return linked.price;
-    } else if (linked?.price != null && !option.priceDeltaBySize) {
-      return linked.price;
+    // A linked topping is a family of sibling SKUs; the size tier picks the exact SKU.
+    const family = findCatalogFamily(catalogItems, option.linkedMenuItemSlug);
+    if (family.length > 1) {
+      const byCode = family.find((sku) => sku.sizeCode === sizeTier);
+      if (byCode?.price != null) return byCode.price;
+      const byLabel = family.find((sku) => (sku.sizeLabel ?? "").toLowerCase().includes(sizeTier));
+      if (byLabel?.price != null) return byLabel.price;
+    }
+    if (family.length === 1 && family[0].price != null && !option.priceDeltaBySize) {
+      return family[0].price;
     }
   }
   return resolveModifierOptionPrice(option, sizeTier);
 }
 
-export function sizeTierFromVariantLabel(label: string | undefined): ModifierSizeTier {
-  if (!label) return "small";
-  return getToppingTierFromVariantLabel(label);
+/** Derive the modifier size tier from the selected SKU (size code first, label fallback). */
+export function sizeTierFromSku(sku: MenuItem | undefined): ModifierSizeTier {
+  if (sku?.sizeCode) return sku.sizeCode;
+  if (sku?.sizeLabel) return getToppingTierFromVariantLabel(sku.sizeLabel);
+  return "small";
 }
 
 export function buildSelectedModifiers(input: {

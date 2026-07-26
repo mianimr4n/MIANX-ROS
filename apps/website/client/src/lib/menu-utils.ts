@@ -1,19 +1,33 @@
-import type { MenuItem, MenuVariant } from "@/lib/telepizza-types";
+import type { MenuItem, MenuProductGroup } from "@/lib/telepizza-types";
 
-export function getDefaultVariant(item: MenuItem): MenuVariant | undefined {
-  return item.variants?.[0];
+/**
+ * Canonical single-price helpers.
+ *
+ * Every `MenuItem` is a sellable SKU with exactly one price. Sizes are sibling SKUs inside
+ * a `MenuProductGroup`; picking a size means picking a different SKU, never a price matrix.
+ */
+
+/** The option a product family shows first (cheapest available, else first listed). */
+export function getDefaultSku(group: MenuProductGroup): MenuItem | undefined {
+  const available = group.options.filter((option) => option.available !== false);
+  return (available.length > 0 ? available : group.options)[0];
 }
 
 export function getDisplayPrice(item: MenuItem): number | undefined {
-  return getDefaultVariant(item)?.price ?? item.price;
+  return item.price;
+}
+
+/** True when a family offers more than one independently priced option. */
+export function hasMultipleOptions(group: MenuProductGroup): boolean {
+  return group.options.length > 1;
 }
 
 /** Flat SKUs with a "Starting Price" badge advertise a floor, not a full size matrix. */
-export function isStartingPriceItem(item: MenuItem): boolean {
+export function isStartingPriceItem(item: MenuItem | MenuProductGroup): boolean {
   return Boolean(item.badge?.toLowerCase().includes("starting"));
 }
 
-export function formatMenuPriceLabel(item: MenuItem, price?: number): string {
+export function formatMenuPriceLabel(item: MenuItem | MenuProductGroup, price?: number): string {
   if (price === undefined) {
     return "Unavailable";
   }
@@ -22,41 +36,42 @@ export function formatMenuPriceLabel(item: MenuItem, price?: number): string {
   return isStartingPriceItem(item) ? `Starting from ${formatted}` : formatted;
 }
 
-export function getVariantId(variant: MenuVariant): string {
-  return variant.label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+/** Stable per-SKU cart key segment. */
+export function getSkuKey(item: MenuItem): string {
+  return item.slug ?? item.id;
 }
 
-export function buildCartItemPayload(
-  item: MenuItem,
-  variant?: MenuVariant,
-) {
-  const selectedVariant = variant ?? getDefaultVariant(item);
-  const price = selectedVariant?.price ?? item.price;
-
-  if (price === undefined) {
+export function buildCartItemPayload(item: MenuItem) {
+  if (item.price === undefined) {
     return null;
   }
 
-  const variantId = selectedVariant ? getVariantId(selectedVariant) : null;
-
-    return {
-      id: variantId ? `${item.id}-${variantId}` : item.id,
-      menuSlug: item.id,
-      name: item.name,
-    price,
+  return {
+    id: getSkuKey(item),
+    menuItemId: item.id,
+    menuSlug: item.slug ?? item.id,
+    name: item.name,
+    price: item.price,
     category: item.category,
-    variant: selectedVariant?.label,
+    variant: item.sizeLabel,
     image: item.image,
     description: item.description,
   };
 }
 
-export function getItemsByCategory(items: MenuItem[], category: string): MenuItem[] {
+export function getItemsByCategory<T extends { category: string }>(items: T[], category: string): T[] {
   return items.filter((item) => item.category === category);
 }
 
 export function getItemsByIds(items: MenuItem[], ids: string[]): MenuItem[] {
   return ids
-    .map((id) => items.find((item) => item.id === id))
+    .map((id) => items.find((item) => item.slug === id || item.id === id))
     .filter((item): item is MenuItem => item !== undefined);
+}
+
+/** Resolve product families by slug/id, preserving the requested order. */
+export function getGroupsByIds(groups: MenuProductGroup[], ids: string[]): MenuProductGroup[] {
+  return ids
+    .map((id) => groups.find((group) => group.productGroupSlug === id))
+    .filter((group): group is MenuProductGroup => group !== undefined);
 }

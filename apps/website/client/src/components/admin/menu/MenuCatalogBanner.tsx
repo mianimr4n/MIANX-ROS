@@ -2,19 +2,24 @@ export function MenuCatalogBanner({ usingFallback }: { usingFallback: boolean })
   return (
     <section
       aria-labelledby="menu-catalog-mode-heading"
-      className="mb-6 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 md:px-5"
+      className={`mb-6 rounded-2xl border px-4 py-4 md:px-5 ${
+        usingFallback ? "border-amber-200 bg-amber-50" : "border-sky-200 bg-sky-50"
+      }`}
     >
-      <h2 id="menu-catalog-mode-heading" className="text-sm font-semibold text-sky-950">
-        Catalog mode
+      <h2
+        id="menu-catalog-mode-heading"
+        className={`text-sm font-semibold ${usingFallback ? "text-amber-950" : "text-sky-950"}`}
+      >
+        Catalog mode: {usingFallback ? "OFFLINE / STALE" : "LIVE"}
       </h2>
-      <p className="mt-1 text-sm text-sky-900">
+      <p className={`mt-1 text-sm ${usingFallback ? "text-amber-900" : "text-sky-900"}`}>
         {usingFallback
-          ? "Displaying verified static fallback — connect VITE_API_BASE_URL + Supabase for live catalog."
-          : "Live catalog from GET /api/v1/menu/catalog — management writes are not exposed to admin yet."}
+          ? "Showing the generated offline fallback (NON-AUTHORITATIVE). Prices may be stale. The live database catalog is unavailable — do not treat these figures as LIVE."
+          : "Live catalog from GET /api/v1/menu/catalog. Owner price edits write menu_items.price with a transactional audit event."}
       </p>
-      <p className="mt-2 text-xs text-sky-800">
-        Unavailable or hidden DB rows are filtered server-side (is_available / is_active). This workspace shows the
-        operational catalog consumed by Website, POS, and quote APIs.
+      <p className={`mt-2 text-xs ${usingFallback ? "text-amber-800" : "text-sky-800"}`}>
+        Every selectable option is one sellable SKU with exactly one price. Product families are presentation
+        grouping only. Fallback never overrides a successful API result.
       </p>
     </section>
   );

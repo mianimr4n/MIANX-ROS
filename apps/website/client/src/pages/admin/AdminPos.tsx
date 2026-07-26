@@ -25,7 +25,7 @@ import {
 import { listActiveSessions, type DiningSessionRecord } from "@/lib/table-service-api";
 import {
   channelToOrderType,
-  defaultVariant,
+  defaultSku,
   displayPrice,
   itemNeedsConfiguration,
   mapCategoryBucket,
@@ -36,7 +36,7 @@ import { createAdminPosOrder, listAdminTables, transitionAdminOrder, type AdminR
 import { ApiRequestError, isApiConfigured } from "@/lib/api";
 import { normalizePhoneE164 } from "@/lib/phone";
 import { quoteOrder } from "@/lib/telepizza-api";
-import type { MenuItem, QuoteOrderResponse } from "@/lib/telepizza-types";
+import type { MenuProductGroup, QuoteOrderResponse } from "@/lib/telepizza-types";
 import { AdminShell } from "./AdminShell";
 
 function newLineKey() {
@@ -47,8 +47,14 @@ export default function AdminPos() {
   const { session, profile, permissions, isSuperAdmin, roles } = useAuth();
   const { selection, setSelection, allowedBranches, label: branchLabel, branchIdFilter } =
     useAdminBranch();
-  const { items, isLoading: menuLoading, error: menuError, usingFallback, reloadCatalog } =
-    useMenuCatalog();
+  const {
+    items,
+    groups,
+    isLoading: menuLoading,
+    error: menuError,
+    usingFallback,
+    reloadCatalog,
+  } = useMenuCatalog();
   const [, setLocation] = useLocation();
 
   const principal = { roles, permissions, isSuperAdmin };
@@ -63,7 +69,7 @@ export default function AdminPos() {
   const [menuSearch, setMenuSearch] = useState("");
   const [searchDraft, setSearchDraft] = useState("");
   const [lines, setLines] = useState<PosCartLine[]>([]);
-  const [configureItem, setConfigureItem] = useState<MenuItem | null>(null);
+  const [configureGroup, setConfigureGroup] = useState<MenuProductGroup | null>(null);
   const [guestMode, setGuestMode] = useState(true);
   const [customerName, setCustomerName] = useState("Walk-in Guest");
   const [customerPhone, setCustomerPhone] = useState("03000000000");
@@ -151,27 +157,35 @@ export default function AdminPos() {
   }, [branchIdFilter, canLoadSessions, channel, session?.access_token]);
 
   const bucketCounts = useMemo(() => {
-    const counts: Record<string, number> = { All: items.length };
-    for (const item of items) {
-      const key = mapCategoryBucket(item.category);
+    const counts: Record<string, number> = { All: groups.length };
+    for (const group of groups) {
+      const key = mapCategoryBucket(group.category);
       counts[key] = (counts[key] ?? 0) + 1;
     }
     return counts;
-  }, [items]);
+  }, [groups]);
 
-  const filteredItems = useMemo(() => {
+  // Search matches on any SKU inside a family so a cashier can type "12 inch" or an exact SKU slug.
+  const filteredGroups = useMemo(() => {
     const needle = menuSearch.trim().toLowerCase();
-    return items.filter((item) => {
-      if (bucket !== "All" && mapCategoryBucket(item.category) !== bucket) return false;
+    return groups.filter((group) => {
+      if (bucket !== "All" && mapCategoryBucket(group.category) !== bucket) return false;
       if (!needle) return true;
-      return (
-        item.name.toLowerCase().includes(needle) ||
-        (item.slug ?? "").toLowerCase().includes(needle) ||
-        item.category.toLowerCase().includes(needle) ||
-        (item.id ?? "").toLowerCase().includes(needle)
+      if (
+        group.name.toLowerCase().includes(needle) ||
+        group.productGroupSlug.toLowerCase().includes(needle) ||
+        group.category.toLowerCase().includes(needle)
+      ) {
+        return true;
+      }
+      return group.options.some(
+        (sku) =>
+          sku.name.toLowerCase().includes(needle) ||
+          (sku.slug ?? "").toLowerCase().includes(needle) ||
+          sku.id.toLowerCase().includes(needle),
       );
     });
-  }, [bucket, items, menuSearch]);
+  }, [bucket, groups, menuSearch]);
 
   const addLine = useCallback((partial: Omit<PosCartLine, "key">) => {
     setLines((prev) => [...prev, { ...partial, key: newLineKey() }]);
@@ -179,26 +193,28 @@ export default function AdminPos() {
     setLastOrderId(null);
   }, []);
 
-  function quickAdd(item: MenuItem) {
-    if (!item.slug) return;
-    if (itemNeedsConfiguration(item)) {
-      setConfigureItem(item);
+  function quickAdd(group: MenuProductGroup) {
+    if (itemNeedsConfiguration(group)) {
+      setConfigureGroup(group);
       return;
     }
-    const variant = defaultVariant(item);
+    const sku = defaultSku(group);
+    if (!sku) return;
     addLine({
-      menuItemSlug: item.slug,
-      productName: item.name,
-      variantLabel: variant?.label,
-      unitPrice: displayPrice(item),
+      menuItemId: sku.id,
+      menuItemSlug: sku.slug ?? sku.id,
+      productName: sku.name,
+      variantLabel: sku.sizeLabel,
+      unitPrice: displayPrice(group),
       quantity: 1,
-      image: item.image,
+      image: sku.image,
     });
   }
 
   const quotePayloadItems = useMemo(
     () =>
       lines.map((line) => ({
+        menuItemId: line.menuItemId,
         menuItemSlug: line.menuItemSlug,
         variantLabel: line.variantLabel,
         quantity: line.quantity,
@@ -309,6 +325,7 @@ export default function AdminPos() {
           diningSessionId:
             channel === "dine-in" && diningSessionId ? diningSessionId : undefined,
           items: lines.map((line) => ({
+            menuItemId: line.menuItemId,
             menuItemSlug: line.menuItemSlug,
             variantLabel: line.variantLabel,
             quantity: line.quantity,
@@ -412,11 +429,11 @@ export default function AdminPos() {
 
         <div className="min-w-0 space-y-4">
           <ProductGrid
-            items={filteredItems}
+            groups={filteredGroups}
             loading={menuLoading}
             emptyMessage="No products match the current category/search."
             onQuickAdd={quickAdd}
-            onConfigure={setConfigureItem}
+            onConfigure={setConfigureGroup}
           />
           <ReceiptPreview
             orderNumber={lastOrderNumber}
@@ -511,9 +528,9 @@ export default function AdminPos() {
       </div>
 
       <ProductConfigureModal
-        open={Boolean(configureItem)}
-        item={configureItem}
-        onClose={() => setConfigureItem(null)}
+        open={Boolean(configureGroup)}
+        group={configureGroup}
+        onClose={() => setConfigureGroup(null)}
         onAdd={addLine}
       />
     </AdminShell>

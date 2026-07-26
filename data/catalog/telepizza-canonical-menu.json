@@ -4,7 +4,7 @@
   "title": "Telepizza Canonical Menu Manifest",
   "currency": "PKR",
   "generatedAt": "2026-07-18",
-  "completionStatus": "BLOCKED_OWNER_EVIDENCE_REQUIRED",
+  "completionStatus": "OWNER_PRICES_LOCKED_EXPAND_20260725120000",
   "completionReason": "Owner structured menu-board image files are not present in the repository. Partial V1 hybrid baseline is verified from approved extraction docs + owner sync migration + production API (13/58/3/40/7). GM Jul-13 conflicts and missing domains require owner confirmation before PASS.",
   "evidenceRank": [
     {
@@ -195,16 +195,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "tele-special",
       "name": "Tele Special",
@@ -221,21 +218,21 @@
           "code": "small",
           "label": "6 inch Small",
           "sizeCode": "small",
-          "pricePkr": 499,
+          "pricePkr": 620,
           "isDefault": true
         },
         {
           "code": "medium",
-          "label": "9 inch Medium",
+          "label": "10 inch Medium",
           "sizeCode": "medium",
-          "pricePkr": 950,
+          "pricePkr": 1250,
           "isDefault": false
         },
         {
           "code": "large",
           "label": "12 inch Large",
           "sizeCode": "large",
-          "pricePkr": 1570,
+          "pricePkr": 1890,
           "isDefault": false
         }
       ],
@@ -252,16 +249,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "peri-peri",
       "name": "Peri Peri",
@@ -278,21 +272,21 @@
           "code": "small",
           "label": "6 inch Small",
           "sizeCode": "small",
-          "pricePkr": 499,
+          "pricePkr": 620,
           "isDefault": true
         },
         {
           "code": "medium",
-          "label": "9 inch Medium",
+          "label": "10 inch Medium",
           "sizeCode": "medium",
-          "pricePkr": 950,
+          "pricePkr": 1250,
           "isDefault": false
         },
         {
           "code": "large",
           "label": "12 inch Large",
           "sizeCode": "large",
-          "pricePkr": 1570,
+          "pricePkr": 1890,
           "isDefault": false
         }
       ],
@@ -309,16 +303,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "bihari-kabab",
       "name": "Bihari Kabab",
@@ -335,21 +326,21 @@
           "code": "small",
           "label": "6 inch Small",
           "sizeCode": "small",
-          "pricePkr": 499,
+          "pricePkr": 620,
           "isDefault": true
         },
         {
           "code": "medium",
-          "label": "9 inch Medium",
+          "label": "10 inch Medium",
           "sizeCode": "medium",
-          "pricePkr": 950,
+          "pricePkr": 1250,
           "isDefault": false
         },
         {
           "code": "large",
           "label": "12 inch Large",
           "sizeCode": "large",
-          "pricePkr": 1570,
+          "pricePkr": 1890,
           "isDefault": false
         }
       ],
@@ -366,16 +357,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "kababish",
       "name": "Kababish",
@@ -392,21 +380,21 @@
           "code": "small",
           "label": "6 inch Small",
           "sizeCode": "small",
-          "pricePkr": 499,
+          "pricePkr": 620,
           "isDefault": true
         },
         {
           "code": "medium",
-          "label": "9 inch Medium",
+          "label": "10 inch Medium",
           "sizeCode": "medium",
-          "pricePkr": 950,
+          "pricePkr": 1250,
           "isDefault": false
         },
         {
           "code": "large",
           "label": "12 inch Large",
           "sizeCode": "large",
-          "pricePkr": 1570,
+          "pricePkr": 1890,
           "isDefault": false
         }
       ],
@@ -423,16 +411,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "tikka",
       "name": "Tikka",
@@ -447,21 +432,21 @@
           "code": "small",
           "label": "6 inch Small",
           "sizeCode": "small",
-          "pricePkr": 470,
+          "pricePkr": 600,
           "isDefault": true
         },
         {
           "code": "medium",
-          "label": "9 inch Medium",
+          "label": "10 inch Medium",
           "sizeCode": "medium",
-          "pricePkr": 890,
+          "pricePkr": 1200,
           "isDefault": false
         },
         {
           "code": "large",
           "label": "12 inch Large",
           "sizeCode": "large",
-          "pricePkr": 1470,
+          "pricePkr": 1790,
           "isDefault": false
         }
       ],
@@ -478,16 +463,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "bonfire",
       "name": "Bonfire",
@@ -502,21 +484,21 @@
           "code": "small",
           "label": "6 inch Small",
           "sizeCode": "small",
-          "pricePkr": 470,
+          "pricePkr": 600,
           "isDefault": true
         },
         {
           "code": "medium",
-          "label": "9 inch Medium",
+          "label": "10 inch Medium",
           "sizeCode": "medium",
-          "pricePkr": 890,
+          "pricePkr": 1200,
           "isDefault": false
         },
         {
           "code": "large",
           "label": "12 inch Large",
           "sizeCode": "large",
-          "pricePkr": 1470,
+          "pricePkr": 1790,
           "isDefault": false
         }
       ],
@@ -533,16 +515,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "chicken-supreme",
       "name": "Chicken Supreme",
@@ -557,21 +536,21 @@
           "code": "small",
           "label": "6 inch Small",
           "sizeCode": "small",
-          "pricePkr": 470,
+          "pricePkr": 600,
           "isDefault": true
         },
         {
           "code": "medium",
-          "label": "9 inch Medium",
+          "label": "10 inch Medium",
           "sizeCode": "medium",
-          "pricePkr": 890,
+          "pricePkr": 1200,
           "isDefault": false
         },
         {
           "code": "large",
           "label": "12 inch Large",
           "sizeCode": "large",
-          "pricePkr": 1470,
+          "pricePkr": 1790,
           "isDefault": false
         }
       ],
@@ -588,16 +567,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "real-fajita",
       "name": "Real Fajita",
@@ -612,21 +588,21 @@
           "code": "small",
           "label": "6 inch Small",
           "sizeCode": "small",
-          "pricePkr": 470,
+          "pricePkr": 600,
           "isDefault": true
         },
         {
           "code": "medium",
-          "label": "9 inch Medium",
+          "label": "10 inch Medium",
           "sizeCode": "medium",
-          "pricePkr": 890,
+          "pricePkr": 1200,
           "isDefault": false
         },
         {
           "code": "large",
           "label": "12 inch Large",
           "sizeCode": "large",
-          "pricePkr": 1470,
+          "pricePkr": 1790,
           "isDefault": false
         }
       ],
@@ -643,16 +619,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "mexicana",
       "name": "Mexicana",
@@ -667,21 +640,21 @@
           "code": "small",
           "label": "6 inch Small",
           "sizeCode": "small",
-          "pricePkr": 470,
+          "pricePkr": 600,
           "isDefault": true
         },
         {
           "code": "medium",
-          "label": "9 inch Medium",
+          "label": "10 inch Medium",
           "sizeCode": "medium",
-          "pricePkr": 890,
+          "pricePkr": 1200,
           "isDefault": false
         },
         {
           "code": "large",
           "label": "12 inch Large",
           "sizeCode": "large",
-          "pricePkr": 1470,
+          "pricePkr": 1790,
           "isDefault": false
         }
       ],
@@ -698,16 +671,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "cheese-lover",
       "name": "Cheese Lover",
@@ -722,21 +692,21 @@
           "code": "small",
           "label": "6 inch Small",
           "sizeCode": "small",
-          "pricePkr": 470,
+          "pricePkr": 600,
           "isDefault": true
         },
         {
           "code": "medium",
-          "label": "9 inch Medium",
+          "label": "10 inch Medium",
           "sizeCode": "medium",
-          "pricePkr": 890,
+          "pricePkr": 1200,
           "isDefault": false
         },
         {
           "code": "large",
           "label": "12 inch Large",
           "sizeCode": "large",
-          "pricePkr": 1470,
+          "pricePkr": 1790,
           "isDefault": false
         }
       ],
@@ -753,16 +723,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "chicago-extreme",
       "name": "Chicago Extreme",
@@ -777,14 +744,14 @@
           "code": "medium",
           "label": "Medium",
           "sizeCode": "medium",
-          "pricePkr": 1199,
+          "pricePkr": 1470,
           "isDefault": true
         },
         {
           "code": "large",
           "label": "Large",
           "sizeCode": "large",
-          "pricePkr": 1899,
+          "pricePkr": 2150,
           "isDefault": false
         }
       ],
@@ -799,16 +766,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "crown-crust",
       "name": "Crown Crust",
@@ -825,14 +789,14 @@
           "code": "medium",
           "label": "Medium",
           "sizeCode": "medium",
-          "pricePkr": 1199,
+          "pricePkr": 1470,
           "isDefault": true
         },
         {
           "code": "large",
           "label": "Large",
           "sizeCode": "large",
-          "pricePkr": 1799,
+          "pricePkr": 2099,
           "isDefault": false
         }
       ],
@@ -847,17 +811,16 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
-        "SIZE_AMBIGUOUS_ON_BOARD",
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "SIZE_AMBIGUOUS_ON_BOARD"
       ],
       "code": "stuffed-crust",
       "name": "Stuffed Crust",
@@ -866,7 +829,7 @@
       "lifecycle": "sellable",
       "description": "Any flavour with kabab stuffing on edges.",
       "imageUrl": "/images/menu-pizza.jpg",
-      "basePricePkr": 1749,
+      "basePricePkr": 2050,
       "variants": [],
       "gmReference": {
         "flat": 2050
@@ -878,17 +841,16 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
-        "SIZE_AMBIGUOUS_ON_BOARD",
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "SIZE_AMBIGUOUS_ON_BOARD"
       ],
       "code": "tele-extreme",
       "name": "Tele Extreme Pizza",
@@ -897,7 +859,7 @@
       "lifecycle": "sellable",
       "description": "2 premium sauces with loaded chicken & lots of cheese.",
       "imageUrl": "/images/menu-pizza.jpg",
-      "basePricePkr": 1699,
+      "basePricePkr": 1950,
       "variants": [],
       "gmReference": {
         "flat": 1950
@@ -909,16 +871,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "sixteen-inch-incher",
       "name": "16\" Incher",
@@ -927,7 +886,7 @@
       "lifecycle": "sellable",
       "description": "Sixteen-inch specialty pizza.",
       "imageUrl": "/images/menu-pizza.jpg",
-      "basePricePkr": 2399,
+      "basePricePkr": 2800,
       "variants": [],
       "gmReference": {
         "flat": 2800
@@ -939,18 +898,17 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
         "MULTI_SOURCE_PRICE_CONFLICT",
-        "BFR-018",
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "BFR-018"
       ],
       "code": "zinger-burger",
       "name": "Zinger Burger",
@@ -961,7 +919,7 @@
       "badge": "Popular",
       "featured": true,
       "imageUrl": "/images/menu-burger.jpg",
-      "basePricePkr": 450,
+      "basePricePkr": 550,
       "variants": [],
       "promoConflict": {
         "price": 440,
@@ -979,16 +937,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "patty-burger",
       "name": "Patty Burger",
@@ -997,7 +952,7 @@
       "lifecycle": "sellable",
       "description": "Tele Pizza patty burger.",
       "imageUrl": "/images/menu-burger.jpg",
-      "basePricePkr": 299,
+      "basePricePkr": 350,
       "variants": [],
       "gmReference": {
         "gm": 350
@@ -1009,16 +964,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "crunchy-sandwich",
       "name": "Crunchy Sandwich",
@@ -1027,7 +979,7 @@
       "lifecycle": "sellable",
       "description": "Served with dip sauce & fries.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 799,
+      "basePricePkr": 950,
       "variants": [],
       "gmReference": {
         "gm": 950
@@ -1039,16 +991,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "special-sandwich",
       "name": "Special Sandwich",
@@ -1057,7 +1006,7 @@
       "lifecycle": "sellable",
       "description": "Served with dip sauce & fries.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 749,
+      "basePricePkr": 930,
       "variants": [],
       "gmReference": {
         "gm": 930
@@ -1069,16 +1018,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "baked-smoked-sandwich",
       "name": "Baked Smoked",
@@ -1087,7 +1033,7 @@
       "lifecycle": "sellable",
       "description": "Served with dip sauce & fries.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 749,
+      "basePricePkr": 930,
       "variants": [],
       "gmReference": {
         "gm": 930
@@ -1099,16 +1045,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "sizzling-sandwich",
       "name": "Sizzling Sandwich",
@@ -1117,7 +1060,7 @@
       "lifecycle": "sellable",
       "description": "Served with dip sauce & fries.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 749,
+      "basePricePkr": 930,
       "variants": [],
       "gmReference": {
         "gm": 930
@@ -1129,17 +1072,16 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
-        "GM_NAME_CONFLICT",
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "GM_NAME_CONFLICT"
       ],
       "code": "jumbo-wrap",
       "name": "Tele Pizza Special Jumbo Wrap",
@@ -1161,16 +1103,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "crunchy-wrap",
       "name": "Crunchy Wrap",
@@ -1179,7 +1118,7 @@
       "lifecycle": "sellable",
       "description": "Crunchy chicken wrap.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 399,
+      "basePricePkr": 550,
       "variants": [],
       "gmReference": {
         "gm": 550
@@ -1191,16 +1130,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "dynamite-wrap",
       "name": "Dynamite Wrap",
@@ -1209,7 +1145,7 @@
       "lifecycle": "sellable",
       "description": "Dynamite-flavoured wrap.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 399,
+      "basePricePkr": 550,
       "variants": [],
       "gmReference": {
         "gm": 550
@@ -1221,16 +1157,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "behari-roll",
       "name": "Behari Roll",
@@ -1239,7 +1172,7 @@
       "lifecycle": "sellable",
       "description": "4 pcs special chicken with special sauce, wrapped in crispy tortilla baked with lots of cheese, mushroom & olives, served with dip sauce & fries.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 799,
+      "basePricePkr": 950,
       "variants": [],
       "gmReference": {
         "gm": 950
@@ -1251,16 +1184,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "crunchy-pasta",
       "name": "Crunchy Pasta",
@@ -1270,7 +1200,7 @@
       "description": "Crunchy pasta.",
       "badge": "Hot",
       "imageUrl": "/images/pasta-dish.jpg",
-      "basePricePkr": 849,
+      "basePricePkr": 980,
       "variants": [],
       "gmReference": {
         "gm": 980
@@ -1282,16 +1212,16 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
-        "NAME_AMBIGUOUS_ON_BOARD",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "NAME_AMBIGUOUS_ON_BOARD"
       ],
       "code": "special-pasta",
       "name": "Special Pasta / Flaming Pasta",
@@ -1300,23 +1230,20 @@
       "lifecycle": "sellable",
       "description": "Special flaming pasta.",
       "imageUrl": "/images/pasta-dish.jpg",
-      "basePricePkr": 749,
+      "basePricePkr": 899,
       "variants": [],
       "notes": "Board layout ambiguous for Special vs Flaming naming; GM lists SPECIAL/FLAMING/ALFREDO at higher prices"
     },
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "fried-crispy-wings",
       "name": "Fried & Crispy",
@@ -1325,7 +1252,7 @@
       "lifecycle": "sellable",
       "description": "Crispy fried chicken wings.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 599,
+      "basePricePkr": 650,
       "variants": [],
       "gmReference": {
         "gm": 650
@@ -1337,16 +1264,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "bbq-wings",
       "name": "BBQ",
@@ -1355,7 +1279,7 @@
       "lifecycle": "sellable",
       "description": "BBQ-flavoured chicken wings.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 599,
+      "basePricePkr": 650,
       "variants": [],
       "gmReference": {
         "gm": 650
@@ -1367,16 +1291,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "creamo-wings",
       "name": "Creamo",
@@ -1385,7 +1306,7 @@
       "lifecycle": "sellable",
       "description": "Creamy-style chicken wings.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 599,
+      "basePricePkr": 650,
       "variants": [],
       "gmReference": {
         "gm": 650
@@ -1397,16 +1318,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "oven-baked-wings",
       "name": "Oven Baked",
@@ -1415,7 +1333,7 @@
       "lifecycle": "sellable",
       "description": "Oven-baked chicken wings.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 549,
+      "basePricePkr": 600,
       "variants": [],
       "gmReference": {
         "gm": 600
@@ -1427,16 +1345,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "flaming-wings",
       "name": "Flaming",
@@ -1445,7 +1360,7 @@
       "lifecycle": "sellable",
       "description": "Spicy flaming chicken wings.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 549,
+      "basePricePkr": 600,
       "variants": [],
       "gmReference": {
         "gm": 600
@@ -1457,16 +1372,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "loaded-fries",
       "name": "Loaded Fries",
@@ -1475,7 +1387,7 @@
       "lifecycle": "sellable",
       "description": "Loaded fries.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 650,
+      "basePricePkr": 790,
       "variants": [],
       "gmReference": {
         "gm": 790
@@ -1487,16 +1399,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "french-fries",
       "name": "French Fries",
@@ -1505,7 +1414,7 @@
       "lifecycle": "sellable",
       "description": "French fries.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 199,
+      "basePricePkr": 250,
       "variants": [],
       "gmReference": {
         "gm": 250
@@ -1517,16 +1426,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "family-fries",
       "name": "Family Fries",
@@ -1535,7 +1441,7 @@
       "lifecycle": "sellable",
       "description": "Family-size fries.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 350,
+      "basePricePkr": 390,
       "variants": [],
       "gmReference": {
         "gm": 390
@@ -1547,16 +1453,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "chicken-tender-strips",
       "name": "Chicken Tender Strips",
@@ -1565,7 +1468,7 @@
       "lifecycle": "sellable",
       "description": "5 pcs juicy chicken tender strips with blend of spices, served with secret delicious dip sauce.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 590,
+      "basePricePkr": 750,
       "variants": [],
       "gmReference": {
         "gm": 750
@@ -1577,16 +1480,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "crispy-box",
       "name": "Crispy Box",
@@ -1595,7 +1495,7 @@
       "lifecycle": "sellable",
       "description": "3 pcs crispy chicken (1 Chest, 1 Drum, 1 Wing) with 1 Garlic Ranch.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 670,
+      "basePricePkr": 790,
       "variants": [],
       "gmReference": {
         "gm": 790
@@ -1607,16 +1507,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "fried-chicken-chest",
       "name": "Fried Chicken (Chest)",
@@ -1625,7 +1522,7 @@
       "lifecycle": "sellable",
       "description": "Fried chicken chest piece.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 250,
+      "basePricePkr": 300,
       "variants": [],
       "gmReference": {
         "gm": 300
@@ -1637,16 +1534,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
-      ],
-      "flags": [
-        "GM_PRICE_CONFLICT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "code": "fried-chicken",
       "name": "Fried Chicken",
@@ -1655,7 +1549,7 @@
       "lifecycle": "sellable",
       "description": "Fried chicken piece.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 220,
+      "basePricePkr": 280,
       "variants": [],
       "gmReference": {
         "gm": 280
@@ -1667,12 +1561,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "nuggets",
@@ -1682,18 +1577,19 @@
       "lifecycle": "sellable",
       "description": "10 pieces.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 449,
+      "basePricePkr": 490,
       "variants": []
     },
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "hot-shots",
@@ -1703,18 +1599,19 @@
       "lifecycle": "sellable",
       "description": "10 pieces.",
       "imageUrl": "/images/sides-platter.jpg",
-      "basePricePkr": 449,
+      "basePricePkr": 499,
       "variants": []
     },
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "special-sauce-dip",
@@ -1731,12 +1628,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "bone-fire-dip",
@@ -1753,12 +1651,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "dip-sauce",
@@ -1775,12 +1674,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "garlic-ranch-dip",
@@ -1797,12 +1697,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "drink-1-5l",
@@ -1812,19 +1713,20 @@
       "lifecycle": "sellable",
       "description": "1.5 liter soft drink.",
       "imageUrl": "/images/desserts-drinks.jpg",
-      "basePricePkr": 210,
+      "basePricePkr": 250,
       "variants": [],
       "domain": "drinks"
     },
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "drink-1l",
@@ -1834,19 +1736,20 @@
       "lifecycle": "sellable",
       "description": "1 liter soft drink.",
       "imageUrl": "/images/desserts-drinks.jpg",
-      "basePricePkr": 170,
+      "basePricePkr": 200,
       "variants": [],
       "domain": "drinks"
     },
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "drink-500ml",
@@ -1856,19 +1759,20 @@
       "lifecycle": "sellable",
       "description": "500 ml soft drink.",
       "imageUrl": "/images/desserts-drinks.jpg",
-      "basePricePkr": 110,
+      "basePricePkr": 140,
       "variants": [],
       "domain": "drinks"
     },
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "drink-345ml",
@@ -1878,19 +1782,20 @@
       "lifecycle": "sellable",
       "description": "345 ml soft drink.",
       "imageUrl": "/images/desserts-drinks.jpg",
-      "basePricePkr": 70,
+      "basePricePkr": 90,
       "variants": [],
       "domain": "drinks"
     },
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "large-water",
@@ -1900,19 +1805,20 @@
       "lifecycle": "sellable",
       "description": "Large bottled water.",
       "imageUrl": "/images/desserts-drinks.jpg",
-      "basePricePkr": 99,
+      "basePricePkr": 130,
       "variants": [],
       "domain": "water"
     },
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "small-water",
@@ -1922,24 +1828,24 @@
       "lifecycle": "sellable",
       "description": "Small bottled water.",
       "imageUrl": "/images/desserts-drinks.jpg",
-      "basePricePkr": 50,
+      "basePricePkr": 70,
       "variants": [],
       "domain": "water"
     },
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
         "EID_PROMO_CONFLICT",
-        "TEMPORARY_PRICE_NOT_EVERGREEN",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "TEMPORARY_PRICE_NOT_EVERGREEN"
       ],
       "code": "family-deal",
       "name": "Family Deal",
@@ -1950,7 +1856,7 @@
       "badge": null,
       "featured": true,
       "imageUrl": "/images/promos/family-deal.jpg",
-      "basePricePkr": 2250,
+      "basePricePkr": 2650,
       "variants": [],
       "promoConflict": {
         "price": 2199,
@@ -1960,17 +1866,17 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
         "EID_PROMO_CONFLICT",
-        "TEMPORARY_PRICE_NOT_EVERGREEN",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "TEMPORARY_PRICE_NOT_EVERGREEN"
       ],
       "code": "pizza-fest",
       "name": "Pizza Fest",
@@ -1981,7 +1887,7 @@
       "badge": "Hot",
       "featured": true,
       "imageUrl": "/images/promos/pizza-fest.jpg",
-      "basePricePkr": 1680,
+      "basePricePkr": 2020,
       "variants": [],
       "promoConflict": {
         "price": 1649,
@@ -1991,12 +1897,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "mega-offer",
@@ -2008,23 +1915,23 @@
       "badge": null,
       "featured": false,
       "imageUrl": "/images/products/deal-combo.jpg",
-      "basePricePkr": 3140,
+      "basePricePkr": 3799,
       "variants": []
     },
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
         "EID_PROMO_CONFLICT",
-        "TEMPORARY_PRICE_NOT_EVERGREEN",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "TEMPORARY_PRICE_NOT_EVERGREEN"
       ],
       "code": "pair-deal",
       "name": "Pair Deal",
@@ -2035,7 +1942,7 @@
       "badge": "Hot",
       "featured": true,
       "imageUrl": "/images/promos/pair-deal.jpg",
-      "basePricePkr": 1999,
+      "basePricePkr": 2600,
       "variants": [],
       "promoConflict": {
         "price": 2099,
@@ -2045,12 +1952,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "family-festival",
@@ -2062,18 +1970,19 @@
       "badge": null,
       "featured": false,
       "imageUrl": "/images/products/deal-combo.jpg",
-      "basePricePkr": 2350,
+      "basePricePkr": 2850,
       "variants": []
     },
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "deal-for-two",
@@ -2085,23 +1994,23 @@
       "badge": null,
       "featured": false,
       "imageUrl": "/images/products/deal-combo.jpg",
-      "basePricePkr": 999,
+      "basePricePkr": 1240,
       "variants": []
     },
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
         "EID_PROMO_CONFLICT",
-        "TEMPORARY_PRICE_NOT_EVERGREEN",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "TEMPORARY_PRICE_NOT_EVERGREEN"
       ],
       "code": "knock-out-deal",
       "name": "Knock Out Deal",
@@ -2112,7 +2021,7 @@
       "badge": null,
       "featured": false,
       "imageUrl": "/images/promos/knock-out-deal.jpg",
-      "basePricePkr": 1440,
+      "basePricePkr": 1750,
       "variants": [],
       "promoConflict": {
         "price": 1390,
@@ -2122,12 +2031,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "extra-chicken",
@@ -2166,12 +2076,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [],
       "code": "extra-cheese",
@@ -2210,12 +2121,13 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
         "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
         "apps/website/client/src/data/menu-data.ts",
-        "prod-api:2026-07-18"
+        "prod-api:2026-07-18",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
         "MODIFIER_SEED_PRICE_MISMATCH"
@@ -2235,16 +2147,16 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL-MENU-EXTRACTION.md#Injected-Broast",
         "supabase/migrations/20260714100000_sync_verified_menu_catalog.sql",
-        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)"
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
         "RETIRED_BY_OWNER_SYNC",
-        "GM_EVIDENCE_PRESENT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "GM_EVIDENCE_PRESENT"
       ],
       "code": "quarter-broast",
       "name": "Quarter Broast",
@@ -2261,16 +2173,16 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL-MENU-EXTRACTION.md#Injected-Broast",
         "supabase/migrations/20260714100000_sync_verified_menu_catalog.sql",
-        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)"
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
         "RETIRED_BY_OWNER_SYNC",
-        "GM_EVIDENCE_PRESENT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "GM_EVIDENCE_PRESENT"
       ],
       "code": "half-broast",
       "name": "Half Broast",
@@ -2287,16 +2199,16 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL-MENU-EXTRACTION.md#Injected-Broast",
         "supabase/migrations/20260714100000_sync_verified_menu_catalog.sql",
-        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)"
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
         "RETIRED_BY_OWNER_SYNC",
-        "GM_EVIDENCE_PRESENT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "GM_EVIDENCE_PRESENT"
       ],
       "code": "full-broast",
       "name": "Full Broast",
@@ -2313,16 +2225,16 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL-MENU-EXTRACTION.md#Injected-Broast",
         "supabase/migrations/20260714100000_sync_verified_menu_catalog.sql",
-        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)"
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
         "RETIRED_BY_OWNER_SYNC",
-        "GM_EVIDENCE_PRESENT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "GM_EVIDENCE_PRESENT"
       ],
       "code": "broast-garlic-dip",
       "name": "Extra Garlic Dip",
@@ -2339,16 +2251,16 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL-MENU-EXTRACTION.md#Injected-Broast",
         "supabase/migrations/20260714100000_sync_verified_menu_catalog.sql",
-        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)"
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql (retired)",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
         "RETIRED_BY_OWNER_SYNC",
-        "GM_EVIDENCE_PRESENT",
-        "OWNER_CONFIRMATION_REQUIRED"
+        "GM_EVIDENCE_PRESENT"
       ],
       "code": "broast-mustard-dip",
       "name": "Extra Mustard Dip",
@@ -2365,14 +2277,14 @@
     {
       "temporary": false,
       "currency": "PKR",
-      "pricingEra": "board-v1-hybrid-bfr001",
+      "pricingEra": "expand-20260725120000-founder-locked",
       "evidence": [
         "REAL_MENU_EXTRACTED.md",
-        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql"
+        "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+        "FOUNDER_PRICE_DECISION_2026-07-26"
       ],
       "flags": [
         "RETIRED_BY_OWNER_SYNC",
-        "OWNER_CONFIRMATION_REQUIRED",
         "POSTER_ONLY"
       ],
       "code": "behari-kabab-pizza",
@@ -2849,5 +2761,15 @@
     "preserveOrderHistory": true,
     "applyProduction": false,
     "requireOwnerApproval": true
+  },
+  "founderPriceDecision": {
+    "decidedAt": "2026-07-26",
+    "rule": "Migration 20260725120000 expanded real-menu prices are the initial authoritative production-intended prices. Older bootstrap board prices are stale. Owner may edit later via Admin Menu with atomic audit.",
+    "authoritativeSource": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+    "examples": {
+      "tele-special-small": 620,
+      "tele-special-medium": 1250,
+      "tele-special-large": 1890
+    }
   }
 }

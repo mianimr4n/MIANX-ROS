@@ -10,20 +10,23 @@ export function createMenuRouter(catalogDataSource: CatalogDataSource) {
     try {
       const catalog = await catalogDataSource.getMenuCatalog();
 
+      const productGroupCount = catalog.categories.reduce(
+        (sum, category) => sum + category.items.length,
+        0,
+      );
+
       res.json({
         ok: true,
         data: catalog,
         meta: {
           source: "supabase",
           module: "menu",
+          contract: "canonical-single-price-v1",
           categoryCount: catalog.categories.length,
-          itemCount: catalog.items.length,
+          productGroupCount,
+          skuCount: catalog.skus.length,
           toppingCount: catalog.toppings.length,
-          variantCount: [...catalog.items, ...catalog.toppings].reduce(
-            (sum, item) => sum + (item.variants?.length ?? 0),
-            0,
-          ),
-          dealCount: catalog.items.filter((item) => item.productType === "deal").length,
+          dealCount: catalog.skus.filter((sku) => sku.productType === "deal").length,
         },
       });
     } catch (error) {

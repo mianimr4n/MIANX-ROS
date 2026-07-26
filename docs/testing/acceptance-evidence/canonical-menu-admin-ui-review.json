@@ -1,0 +1,54 @@
+{
+  "result": "PASS",
+  "role": "admin@telepizza.pk (owner)",
+  "viewports": {
+    "mobile-390": {
+      "category_list": true,
+      "category_create": true,
+      "sku_create": true,
+      "price_field": true,
+      "availability": true,
+      "size_label": true,
+      "product_family": true,
+      "search": true,
+      "audit_history": true,
+      "modifiers": true,
+      "no_variant_matrix": true,
+      "renders_content": true,
+      "no_error_boundary": true
+    },
+    "tablet-768": {
+      "category_list": true,
+      "category_create": true,
+      "sku_create": true,
+      "price_field": true,
+      "availability": true,
+      "size_label": true,
+      "product_family": true,
+      "search": true,
+      "audit_history": true,
+      "modifiers": true,
+      "no_variant_matrix": true,
+      "renders_content": true,
+      "no_error_boundary": true
+    },
+    "desktop-1440": {
+      "category_list": true,
+      "category_create": true,
+      "sku_create": true,
+      "price_field": true,
+      "availability": true,
+      "size_label": true,
+      "product_family": true,
+      "search": true,
+      "audit_history": true,
+      "modifiers": true,
+      "no_variant_matrix": true,
+      "renders_content": true,
+      "no_error_boundary": true
+    }
+  },
+  "controlsMissingOnEveryViewport": [],
+  "note": "Surface review only — control presence, responsiveness, and absence of a variant price matrix. Mutating flows are covered by the price journey spec.",
+  "recordedAt": "2026-07-26T06:16:55.747Z"
+}

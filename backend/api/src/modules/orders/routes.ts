@@ -27,20 +27,29 @@ const orderModifierSchema = z.object({
   optionCode: z.string().min(1).max(80),
 });
 
-const orderItemSchema = z.object({
-  menuItemSlug: z.string().min(1).max(100),
-  variantLabel: z.string().max(100).optional(),
-  quantity: z.number().int().positive().max(20),
-  /** Ignored by server. */
-  unitPrice: z.number().nonnegative().optional(),
-  /** Ignored by server. */
-  productName: z.string().min(1).max(150).optional(),
-  variantName: z.string().max(100).optional(),
-  instructions: z.string().max(250).optional(),
-  toppings: z.array(toppingSlugSchema).max(20).optional(),
-  extras: z.array(orderExtraSchema).max(20).optional(),
-  modifiers: z.array(orderModifierSchema).max(40).optional(),
-});
+const orderItemSchema = z
+  .object({
+    /** Preferred: exact sellable SKU. */
+    menuItemId: z.string().uuid().optional(),
+    /** Canonical SKU slug, or a legacy product-family slug. */
+    menuItemSlug: z.string().min(1).max(100).optional(),
+    /** LEGACY size hint; not required for new orders. */
+    variantLabel: z.string().max(100).optional(),
+    quantity: z.number().int().positive().max(20),
+    /** Ignored by server. */
+    unitPrice: z.number().nonnegative().optional(),
+    /** Ignored by server. */
+    productName: z.string().min(1).max(150).optional(),
+    variantName: z.string().max(100).optional(),
+    instructions: z.string().max(250).optional(),
+    toppings: z.array(toppingSlugSchema).max(20).optional(),
+    extras: z.array(orderExtraSchema).max(20).optional(),
+    modifiers: z.array(orderModifierSchema).max(40).optional(),
+  })
+  .refine((item) => Boolean(item.menuItemId ?? item.menuItemSlug), {
+    message: "Each item requires menuItemId or menuItemSlug.",
+    path: ["menuItemId"],
+  });
 
 const quoteOrderSchema = z.object({
   branchCode: z.string().min(2).max(100),

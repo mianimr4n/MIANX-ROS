@@ -1,0 +1,121 @@
+{
+  "generatedAt": "2026-07-26T06:10:57.340Z",
+  "scope": "LOCAL READ-ONLY — no production or local data was modified",
+  "definitionSources": {
+    "bootstrapCatalog": "data/catalog/telepizza-canonical-menu.json",
+    "expandMigration": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql (materialized in menu_canon)",
+    "liveLocalDatabase": "postgres (synced to founder-locked expand prices)"
+  },
+  "bootstrapCompletionStatus": "OWNER_PRICES_LOCKED_EXPAND_20260725120000",
+  "founderDecisionApplied": true,
+  "founderPriceDecision": {
+    "decidedAt": "2026-07-26",
+    "rule": "Migration 20260725120000 expanded real-menu prices are the initial authoritative production-intended prices. Older bootstrap board prices are stale. Owner may edit later via Admin Menu with atomic audit.",
+    "authoritativeSource": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+    "examples": {
+      "tele-special-small": 620,
+      "tele-special-medium": 1250,
+      "tele-special-large": 1890
+    }
+  },
+  "unresolvedConflicts": 0,
+  "ownerConfirmationRequired": 0,
+  "conflictCount": 0,
+  "flaggedBootstrapProducts": 16,
+  "flaggedSample": [
+    {
+      "code": "stuffed-crust",
+      "flags": [
+        "SIZE_AMBIGUOUS_ON_BOARD"
+      ],
+      "pricingEra": "expand-20260725120000-founder-locked"
+    },
+    {
+      "code": "tele-extreme",
+      "flags": [
+        "SIZE_AMBIGUOUS_ON_BOARD"
+      ],
+      "pricingEra": "expand-20260725120000-founder-locked"
+    },
+    {
+      "code": "zinger-burger",
+      "flags": [
+        "MULTI_SOURCE_PRICE_CONFLICT",
+        "BFR-018"
+      ],
+      "pricingEra": "expand-20260725120000-founder-locked"
+    },
+    {
+      "code": "jumbo-wrap",
+      "flags": [
+        "GM_NAME_CONFLICT"
+      ],
+      "pricingEra": "expand-20260725120000-founder-locked"
+    },
+    {
+      "code": "special-pasta",
+      "flags": [
+        "NAME_AMBIGUOUS_ON_BOARD"
+      ],
+      "pricingEra": "expand-20260725120000-founder-locked"
+    },
+    {
+      "code": "family-deal",
+      "flags": [
+        "EID_PROMO_CONFLICT",
+        "TEMPORARY_PRICE_NOT_EVERGREEN"
+      ],
+      "pricingEra": "expand-20260725120000-founder-locked"
+    },
+    {
+      "code": "pizza-fest",
+      "flags": [
+        "EID_PROMO_CONFLICT",
+        "TEMPORARY_PRICE_NOT_EVERGREEN"
+      ],
+      "pricingEra": "expand-20260725120000-founder-locked"
+    },
+    {
+      "code": "pair-deal",
+      "flags": [
+        "EID_PROMO_CONFLICT",
+        "TEMPORARY_PRICE_NOT_EVERGREEN"
+      ],
+      "pricingEra": "expand-20260725120000-founder-locked"
+    },
+    {
+      "code": "knock-out-deal",
+      "flags": [
+        "EID_PROMO_CONFLICT",
+        "TEMPORARY_PRICE_NOT_EVERGREEN"
+      ],
+      "pricingEra": "expand-20260725120000-founder-locked"
+    },
+    {
+      "code": "extra-cheese-slice",
+      "flags": [
+        "MODIFIER_SEED_PRICE_MISMATCH"
+      ],
+      "pricingEra": "expand-20260725120000-founder-locked"
+    },
+    {
+      "code": "quarter-broast",
+      "flags": [
+        "RETIRED_BY_OWNER_SYNC",
+        "GM_EVIDENCE_PRESENT"
+      ],
+      "pricingEra": "expand-20260725120000-founder-locked"
+    },
+    {
+      "code": "half-broast",
+      "flags": [
+        "RETIRED_BY_OWNER_SYNC",
+        "GM_EVIDENCE_PRESENT"
+      ],
+      "pricingEra": "expand-20260725120000-founder-locked"
+    }
+  ],
+  "conflicts": [],
+  "gate": "PASS",
+  "requiredAction": "None — founder price decision applied; Owner may edit later via Admin Menu with atomic audit."
+}

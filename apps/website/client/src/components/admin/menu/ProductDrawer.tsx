@@ -1,26 +1,49 @@
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { X } from "lucide-react";
 
 import { AvailabilityPanel } from "@/components/admin/menu/AvailabilityPanel";
 import { ModifierManager } from "@/components/admin/menu/ModifierManager";
 import { PricingPanel } from "@/components/admin/menu/PricingPanel";
 import { PublishingPanel } from "@/components/admin/menu/PublishingPanel";
-import { VariantManager } from "@/components/admin/menu/VariantManager";
+import { SkuFamilyPanel } from "@/components/admin/menu/SkuFamilyPanel";
 import { itemSku, type MenuCatalogItemView } from "@/lib/admin-menu";
-import { displayPrice } from "@/lib/admin-pos";
+import type { AdminMenuAuditEvent, UpdateMenuSkuBody } from "@/lib/admin-menu-api";
 import { formatPkr } from "@/lib/admin-order-format";
 
 export function ProductDrawer({
   open,
   product,
+  family,
+  categories,
+  canWrite,
+  saving,
+  saveError,
+  auditEvents,
+  onSave,
+  onOpenSibling,
   onClose,
 }: {
   open: boolean;
   product: MenuCatalogItemView | null;
+  /** Sibling SKUs sharing this product's family key. */
+  family: MenuCatalogItemView[];
+  categories: Array<{ id: string; name: string; slug: string }>;
+  canWrite: boolean;
+  saving: boolean;
+  saveError: string | null;
+  auditEvents: AdminMenuAuditEvent[];
+  onSave: (patch: UpdateMenuSkuBody) => void;
+  onOpenSibling: (sibling: MenuCatalogItemView) => void;
   onClose: () => void;
 }) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [sizeLabel, setSizeLabel] = useState("");
+  const [productGroupSlug, setProductGroupSlug] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -32,9 +55,38 @@ export function ProductDrawer({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!product) return;
+    setName(product.name);
+    setDescription(product.description ?? "");
+    setSizeLabel(product.sizeLabel ?? "");
+    setProductGroupSlug(product.productGroupSlug ?? product.slug ?? product.id);
+    setCategoryId(categories.find((c) => c.slug === product.categorySlug)?.id ?? "");
+    setImageUrl(product.image ?? "");
+  }, [product, categories]);
+
   if (!open || !product) return null;
 
-  const price = displayPrice(product);
+  const detailsDirty =
+    name !== product.name ||
+    description !== (product.description ?? "") ||
+    sizeLabel !== (product.sizeLabel ?? "") ||
+    productGroupSlug !== (product.productGroupSlug ?? product.slug ?? product.id) ||
+    imageUrl !== (product.image ?? "") ||
+    (categoryId !== "" && categoryId !== categories.find((c) => c.slug === product.categorySlug)?.id);
+
+  const saveDetails = () => {
+    const patch: UpdateMenuSkuBody = {
+      name: name.trim(),
+      description: description.trim() || null,
+      sizeLabel: sizeLabel.trim() || null,
+      productGroupSlug: productGroupSlug.trim().toLowerCase(),
+      imageUrl: imageUrl.trim() || null,
+    };
+    const originalCategoryId = categories.find((c) => c.slug === product.categorySlug)?.id;
+    if (categoryId && categoryId !== originalCategoryId) patch.categoryId = categoryId;
+    onSave(patch);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" role="presentation">
@@ -47,12 +99,13 @@ export function ProductDrawer({
       >
         <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] px-5 py-4">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--admin-muted)]">Product</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--admin-muted)]">Sellable SKU</p>
             <h2 id={titleId} className="mt-1 truncate text-xl font-semibold">
               {product.name}
             </h2>
             <p className="mt-1 text-xs text-[var(--admin-muted)]">
-              SKU {itemSku(product)} · {product.catalogScope === "internal" ? "Internal SKU" : "Browse SKU"}
+              SKU {itemSku(product)} · {product.catalogScope === "internal" ? "Internal SKU" : "Browse SKU"} ·{" "}
+              <span className="tabular-nums">{formatPkr(product.price)}</span>
             </p>
           </div>
           <button
@@ -76,52 +129,127 @@ export function ProductDrawer({
               </div>
             )}
 
-            <section>
-              <h3 className="text-sm font-semibold">General</h3>
-              <dl className="mt-2 space-y-2 text-sm">
-                <div className="flex justify-between gap-3">
-                  <dt className="text-[var(--admin-muted)]">Description</dt>
-                  <dd className="max-w-[60%] text-right">{product.description || "—"}</dd>
+            <section aria-labelledby="general-heading">
+              <h3 id="general-heading" className="text-sm font-semibold">
+                General
+              </h3>
+              <div className="mt-3 space-y-3 rounded-xl border border-[var(--admin-border)] p-3">
+                <label className="block text-sm font-medium">
+                  Name
+                  <input
+                    value={name}
+                    disabled={!canWrite || saving}
+                    onChange={(event) => setName(event.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-[var(--admin-border)] px-3 py-2 disabled:bg-[var(--admin-soft)]"
+                  />
+                </label>
+                <label className="block text-sm font-medium">
+                  Description
+                  <textarea
+                    value={description}
+                    rows={3}
+                    disabled={!canWrite || saving}
+                    onChange={(event) => setDescription(event.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-[var(--admin-border)] px-3 py-2 disabled:bg-[var(--admin-soft)]"
+                  />
+                </label>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="block text-sm font-medium">
+                    Size label
+                    <input
+                      value={sizeLabel}
+                      placeholder="e.g. 10 inch Medium"
+                      disabled={!canWrite || saving}
+                      onChange={(event) => setSizeLabel(event.target.value)}
+                      className="mt-1.5 w-full rounded-lg border border-[var(--admin-border)] px-3 py-2 disabled:bg-[var(--admin-soft)]"
+                    />
+                  </label>
+                  <label className="block text-sm font-medium">
+                    Product group
+                    <input
+                      value={productGroupSlug}
+                      disabled={!canWrite || saving}
+                      onChange={(event) => setProductGroupSlug(event.target.value)}
+                      className="mt-1.5 w-full rounded-lg border border-[var(--admin-border)] px-3 py-2 disabled:bg-[var(--admin-soft)]"
+                    />
+                  </label>
+                  <label className="block text-sm font-medium">
+                    Category
+                    <select
+                      value={categoryId}
+                      disabled={!canWrite || saving || categories.length === 0}
+                      onChange={(event) => setCategoryId(event.target.value)}
+                      className="mt-1.5 w-full rounded-lg border border-[var(--admin-border)] px-3 py-2 disabled:bg-[var(--admin-soft)]"
+                    >
+                      <option value="">{product.category}</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block text-sm font-medium">
+                    Image URL
+                    <input
+                      value={imageUrl}
+                      disabled={!canWrite || saving}
+                      onChange={(event) => setImageUrl(event.target.value)}
+                      className="mt-1.5 w-full rounded-lg border border-[var(--admin-border)] px-3 py-2 disabled:bg-[var(--admin-soft)]"
+                    />
+                  </label>
                 </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-[var(--admin-muted)]">Category</dt>
-                  <dd>{product.category}</dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-[var(--admin-muted)]">Product type</dt>
-                  <dd>{product.productType ?? "—"}</dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-[var(--admin-muted)]">Featured</dt>
-                  <dd>{product.featured ? "Yes" : "No"}</dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-[var(--admin-muted)]">Display price</dt>
-                  <dd className="tabular-nums">{price > 0 ? formatPkr(price) : "—"}</dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-[var(--admin-muted)]">Barcode</dt>
-                  <dd className="text-[var(--admin-muted)]">Unavailable</dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-[var(--admin-muted)]">Tax class</dt>
-                  <dd className="text-[var(--admin-muted)]">Foundation</dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-[var(--admin-muted)]">Preparation time</dt>
-                  <dd className="text-[var(--admin-muted)]">Foundation</dd>
-                </div>
-              </dl>
-              <p className="mt-3 rounded-lg border border-dashed border-[var(--admin-border)] px-3 py-2 text-xs text-[var(--admin-muted)]">
-                Edit controls require menu.write admin endpoints — this drawer is read-only.
-              </p>
+                {canWrite ? (
+                  <button
+                    type="button"
+                    disabled={!detailsDirty || saving || name.trim().length === 0}
+                    onClick={saveDetails}
+                    className="min-h-11 rounded-xl border border-[var(--admin-border)] px-4 text-sm font-semibold disabled:opacity-40"
+                  >
+                    {saving ? "Saving…" : "Save details"}
+                  </button>
+                ) : (
+                  <p className="text-xs text-[var(--admin-muted)]">
+                    Read-only — `menu.write` is required to edit this SKU.
+                  </p>
+                )}
+              </div>
             </section>
 
+            <PricingPanel
+              product={product}
+              canWrite={canWrite}
+              saving={saving}
+              error={saveError}
+              onSave={({ price, isAvailable }) => onSave({ price, isAvailable })}
+            />
+            <SkuFamilyPanel product={product} family={family} onOpen={onOpenSibling} />
             <ModifierManager product={product} />
-            <VariantManager product={product} />
-            <PricingPanel product={product} />
             <AvailabilityPanel product={product} />
             <PublishingPanel product={product} />
+
+            <section aria-labelledby="audit-heading">
+              <h3 id="audit-heading" className="text-sm font-semibold">
+                Change history
+              </h3>
+              {auditEvents.length === 0 ? (
+                <p className="mt-2 text-sm text-[var(--admin-muted)]">
+                  No recorded changes for this SKU yet.
+                </p>
+              ) : (
+                <ul className="mt-3 space-y-2 text-sm">
+                  {auditEvents.map((event) => (
+                    <li key={event.id} className="rounded-xl border border-[var(--admin-border)] px-3 py-2">
+                      <p className="font-medium">{event.action}</p>
+                      <p className="text-xs text-[var(--admin-muted)]">
+                        {new Date(event.createdAt).toLocaleString()} · {event.scope}
+                        {event.actorUserId ? ` · actor ${event.actorUserId.slice(0, 8)}` : ""}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           </div>
         </div>
       </aside>

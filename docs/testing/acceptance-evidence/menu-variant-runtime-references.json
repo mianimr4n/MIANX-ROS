@@ -1,0 +1,823 @@
+{
+  "generatedAt": "2026-07-26T06:13:57.812Z",
+  "gate": "PASS",
+  "blockerCount": 0,
+  "countsByClass": {
+    "MIGRATION COMPATIBILITY": 79,
+    "UNUSED": 14,
+    "HISTORICAL ORDER READ": 3,
+    "TEST COMPATIBILITY": 39
+  },
+  "references": [
+    {
+      "file": "apps/website/client/src/lib/admin-menu.ts",
+      "line": 159,
+      "excerpt": "detail: \"Sizes are separate SKUs grouped for display; menu_item_variants is deprecated.\",",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "backend/api/src/services/branches/readiness.ts",
+      "line": 146,
+      "excerpt": "// Counts menu_items.price (one price per SKU) and never consults menu_item_variants.",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "backend/api/src/services/catalog/types.ts",
+      "line": 28,
+      "excerpt": "* POS, Orders, Kitchen and Reports all reference `id`. `menu_item_variants` is deprecated",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "backend/api/src/services/menu/management.ts",
+      "line": 10,
+      "excerpt": "* price; `menu_item_variants` is deprecated and is never read or written here.",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "backend/api/src/services/orders/pricing.ts",
+      "line": 13,
+      "excerpt": "* A canonical sellable SKU row. Exactly one price per row — `menu_item_variants` is",
+      "classification": "UNUSED"
+    },
+    {
+      "file": "backend/api/src/services/orders/pricing.ts",
+      "line": 123,
+      "excerpt": "variantId: string | null;",
+      "classification": "UNUSED"
+    },
+    {
+      "file": "backend/api/src/services/orders/pricing.ts",
+      "line": 386,
+      "excerpt": "// Historical snapshot columns keep their meaning: variant_id is null for SKU orders.",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "backend/api/src/services/orders/pricing.ts",
+      "line": 387,
+      "excerpt": "const variantId: string | null = null;",
+      "classification": "UNUSED"
+    },
+    {
+      "file": "backend/api/src/services/orders/pricing.ts",
+      "line": 476,
+      "excerpt": "variantId,",
+      "classification": "UNUSED"
+    },
+    {
+      "file": "backend/api/src/services/orders/supabase.ts",
+      "line": 563,
+      "excerpt": "variant_id: line.variantId,",
+      "classification": "HISTORICAL ORDER READ"
+    },
+    {
+      "file": "supabase/migrations/20260713190000_foundation_schema.sql",
+      "line": 133,
+      "excerpt": "create table if not exists public.menu_item_variants (",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260713190000_foundation_schema.sql",
+      "line": 181,
+      "excerpt": "variant_id uuid references public.menu_item_variants (id) on delete set null,",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260713190000_foundation_schema.sql",
+      "line": 261,
+      "excerpt": "create index if not exists idx_menu_item_variants_item_id on public.menu_item_variants (menu_item_id);",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260713190000_foundation_schema.sql",
+      "line": 298,
+      "excerpt": "create trigger set_menu_item_variants_updated_at",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260713190000_foundation_schema.sql",
+      "line": 299,
+      "excerpt": "before update on public.menu_item_variants",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260713190000_foundation_schema.sql",
+      "line": 331,
+      "excerpt": "alter table public.menu_item_variants enable row level security;",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260713190000_foundation_schema.sql",
+      "line": 355,
+      "excerpt": "on public.menu_item_variants",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260713191000_seed_foundation_data.sql",
+      "line": 167,
+      "excerpt": "insert into public.menu_item_variants (menu_item_id, label, size_code, price, sort_order, is_default, is_available)",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260714100000_sync_verified_menu_catalog.sql",
+      "line": 69,
+      "excerpt": "insert into public.menu_item_variants (menu_item_id, label, size_code, price, sort_order, is_default, is_available)",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260715120000_pizza_toppings_catalog.sql",
+      "line": 98,
+      "excerpt": "insert into public.menu_item_variants (",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260715153000_option_b_toppings_catalog_repair.sql",
+      "line": 101,
+      "excerpt": "insert into public.menu_item_variants (",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260715153000_option_b_toppings_catalog_repair.sql",
+      "line": 148,
+      "excerpt": "-- from public.menu_item_variants v",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260715153000_option_b_toppings_catalog_repair.sql",
+      "line": 157,
+      "excerpt": "--   delete from public.menu_item_variants",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+      "line": 36,
+      "excerpt": "update public.menu_item_variants",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+      "line": 126,
+      "excerpt": "insert into public.menu_item_variants (menu_item_id, label, size_code, price, sort_order, is_default, is_available)",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260716160000_sync_owner_menu_catalog.sql",
+      "line": 180,
+      "excerpt": "-- select count(*) from menu_item_variants v join menu_items i on i.id = v.menu_item_id",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260718120000_product_modifier_system.sql",
+      "line": 4,
+      "excerpt": "-- Size pricing remains on menu_item_variants; this schema covers crust/extras/addons",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260718120000_product_modifier_system.sql",
+      "line": 286,
+      "excerpt": "'Reusable size group for items without menu_item_variants. Pizzas keep variants for size pricing.',",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260718130000_p0_harden_grants_and_definer_execute.sql",
+      "line": 32,
+      "excerpt": "on table public.branches, public.menu_categories, public.menu_items, public.menu_item_variants",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260718130000_p0_harden_grants_and_definer_execute.sql",
+      "line": 35,
+      "excerpt": "grant select on table public.branches, public.menu_categories, public.menu_items, public.menu_item_variants",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260718180000_sync_canonical_menu_catalog.sql",
+      "line": 64,
+      "excerpt": "update public.menu_item_variants",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260718180000_sync_canonical_menu_catalog.sql",
+      "line": 162,
+      "excerpt": "insert into public.menu_item_variants (menu_item_id, label, size_code, price, sort_order, is_default, is_available)",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260718180000_sync_canonical_menu_catalog.sql",
+      "line": 234,
+      "excerpt": "-- select count(*) from menu_item_variants v join menu_items i on i.id = v.menu_item_id",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725050000_d2_atomic_order_create.sql",
+      "line": 54,
+      "excerpt": "*   menu_item_id, variant_id, product_name, variant_name, quantity,",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725050000_d2_atomic_order_create.sql",
+      "line": 243,
+      "excerpt": "id, order_id, menu_item_id, variant_id, product_name, variant_name,",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725050000_d2_atomic_order_create.sql",
+      "line": 249,
+      "excerpt": "nullif(v_item->>'variant_id', '')::uuid,",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725101000_d3_pos_dinein_order_link.sql",
+      "line": 246,
+      "excerpt": "id, order_id, menu_item_id, variant_id, product_name, variant_name,",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725101000_d3_pos_dinein_order_link.sql",
+      "line": 252,
+      "excerpt": "nullif(v_item->>'variant_id', '')::uuid,",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 29,
+      "excerpt": "(select count(*) from public.menu_item_variants)     as menu_item_variants;",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 32,
+      "excerpt": "select id, order_id, menu_item_id, variant_id from public.order_items;",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 137,
+      "excerpt": "update public.menu_item_variants v",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 146,
+      "excerpt": "update public.menu_item_variants v",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 153,
+      "excerpt": "update public.menu_item_variants v",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 160,
+      "excerpt": "update public.menu_item_variants v",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 165,
+      "excerpt": "update public.menu_item_variants v",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 270,
+      "excerpt": "insert into public.menu_item_variants (menu_item_id, label, size_code, price, sort_order, is_default, is_available)",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 284,
+      "excerpt": "update public.menu_item_variants v",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 339,
+      "excerpt": "if (select count(*) from public.menu_item_variants) < pre.menu_item_variants then",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 340,
+      "excerpt": "raise exception 'ASSERTION FAILED: menu_item_variants count reduced';",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 349,
+      "excerpt": "or oi.variant_id is distinct from p.variant_id;",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 368,
+      "excerpt": "select menu_item_id, label from public.menu_item_variants group by menu_item_id, label having count(*) > 1",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 379,
+      "excerpt": "select count(*) into bad_count from public.menu_item_variants where price < 0;",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 381,
+      "excerpt": "raise exception 'ASSERTION FAILED: negative menu_item_variants.price';",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 386,
+      "excerpt": "from public.menu_item_variants v",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 390,
+      "excerpt": "raise exception 'ASSERTION FAILED: orphan menu_item_variants';",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725120000_expand_and_activate_real_menu_catalog.sql",
+      "line": 408,
+      "excerpt": "--   select count(*) from menu_item_variants;                       -- 43",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 5,
+      "excerpt": "-- current selling price. `menu_item_variants` stops being the pricing model.",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 11,
+      "excerpt": "--   * order_items.variant_id stays intact and readable (historical compatibility)",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 12,
+      "excerpt": "--   * menu_item_variants is DEPRECATED, not dropped (see comment at the end)",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 30,
+      "excerpt": "(select count(*) from public.menu_item_variants)   as menu_item_variants;",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 33,
+      "excerpt": "select id, order_id, menu_item_id, variant_id from public.order_items;",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 66,
+      "excerpt": "'Maps every legacy menu_item_variants row to the canonical sellable SKU it became. Keeps historical order_items.variant_id readable after the single-price refactor.';",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 147,
+      "excerpt": "from public.menu_item_variants v",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 160,
+      "excerpt": "from public.menu_item_variants v",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 254,
+      "excerpt": "-- 8) Deprecate menu_item_variants (retained for rollback + order history)",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 256,
+      "excerpt": "comment on table public.menu_item_variants is",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 259,
+      "excerpt": "comment on column public.order_items.variant_id is",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 260,
+      "excerpt": "'Historical reference to the deprecated menu_item_variants row captured at order time. New orders leave this null and rely on order_items.menu_item_id plus the name/price snapshots.';",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 320,
+      "excerpt": "if (select count(*) from public.menu_item_variants) <> pre.menu_item_variants then",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 321,
+      "excerpt": "raise exception 'ASSERTION FAILED: menu_item_variants must be preserved untouched';",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 330,
+      "excerpt": "or oi.variant_id is distinct from p.variant_id;",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 337,
+      "excerpt": "from public.menu_item_variants v",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 347,
+      "excerpt": "where oi.variant_id is not null",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 348,
+      "excerpt": "and not exists (select 1 from public.menu_variant_sku_mappings m where m.old_variant_id = oi.variant_id);",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725130000_canonical_single_price_menu_domain.sql",
+      "line": 395,
+      "excerpt": "-- Rollback: menu_item_variants is untouched and base_price is retained, so the previous",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725140000_canonical_menu_price_audit_atomic.sql",
+      "line": 3,
+      "excerpt": "-- Additive only. Does not drop menu_item_variants. Does not TRUNCATE/DELETE catalog.",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725140000_canonical_menu_price_audit_atomic.sql",
+      "line": 151,
+      "excerpt": "-- 3) Block new operational writes to deprecated menu_item_variants",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725140000_canonical_menu_price_audit_atomic.sql",
+      "line": 167,
+      "excerpt": "'MENU_ITEM_VARIANTS_DEPRECATED: menu_item_variants is deprecated. Use menu_items.price / sellable SKUs. Historical rows are retained read-only.'",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725140000_canonical_menu_price_audit_atomic.sql",
+      "line": 172,
+      "excerpt": "drop trigger if exists trg_prevent_menu_item_variant_writes on public.menu_item_variants;",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725140000_canonical_menu_price_audit_atomic.sql",
+      "line": 174,
+      "excerpt": "before insert or update or delete on public.menu_item_variants",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "supabase/migrations/20260725140000_canonical_menu_price_audit_atomic.sql",
+      "line": 179,
+      "excerpt": "'Blocks INSERT/UPDATE/DELETE on deprecated menu_item_variants unless telepizza.allow_variant_writes=on for the current transaction.';",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "tests/catalog/canonical-menu.test.mjs",
+      "line": 130,
+      "excerpt": ".reduce((sum, item) => sum + Math.max(1, item.variants?.length ?? 0), 0);",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/database/canonical-menu-corrective-audit.test.mjs",
+      "line": 29,
+      "excerpt": "it(\"blocks operational writes to menu_item_variants\", () => {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/database/canonical-menu-corrective-audit.test.mjs",
+      "line": 33,
+      "excerpt": "assert.match(sql, /before insert or update or delete on public\\.menu_item_variants/i);",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/database/canonical-single-price-menu.test.mjs",
+      "line": 83,
+      "excerpt": "it(\"deprecates menu_item_variants instead of dropping it\", () => {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/database/canonical-single-price-menu.test.mjs",
+      "line": 84,
+      "excerpt": "assert.match(migration, /comment on table public\\.menu_item_variants is\\s*\\n\\s*'DEPRECATED/);",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/database/canonical-single-price-menu.test.mjs",
+      "line": 85,
+      "excerpt": "assert.match(migration, /ASSERTION FAILED: menu_item_variants must be preserved untouched/);",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/database/canonical-single-price-menu.test.mjs",
+      "line": 86,
+      "excerpt": "assert.doesNotMatch(migration, /drop table[^\\n]*menu_item_variants/i);",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/database/foundation-migrations.test.mjs",
+      "line": 30,
+      "excerpt": "\"menu_item_variants\",",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/database/foundation-migrations.test.mjs",
+      "line": 49,
+      "excerpt": "for (const table of [\"branches\", \"menu_categories\", \"menu_items\", \"menu_item_variants\", \"orders\", \"payments\"]) {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/menu/option-b-catalog.test.mjs",
+      "line": 16,
+      "excerpt": "if (item.variants?.length) {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/menu/option-b-catalog.test.mjs",
+      "line": 17,
+      "excerpt": "const bySize = item.variants.find((variant) => variant.sizeCode === tier);",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/menu/option-b-catalog.test.mjs",
+      "line": 19,
+      "excerpt": "const labelMatch = item.variants.find((variant) => {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/menu/option-b-catalog.test.mjs",
+      "line": 108,
+      "excerpt": "const buildCartId = (menuSlug, variantId, extras) => {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/menu/option-b-catalog.test.mjs",
+      "line": 110,
+      "excerpt": "return [menuSlug, variantId, extraSlug || null].filter(Boolean).join(\"--\");",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/website/admin-menu-management-v1.test.mjs",
+      "line": 49,
+      "excerpt": "assert.doesNotMatch(pricing, /product\\.variants|variantId|menu_item_variants/);",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/website/admin-menu-management-v1.test.mjs",
+      "line": 57,
+      "excerpt": "assert.doesNotMatch(api, /\\/variants|variantId|menu_item_variants/);",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/website/canonical-single-price-menu-frontend.test.mjs",
+      "line": 23,
+      "excerpt": "* `menu_item_variants` is not mistaken for a runtime dependency on it.",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "tests/website/canonical-single-price-menu-frontend.test.mjs",
+      "line": 34,
+      "excerpt": "const VARIANT_PRICING = /menu_item_variants|\\bitem\\.variants\\b|\\bproduct\\.variants\\b|\\bvariantId\\b|getDefaultVariant|resolveVariantPrice/;",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/apply-founder-price-decision.mjs",
+      "line": 104,
+      "excerpt": "if (item.variants?.length) {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/apply-founder-price-decision.mjs",
+      "line": 105,
+      "excerpt": "for (const variant of item.variants) {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/apply-founder-price-decision.mjs",
+      "line": 125,
+      "excerpt": "} else if (!item.variants?.length && single && item.basePricePkr == null && single.price != null) {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/d2/atomic-order-live-tests.mjs",
+      "line": 67,
+      "excerpt": "variant_id: VARIANT,",
+      "classification": "UNUSED"
+    },
+    {
+      "file": "scripts/dry-run-canonical-menu-migration.mjs",
+      "line": 5,
+      "excerpt": "* `menu_item_variants` price matrix. It is retained only so that migration's contract stays",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/dry-run-canonical-menu-migration.mjs",
+      "line": 73,
+      "excerpt": "from menu_item_variants v",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/generate-menu-fallback-from-canonical.mjs",
+      "line": 48,
+      "excerpt": "if (!item.variants?.length) {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/generate-menu-fallback-from-canonical.mjs",
+      "line": 63,
+      "excerpt": "return item.variants.map((variant, index) => {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/reconcile-canonical-menu-counts.mjs",
+      "line": 41,
+      "excerpt": "return Math.max(1, item.variants?.length ?? 0);",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/reconcile-menu-catalog-full.mjs",
+      "line": 41,
+      "excerpt": "if (!item.variants?.length) {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/reconcile-menu-catalog-full.mjs",
+      "line": 70,
+      "excerpt": "return item.variants.map((variant, index) => {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/scan-variant-runtime-refs.mjs",
+      "line": 28,
+      "excerpt": "/menu_item_variants|\\bvariantId\\b|\\bvariant_id\\b|\\bselectedVariant\\b|resolveVariantPrice|getDefaultVariant|\\bitem\\.variants\\b|\\bproduct\\.variants\\b/g;",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/scan-variant-runtime-refs.mjs",
+      "line": 80,
+      "excerpt": "if (text.includes(\"variant_id\") && (path.includes(\"orders\") || path.includes(\"kitchen\"))) {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/scan-variant-runtime-refs.mjs",
+      "line": 84,
+      "excerpt": "/from\\(\\s*['\"]menu_item_variants['\"]\\s*\\)/.test(line) ||",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/scan-variant-runtime-refs.mjs",
+      "line": 87,
+      "excerpt": "/resolveVariantPrice|getDefaultVariant/.test(line)",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/verify-canonical-menu-migration-safety.mjs",
+      "line": 25,
+      "excerpt": "{ label: \"DROP menu_item_variants\", re: /drop\\s+table[^\\n;]*menu_item_variants/i },",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/verify-canonical-menu-migration-safety.mjs",
+      "line": 49,
+      "excerpt": "(select count(*) from menu_item_variants),",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/verify-menu-audit-and-historical.mjs",
+      "line": 70,
+      "excerpt": "query(\"select count(*) from order_items where variant_id is not null;\").rows[0]?.[0] ?? 0,",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/verify-menu-audit-and-historical.mjs",
+      "line": 94,
+      "excerpt": "\"select count(*) from order_items oi where oi.variant_id is not null and not exists (select 1 from menu_item_variants v where v.id=oi.variant_id);\",",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/verify-menu-audit-and-historical.mjs",
+      "line": 100,
+      "excerpt": "\"select count(*) from menu_item_variants v where not exists (select 1 from menu_variant_sku_mappings m where m.variant_id=v.id);\",",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/verify-menu-price-definition-conflicts.mjs",
+      "line": 37,
+      "excerpt": "if (!item.variants?.length) {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "scripts/verify-menu-price-definition-conflicts.mjs",
+      "line": 41,
+      "excerpt": "item.variants.forEach((variant, index) => {",
+      "classification": "TEST COMPATIBILITY"
+    },
+    {
+      "file": "docs/architecture/CANONICAL-MENU-DOMAIN.md",
+      "line": 43,
+      "excerpt": "`menu_item_variants` is no longer the pricing model. It is deprecated and retained only for",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "docs/architecture/CANONICAL-MENU-DOMAIN.md",
+      "line": 108,
+      "excerpt": "9. No active runtime path depends on `menu_item_variants`.",
+      "classification": "UNUSED"
+    },
+    {
+      "file": "docs/architecture/CANONICAL-MENU-DOMAIN.md",
+      "line": 147,
+      "excerpt": "8. Deprecate `menu_item_variants` via table comment.",
+      "classification": "UNUSED"
+    },
+    {
+      "file": "docs/architecture/CANONICAL-MENU-DOMAIN.md",
+      "line": 165,
+      "excerpt": "- `order_items.menu_item_id` and `order_items.variant_id` are **never rewritten**. The migration",
+      "classification": "UNUSED"
+    },
+    {
+      "file": "docs/architecture/CANONICAL-MENU-DOMAIN.md",
+      "line": 167,
+      "excerpt": "- `order_items.variant_id` keeps a table comment describing it as a historical snapshot.",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "docs/architecture/CANONICAL-MENU-DOMAIN.md",
+      "line": 168,
+      "excerpt": "- Every legacy `variant_id` resolves to exactly one current SKU through",
+      "classification": "UNUSED"
+    },
+    {
+      "file": "docs/architecture/CANONICAL-MENU-DOMAIN.md",
+      "line": 211,
+      "excerpt": "`menu_item_variants` is neither read nor exposed.",
+      "classification": "UNUSED"
+    },
+    {
+      "file": "docs/architecture/CANONICAL-MENU-DOMAIN.md",
+      "line": 255,
+      "excerpt": "## 10. Deprecation of `menu_item_variants`",
+      "classification": "UNUSED"
+    },
+    {
+      "file": "docs/architecture/CANONICAL-MENU-DOMAIN.md",
+      "line": 257,
+      "excerpt": "`menu_item_variants` is **deprecated, not dropped**.",
+      "classification": "MIGRATION COMPATIBILITY"
+    },
+    {
+      "file": "docs/architecture/CANONICAL-MENU-DOMAIN.md",
+      "line": 277,
+      "excerpt": "- `menu_item_variants` is untouched — the previous pricing model is intact.",
+      "classification": "UNUSED"
+    },
+    {
+      "file": "docs/architecture/CANONICAL-MENU-DOMAIN.md",
+      "line": 301,
+      "excerpt": "7. Keep `menu_item_variants` in place; schedule its removal as a separate authorized slice.",
+      "classification": "UNUSED"
+    },
+    {
+      "file": "docs/architecture/CANONICAL-MENU-DOMAIN.md",
+      "line": 315,
+      "excerpt": "select count(*) from menu_item_variants v",
+      "classification": "UNUSED"
+    },
+    {
+      "file": "docs/architecture/ORDERS_ARCHITECTURE.md",
+      "line": 41,
+      "excerpt": "| `menu_items` / `menu_item_variants` | ✅ | Toppings = `product_type='topping'` SKUs (`extra-chicken`, `extra-cheese`, `extra-cheese-slice`) |",
+      "classification": "HISTORICAL ORDER READ"
+    },
+    {
+      "file": "docs/architecture/ORDERS_ARCHITECTURE.md",
+      "line": 247,
+      "excerpt": "| Keep FKs `menu_item_id` / `variant_id` | Analytics; nullable-safe if SKU later removed |",
+      "classification": "HISTORICAL ORDER READ"
+    }
+  ]
+}

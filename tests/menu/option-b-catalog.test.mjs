@@ -60,27 +60,30 @@ test("static public categories remain 13 without Toppings chip", () => {
 test("static fallback matches owner board: dips + zinger + pasta, no broast / specialty behari", () => {
   const menuData = read("apps/website/client/src/data/menu-data.ts");
 
-  assert.match(menuData, /id: "extra-chicken"/);
-  assert.match(menuData, /id: "extra-cheese"/);
-  assert.match(menuData, /id: "extra-cheese-slice"/);
+  // Families are asserted by product group; sizes are separate SKUs inside each family.
+  assert.match(menuData, /productGroupSlug: "extra-chicken"/);
+  assert.match(menuData, /productGroupSlug: "extra-cheese"/);
+  assert.match(menuData, /productGroupSlug: "extra-cheese-slice"/);
   assert.match(menuData, /productType: "topping"/);
-  assert.match(menuData, /id: "zinger-burger"/);
-  assert.match(menuData, /id: "special-pasta"/);
-  assert.match(menuData, /id: "special-sauce-dip"/);
-  assert.match(menuData, /id: "bone-fire-dip"/);
-  assert.match(menuData, /id: "dip-sauce"/);
-  assert.match(menuData, /id: "garlic-ranch-dip"/);
-  assert.match(menuData, /id: "bihari-kabab"/);
+  assert.match(menuData, /productGroupSlug: "zinger-burger"/);
+  assert.match(menuData, /productGroupSlug: "special-pasta"/);
+  assert.match(menuData, /productGroupSlug: "special-sauce-dip"/);
+  assert.match(menuData, /productGroupSlug: "bone-fire-dip"/);
+  assert.match(menuData, /productGroupSlug: "dip-sauce"/);
+  assert.match(menuData, /productGroupSlug: "garlic-ranch-dip"/);
+  assert.match(menuData, /productGroupSlug: "bihari-kabab"/);
 
-  assert.equal(/id: "behari-kabab-pizza"/.test(menuData), false);
-  assert.equal(/id: "quarter-broast"/.test(menuData), false);
+  assert.equal(/productGroupSlug: "behari-kabab-pizza"/.test(menuData), false);
+  assert.equal(/productGroupSlug: "quarter-broast"/.test(menuData), false);
   assert.equal(/category: "Broast"/.test(menuData), false);
 
-  const itemIds = [...menuData.matchAll(/id: "([^"]+)"/g)].map((match) => match[1]);
-  const browseIds = itemIds.filter(
-    (id) => !["extra-chicken", "extra-cheese", "extra-cheese-slice"].includes(id),
+  const familySlugs = [...menuData.matchAll(/productGroupSlug: "([^"]+)"/g)].map((match) => match[1]);
+  const browseFamilies = new Set(
+    familySlugs.filter(
+      (slug) => !["extra-chicken", "extra-cheese", "extra-cheese-slice"].includes(slug),
+    ),
   );
-  assert.equal(browseIds.length, 58);
+  assert.equal(browseFamilies.size, 58);
 });
 
 test("customizer price resolver maps S/M/L and cheese slice without inventing", () => {
