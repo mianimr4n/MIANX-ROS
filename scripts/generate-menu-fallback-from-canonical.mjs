@@ -8,16 +8,17 @@
  *
  * Usage: node scripts/generate-menu-fallback-from-canonical.mjs
  */
-import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { checksumCanonicalCatalogFile } from "./lib/canonical-menu-checksum.mjs";
+
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const catalogPath = join(root, "data", "catalog", "telepizza-canonical-menu.json");
-const catalogRaw = readFileSync(catalogPath, "utf8");
+const { checksum: sourceChecksum, normalizedText: catalogRaw } =
+  checksumCanonicalCatalogFile(catalogPath);
 const canonical = JSON.parse(catalogRaw);
-const sourceChecksum = createHash("sha256").update(catalogRaw).digest("hex");
 const outPath = join(root, "apps", "website", "client", "src", "data", "menu-data.ts");
 
 const sellableCats = canonical.categories

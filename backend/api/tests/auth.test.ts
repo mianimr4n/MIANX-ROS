@@ -22,7 +22,7 @@ const catalogDataSource: CatalogDataSource = {
     return [];
   },
   async getMenuCatalog() {
-    return { categories: [], items: [], toppings: [] };
+    return { categories: [], items: [], skus: [], toppings: [] };
   },
 };
 

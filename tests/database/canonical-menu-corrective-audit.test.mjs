@@ -3,7 +3,8 @@ import { describe, it } from "node:test";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createHash } from "node:crypto";
+
+import { checksumCanonicalCatalogFile } from "../../scripts/lib/canonical-menu-checksum.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const read = (p) => readFileSync(join(root, p), "utf8");
@@ -46,11 +47,15 @@ describe("canonical menu corrective — transactional audit + variant guard", ()
 
 describe("canonical menu corrective — offline fallback checksum", () => {
   it("generated menu-data.ts checksum matches freeze JSON", () => {
-    const catalogRaw = read("data/catalog/telepizza-canonical-menu.json");
-    const expected = createHash("sha256").update(catalogRaw).digest("hex");
+    const catalogPath = join(root, "data", "catalog", "telepizza-canonical-menu.json");
+    const { checksum: expected } = checksumCanonicalCatalogFile(catalogPath);
     const menuData = read("apps/website/client/src/data/menu-data.ts");
-    assert.match(menuData, new RegExp(`SOURCE_CHECKSUM_SHA256: ${expected}`));
-    assert.match(menuData, /MENU_FALLBACK_SOURCE_CHECKSUM/);
+    assert.match(
+      menuData,
+      new RegExp(`SOURCE_CHECKSUM_SHA256: ${expected}`),
+      `menu-data.ts SOURCE_CHECKSUM_SHA256 must equal LF-normalized sha256 of ${catalogPath} (expected ${expected})`,
+    );
+    assert.match(menuData, new RegExp(`MENU_FALLBACK_SOURCE_CHECKSUM = "${expected}"`));
     assert.match(menuData, /MENU_FALLBACK_AUTHORITY = "OFFLINE_FALLBACK"/);
     assert.match(menuData, /NON-AUTHORITATIVE/);
   });
