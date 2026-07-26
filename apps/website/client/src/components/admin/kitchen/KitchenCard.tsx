@@ -18,7 +18,7 @@ export type KitchenCardEnrichment = {
   contactName?: string | null;
   orderType?: string | null;
   orderSource?: string | null;
-  notes?: string | null;
+  /** Customer private notes must not be passed; prep-only fields are not on list enrichment. */
   paymentStatus?: string | null;
 };
 
@@ -118,13 +118,6 @@ export function KitchenCard({
           );
         })}
       </ul>
-
-      {enrichment?.notes ? (
-        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-          <span className="font-semibold">Instructions: </span>
-          {enrichment.notes}
-        </p>
-      ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
         <button

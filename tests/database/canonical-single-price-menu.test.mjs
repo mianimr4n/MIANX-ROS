@@ -123,8 +123,7 @@ describe("canonical single-price menu migration", () => {
     const corrective = "20260725140000_canonical_menu_price_audit_atomic.sql";
     assert.ok(files.includes(canonical));
     assert.ok(files.includes(corrective));
-    // Corrective audit/guard migration is additive and must remain the newest menu slice.
-    assert.equal([...files].sort().at(-1), corrective);
+    // Corrective audit/guard migration is additive after the domain slice (later migrations may follow).
     assert.ok([...files].sort().indexOf(canonical) < [...files].sort().indexOf(corrective));
   });
 });

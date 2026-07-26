@@ -38,6 +38,7 @@ import {
   createBranchReadinessService,
   type BranchReadinessService,
 } from "../../services/branches/readiness.js";
+import { createDashboardSummariesService } from "../../services/dashboard/summaries.js";
 import {
   assertCanReadInvites,
   type InviteAuditContext,
@@ -154,13 +155,24 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
     }),
   );
 
-  // Admin ERP S1 — operations overview dashboard.
+  // Admin ERP S1 + D4 — operations / table-service / system-health / opening-readiness.
+  const readinessService =
+    dependencies.branchReadiness ?? createBranchReadinessService(dependencies.envStatus);
+  const dashboardSummaries = createDashboardSummariesService({
+    envStatus: dependencies.envStatus,
+    reservations: dependencies.reservations,
+    tableService: dependencies.tableService,
+    branchReadiness: readinessService,
+    outboxWorker: dependencies.outboxWorker,
+  });
+
   router.use(
     "/dashboard",
     createAdminDashboardRouter({
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       branchOrderManagement: dependencies.branchOrderManagement,
+      dashboardSummaries,
     }),
   );
 
@@ -194,7 +206,6 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
     }),
   );
 
-  // Canonical single-price Admin Menu management.
   router.use(
     "/menu",
     createAdminMenuRouter({
@@ -395,8 +406,7 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
     }),
   );
 
-  const readiness =
-    dependencies.branchReadiness ?? createBranchReadinessService(dependencies.envStatus);
+  const readiness = readinessService;
 
   router.get(
     "/branches/:branchId/readiness",

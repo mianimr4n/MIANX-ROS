@@ -37,6 +37,12 @@ import AdminIndexRedirect from "./pages/admin/AdminIndexRedirect";
 import AdminUnauthorized from "./pages/admin/AdminUnauthorized";
 import AdminComingSoon from "./pages/admin/AdminComingSoon";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminCashierHome from "./pages/admin/AdminCashierHome";
+import AdminHostHome from "./pages/admin/AdminHostHome";
+import AdminWaiterHome from "./pages/admin/AdminWaiterHome";
+import AdminDeliveryHome from "./pages/admin/AdminDeliveryHome";
+import AdminStaffHome from "./pages/admin/AdminStaffHome";
+import AdminConfigHome from "./pages/admin/AdminConfigHome";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminOrderDetail from "./pages/admin/AdminOrderDetail";
 import AdminKitchen from "./pages/admin/AdminKitchen";
@@ -157,6 +163,13 @@ function Router() {
       <Route path="/admin/branch" component={AdminBranchManager} />
       {/* Commit E — Kitchen Manager KDS */}
       <Route path="/admin/kitchen-dashboard" component={AdminKitchenDashboard} />
+      {/* D4 — role homes */}
+      <Route path="/admin/home/cashier" component={AdminCashierHome} />
+      <Route path="/admin/home/host" component={AdminHostHome} />
+      <Route path="/admin/home/waiter" component={AdminWaiterHome} />
+      <Route path="/admin/home/delivery" component={AdminDeliveryHome} />
+      <Route path="/admin/home/staff" component={AdminStaffHome} />
+      <Route path="/admin/home/config" component={AdminConfigHome} />
       {/* D3 — floor, dine-in, reservations */}
       <Route path="/admin/floor" component={AdminFloorConsole} />
       <Route path="/admin/floor-plan" component={AdminFloorPlan} />

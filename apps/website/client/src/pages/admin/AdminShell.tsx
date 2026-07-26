@@ -282,7 +282,7 @@ export function AdminShell({
                           setBranchMenuOpen(false);
                         }}
                       >
-                        All Branches
+                        {isSuperAdmin ? "All Branches" : "Assigned Branches"}
                       </button>
                     </li>
                   ) : null}

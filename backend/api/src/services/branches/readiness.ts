@@ -21,16 +21,40 @@ export interface BranchReadinessReport {
   name: string;
   status: BranchStatus | string;
   operationallyActive: boolean;
-  blockers: Array<{ code: string; message: string }>;
+  /** READY | READY_WITH_LIMITATIONS | BLOCKED | NOT_VERIFIED | ERROR */
+  readinessGrade: "READY" | "READY_WITH_LIMITATIONS" | "BLOCKED" | "NOT_VERIFIED" | "ERROR";
+  blockers: Array<{ code: string; message: string; nextAction?: string }>;
+  /** Ordered operator next steps derived from honest unverified / missing probes. */
+  nextActions: string[];
   checks: {
     phone: boolean;
     operatingHours: boolean;
     branchManagerAssigned: boolean;
     cashierAssigned: boolean;
+    hostAssigned: boolean;
+    waiterAssigned: boolean;
     kitchenAssigned: boolean;
     riderAssigned: boolean;
     statusOperating: boolean;
+    floorConfigured: boolean;
+    bookingPolicyConfigured: boolean;
+    menuAssigned: boolean;
+    posReady: boolean;
+    kdsReady: boolean;
+    deliveryReady: boolean;
+    paymentConfigured: boolean;
+    notificationConfigured: boolean;
+    deviceVerified: boolean;
   };
+}
+
+const PHONE_PLACEHOLDERS = new Set(["coming soon", "n/a", "tbd", "todo", "placeholder"]);
+
+function isConfiguredPhone(value: string | null | undefined): boolean {
+  if (value == null) return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  return !PHONE_PLACEHOLDERS.has(trimmed.toLowerCase());
 }
 
 async function countRoleOnBranch(
@@ -53,6 +77,43 @@ async function countRoleOnBranch(
     .eq("role_id", (role as { id: string }).id);
   if (error) throw new ApiError(500, "MEMBERSHIP_LOOKUP_FAILED", error.message);
   return count ?? 0;
+}
+
+function errorReport(
+  branch: { id: string; branch_code: string; name: string; status: string },
+  message: string,
+  nextAction: string,
+): BranchReadinessReport {
+  return {
+    branchId: branch.id,
+    branchCode: branch.branch_code,
+    name: branch.name,
+    status: branch.status,
+    operationallyActive: isOperationallyActive(branch.status),
+    readinessGrade: "ERROR",
+    blockers: [{ code: "PROBE_FAILED", message, nextAction }],
+    nextActions: [nextAction],
+    checks: {
+      phone: false,
+      operatingHours: false,
+      branchManagerAssigned: false,
+      cashierAssigned: false,
+      hostAssigned: false,
+      waiterAssigned: false,
+      kitchenAssigned: false,
+      riderAssigned: false,
+      statusOperating: isOperationallyActive(branch.status),
+      floorConfigured: false,
+      bookingPolicyConfigured: false,
+      menuAssigned: false,
+      posReady: false,
+      kdsReady: false,
+      deliveryReady: false,
+      paymentConfigured: false,
+      notificationConfigured: false,
+      deviceVerified: false,
+    },
+  };
 }
 
 export function createBranchReadinessService(envStatus: EnvironmentStatus) {
@@ -91,10 +152,14 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
         .maybeSingle();
 
       if (detailsError) {
-        throw new ApiError(500, "BRANCH_LOOKUP_FAILED", detailsError.message);
+        return errorReport(
+          branch,
+          `Branch details probe failed: ${detailsError.message}`,
+          "Retry readiness after database connectivity is restored",
+        );
       }
 
-      const phone = Boolean((details as { phone?: string | null } | null)?.phone?.trim());
+      const phone = isConfiguredPhone((details as { phone?: string | null } | null)?.phone);
       const openingHours = (details as { opening_hours?: Record<string, unknown> } | null)
         ?.opening_hours;
       const hoursOk =
@@ -102,62 +167,257 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
         JSON.stringify(openingHours).toLowerCase().includes("coming soon") === false &&
         Object.keys(openingHours ?? {}).length > 0;
 
-      const [bm, cashier, kitchen, rider] = await Promise.all([
-        countRoleOnBranch(supabase, branchId, "branch-manager"),
-        countRoleOnBranch(supabase, branchId, "cashier"),
-        countRoleOnBranch(supabase, branchId, "kitchen"),
-        countRoleOnBranch(supabase, branchId, "rider"),
+      let bm: number;
+      let cashier: number;
+      let host: number;
+      let waiter: number;
+      let kitchen: number;
+      let rider: number;
+      try {
+        [bm, cashier, host, waiter, kitchen, rider] = await Promise.all([
+          countRoleOnBranch(supabase, branchId, "branch-manager"),
+          countRoleOnBranch(supabase, branchId, "cashier"),
+          countRoleOnBranch(supabase, branchId, "host"),
+          countRoleOnBranch(supabase, branchId, "waiter"),
+          countRoleOnBranch(supabase, branchId, "kitchen"),
+          countRoleOnBranch(supabase, branchId, "rider"),
+        ]);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Staffing probe failed.";
+        return errorReport(branch, message, "Retry readiness after role membership queries succeed");
+      }
+
+      const [floorResult, tableResult, policyResult, notificationResult] = await Promise.all([
+        supabase
+          .from("restaurant_floors")
+          .select("id", { count: "exact", head: true })
+          .eq("branch_id", branchId)
+          .eq("is_active", true),
+        supabase
+          .from("restaurant_tables")
+          .select("id", { count: "exact", head: true })
+          .eq("branch_id", branchId)
+          .eq("is_active", true),
+        supabase
+          .from("branch_booking_policies")
+          .select("id, booking_enabled")
+          .eq("branch_id", branchId)
+          .maybeSingle(),
+        supabase
+          .from("branch_notification_settings")
+          .select("email_enabled, whatsapp_enabled, provider_mode")
+          .eq("branch_id", branchId)
+          .maybeSingle(),
       ]);
+
+      if (floorResult.error || tableResult.error || policyResult.error || notificationResult.error) {
+        const message =
+          floorResult.error?.message ??
+          tableResult.error?.message ??
+          policyResult.error?.message ??
+          notificationResult.error?.message ??
+          "Configuration probe failed.";
+        return errorReport(
+          branch,
+          `Configuration probe failed: ${message}`,
+          "Retry readiness after floor / booking / notification queries succeed",
+        );
+      }
+
+      // Catalog is organization-wide today; available sellable SKUs count as menu readiness.
+      // Counts menu_items.price (one price per SKU) and never consults menu_item_variants.
+      const { count: menuItemCount, error: menuError } = await supabase
+        .from("menu_items")
+        .select("id", { count: "exact", head: true })
+        .eq("is_available", true)
+        .neq("product_type", "topping");
+      if (menuError) {
+        return errorReport(
+          branch,
+          `Menu probe failed: ${menuError.message}`,
+          "Retry readiness after menu catalog query succeeds",
+        );
+      }
+      const menuAssigned = (menuItemCount ?? 0) > 0;
+
+      const floorConfigured = (floorResult.count ?? 0) > 0 && (tableResult.count ?? 0) > 0;
+      const bookingPolicyConfigured = Boolean(policyResult.data);
+      const statusOperating = isOperationallyActive(branch.status);
+
+      // Honest notification probe: branch_notification_settings must exist with a non-disabled
+      // provider mode and at least one channel enabled. Phone is not a notification proxy.
+      const notif = notificationResult.data as
+        | {
+            email_enabled?: boolean;
+            whatsapp_enabled?: boolean;
+            provider_mode?: string;
+          }
+        | null;
+      const providerMode = String(notif?.provider_mode ?? "disabled").toLowerCase();
+      const notificationConfigured = Boolean(
+        notif &&
+          providerMode !== "disabled" &&
+          (notif.email_enabled === true || notif.whatsapp_enabled === true),
+      );
+
+      // No branch payment_settings / provider table exists in repository evidence.
+      // Do not equate cashier staffing to payment readiness.
+      const paymentConfigured = false;
 
       const checks = {
         phone,
         operatingHours: hoursOk,
         branchManagerAssigned: bm > 0,
         cashierAssigned: cashier > 0,
+        hostAssigned: host > 0,
+        waiterAssigned: waiter > 0,
         kitchenAssigned: kitchen > 0,
         riderAssigned: rider > 0,
-        statusOperating: isOperationallyActive(branch.status),
+        statusOperating,
+        floorConfigured,
+        bookingPolicyConfigured,
+        menuAssigned,
+        // POS/KDS/delivery staffing readiness (device verification stays explicit / separate).
+        posReady: cashier > 0 && statusOperating,
+        kdsReady: kitchen > 0 && statusOperating,
+        deliveryReady: rider > 0 && statusOperating,
+        paymentConfigured,
+        notificationConfigured,
+        deviceVerified: false,
       };
 
-      const blockers: Array<{ code: string; message: string }> = [];
+      const blockers: Array<{ code: string; message: string; nextAction?: string }> = [];
+      const nextActions: string[] = [];
+
+      const pushBlocker = (code: string, message: string, nextAction?: string) => {
+        blockers.push(nextAction ? { code, message, nextAction } : { code, message });
+        if (nextAction && !nextActions.includes(nextAction)) nextActions.push(nextAction);
+      };
+
       if (!checks.statusOperating) {
-        blockers.push({
-          code: "STATUS_NOT_OPERATING",
-          message: `Branch status is '${branch.status}'. Flip to operating before live service.`,
-        });
+        pushBlocker(
+          "STATUS_NOT_OPERATING",
+          `Branch status is '${branch.status}'. Flip to operating before live service.`,
+          "Set branch status to operating when launch-ready",
+        );
       }
       if (!checks.phone) {
-        blockers.push({ code: "PHONE_MISSING", message: "Branch phone number is required." });
+        pushBlocker(
+          "PHONE_MISSING",
+          "Branch phone number is required (placeholders like Coming Soon / N/A are not valid).",
+          "Set a real branch phone number",
+        );
       }
       if (!checks.operatingHours) {
-        blockers.push({
-          code: "HOURS_MISSING",
-          message: "Real operating hours are required (placeholder Coming Soon is not valid).",
-        });
+        pushBlocker(
+          "HOURS_MISSING",
+          "Real operating hours are required (placeholder Coming Soon is not valid).",
+          "Configure real operating hours",
+        );
       }
       if (!checks.branchManagerAssigned) {
-        blockers.push({
-          code: "MANAGER_MISSING",
-          message: "No branch-manager membership is assigned to this branch.",
-        });
+        pushBlocker(
+          "MANAGER_MISSING",
+          "No branch-manager membership is assigned to this branch.",
+          "Assign a branch-manager to this branch",
+        );
       }
       if (!checks.cashierAssigned) {
-        blockers.push({
-          code: "CASHIER_MISSING",
-          message: "No cashier membership is assigned to this branch.",
-        });
+        pushBlocker(
+          "CASHIER_MISSING",
+          "No cashier membership is assigned to this branch.",
+          "Assign a cashier to this branch",
+        );
       }
       if (!checks.kitchenAssigned) {
-        blockers.push({
-          code: "KITCHEN_MISSING",
-          message: "No kitchen membership is assigned to this branch.",
-        });
+        pushBlocker(
+          "KITCHEN_MISSING",
+          "No kitchen membership is assigned to this branch.",
+          "Assign kitchen staff to this branch",
+        );
       }
       if (!checks.riderAssigned) {
-        blockers.push({
-          code: "RIDER_MISSING",
-          message: "No rider membership is assigned (required for delivery).",
-        });
+        pushBlocker(
+          "RIDER_MISSING",
+          "No rider membership is assigned (required for delivery).",
+          "Assign a rider to this branch",
+        );
+      }
+      if (!checks.hostAssigned) {
+        pushBlocker(
+          "HOST_MISSING",
+          "No host membership is assigned (front desk / seating).",
+          "Assign a host to this branch",
+        );
+      }
+      if (!checks.waiterAssigned) {
+        pushBlocker(
+          "WAITER_MISSING",
+          "No waiter membership is assigned (table service).",
+          "Assign a waiter to this branch",
+        );
+      }
+      if (!checks.floorConfigured) {
+        pushBlocker(
+          "FLOOR_MISSING",
+          "Active floor and tables are required before dine-in service.",
+          "Configure active floor plan and tables",
+        );
+      }
+      if (!checks.bookingPolicyConfigured) {
+        pushBlocker(
+          "BOOKING_POLICY_MISSING",
+          "Branch booking policy is not configured.",
+          "Configure branch booking policy",
+        );
+      }
+      if (!checks.paymentConfigured) {
+        pushBlocker(
+          "PAYMENT_NOT_VERIFIED",
+          "Branch payment provider configuration is not verified (no payment settings table probe available).",
+          "Configure payment provider",
+        );
+      }
+      if (!checks.notificationConfigured) {
+        pushBlocker(
+          "NOTIFICATION_NOT_VERIFIED",
+          "Branch notification provider is not configured (requires branch_notification_settings with a non-disabled provider mode and an enabled channel).",
+          "Configure notification provider",
+        );
+      }
+      if (!checks.deviceVerified) {
+        pushBlocker(
+          "DEVICE_NOT_VERIFIED",
+          "On-site device/POS/KDS verification has not been recorded.",
+          "Complete on-site device/POS/KDS validation",
+        );
+      }
+
+      const hardBlockCodes = new Set([
+        "STATUS_NOT_OPERATING",
+        "PHONE_MISSING",
+        "HOURS_MISSING",
+        "MANAGER_MISSING",
+        "CASHIER_MISSING",
+        "KITCHEN_MISSING",
+      ]);
+      const hardBlocks = blockers.filter((b) => hardBlockCodes.has(b.code));
+      const verificationCodes = new Set([
+        "PAYMENT_NOT_VERIFIED",
+        "NOTIFICATION_NOT_VERIFIED",
+        "DEVICE_NOT_VERIFIED",
+      ]);
+      const onlyVerificationGaps =
+        blockers.length > 0 && blockers.every((b) => verificationCodes.has(b.code));
+
+      let readinessGrade: BranchReadinessReport["readinessGrade"] = "READY";
+      if (hardBlocks.length > 0 || !checks.statusOperating) {
+        readinessGrade = "BLOCKED";
+      } else if (onlyVerificationGaps) {
+        // Payment / notification / device have no proven store evidence — do not claim READY.
+        readinessGrade = "NOT_VERIFIED";
+      } else if (blockers.length > 0) {
+        readinessGrade = "READY_WITH_LIMITATIONS";
       }
 
       return {
@@ -166,7 +426,9 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
         name: branch.name,
         status: branch.status,
         operationallyActive: checks.statusOperating,
+        readinessGrade,
         blockers,
+        nextActions,
         checks,
       };
     },

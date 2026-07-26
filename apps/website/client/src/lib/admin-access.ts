@@ -197,7 +197,7 @@ export function isKitchenOnly(input: AdminPrincipalInput): boolean {
   );
 }
 
-/** Cashier-role staff without manager/kitchen roles — POS is their home (D2 staff dashboard). */
+/** Cashier-role staff without manager/kitchen roles — D4 home `/admin/home/cashier`. */
 export function isCashierOnly(input: AdminPrincipalInput): boolean {
   return (
     !input.isSuperAdmin &&
@@ -207,7 +207,7 @@ export function isCashierOnly(input: AdminPrincipalInput): boolean {
   );
 }
 
-/** Rider-role staff without other operational roles — Delivery is their home (D2 staff dashboard). */
+/** Rider-role staff without other operational roles — D4 home `/admin/home/delivery`. */
 export function isRiderOnly(input: AdminPrincipalInput): boolean {
   return (
     !input.isSuperAdmin &&
@@ -218,7 +218,7 @@ export function isRiderOnly(input: AdminPrincipalInput): boolean {
   );
 }
 
-/** D3 — host/front-desk staff without manager roles: Reservations is their home. */
+/** D3/D4 — host/front-desk staff without manager roles: home `/admin/home/host`. */
 export function isHostOnly(input: AdminPrincipalInput): boolean {
   return (
     !input.isSuperAdmin &&
@@ -229,7 +229,7 @@ export function isHostOnly(input: AdminPrincipalInput): boolean {
   );
 }
 
-/** D3 — waiter staff without manager roles: the Live floor console is their home. */
+/** D3/D4 — waiter staff without manager roles: home `/admin/home/waiter`. */
 export function isWaiterOnly(input: AdminPrincipalInput): boolean {
   return (
     !input.isSuperAdmin &&
@@ -241,12 +241,85 @@ export function isWaiterOnly(input: AdminPrincipalInput): boolean {
   );
 }
 
+/** Admin configuration role without Super Admin / Branch Manager. */
+export function isAdminConfigOnly(input: AdminPrincipalInput): boolean {
+  return (
+    !input.isSuperAdmin &&
+    input.roles.includes("admin") &&
+    !input.roles.includes("branch-manager")
+  );
+}
+
+/**
+ * Configuration home capability — settings, menu, floor config, HR, admin role, or admin.access.
+ * Does not require an unseeded admin-only role; specialized ops roles still prefer their own homes.
+ */
+export function canAccessConfigurationHome(input: AdminPrincipalInput): boolean {
+  return (
+    input.isSuperAdmin ||
+    input.roles.includes("admin") ||
+    canAccessAdminSettings(input) ||
+    canManageMenu(input) ||
+    canManageFloorConfiguration(input) ||
+    canAccessAdminHr(input)
+  );
+}
+
+/** Configuration-capable staff who are not SA / BM / kitchen / cashier / rider / host / waiter. */
+export function isConfigurationHomeCandidate(input: AdminPrincipalInput): boolean {
+  if (input.isSuperAdmin || input.roles.includes("super-admin")) return false;
+  if (input.roles.includes("branch-manager")) return false;
+  if (input.roles.includes("kitchen")) return false;
+  if (input.roles.includes("cashier")) return false;
+  if (input.roles.includes("rider")) return false;
+  if (input.roles.includes("host")) return false;
+  if (input.roles.includes("waiter")) return false;
+  return canAccessConfigurationHome(input);
+}
+
+/**
+ * Staff without a specialized opening home (cashier/host/waiter/kitchen/rider/BM/admin).
+ * Support agents land here unless they also hold a specialized role above.
+ */
+export function isGeneralStaff(input: AdminPrincipalInput): boolean {
+  if (input.isSuperAdmin) return false;
+  if (input.roles.includes("branch-manager")) return false;
+  if (input.roles.includes("kitchen")) return false;
+  if (input.roles.includes("cashier")) return false;
+  if (input.roles.includes("rider")) return false;
+  if (input.roles.includes("host")) return false;
+  if (input.roles.includes("waiter")) return false;
+  if (input.roles.includes("admin")) return false;
+  if (isConfigurationHomeCandidate(input)) return false;
+  return input.roles.length > 0 || input.permissions.length > 0;
+}
+
+/**
+ * D4 — canonical post-login / `/admin` home for the verified principal.
+ * Uses repository role codes only (no invented aliases).
+ */
+export function resolveStaffHome(input: AdminPrincipalInput): string {
+  if (input.isSuperAdmin || input.roles.includes("super-admin")) return "/admin/dashboard";
+  if (isKitchenOnly(input)) return "/admin/kitchen-dashboard";
+  if (isBranchManagerOnly(input)) return "/admin/branch";
+  if (isCashierOnly(input)) return "/admin/home/cashier";
+  if (isRiderOnly(input)) return "/admin/home/delivery";
+  if (isHostOnly(input)) return "/admin/home/host";
+  if (isWaiterOnly(input)) return "/admin/home/waiter";
+  if (isAdminConfigOnly(input) || isConfigurationHomeCandidate(input)) return "/admin/home/config";
+  if (canAccessAdminOrdersApi(input)) return "/admin/dashboard";
+  return "/admin/home/staff";
+}
+
 export function primaryRoleLabel(roles: string[], isSuperAdmin: boolean): string {
   if (isSuperAdmin || roles.includes("super-admin")) return "Super Admin";
   if (roles.includes("branch-manager")) return "Branch Manager";
+  if (roles.includes("admin")) return "Admin";
   if (roles.includes("kitchen")) return "Kitchen Manager";
+  if (roles.includes("host")) return "Host";
+  if (roles.includes("waiter")) return "Waiter";
   if (roles.includes("cashier")) return "Cashier";
-  if (roles.includes("rider")) return "Rider";
+  if (roles.includes("rider")) return "Delivery";
   if (roles.includes("customer-support")) return "Support Agent";
   return roles[0] ?? "Staff";
 }
@@ -404,6 +477,8 @@ export function filterVisibleAdminNav(input: AdminPrincipalInput): AdminNavItem[
   const kitchenOnly = isKitchenOnly(input);
   const cashierOnly = isCashierOnly(input);
   const riderOnly = isRiderOnly(input);
+  const adminConfigOnly = isAdminConfigOnly(input) || isConfigurationHomeCandidate(input);
+  const generalStaff = isGeneralStaff(input);
 
   return getAdminNavItems(input).filter((item) => {
     if (kitchenOnly) {
@@ -412,7 +487,7 @@ export function filterVisibleAdminNav(input: AdminPrincipalInput): AdminNavItem[
     }
 
     if (cashierOnly) {
-      // D2 staff shell: cashier home is POS — no Owner dashboards or financial metrics.
+      // D4 cashier home is `/admin/home/cashier`; nav stays POS + permitted ops.
       // D3: cashiers may also see the live floor to attach dine-in orders to sessions.
       const allowed: AdminNavKey[] = ["pos", "orders", "floor-console"];
       if (!allowed.includes(item.key)) return false;
@@ -422,22 +497,38 @@ export function filterVisibleAdminNav(input: AdminPrincipalInput): AdminNavItem[
     }
 
     if (riderOnly) {
-      // D2 staff shell: rider home is Delivery — assigned deliveries and status actions only.
+      // D4 rider home is `/admin/home/delivery`; nav stays Delivery console.
       const allowed: AdminNavKey[] = ["delivery"];
       return allowed.includes(item.key) && deliveryApi;
     }
 
     if (isHostOnly(input)) {
-      // D3 staff shell: host works the front desk — reservations, waitlist, live floor only.
+      // D4 host home is `/admin/home/host`; nav stays front-desk modules.
       const allowed: AdminNavKey[] = ["reservations", "waitlist", "floor-console"];
       return allowed.includes(item.key) && canAccessTableService(input);
     }
 
     if (isWaiterOnly(input)) {
-      // D3 staff shell: waiter serves tables — live floor plus orders they may manage.
+      // D4 waiter home is `/admin/home/waiter`; nav stays floor + permitted orders.
       if (item.key === "floor-console") return canAccessTableService(input);
+      if (item.key === "pos") return posApi;
       if (item.key === "orders") return ordersApi;
       return false;
+    }
+
+    if (adminConfigOnly) {
+      const allowed: AdminNavKey[] = ["settings", "menu", "floor-plan", "staff", "branches"];
+      if (!allowed.includes(item.key)) return false;
+      if (item.key === "settings") return settingsApi;
+      if (item.key === "menu") return menuApi;
+      if (item.key === "floor-plan") return canManageFloorConfiguration(input);
+      if (item.key === "staff") return hrApi;
+      return true;
+    }
+
+    if (generalStaff) {
+      // General staff: only modules their permissions already unlock.
+      return item.available;
     }
 
     if (bmOnly && item.key !== "branch-home") {

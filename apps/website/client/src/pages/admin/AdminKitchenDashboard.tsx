@@ -188,11 +188,11 @@ export default function AdminKitchenDashboard() {
     for (const order of orders) {
       map[order.id] = {
         orderNumber: order.orderNumber,
-        contactName: order.contactName,
+        // Kitchen UI: avoid guest PII — use order number / type / source only.
+        contactName: null,
         orderType: order.orderType,
         orderSource: order.orderSource || null,
         paymentStatus: order.paymentStatus,
-        notes: null,
       };
     }
     return map;
