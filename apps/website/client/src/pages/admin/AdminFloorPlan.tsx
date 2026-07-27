@@ -260,7 +260,7 @@ export default function AdminFloorPlan() {
       <div className="space-y-6">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold">Floor plan — {branchLabel}</h1>
+            <h2 className="text-xl font-semibold">Floor plan — {branchLabel}</h2>
             <p className="text-sm text-muted-foreground">
               Floors, service areas, tables, and permitted combinations. Changes are saved to the
               server and enforced branch-wide.

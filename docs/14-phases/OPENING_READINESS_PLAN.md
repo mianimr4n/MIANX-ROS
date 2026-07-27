@@ -30,7 +30,7 @@ Verified against repository main `17cc5e9cee8f65eb5c10fcc069ea3b863931a8b8` (inc
 - Owner/Founder database roles (display labels only; authorization remains `super-admin` with `branch_id = null`)
 
 ## Known blockers
-- Orders/Kitchen/Delivery truth alignment remains a follow-on on `feature/opening-readiness-final`
+- Orders/Kitchen/Delivery truth alignment is complete on `feature/opening-readiness-final` (verified)
 - Protected test order `TP-260727-000001` stays `pending` (Behari Roll) with no kitchen ticket until confirmation
 
 ## Owner decision required
