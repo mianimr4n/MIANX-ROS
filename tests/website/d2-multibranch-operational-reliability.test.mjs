@@ -142,10 +142,23 @@ describe("D2 — dashboards never render failure as zero", () => {
     const src = read("apps/website/client/src/pages/admin/AdminKitchenDashboard.tsx");
     assert.match(src, /hasTicketPayload/);
     assert.match(src, /ticketKpiState/);
+    assert.match(src, /showResolvedZero/);
+    assert.match(src, /ticketQueueEmpty/);
     assert.doesNotMatch(
       src,
       /AdminKpiCard title="New \(queued\)" value=\{String\(summary\.queued\)\} source="LIVE"/,
     );
+  });
+
+  it("Kitchen EMPTY queue shows resolved zeros without LIVE labeling", () => {
+    const src = read("apps/website/client/src/pages/admin/AdminKitchenDashboard.tsx");
+    const kpi = read("apps/website/client/src/components/admin/AdminKpiCard.tsx");
+    assert.match(src, /isEmpty:\s*\(data\)\s*=>\s*data\.length === 0/);
+    assert.match(src, /ticketQueueEmpty\s*\?\s*\("EMPTY" as const\)/);
+    assert.match(src, /No active tickets/);
+    assert.match(src, /Nothing preparing/);
+    assert.match(kpi, /showResolvedZero\?: boolean/);
+    assert.match(kpi, /state === "empty" && showResolvedZero/);
   });
 
   it("KPI card supports a distinct stale state that keeps the last value visible", () => {

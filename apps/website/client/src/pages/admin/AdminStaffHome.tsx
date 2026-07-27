@@ -14,6 +14,7 @@ import {
   filterVisibleAdminNav,
   primaryRoleLabel,
 } from "@/lib/admin-access";
+import { splitStaffHomeRestEntries } from "@/lib/admin-staff-home-nav";
 import { AdminShell } from "@/pages/admin/AdminShell";
 
 /**
@@ -60,6 +61,11 @@ export default function AdminStaffHome() {
   const homeTitle = isSupportAgent ? "Support home" : "Staff home";
   const canLookupOrders = canAccessAdminOrdersApi(principal);
   const canOpenReservations = canManageReservations(principal);
+  const secondaryCount = isSupportAgent ? 2 : 3;
+  const { secondary: secondaryEntries, more: moreEntries } = splitStaffHomeRestEntries(
+    restEntries,
+    secondaryCount,
+  );
 
   return (
     <RoleHomeShell
@@ -96,7 +102,7 @@ export default function AdminStaffHome() {
               href="/admin/reservations"
             />
           ) : null}
-          {restEntries.slice(0, isSupportAgent ? 2 : 3).map((item) => (
+          {secondaryEntries.map((item) => (
             <DashboardActionCard
               key={item.key}
               title={`Open ${item.label}`}
@@ -136,7 +142,7 @@ export default function AdminStaffHome() {
         <p className="text-sm text-[var(--admin-muted)]">
           Your account has no work areas yet. Ask a Super Admin to assign your role or permissions.
         </p>
-      ) : restEntries.length > 3 ? (
+      ) : moreEntries.length > 0 ? (
         <>
           <AdminSectionTitle
             eyebrow="More"
@@ -144,7 +150,7 @@ export default function AdminStaffHome() {
             description="Everything else your account has access to."
           />
           <DashboardActionGrid>
-            {restEntries.slice(3).map((item) => (
+            {moreEntries.map((item) => (
               <DashboardActionCard
                 key={item.key}
                 title={`Open ${item.label}`}

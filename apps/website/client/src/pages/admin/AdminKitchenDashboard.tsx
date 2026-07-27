@@ -147,6 +147,7 @@ export default function AdminKitchenDashboard() {
   const live = ticketsOp.state === "LIVE" || ticketsOp.state === "EMPTY";
   const lastUpdatedAt = ticketsOp.lastSuccessAt ? new Date(ticketsOp.lastSuccessAt) : null;
   const hasTicketPayload = ticketsOp.data != null;
+  const ticketQueueEmpty = ticketsOp.state === "EMPTY";
   const ticketKpiState =
     ticketsOp.state === "LOADING" && !hasTicketPayload
       ? ("loading" as const)
@@ -154,10 +155,16 @@ export default function AdminKitchenDashboard() {
         ? ("error" as const)
         : ticketsOp.state === "STALE"
           ? ("stale" as const)
-          : ticketsOp.state === "EMPTY"
+          : ticketQueueEmpty
             ? ("empty" as const)
             : ("available" as const);
-  const ticketKpiSource = hasTicketPayload ? ("LIVE" as const) : ("UNAVAILABLE" as const);
+  // EMPTY is a successful empty collection — never label those KPIs LIVE.
+  const ticketKpiSource = !hasTicketPayload
+    ? ("UNAVAILABLE" as const)
+    : ticketQueueEmpty
+      ? ("EMPTY" as const)
+      : ("LIVE" as const);
+  const showResolvedZero = ticketQueueEmpty;
 
   const loadDetail = useCallback(
     async (orderId: string) => {
@@ -438,31 +445,40 @@ export default function AdminKitchenDashboard() {
               value={hasTicketPayload ? String(summary.queued) : null}
               source={ticketKpiSource}
               state={ticketKpiState}
+              showResolvedZero={showResolvedZero}
+              detail={ticketQueueEmpty ? "No active tickets" : undefined}
             />
             <AdminKpiCard
               title="Accepted"
               value={hasTicketPayload ? String(summary.accepted) : null}
               source={ticketKpiSource}
               state={ticketKpiState}
+              showResolvedZero={showResolvedZero}
+              detail={ticketQueueEmpty ? "Nothing accepted" : undefined}
             />
             <AdminKpiCard
               title="Preparing"
               value={hasTicketPayload ? String(summary.preparing) : null}
               source={ticketKpiSource}
               state={ticketKpiState}
+              showResolvedZero={showResolvedZero}
+              detail={ticketQueueEmpty ? "Nothing preparing" : undefined}
             />
             <AdminKpiCard
               title="Ready"
               value={hasTicketPayload ? String(summary.ready) : null}
               source={ticketKpiSource}
               state={ticketKpiState}
+              showResolvedZero={showResolvedZero}
+              detail={ticketQueueEmpty ? "Nothing ready" : undefined}
             />
             <AdminKpiCard
               title="Delayed"
               value={hasTicketPayload ? String(summary.delayed) : null}
-              source={hasTicketPayload ? "DERIVED" : "UNAVAILABLE"}
+              source={hasTicketPayload ? (ticketQueueEmpty ? "EMPTY" : "DERIVED") : "UNAVAILABLE"}
               state={ticketKpiState}
-              detail={`≥ ${PREP_TARGET_MINUTES}m elapsed`}
+              showResolvedZero={showResolvedZero}
+              detail={ticketQueueEmpty ? "No delayed tickets" : `≥ ${PREP_TARGET_MINUTES}m elapsed`}
             />
             <AdminKpiCard
               title="Avg prep (min)"
@@ -486,7 +502,7 @@ export default function AdminKitchenDashboard() {
             <AdminKpiCard
               title="Oldest active (min)"
               value={hasTicketPayload && summary.oldest != null ? String(summary.oldest) : null}
-              source={hasTicketPayload ? "DERIVED" : "UNAVAILABLE"}
+              source={hasTicketPayload && summary.oldest != null ? "DERIVED" : "UNAVAILABLE"}
               state={
                 !hasTicketPayload
                   ? ticketKpiState
