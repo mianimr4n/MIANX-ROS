@@ -5,15 +5,9 @@
  */
 import { bearerHeaders, fetchApiData } from "@/lib/api";
 import { ADMIN_READ_TIMEOUT_MS, ADMIN_WRITE_TIMEOUT_MS, type AdminReadOptions } from "@/lib/admin-api";
+import { clampListLimit, TABLE_SERVICE_LIST_LIMIT_MAX } from "@/lib/clamp-list-limit";
 
-/** Backend list query schemas accept limit in [1, 100] only. */
-export const TABLE_SERVICE_LIST_LIMIT_MAX = 100;
-
-function clampListLimit(limit: number | undefined): number {
-  const raw = limit ?? TABLE_SERVICE_LIST_LIMIT_MAX;
-  if (!Number.isFinite(raw)) return TABLE_SERVICE_LIST_LIMIT_MAX;
-  return Math.min(TABLE_SERVICE_LIST_LIMIT_MAX, Math.max(1, Math.trunc(raw)));
-}
+export { clampListLimit, TABLE_SERVICE_LIST_LIMIT_MAX, TABLE_SERVICE_LIST_LIMIT_MIN } from "@/lib/clamp-list-limit";
 
 export type TableOperationalStatus =
   | "available"

@@ -440,7 +440,11 @@ export default function AdminWaitlist() {
             <span className="text-xs text-muted-foreground">{showClosed ? "Hide" : "Show"}</span>
           </button>
           {showClosed ? (
-            closed.length === 0 ? (
+            waitlistOp.state === "ERROR" || waitlistOp.state === "OFFLINE" ? (
+              <p className="border-t px-4 py-3 text-sm text-muted-foreground">
+                Resolved history unavailable while waitlist data could not be loaded.
+              </p>
+            ) : closed.length === 0 ? (
               <p className="border-t px-4 py-3 text-sm text-muted-foreground">EMPTY.</p>
             ) : (
               <div className="divide-y border-t">

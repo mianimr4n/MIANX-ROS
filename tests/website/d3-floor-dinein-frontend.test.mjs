@@ -80,19 +80,47 @@ describe("D3 Waitlist workspace (static)", () => {
     assert.doesNotMatch(src, /limit:\s*200/);
     assert.match(src, /EMPTY — nobody is waiting/);
     assert.match(src, /waitlistOp\.state === "ERROR"/);
+    assert.match(src, /waitlistOp\.state === "OFFLINE"/);
     assert.match(src, /Resolved today/);
     assert.match(src, /Use Retry above/);
+  });
+
+  it("keeps resolved-today honest on ERROR and OFFLINE (no EMPTY concealment)", () => {
+    const src = page();
+    assert.match(
+      src,
+      /Resolved history unavailable while waitlist data could not be loaded/,
+    );
+    // Expanded resolved body must gate ERROR/OFFLINE before EMPTY.
+    assert.match(
+      src,
+      /waitlistOp\.state === "ERROR" \|\| waitlistOp\.state === "OFFLINE"[\s\S]*Resolved history unavailable[\s\S]*closed\.length === 0[\s\S]*EMPTY\./,
+    );
   });
 });
 
 describe("D3 table-service list query serialization", () => {
-  it("clamps reservation and waitlist list limits to backend max 100", () => {
+  it("clamps reservation and waitlist list limits via shared clampListLimit", () => {
     const api = read("apps/website/client/src/lib/table-service-api.ts");
-    assert.match(api, /TABLE_SERVICE_LIST_LIMIT_MAX\s*=\s*100/);
-    assert.match(api, /function clampListLimit/);
+    assert.match(api, /clampListLimit/);
+    assert.match(api, /from "@\/lib\/clamp-list-limit"/);
     assert.match(api, /params\.set\("limit", String\(clampListLimit\(query\.limit\)\)\)/);
-    // Must not serialize oversized limits that Production rejected.
     assert.doesNotMatch(api, /params\.set\("limit", String\(query\.limit \?\? 100\)\)/);
+  });
+});
+
+describe("responsive smoke script path hygiene", () => {
+  it("contains no absolute D-drive private release-artifacts path", () => {
+    const src = read("scripts/reservations-waitlist-responsive-smoke.mjs");
+    const privateRoot = ["telepizza", "private"].join("-");
+    const absForward = `D:/${privateRoot}`;
+    const absBack = `D:\\${privateRoot}`;
+    const evidencePath = ["release-artifacts", "prod-acceptance"].join("/");
+    assert.ok(!src.includes(absForward), "forward-slash private absolute path must be absent");
+    assert.ok(!src.includes(absBack), "backslash private absolute path must be absent");
+    assert.ok(!src.includes(evidencePath), "private evidence path must be absent");
+    assert.match(src, /test-results/);
+    assert.match(src, /RESERVATIONS_WAITLIST_SMOKE_OUT|process\.argv\[2\]/);
   });
 });
 
