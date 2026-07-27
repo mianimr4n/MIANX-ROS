@@ -53,6 +53,15 @@ describe("D3 Reservations workspace (static)", () => {
     assert.match(src, /searchAvailability|listReservations/);
     assert.doesNotMatch(src, /BRANCH_UTC_OFFSET|wallTimeToUtcIso/);
   });
+
+  it("sends list limit within backend max and keeps EMPTY distinct from ERROR", () => {
+    const src = page();
+    assert.match(src, /limit:\s*100/);
+    assert.doesNotMatch(src, /limit:\s*200/);
+    assert.match(src, /EMPTY — no reservations for this day/);
+    assert.match(src, /reservationsOp\.state === "ERROR"/);
+    assert.match(src, /Use Retry above/);
+  });
 });
 
 describe("D3 Waitlist workspace (static)", () => {
@@ -63,6 +72,27 @@ describe("D3 Waitlist workspace (static)", () => {
     assert.match(src, /addWaitlistEntry|listWaitlist/);
     assert.match(src, /notify|arrive|seat|cancel|left/i);
     assert.match(src, /quotedWait|partySize|guestName/i);
+  });
+
+  it("sends list limit within backend max and keeps EMPTY distinct from ERROR", () => {
+    const src = page();
+    assert.match(src, /limit:\s*100/);
+    assert.doesNotMatch(src, /limit:\s*200/);
+    assert.match(src, /EMPTY — nobody is waiting/);
+    assert.match(src, /waitlistOp\.state === "ERROR"/);
+    assert.match(src, /Resolved today/);
+    assert.match(src, /Use Retry above/);
+  });
+});
+
+describe("D3 table-service list query serialization", () => {
+  it("clamps reservation and waitlist list limits to backend max 100", () => {
+    const api = read("apps/website/client/src/lib/table-service-api.ts");
+    assert.match(api, /TABLE_SERVICE_LIST_LIMIT_MAX\s*=\s*100/);
+    assert.match(api, /function clampListLimit/);
+    assert.match(api, /params\.set\("limit", String\(clampListLimit\(query\.limit\)\)\)/);
+    // Must not serialize oversized limits that Production rejected.
+    assert.doesNotMatch(api, /params\.set\("limit", String\(query\.limit \?\? 100\)\)/);
   });
 });
 

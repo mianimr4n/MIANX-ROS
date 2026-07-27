@@ -93,7 +93,7 @@ export default function AdminReservations() {
     ({ signal, correlationId }) =>
       listReservations(
         token!,
-        { branchId: branchId!, date, status: statusFilter || undefined, limit: 200 },
+        { branchId: branchId!, date, status: statusFilter || undefined, limit: 100 },
         { signal, correlationId },
       ),
     [token, branchId, date, statusFilter],
@@ -448,11 +448,18 @@ export default function AdminReservations() {
         <section className="rounded-xl border">
           <div className="border-b px-4 py-3">
             <h2 className="text-sm font-semibold">
-              {date} — {rows.length} reservation{rows.length === 1 ? "" : "s"}
+              {date} —{" "}
+              {reservationsOp.state === "ERROR" || reservationsOp.state === "OFFLINE"
+                ? "unavailable"
+                : `${rows.length} reservation${rows.length === 1 ? "" : "s"}`}
             </h2>
           </div>
           {reservationsOp.state === "LOADING" ? (
             <p className="px-4 py-3 text-sm text-muted-foreground">Loading reservations…</p>
+          ) : reservationsOp.state === "ERROR" || reservationsOp.state === "OFFLINE" ? (
+            <p className="px-4 py-3 text-sm text-muted-foreground">
+              Reservations are unavailable until the request succeeds. Use Retry above.
+            </p>
           ) : rows.length === 0 ? (
             <p className="px-4 py-3 text-sm text-muted-foreground">EMPTY — no reservations for this day.</p>
           ) : (

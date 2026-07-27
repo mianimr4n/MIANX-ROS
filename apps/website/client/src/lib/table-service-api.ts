@@ -6,6 +6,15 @@
 import { bearerHeaders, fetchApiData } from "@/lib/api";
 import { ADMIN_READ_TIMEOUT_MS, ADMIN_WRITE_TIMEOUT_MS, type AdminReadOptions } from "@/lib/admin-api";
 
+/** Backend list query schemas accept limit in [1, 100] only. */
+export const TABLE_SERVICE_LIST_LIMIT_MAX = 100;
+
+function clampListLimit(limit: number | undefined): number {
+  const raw = limit ?? TABLE_SERVICE_LIST_LIMIT_MAX;
+  if (!Number.isFinite(raw)) return TABLE_SERVICE_LIST_LIMIT_MAX;
+  return Math.min(TABLE_SERVICE_LIST_LIMIT_MAX, Math.max(1, Math.trunc(raw)));
+}
+
 export type TableOperationalStatus =
   | "available"
   | "reserved"
@@ -434,8 +443,8 @@ export async function listReservations(
   const params = new URLSearchParams({ branchId: query.branchId });
   if (query.date) params.set("date", query.date);
   if (query.status) params.set("status", query.status);
-  params.set("limit", String(query.limit ?? 100));
-  if (query.offset) params.set("offset", String(query.offset));
+  params.set("limit", String(clampListLimit(query.limit)));
+  if (query.offset != null && query.offset > 0) params.set("offset", String(Math.trunc(query.offset)));
   return fetchApiData<ReservationRecord[]>(
     `/admin/reservations?${params.toString()}`,
     readInit(accessToken, opts),
@@ -519,7 +528,7 @@ export async function listWaitlist(
 ): Promise<WaitlistRecord[]> {
   const params = new URLSearchParams({ branchId: query.branchId });
   if (query.status) params.set("status", query.status);
-  params.set("limit", String(query.limit ?? 100));
+  params.set("limit", String(clampListLimit(query.limit)));
   return fetchApiData<WaitlistRecord[]>(`/admin/waitlist?${params.toString()}`, readInit(accessToken, opts));
 }
 

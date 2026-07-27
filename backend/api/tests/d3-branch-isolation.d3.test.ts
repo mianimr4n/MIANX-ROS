@@ -86,6 +86,13 @@ describe("D3 — reservations service branch isolation", () => {
     );
   });
 
+  it("listing another branch's waitlist is denied", async () => {
+    await expect403(
+      service.listWaitlist(branchAStaff, { branchId: B2, limit: 10, offset: 0 }),
+      "RESERVATION_ACCESS_DENIED",
+    );
+  });
+
   it("reading another branch's daily report is denied", async () => {
     await expect403(
       service.getDailyReport(branchAStaff, B2, "2026-08-14"),
