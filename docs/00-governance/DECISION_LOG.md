@@ -1,6 +1,6 @@
 # Decision Log
 
-**Status:** Living Document
+**Status:** Active — Append-only Record
 
 ---
 
