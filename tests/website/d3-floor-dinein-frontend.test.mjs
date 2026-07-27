@@ -101,6 +101,9 @@ describe("D3 admin access + routes (static)", () => {
     // D4 consolidates redirects through resolveStaffHome (still uses isHostOnly/isWaiterOnly).
     assert.match(access, /resolveStaffHome/);
     assert.match(access, /\/admin\/home\/host|\/admin\/home\/waiter/);
+    const host = read("apps/website/client/src/pages/admin/AdminHostHome.tsx");
+    assert.match(host, /tableOp\.state === "ERROR"|tableOp\.state === "OFFLINE"/);
+    assert.match(host, /zeros are not shown while the API is down/);
     const redirect = read("apps/website/client/src/pages/admin/AdminIndexRedirect.tsx");
     assert.match(redirect, /resolveStaffHome/);
   });
