@@ -30,14 +30,14 @@ Verified against repository main `17cc5e9cee8f65eb5c10fcc069ea3b863931a8b8` (inc
 - Owner/Founder database roles (display labels only; authorization remains `super-admin` with `branch_id = null`)
 
 ## Known blockers
-- Orders/Kitchen/Delivery truth alignment remains a follow-on on `feature/opening-readiness-final`
+- Real Royal Orchard staff accounts, devices, payment provider, and Founder go/no-go remain WAITING_ON_HUMAN / FOUNDATION
 - Protected test order `TP-260727-000001` stays `pending` (Behari Roll) with no kitchen ticket until confirmation
 
 ## Owner decision required
-Confirm opening-day staffing, devices, and provider readiness for Royal Orchard before 14 August 2026 10:00 Asia/Karachi.
+Confirm opening-day staffing, devices, and provider readiness for Royal Orchard before 14 August 2026 10:00 Asia/Karachi. Use `/admin/ai-team` Owner Decision Queue.
 
 ## Next implementation action
-Continue opening-readiness work on the same branch: OMS/KDS/delivery truth, RBAC wording, full opening dashboard completion.
+Run opening-scope Production smoke (read-only) after Founder review of the Owner command center.
 
 ## Source of truth
 Repository evidence under `docs/`, `apps/website`, `backend/api`, `supabase/`, plus Production smoke evidence outside Git.

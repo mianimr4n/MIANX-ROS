@@ -21,6 +21,19 @@ import {
   type MianxAgentCard,
 } from "@/lib/mianx-team";
 import { computeOpeningCountdown } from "@/lib/opening-countdown";
+import {
+  buildOwnerDecisionQueue,
+  computeOpeningPercentage,
+  criticalBlockerCount,
+  evaluateOpeningReadiness,
+  recentlyCompletedItems,
+  waitingOnHumanCount,
+} from "@/lib/opening-readiness-model";
+import {
+  OpeningPercentageBanner,
+  OwnerDecisionQueueView,
+  RecentlyCompletedList,
+} from "@/components/admin/dashboard/OpeningCommandCenter";
 import { useOperationalData } from "@/lib/op-status";
 import { listReservations, listWaitlist } from "@/lib/table-service-api";
 import { AdminShell } from "@/pages/admin/AdminShell";
@@ -67,28 +80,28 @@ function AgentCardView({ agent }: { agent: MianxAgentCard }) {
         </span>
       </div>
       <p className="mt-2 text-sm text-[var(--admin-muted)]">{agent.mission}</p>
-      <dl className="mt-4 space-y-2 text-sm">
+      <div className="mt-4 space-y-2 text-sm">
         <div>
-          <dt className="font-semibold text-[var(--admin-ink)]">Status</dt>
-          <dd className="text-[var(--admin-muted)]">{agent.status}</dd>
+          <p className="font-semibold text-[var(--admin-ink)]">Status</p>
+          <p className="text-[var(--admin-muted)]">{agent.status}</p>
         </div>
         <div>
-          <dt className="font-semibold text-[var(--admin-ink)]">Verified signal</dt>
-          <dd className="text-[var(--admin-muted)]">{agent.verifiedSignal}</dd>
+          <p className="font-semibold text-[var(--admin-ink)]">Verified signal</p>
+          <p className="text-[var(--admin-muted)]">{agent.verifiedSignal}</p>
         </div>
         <div>
-          <dt className="font-semibold text-[var(--admin-ink)]">Problem</dt>
-          <dd className="text-[var(--admin-muted)]">{agent.currentProblem}</dd>
+          <p className="font-semibold text-[var(--admin-ink)]">Problem</p>
+          <p className="text-[var(--admin-muted)]">{agent.currentProblem}</p>
         </div>
         <div>
-          <dt className="font-semibold text-[var(--admin-ink)]">Next action</dt>
-          <dd className="text-[var(--admin-muted)]">{agent.nextAction}</dd>
+          <p className="font-semibold text-[var(--admin-ink)]">Next action</p>
+          <p className="text-[var(--admin-muted)]">{agent.nextAction}</p>
         </div>
         <div className="flex flex-wrap gap-3 text-xs text-[var(--admin-muted)]">
           <span>Source: {agent.sourceType}</span>
           <span>Approval: {agent.humanApprovalRequired ? "Required" : "Not required"}</span>
         </div>
-      </dl>
+      </div>
     </article>
   );
 }
@@ -155,13 +168,81 @@ export default function AdminAiTeam() {
       ? allBranches.find((b) => b.id === selection.branchId)
       : allBranches.find((b) => b.id === branchIdFilter) ?? null;
 
+  const comingSoonSelected = selectedBranchMeta?.status === "coming-soon";
+  const readinessError = opening.state === "ERROR";
+  const readinessOffline = opening.state === "OFFLINE";
+  const reservationsFailed = reservations.state === "ERROR" || reservations.state === "OFFLINE";
+  const waitlistFailed = waitlist.state === "ERROR" || waitlist.state === "OFFLINE";
+  const healthFailed = health.state === "ERROR" || health.state === "OFFLINE";
+
+  const readinessItems = useMemo(
+    () =>
+      evaluateOpeningReadiness({
+        nowIso: now.toISOString(),
+        branchCode: opening.data?.branchCode ?? selectedBranchMeta?.code ?? null,
+        branchStatus: selectedBranchMeta?.status ?? opening.data?.status ?? null,
+        northernBypassStatus: northern?.status ?? "coming-soon",
+        readinessReport: opening.data
+          ? {
+              readinessGrade: opening.data.readinessGrade,
+              checks: opening.data.checks,
+              blockers: opening.data.blockers,
+            }
+          : null,
+        readinessError,
+        readinessOffline,
+        reservationsOk: reservationsFailed ? false : reservations.data ? true : null,
+        waitlistOk: waitlistFailed ? false : waitlist.data ? true : null,
+        healthOk: healthFailed ? null : health.data ? health.data.api.status === "ok" : null,
+        healthError: health.state === "ERROR",
+        healthOffline: health.state === "OFFLINE",
+        rollbackRunbookPresent: true,
+        incidentRunbookPresent: true,
+      }),
+    [
+      health.data,
+      health.state,
+      northern?.status,
+      now,
+      opening.data,
+      readinessError,
+      readinessOffline,
+      reservations.data,
+      reservationsFailed,
+      selectedBranchMeta?.code,
+      selectedBranchMeta?.status,
+      waitlist.data,
+      waitlistFailed,
+    ],
+  );
+
+  const openingPercentage = useMemo(
+    () =>
+      comingSoonSelected
+        ? {
+            completed: 0,
+            total: 0,
+            percent: null,
+            label: "Coming-soon branch — Royal Orchard opening percentage is not inherited",
+            live: false,
+            error: false,
+            offline: false,
+          }
+        : computeOpeningPercentage(readinessItems, { readinessError, readinessOffline }),
+    [comingSoonSelected, readinessError, readinessItems, readinessOffline],
+  );
+
+  const ownerDecisions = useMemo(
+    () => (comingSoonSelected ? [] : buildOwnerDecisionQueue(readinessItems, branchLabel)),
+    [branchLabel, comingSoonSelected, readinessItems],
+  );
+
+  const completedItems = useMemo(() => recentlyCompletedItems(readinessItems), [readinessItems]);
+
   const cards = useMemo(() => {
     const kpis = ops.data?.kpis;
     const opsFailed = ops.state === "ERROR" || ops.state === "OFFLINE";
-    const openingFailed = opening.state === "ERROR" || opening.state === "OFFLINE";
-    const reservationsFailed = reservations.state === "ERROR" || reservations.state === "OFFLINE";
-    const waitlistFailed = waitlist.state === "ERROR" || waitlist.state === "OFFLINE";
-    const healthFailed = health.state === "ERROR" || health.state === "OFFLINE";
+    const openingFailed = readinessError || readinessOffline;
     return buildMianxAgentCards({
       nowIso: now.toISOString(),
       branchLabel,
@@ -185,30 +266,33 @@ export default function AdminAiTeam() {
       healthOk: healthFailed ? null : health.data ? health.data.api.status === "ok" : null,
       healthError: healthFailed,
       isSuperAdmin,
+      readinessItems,
+      openingPercentage,
     });
   }, [
     branchLabel,
     health.data,
-    health.state,
+    healthFailed,
     isSuperAdmin,
     northern?.status,
     now,
     opening.data,
-    opening.state,
+    openingPercentage,
     ops.data,
     ops.state,
+    readinessError,
+    readinessItems,
+    readinessOffline,
     reservations.data,
-    reservations.state,
+    reservationsFailed,
     selectedBranchMeta?.status,
     waitlist.data,
-    waitlist.state,
+    waitlistFailed,
   ]);
 
   const summary = useMemo(() => summarizeAgentStatuses(cards), [cards]);
-  const decisions = cards.filter((c) => c.humanApprovalRequired);
   const blockers = cards.filter((c) => c.status === "BLOCKED" || c.status === "WAITING_ON_HUMAN");
-  const completed = cards.filter((c) => c.status === "COMPLETE");
-  const nextSeven = cards.slice(0, 7);
+  const nextSeven = ownerDecisions.slice(0, 7);
 
   if (isAuthLoading) {
     return (
@@ -232,9 +316,6 @@ export default function AdminAiTeam() {
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--brand-red)]">
           Telepizza Opening Mission
         </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--admin-ink)]">
-          Mianx.ai Operating Team
-        </h1>
         <p className="mt-2 max-w-3xl text-sm text-[var(--admin-muted)]">
           Status → Problem → Next Action. Honest operating signals only — no fabricated agent chat and no
           autonomous background workforce.
@@ -258,7 +339,7 @@ export default function AdminAiTeam() {
           <AdminSurfaceHeader title="Opening countdown" description="Canonical target 14 Aug 2026 · 10:00 Asia/Karachi" />
           <AdminSurfaceBody>
             <p className="text-3xl font-semibold tabular-nums text-[var(--admin-ink)]" aria-live="polite">
-              {countdown.mode === "before" ? countdown.label : countdown.label}
+              {countdown.label}
             </p>
             {countdown.mode === "before" ? (
               <p className="mt-2 text-xs text-[var(--admin-muted)]">
@@ -267,30 +348,21 @@ export default function AdminAiTeam() {
             ) : null}
           </AdminSurfaceBody>
         </AdminSurface>
-        <AdminSurface>
-          <AdminSurfaceHeader title="Readiness" />
+        <AdminSurface className="sm:col-span-2">
+          <AdminSurfaceHeader title="Opening readiness %" description="Required checks only — not agent heuristics" />
           <AdminSurfaceBody>
-            <p className="text-3xl font-semibold tabular-nums">{summary.readinessPct}%</p>
-            <p className="mt-1 text-xs text-[var(--admin-muted)]">Derived from agent statuses</p>
-          </AdminSurfaceBody>
-        </AdminSurface>
-        <AdminSurface>
-          <AdminSurfaceHeader title="COMPLETE / ACTIVE" />
-          <AdminSurfaceBody>
-            <p className="text-3xl font-semibold tabular-nums">
-              {summary.counts.COMPLETE}/{summary.counts.ACTIVE}
+            <OpeningPercentageBanner percentage={openingPercentage} comingSoon={comingSoonSelected} />
+            <p className="mt-2 text-xs text-[var(--admin-muted)]">
+              Critical blockers: {comingSoonSelected ? "—" : criticalBlockerCount(readinessItems)} · Waiting on
+              human: {comingSoonSelected ? "—" : waitingOnHumanCount(readinessItems)}
             </p>
           </AdminSurfaceBody>
         </AdminSurface>
         <AdminSurface>
-          <AdminSurfaceHeader title="BLOCKED / HUMAN" />
+          <AdminSurfaceHeader title="Agents ACTIVE" />
           <AdminSurfaceBody>
-            <p className="text-3xl font-semibold tabular-nums">
-              {summary.counts.BLOCKED}/{summary.counts.WAITING_ON_HUMAN}
-            </p>
-            <p className="mt-1 text-xs text-[var(--admin-muted)]">
-              Owner decisions pending: {summary.decisionPending}
-            </p>
+            <p className="text-3xl font-semibold tabular-nums">{summary.counts.ACTIVE}</p>
+            <p className="mt-1 text-xs text-[var(--admin-muted)]">COMPLETE: {summary.counts.COMPLETE}</p>
           </AdminSurfaceBody>
         </AdminSurface>
       </section>
@@ -330,23 +402,13 @@ export default function AdminAiTeam() {
         )}
       </section>
 
-      <section className="mb-8" aria-label="Owner decision queue">
-        <AdminSectionTitle eyebrow="Owner" title="Owner Decision Queue" description="WAITING_ON_HUMAN and approval-required items." />
-        <ul className="space-y-2">
-          {decisions.map((d) => (
-            <li key={`decision-${d.id}`} className="rounded-xl border border-[var(--admin-border)] bg-white px-4 py-3 text-sm">
-              <span className="font-semibold text-[var(--admin-ink)]">{d.name}</span>
-              <span className="text-[var(--admin-muted)]"> — {d.nextAction}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <OwnerDecisionQueueView decisions={ownerDecisions} />
 
       <section className="mb-8" aria-label="Mianx.ai team agents">
         <AdminSectionTitle
           eyebrow="Team"
           title="Mianx.ai Team"
-          description="Fourteen operating agents. LIVE only from successful API responses."
+          description="Fourteen operating agents. LIVE only from successful API responses. No fake background-working animation."
         />
         <OperationalStatusBanner
           state={ops.state}
@@ -355,7 +417,12 @@ export default function AdminAiTeam() {
           onRetry={ops.retry}
           correlationId={ops.correlationId}
         />
-        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{cards.map((agent) => <AgentCardView key={agent.id} agent={agent} />)}</div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-testid="mianx-agent-grid">
+          {cards.map((agent) => (
+            <AgentCardView key={agent.id} agent={agent} />
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-[var(--admin-muted)]">Agents rendered: {cards.length} (required 14)</p>
       </section>
 
       <section className="mb-8 grid gap-6 lg:grid-cols-2" aria-label="Signals and recent work">
@@ -374,13 +441,11 @@ export default function AdminAiTeam() {
         <div>
           <AdminSectionTitle eyebrow="Done" title="Recently Completed Work" />
           <AdminSurface>
-            <AdminSurfaceBody className="space-y-2 text-sm text-[var(--admin-muted)]">
-              <p>PR #111 reservations/waitlist query contract — Production smoke PASS</p>
-              <p>PR #102 Decision Log — Append-only Record</p>
-              {completed.length === 0 ? <p>No agents marked COMPLETE in this session.</p> : null}
-              {completed.map((c) => (
-                <p key={`done-${c.id}`}>{c.name}</p>
-              ))}
+            <AdminSurfaceBody>
+              <RecentlyCompletedList items={completedItems} />
+              <p className="mt-3 text-xs text-[var(--admin-muted)]">
+                Software delivery evidence (PR #111, #102) is separate from restaurant opening readiness.
+              </p>
             </AdminSurfaceBody>
           </AdminSurface>
         </div>
@@ -389,9 +454,10 @@ export default function AdminAiTeam() {
       <section className="mb-8" aria-label="Next seven actions">
         <AdminSectionTitle eyebrow="Plan" title="Next Seven Actions" />
         <ol className="list-decimal space-y-2 pl-5 text-sm text-[var(--admin-muted)]">
+          {nextSeven.length === 0 ? <li>No urgent Owner decisions queued.</li> : null}
           {nextSeven.map((a) => (
             <li key={`next-${a.id}`}>
-              <strong className="text-[var(--admin-ink)]">{a.name}:</strong> {a.nextAction}
+              <strong className="text-[var(--admin-ink)]">{a.title}:</strong> {a.nextAction}
             </li>
           ))}
         </ol>

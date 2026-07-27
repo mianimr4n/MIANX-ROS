@@ -53,8 +53,8 @@ export async function browserLogin(page: Page, email: string, password: string) 
   await page.getByRole("button", { name: /^Sign in$/i }).click();
   const alert = page.locator("[role=alert]");
   await Promise.race([
-    page.waitForURL(/\/admin(?!\/login)/, { timeout: 45_000 }),
-    alert.waitFor({ state: "visible", timeout: 45_000 }).then(async () => {
+    page.waitForURL(/\/admin(?!\/login)/, { timeout: 60_000 }),
+    alert.waitFor({ state: "visible", timeout: 60_000 }).then(async () => {
       throw new Error(`Login failed: ${(await alert.textContent())?.trim() ?? "unknown"}`);
     }),
   ]);

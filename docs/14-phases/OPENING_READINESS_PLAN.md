@@ -58,14 +58,44 @@ Repository evidence under `docs/`, `apps/website`, `backend/api`, `supabase/`, p
 ## Target
 **14 August 2026 · 10:00 AM · Asia/Karachi** — Royal Orchard.
 
+## Software completion versus restaurant opening readiness
+
+**Software delivery completion** may reach 100% when opening-scope pages exist, navigation works, data states are honest, and responsive/accessibility tests pass.
+
+**Restaurant opening readiness** is operational. It cannot become 100% until real people, devices, payments, notifications, training, and Founder go/no-go are verified.
+
+Do not claim restaurant ready to open, staff ready, payment ready, devices ready, notifications ready, training complete, or Founder go-live approved without verified evidence.
+
+## Opening readiness percentage contract
+
+- Only `requiredForOpening=true` and `contributesToPercentage=true` items enter the denominator.
+- COMPLETE earns credit. ACTIVE, WAITING_ON_HUMAN, BLOCKED, ERROR, OFFLINE, FOUNDATION, and UNAVAILABLE do not.
+- Display must show completed/total, e.g. `Opening readiness: 4 of 18 required checks complete — 22%`.
+- API ERROR/OFFLINE must not retain a misleading LIVE percentage.
+- Optional ERP foundation items must not reduce the operational opening percentage unless classified required for launch.
+- Source model: `apps/website/client/src/lib/opening-readiness-model.ts` shared by `/admin/ai-team`, `/admin/dashboard`, `/admin/branch`.
+
+## Required Owner decisions
+
+1. Assign real Royal Orchard operating staff (canonical roles only — no Founder/Owner role codes)
+2. Configure floor and tables
+3. Approve booking policy
+4. Decide payment methods and verify provider/terminal
+5. Configure notification channels (do not claim WhatsApp Connected)
+6. Verify onsite POS/KDS/printer/rider devices
+7. Verify internet and UPS contingency
+8. Schedule staff training and full rehearsal
+9. Review final go/no-go evidence
+10. Authorize opening
+11. Keep Northern Bypass coming-soon unless separately authorized
+
 ## Already complete (verified)
 - Decision Log append-only (PR #102)
 - Reservations/waitlist query contract (PR #111) Production smoke PASS
-- Owner documentation foundation + Mianx.ai Team Center (this slice)
+- Owner documentation foundation + Mianx.ai Team Center
+- Order/Kitchen/Delivery operational truth alignment
+- Owner readiness command center model + Decision Queue (this slice)
 
 ## Next on the same branch
-1. Orders/Kitchen/Delivery truth alignment
-2. RBAC wording alignment
-3. Full opening dashboard completion
-4. Full opening-scope Production smoke
-5. Single PR when scope complete
+1. Full opening-scope Production smoke (read-only)
+2. Single PR when Founder authorizes

@@ -23,9 +23,10 @@ import {
   buildLiveActivity,
   buildMianxInsightItems,
 } from "@/components/admin/dashboard/ExecutiveWidgets";
-import { MianxTeamSummaryCard } from "@/components/admin/dashboard/MianxTeamSummaryCard";
+import { OpeningExecSummaryBridge } from "@/components/admin/dashboard/OpeningExecSummaryBridge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
+import { useBranch } from "@/contexts/BranchContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import {
   canAccessAdminOrdersApi,
@@ -120,6 +121,7 @@ function kpiState(opState: OperationalState, unavailable?: boolean): AdminKpiSta
 export default function AdminDashboard() {
   const { session, permissions, isSuperAdmin, roles, profile, branchIds } = useAuth();
   const { branchIdFilter, label: branchLabel, setSelection, allowedBranches } = useAdminBranch();
+  const { allBranches } = useBranch();
   const [, setLocation] = useLocation();
   const [filters, setFilters] = useState<ExecutiveDashboardFilters>(DEFAULT_EXECUTIVE_FILTERS);
   const [now] = useState(() => new Date());
@@ -415,6 +417,11 @@ export default function AdminDashboard() {
             branchId={branchIdFilter}
             enabled={gateReady}
             showTechnicalDetail={isSuperAdmin}
+            variant="compact"
+            northernBypassStatus={
+              allBranches.find((b) => b.code === "northern-bypass" || /northern/i.test(b.name))?.status ??
+              "coming-soon"
+            }
           />
           {!comingSoonBranch ? (
             <TableServiceSummary
@@ -436,6 +443,11 @@ export default function AdminDashboard() {
             branchId={occupancyAnchorBranchId}
             enabled={gateReady}
             showTechnicalDetail={isSuperAdmin}
+            variant="compact"
+            northernBypassStatus={
+              allBranches.find((b) => b.code === "northern-bypass" || /northern/i.test(b.name))?.status ??
+              "coming-soon"
+            }
           />
           {!comingSoonBranch && canAccessTableService({ roles, permissions, isSuperAdmin }) ? (
             <p className="mb-8 rounded-xl border bg-[var(--admin-soft)] px-4 py-3 text-sm text-[var(--admin-muted)]">
@@ -580,7 +592,19 @@ export default function AdminDashboard() {
       {!comingSoonBranch ? (
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]">
         <div className="space-y-6">
-          {isSuperAdmin ? <MianxTeamSummaryCard /> : null}
+          {isSuperAdmin ? (
+            <OpeningExecSummaryBridge
+              token={token}
+              branchId={branchIdFilter ?? occupancyAnchorBranchId}
+              enabled={gateReady}
+              comingSoon={Boolean(comingSoonBranch)}
+              northernBypassStatus={
+                allBranches.find((b) => b.code === "northern-bypass" || /northern/i.test(b.name))?.status ??
+                "coming-soon"
+              }
+              branchLabel={branchLabel}
+            />
+          ) : null}
           <AiInsightsPanel items={mianxItems} loading={loading && !data} />
           <LiveActivityPanel items={activity} />
         </div>

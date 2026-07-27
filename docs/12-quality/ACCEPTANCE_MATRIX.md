@@ -30,31 +30,21 @@ Verified against repository main `17cc5e9cee8f65eb5c10fcc069ea3b863931a8b8` (inc
 - Owner/Founder database roles (display labels only; authorization remains `super-admin` with `branch_id = null`)
 
 ## Known blockers
-- Orders/Kitchen/Delivery truth alignment remains a follow-on on `feature/opening-readiness-final`
-- Protected test order `TP-260727-000001` stays `pending` (Behari Roll) with no kitchen ticket until confirmation
+- Real Royal Orchard staff, devices, payment provider verification, and Founder go/no-go remain Owner decisions
+- Protected test order `TP-260727-000001` stays `pending` until intentional confirmation
 
 ## Owner decision required
-Confirm opening-day staffing, devices, and provider readiness for Royal Orchard before 14 August 2026 10:00 Asia/Karachi.
+Use `/admin/ai-team` Owner Decision Queue. Software percentage is not restaurant ready to open.
 
 ## Next implementation action
-Continue opening-readiness work on the same branch: OMS/KDS/delivery truth, RBAC wording, full opening dashboard completion.
-
-## Source of truth
-Repository evidence under `docs/`, `apps/website`, `backend/api`, `supabase/`, plus Production smoke evidence outside Git.
-
-## Last verified date
-2026-07-28
-
-## Related routes/files/services
-- Website: `apps/website`
-- API: `backend/api`
-- Admin: `/admin/*`
-- Team Center: `/admin/ai-team`
+Founder reviews go/no-go evidence; keep Northern Bypass `coming-soon` unless separately authorized.
 
 ## Acceptance criteria
 - Documentation states LIVE/DERIVED/FOUNDATION/UNAVAILABLE honestly
+- Opening readiness percentage shows completed/total denominator
+- No fake AI autonomy or background-working claims
+- Northern Bypass remains `coming-soon` with separate authorization
 - No claim of unverified Kubernetes/microservices/Prisma/mobile/event-bus in Production
-- Northern Bypass remains `coming-soon`
 ## Foundation slice gates
 | Gate | Required |
 | --- | --- |

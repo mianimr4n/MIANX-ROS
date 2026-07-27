@@ -30,14 +30,15 @@ Verified against repository main `17cc5e9cee8f65eb5c10fcc069ea3b863931a8b8` (inc
 - Owner/Founder database roles (display labels only; authorization remains `super-admin` with `branch_id = null`)
 
 ## Known blockers
-- Orders/Kitchen/Delivery truth alignment remains a follow-on on `feature/opening-readiness-final`
-- Protected test order `TP-260727-000001` stays `pending` (Behari Roll) with no kitchen ticket until confirmation
+- Opening Readiness Lead remains WAITING_ON_HUMAN until real Royal Orchard staff are assigned
+- Protected test order `TP-260727-000001` stays `pending` until intentional confirmation
 
 ## Owner decision required
-Confirm opening-day staffing, devices, and provider readiness for Royal Orchard before 14 August 2026 10:00 Asia/Karachi.
+Assign named staff using canonical roles only. Do not invent Founder/Owner role codes.
 
 ## Next implementation action
-Continue opening-readiness work on the same branch: OMS/KDS/delivery truth, RBAC wording, full opening dashboard completion.
+Agents consume `opening-readiness-model.ts`. Keep exactly 14 agents with unique IDs.
+
 
 ## Source of truth
 Repository evidence under `docs/`, `apps/website`, `backend/api`, `supabase/`, plus Production smoke evidence outside Git.

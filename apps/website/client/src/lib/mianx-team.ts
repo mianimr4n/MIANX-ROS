@@ -1,3 +1,5 @@
+import type { EvaluatedReadinessItem, OpeningPercentage } from "@/lib/opening-readiness-model";
+
 /**
  * Mianx.ai Team — typed fourteen-agent registry (no autonomous runtime).
  */
@@ -158,7 +160,20 @@ export type MianxTeamSignals = {
   healthOk: boolean | null;
   healthError: boolean;
   isSuperAdmin: boolean;
+  /** Shared opening-readiness model — drives Owner-facing agents. */
+  readinessItems?: EvaluatedReadinessItem[] | null;
+  openingPercentage?: OpeningPercentage | null;
 };
+
+function itemById(items: EvaluatedReadinessItem[] | null | undefined, id: string) {
+  return items?.find((i) => i.id === id) ?? null;
+}
+
+function peopleWaiting(items: EvaluatedReadinessItem[] | null | undefined) {
+  if (!items) return null;
+  const people = items.filter((i) => i.category === "PEOPLE" && i.status !== "COMPLETE");
+  return people;
+}
 
 function card(
   def: MianxAgentDefinition,
@@ -175,21 +190,27 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
   const defs = MIANX_AGENT_REGISTRY;
   return defs.map((def) => {
     switch (def.id) {
-      case "chief-of-staff":
+      case "chief-of-staff": {
+        const pct = signals.openingPercentage;
+        const waitingPeople = peopleWaiting(signals.readinessItems);
         return card(def, {
-          status: "ACTIVE",
-          verifiedSignal: "Opening mission tracked in Team Center",
-          currentProblem: "Owner decisions still gate opening staffing and provider readiness",
+          status: waitingPeople && waitingPeople.length > 0 ? "WAITING_ON_HUMAN" : "ACTIVE",
+          verifiedSignal: pct?.label ?? "Opening mission tracked in Team Center",
+          currentProblem:
+            waitingPeople && waitingPeople.length > 0
+              ? "Owner decisions still gate staffing, devices, payments, and go/no-go."
+              : "Owner decisions still gate remaining opening blockers.",
           nextAction: "Review Owner Decision Queue and clear WAITING_ON_HUMAN items",
           humanApprovalRequired: true,
           sourceType: "CONFIGURED_PLAN",
           lastUpdatedIso: updated,
         });
-      case "opening-readiness":
+      }
+      case "opening-readiness": {
         if (signals.openingError) {
           return card(def, {
             status: "UNAVAILABLE",
-            verifiedSignal: "Opening readiness API error",
+            verifiedSignal: "Opening readiness API error — not LIVE",
             currentProblem: "Could not load opening readiness for the selected branch",
             nextAction: "Retry opening readiness and confirm branch selection",
             humanApprovalRequired: false,
@@ -197,7 +218,21 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
             lastUpdatedIso: updated,
           });
         }
-        if (signals.openingGrade == null) {
+        const waitingPeople = peopleWaiting(signals.readinessItems);
+        if (waitingPeople && waitingPeople.length > 0) {
+          return card(def, {
+            status: "WAITING_ON_HUMAN",
+            verifiedSignal: signals.openingPercentage?.label ?? "Required opening checks incomplete",
+            currentProblem:
+              "No real branch manager, cashier, kitchen, rider, host or waiter accounts are assigned to Royal Orchard (and support coverage remains Founder-owned).",
+            nextAction:
+              "Founder invites named staff using canonical roles and Royal Orchard branch scope.",
+            humanApprovalRequired: true,
+            sourceType: "LIVE_API",
+            lastUpdatedIso: updated,
+          });
+        }
+        if (signals.openingGrade == null && !signals.readinessItems) {
           return card(def, {
             status: "ACTIVE",
             verifiedSignal: "Opening readiness not yet loaded",
@@ -210,32 +245,37 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
         }
         return card(def, {
           status: (signals.openingBlockers ?? 0) > 0 ? "WAITING_ON_HUMAN" : "ACTIVE",
-          verifiedSignal: `Grade ${signals.openingGrade}; blockers ${signals.openingBlockers ?? 0}`,
+          verifiedSignal:
+            signals.openingPercentage?.label ??
+            `Grade ${signals.openingGrade}; blockers ${signals.openingBlockers ?? 0}`,
           currentProblem:
             (signals.openingBlockers ?? 0) > 0
-              ? "Stored opening checks still incomplete"
+              ? "Required opening checks still incomplete — software % is not restaurant ready"
               : "Continue monitoring people, devices, and providers",
           nextAction:
             (signals.openingBlockers ?? 0) > 0
-              ? "Complete opening readiness blockers on Branch dashboard"
-              : "Confirm opening-day staffing roster",
+              ? "Resolve Owner Decision Queue items on this page"
+              : "Confirm opening-day staffing roster and go/no-go evidence",
           humanApprovalRequired: (signals.openingBlockers ?? 0) > 0,
           sourceType: "LIVE_API",
           lastUpdatedIso: updated,
         });
-      case "branch-operations":
+      }
+      case "branch-operations": {
+        const northern = itemById(signals.readinessItems, "gov-northern-bypass");
         return card(def, {
           status: signals.branchStatus === "coming-soon" ? "BLOCKED" : "ACTIVE",
           verifiedSignal: `${signals.branchLabel}: ${signals.branchStatus ?? "unknown"}; Northern Bypass: ${signals.northernBypassStatus ?? "unknown"}`,
           currentProblem:
-            signals.northernBypassStatus === "coming-soon"
+            northern?.status === "COMPLETE"
               ? "Northern Bypass correctly remains coming-soon"
-              : "Confirm branch operating status matches Production",
-          nextAction: "Keep Northern Bypass coming-soon; operate Royal Orchard only",
-          humanApprovalRequired: false,
+              : northern?.problem ?? "Confirm branch operating status matches Production",
+          nextAction: northern?.nextAction ?? "Keep Northern Bypass coming-soon; operate Royal Orchard only",
+          humanApprovalRequired: true,
           sourceType: "DERIVED_API",
           lastUpdatedIso: updated,
         });
+      }
       case "order-control":
         if (signals.ordersError) {
           return card(def, {
@@ -310,16 +350,22 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
           sourceType: signals.deliveriesActive == null ? "CONFIGURED_PLAN" : "LIVE_API",
           lastUpdatedIso: updated,
         });
-      case "pos-cash":
+      case "pos-cash": {
+        const pos = itemById(signals.readinessItems, "device-pos");
+        const pay = itemById(signals.readinessItems, "payments-provider");
         return card(def, {
-          status: "ACTIVE",
-          verifiedSignal: "POS route available for authorized cashiers/BM/SA",
-          currentProblem: "POS readiness is operational — not accounting settlement",
-          nextAction: "Spot-check POS + menu reachability on Royal Orchard devices",
-          humanApprovalRequired: false,
-          sourceType: "CONFIGURED_PLAN",
+          status: pos?.status === "COMPLETE" && pay?.status === "COMPLETE" ? "ACTIVE" : "WAITING_ON_HUMAN",
+          verifiedSignal: pos
+            ? `POS device: ${pos.status}; payment provider: ${pay?.status ?? "unknown"}`
+            : "POS route available for authorized cashiers/BM/SA",
+          currentProblem:
+            pos?.problem ?? "POS readiness is operational — not accounting settlement or provider verification",
+          nextAction: pos?.nextAction ?? "Spot-check POS + menu reachability on Royal Orchard devices",
+          humanApprovalRequired: true,
+          sourceType: pos?.sourceType === "FOUNDATION" ? "FOUNDATION" : "CONFIGURED_PLAN",
           lastUpdatedIso: updated,
         });
+      }
       case "dine-in-reservations":
         if (signals.reservationsError || signals.waitlistError) {
           return card(def, {
@@ -332,18 +378,29 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
             lastUpdatedIso: updated,
           });
         }
-        return card(def, {
-          status: "ACTIVE",
-          verifiedSignal: `Reservations ${signals.reservationsCount ?? "—"} · Waitlist ${signals.waitlistCount ?? "—"}`,
-          currentProblem: "Confirm intentional bookings vs EMPTY for opening day",
-          nextAction: "Review Reservations and Waitlist for Royal Orchard",
-          humanApprovalRequired: false,
-          sourceType:
-            signals.reservationsCount == null && signals.waitlistCount == null
-              ? "CONFIGURED_PLAN"
-              : "LIVE_API",
-          lastUpdatedIso: updated,
-        });
+        {
+          const floor = itemById(signals.readinessItems, "floor-plan");
+          const policy = itemById(signals.readinessItems, "booking-policy");
+          const incomplete = [floor, policy].some((i) => i && i.status !== "COMPLETE");
+          return card(def, {
+            status: incomplete ? "WAITING_ON_HUMAN" : "ACTIVE",
+            verifiedSignal: `Reservations ${signals.reservationsCount ?? "—"} · Waitlist ${signals.waitlistCount ?? "—"}`,
+            currentProblem:
+              incomplete
+                ? floor?.problem ?? policy?.problem ?? "Floor/booking setup incomplete"
+                : "Confirm intentional bookings vs EMPTY for opening day",
+            nextAction:
+              incomplete
+                ? floor?.nextAction ?? policy?.nextAction ?? "Configure floor, tables, and booking policy"
+                : "Review Reservations and Waitlist for Royal Orchard",
+            humanApprovalRequired: incomplete,
+            sourceType:
+              signals.reservationsCount == null && signals.waitlistCount == null
+                ? "CONFIGURED_PLAN"
+                : "LIVE_API",
+            lastUpdatedIso: updated,
+          });
+        }
       case "menu-pricing":
         return card(def, {
           status: "ACTIVE",
@@ -354,16 +411,20 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
           sourceType: "RELEASE_EVIDENCE",
           lastUpdatedIso: updated,
         });
-      case "customer-support":
+      case "customer-support": {
+        const support = itemById(signals.readinessItems, "people-customer-support");
         return card(def, {
-          status: "ACTIVE",
-          verifiedSignal: "Support surface present for Owner shell",
-          currentProblem: "Customer-contact staffing still Owner-owned",
-          nextAction: "Confirm WhatsApp/support coverage for opening week",
+          status: support?.status === "COMPLETE" ? "ACTIVE" : "WAITING_ON_HUMAN",
+          verifiedSignal: support
+            ? `Customer-support coverage: ${support.status}`
+            : "Support surface present for Owner shell",
+          currentProblem: support?.problem ?? "Customer-contact staffing still Owner-owned",
+          nextAction: support?.nextAction ?? "Confirm WhatsApp/support coverage for opening week",
           humanApprovalRequired: true,
-          sourceType: "CONFIGURED_PLAN",
+          sourceType: support?.sourceType ?? "CONFIGURED_PLAN",
           lastUpdatedIso: updated,
         });
+      }
       case "inventory-purchasing":
         return card(def, {
           status: "FOUNDATION",
@@ -449,9 +510,5 @@ export function summarizeAgentStatuses(cards: MianxAgentCard[]) {
   };
   for (const c of cards) counts[c.status] += 1;
   const decisionPending = cards.filter((c) => c.humanApprovalRequired).length;
-  const total = cards.length || 1;
-  const readinessPct = Math.round(
-    ((counts.COMPLETE + counts.ACTIVE * 0.7 + counts.FOUNDATION * 0.2) / total) * 100,
-  );
-  return { counts, decisionPending, readinessPct: Math.min(100, Math.max(0, readinessPct)) };
+  return { counts, decisionPending };
 }

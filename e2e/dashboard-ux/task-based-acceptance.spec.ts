@@ -52,7 +52,7 @@ const personas: Persona[] = [
     primary: /continue setup/i,
     tasks: [
       { name: "Continue setup", destination: "/admin/settings", linkName: /continue setup/i },
-      { name: "Review readiness", text: /opening readiness|complete opening readiness/i },
+      { name: "Review readiness", text: /opening readiness|review opening plan|open mianx\.ai team/i },
       { name: "Find setup shortcuts", text: /update menu|edit floor plan|manage staff|start here/i },
     ],
   },
@@ -148,10 +148,10 @@ const personas: Persona[] = [
     key: "northern-bypass-manager",
     route: "/admin/branch",
     account: () => d4Account("northern_bypass_bm"),
-    primary: /complete opening readiness/i,
+    primary: /open mianx\.ai team|review opening plan|resolve setup blockers/i,
     tasks: [
       { name: "Identify blocker", text: /needs attention|blocker|setup needed|coming soon/i },
-      { name: "Open setup", destination: "/admin/settings" },
+      { name: "Open setup", destination: "/admin/ai-team", linkName: /open mianx\.ai team/i },
       { name: "Confirm coming-soon", text: /coming soon|coming-soon/i },
     ],
   },
