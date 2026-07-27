@@ -37,6 +37,7 @@ import AdminIndexRedirect from "./pages/admin/AdminIndexRedirect";
 import AdminUnauthorized from "./pages/admin/AdminUnauthorized";
 import AdminComingSoon from "./pages/admin/AdminComingSoon";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminAiTeam from "./pages/admin/AdminAiTeam";
 import AdminCashierHome from "./pages/admin/AdminCashierHome";
 import AdminHostHome from "./pages/admin/AdminHostHome";
 import AdminWaiterHome from "./pages/admin/AdminWaiterHome";
@@ -175,6 +176,7 @@ function Router() {
       <Route path="/admin/floor-plan" component={AdminFloorPlan} />
       <Route path="/admin/reservations" component={AdminReservations} />
       <Route path="/admin/waitlist" component={AdminWaitlist} />
+      <Route path="/admin/ai-team" component={AdminAiTeam} />
       {/* Not yet implemented Owner surfaces */}
       <Route path="/admin/promotions" component={PromotionsComingSoon} />
       <Route path="/admin/support" component={SupportComingSoon} />

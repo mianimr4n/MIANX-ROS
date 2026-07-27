@@ -1,7 +1,7 @@
-﻿# docs/09-observability
+# 09-observability
 
-**Class:** FUTURE (TEAS slot)
+**Status:** ACTIVE
 
-Reserved for Enterprise Architecture Standards filings. No ACTIVE content yet.
+Canonical content: [PRODUCTION_HEALTH_SIGNALS.md](./PRODUCTION_HEALTH_SIGNALS.md)
 
-See [Documentation Map](../README.md).
+See also [DOCUMENTATION_MAP.md](../DOCUMENTATION_MAP.md).

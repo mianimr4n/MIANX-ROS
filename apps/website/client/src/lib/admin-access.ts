@@ -129,6 +129,11 @@ export function canAccessAdminSettings(input: AdminPrincipalInput): boolean {
   return input.isSuperAdmin || input.permissions.includes("admin.access");
 }
 
+/** Mianx.ai Team Center — super-admin only (Owner/Founder are display labels). */
+export function canAccessAiTeam(input: AdminPrincipalInput): boolean {
+  return input.isSuperAdmin;
+}
+
 /** D3 — table service reads (live floor, reservations, waitlist): reservation.read. */
 export function canAccessTableService(input: AdminPrincipalInput): boolean {
   return (
@@ -351,6 +356,7 @@ export type AdminNavKey =
   | "staff"
   | "finance"
   | "reports"
+  | "ai-team"
   | "ai-command-center"
   | "integrations"
   | "settings";
@@ -381,6 +387,7 @@ const NAV_BLUEPRINT: Array<
     requiresSettings?: boolean;
     requiresTableService?: boolean;
     requiresFloorConfig?: boolean;
+    requiresAiTeam?: boolean;
     ownerOnly?: boolean;
   }
 > = [
@@ -407,6 +414,7 @@ const NAV_BLUEPRINT: Array<
   { key: "staff", label: "Staff schedule", href: "/admin/hr", group: "Management", requiresHr: true },
   { key: "finance", label: "Finance", href: "/admin/finance", group: "Management", requiresFinance: true, ownerOnly: true },
   { key: "reports", label: "Reports", href: "/admin/reports", group: "Management", requiresReports: true },
+  { key: "ai-team", label: "Mianx.ai Team", href: "/admin/ai-team", group: "Intelligence", requiresAiTeam: true, ownerOnly: true },
   { key: "ai-command-center", label: "AI Command Center", href: "/admin/ai-command-center", group: "Intelligence", ownerOnly: true },
   { key: "integrations", label: "Integrations", href: "/admin/integrations", group: "System", ownerOnly: true },
   { key: "settings", label: "Settings", href: "/admin/settings", group: "System", requiresSettings: true, ownerOnly: true },
@@ -428,6 +436,7 @@ export function getAdminNavItems(input: AdminPrincipalInput): AdminNavItem[] {
   const settingsApi = canAccessAdminSettings(input);
   const tableServiceApi = canAccessTableService(input);
   const floorConfigApi = canManageFloorConfiguration(input);
+  const aiTeamApi = canAccessAiTeam(input);
   const bmOnly = isBranchManagerOnly(input);
   const kitchenOnly = isKitchenOnly(input);
 
@@ -455,7 +464,8 @@ export function getAdminNavItems(input: AdminPrincipalInput): AdminNavItem[] {
           (item.requiresHr && hrApi) ||
           (item.requiresSettings && settingsApi) ||
           (item.requiresTableService && tableServiceApi) ||
-          (item.requiresFloorConfig && floorConfigApi),
+          (item.requiresFloorConfig && floorConfigApi) ||
+          (item.requiresAiTeam && aiTeamApi),
       ),
     };
   });
@@ -580,6 +590,7 @@ export function filterVisibleAdminNav(input: AdminPrincipalInput): AdminNavItem[
       return canAccessTableService(input);
     }
     if (item.key === "floor-plan") return canManageFloorConfiguration(input);
+    if (item.key === "ai-team") return canAccessAiTeam(input);
     // Coming soon / reserved — Owner shell only
     return !bmOnly && !kitchenOnly;
   });

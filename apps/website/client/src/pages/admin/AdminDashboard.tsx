@@ -23,6 +23,7 @@ import {
   buildLiveActivity,
   buildMianxInsightItems,
 } from "@/components/admin/dashboard/ExecutiveWidgets";
+import { MianxTeamSummaryCard } from "@/components/admin/dashboard/MianxTeamSummaryCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
@@ -239,6 +240,14 @@ export default function AdminDashboard() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {isSuperAdmin ? (
+            <Link
+              href="/admin/ai-team"
+              className="inline-flex min-h-11 items-center rounded-lg border border-[var(--admin-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--admin-ink)] transition-colors hover:bg-[var(--admin-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)]"
+            >
+              Mianx.ai Team
+            </Link>
+          ) : null}
           <Link
             href="/admin/branch"
             className="inline-flex min-h-11 items-center rounded-lg bg-[var(--brand-red)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--brand-red-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)] motion-reduce:transition-none"
@@ -571,6 +580,7 @@ export default function AdminDashboard() {
       {!comingSoonBranch ? (
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]">
         <div className="space-y-6">
+          {isSuperAdmin ? <MianxTeamSummaryCard /> : null}
           <AiInsightsPanel items={mianxItems} loading={loading && !data} />
           <LiveActivityPanel items={activity} />
         </div>

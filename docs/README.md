@@ -1,205 +1,76 @@
 # Telepizza Documentation Map
 
-**Status:** ACTIVE index (post repository cleanup consolidation)  
-**Authority:** Living navigation spine for engineers and Founders  
-**Code/schema:** Not modified by documentation cleanup
+**Status:** ACTIVE Owner-first documentation spine
+**Authority:** Navigation for Founder / Owner (super-admin) and engineering
+**Last verified:** 2026-07-28
+
+---
+
+## Start here (Owner)
+
+| Doc | Why |
+| --- | --- |
+| [DOCUMENTATION_MAP.md](./DOCUMENTATION_MAP.md) | Full canonical map |
+| [00-governance/PROJECT_STATUS.md](./00-governance/PROJECT_STATUS.md) | Opening status |
+| [14-phases/OPENING_READINESS_PLAN.md](./14-phases/OPENING_READINESS_PLAN.md) | Path to 14 August |
+| [11-ai/MIANX_AI_TEAM_OPERATING_MODEL.md](./11-ai/MIANX_AI_TEAM_OPERATING_MODEL.md) | Mianx.ai Team Center model |
+| [15-runbooks/OPENING_DAY_RUNBOOK.md](./15-runbooks/OPENING_DAY_RUNBOOK.md) | Opening day actions |
 
 ---
 
 ## Repository Governance
 
-This repository follows **Repository Governance v1**.
-
-Documentation is organized to clearly separate:
-
-- Architecture
-- Requirements
-- Repository Evidence
-- Acceptance
-- Release
-
 Authority chain:
 
 ```text
-README.md
-        ↓
-AGENTS.md
-        ↓
-docs/README.md
-        ↓
-docs/00-governance/
-        ↓
-Architecture
-        ↓
-Requirements
-        ↓
-Repository Evidence
-        ↓
-Acceptance Records
-        ↓
-Release Records
+README.md → AGENTS.md → docs/README.md → docs/00-governance/ → Architecture → Requirements → Evidence → Acceptance → Release
 ```
 
-### Documentation Authority
+Repository evidence is the authoritative implementation source. Planning documents are not implementation evidence.
 
-| Document | Purpose |
-| ---------- | --------- |
-| [README.md](../README.md) | Repository overview and onboarding |
-| [AGENTS.md](../AGENTS.md) | Engineering constitution and runtime guidance |
-| [docs/README.md](./README.md) | Documentation navigation |
-| [docs/00-governance/](./00-governance/) | Governance authority |
-| Architecture | Approved technical direction |
-| Requirements | Intended capability |
-| Repository evidence | Implemented capability |
-| Acceptance | Verified delivery |
+Decision Log is an **Append-only Record**: [00-governance/DECISION_LOG.md](./00-governance/DECISION_LOG.md).
 
-### Repository Truth
-
-Repository evidence is the authoritative implementation source.
-
-- Architecture defines approved direction.
-- Requirements define intended capability.
-- Repository evidence defines implemented capability.
-- Acceptance gates define verified delivery.
-- Release records define released capability.
-
-Planning documents, roadmaps, proposals, mockups, and design discussions are **not** implementation evidence.
-
-Documentation must accurately reflect repository evidence and must never overstate implementation status.
-
-Current delivery status lives in [`00-governance/REPOSITORY_STATUS.md`](./00-governance/REPOSITORY_STATUS.md).
+Current repository status: [00-governance/REPOSITORY_STATUS.md](./00-governance/REPOSITORY_STATUS.md).
 
 ---
 
-## How to use this tree
+## Canonical ACTIVE TEAS documents
 
-| Class | Meaning |
+| Slot | Canonical file |
 | --- | --- |
-| **ACTIVE** | Current source of truth — start here |
-| **REFERENCE** | Valid for future phases; not daily SoT |
-| **ARCHIVE** | Historical evidence — do not treat as current |
-| **FUTURE** | Empty TEAS slots reserved for Enterprise Foundation Pack |
-| **COMPAT** | Classic path kept for tests/tooling; TEAS number is the nav alias |
+| 00-governance | PROJECT_STATUS.md · OPERATING_PRINCIPLES.md · DECISION_LOG.md · REPOSITORY_STATUS.md |
+| 01-architecture | CURRENT_SYSTEM_MAP.md |
+| 02-domains | DOMAIN_CAPABILITY_MATRIX.md |
+| 03-data | PRODUCTION_DATA_BASELINE.md |
+| 04-api | API_CATALOG.md |
+| 05-events | ORDER_TO_DELIVERY_LIFECYCLE.md |
+| 06-frontend | DASHBOARD_ROUTE_MATRIX.md |
+| 07-backend | BACKEND_CAPABILITY_MATRIX.md |
+| 08-security | RBAC_AND_ACCESS_MATRIX.md |
+| 09-observability | PRODUCTION_HEALTH_SIGNALS.md |
+| 10-devops | RELEASE_AND_ROLLBACK_RUNBOOK.md |
+| 11-ai | MIANX_AI_TEAM_OPERATING_MODEL.md · AGENT_REGISTRY.md |
+| 12-quality | ACCEPTANCE_MATRIX.md |
+| 14-phases | OPENING_READINESS_PLAN.md (+ existing roadmaps) |
+| 15-runbooks | OPENING_DAY_RUNBOOK.md (+ classic operations/) |
+| 17-releases | RELEASE_HISTORY.md |
+| 18-reference | GLOSSARY_AND_DATA_STATES.md |
+
+Classic ACTIVE paths remain valid: `architecture/`, `database/`, `operations/`, `team/`, `catalog/`, `admin/`, `founder/`, `staff/`.
 
 ---
 
-## Navigation model (hybrid TEAS)
+## Production architecture truth
 
-Numbered TEAS folders (`00-governance` … `18-reference`) are the **enterprise navigation spine**.
+- Website: Vercel
+- API: Render
+- DB/Auth: Supabase PostgreSQL
+- One monorepo — **not** live Kubernetes/microservices/Prisma/mobile/event-bus
 
-Living ACTIVE content is stored under **stable classic paths** so existing tests and deep links keep working:
-
-| TEAS slot | Classic path (files live here) |
-| --- | --- |
-| `01-architecture/` | `architecture/` |
-| `03-data/` | `database/` |
-| `15-runbooks/` | `operations/` |
-| `16-decisions/` | `team/` |
-| `18-reference/catalog/` | `catalog/` |
-
-Each numbered slot has a `README.md` pointer. Prefer the TEAS path when browsing; prefer the classic path when linking from tests or historical docs.
-
-```text
-docs/
-├── README.md                 ← you are here
-├── 00-governance/ … 17-releases/   TEAS slots (README + FUTURE/ACTIVE)
-├── 14-phases/                ACTIVE roadmaps (canonical files)
-├── architecture/             ACTIVE architecture (classic)
-├── database/                 ACTIVE DB freeze (classic)
-├── operations/               ACTIVE runbooks (classic)
-├── team/                     ACTIVE Founder decisions (classic)
-├── catalog/                  ACTIVE catalog docs (classic)
-└── 18-reference/
-    ├── brand/                Logo.jpg
-    ├── catalog/              README → ../catalog/
-    └── archive/              ARCHIVE bundles
-```
+Branches: Royal Orchard = operating · Northern Bypass = coming-soon
 
 ---
 
-## ACTIVE documents (start here)
+## ARCHIVE / REFERENCE
 
-| Area | Path |
-| --- | --- |
-| Repository governance | [`00-governance/`](00-governance/) |
-| Current repository status | [`00-governance/REPOSITORY_STATUS.md`](00-governance/REPOSITORY_STATUS.md) |
-| ROS architecture blueprint (target) | [`architecture/RESTAURANT_OPERATING_SYSTEM_BLUEPRINT.md`](architecture/RESTAURANT_OPERATING_SYSTEM_BLUEPRINT.md) |
-| ROS current-state assessment | [`architecture/assessments/ROS_CURRENT_STATE_ASSESSMENT_2026-07-25.md`](architecture/assessments/ROS_CURRENT_STATE_ASSESSMENT_2026-07-25.md) |
-| Master roadmap (locked sequence) | [`14-phases/TELEPIZZA-MASTER-ROADMAP.md`](14-phases/TELEPIZZA-MASTER-ROADMAP.md) |
-| Milestone companion | [`14-phases/PROJECT-MILESTONE-AND-ROADMAP.md`](14-phases/PROJECT-MILESTONE-AND-ROADMAP.md) |
-| Architecture | [`architecture/`](architecture/) · nav alias [`01-architecture/`](01-architecture/) |
-| Database freeze & workflow | [`database/`](database/) · nav alias [`03-data/`](03-data/) |
-| Catalog docs | [`catalog/`](catalog/) |
-| Canonical menu data | [`../data/catalog/telepizza-canonical-menu.json`](../data/catalog/telepizza-canonical-menu.json) |
-| Canonical single-price menu domain | [`architecture/CANONICAL-MENU-DOMAIN.md`](architecture/CANONICAL-MENU-DOMAIN.md) |
-| Founder decisions (CP-0, CP-7) | [`team/`](team/) · nav alias [`16-decisions/`](16-decisions/) |
-| Auth email runbook | [`operations/AUTH-EMAIL-DELIVERY-RUNBOOK.md`](operations/AUTH-EMAIL-DELIVERY-RUNBOOK.md) |
-| Agent ops | [`../AGENTS.md`](../AGENTS.md) |
-
-### Phase 1 (customer platform) — still under Founder review
-
-| Doc | Path |
-| --- | --- |
-| Completion audit | `architecture/PHASE-1-CUSTOMER-PLATFORM-COMPLETION-AUDIT.md` |
-| Completion program | `architecture/PHASE-1-CUSTOMER-PLATFORM-COMPLETION-PROGRAM.md` |
-| Deployment readiness | `architecture/PHASE-1-ENGINEERING-DEPLOYMENT-READINESS.md` |
-| Migrations inventory | `architecture/PHASE-1-CUSTOMER-MIGRATIONS-INVENTORY.md` |
-
-**Do not claim Phase 1 PASS** until Founder closure checklist is signed.
-
----
-
-## REFERENCE
-
-| Area | Path |
-| --- | --- |
-| Curated AI workforce templates (archived bulk) | `18-reference/archive/template-enterprise/00-ai-workforce/` |
-| Future requirements packs | `18-reference/archive/template-enterprise/02-requirements/` |
-
-Promote to ACTIVE only via ADR + Founder approval.
-
----
-
-## ARCHIVE (historical — recoverable)
-
-| Bundle | Path | Contents |
-| --- | --- | --- |
-| Root legacy | [`18-reference/archive/root-legacy/`](18-reference/archive/root-legacy/) | Old `ROADMAP.md`, `PROJECT_*`, `REAL-MENU-EXTRACTION.md` |
-| Template enterprise library | [`18-reference/archive/template-enterprise/`](18-reference/archive/template-enterprise/) | Former `docs/00–05` packs (~500 files) |
-| Repository cleanup 2026-07-12 | [`18-reference/archive/repository-cleanup-20260712/`](18-reference/archive/repository-cleanup-20260712/) | CSV/TXT audits + completion report |
-| Documentation audit | [`18-reference/archive/documentation-audit/`](18-reference/archive/documentation-audit/) | Business freeze pack, releases, evidence, sprint reports |
-| Misc scripts | [`18-reference/archive/scripts/`](18-reference/archive/scripts/) | Former root `.verify-bundle.mjs` |
-
-See each archive folder’s `README.md` / `INDEX.md`.
-
-**Local compat:** after clone on Windows, recreate junction  
-`_documentation-audit` → `docs/18-reference/archive/documentation-audit`  
-if tooling still expects the old root path. Content is never deleted — only relocated.
-
----
-
-## Deprecated / superseded
-
-| Former location | Superseded by |
-| --- | --- |
-| Root `ROADMAP.md` | `14-phases/TELEPIZZA-MASTER-ROADMAP.md` |
-| Root `PROJECT_STRUCTURE.md` | This map + real `apps/`, `backend/`, `supabase/` |
-| Root `PROJECT_MASTER_PLAN.md` | Master roadmap + TEAS slots |
-| `_repository-cleanup/` | `18-reference/archive/repository-cleanup-20260712/` |
-| `_documentation-audit/` (as daily SoT) | Archive path above; living DB/architecture under classic paths |
-
----
-
-## FUTURE (empty or reserved TEAS slots)
-
-`02-domains`, `04-api` … `13-adr`, `11-ai`, `12-quality`, `17-releases` — reserved for Enterprise Architecture Standards filings. Each contains a placeholder `README.md`.
-
-`00-governance/` is **ACTIVE** (Repository Governance v1). Do not treat it as an empty FUTURE slot.
-
----
-
-## Root files (allowed)
-
-`README.md` · `AGENTS.md` · `package.json` · `pnpm-lock.yaml` · `pnpm-workspace.yaml` · `.env.example` · `.gitignore` · `vercel.json` · `render.yaml`
-
-**Compat shim (temporary):** `REAL-MENU-EXTRACTION.md` at repo root — identical copy of archive file, required by website contract tests until those path strings are updated in a dedicated PR.
+Historical packs remain under `18-reference/archive/`. Legacy ZIP corpus is catalogued privately outside Git and is **not** imported wholesale.

@@ -1,7 +1,7 @@
-﻿# docs/11-ai
+# 11-ai
 
-**Class:** FUTURE (TEAS slot)
+**Status:** ACTIVE
 
-Reserved for Enterprise Architecture Standards filings. No ACTIVE content yet.
+Canonical content: [MIANX_AI_TEAM_OPERATING_MODEL.md](./MIANX_AI_TEAM_OPERATING_MODEL.md)
 
-See [Documentation Map](../README.md).
+See also [DOCUMENTATION_MAP.md](../DOCUMENTATION_MAP.md).

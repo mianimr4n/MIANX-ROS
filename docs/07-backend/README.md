@@ -1,7 +1,7 @@
-﻿# docs/07-backend
+# 07-backend
 
-**Class:** FUTURE (TEAS slot)
+**Status:** ACTIVE
 
-Reserved for Enterprise Architecture Standards filings. No ACTIVE content yet.
+Canonical content: [BACKEND_CAPABILITY_MATRIX.md](./BACKEND_CAPABILITY_MATRIX.md)
 
-See [Documentation Map](../README.md).
+See also [DOCUMENTATION_MAP.md](../DOCUMENTATION_MAP.md).

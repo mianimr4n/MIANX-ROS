@@ -39,6 +39,8 @@ describe("Admin ERP Foundation S1 (static)", () => {
     assert.match(app, /\/admin\/whatsapp/);
     assert.match(app, /AdminWhatsApp/);
     assert.match(app, /\/admin\/ai-command-center/);
+    assert.match(app, /\/admin\/ai-team/);
+    assert.match(app, /AdminAiTeam/);
     assert.match(app, /AdminComingSoon/);
     const soon = read("apps/website/client/src/pages/admin/AdminComingSoon.tsx");
     assert.match(soon, /not available in Foundation S1/i);

@@ -1,7 +1,7 @@
-﻿# docs/06-frontend
+# 06-frontend
 
-**Class:** FUTURE (TEAS slot)
+**Status:** ACTIVE
 
-Reserved for Enterprise Architecture Standards filings. No ACTIVE content yet.
+Canonical content: [DASHBOARD_ROUTE_MATRIX.md](./DASHBOARD_ROUTE_MATRIX.md)
 
-See [Documentation Map](../README.md).
+See also [DOCUMENTATION_MAP.md](../DOCUMENTATION_MAP.md).

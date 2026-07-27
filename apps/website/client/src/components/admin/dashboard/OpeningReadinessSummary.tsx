@@ -1,9 +1,11 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 
 import { AdminSectionTitle } from "@/components/admin/AdminKpiCard";
 import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
 import { useOperationalData } from "@/lib/op-status";
 import { fetchOpeningReadiness } from "@/lib/admin-api";
+import { computeOpeningCountdown } from "@/lib/opening-countdown";
 
 const GRADE_STYLES: Record<string, string> = {
   READY: "bg-emerald-50 text-emerald-900 border-emerald-200",
@@ -82,11 +84,18 @@ export function OpeningReadinessSummary({
     { enabled: ready, pollMs: 120_000 },
   );
 
-  if (!ready) return null;
-
   const data = op.data;
   const grade = data?.readinessGrade ?? (data?.operationallyActive ? "READY_WITH_LIMITATIONS" : "BLOCKED");
   const comingSoon = String(data?.status ?? "").toLowerCase() === "coming-soon";
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    if (!ready || comingSoon) return;
+    const id = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(id);
+  }, [comingSoon, ready]);
+  const countdown = useMemo(() => computeOpeningCountdown(now.getTime(), false), [now]);
+
+  if (!ready) return null;
 
   return (
     <section aria-label="Opening readiness" className="mb-8">
@@ -95,10 +104,16 @@ export function OpeningReadinessSummary({
         title="Opening readiness"
         description={
           comingSoon
-            ? "This branch is coming soon. Finish the setup steps below before live service — no live sales are shown until it opens."
+            ? "This branch is coming soon. Finish the setup steps below before live service — no live sales are shown until it opens. Countdown stays with Royal Orchard operating launch and is not inherited here."
             : "Staffing, phone, hours, floor, booking, and device checks for launch."
         }
       />
+      {!comingSoon ? (
+        <p className="mb-3 text-sm text-[var(--admin-muted)]" aria-live="polite">
+          Opening countdown: <strong className="text-[var(--admin-ink)]">{countdown.label}</strong>
+          <span className="ml-2 text-xs">(14 Aug 2026 · 10:00 Asia/Karachi)</span>
+        </p>
+      ) : null}
       <OperationalStatusBanner
         state={op.state}
         error={op.error}
