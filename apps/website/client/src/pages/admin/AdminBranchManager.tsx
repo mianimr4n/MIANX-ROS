@@ -381,39 +381,39 @@ export default function AdminBranchManager() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <AdminKpiCard
-              title="Pending orders"
+              title="Pending customer orders"
               value={data && pending != null ? String(pending) : null}
               source="DERIVED"
               state={kpiCardState}
-              detail="New orders waiting to be confirmed"
+              detail="Order-derived — awaiting staff confirmation (not kitchen tickets)"
             />
             <AdminKpiCard
-              title="Kitchen queue"
+              title="In kitchen (orders)"
               value={data ? String(data.kpis.kitchenWaiting) : null}
               source="DERIVED"
               state={kpiCardState}
-              detail="Orders confirmed or being prepared"
+              detail="Order-derived confirmed + preparing — not a KDS ticket count"
             />
             <AdminKpiCard
-              title="Ready orders"
+              title="Ready for dispatch"
               value={data && ready != null ? String(ready) : null}
               source="DERIVED"
               state={kpiCardState}
-              detail="Waiting for pickup or dispatch"
+              detail="Order-derived ready — may enter rider assignment"
             />
             <AdminKpiCard
               title="Out for delivery"
               value={data ? String(data.kpis.activeDeliveries) : null}
               source="DERIVED"
               state={kpiCardState}
-              detail="Orders currently dispatched"
+              detail="Order-derived dispatched status"
             />
             <AdminKpiCard
-              title="Customers waiting"
+              title="Customers awaiting staff"
               value={data && customerWaiting != null ? String(customerWaiting) : null}
               source="DERIVED"
               state={kpiCardState}
-              detail="Pending plus confirmed orders"
+              detail="Pending + confirmed orders needing staff action"
             />
             <AdminKpiCard
               title="Cancelled today"

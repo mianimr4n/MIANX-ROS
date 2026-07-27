@@ -353,7 +353,7 @@ export default function AdminDashboard() {
               source="DERIVED"
               state={kpiState(opState)}
               lastUpdated={updated}
-              detail="Orders not yet completed or cancelled"
+              detail="All in-flight orders including pending confirmation (broader than Kitchen Queue)"
             />
             <AdminKpiCard
               title="Kitchen Queue"
@@ -362,7 +362,7 @@ export default function AdminDashboard() {
               source="DERIVED"
               state={kpiState(opState)}
               lastUpdated={updated}
-              detail="Calculated from order statuses — the kitchen display shows live tickets"
+              detail="Order-derived confirmed + preparing only — excludes pending; KDS uses kitchen_tickets"
               action={
                 <Link href="/admin/kitchen-dashboard" className="text-xs font-semibold text-[var(--brand-red)]">
                   Open kitchen display
@@ -376,7 +376,7 @@ export default function AdminDashboard() {
               source="DERIVED"
               state={kpiState(opState)}
               lastUpdated={updated}
-              detail="Orders currently in dispatched status"
+              detail="Order-derived dispatched only — not provisional delivery rows"
               action={
                 <Link href="/admin/delivery" className="text-xs font-semibold text-[var(--brand-red)]">
                   Open delivery

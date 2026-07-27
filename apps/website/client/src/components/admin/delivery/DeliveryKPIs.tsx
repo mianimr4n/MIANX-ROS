@@ -2,6 +2,7 @@ import { AdminKpiCard, AdminSectionTitle } from "@/components/admin/AdminKpiCard
 
 export type DeliveryKpiSnapshot = {
   waiting: number;
+  provisional: number;
   assigned: number;
   outForDelivery: number;
   deliveredToday: number;
@@ -25,7 +26,7 @@ export function DeliveryKPIs({
       <AdminSectionTitle
         eyebrow="Delivery"
         title="Delivery KPIs"
-        description="Live counts from delivery assignments in the current branch scope."
+        description="Dispatch counts exclude provisional rows for unconfirmed orders. Late uses assigned/picked-up clocks only."
       />
       {loading && !snapshot ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-busy="true">
@@ -39,7 +40,13 @@ export function DeliveryKPIs({
             title="Waiting for rider"
             value={String(snapshot?.waiting ?? 0)}
             source="LIVE"
-            detail="Delivery status = pending"
+            detail="Confirmed/ready orders with delivery status pending"
+          />
+          <AdminKpiCard
+            title="Awaiting confirmation"
+            value={String(snapshot?.provisional ?? 0)}
+            source="DERIVED"
+            detail="Provisional delivery rows — order still pending"
           />
           <AdminKpiCard
             title="Assigned"
@@ -80,7 +87,7 @@ export function DeliveryKPIs({
             title="Late deliveries"
             value={String(snapshot?.late ?? 0)}
             source="DERIVED"
-            detail="Active elapsed ≥ 45 min (display threshold)"
+            detail="Assigned/picked-up only · elapsed ≥ 45 min from assign/pickup"
           />
           <AdminKpiCard
             title="Online riders"

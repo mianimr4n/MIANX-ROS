@@ -179,7 +179,7 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
         return card(def, {
           status: "ACTIVE",
           verifiedSignal: "Opening mission tracked in Team Center",
-          currentProblem: "Orders/Kitchen/Delivery truth alignment still pending on this branch",
+          currentProblem: "Owner decisions still gate opening staffing and provider readiness",
           nextAction: "Review Owner Decision Queue and clear WAITING_ON_HUMAN items",
           humanApprovalRequired: true,
           sourceType: "CONFIGURED_PLAN",
@@ -253,8 +253,9 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
           verifiedSignal:
             signals.ordersPending == null
               ? "Orders signal not loaded"
-              : `Pending orders (scope): ${signals.ordersPending}`,
-          currentProblem: "Pending orders must not invent kitchen tickets before confirmation",
+              : `Pending confirmation (order.status=pending): ${signals.ordersPending}`,
+          currentProblem:
+            "Pending confirmation is not a kitchen ticket and must not show Queued / Waiting for rider",
           nextAction: "Review Orders console; protect TP-260727-000001 until intentional confirm",
           humanApprovalRequired: false,
           sourceType: signals.ordersPending == null ? "CONFIGURED_PLAN" : "LIVE_API",
@@ -265,7 +266,7 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
           return card(def, {
             status: "UNAVAILABLE",
             verifiedSignal: "Kitchen API error — not LIVE",
-            currentProblem: "Kitchen ticket counts unavailable",
+            currentProblem: "Kitchen ticket counts unavailable — refusing fake LIVE zero",
             nextAction: "Retry kitchen tickets API",
             humanApprovalRequired: false,
             sourceType: "LIVE_API",
@@ -277,9 +278,9 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
           verifiedSignal:
             signals.kitchenTickets == null
               ? "Kitchen signal not loaded"
-              : `Kitchen tickets (scope): ${signals.kitchenTickets}`,
-          currentProblem: "Ticket truth must follow confirmed orders only",
-          nextAction: "Open Kitchen board and verify queue honesty",
+              : `kitchen_tickets in scope: ${signals.kitchenTickets}`,
+          currentProblem: "KDS queue is kitchen_tickets only — pending orders without tickets stay out",
+          nextAction: "Open Kitchen board and verify zero-ticket honesty",
           humanApprovalRequired: false,
           sourceType: signals.kitchenTickets == null ? "CONFIGURED_PLAN" : "LIVE_API",
           lastUpdatedIso: updated,
@@ -289,7 +290,7 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
           return card(def, {
             status: "UNAVAILABLE",
             verifiedSignal: "Delivery API error — not LIVE",
-            currentProblem: "Delivery assignments unavailable",
+            currentProblem: "Delivery assignments unavailable — refusing fake LIVE zero",
             nextAction: "Retry delivery API and confirm rider staffing",
             humanApprovalRequired: false,
             sourceType: "LIVE_API",
@@ -301,9 +302,10 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
           verifiedSignal:
             signals.deliveriesActive == null
               ? "Delivery signal not loaded"
-              : `Active deliveries (scope): ${signals.deliveriesActive}`,
-          currentProblem: "Rider readiness must be verified before opening peak",
-          nextAction: "Open Delivery console and confirm rider coverage",
+              : `Active dispatch (assigned/picked-up): ${signals.deliveriesActive}`,
+          currentProblem:
+            "Provisional delivery rows for unconfirmed orders are not active and not late",
+          nextAction: "Open Delivery console; assign only when order is ready",
           humanApprovalRequired: true,
           sourceType: signals.deliveriesActive == null ? "CONFIGURED_PLAN" : "LIVE_API",
           lastUpdatedIso: updated,

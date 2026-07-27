@@ -5,6 +5,7 @@ import { DeliveryTimeline } from "@/components/admin/delivery/DeliveryTimeline";
 import type { AdminOrderDetail } from "@/lib/admin-api";
 import { deliveryStatusBadgeClass, deliveryStatusLabel } from "@/lib/admin-delivery";
 import { formatOrderDateTime, formatPkr } from "@/lib/admin-order-format";
+import { isProvisionalDelivery } from "@/lib/operational-truth";
 import type { DeliveryAssignment } from "@/lib/ops-api";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,13 @@ export function DeliveryDrawer({
   }, [open, onClose]);
 
   if (!open || !assignment) return null;
+
+  const statusText = isProvisionalDelivery({
+    deliveryStatus: assignment.status,
+    orderStatus: assignment.orderStatus,
+  })
+    ? "Delivery record created — order awaiting confirmation"
+    : deliveryStatusLabel(assignment.status);
 
   const kitchenReadyAt =
     detail?.statusHistory.find((entry) => entry.toStatus === "ready")?.createdAt ?? null;
@@ -94,7 +102,7 @@ export function DeliveryDrawer({
                   deliveryStatusBadgeClass(assignment.status),
                 )}
               >
-                {deliveryStatusLabel(assignment.status)}
+                {statusText}
               </span>
               <p className="mt-2 text-sm text-[var(--admin-muted)]">
                 Rider: {assignment.riderName ?? "Unassigned"} · Order {assignment.orderStatus}

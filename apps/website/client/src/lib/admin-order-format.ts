@@ -1,5 +1,12 @@
 /** Shared order display helpers for Admin Orders Management. */
 
+import {
+  deliveryRelationshipFromOrder,
+  deliveryRelationshipLabel,
+  kitchenRelationshipFromOrderStatus,
+  kitchenRelationshipLabel,
+} from "@/lib/operational-truth";
+
 export const ORDER_STATUSES = [
   "pending",
   "confirmed",
@@ -47,41 +54,20 @@ export function formatOrderDateTime(iso: string) {
   }
 }
 
-/** Map stored status → kitchen lane label (derived, not KDS). */
+/**
+ * Kitchen relationship label for Orders Management.
+ * Pending orders are NOT_SENT_TO_KITCHEN — never "Queued" without a ticket contract.
+ */
 export function kitchenStatusLabel(status: string): string {
-  switch (status) {
-    case "pending":
-    case "confirmed":
-      return "Queued";
-    case "preparing":
-      return "Preparing";
-    case "ready":
-      return "Ready";
-    case "dispatched":
-    case "completed":
-      return "Done";
-    case "cancelled":
-      return "Cancelled";
-    default:
-      return status;
-  }
+  return kitchenRelationshipLabel(kitchenRelationshipFromOrderStatus(status));
 }
 
-/** Map stored status → delivery lane label (derived, not GPS). */
+/**
+ * Delivery relationship for Orders Management (order-status derived).
+ * Pending delivery orders await confirmation — not "Waiting for rider".
+ */
 export function deliveryStatusLabel(status: string, orderType: string): string {
-  if (orderType !== "delivery") return "N/A";
-  switch (status) {
-    case "ready":
-      return "Awaiting dispatch";
-    case "dispatched":
-      return "Out for delivery";
-    case "completed":
-      return "Delivered";
-    case "cancelled":
-      return "Cancelled";
-    default:
-      return "Not dispatched";
-  }
+  return deliveryRelationshipLabel(deliveryRelationshipFromOrder(status, orderType));
 }
 
 export function statusBadgeClass(status: string): string {
@@ -108,7 +94,7 @@ export function statusBadgeClass(status: string): string {
 /** Human labels for stored statuses — do not invent new states. */
 export function orderStatusLabel(status: string): string {
   const map: Record<string, string> = {
-    pending: "Received",
+    pending: "Pending confirmation",
     confirmed: "Accepted",
     preparing: "Preparing",
     ready: "Ready",

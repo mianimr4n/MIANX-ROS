@@ -261,7 +261,7 @@ export function UsersAccessSettings({
     <AdminSurface aria-labelledby="users-access-settings-heading">
       <AdminSurfaceHeader
         title="Users & Access"
-        description="Verified RBAC seed and session grants — not a full HR directory."
+        description="Separates current session grants from the UI role/permission reference — not the full DB RBAC catalog."
       />
       <AdminSurfaceBody>
         <h2 id="users-access-settings-heading" className="sr-only">
@@ -273,7 +273,10 @@ export function UsersAccessSettings({
         </div>
         <SettingsReadOnlyNotice message="Reuse existing RBAC. Workforce records belong in HR. Settings shows application access only — no invented roles." />
         <div className="mb-4 rounded-xl border border-[var(--admin-border)] bg-white px-4 py-3 text-sm">
-          <p className="font-semibold">Your session (derived)</p>
+          <p className="font-semibold">Current session grants</p>
+          <p className="mt-1 text-xs text-[var(--admin-muted)]">
+            From /auth/me — not the complete Seeded RBAC catalog.
+          </p>
           <p className="mt-1 text-xs text-[var(--admin-muted)]">
             Super-admin: {isSuperAdmin ? "yes" : "no"} · Roles: {roles.join(", ") || "—"}
           </p>
@@ -283,7 +286,10 @@ export function UsersAccessSettings({
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
           <div>
-            <h3 className="mb-2 text-sm font-semibold">Seeded roles</h3>
+            <h3 className="mb-2 text-sm font-semibold">UI-visible application roles</h3>
+            <p className="mb-2 text-xs text-[var(--admin-muted)]">
+              Canonical staff role codes available to staff UIs — not a count of DB roles rows.
+            </p>
             <ul className="space-y-2">
               {SEEDED_ROLES.map((role) => (
                 <li key={role.code} className="rounded-lg border border-[var(--admin-border)] px-3 py-2 text-sm">
@@ -294,7 +300,10 @@ export function UsersAccessSettings({
             </ul>
           </div>
           <div>
-            <h3 className="mb-2 text-sm font-semibold">Seeded permissions</h3>
+            <h3 className="mb-2 text-sm font-semibold">UI permission reference</h3>
+            <p className="mb-2 text-xs text-[var(--admin-muted)]">
+              UI_VISIBLE subset — not the complete seeded role_permissions catalog.
+            </p>
             <div className="max-h-72 overflow-y-auto rounded-lg border border-[var(--admin-border)]">
               <table className="min-w-full text-left text-xs">
                 <caption className="sr-only">Seeded permissions</caption>
