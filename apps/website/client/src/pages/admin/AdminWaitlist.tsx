@@ -77,7 +77,7 @@ export default function AdminWaitlist() {
 
   const waitlistOp = useOperationalData(
     ({ signal, correlationId }) =>
-      listWaitlist(token!, { branchId: branchId!, limit: 200 }, { signal, correlationId }),
+      listWaitlist(token!, { branchId: branchId!, limit: 100 }, { signal, correlationId }),
     [token, branchId],
     {
       enabled: Boolean(token) && Boolean(branchId) && allowed && gateReady,
@@ -252,11 +252,19 @@ export default function AdminWaitlist() {
         <section className="rounded-xl border">
           <div className="border-b px-4 py-3">
             <h2 className="text-sm font-semibold">
-              Queue ({queue.length} waiting)
+              Queue (
+              {waitlistOp.state === "ERROR" || waitlistOp.state === "OFFLINE"
+                ? "unavailable"
+                : `${queue.length} waiting`}
+              )
             </h2>
           </div>
           {waitlistOp.state === "LOADING" ? (
             <p className="px-4 py-3 text-sm text-muted-foreground">Loading waitlist…</p>
+          ) : waitlistOp.state === "ERROR" || waitlistOp.state === "OFFLINE" ? (
+            <p className="px-4 py-3 text-sm text-muted-foreground">
+              Waitlist is unavailable until the request succeeds. Use Retry above.
+            </p>
           ) : queue.length === 0 ? (
             <p className="px-4 py-3 text-sm text-muted-foreground">EMPTY — nobody is waiting.</p>
           ) : (
@@ -427,11 +435,16 @@ export default function AdminWaitlist() {
             onClick={() => setShowClosed((v) => !v)}
             className="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold"
           >
-            Resolved today ({closed.length})
+            Resolved today (
+            {waitlistOp.state === "ERROR" || waitlistOp.state === "OFFLINE" ? "unavailable" : closed.length})
             <span className="text-xs text-muted-foreground">{showClosed ? "Hide" : "Show"}</span>
           </button>
           {showClosed ? (
-            closed.length === 0 ? (
+            waitlistOp.state === "ERROR" || waitlistOp.state === "OFFLINE" ? (
+              <p className="border-t px-4 py-3 text-sm text-muted-foreground">
+                Resolved history unavailable while waitlist data could not be loaded.
+              </p>
+            ) : closed.length === 0 ? (
               <p className="border-t px-4 py-3 text-sm text-muted-foreground">EMPTY.</p>
             ) : (
               <div className="divide-y border-t">
