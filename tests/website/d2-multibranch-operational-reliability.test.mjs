@@ -138,6 +138,16 @@ describe("D2 — dashboards never render failure as zero", () => {
     assert.match(src, /\{data \? \(/);
   });
 
+  it("Kitchen Manager KPIs hide zeros when the ticket payload failed to load", () => {
+    const src = read("apps/website/client/src/pages/admin/AdminKitchenDashboard.tsx");
+    assert.match(src, /hasTicketPayload/);
+    assert.match(src, /ticketKpiState/);
+    assert.doesNotMatch(
+      src,
+      /AdminKpiCard title="New \(queued\)" value=\{String\(summary\.queued\)\} source="LIVE"/,
+    );
+  });
+
   it("KPI card supports a distinct stale state that keeps the last value visible", () => {
     const src = read("apps/website/client/src/components/admin/AdminKpiCard.tsx");
     assert.match(src, /\| "stale"/);
@@ -146,14 +156,17 @@ describe("D2 — dashboards never render failure as zero", () => {
 });
 
 describe("D2 — role dashboards and staff homes", () => {
-  it("cashier-only staff land on POS, rider-only staff on Delivery", () => {
+  it("cashier-only and rider-only staff land on specialized D4 homes (via resolveStaffHome)", () => {
     const redirect = read("apps/website/client/src/pages/admin/AdminIndexRedirect.tsx");
-    const access = read("apps/website/client/src/lib/admin-access.ts");
     assert.match(redirect, /resolveStaffHome/);
-    assert.match(access, /isCashierOnly/);
-    assert.match(access, /isRiderOnly/);
+    const access = read("apps/website/client/src/lib/admin-access.ts");
+    assert.match(access, /export function resolveStaffHome/);
     assert.match(access, /\/admin\/home\/cashier/);
     assert.match(access, /\/admin\/home\/delivery/);
+    assert.match(access, /isCashierOnly/);
+    assert.match(access, /isRiderOnly/);
+    assert.match(access, /customer-support/);
+    assert.match(access, /\/admin\/home\/staff/);
   });
 
   it("Executive dashboard redirects staff-only roles away from owner metrics", () => {

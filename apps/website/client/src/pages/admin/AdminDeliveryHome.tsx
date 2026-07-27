@@ -96,6 +96,18 @@ export default function AdminDeliveryHome() {
         description="Deliveries for your branch only. Orders waiting for a rider come first."
       />
 
+      {hasData && rows.length === 0 ? (
+        <p className="mb-6 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-3 text-sm text-[var(--admin-muted)]" role="status">
+          No deliveries are assigned for this branch right now. New ready orders will appear here.
+        </p>
+      ) : null}
+
+      {(assignmentsOp.state === "ERROR" || assignmentsOp.state === "OFFLINE") && !hasData ? (
+        <p className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
+          Delivery counts could not be loaded. Use Refresh or open the delivery console — zeros are not shown while the API is down.
+        </p>
+      ) : null}
+
       <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {assignmentsOp.state === "LOADING" && !hasData ? (
           <>

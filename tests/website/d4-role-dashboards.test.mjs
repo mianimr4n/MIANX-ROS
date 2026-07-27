@@ -86,6 +86,10 @@ describe("D4 role dashboards (static)", () => {
 
     assert.match(access, /\/admin\/dashboard/);
 
+    assert.match(access, /customer-support/);
+
+    assert.match(access, /roles\.includes\("customer-support"\)/);
+
   });
 
 

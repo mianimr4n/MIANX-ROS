@@ -306,6 +306,9 @@ export function resolveStaffHome(input: AdminPrincipalInput): string {
   if (isRiderOnly(input)) return "/admin/home/delivery";
   if (isHostOnly(input)) return "/admin/home/host";
   if (isWaiterOnly(input)) return "/admin/home/waiter";
+  // Canonical customer-support lands on staff/support home (order lookup + reservations),
+  // not the executive dashboard — even when order.manage is granted.
+  if (input.roles.includes("customer-support")) return "/admin/home/staff";
   if (isAdminConfigOnly(input) || isConfigurationHomeCandidate(input)) return "/admin/home/config";
   if (canAccessAdminOrdersApi(input)) return "/admin/dashboard";
   return "/admin/home/staff";

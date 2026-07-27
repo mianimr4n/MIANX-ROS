@@ -98,6 +98,9 @@ describe("D3 admin access + routes (static)", () => {
     const access = read("apps/website/client/src/lib/admin-access.ts");
     assert.match(access, /canAccessTableService|canManageReservations|canSeatGuests|canManageFloorConfiguration/);
     assert.match(access, /isHostOnly|isWaiterOnly/);
+    // D4 consolidates redirects through resolveStaffHome (still uses isHostOnly/isWaiterOnly).
+    assert.match(access, /resolveStaffHome/);
+    assert.match(access, /\/admin\/home\/host|\/admin\/home\/waiter/);
     const redirect = read("apps/website/client/src/pages/admin/AdminIndexRedirect.tsx");
     assert.match(redirect, /resolveStaffHome/);
   });

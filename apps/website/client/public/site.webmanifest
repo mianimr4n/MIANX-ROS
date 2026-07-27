@@ -1,0 +1,23 @@
+{
+  "name": "Telepizza Pakistan",
+  "short_name": "Telepizza",
+  "description": "Order Telepizza online in Multan — Royal Orchard.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#E31E24",
+  "icons": [
+    {
+      "src": "/favicon.jpg",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/telepizza-logo-primary.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}

@@ -9,13 +9,16 @@ import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import {
   canAccessAdmin,
+  canAccessAdminOrdersApi,
+  canManageReservations,
   filterVisibleAdminNav,
   primaryRoleLabel,
 } from "@/lib/admin-access";
 import { AdminShell } from "@/pages/admin/AdminShell";
 
 /**
- * General staff home — identity + permitted entry points only.
+ * Staff / support home — identity + permitted entry points only.
+ * Uses the canonical `customer-support` role when present; never invents general-staff.
  * No fabricated KPIs.
  */
 export default function AdminStaffHome() {
@@ -24,10 +27,11 @@ export default function AdminStaffHome() {
   const principal = { roles, permissions, isSuperAdmin, branchIds };
   const allowed = canAccessAdmin(principal);
   const { isAuthLoading } = useAdminAccessGate(allowed);
+  const isSupportAgent = roles.includes("customer-support");
 
   if (isAuthLoading) {
     return (
-      <AdminShell title="Staff home">
+      <AdminShell title={isSupportAgent ? "Support home" : "Staff home"}>
         <p className="text-sm text-[var(--admin-muted)]">Loading session…</p>
       </AdminShell>
     );
@@ -39,34 +43,69 @@ export default function AdminStaffHome() {
     const rank = ["Operations", "Commerce", "Customers", "Overview", "Management", "Intelligence", "System"].indexOf(group);
     return rank === -1 ? Number.MAX_SAFE_INTEGER : rank;
   };
+  const supportPriority = (key: string) => {
+    const rank = ["orders", "customers", "reservations", "waitlist", "floor-console"].indexOf(key);
+    return rank === -1 ? Number.MAX_SAFE_INTEGER : rank;
+  };
   const entries = filterVisibleAdminNav(principal)
     .filter((item) => item.available)
-    .sort((a, b) => groupRank(a.group) - groupRank(b.group));
+    .sort((a, b) => {
+      if (isSupportAgent) {
+        const bySupport = supportPriority(a.key) - supportPriority(b.key);
+        if (bySupport !== 0) return bySupport;
+      }
+      return groupRank(a.group) - groupRank(b.group);
+    });
   const [firstEntry, ...restEntries] = entries;
+  const homeTitle = isSupportAgent ? "Support home" : "Staff home";
+  const canLookupOrders = canAccessAdminOrdersApi(principal);
+  const canOpenReservations = canManageReservations(principal);
 
   return (
     <RoleHomeShell
-      title="Staff home"
+      title={homeTitle}
       subtitle={`${profile?.fullName ?? "Staff"} · ${primaryRoleLabel(roles, isSuperAdmin)} · ${branchLabel}`}
       state="LIVE"
       primaryAction={
         firstEntry ? (
           <DashboardActionCard
-            title={`Open ${firstEntry.label}`}
-            description={firstEntry.group}
+            title={
+              isSupportAgent && firstEntry.key === "orders"
+                ? "Look up an order"
+                : `Open ${firstEntry.label}`
+            }
+            description={
+              isSupportAgent && firstEntry.key === "orders"
+                ? "Find guest orders by phone or number"
+                : firstEntry.group
+            }
             href={firstEntry.href}
             primary
           />
         ) : null
       }
-      secondaryActions={restEntries.slice(0, 3).map((item) => (
-        <DashboardActionCard
-          key={item.key}
-          title={`Open ${item.label}`}
-          description={item.group}
-          href={item.href}
-        />
-      ))}
+      secondaryActions={
+        <>
+          {isSupportAgent && canLookupOrders && firstEntry?.key !== "customers" ? (
+            <DashboardActionCard title="Open CRM" description="Guest history" href="/admin/crm" />
+          ) : null}
+          {isSupportAgent && canOpenReservations ? (
+            <DashboardActionCard
+              title="Reservations"
+              description="Bookings and arrivals"
+              href="/admin/reservations"
+            />
+          ) : null}
+          {restEntries.slice(0, isSupportAgent ? 2 : 3).map((item) => (
+            <DashboardActionCard
+              key={item.key}
+              title={`Open ${item.label}`}
+              description={item.group}
+              href={item.href}
+            />
+          ))}
+        </>
+      }
     >
       <div className="mb-8 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">Account</p>
@@ -87,13 +126,15 @@ export default function AdminStaffHome() {
           </div>
         </dl>
         <p className="mt-4 text-sm text-[var(--admin-muted)]">
-          You only see the areas your account can open. There are no performance numbers on this page.
+          {isSupportAgent
+            ? "Support work uses order lookup, guest history, and reservations when your account has those permissions. There are no invented performance numbers on this page."
+            : "You only see the areas your account can open. There are no performance numbers on this page."}
         </p>
       </div>
 
       {entries.length === 0 ? (
         <p className="text-sm text-[var(--admin-muted)]">
-          Your account has no work areas yet. Ask an Owner to assign your role or permissions.
+          Your account has no work areas yet. Ask a Super Admin to assign your role or permissions.
         </p>
       ) : restEntries.length > 3 ? (
         <>

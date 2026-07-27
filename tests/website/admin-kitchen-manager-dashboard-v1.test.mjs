@@ -40,6 +40,10 @@ describe("Kitchen Manager Dashboard V1 (static)", () => {
     assert.match(page, /listKitchenTickets/);
     assert.match(page, /patchKitchenTicketStatus/);
     assert.match(page, /UNAVAILABLE|unavailable/i);
+    // API failure must not render LIVE queue zeros — KPIs require a successful ticket payload.
+    assert.match(page, /hasTicketPayload/);
+    assert.match(page, /ticketKpiState/);
+    assert.match(page, /hasTicketPayload \? String\(summary\.queued\) : null/);
     assert.match(shell, /Kitchen Display System/);
     assert.doesNotMatch(shell, /AI Command Center/);
     assert.doesNotMatch(shell, /Finance/);

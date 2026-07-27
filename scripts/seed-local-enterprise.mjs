@@ -2,6 +2,9 @@
  * LOCAL-ONLY enterprise seed: staff accounts + interconnected OMS/KDS sample orders.
  * Refuses *.supabase.co. Passwords written only to gitignored scripts/.tmp_pw/.
  *
+ * DO NOT RUN IN PRODUCTION — HISTORICAL/LOCAL SEED ONLY.
+ * Does not replace the canonical single-price menu domain migration.
+ *
  * Usage: node scripts/seed-local-enterprise.mjs
  */
 import { createHash, randomBytes } from "node:crypto";

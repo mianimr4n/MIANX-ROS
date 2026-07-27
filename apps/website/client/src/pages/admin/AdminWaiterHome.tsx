@@ -144,7 +144,7 @@ export default function AdminWaiterHome() {
 
       {!assignmentFilterReady ? (
         <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="status">
-          We can't match tables to your account right now. Ask an admin to refresh your staff profile.
+          We can't match tables to your account right now. Ask a Super Admin to refresh your staff profile.
         </p>
       ) : null}
 
