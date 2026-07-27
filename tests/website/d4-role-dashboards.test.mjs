@@ -86,6 +86,10 @@ describe("D4 role dashboards (static)", () => {
 
     assert.match(access, /\/admin\/dashboard/);
 
+    assert.match(access, /customer-support/);
+
+    assert.match(access, /roles\.includes\("customer-support"\)/);
+
   });
 
 
@@ -273,6 +277,76 @@ describe("D4 role dashboards (static)", () => {
     assert.match(dash, /averageWaitMinutes == null/);
 
     assert.match(dash, /averageTableTurnMinutes == null/);
+
+  });
+
+
+
+  it("support home preserves every rest nav entry without skipping index 2", () => {
+
+    const page = read("apps/website/client/src/pages/admin/AdminStaffHome.tsx");
+
+    const helper = read("apps/website/client/src/lib/admin-staff-home-nav.ts");
+
+    assert.match(page, /customer-support/);
+
+    assert.match(page, /splitStaffHomeRestEntries/);
+
+    assert.match(helper, /export function splitStaffHomeRestEntries/);
+
+    assert.match(helper, /restEntries\.slice\(0, safeCount\)/);
+
+    assert.match(helper, /restEntries\.slice\(safeCount\)/);
+
+    // Former off-by-one: secondary slice(0,2) + more slice(3) dropped index 2.
+
+    assert.doesNotMatch(page, /restEntries\.slice\(3\)/);
+
+    assert.doesNotMatch(page, /restEntries\.slice\(0,\s*isSupportAgent \? 2 : 3\)/);
+
+
+
+    // Behavioral contract for ≥4 secondary entries (support secondaryCount = 2).
+
+    function splitStaffHomeRestEntries(restEntries, secondaryCount) {
+
+      const safeCount = Math.max(0, secondaryCount);
+
+      return {
+
+        secondary: restEntries.slice(0, safeCount),
+
+        more: restEntries.slice(safeCount),
+
+      };
+
+    }
+
+    const rest = ["orders", "customers", "reservations", "waitlist", "floor-console"];
+
+    const { secondary, more } = splitStaffHomeRestEntries(rest, 2);
+
+    assert.deepEqual(secondary, ["orders", "customers"]);
+
+    assert.deepEqual(more, ["reservations", "waitlist", "floor-console"]);
+
+    assert.equal(more[0], rest[2]);
+
+    const reunited = [...secondary, ...more];
+
+    assert.deepEqual(reunited, rest);
+
+    assert.equal(new Set(reunited).size, rest.length);
+
+
+
+    // Smaller entry case does not open an empty More group.
+
+    const small = splitStaffHomeRestEntries(["orders", "customers"], 2);
+
+    assert.deepEqual(small.secondary, ["orders", "customers"]);
+
+    assert.deepEqual(small.more, []);
 
   });
 

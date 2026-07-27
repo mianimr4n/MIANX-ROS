@@ -122,6 +122,14 @@ export default function AdminCashierHome() {
         </p>
       ) : null}
 
+      {(opsOp.state === "ERROR" || opsOp.state === "OFFLINE" || tableOp.state === "ERROR" || tableOp.state === "OFFLINE") &&
+      !opsOp.data &&
+      !tableOp.data ? (
+        <p className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
+          Counter metrics could not be loaded. Open POS to keep taking orders — live counts are hidden while the API is down.
+        </p>
+      ) : null}
+
       <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {canOps && opsOp.state === "LOADING" && !opsOp.data ? (
           <>

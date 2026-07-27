@@ -110,6 +110,12 @@ export default function AdminHostHome() {
         </p>
       ) : null}
 
+      {(tableOp.state === "ERROR" || tableOp.state === "OFFLINE") && !d ? (
+        <p className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
+          Arrivals and table counts could not be loaded. Use Refresh — zeros are not shown while the API is down.
+        </p>
+      ) : null}
+
       {quietDay ? (
         <p className="mb-6 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-3 text-sm text-[var(--admin-muted)]">
           No reservations or waitlist entries yet today.{" "}

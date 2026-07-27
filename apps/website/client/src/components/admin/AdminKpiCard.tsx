@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-export type AdminKpiSource = "LIVE" | "DERIVED" | "PARTIAL" | "FOUNDATION" | "UNAVAILABLE";
+export type AdminKpiSource = "LIVE" | "DERIVED" | "PARTIAL" | "FOUNDATION" | "UNAVAILABLE" | "EMPTY";
 
 export type AdminKpiState =
   | "available"
@@ -24,6 +24,12 @@ export type AdminKpiCardProps = {
   state?: AdminKpiState;
   detail?: string;
   action?: ReactNode;
+  /**
+   * When the collection is EMPTY after a successful payload, show the resolved
+   * numeric value (including `"0"`) instead of an em dash. Never invents zeros
+   * for error / unavailable / missing payloads.
+   */
+  showResolvedZero?: boolean;
   /** @deprecated Prefer `state="unavailable"`. Kept for existing Admin modules. */
   unavailable?: boolean;
   className?: string;
@@ -35,6 +41,8 @@ const SOURCE_STYLES: Record<AdminKpiSource, string> = {
   PARTIAL: "bg-amber-50 text-amber-950",
   FOUNDATION: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
   UNAVAILABLE: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
+  /** Successful empty collection — not LIVE traffic; page banner owns EMPTY. */
+  EMPTY: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
 };
 
 /**
@@ -47,6 +55,8 @@ const SOURCE_LABEL: Record<AdminKpiSource, string | null> = {
   PARTIAL: "Partial data",
   FOUNDATION: "Setup only",
   UNAVAILABLE: "Not available",
+  /** No provenance badge — EMPTY is owned by OperationalStatusBanner + detail. */
+  EMPTY: null,
 };
 
 const STATE_LABEL: Record<AdminKpiState, string> = {
@@ -59,8 +69,16 @@ const STATE_LABEL: Record<AdminKpiState, string> = {
   planned: "Planned",
 };
 
-function resolveDisplayValue(value: string | null | undefined, state: AdminKpiState): string {
+function resolveDisplayValue(
+  value: string | null | undefined,
+  state: AdminKpiState,
+  showResolvedZero: boolean,
+): string {
   if (state === "loading") return "…";
+  // Successful empty payload with a resolved numeric count (including "0").
+  if (state === "empty" && showResolvedZero && value != null && value !== "") {
+    return value;
+  }
   if (state === "unavailable" || state === "planned" || state === "error" || state === "empty") {
     return "—";
   }
@@ -78,12 +96,14 @@ export function AdminKpiCard({
   state,
   detail,
   action,
+  showResolvedZero = false,
   unavailable = false,
   className,
 }: AdminKpiCardProps) {
   const resolvedState: AdminKpiState = state ?? (unavailable ? "unavailable" : "available");
-  const display = resolveDisplayValue(value, resolvedState);
-  const showAsMuted = resolvedState !== "available";
+  const display = resolveDisplayValue(value, resolvedState, showResolvedZero);
+  const resolvedZeroEmpty = resolvedState === "empty" && showResolvedZero;
+  const showAsMuted = resolvedState !== "available" && !resolvedZeroEmpty;
 
   return (
     <article
@@ -106,7 +126,10 @@ export function AdminKpiCard({
               {SOURCE_LABEL[source]}
             </span>
           ) : null}
-          {resolvedState !== "available" && STATE_LABEL[resolvedState] !== SOURCE_LABEL[source] ? (
+          {/* Resolved-zero EMPTY uses detail copy, not the generic "No data yet" badge. */}
+          {resolvedState !== "available" &&
+          !resolvedZeroEmpty &&
+          STATE_LABEL[resolvedState] !== SOURCE_LABEL[source] ? (
             <span className="rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[var(--admin-muted)]">
               {STATE_LABEL[resolvedState]}
             </span>
