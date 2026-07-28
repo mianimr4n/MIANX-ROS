@@ -78,6 +78,42 @@ export interface BranchReadinessReport {
     deviceInternetFailed: boolean;
     deviceBackupInternetFailed: boolean;
     deviceUpsFailed: boolean;
+    // M3: SOPs
+    sopOrderConfirmApproved: boolean;
+    sopOrderConfirmReviewed: boolean;
+    sopOrderConfirmFailed: boolean;
+    sopKitchenApproved: boolean;
+    sopKitchenReviewed: boolean;
+    sopKitchenFailed: boolean;
+    sopDeliveryApproved: boolean;
+    sopDeliveryReviewed: boolean;
+    sopDeliveryFailed: boolean;
+    sopCancelRefundApproved: boolean;
+    sopCancelRefundReviewed: boolean;
+    sopCancelRefundFailed: boolean;
+    sopOpeningChecklistApproved: boolean;
+    sopOpeningChecklistFailed: boolean;
+    sopClosingChecklistApproved: boolean;
+    sopClosingChecklistFailed: boolean;
+    sopCashReconciliationApproved: boolean;
+    // M3: Training
+    trainingBmComplete: boolean;
+    trainingBmFailed: boolean;
+    trainingCashierComplete: boolean;
+    trainingCashierFailed: boolean;
+    trainingKitchenComplete: boolean;
+    trainingKitchenFailed: boolean;
+    trainingRiderComplete: boolean;
+    trainingRiderFailed: boolean;
+    trainingHostWaiterComplete: boolean;
+    trainingHostWaiterFailed: boolean;
+    // M3: E2E rehearsal
+    e2eRehearsalComplete: boolean;
+    e2eRehearsalFailed: boolean;
+    // M3: Founder + handover
+    founderGoApproved: boolean;
+    founderGoFailed: boolean;
+    ownerHandoverReady: boolean;
   };
 }
 
@@ -130,6 +166,39 @@ function defaultM2ChecksFalse() {
     deviceInternetFailed: false,
     deviceBackupInternetFailed: false,
     deviceUpsFailed: false,
+    // M3 defaults
+    sopOrderConfirmApproved: false,
+    sopOrderConfirmReviewed: false,
+    sopOrderConfirmFailed: false,
+    sopKitchenApproved: false,
+    sopKitchenReviewed: false,
+    sopKitchenFailed: false,
+    sopDeliveryApproved: false,
+    sopDeliveryReviewed: false,
+    sopDeliveryFailed: false,
+    sopCancelRefundApproved: false,
+    sopCancelRefundReviewed: false,
+    sopCancelRefundFailed: false,
+    sopOpeningChecklistApproved: false,
+    sopOpeningChecklistFailed: false,
+    sopClosingChecklistApproved: false,
+    sopClosingChecklistFailed: false,
+    sopCashReconciliationApproved: false,
+    trainingBmComplete: false,
+    trainingBmFailed: false,
+    trainingCashierComplete: false,
+    trainingCashierFailed: false,
+    trainingKitchenComplete: false,
+    trainingKitchenFailed: false,
+    trainingRiderComplete: false,
+    trainingRiderFailed: false,
+    trainingHostWaiterComplete: false,
+    trainingHostWaiterFailed: false,
+    e2eRehearsalComplete: false,
+    e2eRehearsalFailed: false,
+    founderGoApproved: false,
+    founderGoFailed: false,
+    ownerHandoverReady: false,
   };
 }
 
@@ -299,6 +368,11 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
         cashProcedureResult,
         notificationChannelsResult,
         devicesResult,
+        sopReviewsResult,
+        roleRehearsalsResult,
+        e2eRehearsalsResult,
+        founderDecisionsResult,
+        ownerHandoverResult,
       ] = await Promise.all([
         supabase
           .from("restaurant_floors")
@@ -345,6 +419,30 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
           .from("branch_device_verifications")
           .select("device_type, verification_status, expires_at, evidence_type")
           .eq("branch_id", branchId),
+        // M3 queries
+        supabase
+          .from("branch_sop_reviews")
+          .select("sop_code, review_status, operational_verification_status")
+          .eq("branch_id", branchId),
+        supabase
+          .from("branch_role_rehearsals")
+          .select("rehearsal_code, rehearsal_status, result, local_test_only")
+          .eq("branch_id", branchId),
+        supabase
+          .from("branch_e2e_rehearsals")
+          .select("status, result, local_test_only, critical_failures")
+          .eq("branch_id", branchId),
+        supabase
+          .from("branch_founder_opening_decisions")
+          .select("decision, decided_at")
+          .eq("branch_id", branchId)
+          .order("decided_at", { ascending: false })
+          .limit(1),
+        supabase
+          .from("branch_owner_handover_records")
+          .select("handover_status")
+          .eq("branch_id", branchId)
+          .maybeSingle(),
       ]);
 
       if (
@@ -527,6 +625,103 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
         deviceBackupInternetVerified &&
         deviceUpsVerified;
 
+      // ------------------------------------------------------------------
+      // M3: SOPs, Training, E2E, Founder decisions, Owner handover
+      // ------------------------------------------------------------------
+
+      const sops = (sopReviewsResult.data ?? []) as Array<{
+        sop_code: string;
+        review_status: string;
+        operational_verification_status: string;
+      }>;
+
+      // Process SOPs require APPROVED + VERIFIED_ONSITE
+      const sopApproved = (code: string): boolean =>
+        sops.some(
+          (s) =>
+            s.sop_code === code &&
+            s.review_status === "APPROVED" &&
+            s.operational_verification_status === "VERIFIED_ONSITE",
+        );
+      // Reviewed = APPROVED or REVIEWED
+      const sopReviewed = (code: string): boolean =>
+        sops.some((s) => s.sop_code === code && (s.review_status === "APPROVED" || s.review_status === "REVIEWED"));
+      // Checklist SOPs require only APPROVED review_status
+      const sopChecklistApproved = (code: string): boolean =>
+        sops.some((s) => s.sop_code === code && s.review_status === "APPROVED");
+      const sopFailed = (code: string): boolean =>
+        sops.some((s) => s.sop_code === code && s.operational_verification_status === "FAILED");
+
+      const sopOrderConfirmApproved = sopApproved("ORDER_CONFIRMATION");
+      const sopOrderConfirmReviewed = sopReviewed("ORDER_CONFIRMATION");
+      const sopOrderConfirmFailed = sopFailed("ORDER_CONFIRMATION");
+      const sopKitchenApproved = sopApproved("KITCHEN_PROGRESSION");
+      const sopKitchenReviewed = sopReviewed("KITCHEN_PROGRESSION");
+      const sopKitchenFailed = sopFailed("KITCHEN_PROGRESSION");
+      const sopDeliveryApproved = sopApproved("DELIVERY_DISPATCH");
+      const sopDeliveryReviewed = sopReviewed("DELIVERY_DISPATCH");
+      const sopDeliveryFailed = sopFailed("DELIVERY_DISPATCH");
+      const sopCancelRefundApproved = sopApproved("CANCELLATION_REFUND");
+      const sopCancelRefundReviewed = sopReviewed("CANCELLATION_REFUND");
+      const sopCancelRefundFailed = sopFailed("CANCELLATION_REFUND");
+      const sopOpeningChecklistApproved = sopChecklistApproved("OPENING_CHECKLIST");
+      const sopOpeningChecklistFailed = sopFailed("OPENING_CHECKLIST");
+      const sopClosingChecklistApproved = sopChecklistApproved("CLOSING_CHECKLIST");
+      const sopClosingChecklistFailed = sopFailed("CLOSING_CHECKLIST");
+      const sopCashReconciliationApproved = sopChecklistApproved("CASH_RECONCILIATION");
+
+      // Role rehearsals drive training-* readiness items (local_test_only never COMPLETE).
+      const rehearsals = (roleRehearsalsResult.data ?? []) as Array<{
+        rehearsal_code: string;
+        rehearsal_status: string;
+        result: string;
+        local_test_only: boolean;
+      }>;
+
+      const rehearsalComplete = (code: string): boolean =>
+        rehearsals.some(
+          (r) =>
+            r.rehearsal_code === code &&
+            r.rehearsal_status === "COMPLETED" &&
+            (r.result === "PASS" || r.result === "CONDITIONAL_PASS") &&
+            !r.local_test_only,
+        );
+      const rehearsalFailed = (code: string): boolean =>
+        rehearsals.some((r) => r.rehearsal_code === code && r.rehearsal_status === "FAILED");
+
+      const trainingBmComplete = rehearsalComplete("BRANCH_MANAGER_OPENING");
+      const trainingBmFailed = rehearsalFailed("BRANCH_MANAGER_OPENING");
+      const trainingCashierComplete = rehearsalComplete("CASHIER_POS");
+      const trainingCashierFailed = rehearsalFailed("CASHIER_POS");
+      const trainingKitchenComplete = rehearsalComplete("KITCHEN_ORDER_FLOW");
+      const trainingKitchenFailed = rehearsalFailed("KITCHEN_ORDER_FLOW");
+      const trainingRiderComplete = rehearsalComplete("RIDER_DISPATCH");
+      const trainingRiderFailed = rehearsalFailed("RIDER_DISPATCH");
+      const trainingHostWaiterComplete = rehearsalComplete("HOST_WAITER_FLOOR");
+      const trainingHostWaiterFailed = rehearsalFailed("HOST_WAITER_FLOOR");
+
+      // E2E rehearsal: COMPLETED + result=PASS + critical_failures=0 + local_test_only=false
+      const e2eRows = (e2eRehearsalsResult.data ?? []) as Array<{
+        status: string;
+        result: string;
+        local_test_only: boolean;
+        critical_failures: number;
+      }>;
+      const e2eRehearsalComplete = e2eRows.some(
+        (r) => r.status === "COMPLETED" && r.result === "PASS" && r.critical_failures === 0 && !r.local_test_only,
+      );
+      const e2eRehearsalFailed = e2eRows.some((r) => r.status === "FAILED");
+
+      // Founder decisions: latest GO_APPROVED only (not GO_CONDITIONAL); NO_GO = failed
+      const founderRows = (founderDecisionsResult.data ?? []) as Array<{ decision: string; decided_at: string }>;
+      const latestFounderDecision = founderRows[0]; // already ordered by decided_at desc
+      const founderGoApproved = latestFounderDecision?.decision === "GO_APPROVED";
+      const founderGoFailed = latestFounderDecision?.decision === "NO_GO";
+
+      // Owner handover: READY_FOR_HANDOVER
+      const handoverRow = ownerHandoverResult.data as { handover_status?: string } | null;
+      const ownerHandoverReady = handoverRow?.handover_status === "READY_FOR_HANDOVER";
+
       const checks = {
         phone,
         operatingHours: hoursOk,
@@ -579,6 +774,39 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
         deviceInternetFailed,
         deviceBackupInternetFailed,
         deviceUpsFailed,
+        // M3
+        sopOrderConfirmApproved,
+        sopOrderConfirmReviewed,
+        sopOrderConfirmFailed,
+        sopKitchenApproved,
+        sopKitchenReviewed,
+        sopKitchenFailed,
+        sopDeliveryApproved,
+        sopDeliveryReviewed,
+        sopDeliveryFailed,
+        sopCancelRefundApproved,
+        sopCancelRefundReviewed,
+        sopCancelRefundFailed,
+        sopOpeningChecklistApproved,
+        sopOpeningChecklistFailed,
+        sopClosingChecklistApproved,
+        sopClosingChecklistFailed,
+        sopCashReconciliationApproved,
+        trainingBmComplete,
+        trainingBmFailed,
+        trainingCashierComplete,
+        trainingCashierFailed,
+        trainingKitchenComplete,
+        trainingKitchenFailed,
+        trainingRiderComplete,
+        trainingRiderFailed,
+        trainingHostWaiterComplete,
+        trainingHostWaiterFailed,
+        e2eRehearsalComplete,
+        e2eRehearsalFailed,
+        founderGoApproved,
+        founderGoFailed,
+        ownerHandoverReady,
       };
 
       const blockers: Array<{ code: string; message: string; nextAction?: string }> = [];

@@ -979,3 +979,417 @@ export function failOpeningDevice(accessToken: string, id: string, reason: strin
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }
+
+// --- Opening Operations M3 (SOPs, training, rehearsals, governance) ---
+
+export const OPENING_SOP_CODES = [
+  "ORDER_CONFIRMATION",
+  "KITCHEN_PROGRESSION",
+  "DELIVERY_DISPATCH",
+  "CANCELLATION_REFUND",
+  "OPENING_CHECKLIST",
+  "CLOSING_CHECKLIST",
+  "CASH_RECONCILIATION",
+  "RESERVATION_AND_WAITLIST",
+  "INCIDENT_ESCALATION",
+] as const;
+export type OpeningSopCode = (typeof OPENING_SOP_CODES)[number];
+
+export const OPENING_TRAINING_CODES = [
+  "BRANCH_MANAGER",
+  "CASHIER_POS",
+  "KITCHEN",
+  "RIDER_DELIVERY",
+  "HOST_WAITER",
+  "CUSTOMER_SUPPORT",
+  "OPENING_AND_CLOSING",
+  "SAFETY_AND_INCIDENT",
+  "CASH_RECONCILIATION",
+] as const;
+export type OpeningTrainingCode = (typeof OPENING_TRAINING_CODES)[number];
+
+export const OPENING_ROLE_REHEARSAL_CODES = [
+  "BRANCH_MANAGER_OPENING",
+  "CASHIER_POS",
+  "KITCHEN_ORDER_FLOW",
+  "RIDER_DISPATCH",
+  "HOST_WAITER_FLOOR",
+  "CUSTOMER_SUPPORT_ESCALATION",
+] as const;
+export type OpeningRoleRehearsalCode = (typeof OPENING_ROLE_REHEARSAL_CODES)[number];
+
+export const OPENING_FOUNDER_DECISIONS = [
+  "NOT_READY",
+  "REVIEW_REQUIRED",
+  "GO_CONDITIONAL",
+  "GO_APPROVED",
+  "NO_GO",
+  "WITHDRAWN",
+] as const;
+export type OpeningFounderDecision = (typeof OPENING_FOUNDER_DECISIONS)[number];
+
+export type OpeningSopReview = {
+  id: string;
+  branchId: string;
+  sopCode: OpeningSopCode;
+  documentReference: string | null;
+  documentVersion: string | null;
+  reviewStatus: string;
+  reviewedAt: string | null;
+  approvedAt: string | null;
+  operationalVerificationStatus: string;
+  operationallyVerifiedAt: string | null;
+  reviewDueAt: string | null;
+  notes: string | null;
+};
+
+export type OpeningTrainingSession = {
+  id: string;
+  branchId: string;
+  trainingCode: OpeningTrainingCode;
+  title: string;
+  scheduledAt: string | null;
+  completedAt: string | null;
+  trainingStatus: string;
+  result: string;
+  localTestOnly: boolean;
+  followUpRequired: boolean;
+  notes: string | null;
+};
+
+export type OpeningRoleRehearsal = {
+  id: string;
+  branchId: string;
+  rehearsalCode: OpeningRoleRehearsalCode;
+  scenario: string;
+  scheduledAt: string | null;
+  completedAt: string | null;
+  rehearsalStatus: string;
+  result: string;
+  localTestOnly: boolean;
+  retestRequired: boolean;
+  issuesFound: string | null;
+  notes: string | null;
+};
+
+export type OpeningE2eRehearsal = {
+  id: string;
+  branchId: string;
+  scheduledAt: string | null;
+  completedAt: string | null;
+  status: string;
+  result: string;
+  localTestOnly: boolean;
+  criticalFailures: number;
+  stagesCompleted: unknown[];
+  stagesFailed: unknown[];
+  retestRequired: boolean;
+  notes: string | null;
+};
+
+export type OpeningFounderDecisionRecord = {
+  id: string;
+  branchId: string;
+  decision: OpeningFounderDecision;
+  decisionNotes: string | null;
+  conditions: string | null;
+  decidedAt: string;
+  completedItems: number;
+  requiredItems: number;
+  readinessPercentage: number | null;
+};
+
+export type OpeningOwnerHandoverRecord = {
+  id: string;
+  branchId: string;
+  handoverStatus: string;
+  intendedOwnerName: string | null;
+  intendedOwnerContactReference: string | null;
+  handoverScope: string | null;
+  accessReviewStatus: string;
+  operationalDocumentsReviewed: boolean;
+  financialProcedureReviewed: boolean;
+  staffStructureReviewed: boolean;
+  deviceInventoryReviewed: boolean;
+  acceptedAt: string | null;
+  notes: string | null;
+};
+
+export function listOpeningSops(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningSopReview[]>(`/admin/opening/sops?${openingQuery(branchId)}`, readInit(accessToken, opts));
+}
+
+export function upsertOpeningSop(
+  accessToken: string,
+  input: {
+    id?: string;
+    branchId: string;
+    sopCode: OpeningSopCode;
+    documentReference?: string | null;
+    documentVersion?: string | null;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningSopReview>(`/admin/opening/sops`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function approveOpeningSop(accessToken: string, id: string, notes?: string) {
+  return fetchApiData<OpeningSopReview>(`/admin/opening/sops/${id}/approve`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(notes ? { notes } : {}),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function verifyOpeningSopOperational(
+  accessToken: string,
+  id: string,
+  input: { summary: string; evidenceType?: OpeningEvidenceType },
+) {
+  return fetchApiData<OpeningSopReview>(`/admin/opening/sops/${id}/verify-operational`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningSop(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningSopReview>(`/admin/opening/sops/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningTraining(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningTrainingSession[]>(
+    `/admin/opening/training?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningTrainingSession(
+  accessToken: string,
+  input: {
+    id?: string;
+    branchId: string;
+    trainingCode: OpeningTrainingCode;
+    title: string;
+    scheduledAt?: string | null;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningTrainingSession>(`/admin/opening/training`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function completeOpeningTrainingSession(
+  accessToken: string,
+  id: string,
+  input: { result?: "PASS" | "CONDITIONAL_PASS" | "FAIL"; localTestOnly?: boolean; notes?: string },
+) {
+  return fetchApiData<OpeningTrainingSession>(`/admin/opening/training/${id}/complete`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningTrainingSession(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningTrainingSession>(`/admin/opening/training/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningRoleRehearsals(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningRoleRehearsal[]>(
+    `/admin/opening/role-rehearsals?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningRoleRehearsal(
+  accessToken: string,
+  input: {
+    id?: string;
+    branchId: string;
+    rehearsalCode: OpeningRoleRehearsalCode;
+    scenario: string;
+    scheduledAt?: string | null;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningRoleRehearsal>(`/admin/opening/role-rehearsals`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function completeOpeningRoleRehearsal(
+  accessToken: string,
+  id: string,
+  input: { result?: "PASS" | "CONDITIONAL_PASS" | "FAIL"; localTestOnly?: boolean; notes?: string },
+) {
+  return fetchApiData<OpeningRoleRehearsal>(`/admin/opening/role-rehearsals/${id}/complete`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningRoleRehearsal(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningRoleRehearsal>(`/admin/opening/role-rehearsals/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningE2eRehearsals(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningE2eRehearsal[]>(
+    `/admin/opening/e2e-rehearsals?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function scheduleOpeningE2eRehearsal(
+  accessToken: string,
+  input: { branchId: string; scheduledAt?: string | null; notes?: string | null },
+) {
+  return fetchApiData<OpeningE2eRehearsal>(`/admin/opening/e2e-rehearsals`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function completeOpeningE2eRehearsal(
+  accessToken: string,
+  id: string,
+  input: {
+    result?: "PASS" | "CONDITIONAL_PASS" | "FAIL";
+    localTestOnly?: boolean;
+    stagesCompleted?: string[];
+    notes?: string;
+  },
+) {
+  return fetchApiData<OpeningE2eRehearsal>(`/admin/opening/e2e-rehearsals/${id}/complete`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningE2eRehearsal(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningE2eRehearsal>(`/admin/opening/e2e-rehearsals/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningFounderDecisions(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningFounderDecisionRecord[]>(
+    `/admin/opening/founder-decisions?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function recordOpeningFounderDecision(
+  accessToken: string,
+  input: {
+    branchId: string;
+    decision: OpeningFounderDecision;
+    decisionNotes?: string | null;
+    conditions?: string | null;
+  },
+) {
+  return fetchApiData<OpeningFounderDecisionRecord>(`/admin/opening/founder-decisions`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function fetchOpeningOwnerHandover(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningOwnerHandoverRecord | null>(
+    `/admin/opening/owner-handover?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningOwnerHandover(
+  accessToken: string,
+  input: {
+    branchId: string;
+    intendedOwnerName?: string | null;
+    intendedOwnerContactReference?: string | null;
+    handoverScope?: string | null;
+    operationalDocumentsReviewed?: boolean;
+    financialProcedureReviewed?: boolean;
+    staffStructureReviewed?: boolean;
+    deviceInventoryReviewed?: boolean;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningOwnerHandoverRecord>(`/admin/opening/owner-handover`, {
+    method: "PUT",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function markOpeningOwnerHandoverReady(accessToken: string, branchId: string) {
+  return fetchApiData<OpeningOwnerHandoverRecord>(`/admin/opening/owner-handover/${branchId}/ready`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function acceptOpeningOwnerHandover(
+  accessToken: string,
+  branchId: string,
+  acceptedByReference: string,
+) {
+  return fetchApiData<OpeningOwnerHandoverRecord>(`/admin/opening/owner-handover/${branchId}/accept`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ acceptedByReference }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function reviewOpeningSop(accessToken: string, id: string, notes?: string) {
+  return fetchApiData<OpeningSopReview>(`/admin/opening/sops/${id}/review`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(notes ? { notes } : {}),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}

@@ -1,6 +1,7 @@
 import type { Branch } from "@/lib/telepizza-types";
 import { SEEDED_PERMISSIONS, SEEDED_ROLES } from "@/lib/admin-settings";
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
+import { OpeningGovernancePanel } from "@/components/admin/OpeningGovernancePanel";
 import { OpeningOperationsPanel } from "@/components/admin/OpeningOperationsPanel";
 import {
   SettingsFoundationPanel,
@@ -100,10 +101,11 @@ export function RestaurantOperationsSettings() {
       <SettingsFoundationPanel
         title="Restaurant Operations"
         description="Service modes, holiday closures, and opening verification workflows."
-        body="Dine-in, pickup, delivery toggles and holiday calendars remain foundation. Opening payment, notification, and device verification is persisted below — secrets stay environment-managed."
+        body="Dine-in, pickup, delivery toggles and holiday calendars remain foundation. Opening payment, notification, device, SOP, training, and governance verification is persisted below — secrets stay environment-managed."
         scope="Branch"
       />
       <OpeningOperationsPanel />
+      <OpeningGovernancePanel />
     </div>
   );
 }
