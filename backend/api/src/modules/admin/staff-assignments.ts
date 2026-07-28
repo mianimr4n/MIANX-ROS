@@ -44,7 +44,7 @@ const createAssignmentSchema = z
 
 const statusSchema = z
   .object({
-    status: z.enum(ASSIGNMENT_STATUSES as unknown as [string, ...string[]]),
+    status: z.enum(ASSIGNMENT_STATUSES),
     notes: z.string().trim().max(1000).optional().nullable(),
   })
   .strict();

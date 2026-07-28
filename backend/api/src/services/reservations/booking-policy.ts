@@ -131,10 +131,10 @@ const SELECT = [
 ].join(", ");
 
 function createServiceClient(envStatus: EnvironmentStatus): SupabaseClient {
-  if (!envStatus.supabaseUrl || !envStatus.supabaseServiceRoleKey) {
+  if (!envStatus.config.supabaseUrl || !envStatus.config.supabaseServiceRoleKey) {
     throw new ApiError(503, "SUPABASE_NOT_CONFIGURED", "Supabase service role is not configured.");
   }
-  return createClient(envStatus.supabaseUrl, envStatus.supabaseServiceRoleKey, {
+  return createClient(envStatus.config.supabaseUrl, envStatus.config.supabaseServiceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
@@ -235,7 +235,7 @@ export function createBookingPolicyService(envStatus: EnvironmentStatus): Bookin
       .maybeSingle();
     if (error) throw new ApiError(500, "POLICY_LOOKUP_FAILED", error.message);
     if (!data) throw new ApiError(404, "POLICY_NOT_FOUND", "Booking policy not found.");
-    return data as PolicyRow;
+    return data as unknown as PolicyRow;
   }
 
   return {
@@ -249,7 +249,7 @@ export function createBookingPolicyService(envStatus: EnvironmentStatus): Bookin
         .eq("status", "ACTIVE")
         .maybeSingle();
       if (activeError) throw new ApiError(500, "POLICY_LOOKUP_FAILED", activeError.message);
-      if (active) return mapRow(active as PolicyRow);
+      if (active) return mapRow(active as unknown as PolicyRow);
 
       const { data: latest, error } = await admin
         .from("branch_booking_policies")
@@ -259,7 +259,7 @@ export function createBookingPolicyService(envStatus: EnvironmentStatus): Bookin
         .limit(1)
         .maybeSingle();
       if (error) throw new ApiError(500, "POLICY_LOOKUP_FAILED", error.message);
-      return latest ? mapRow(latest as PolicyRow) : null;
+      return latest ? mapRow(latest as unknown as PolicyRow) : null;
     },
 
     async listVersions(scope, branchId) {
@@ -271,7 +271,7 @@ export function createBookingPolicyService(envStatus: EnvironmentStatus): Bookin
         .eq("branch_id", branchId)
         .order("version", { ascending: false });
       if (error) throw new ApiError(500, "POLICY_LIST_FAILED", error.message);
-      return ((data ?? []) as PolicyRow[]).map(mapRow);
+      return ((data ?? []) as unknown as PolicyRow[]).map(mapRow);
     },
 
     async createDraft(actor, input) {
@@ -335,7 +335,7 @@ export function createBookingPolicyService(envStatus: EnvironmentStatus): Bookin
       if (error || !data) {
         throw new ApiError(500, "POLICY_CREATE_FAILED", error?.message ?? "create failed");
       }
-      return mapRow(data as PolicyRow);
+      return mapRow(data as unknown as PolicyRow);
     },
 
     async updateDraft(actor, policyId, patch) {
@@ -372,7 +372,7 @@ export function createBookingPolicyService(envStatus: EnvironmentStatus): Bookin
       if (error || !data) {
         throw new ApiError(500, "POLICY_UPDATE_FAILED", error?.message ?? "update failed");
       }
-      return mapRow(data as PolicyRow);
+      return mapRow(data as unknown as PolicyRow);
     },
 
     async submitForReview(actor, policyId) {
@@ -396,7 +396,7 @@ export function createBookingPolicyService(envStatus: EnvironmentStatus): Bookin
       if (error || !data) {
         throw new ApiError(500, "POLICY_SUBMIT_FAILED", error?.message ?? "submit failed");
       }
-      return mapRow(data as PolicyRow);
+      return mapRow(data as unknown as PolicyRow);
     },
 
     async approve(actor, policyId) {
@@ -426,7 +426,7 @@ export function createBookingPolicyService(envStatus: EnvironmentStatus): Bookin
       if (error || !data) {
         throw new ApiError(500, "POLICY_APPROVE_FAILED", error?.message ?? "approve failed");
       }
-      return mapRow(data as PolicyRow);
+      return mapRow(data as unknown as PolicyRow);
     },
 
     async activate(actor, policyId) {
@@ -474,7 +474,7 @@ export function createBookingPolicyService(envStatus: EnvironmentStatus): Bookin
       if (error || !data) {
         throw new ApiError(500, "POLICY_ACTIVATE_FAILED", error?.message ?? "activate failed");
       }
-      return mapRow(data as PolicyRow);
+      return mapRow(data as unknown as PolicyRow);
     },
 
     async retire(actor, policyId) {
@@ -499,7 +499,7 @@ export function createBookingPolicyService(envStatus: EnvironmentStatus): Bookin
       if (error || !data) {
         throw new ApiError(500, "POLICY_RETIRE_FAILED", error?.message ?? "retire failed");
       }
-      return mapRow(data as PolicyRow);
+      return mapRow(data as unknown as PolicyRow);
     },
   };
 }

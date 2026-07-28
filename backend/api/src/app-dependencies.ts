@@ -98,6 +98,10 @@ import {
   createBookingPolicyService,
   type BookingPolicyService,
 } from "./services/reservations/booking-policy.js";
+import {
+  createOpeningOperationsService,
+  type OpeningOperationsService,
+} from "./services/opening/operations.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -122,6 +126,7 @@ export interface AppDependencies {
   reservations: ReservationsService;
   publicBooking: PublicBookingService;
   bookingPolicy: BookingPolicyService;
+  openingOperations: OpeningOperationsService;
   tableService: TableServiceOperations;
   paymentSettlement: PaymentSettlementService;
   deposits: DepositService;
@@ -156,6 +161,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     reservations: createReservationsService(envStatus),
     publicBooking: createPublicBookingService(envStatus),
     bookingPolicy: createBookingPolicyService(envStatus),
+    openingOperations: createOpeningOperationsService(envStatus),
     tableService: createTableServiceOperations(envStatus),
     paymentSettlement: createPaymentSettlementService(envStatus),
     deposits: createDepositService(envStatus),

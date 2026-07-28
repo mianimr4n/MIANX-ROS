@@ -151,10 +151,10 @@ const SELECT =
   "id, user_id, role_id, branch_id, assignment_status, invitation_id, assigned_by, assigned_at, verified_by, verified_at, deactivated_by, deactivated_at, notes, created_at, updated_at, roles(code), users(email, full_name), branches(branch_code, name)";
 
 function createServiceClient(envStatus: EnvironmentStatus): SupabaseClient {
-  if (!envStatus.supabaseUrl || !envStatus.supabaseServiceRoleKey) {
+  if (!envStatus.config.supabaseUrl || !envStatus.config.supabaseServiceRoleKey) {
     throw new ApiError(503, "SUPABASE_NOT_CONFIGURED", "Supabase service role is not configured.");
   }
-  return createClient(envStatus.supabaseUrl, envStatus.supabaseServiceRoleKey, {
+  return createClient(envStatus.config.supabaseUrl, envStatus.config.supabaseServiceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
