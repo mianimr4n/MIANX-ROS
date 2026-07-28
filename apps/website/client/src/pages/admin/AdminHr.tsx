@@ -22,6 +22,7 @@ import {
   TrainingCenter,
 } from "@/components/admin/hr/WorkforcePanels";
 import { WorkforceInsights } from "@/components/admin/hr/WorkforceInsights";
+import { StaffAssignmentsPanel } from "@/components/admin/hr/StaffAssignmentsPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
@@ -101,6 +102,8 @@ export default function AdminHr() {
       <HRStatusBanner />
 
       <HRKPIs inviteSummary={inviteSummary} />
+
+      <StaffAssignmentsPanel />
 
       <OrganizationTree />
 

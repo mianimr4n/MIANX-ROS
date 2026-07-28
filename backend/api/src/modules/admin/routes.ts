@@ -45,6 +45,10 @@ import {
   type StaffInviteRepository,
   type StaffInviteStatus,
 } from "../../services/staff/invites.js";
+import type { StaffAssignmentService } from "../../services/staff/assignments.js";
+import type { BookingPolicyService } from "../../services/reservations/booking-policy.js";
+import { createAdminStaffAssignmentsRouter } from "./staff-assignments.js";
+import { createAdminBookingPolicyRouter } from "./booking-policy.js";
 
 const createInviteSchema = z.object({
   email: z.email(),
@@ -91,6 +95,8 @@ export interface AdminRouterDependencies {
   envStatus: EnvironmentStatus;
   branchReadiness?: BranchReadinessService;
   inviteAppOrigin: string;
+  staffAssignments: StaffAssignmentService;
+  bookingPolicy: BookingPolicyService;
 }
 
 function toSafeInvite(invite: {
@@ -474,6 +480,22 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
         return next(error);
       }
     },
+  );
+
+  router.use(
+    createAdminStaffAssignmentsRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      staffAssignments: dependencies.staffAssignments,
+    }),
+  );
+
+  router.use(
+    createAdminBookingPolicyRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      bookingPolicy: dependencies.bookingPolicy,
+    }),
   );
 
   return router;

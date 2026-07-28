@@ -130,6 +130,8 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       staffInviteRepository: dependencies.staffInviteRepository,
+      staffAssignments: dependencies.staffAssignments,
+      bookingPolicy: dependencies.bookingPolicy,
       branchOrderManagement: dependencies.branchOrderManagement,
       restaurantTables: dependencies.restaurantTables,
       restaurantBills: dependencies.restaurantBills,

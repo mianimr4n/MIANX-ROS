@@ -403,3 +403,187 @@ export async function listAdminStaffInvites(
     readInit(accessToken, opts),
   );
 }
+
+export const ASSIGNABLE_STAFF_ROLE_CODES = [
+  "branch-manager",
+  "cashier",
+  "kitchen",
+  "rider",
+  "customer-support",
+  "host",
+  "waiter",
+] as const;
+
+export type StaffAssignment = {
+  id: string;
+  branchId: string | null;
+  userId: string;
+  roleId: string;
+  roleCode: string;
+  assignmentStatus: string;
+  invitationId: string | null;
+  assignedBy: string | null;
+  assignedAt: string;
+  verifiedBy: string | null;
+  verifiedAt: string | null;
+  deactivatedBy: string | null;
+  deactivatedAt: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  userEmail: string | null;
+  userFullName: string | null;
+  branchCode: string | null;
+  branchName: string | null;
+};
+
+export type StaffAssignmentEvent = {
+  id: string;
+  userRoleId: string;
+  branchId: string | null;
+  userId: string;
+  roleId: string;
+  eventType: string;
+  fromStatus: string | null;
+  toStatus: string | null;
+  actorUserId: string | null;
+  notes: string | null;
+  createdAt: string;
+};
+
+export type BookingPolicy = {
+  id: string;
+  branchId: string;
+  version: number;
+  status: string;
+  bookingEnabled: boolean;
+  onlineBookingEnabled: boolean;
+  minimumPartySize: number;
+  maximumPartySize: number;
+  bookingIntervalMinutes: number;
+  minimumAdvanceMinutes: number;
+  maximumAdvanceDays: number;
+  cancellationWindowMinutes: number;
+  gracePeriodMinutes: number;
+  tableHoldMinutes: number;
+  waitlistEnabled: boolean;
+  sameDayBookingEnabled: boolean;
+  specialNotes: string | null;
+  effectiveFrom: string | null;
+  effectiveUntil: string | null;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export function listStaffAssignments(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  const params = new URLSearchParams({ branchId });
+  return fetchApiData<StaffAssignment[]>(
+    `/admin/staff/assignments?${params}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function listAvailableStaffUsers(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  const params = new URLSearchParams({ branchId });
+  return fetchApiData<Array<{ userId: string; email: string | null; fullName: string | null }>>(
+    `/admin/staff/available-users?${params}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createStaffAssignment(
+  accessToken: string,
+  input: { branchId: string; userId: string; roleCode: string; notes?: string | null },
+) {
+  return fetchApiData<StaffAssignment>(`/admin/staff/assignments`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function deactivateStaffAssignment(accessToken: string, id: string, notes?: string | null) {
+  return fetchApiData<StaffAssignment>(`/admin/staff/assignments/${id}/deactivate`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ notes: notes ?? null }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function reactivateStaffAssignment(accessToken: string, id: string, notes?: string | null) {
+  return fetchApiData<StaffAssignment>(`/admin/staff/assignments/${id}/reactivate`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ notes: notes ?? null }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listStaffAssignmentHistory(accessToken: string, id: string, opts?: AdminReadOptions) {
+  return fetchApiData<StaffAssignmentEvent[]>(
+    `/admin/staff/assignments/${id}/history`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function fetchCurrentBookingPolicy(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  const params = new URLSearchParams({ branchId });
+  return fetchApiData<BookingPolicy | null>(
+    `/admin/booking-policies/current?${params}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function listBookingPolicyVersions(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  const params = new URLSearchParams({ branchId });
+  return fetchApiData<BookingPolicy[]>(`/admin/booking-policies?${params}`, readInit(accessToken, opts));
+}
+
+export function createBookingPolicyDraft(
+  accessToken: string,
+  input: Partial<BookingPolicy> & { branchId: string },
+) {
+  return fetchApiData<BookingPolicy>(`/admin/booking-policies`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function submitBookingPolicy(accessToken: string, id: string) {
+  return fetchApiData<BookingPolicy>(`/admin/booking-policies/${id}/submit`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function approveBookingPolicy(accessToken: string, id: string) {
+  return fetchApiData<BookingPolicy>(`/admin/booking-policies/${id}/approve`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function activateBookingPolicy(accessToken: string, id: string) {
+  return fetchApiData<BookingPolicy>(`/admin/booking-policies/${id}/activate`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function retireBookingPolicy(accessToken: string, id: string) {
+  return fetchApiData<BookingPolicy>(`/admin/booking-policies/${id}/retire`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}

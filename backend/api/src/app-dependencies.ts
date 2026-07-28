@@ -90,6 +90,14 @@ import {
   createManualContactService,
   type ManualContactService,
 } from "./services/notifications/manual-contact.js";
+import {
+  createStaffAssignmentService,
+  type StaffAssignmentService,
+} from "./services/staff/assignments.js";
+import {
+  createBookingPolicyService,
+  type BookingPolicyService,
+} from "./services/reservations/booking-policy.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -101,6 +109,7 @@ export interface AppDependencies {
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
   staffInviteRepository: StaffInviteRepository;
+  staffAssignments: StaffAssignmentService;
   restaurantTables: RestaurantTablesDataSource;
   qrTokenValidator: QrTokenValidator;
   dineInSessions: DineInSessionsService;
@@ -112,6 +121,7 @@ export interface AppDependencies {
   menuManagement: MenuManagementService;
   reservations: ReservationsService;
   publicBooking: PublicBookingService;
+  bookingPolicy: BookingPolicyService;
   tableService: TableServiceOperations;
   paymentSettlement: PaymentSettlementService;
   deposits: DepositService;
@@ -133,6 +143,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     authTokenVerifier: createSupabaseAuthTokenVerifier(envStatus),
     authProfileRepository: createSupabaseAuthProfileRepository(envStatus),
     staffInviteRepository: createSupabaseStaffInviteRepository(envStatus),
+    staffAssignments: createStaffAssignmentService(envStatus),
     restaurantTables: createRestaurantTablesDataSource(envStatus),
     qrTokenValidator,
     dineInSessions: createDineInSessionsService(envStatus, qrTokenValidator),
@@ -144,6 +155,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     menuManagement: createMenuManagementService(envStatus),
     reservations: createReservationsService(envStatus),
     publicBooking: createPublicBookingService(envStatus),
+    bookingPolicy: createBookingPolicyService(envStatus),
     tableService: createTableServiceOperations(envStatus),
     paymentSettlement: createPaymentSettlementService(envStatus),
     deposits: createDepositService(envStatus),
