@@ -557,6 +557,7 @@ export function createReservationsService(envStatus: EnvironmentStatus): Reserva
         .from("branch_booking_policies")
         .select("*")
         .eq("branch_id", query.branchId)
+        .eq("status", "ACTIVE")
         .maybeSingle();
       const policy = { ...DEFAULT_POLICY, ...(policyRow ?? {}) };
 
@@ -783,6 +784,7 @@ export function createReservationsService(envStatus: EnvironmentStatus): Reserva
           .from("branch_booking_policies")
           .select("default_duration_minutes")
           .eq("branch_id", input.branchId)
+          .eq("status", "ACTIVE")
           .maybeSingle();
         const duration = (policyRow?.default_duration_minutes as number | undefined) ?? 90;
         expectedEnd = new Date(startAt.getTime() + duration * 60_000);
