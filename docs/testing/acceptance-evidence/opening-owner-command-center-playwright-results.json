@@ -1,0 +1,161 @@
+{
+  "config": {
+    "configFile": "D:\\telepizza-private\\worktrees\\telepizza-opening-readiness-final\\playwright.opening-command-center.config.ts",
+    "rootDir": "D:/telepizza-private/worktrees/telepizza-opening-readiness-final/e2e/opening",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/testing/acceptance-evidence/opening-owner-command-center-playwright-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/telepizza-private/worktrees/telepizza-opening-readiness-final/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "D:/telepizza-private/worktrees/telepizza-opening-readiness-final/e2e/opening",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 180000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.52.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "owner-command-center.spec.ts",
+      "file": "owner-command-center.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Owner command center — actual browser",
+          "file": "owner-command-center.spec.ts",
+          "line": 33,
+          "column": 6,
+          "specs": [
+            {
+              "title": "dashboard / branch / ai-team across viewports with axe",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 49086,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================\n    at browserLogin (D:\\telepizza-private\\worktrees\\telepizza-opening-readiness-final\\e2e\\d3\\helpers.ts:56:10)\n    at D:\\telepizza-private\\worktrees\\telepizza-opening-readiness-final\\e2e\\opening\\owner-command-center.spec.ts:39:5",
+                        "location": {
+                          "file": "D:\\telepizza-private\\worktrees\\telepizza-opening-readiness-final\\e2e\\d3\\helpers.ts",
+                          "column": 10,
+                          "line": 56
+                        },
+                        "snippet": "   at ..\\d3\\helpers.ts:56\n\n  54 |   const alert = page.locator(\"[role=alert]\");\n  55 |   await Promise.race([\n> 56 |     page.waitForURL(/\\/admin(?!\\/login)/, { timeout: 45_000 }),\n     |          ^\n  57 |     alert.waitFor({ state: \"visible\", timeout: 45_000 }).then(async () => {\n  58 |       throw new Error(`Login failed: ${(await alert.textContent())?.trim() ?? \"unknown\"}`);\n  59 |     }),"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\telepizza-private\\worktrees\\telepizza-opening-readiness-final\\e2e\\d3\\helpers.ts",
+                            "column": 10,
+                            "line": 56
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================\n\n   at ..\\d3\\helpers.ts:56\n\n  54 |   const alert = page.locator(\"[role=alert]\");\n  55 |   await Promise.race([\n> 56 |     page.waitForURL(/\\/admin(?!\\/login)/, { timeout: 45_000 }),\n     |          ^\n  57 |     alert.waitFor({ state: \"visible\", timeout: 45_000 }).then(async () => {\n  58 |       throw new Error(`Login failed: ${(await alert.textContent())?.trim() ?? \"unknown\"}`);\n  59 |     }),\n    at browserLogin (D:\\telepizza-private\\worktrees\\telepizza-opening-readiness-final\\e2e\\d3\\helpers.ts:56:10)\n    at D:\\telepizza-private\\worktrees\\telepizza-opening-readiness-final\\e2e\\opening\\owner-command-center.spec.ts:39:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-27T22:46:03.069Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\telepizza-private\\worktrees\\telepizza-opening-readiness-final\\test-results\\owner-command-center-Owner-8eafe-m-across-viewports-with-axe-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "_error-context-0",
+                          "contentType": "text/markdown",
+                          "path": "D:\\telepizza-private\\worktrees\\telepizza-opening-readiness-final\\test-results\\owner-command-center-Owner-8eafe-m-across-viewports-with-axe-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "D:\\telepizza-private\\worktrees\\telepizza-opening-readiness-final\\test-results\\owner-command-center-Owner-8eafe-m-across-viewports-with-axe-chromium\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\telepizza-private\\worktrees\\telepizza-opening-readiness-final\\e2e\\d3\\helpers.ts",
+                        "column": 10,
+                        "line": 56
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "c9fd10785527c65c516a-ae170e62f1b481cb78b4",
+              "file": "owner-command-center.spec.ts",
+              "line": 36,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-07-27T22:46:01.515Z",
+    "duration": 51247.395,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

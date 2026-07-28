@@ -343,24 +343,30 @@ export default function AdminBranchManager() {
         <section className="mb-8" aria-label="Start here">
           <AdminSectionTitle
             eyebrow="Start here"
-            title="Complete opening readiness"
-            description="This branch is coming soon. Finish setup before treating sales or table KPIs as live."
+            title="Coming-soon branch setup"
+            description="This branch is coming soon. Finish setup before treating sales or table KPIs as live. Do not inherit Royal Orchard opening percentage."
           />
           <DashboardActionGrid>
             <DashboardActionCard
               primary
-              title="Complete opening readiness"
-              description="Open branch and system settings"
-              href="/admin/settings"
+              title="Open Mianx.ai Team"
+              description="Owner decision queue and readiness model"
+              href="/admin/ai-team"
             />
             <DashboardActionCard
-              title="Review readiness checklist"
-              description="See blockers on this page"
+              title="Review opening plan"
+              description="See blockers grouped on this page"
               href="/admin/branch"
+            />
+            <DashboardActionCard
+              title="Resolve setup blockers"
+              description="Invite real staff with canonical roles"
+              href="/admin/hr"
             />
           </DashboardActionGrid>
           <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            Coming soon — no live order or sales board until the branch is operating.
+            Coming soon — no live order or sales board until the branch is operating. Northern Bypass
+            activation requires separate Founder authorization.
           </div>
         </section>
       ) : null}
@@ -381,39 +387,39 @@ export default function AdminBranchManager() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <AdminKpiCard
-              title="Pending orders"
+              title="Pending customer orders"
               value={data && pending != null ? String(pending) : null}
               source="DERIVED"
               state={kpiCardState}
-              detail="New orders waiting to be confirmed"
+              detail="Order-derived — awaiting staff confirmation (not kitchen tickets)"
             />
             <AdminKpiCard
-              title="Kitchen queue"
+              title="In kitchen (orders)"
               value={data ? String(data.kpis.kitchenWaiting) : null}
               source="DERIVED"
               state={kpiCardState}
-              detail="Orders confirmed or being prepared"
+              detail="Order-derived confirmed + preparing — not a KDS ticket count"
             />
             <AdminKpiCard
-              title="Ready orders"
+              title="Ready for dispatch"
               value={data && ready != null ? String(ready) : null}
               source="DERIVED"
               state={kpiCardState}
-              detail="Waiting for pickup or dispatch"
+              detail="Order-derived ready — may enter rider assignment"
             />
             <AdminKpiCard
               title="Out for delivery"
               value={data ? String(data.kpis.activeDeliveries) : null}
               source="DERIVED"
               state={kpiCardState}
-              detail="Orders currently dispatched"
+              detail="Order-derived dispatched status"
             />
             <AdminKpiCard
-              title="Customers waiting"
+              title="Customers awaiting staff"
               value={data && customerWaiting != null ? String(customerWaiting) : null}
               source="DERIVED"
               state={kpiCardState}
-              detail="Pending plus confirmed orders"
+              detail="Pending + confirmed orders needing staff action"
             />
             <AdminKpiCard
               title="Cancelled today"

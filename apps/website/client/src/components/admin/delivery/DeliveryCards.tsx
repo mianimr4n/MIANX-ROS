@@ -53,8 +53,9 @@ export function DeliveryCards({
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {rows.map((row) => {
-            const minutes = elapsedMinutes(deliveryTimerStartIso(row), nowMs);
-            const tone = timerTone(minutes);
+            const startIso = deliveryTimerStartIso(row);
+            const minutes = startIso ? elapsedMinutes(startIso, nowMs) : null;
+            const tone = minutes == null ? "green" : timerTone(minutes);
             const enrichment = enrichmentByOrderId[row.orderId];
             return (
               <article
@@ -75,9 +76,13 @@ export function DeliveryCards({
                       "rounded-lg border px-3 py-1.5 text-base font-semibold tabular-nums",
                       timerToneClass(tone),
                     )}
-                    aria-label={`Elapsed ${minutes} minutes`}
+                    aria-label={
+                      minutes == null
+                        ? "Elapsed time not applicable until rider assignment"
+                        : `Elapsed ${minutes} minutes`
+                    }
                   >
-                    {minutes}m
+                    {minutes == null ? "—" : `${minutes}m`}
                   </div>
                 </div>
 

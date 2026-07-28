@@ -36,7 +36,7 @@ export function DeliveryPerformance({ snapshot }: { snapshot: DeliveryKpiSnapsho
           title="Late"
           value={String(snapshot?.late ?? 0)}
           source="DERIVED"
-          detail="Active ≥ 45 min display threshold"
+          detail="Assigned/picked-up only · ≥ 45 min from assign/pickup — provisional excluded"
         />
         <AdminKpiCard
           title="Capacity"

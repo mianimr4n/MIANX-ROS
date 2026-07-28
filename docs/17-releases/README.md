@@ -1,7 +1,7 @@
-﻿# docs/17-releases
+# 17-releases
 
-**Class:** FUTURE (TEAS slot)
+**Status:** ACTIVE
 
-Reserved for Enterprise Architecture Standards filings. No ACTIVE content yet.
+Canonical content: [RELEASE_HISTORY.md](./RELEASE_HISTORY.md)
 
-See [Documentation Map](../README.md).
+See also [DOCUMENTATION_MAP.md](../DOCUMENTATION_MAP.md).

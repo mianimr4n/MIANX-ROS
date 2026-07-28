@@ -49,13 +49,18 @@ export function elapsedMinutes(fromIso: string, now = Date.now()): number {
   return Math.max(0, Math.floor((now - start) / 60_000));
 }
 
-/** Prefer picked-up → assigned → created for in-flight elapsed. */
+/** Prefer picked-up → assigned for in-flight elapsed. Never use createdAt for late clocks. */
 export function deliveryTimerStartIso(row: {
   pickedUpAt: string | null;
   assignedAt: string | null;
   createdAt: string;
-}): string {
-  return row.pickedUpAt ?? row.assignedAt ?? row.createdAt;
+}): string | null {
+  return row.pickedUpAt ?? row.assignedAt ?? null;
+}
+
+/** @deprecated Prefer deliveryTimerStartIso + classifyDeliveryLate from operational-truth. */
+export function deliveryCreatedFallbackIso(row: { createdAt: string }): string {
+  return row.createdAt;
 }
 
 export function timerTone(minutes: number): "green" | "yellow" | "red" {

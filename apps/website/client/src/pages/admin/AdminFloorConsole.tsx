@@ -185,7 +185,7 @@ export default function AdminFloorConsole() {
       <div className="space-y-6">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold">Live floor — {branchLabel}</h1>
+            <h2 className="text-xl font-semibold">Live floor — {branchLabel}</h2>
             <p className="text-sm text-muted-foreground">
               {state
                 ? `Last update ${formatLastSuccess(floorOp.lastSuccessAt) ?? "—"} · ${state.waitlistCount} waiting`

@@ -26,11 +26,15 @@ import {
   DELIVERY_LATE_MINUTES,
   averageDeliveryMinutes,
   currentShiftLabel,
-  deliveryTimerStartIso,
-  elapsedMinutes,
   isKarachiToday,
   isOnlineRiderStatus,
 } from "@/lib/admin-delivery";
+import {
+  canAssignRider,
+  classifyDeliveryLate,
+  isDispatchWaitingForRider,
+  isProvisionalDelivery,
+} from "@/lib/operational-truth";
 import { getAdminOrder, listAdminOrders, type AdminOrderDetail } from "@/lib/admin-api";
 import { useOperationalData } from "@/lib/op-status";
 import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
@@ -221,8 +225,18 @@ export default function AdminDelivery() {
     });
   }, [assignments, urlState.riderId, urlState.search]);
 
+  const provisionalRows = useMemo(
+    () =>
+      filtered.filter((row) =>
+        isProvisionalDelivery({ deliveryStatus: row.status, orderStatus: row.orderStatus }),
+      ),
+    [filtered],
+  );
   const waitingRows = useMemo(
-    () => filtered.filter((row) => row.status === "pending"),
+    () =>
+      filtered.filter((row) =>
+        isDispatchWaitingForRider({ deliveryStatus: row.status, orderStatus: row.orderStatus }),
+      ),
     [filtered],
   );
   const activeRows = useMemo(
@@ -231,21 +245,35 @@ export default function AdminDelivery() {
   );
 
   const kpiSnapshot: DeliveryKpiSnapshot = useMemo(() => {
-    const waiting = assignments.filter((a) => a.status === "pending").length;
+    const waiting = assignments.filter((a) =>
+      isDispatchWaitingForRider({ deliveryStatus: a.status, orderStatus: a.orderStatus }),
+    ).length;
+    const provisional = assignments.filter((a) =>
+      isProvisionalDelivery({ deliveryStatus: a.status, orderStatus: a.orderStatus }),
+    ).length;
     const assigned = assignments.filter((a) => a.status === "assigned").length;
     const outForDelivery = assignments.filter((a) => a.status === "picked-up").length;
     const deliveredToday = assignments.filter(
       (a) => a.status === "delivered" && isKarachiToday(a.deliveredAt),
     ).length;
     const failed = assignments.filter((a) => a.status === "failed").length;
-    const late = assignments
-      .filter((a) => a.status === "pending" || a.status === "assigned" || a.status === "picked-up")
-      .filter((a) => elapsedMinutes(deliveryTimerStartIso(a), nowMs) >= DELIVERY_LATE_MINUTES).length;
+    const late = assignments.filter(
+      (a) =>
+        classifyDeliveryLate({
+          deliveryStatus: a.status,
+          orderStatus: a.orderStatus,
+          assignedAt: a.assignedAt,
+          pickedUpAt: a.pickedUpAt,
+          nowMs,
+          lateMinutes: DELIVERY_LATE_MINUTES,
+        }) === "LATE",
+    ).length;
     const onlineRiders = ridersLive
       ? riders.filter((rider) => isOnlineRiderStatus(rider.status)).length
       : null;
     return {
       waiting,
+      provisional,
       assigned,
       outForDelivery,
       deliveredToday,
@@ -264,8 +292,16 @@ export default function AdminDelivery() {
   async function onAssign(deliveryId: string) {
     const token = session?.access_token;
     const riderId = selectedRiderByDelivery[deliveryId];
+    const row = assignments.find((a) => a.id === deliveryId);
     if (!token || !riderId || busyId) {
       if (!riderId) setActionError("Select a rider first.");
+      return;
+    }
+    if (
+      row &&
+      !canAssignRider({ deliveryStatus: row.status, orderStatus: row.orderStatus })
+    ) {
+      setActionError("Rider assignment unavailable until the order is confirmed and ready for dispatch.");
       return;
     }
     setBusyId(deliveryId);
@@ -421,6 +457,34 @@ export default function AdminDelivery() {
         riders={riders}
         ridersLive={ridersLive}
       />
+
+      {provisionalRows.length > 0 ? (
+        <section aria-label="Provisional delivery records" className="mb-6">
+          <div className="mb-3">
+            <h3 className="text-lg font-semibold tracking-tight">Awaiting confirmation</h3>
+            <p className="text-sm text-[var(--admin-muted)]">
+              Delivery record created — order awaiting confirmation. Not an active dispatch and not late.
+            </p>
+          </div>
+          <ul className="space-y-2 rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
+            {provisionalRows.map((row) => (
+              <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span className="font-mono font-semibold">{row.orderNumber}</span>
+                <span className="text-[var(--admin-muted)]">
+                  Delivery record created — order awaiting confirmation
+                </span>
+                <button
+                  type="button"
+                  className="font-semibold text-[var(--brand-red)]"
+                  onClick={() => openDrawer(row)}
+                >
+                  View
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <DispatchQueue
         rows={waitingRows}

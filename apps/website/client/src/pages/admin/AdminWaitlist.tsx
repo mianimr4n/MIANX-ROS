@@ -162,7 +162,7 @@ export default function AdminWaitlist() {
     <AdminShell title="Waitlist">
       <div className="space-y-6">
         <header>
-          <h1 className="text-xl font-semibold">Waitlist — {branchLabel}</h1>
+          <h2 className="text-xl font-semibold">Waitlist — {branchLabel}</h2>
           <p className="text-sm text-muted-foreground">
             Walk-in queue in arrival order. Seating creates a dining session atomically.
           </p>

@@ -1,7 +1,7 @@
-﻿# docs/08-security
+# 08-security
 
-**Class:** FUTURE (TEAS slot)
+**Status:** ACTIVE
 
-Reserved for Enterprise Architecture Standards filings. No ACTIVE content yet.
+Canonical content: [RBAC_AND_ACCESS_MATRIX.md](./RBAC_AND_ACCESS_MATRIX.md)
 
-See [Documentation Map](../README.md).
+See also [DOCUMENTATION_MAP.md](../DOCUMENTATION_MAP.md).

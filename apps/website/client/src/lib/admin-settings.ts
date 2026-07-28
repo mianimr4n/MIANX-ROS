@@ -328,9 +328,9 @@ export function integrationChecks(): SettingsIntegrationCheck[] {
     },
     {
       id: "rbac-seed",
-      label: "RBAC seed",
+      label: "RBAC UI reference",
       status: "present",
-      note: "roles + permissions seeded — Settings shows verified codes only.",
+      note: "Settings shows UI-visible role codes + session grants — not the full DB role_permissions catalog.",
     },
     {
       id: "settings-persist",
@@ -403,8 +403,9 @@ export function buildConfigurationInsights(input: {
     },
     {
       id: "rbac",
-      title: `RBAC seed: ${input.roleCount} roles · ${input.permissionCount} permissions`,
-      detail: "Session grants are derived from /auth/me — Settings does not invent or mutate roles.",
+      title: `UI-visible roles: ${input.roleCount} · UI permission reference: ${input.permissionCount}`,
+      detail:
+        "Not the complete Seeded RBAC catalog (DB baseline). Current session grants appear separately under Users & Access — do not conflate with seed counts.",
       source: "derived",
     },
     {

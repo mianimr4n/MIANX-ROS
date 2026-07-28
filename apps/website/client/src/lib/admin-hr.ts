@@ -25,7 +25,7 @@ export type HrReadinessGroup = {
   related: string;
 };
 
-/** Verified from supabase/migrations seed — not invented. */
+/** UI-visible application role codes — not the full DB roles catalog (9 rows). */
 export const SEEDED_ROLES: Array<{ code: string; name: string; description: string }> = [
   { code: "super-admin", name: "Super Admin", description: "Full system access across Telepizza operations." },
   { code: "branch-manager", name: "Branch Manager", description: "Branch operations, staff, and order oversight." },
@@ -33,9 +33,14 @@ export const SEEDED_ROLES: Array<{ code: string; name: string; description: stri
   { code: "cashier", name: "Cashier", description: "POS and payment workflows." },
   { code: "rider", name: "Rider", description: "Delivery assignment and completion workflows." },
   { code: "customer-support", name: "Customer Support", description: "Customer support and order resolution." },
+  { code: "host", name: "Host", description: "Front-of-house hosting and floor coordination." },
+  { code: "waiter", name: "Waiter", description: "Table service and dine-in order support." },
 ];
 
-/** Verified permission codes from committed migrations. */
+/**
+ * UI reference permission codes shown in Settings/HR panels.
+ * This is a UI_VISIBLE subset — not the complete seeded role_permissions catalog (76 rows).
+ */
 export const SEEDED_PERMISSIONS: Array<{ code: string; module: string; description: string }> = [
   { code: "menu.read", module: "menu", description: "Read menu catalog and variants." },
   { code: "menu.write", module: "menu", description: "Manage menu categories, items, and variants." },

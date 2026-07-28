@@ -1,7 +1,7 @@
-﻿# docs/10-devops
+# 10-devops
 
-**Class:** FUTURE (TEAS slot)
+**Status:** ACTIVE
 
-Reserved for Enterprise Architecture Standards filings. No ACTIVE content yet.
+Canonical content: [RELEASE_AND_ROLLBACK_RUNBOOK.md](./RELEASE_AND_ROLLBACK_RUNBOOK.md)
 
-See [Documentation Map](../README.md).
+See also [DOCUMENTATION_MAP.md](../DOCUMENTATION_MAP.md).

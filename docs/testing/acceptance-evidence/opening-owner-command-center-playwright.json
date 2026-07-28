@@ -1,0 +1,54 @@
+{
+  "ok": true,
+  "baseURL": "http://localhost:3000",
+  "viewports": {
+    "mobile-390": {
+      "/admin/dashboard": {
+        "h1": 1,
+        "overflow": false
+      },
+      "/admin/branch": {
+        "h1": 1,
+        "overflow": false
+      },
+      "/admin/ai-team": {
+        "h1": 1,
+        "overflow": false
+      }
+    },
+    "tablet-768": {
+      "/admin/dashboard": {
+        "h1": 1,
+        "overflow": false
+      },
+      "/admin/branch": {
+        "h1": 1,
+        "overflow": false
+      },
+      "/admin/ai-team": {
+        "h1": 1,
+        "overflow": false
+      }
+    },
+    "desktop-1440": {
+      "/admin/dashboard": {
+        "h1": 1,
+        "overflow": false
+      },
+      "/admin/branch": {
+        "h1": 1,
+        "overflow": false
+      },
+      "/admin/ai-team": {
+        "h1": 1,
+        "overflow": false
+      }
+    }
+  },
+  "axe": {
+    "violations": 0,
+    "seriousOrCritical": 0,
+    "ids": []
+  },
+  "agents": 14
+}

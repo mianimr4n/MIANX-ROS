@@ -1,7 +1,7 @@
-﻿# docs/05-events
+# 05-events
 
-**Class:** FUTURE (TEAS slot)
+**Status:** ACTIVE
 
-Reserved for Enterprise Architecture Standards filings. No ACTIVE content yet.
+Canonical content: [ORDER_TO_DELIVERY_LIFECYCLE.md](./ORDER_TO_DELIVERY_LIFECYCLE.md)
 
-See [Documentation Map](../README.md).
+See also [DOCUMENTATION_MAP.md](../DOCUMENTATION_MAP.md).

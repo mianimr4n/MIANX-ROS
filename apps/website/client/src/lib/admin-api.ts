@@ -247,8 +247,9 @@ export type BranchReadinessReport = {
   name: string;
   status: string;
   operationallyActive: boolean;
-  readinessGrade?: "READY" | "READY_WITH_LIMITATIONS" | "BLOCKED" | "NOT_VERIFIED";
-  blockers: Array<{ code: string; message: string }>;
+  readinessGrade?: "READY" | "READY_WITH_LIMITATIONS" | "BLOCKED" | "NOT_VERIFIED" | "ERROR";
+  blockers: Array<{ code: string; message: string; nextAction?: string }>;
+  nextActions?: string[];
   checks: Record<string, boolean>;
 };
 

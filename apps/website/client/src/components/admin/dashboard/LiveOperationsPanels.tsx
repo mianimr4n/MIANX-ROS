@@ -80,22 +80,22 @@ export function KitchenStatusPanel({
   failed?: boolean;
 }) {
   const rows = [
-    { key: "preparing", label: "Preparing", tone: "bg-amber-50 text-amber-950" },
-    { key: "ready", label: "Ready", tone: "bg-emerald-50 text-emerald-900" },
-    { key: "confirmed", label: "Confirmed", tone: "bg-sky-50 text-sky-950" },
-    { key: "pending", label: "Pending", tone: "bg-orange-50 text-orange-950" },
+    { key: "preparing", label: "Preparing (orders)", tone: "bg-amber-50 text-amber-950" },
+    { key: "ready", label: "Ready (orders)", tone: "bg-emerald-50 text-emerald-900" },
+    { key: "confirmed", label: "Confirmed (orders)", tone: "bg-sky-50 text-sky-950" },
+    { key: "pending", label: "Pending confirmation (orders)", tone: "bg-orange-50 text-orange-950" },
   ];
 
   if (failed || counts == null) {
     return (
       <AdminSurface aria-labelledby="kitchen-status-heading">
         <AdminSurfaceHeader
-          title="Kitchen status"
-          description="Derived from current order statuses. Not a live KDS feed."
+          title="Kitchen status (order-derived)"
+          description="Order-derived counts from order.status — not kitchen_tickets / KDS live feed."
         />
         <AdminSurfaceBody>
           <h3 id="kitchen-status-heading" className="sr-only">
-            Kitchen status
+            Kitchen status order-derived
           </h3>
           <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-800" role="status">
             ERROR — kitchen status unavailable. Counts are not shown as zero.
@@ -108,13 +108,16 @@ export function KitchenStatusPanel({
   return (
     <AdminSurface aria-labelledby="kitchen-status-heading">
       <AdminSurfaceHeader
-        title="Kitchen status"
-        description="Derived from current order statuses. Not a live KDS feed."
+        title="Kitchen status (order-derived)"
+        description="Order-derived counts from order.status — not kitchen_tickets / KDS live feed."
       />
       <AdminSurfaceBody>
         <h3 id="kitchen-status-heading" className="sr-only">
-          Kitchen status
+          Kitchen status order-derived
         </h3>
+        <p className="mb-3 rounded-lg border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2 text-xs text-[var(--admin-muted)]">
+          Pending confirmation is a customer order waiting for staff — not a kitchen ticket.
+        </p>
         <ul className="grid gap-2 sm:grid-cols-2">
           {rows.map((row) => (
             <li key={row.key} className={`flex items-center justify-between rounded-xl px-3 py-3 text-sm ${row.tone}`}>

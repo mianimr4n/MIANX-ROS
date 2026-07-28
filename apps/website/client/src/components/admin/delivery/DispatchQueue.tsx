@@ -4,6 +4,7 @@ import {
   deliveryStatusBadgeClass,
   deliveryStatusLabel,
 } from "@/lib/admin-delivery";
+import { canAssignRider, isProvisionalDelivery } from "@/lib/operational-truth";
 import type { DeliveryAssignment } from "@/lib/ops-api";
 import type { RiderRosterItem } from "@/lib/ops-api";
 import { cn } from "@/lib/utils";
@@ -45,7 +46,9 @@ export function DispatchQueue({
       <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
         <div>
           <h3 className="text-lg font-semibold tracking-tight">Dispatch queue</h3>
-          <p className="text-sm text-[var(--admin-muted)]">Orders waiting for rider assignment (pending).</p>
+          <p className="text-sm text-[var(--admin-muted)]">
+            Orders ready for rider assignment — excludes unconfirmed provisional rows.
+          </p>
         </div>
         <span className="rounded-full bg-[var(--admin-soft)] px-2.5 py-1 text-xs font-semibold tabular-nums">
           {rows.length}
@@ -94,6 +97,15 @@ export function DispatchQueue({
             <tbody>
               {rows.map((row) => {
                 const enrichment = enrichmentByOrderId[row.orderId];
+                const assignAllowed =
+                  canAssign &&
+                  canAssignRider({ deliveryStatus: row.status, orderStatus: row.orderStatus });
+                const statusText = isProvisionalDelivery({
+                  deliveryStatus: row.status,
+                  orderStatus: row.orderStatus,
+                })
+                  ? "Delivery record created — order awaiting confirmation"
+                  : deliveryStatusLabel(row.status);
                 return (
                   <tr key={row.id} className="border-b border-[var(--admin-border)]/70 hover:bg-[var(--admin-soft)]/60">
                     <td className="px-3 py-3 font-mono font-semibold">{row.orderNumber}</td>
@@ -120,13 +132,13 @@ export function DispatchQueue({
                           "inline-flex rounded-full px-2 py-0.5 text-xs font-semibold",
                           deliveryStatusBadgeClass(row.status),
                         )}
-                        aria-label={`Status ${deliveryStatusLabel(row.status)}`}
+                        aria-label={`Status ${statusText}`}
                       >
-                        {deliveryStatusLabel(row.status)}
+                        {statusText}
                       </span>
                     </td>
                     <td className="px-3 py-3">
-                      {canAssign ? (
+                      {assignAllowed ? (
                         <div className="flex min-w-[12rem] flex-col gap-2">
                           <select
                             className="min-h-10 rounded-lg border border-[var(--admin-border)] bg-white px-2 text-sm"
@@ -152,7 +164,11 @@ export function DispatchQueue({
                           </button>
                         </div>
                       ) : (
-                        <span className="text-xs text-[var(--admin-muted)]">Needs delivery.assign</span>
+                        <span className="text-xs text-[var(--admin-muted)]">
+                          {!canAssign
+                            ? "Needs delivery.assign"
+                            : "Unavailable until order is ready for dispatch"}
+                        </span>
                       )}
                     </td>
                     <td className="px-3 py-3">
