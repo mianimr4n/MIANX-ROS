@@ -273,6 +273,21 @@ export default function AdminFloorPlan() {
           ) : null}
         </header>
 
+        {(floors.filter((f) => f.isActive).length === 0 ||
+          tables.filter((t) => t.isActive).length === 0) && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <p className="font-semibold">SETUP REQUIRED / FOUNDATION</p>
+            <p>
+              <span className="font-medium">Problem:</span> No active floor or tables configured for
+              Royal Orchard.
+            </p>
+            <p>
+              <span className="font-medium">Next action:</span> Create the first floor and at least one
+              active table.
+            </p>
+          </div>
+        )}
+
         {!branchId ? (
           <p className="rounded-xl border bg-muted/40 p-4 text-sm">
             Select a specific branch to configure its floor plan.

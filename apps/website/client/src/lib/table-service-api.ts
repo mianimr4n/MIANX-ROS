@@ -62,6 +62,8 @@ export type FloorTableRecord = {
   rotation: number;
   isAccessible: boolean;
   highChairSupported: boolean;
+  accessibilityNotes?: string | null;
+  isCombinable?: boolean;
   isActive: boolean;
   operationalStatus: TableOperationalStatus;
   updatedAt: string;
@@ -276,6 +278,27 @@ export async function createFloor(
   input: { branchId: string; code: string; displayName: string; description?: string; sortOrder?: number },
 ): Promise<FloorRecord> {
   return fetchApiData<FloorRecord>(`/admin/floor/floors`, writeInit(accessToken, input));
+}
+
+export async function createFloorTable(
+  accessToken: string,
+  input: {
+    branchId: string;
+    floorId: string;
+    tableNumber: string;
+    displayName?: string | null;
+    capacity: number;
+    capacityMin?: number;
+    capacityMax?: number | null;
+    serviceAreaId?: string | null;
+    isAccessible?: boolean;
+    highChairSupported?: boolean;
+    accessibilityNotes?: string | null;
+    isCombinable?: boolean;
+    isActive?: boolean;
+  },
+): Promise<FloorTableRecord> {
+  return fetchApiData<FloorTableRecord>(`/admin/floor/tables`, writeInit(accessToken, input));
 }
 
 export async function updateFloor(

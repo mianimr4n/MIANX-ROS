@@ -96,6 +96,26 @@ const updateTableLayoutSchema = z
     rotation: z.number().min(-360).max(360).optional(),
     isAccessible: z.boolean().optional(),
     highChairSupported: z.boolean().optional(),
+    accessibilityNotes: z.string().trim().max(1000).optional().nullable(),
+    isCombinable: z.boolean().optional(),
+    isActive: z.boolean().optional(),
+  })
+  .strict();
+
+const createTableSchema = z
+  .object({
+    branchId: z.string().uuid(),
+    floorId: z.string().uuid(),
+    tableNumber: z.string().trim().min(1).max(40),
+    displayName: z.string().trim().max(120).optional().nullable(),
+    capacity: z.number().int().min(1).max(100),
+    capacityMin: z.number().int().min(1).max(100).optional(),
+    capacityMax: z.number().int().min(1).max(100).optional().nullable(),
+    serviceAreaId: z.string().uuid().optional().nullable(),
+    isAccessible: z.boolean().optional(),
+    highChairSupported: z.boolean().optional(),
+    accessibilityNotes: z.string().trim().max(1000).optional().nullable(),
+    isCombinable: z.boolean().optional(),
     isActive: z.boolean().optional(),
   })
   .strict();
@@ -223,6 +243,26 @@ export function createAdminFloorRouter(deps: AdminFloorRouterDependencies) {
           req.body,
         );
         return res.json({ ok: true, data: area });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/tables",
+    requireAuthenticatedUser,
+    requirePermission("floor.manage"),
+    validateBody(createTableSchema),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const table = await deps.floorConfiguration.createTable(
+          scopeFrom(principal),
+          req.body,
+          principal.userId,
+        );
+        return res.status(201).json({ ok: true, data: table });
       } catch (error) {
         return next(error);
       }
