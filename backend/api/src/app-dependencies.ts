@@ -102,6 +102,10 @@ import {
   createOpeningOperationsService,
   type OpeningOperationsService,
 } from "./services/opening/operations.js";
+import {
+  createOpeningGovernanceService,
+  type OpeningGovernanceService,
+} from "./services/opening/governance.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -127,6 +131,7 @@ export interface AppDependencies {
   publicBooking: PublicBookingService;
   bookingPolicy: BookingPolicyService;
   openingOperations: OpeningOperationsService;
+  openingGovernance: OpeningGovernanceService;
   tableService: TableServiceOperations;
   paymentSettlement: PaymentSettlementService;
   deposits: DepositService;
@@ -162,6 +167,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     publicBooking: createPublicBookingService(envStatus),
     bookingPolicy: createBookingPolicyService(envStatus),
     openingOperations: createOpeningOperationsService(envStatus),
+    openingGovernance: createOpeningGovernanceService(envStatus),
     tableService: createTableServiceOperations(envStatus),
     paymentSettlement: createPaymentSettlementService(envStatus),
     deposits: createDepositService(envStatus),
