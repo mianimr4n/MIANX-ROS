@@ -110,7 +110,8 @@ export function AdminShell({
 
   if (isLoading) {
     return (
-      <div className="admin-shell min-h-screen flex items-center justify-center bg-[var(--admin-canvas)] text-[var(--admin-ink)]">
+      <div className="admin-shell min-h-screen flex flex-col items-center justify-center gap-3 bg-[var(--admin-canvas)] text-[var(--admin-ink)]">
+        <h1 className="text-lg font-semibold tracking-tight">{resolvedTitle}</h1>
         <div className="animate-pulse text-sm tracking-wide text-[var(--admin-muted)]">
           Loading admin session…
         </div>
