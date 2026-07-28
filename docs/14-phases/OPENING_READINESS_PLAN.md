@@ -37,7 +37,18 @@ Verified against repository main `17cc5e9cee8f65eb5c10fcc069ea3b863931a8b8` (inc
 Confirm opening-day staffing, devices, and provider readiness for Royal Orchard before 14 August 2026 10:00 Asia/Karachi.
 
 ## Next implementation action
-Continue opening-readiness work on the same branch: OMS/KDS/delivery truth, RBAC wording, full opening dashboard completion.
+Opening Operations Milestone 1 (people, floor, booking) adds local persisted workflows:
+staff assignments on `user_roles`, floor/table management, and Founder-approved booking
+policy lifecycle — wired into the shared readiness model. Do not mark Royal Orchard
+staff/floor/booking COMPLETE in Production without verified ACTIVE assignments and an
+approved ACTIVE policy. Payments, notifications, devices, and training remain later milestones.
+
+### Opening M1 notes
+- Canonical roles only; forbidden codes rejected (owner/founder/admin/delivery/general-staff/staff).
+- Booking COMPLETE only with ACTIVE + approved_at; unapproved cannot appear ACTIVE.
+- Floor and tables are separate readiness probes; empty surfaces show SETUP REQUIRED.
+- Migration `20260728180000_opening_m1_people_floor_booking.sql` is local-only in this task.
+- Exactly 14 Mianx.ai agents; no fake LIVE/background activity.
 
 ## Source of truth
 Repository evidence under `docs/`, `apps/website`, `backend/api`, `supabase/`, plus Production smoke evidence outside Git.

@@ -281,13 +281,12 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Named customer-support coverage for opening week.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
     deepLink: "/admin/hr",
-    defaultProblem:
-      "Customer-support assignment is not probed by the readiness API — Founder must assign named coverage.",
+    defaultProblem: "No customer-support assigned to Royal Orchard.",
     defaultNextAction: "Founder invites named customer-support using the canonical role.",
   },
   {
@@ -324,7 +323,7 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     id: "booking-policy",
     category: "FLOOR_AND_BOOKING",
     title: "Booking policy configured",
-    description: "Branch booking policy row present.",
+    description: "Founder-approved ACTIVE booking policy present for the branch.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
     sourceType: "LIVE_API",
@@ -332,8 +331,8 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     blockingSeverity: "high",
     ownerDecision: true,
     deepLink: "/admin/reservations",
-    defaultProblem: "Booking policy not configured.",
-    defaultNextAction: "Approve and save Royal Orchard booking policy.",
+    defaultProblem: "No Founder-approved ACTIVE booking policy for Royal Orchard.",
+    defaultNextAction: "Draft, submit for Founder approval, and activate a booking policy.",
   },
   {
     id: "reservations-route",
@@ -1048,7 +1047,6 @@ export function evaluateOpeningReadiness(signals: OpeningReadinessSignals): Eval
   }
   const checks = signals.readinessReport?.checks ?? {};
   const notifOk = checks.notificationConfigured === true;
-  const floorOk = checks.floorConfigured === true;
 
   const items: EvaluatedReadinessItem[] = [];
 
@@ -1085,12 +1083,13 @@ export function evaluateOpeningReadiness(signals: OpeningReadinessSignals): Eval
         items.push(fromCheck(def, checks.waiterAssigned, signals));
         break;
       case "people-customer-support":
-        items.push(humanFoundation(def, signals));
+        items.push(fromCheck(def, checks.customerSupportAssigned, signals));
         break;
       case "floor-plan":
+        items.push(fromCheck(def, checks.floorConfigured, signals));
+        break;
       case "floor-tables":
-        // API exposes combined floorConfigured (floors AND tables).
-        items.push(fromCheck(def, floorOk, signals));
+        items.push(fromCheck(def, checks.tablesConfigured, signals));
         break;
       case "booking-policy":
         items.push(fromCheck(def, checks.bookingPolicyConfigured, signals));

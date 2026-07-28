@@ -35,8 +35,10 @@ export interface BranchReadinessReport {
     waiterAssigned: boolean;
     kitchenAssigned: boolean;
     riderAssigned: boolean;
+    customerSupportAssigned: boolean;
     statusOperating: boolean;
     floorConfigured: boolean;
+    tablesConfigured: boolean;
     bookingPolicyConfigured: boolean;
     menuAssigned: boolean;
     posReady: boolean;
@@ -74,8 +76,21 @@ async function countRoleOnBranch(
     .from("user_roles")
     .select("user_id", { count: "exact", head: true })
     .eq("branch_id", branchId)
-    .eq("role_id", (role as { id: string }).id);
-  if (error) throw new ApiError(500, "MEMBERSHIP_LOOKUP_FAILED", error.message);
+    .eq("role_id", (role as { id: string }).id)
+    .eq("assignment_status", "ACTIVE");
+  if (error) {
+    // Pre-migration environments may lack assignment_status; fall back without status filter.
+    if (String(error.message).toLowerCase().includes("assignment_status")) {
+      const fallback = await supabase
+        .from("user_roles")
+        .select("user_id", { count: "exact", head: true })
+        .eq("branch_id", branchId)
+        .eq("role_id", (role as { id: string }).id);
+      if (fallback.error) throw new ApiError(500, "MEMBERSHIP_LOOKUP_FAILED", fallback.error.message);
+      return fallback.count ?? 0;
+    }
+    throw new ApiError(500, "MEMBERSHIP_LOOKUP_FAILED", error.message);
+  }
   return count ?? 0;
 }
 
@@ -102,8 +117,10 @@ function errorReport(
       waiterAssigned: false,
       kitchenAssigned: false,
       riderAssigned: false,
+      customerSupportAssigned: false,
       statusOperating: isOperationallyActive(branch.status),
       floorConfigured: false,
+      tablesConfigured: false,
       bookingPolicyConfigured: false,
       menuAssigned: false,
       posReady: false,
@@ -173,14 +190,16 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
       let waiter: number;
       let kitchen: number;
       let rider: number;
+      let customerSupport: number;
       try {
-        [bm, cashier, host, waiter, kitchen, rider] = await Promise.all([
+        [bm, cashier, host, waiter, kitchen, rider, customerSupport] = await Promise.all([
           countRoleOnBranch(supabase, branchId, "branch-manager"),
           countRoleOnBranch(supabase, branchId, "cashier"),
           countRoleOnBranch(supabase, branchId, "host"),
           countRoleOnBranch(supabase, branchId, "waiter"),
           countRoleOnBranch(supabase, branchId, "kitchen"),
           countRoleOnBranch(supabase, branchId, "rider"),
+          countRoleOnBranch(supabase, branchId, "customer-support"),
         ]);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Staffing probe failed.";
@@ -200,8 +219,9 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
           .eq("is_active", true),
         supabase
           .from("branch_booking_policies")
-          .select("id, booking_enabled")
+          .select("id, booking_enabled, status, approved_at")
           .eq("branch_id", branchId)
+          .eq("status", "ACTIVE")
           .maybeSingle(),
         supabase
           .from("branch_notification_settings")
@@ -240,8 +260,13 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
       }
       const menuAssigned = (menuItemCount ?? 0) > 0;
 
-      const floorConfigured = (floorResult.count ?? 0) > 0 && (tableResult.count ?? 0) > 0;
-      const bookingPolicyConfigured = Boolean(policyResult.data);
+      const floorConfigured = (floorResult.count ?? 0) > 0;
+      const tablesConfigured = (tableResult.count ?? 0) > 0;
+      const policy = policyResult.data as
+        | { id: string; booking_enabled?: boolean; status?: string; approved_at?: string | null }
+        | null;
+      // ACTIVE + Founder-approved (approved_at set). Do not treat draft rows as configured.
+      const bookingPolicyConfigured = Boolean(policy && policy.status === "ACTIVE" && policy.approved_at);
       const statusOperating = isOperationallyActive(branch.status);
 
       // Honest notification probe: branch_notification_settings must exist with a non-disabled
@@ -273,8 +298,10 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
         waiterAssigned: waiter > 0,
         kitchenAssigned: kitchen > 0,
         riderAssigned: rider > 0,
+        customerSupportAssigned: customerSupport > 0,
         statusOperating,
         floorConfigured,
+        tablesConfigured,
         bookingPolicyConfigured,
         menuAssigned,
         // POS/KDS/delivery staffing readiness (device verification stays explicit / separate).
@@ -357,18 +384,32 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
           "Assign a waiter to this branch",
         );
       }
+      if (!checks.customerSupportAssigned) {
+        pushBlocker(
+          "CUSTOMER_SUPPORT_MISSING",
+          "No customer-support membership is assigned to this branch.",
+          "Assign customer-support coverage to this branch",
+        );
+      }
       if (!checks.floorConfigured) {
         pushBlocker(
           "FLOOR_MISSING",
-          "Active floor and tables are required before dine-in service.",
-          "Configure active floor plan and tables",
+          "At least one active floor is required before dine-in service.",
+          "Create and activate a floor plan",
+        );
+      }
+      if (!checks.tablesConfigured) {
+        pushBlocker(
+          "TABLES_MISSING",
+          "At least one active table is required before dine-in service.",
+          "Add at least one active table on an active floor",
         );
       }
       if (!checks.bookingPolicyConfigured) {
         pushBlocker(
           "BOOKING_POLICY_MISSING",
-          "Branch booking policy is not configured.",
-          "Configure branch booking policy",
+          "No Founder-approved ACTIVE booking policy exists for this branch.",
+          "Draft, submit, approve, and activate a booking policy",
         );
       }
       if (!checks.paymentConfigured) {
