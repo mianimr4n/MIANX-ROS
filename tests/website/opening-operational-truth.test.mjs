@@ -83,10 +83,10 @@ describe("Pending order truth", () => {
     });
     const order = cards.find((c) => c.id === "order-control");
     assert.ok(order);
-    assert.match(order.verifiedSignal, /Pending confirmation/);
+    assert.match(order.verifiedSignal, /Pending customer confirmation/);
     assert.match(order.currentProblem, /not a kitchen ticket/i);
     const kitchen = cards.find((c) => c.id === "kitchen-control");
-    assert.match(kitchen.verifiedSignal, /kitchen_tickets in scope: 0/);
+    assert.match(kitchen.verifiedSignal, /Actual kitchen tickets: 0/);
     const deliveryAgent = cards.find((c) => c.id === "delivery-control");
     assert.match(deliveryAgent.currentProblem, /not active and not late/i);
   });
@@ -173,13 +173,13 @@ describe("Error / empty honesty wiring (static)", () => {
     assert.match(panels, /ERROR — kitchen status unavailable/);
     assert.match(panels, /Counts are not shown as zero/);
     const team = read("apps/website/client/src/lib/mianx-team.ts");
-    assert.match(team, /Kitchen API error — not LIVE/);
+    assert.match(team, /Kitchen tickets API error — not LIVE/);
     assert.match(team, /refusing fake LIVE zero/);
   });
 
   it("delivery API error refuses fake LIVE zero", () => {
     const team = read("apps/website/client/src/lib/mianx-team.ts");
-    assert.match(team, /Delivery API error — not LIVE/);
+    assert.match(team, /Delivery assignments API error — not LIVE/);
     assert.match(team, /refusing fake LIVE zero/);
   });
 
@@ -222,8 +222,10 @@ describe("Dashboard alignment (static)", () => {
 
   it("AI Team agents match operational contracts", () => {
     const registry = read("apps/website/client/src/lib/mianx-team.ts");
-    assert.match(registry, /Pending confirmation \(order\.status=pending\)/);
-    assert.match(registry, /kitchen_tickets in scope/);
+    assert.match(registry, /Pending customer confirmation/);
+    assert.match(registry, /Actual kitchen tickets/);
+    assert.match(registry, /Active dispatched deliveries/);
+    assert.match(registry, /Provisional delivery records/);
     assert.match(registry, /Provisional delivery rows for unconfirmed orders are not active and not late/);
     assert.match(registry, /Northern Bypass correctly remains coming-soon/);
   });

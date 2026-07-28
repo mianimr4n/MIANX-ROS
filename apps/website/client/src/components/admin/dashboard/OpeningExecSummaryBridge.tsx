@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { MianxTeamSummaryCard } from "@/components/admin/dashboard/MianxTeamSummaryCard";
-import { fetchOpeningReadiness } from "@/lib/admin-api";
+import { fetchOpeningReadiness, fetchSystemHealth } from "@/lib/admin-api";
 import { computeOpeningCountdown } from "@/lib/opening-countdown";
 import {
   buildOwnerDecisionQueue,
@@ -10,9 +10,11 @@ import {
   evaluateOpeningReadiness,
   waitingOnHumanCount,
 } from "@/lib/opening-readiness-model";
+import { getOpeningReleaseEvidence } from "@/lib/opening-release-evidence";
 import { useOperationalData } from "@/lib/op-status";
+import { listReservations, listWaitlist } from "@/lib/table-service-api";
 
-/** Fetches readiness once and feeds the Executive compact summary card. */
+/** Fetches readiness + shared signals and feeds the Executive compact summary card. */
 export function OpeningExecSummaryBridge({
   token,
   branchId,
@@ -41,9 +43,33 @@ export function OpeningExecSummaryBridge({
     [token, branchId],
     { enabled: ready, pollMs: 120_000 },
   );
+  const health = useOperationalData(
+    ({ signal, correlationId }) => fetchSystemHealth(token!, { signal, correlationId }),
+    [token],
+    { enabled: ready, pollMs: 120_000 },
+  );
+  const reservations = useOperationalData(
+    ({ signal, correlationId }) =>
+      listReservations(token!, { branchId: branchId!, limit: 100 }, { signal, correlationId }),
+    [token, branchId],
+    { enabled: ready },
+  );
+  const waitlist = useOperationalData(
+    ({ signal, correlationId }) =>
+      listWaitlist(token!, { branchId: branchId!, limit: 100 }, { signal, correlationId }),
+    [token, branchId],
+    { enabled: ready },
+  );
 
   const readinessError = op.state === "ERROR";
   const readinessOffline = op.state === "OFFLINE";
+  const reservationsFailed = reservations.state === "ERROR" || reservations.state === "OFFLINE";
+  const waitlistFailed = waitlist.state === "ERROR" || waitlist.state === "OFFLINE";
+  const healthError = health.state === "ERROR";
+  const healthOffline = health.state === "OFFLINE";
+  const healthFailed = healthError || healthOffline;
+  const releaseEvidence = getOpeningReleaseEvidence();
+
   const items = useMemo(
     () =>
       evaluateOpeningReadiness({
@@ -60,15 +86,31 @@ export function OpeningExecSummaryBridge({
           : null,
         readinessError,
         readinessOffline,
-        reservationsOk: null,
-        waitlistOk: null,
-        healthOk: null,
-        healthError: false,
-        healthOffline: false,
-        rollbackRunbookPresent: true,
-        incidentRunbookPresent: true,
+        reservationsOk: reservationsFailed ? false : reservations.data ? true : null,
+        waitlistOk: waitlistFailed ? false : waitlist.data ? true : null,
+        healthOk: healthFailed ? null : health.data ? health.data.api.status === "ok" : null,
+        healthError,
+        healthOffline,
+        rollbackRunbookPresent: releaseEvidence.rollbackRunbookDocumented,
+        incidentRunbookPresent: releaseEvidence.incidentRunbookDocumented,
       }),
-    [northernBypassStatus, now, op.data, readinessError, readinessOffline],
+    [
+      health.data,
+      healthError,
+      healthFailed,
+      healthOffline,
+      northernBypassStatus,
+      now,
+      op.data,
+      readinessError,
+      readinessOffline,
+      releaseEvidence.incidentRunbookDocumented,
+      releaseEvidence.rollbackRunbookDocumented,
+      reservations.data,
+      reservationsFailed,
+      waitlist.data,
+      waitlistFailed,
+    ],
   );
 
   const percentage = useMemo(

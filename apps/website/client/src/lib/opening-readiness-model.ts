@@ -917,7 +917,10 @@ export type OpeningReadinessSignals = {
   healthOk: boolean | null;
   healthError: boolean;
   healthOffline: boolean;
-  /** Repository evidence flags — never invent LIVE. */
+  /**
+   * Documentation presence from release-evidence registry (not operational COMPLETE).
+   * Explicit true = documented; false/undefined = not confirmed documented.
+   */
   rollbackRunbookPresent?: boolean;
   incidentRunbookPresent?: boolean;
 };
@@ -982,17 +985,67 @@ function configuredPlan(def: OpeningReadinessDefinition, signals: OpeningReadine
   if (complete) {
     return { ...def, status: "COMPLETE", problem: "None.", nextAction: "No action required.", lastVerifiedAt: signals.nowIso };
   }
+  // Unrehearsed ops/training stay WAITING_ON_HUMAN even when not Owner-owned decisions.
+  const waiting =
+    def.ownerDecision || def.category === "OPERATIONS" || def.category === "TRAINING";
   return {
     ...def,
-    status: def.ownerDecision ? "WAITING_ON_HUMAN" : "ACTIVE",
+    status: waiting ? "WAITING_ON_HUMAN" : "ACTIVE",
     problem: def.defaultProblem,
     nextAction: def.defaultNextAction,
     lastVerifiedAt: signals.nowIso,
   };
 }
 
+/**
+ * Documentation presence ≠ rehearsal ≠ operational verification.
+ * Documented runbooks stay ACTIVE (not COMPLETE) until a verified ops source exists.
+ */
+function runbookDocumentationItem(
+  def: OpeningReadinessDefinition,
+  signals: OpeningReadinessSignals,
+  documented: boolean,
+): EvaluatedReadinessItem {
+  if (!documented) {
+    return {
+      ...def,
+      status: "BLOCKED",
+      problem: def.defaultProblem,
+      nextAction: def.defaultNextAction,
+      lastVerifiedAt: signals.nowIso,
+    };
+  }
+  return {
+    ...def,
+    status: "ACTIVE",
+    problem:
+      "Runbook is documented in release evidence — rehearsal and onsite operational verification still required.",
+    nextAction:
+      "Confirm rehearsal and operational verification; documentation alone does not mark this COMPLETE.",
+    lastVerifiedAt: signals.nowIso,
+  };
+}
+
+let registryCopyValidated = false;
+
+/** Fail closed when forbidden role codes appear in registry copy. */
+export function validateOpeningReadinessRegistryCopy(): void {
+  for (const def of OPENING_READINESS_DEFINITIONS) {
+    const blob = [def.id, def.title, def.description, def.defaultProblem, def.defaultNextAction, def.deepLink].join(
+      "\n",
+    );
+    if (!assertNoForbiddenRolesInReadinessCopy(blob)) {
+      throw new Error(`Forbidden role code in opening readiness copy: ${def.id}`);
+    }
+  }
+}
+
 /** Evaluate the full registry against verified signals. */
 export function evaluateOpeningReadiness(signals: OpeningReadinessSignals): EvaluatedReadinessItem[] {
+  if (!registryCopyValidated) {
+    validateOpeningReadinessRegistryCopy();
+    registryCopyValidated = true;
+  }
   const checks = signals.readinessReport?.checks ?? {};
   const notifOk = checks.notificationConfigured === true;
   const floorOk = checks.floorConfigured === true;
@@ -1093,14 +1146,10 @@ export function evaluateOpeningReadiness(signals: OpeningReadinessSignals): Eval
         }
         break;
       case "reliability-rollback":
-        items.push(
-          configuredPlan(def, signals, signals.rollbackRunbookPresent !== false),
-        );
+        items.push(runbookDocumentationItem(def, signals, signals.rollbackRunbookPresent === true));
         break;
       case "reliability-incident":
-        items.push(
-          configuredPlan(def, signals, signals.incidentRunbookPresent !== false),
-        );
+        items.push(runbookDocumentationItem(def, signals, signals.incidentRunbookPresent === true));
         break;
       case "gov-northern-bypass": {
         const nb = (signals.northernBypassStatus ?? "coming-soon").toLowerCase();
@@ -1445,10 +1494,17 @@ export function assertNoForbiddenRolesInReadinessCopy(text: string): boolean {
     ) {
       return false;
     }
+    // Quoted assignment tokens: roles: ["owner"] / roleCodes include 'founder'
+    if (
+      new RegExp(
+        `(?:roles?|role[_-]?codes?)[^\\n]{0,40}["'\`]${code}["'\`]`,
+        "i",
+      ).test(text)
+    ) {
+      return false;
+    }
   }
-  return !OPENING_FORBIDDEN_ROLE_CODES.some((code) =>
-    (OPENING_CANONICAL_PEOPLE_ROLES as readonly string[]).includes(code),
-  );
+  return true;
 }
 
 export function canonicalPeopleRoles(): readonly string[] {
@@ -1476,7 +1532,9 @@ export function criticalBlockerCount(items: EvaluatedReadinessItem[]): number {
       i.requiredForOpening &&
       (i.blockingSeverity === "critical" || i.blockingSeverity === "high") &&
       i.status !== "COMPLETE" &&
-      i.status !== "ACTIVE",
+      i.status !== "ACTIVE" &&
+      // Unverified / not-yet-loaded signals must not invent blockers or inflate totals.
+      i.status !== "UNAVAILABLE",
   ).length;
 }
 

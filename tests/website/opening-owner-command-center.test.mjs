@@ -106,7 +106,8 @@ describe("Opening percentage contract", () => {
     assert.equal(pct.completed, items.filter((i) => i.requiredForOpening && i.contributesToPercentage && i.status === "COMPLETE").length);
     const blocked = items.filter((i) => i.status === "WAITING_ON_HUMAN" || i.status === "BLOCKED");
     assert.ok(blocked.length > 0);
-    // phone/hours/status/menu/northern/reservations/waitlist/health/rollback/incident may complete
+    // phone/hours/status/menu/northern/reservations/waitlist/health may complete;
+    // documented runbooks stay ACTIVE (not COMPLETE) until operationally verified.
     assert.ok(pct.percent != null && pct.percent < 100);
   });
 

@@ -10,7 +10,7 @@ import {
 } from "@/components/admin/dashboard/OpeningCommandCenter";
 import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
 import { useOperationalData } from "@/lib/op-status";
-import { fetchOpeningReadiness } from "@/lib/admin-api";
+import { fetchOpeningReadiness, fetchSystemHealth } from "@/lib/admin-api";
 import { computeOpeningCountdown } from "@/lib/opening-countdown";
 import {
   buildOwnerDecisionQueue,
@@ -20,6 +20,8 @@ import {
   waitingOnHumanCount,
   criticalBlockerCount,
 } from "@/lib/opening-readiness-model";
+import { getOpeningReleaseEvidence } from "@/lib/opening-release-evidence";
+import { listReservations, listWaitlist } from "@/lib/table-service-api";
 
 const GRADE_STYLES: Record<string, string> = {
   READY: "bg-emerald-50 text-emerald-900 border-emerald-200",
@@ -56,11 +58,11 @@ export function OpeningReadinessSummary({
   showTechnicalDetail = false,
   variant = "full",
   northernBypassStatus = "coming-soon",
-  reservationsOk = null,
-  waitlistOk = null,
-  healthOk = null,
-  healthError = false,
-  healthOffline = false,
+  reservationsOk: reservationsOkProp = undefined,
+  waitlistOk: waitlistOkProp = undefined,
+  healthOk: healthOkProp = undefined,
+  healthError: healthErrorProp = undefined,
+  healthOffline: healthOfflineProp = undefined,
 }: {
   token: string | undefined;
   branchId: string | null;
@@ -80,6 +82,25 @@ export function OpeningReadinessSummary({
     [token, branchId],
     { enabled: ready, pollMs: 120_000 },
   );
+  const fetchAux = ready && reservationsOkProp === undefined;
+  const fetchHealth = fetchAux && showTechnicalDetail;
+  const health = useOperationalData(
+    ({ signal, correlationId }) => fetchSystemHealth(token!, { signal, correlationId }),
+    [token],
+    { enabled: fetchHealth, pollMs: 120_000 },
+  );
+  const reservations = useOperationalData(
+    ({ signal, correlationId }) =>
+      listReservations(token!, { branchId: branchId!, limit: 100 }, { signal, correlationId }),
+    [token, branchId],
+    { enabled: fetchAux },
+  );
+  const waitlist = useOperationalData(
+    ({ signal, correlationId }) =>
+      listWaitlist(token!, { branchId: branchId!, limit: 100 }, { signal, correlationId }),
+    [token, branchId],
+    { enabled: fetchAux },
+  );
 
   const data = op.data;
   const grade = data?.readinessGrade ?? (data?.operationallyActive ? "READY_WITH_LIMITATIONS" : "BLOCKED");
@@ -94,6 +115,39 @@ export function OpeningReadinessSummary({
 
   const readinessError = op.state === "ERROR";
   const readinessOffline = op.state === "OFFLINE";
+  const releaseEvidence = getOpeningReleaseEvidence();
+  const reservationsFailed = reservations.state === "ERROR" || reservations.state === "OFFLINE";
+  const waitlistFailed = waitlist.state === "ERROR" || waitlist.state === "OFFLINE";
+  const healthErrorFetched = health.state === "ERROR";
+  const healthOfflineFetched = health.state === "OFFLINE";
+  const healthFailed = healthErrorFetched || healthOfflineFetched;
+
+  const reservationsOk =
+    reservationsOkProp !== undefined
+      ? reservationsOkProp
+      : reservationsFailed
+        ? false
+        : reservations.data
+          ? true
+          : null;
+  const waitlistOk =
+    waitlistOkProp !== undefined
+      ? waitlistOkProp
+      : waitlistFailed
+        ? false
+        : waitlist.data
+          ? true
+          : null;
+  const healthOk =
+    healthOkProp !== undefined
+      ? healthOkProp
+      : healthFailed
+        ? null
+        : health.data
+          ? health.data.api.status === "ok"
+          : null;
+  const healthError = healthErrorProp !== undefined ? healthErrorProp : healthErrorFetched;
+  const healthOffline = healthOfflineProp !== undefined ? healthOfflineProp : healthOfflineFetched;
 
   const items = useMemo(
     () =>
@@ -112,8 +166,8 @@ export function OpeningReadinessSummary({
         healthOk,
         healthError,
         healthOffline,
-        rollbackRunbookPresent: true,
-        incidentRunbookPresent: true,
+        rollbackRunbookPresent: releaseEvidence.rollbackRunbookDocumented,
+        incidentRunbookPresent: releaseEvidence.incidentRunbookDocumented,
       }),
     [
       data,
@@ -124,6 +178,8 @@ export function OpeningReadinessSummary({
       now,
       readinessError,
       readinessOffline,
+      releaseEvidence.incidentRunbookDocumented,
+      releaseEvidence.rollbackRunbookDocumented,
       reservationsOk,
       waitlistOk,
     ],

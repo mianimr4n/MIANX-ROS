@@ -1,8 +1,32 @@
-import type { EvaluatedReadinessItem, OpeningPercentage } from "@/lib/opening-readiness-model";
-
 /**
  * Mianx.ai Team — typed fourteen-agent registry (no autonomous runtime).
  */
+
+/** Minimal shared-model shapes — keep Node tests free of Vite path aliases. */
+export type MianxReadinessItem = {
+  id: string;
+  category: string;
+  status: string;
+  problem: string;
+  nextAction: string;
+  sourceType?: string;
+};
+
+export type MianxOpeningPercentage = {
+  completed: number;
+  total: number;
+  percent: number | null;
+  label: string;
+  live: boolean;
+  error: boolean;
+  offline: boolean;
+};
+
+export type MianxOwnerDecision = {
+  title?: string;
+  whyItMatters: string;
+  nextAction: string;
+};
 
 export type AgentStatus =
   | "COMPLETE"
@@ -10,7 +34,9 @@ export type AgentStatus =
   | "BLOCKED"
   | "WAITING_ON_HUMAN"
   | "FOUNDATION"
-  | "UNAVAILABLE";
+  | "UNAVAILABLE"
+  | "OFFLINE"
+  | "ERROR";
 
 export type AgentSourceType =
   | "LIVE_API"
@@ -144,32 +170,43 @@ export type MianxTeamSignals = {
   branchLabel: string;
   branchStatus: string | null;
   northernBypassStatus: string | null;
+  /** order.status=pending only — never activeOrders fallback. */
   ordersPending: number | null;
   ordersError: boolean;
+  /** Actual kitchen_tickets row count from /kitchen/tickets. */
   kitchenTickets: number | null;
   kitchenError: boolean;
+  /** Assignment rows in assigned/picked-up — not order.status=dispatched KPI. */
   deliveriesActive: number | null;
+  /** Provisional delivery records (pending order + pending delivery). */
+  deliveriesProvisional: number | null;
   deliveryError: boolean;
   reservationsCount: number | null;
   reservationsError: boolean;
   waitlistCount: number | null;
   waitlistError: boolean;
   openingGrade: string | null;
-  openingBlockers: number | null;
+  /** @deprecated Prefer readinessItems + criticalBlockerCount — kept unused. */
+  openingBlockers?: number | null;
   openingError: boolean;
   healthOk: boolean | null;
   healthError: boolean;
+  healthOffline?: boolean;
   isSuperAdmin: boolean;
   /** Shared opening-readiness model — drives Owner-facing agents. */
-  readinessItems?: EvaluatedReadinessItem[] | null;
-  openingPercentage?: OpeningPercentage | null;
+  readinessItems?: MianxReadinessItem[] | null;
+  openingPercentage?: MianxOpeningPercentage | null;
+  /** Precomputed from shared model — never raw API blockers.length. */
+  openingCriticalBlockers?: number | null;
+  openingWaitingOnHuman?: number | null;
+  openingNextDecision?: MianxOwnerDecision | null;
 };
 
-function itemById(items: EvaluatedReadinessItem[] | null | undefined, id: string) {
+function itemById(items: MianxReadinessItem[] | null | undefined, id: string) {
   return items?.find((i) => i.id === id) ?? null;
 }
 
-function peopleWaiting(items: EvaluatedReadinessItem[] | null | undefined) {
+function peopleWaiting(items: MianxReadinessItem[] | null | undefined) {
   if (!items) return null;
   const people = items.filter((i) => i.category === "PEOPLE" && i.status !== "COMPLETE");
   return people;
@@ -218,21 +255,8 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
             lastUpdatedIso: updated,
           });
         }
-        const waitingPeople = peopleWaiting(signals.readinessItems);
-        if (waitingPeople && waitingPeople.length > 0) {
-          return card(def, {
-            status: "WAITING_ON_HUMAN",
-            verifiedSignal: signals.openingPercentage?.label ?? "Required opening checks incomplete",
-            currentProblem:
-              "No real branch manager, cashier, kitchen, rider, host or waiter accounts are assigned to Royal Orchard (and support coverage remains Founder-owned).",
-            nextAction:
-              "Founder invites named staff using canonical roles and Royal Orchard branch scope.",
-            humanApprovalRequired: true,
-            sourceType: "LIVE_API",
-            lastUpdatedIso: updated,
-          });
-        }
-        if (signals.openingGrade == null && !signals.readinessItems) {
+        const items = signals.readinessItems ?? null;
+        if (!items || items.length === 0) {
           return card(def, {
             status: "ACTIVE",
             verifiedSignal: "Opening readiness not yet loaded",
@@ -243,21 +267,30 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
             lastUpdatedIso: updated,
           });
         }
+        const critical = signals.openingCriticalBlockers ?? 0;
+        const waiting = signals.openingWaitingOnHuman ?? 0;
+        const next = signals.openingNextDecision ?? null;
+        const pctLabel = signals.openingPercentage?.label ?? "Required opening checks incomplete";
+        if (waiting > 0 || critical > 0) {
+          return card(def, {
+            status: "WAITING_ON_HUMAN",
+            verifiedSignal: `${pctLabel} · critical blockers ${critical} · waiting on human ${waiting}`,
+            currentProblem:
+              next?.whyItMatters ??
+              "Shared readiness model still has unresolved required opening checks.",
+            nextAction: next?.nextAction ?? "Resolve Owner Decision Queue items on this page",
+            humanApprovalRequired: true,
+            sourceType: "DERIVED_API",
+            lastUpdatedIso: updated,
+          });
+        }
         return card(def, {
-          status: (signals.openingBlockers ?? 0) > 0 ? "WAITING_ON_HUMAN" : "ACTIVE",
-          verifiedSignal:
-            signals.openingPercentage?.label ??
-            `Grade ${signals.openingGrade}; blockers ${signals.openingBlockers ?? 0}`,
-          currentProblem:
-            (signals.openingBlockers ?? 0) > 0
-              ? "Required opening checks still incomplete — software % is not restaurant ready"
-              : "Continue monitoring people, devices, and providers",
-          nextAction:
-            (signals.openingBlockers ?? 0) > 0
-              ? "Resolve Owner Decision Queue items on this page"
-              : "Confirm opening-day staffing roster and go/no-go evidence",
-          humanApprovalRequired: (signals.openingBlockers ?? 0) > 0,
-          sourceType: "LIVE_API",
+          status: "ACTIVE",
+          verifiedSignal: pctLabel,
+          currentProblem: "Continue monitoring people, devices, and providers",
+          nextAction: "Confirm opening-day staffing roster and go/no-go evidence",
+          humanApprovalRequired: true,
+          sourceType: "DERIVED_API",
           lastUpdatedIso: updated,
         });
       }
@@ -279,7 +312,7 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
       case "order-control":
         if (signals.ordersError) {
           return card(def, {
-            status: "UNAVAILABLE",
+            status: "ERROR",
             verifiedSignal: "Orders API error — not LIVE",
             currentProblem: "Order counts unavailable; refusing fake LIVE zero",
             nextAction: "Retry orders API and verify staff order.manage access",
@@ -292,8 +325,8 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
           status: "ACTIVE",
           verifiedSignal:
             signals.ordersPending == null
-              ? "Orders signal not loaded"
-              : `Pending confirmation (order.status=pending): ${signals.ordersPending}`,
+              ? "Pending confirmation signal not loaded"
+              : `Pending customer confirmation: ${signals.ordersPending}`,
           currentProblem:
             "Pending confirmation is not a kitchen ticket and must not show Queued / Waiting for rider",
           nextAction: "Review Orders console; protect TP-260727-000001 until intentional confirm",
@@ -304,8 +337,8 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
       case "kitchen-control":
         if (signals.kitchenError) {
           return card(def, {
-            status: "UNAVAILABLE",
-            verifiedSignal: "Kitchen API error — not LIVE",
+            status: "ERROR",
+            verifiedSignal: "Kitchen tickets API error — not LIVE",
             currentProblem: "Kitchen ticket counts unavailable — refusing fake LIVE zero",
             nextAction: "Retry kitchen tickets API",
             humanApprovalRequired: false,
@@ -317,8 +350,8 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
           status: "ACTIVE",
           verifiedSignal:
             signals.kitchenTickets == null
-              ? "Kitchen signal not loaded"
-              : `kitchen_tickets in scope: ${signals.kitchenTickets}`,
+              ? "Kitchen tickets signal not loaded"
+              : `Actual kitchen tickets: ${signals.kitchenTickets}`,
           currentProblem: "KDS queue is kitchen_tickets only — pending orders without tickets stay out",
           nextAction: "Open Kitchen board and verify zero-ticket honesty",
           humanApprovalRequired: false,
@@ -328,8 +361,8 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
       case "delivery-control":
         if (signals.deliveryError) {
           return card(def, {
-            status: "UNAVAILABLE",
-            verifiedSignal: "Delivery API error — not LIVE",
+            status: "ERROR",
+            verifiedSignal: "Delivery assignments API error — not LIVE",
             currentProblem: "Delivery assignments unavailable — refusing fake LIVE zero",
             nextAction: "Retry delivery API and confirm rider staffing",
             humanApprovalRequired: false,
@@ -341,8 +374,8 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
           status: "ACTIVE",
           verifiedSignal:
             signals.deliveriesActive == null
-              ? "Delivery signal not loaded"
-              : `Active dispatch (assigned/picked-up): ${signals.deliveriesActive}`,
+              ? "Delivery assignments signal not loaded"
+              : `Active dispatched deliveries: ${signals.deliveriesActive}; Provisional delivery records: ${signals.deliveriesProvisional ?? 0}`,
           currentProblem:
             "Provisional delivery rows for unconfirmed orders are not active and not late",
           nextAction: "Open Delivery console; assign only when order is ready",
@@ -421,7 +454,7 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
           currentProblem: support?.problem ?? "Customer-contact staffing still Owner-owned",
           nextAction: support?.nextAction ?? "Confirm WhatsApp/support coverage for opening week",
           humanApprovalRequired: true,
-          sourceType: support?.sourceType ?? "CONFIGURED_PLAN",
+          sourceType: (support?.sourceType as AgentSourceType | undefined) ?? "CONFIGURED_PLAN",
           lastUpdatedIso: updated,
         });
       }
@@ -456,10 +489,21 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
           lastUpdatedIso: updated,
         });
       case "reliability-deployment":
+        if (signals.healthOffline) {
+          return card(def, {
+            status: "OFFLINE",
+            verifiedSignal: "Health OFFLINE — not LIVE",
+            currentProblem: "System health poll is offline",
+            nextAction: "Retry system health when network recovers",
+            humanApprovalRequired: false,
+            sourceType: "LIVE_API",
+            lastUpdatedIso: updated,
+          });
+        }
         if (signals.healthError) {
           return card(def, {
-            status: "UNAVAILABLE",
-            verifiedSignal: "Health signal error — not LIVE",
+            status: "ERROR",
+            verifiedSignal: "Health signal ERROR — not LIVE",
             currentProblem: "Could not read API/system health",
             nextAction: "Retry system health from Executive Dashboard",
             humanApprovalRequired: false,
@@ -500,13 +544,15 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
 }
 
 export function summarizeAgentStatuses(cards: MianxAgentCard[]) {
-  const counts = {
+  const counts: Record<AgentStatus, number> = {
     COMPLETE: 0,
     ACTIVE: 0,
     BLOCKED: 0,
     WAITING_ON_HUMAN: 0,
     FOUNDATION: 0,
     UNAVAILABLE: 0,
+    OFFLINE: 0,
+    ERROR: 0,
   };
   for (const c of cards) counts[c.status] += 1;
   const decisionPending = cards.filter((c) => c.humanApprovalRequired).length;

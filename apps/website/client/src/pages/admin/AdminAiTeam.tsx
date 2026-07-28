@@ -29,12 +29,15 @@ import {
   recentlyCompletedItems,
   waitingOnHumanCount,
 } from "@/lib/opening-readiness-model";
+import { getOpeningReleaseEvidence } from "@/lib/opening-release-evidence";
 import {
   OpeningPercentageBanner,
   OwnerDecisionQueueView,
   RecentlyCompletedList,
 } from "@/components/admin/dashboard/OpeningCommandCenter";
 import { useOperationalData } from "@/lib/op-status";
+import { listDeliveryAssignments, listKitchenTickets } from "@/lib/ops-api";
+import { isProvisionalDelivery } from "@/lib/operational-truth";
 import { listReservations, listWaitlist } from "@/lib/table-service-api";
 import { AdminShell } from "@/pages/admin/AdminShell";
 
@@ -45,6 +48,8 @@ const STATUS_STYLES: Record<string, string> = {
   WAITING_ON_HUMAN: "bg-amber-50 text-amber-950 border-amber-200",
   FOUNDATION: "bg-[var(--admin-soft)] text-[var(--admin-muted)] border-[var(--admin-border)]",
   UNAVAILABLE: "bg-stone-100 text-stone-700 border-stone-200",
+  OFFLINE: "bg-stone-100 text-stone-700 border-stone-300",
+  ERROR: "bg-red-50 text-red-900 border-red-300",
 };
 
 function formatKarachiNow(now: Date) {
@@ -162,6 +167,20 @@ export default function AdminAiTeam() {
     { enabled: apiReady && Boolean(openingBranchId) },
   );
 
+  const kitchenTickets = useOperationalData(
+    ({ signal, correlationId }) =>
+      listKitchenTickets(token!, { branchId: branchIdFilter, limit: 100 }, { signal, correlationId }),
+    [token, branchIdFilter, apiReady],
+    { enabled: apiReady },
+  );
+
+  const deliveryAssignments = useOperationalData(
+    ({ signal, correlationId }) =>
+      listDeliveryAssignments(token!, { branchId: branchIdFilter, limit: 100 }, { signal, correlationId }),
+    [token, branchIdFilter, apiReady],
+    { enabled: apiReady },
+  );
+
   const northern = allBranches.find((b) => b.code === "northern-bypass" || /northern/i.test(b.name));
   const selectedBranchMeta =
     selection.mode === "branch"
@@ -173,7 +192,10 @@ export default function AdminAiTeam() {
   const readinessOffline = opening.state === "OFFLINE";
   const reservationsFailed = reservations.state === "ERROR" || reservations.state === "OFFLINE";
   const waitlistFailed = waitlist.state === "ERROR" || waitlist.state === "OFFLINE";
-  const healthFailed = health.state === "ERROR" || health.state === "OFFLINE";
+  const healthError = health.state === "ERROR";
+  const healthOffline = health.state === "OFFLINE";
+  const healthFailed = healthError || healthOffline;
+  const releaseEvidence = getOpeningReleaseEvidence();
 
   const readinessItems = useMemo(
     () =>
@@ -194,19 +216,23 @@ export default function AdminAiTeam() {
         reservationsOk: reservationsFailed ? false : reservations.data ? true : null,
         waitlistOk: waitlistFailed ? false : waitlist.data ? true : null,
         healthOk: healthFailed ? null : health.data ? health.data.api.status === "ok" : null,
-        healthError: health.state === "ERROR",
-        healthOffline: health.state === "OFFLINE",
-        rollbackRunbookPresent: true,
-        incidentRunbookPresent: true,
+        healthError,
+        healthOffline,
+        rollbackRunbookPresent: releaseEvidence.rollbackRunbookDocumented,
+        incidentRunbookPresent: releaseEvidence.incidentRunbookDocumented,
       }),
     [
       health.data,
-      health.state,
+      healthError,
+      healthFailed,
+      healthOffline,
       northern?.status,
       now,
       opening.data,
       readinessError,
       readinessOffline,
+      releaseEvidence.incidentRunbookDocumented,
+      releaseEvidence.rollbackRunbookDocumented,
       reservations.data,
       reservationsFailed,
       selectedBranchMeta?.code,
@@ -240,46 +266,77 @@ export default function AdminAiTeam() {
   const completedItems = useMemo(() => recentlyCompletedItems(readinessItems), [readinessItems]);
 
   const cards = useMemo(() => {
-    const kpis = ops.data?.kpis;
     const opsFailed = ops.state === "ERROR" || ops.state === "OFFLINE";
+    const kitchenFailed = kitchenTickets.state === "ERROR" || kitchenTickets.state === "OFFLINE";
+    const deliveryFailed =
+      deliveryAssignments.state === "ERROR" || deliveryAssignments.state === "OFFLINE";
     const openingFailed = readinessError || readinessOffline;
+    const pendingCount =
+      opsFailed || ops.data == null
+        ? null
+        : typeof ops.data.statusCounts?.pending === "number"
+          ? ops.data.statusCounts.pending
+          : null;
+    const ticketRows = kitchenFailed ? null : (kitchenTickets.data ?? null);
+    const assignmentRows = deliveryFailed ? null : (deliveryAssignments.data ?? null);
+    const activeDispatch =
+      assignmentRows == null
+        ? null
+        : assignmentRows.filter((row) => row.status === "assigned" || row.status === "picked-up")
+            .length;
+    const provisional =
+      assignmentRows == null
+        ? null
+        : assignmentRows.filter((row) =>
+            isProvisionalDelivery({ deliveryStatus: row.status, orderStatus: row.orderStatus }),
+          ).length;
     return buildMianxAgentCards({
       nowIso: now.toISOString(),
       branchLabel,
       branchStatus: selectedBranchMeta?.status ?? null,
       northernBypassStatus: northern?.status ?? "coming-soon",
-      ordersPending: opsFailed
-        ? null
-        : (ops.data?.statusCounts?.pending ?? kpis?.activeOrders ?? null),
+      ordersPending: pendingCount,
       ordersError: opsFailed,
-      kitchenTickets: opsFailed ? null : (kpis?.kitchenWaiting ?? null),
-      kitchenError: opsFailed,
-      deliveriesActive: opsFailed ? null : (kpis?.activeDeliveries ?? null),
-      deliveryError: opsFailed,
+      kitchenTickets: ticketRows == null ? null : ticketRows.length,
+      kitchenError: kitchenFailed,
+      deliveriesActive: activeDispatch,
+      deliveriesProvisional: provisional,
+      deliveryError: deliveryFailed,
       reservationsCount: reservationsFailed ? null : (reservations.data?.length ?? null),
       reservationsError: reservationsFailed,
       waitlistCount: waitlistFailed ? null : (waitlist.data?.length ?? null),
       waitlistError: waitlistFailed,
       openingGrade: openingFailed ? null : (opening.data?.readinessGrade ?? null),
-      openingBlockers: openingFailed ? null : (opening.data?.blockers?.length ?? null),
       openingError: openingFailed,
       healthOk: healthFailed ? null : health.data ? health.data.api.status === "ok" : null,
-      healthError: healthFailed,
+      healthError,
+      healthOffline,
       isSuperAdmin,
       readinessItems,
       openingPercentage,
+      openingCriticalBlockers: comingSoonSelected ? null : criticalBlockerCount(readinessItems),
+      openingWaitingOnHuman: comingSoonSelected ? null : waitingOnHumanCount(readinessItems),
+      openingNextDecision: comingSoonSelected ? null : (ownerDecisions[0] ?? null),
     });
   }, [
     branchLabel,
+    comingSoonSelected,
+    deliveryAssignments.data,
+    deliveryAssignments.state,
     health.data,
+    healthError,
     healthFailed,
+    healthOffline,
     isSuperAdmin,
+    kitchenTickets.data,
+    kitchenTickets.state,
     northern?.status,
     now,
     opening.data,
     openingPercentage,
     ops.data,
     ops.state,
+    ownerDecisions,
     readinessError,
     readinessItems,
     readinessOffline,
