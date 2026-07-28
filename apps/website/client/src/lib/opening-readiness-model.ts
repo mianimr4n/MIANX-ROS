@@ -371,11 +371,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Founder decides cash/card/other methods for opening.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "critical",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Payment methods not recorded as Founder-approved.",
     defaultNextAction: "Decide accepted payment methods for Royal Orchard opening day.",
   },
@@ -386,11 +386,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Provider credentials verified — not order.payment_status.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "critical",
     ownerDecision: true,
-    deepLink: "/admin/settings",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "No verified payment-provider settings API — not accounting from order rows.",
     defaultNextAction: "Verify payment provider outside Admin UI; do not invent Connected status.",
   },
@@ -401,11 +401,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Physical card terminal verified onsite.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Card terminal not verified onsite.",
     defaultNextAction: "Verify the Royal Orchard card terminal before opening day.",
   },
@@ -416,11 +416,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Cash drawer and reconciliation procedure agreed.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Cash handling SOP not confirmed.",
     defaultNextAction: "Confirm cash handling and reconciliation procedure with branch manager.",
   },
@@ -431,11 +431,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Customer order updates channel selected — do not claim WhatsApp connected.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "DERIVED_API",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/settings",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Customer notification channel not verified.",
     defaultNextAction: "Configure customer notification channel without claiming WhatsApp Connected.",
   },
@@ -446,11 +446,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "How kitchen is notified of new tickets.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "medium",
     ownerDecision: true,
-    deepLink: "/admin/kitchen",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Kitchen notification method not confirmed.",
     defaultNextAction: "Confirm KDS/audio/staff method for new tickets.",
   },
@@ -461,11 +461,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "How riders receive dispatch assignments.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "medium",
     ownerDecision: true,
-    deepLink: "/admin/delivery",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Rider notification method not confirmed.",
     defaultNextAction: "Confirm how riders receive assignment alerts.",
   },
@@ -476,11 +476,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Named escalation contact for opening incidents.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Escalation contact not named.",
     defaultNextAction: "Name Founder/BM escalation contact for opening week.",
   },
@@ -491,11 +491,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Onsite POS hardware verified — not frontend route availability.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "critical",
     ownerDecision: true,
-    deepLink: "/admin/pos",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "POS device not verified onsite.",
     defaultNextAction: "Verify POS device on Royal Orchard floor before opening.",
   },
@@ -506,11 +506,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Onsite kitchen display verified.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "critical",
     ownerDecision: true,
-    deepLink: "/admin/kitchen-dashboard",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "KDS device not verified onsite.",
     defaultNextAction: "Verify kitchen display hardware onsite.",
   },
@@ -521,11 +521,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Receipt printer prints a test ticket.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/pos",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Receipt printer not verified.",
     defaultNextAction: "Print a test receipt on the opening POS station.",
   },
@@ -536,11 +536,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Physical card terminal connectivity verified.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Card terminal device not verified.",
     defaultNextAction: "Run a test authorization on the card terminal (no Production order mutation).",
   },
@@ -551,11 +551,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Rider phone/app readiness verified.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/delivery",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Rider device not verified.",
     defaultNextAction: "Confirm rider phone and dispatch access for opening riders.",
   },
@@ -566,11 +566,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Primary internet verified onsite.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "critical",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Primary internet not verified onsite.",
     defaultNextAction: "Verify Royal Orchard primary internet with POS and KDS online.",
   },
@@ -581,11 +581,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Failover plan documented.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Backup internet contingency not documented.",
     defaultNextAction: "Document backup hotspot / ISP contingency for opening day.",
   },
@@ -596,11 +596,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Power contingency verified for POS/KDS.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "UPS / power backup not verified.",
     defaultNextAction: "Verify UPS coverage for POS and kitchen displays.",
   },
@@ -996,6 +996,79 @@ function configuredPlan(def: OpeningReadinessDefinition, signals: OpeningReadine
   };
 }
 
+type OpeningM2ProbeKeys = {
+  verified: string;
+  configured?: string;
+  failed?: string;
+  activeProblem?: string;
+  activeNextAction?: string;
+};
+
+/** M2 payments / notifications / devices — probe booleans only; LOCAL_TEST_ONLY never yields COMPLETE. */
+function openingM2ProbeItem(
+  def: OpeningReadinessDefinition,
+  signals: OpeningReadinessSignals,
+  keys: OpeningM2ProbeKeys,
+): EvaluatedReadinessItem {
+  if (signals.readinessOffline) {
+    return {
+      ...def,
+      status: "OFFLINE",
+      problem: "Readiness API offline.",
+      nextAction: "Retry when network recovers.",
+      lastVerifiedAt: null,
+    };
+  }
+  if (signals.readinessError || signals.readinessReport == null) {
+    return {
+      ...def,
+      status: "ERROR",
+      problem: "Readiness API error — not treating as missing setup.",
+      nextAction: "Retry opening readiness for the selected branch.",
+      lastVerifiedAt: null,
+    };
+  }
+  const checks = signals.readinessReport.checks;
+  const verified = checks[keys.verified] === true;
+  const configured = keys.configured ? checks[keys.configured] === true : false;
+  const failed = keys.failed ? checks[keys.failed] === true : false;
+
+  if (verified) {
+    return {
+      ...def,
+      status: "COMPLETE",
+      problem: "None.",
+      nextAction: "No action required.",
+      lastVerifiedAt: signals.nowIso,
+    };
+  }
+  if (failed) {
+    return {
+      ...def,
+      status: "BLOCKED",
+      problem: def.defaultProblem,
+      nextAction: def.defaultNextAction,
+      lastVerifiedAt: signals.nowIso,
+    };
+  }
+  if (keys.configured && configured) {
+    return {
+      ...def,
+      status: "ACTIVE",
+      problem: keys.activeProblem ?? "Configured — Production verification still pending.",
+      nextAction: keys.activeNextAction ?? def.defaultNextAction,
+      lastVerifiedAt: signals.nowIso,
+    };
+  }
+  return {
+    ...def,
+    status: "WAITING_ON_HUMAN",
+    problem: def.defaultProblem,
+    nextAction: def.defaultNextAction,
+    lastVerifiedAt: signals.nowIso,
+  };
+}
+
 /**
  * Documentation presence ≠ rehearsal ≠ operational verification.
  * Documented runbooks stay ACTIVE (not COMPLETE) until a verified ops source exists.
@@ -1046,7 +1119,6 @@ export function evaluateOpeningReadiness(signals: OpeningReadinessSignals): Eval
     registryCopyValidated = true;
   }
   const checks = signals.readinessReport?.checks ?? {};
-  const notifOk = checks.notificationConfigured === true;
 
   const items: EvaluatedReadinessItem[] = [];
 
@@ -1112,23 +1184,129 @@ export function evaluateOpeningReadiness(signals: OpeningReadinessSignals): Eval
           items.push({ ...def, status: "ERROR", problem: def.defaultProblem, nextAction: def.defaultNextAction, lastVerifiedAt: signals.nowIso });
         }
         break;
+      case "payments-methods-decided":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "paymentMethodsConfigured",
+          }),
+        );
+        break;
       case "payments-provider":
-        if (signals.readinessError || signals.readinessOffline) {
-          items.push(fromCheck(def, false, signals));
-        } else if (checks.paymentConfigured) {
-          items.push({ ...def, status: "COMPLETE", problem: "None.", nextAction: "No action required.", lastVerifiedAt: signals.nowIso });
-        } else {
-          items.push(humanFoundation(def, signals));
-        }
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "paymentProviderVerified",
+            configured: "paymentMethodsConfigured",
+            failed: "paymentProviderFailed",
+            activeProblem: "Accepted payment methods recorded — provider not Production-verified yet.",
+            activeNextAction: "Configure provider metadata and complete Founder verification in Opening Operations.",
+          }),
+        );
+        break;
+      case "payments-card-terminal":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "cardTerminalVerified",
+            failed: "cardTerminalFailed",
+          }),
+        );
+        break;
+      case "payments-cash-sop":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "cashProcedureApproved",
+            failed: "cashProcedureFailed",
+          }),
+        );
         break;
       case "notif-customer":
-        if (signals.readinessError || signals.readinessOffline) {
-          items.push(fromCheck(def, false, signals));
-        } else if (notifOk) {
-          items.push({ ...def, status: "COMPLETE", problem: "None.", nextAction: "No action required.", lastVerifiedAt: signals.nowIso });
-        } else {
-          items.push(humanFoundation(def, signals));
-        }
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "notifCustomerConfigured",
+            failed: "notifCustomerFailed",
+            activeProblem: "Channel configured — Production notification verification still pending.",
+            activeNextAction:
+              "Complete notification setup in Opening Operations — do not claim WhatsApp Connected.",
+          }),
+        );
+        break;
+      case "notif-kitchen":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "notifKitchenConfigured",
+            failed: "notifKitchenFailed",
+          }),
+        );
+        break;
+      case "notif-rider":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "notifRiderConfigured",
+            failed: "notifRiderFailed",
+          }),
+        );
+        break;
+      case "notif-escalation":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "notifEscalationConfigured",
+            failed: "notifEscalationFailed",
+          }),
+        );
+        break;
+      case "device-pos":
+        items.push(
+          openingM2ProbeItem(def, signals, { verified: "devicePosVerified", failed: "devicePosFailed" }),
+        );
+        break;
+      case "device-kds":
+        items.push(
+          openingM2ProbeItem(def, signals, { verified: "deviceKdsVerified", failed: "deviceKdsFailed" }),
+        );
+        break;
+      case "device-printer":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "devicePrinterVerified",
+            failed: "devicePrinterFailed",
+          }),
+        );
+        break;
+      case "device-card-terminal":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "deviceCardTerminalVerified",
+            failed: "deviceCardTerminalFailed",
+          }),
+        );
+        break;
+      case "device-rider":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "deviceRiderVerified",
+            failed: "deviceRiderFailed",
+          }),
+        );
+        break;
+      case "device-internet":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "deviceInternetVerified",
+            failed: "deviceInternetFailed",
+          }),
+        );
+        break;
+      case "device-backup-internet":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "deviceBackupInternetVerified",
+            failed: "deviceBackupInternetFailed",
+          }),
+        );
+        break;
+      case "device-ups":
+        items.push(
+          openingM2ProbeItem(def, signals, { verified: "deviceUpsVerified", failed: "deviceUpsFailed" }),
+        );
         break;
       case "reliability-website":
       case "reliability-api":
@@ -1179,20 +1357,6 @@ export function evaluateOpeningReadiness(signals: OpeningReadinessSignals): Eval
         }
         break;
       }
-      case "payments-methods-decided":
-      case "payments-card-terminal":
-      case "payments-cash-sop":
-      case "notif-kitchen":
-      case "notif-rider":
-      case "notif-escalation":
-      case "device-pos":
-      case "device-kds":
-      case "device-printer":
-      case "device-card-terminal":
-      case "device-rider":
-      case "device-internet":
-      case "device-backup-internet":
-      case "device-ups":
       case "ops-order-confirm-sop":
       case "ops-kitchen-sop":
       case "ops-delivery-sop":

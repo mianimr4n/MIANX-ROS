@@ -587,3 +587,395 @@ export function retireBookingPolicy(accessToken: string, id: string) {
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }
+
+// --- Opening Operations M2 (payments, notifications, devices) ---
+
+export const OPENING_PAYMENT_METHOD_CODES = ["CASH", "CARD", "BANK_TRANSFER", "ONLINE_PAYMENT"] as const;
+export type OpeningPaymentMethodCode = (typeof OPENING_PAYMENT_METHOD_CODES)[number];
+
+export const OPENING_NOTIFICATION_PURPOSES = [
+  "CUSTOMER_ORDER",
+  "KITCHEN_ALERT",
+  "RIDER_ALERT",
+  "ESCALATION",
+] as const;
+export type OpeningNotificationPurpose = (typeof OPENING_NOTIFICATION_PURPOSES)[number];
+
+export const OPENING_NOTIFICATION_CHANNELS = [
+  "IN_APP",
+  "EMAIL",
+  "SMS",
+  "WHATSAPP",
+  "PHONE_MANUAL",
+] as const;
+export type OpeningNotificationChannel = (typeof OPENING_NOTIFICATION_CHANNELS)[number];
+
+export const OPENING_DEVICE_TYPES = [
+  "POS_DEVICE",
+  "KDS_DEVICE",
+  "RECEIPT_PRINTER",
+  "CARD_TERMINAL",
+  "RIDER_DEVICE",
+  "PRIMARY_INTERNET",
+  "BACKUP_INTERNET",
+  "UPS_POWER_BACKUP",
+] as const;
+export type OpeningDeviceType = (typeof OPENING_DEVICE_TYPES)[number];
+
+export const OPENING_EVIDENCE_TYPES = [
+  "ONSITE_CHECK",
+  "SUPPLIER_CONFIRMATION",
+  "MANUAL_TEST",
+  "DOCUMENTED_CONTINGENCY",
+  "LOCAL_TEST_ONLY",
+] as const;
+export type OpeningEvidenceType = (typeof OPENING_EVIDENCE_TYPES)[number];
+
+export type OpeningPaymentMethod = {
+  id: string;
+  branchId: string;
+  methodCode: OpeningPaymentMethodCode;
+  displayName: string;
+  enabled: boolean;
+  configurationStatus: string;
+  verificationStatus: string;
+  verifiedAt: string | null;
+  notes: string | null;
+};
+
+export type OpeningPaymentProvider = {
+  id: string;
+  branchId: string;
+  providerName: string;
+  providerEnvironment: string;
+  providerStatus: string;
+  terminalRequired: boolean;
+  terminalVerified: boolean;
+  verificationSummary: string | null;
+  verifiedAt: string | null;
+  failureReason: string | null;
+};
+
+export type OpeningCardTerminal = {
+  id: string;
+  branchId: string;
+  terminalLabel: string;
+  terminalProvider: string | null;
+  physicalLocation: string | null;
+  verificationResult: string;
+  evidenceType: OpeningEvidenceType | null;
+  verifiedAt: string | null;
+  failureReason: string | null;
+};
+
+export type OpeningCashProcedure = {
+  id: string;
+  branchId: string;
+  procedureDocumented: boolean;
+  procedureReviewed: boolean;
+  cashDrawerProcessApproved: boolean;
+  shiftReconciliationApproved: boolean;
+  discrepancyEscalationDefined: boolean;
+  documentationStatus: string;
+  approvedAt: string | null;
+  notes: string | null;
+};
+
+export type OpeningNotificationChannelRow = {
+  id: string;
+  branchId: string;
+  purposeCode: OpeningNotificationPurpose;
+  channelCode: OpeningNotificationChannel;
+  enabled: boolean;
+  providerName: string | null;
+  providerStatus: string;
+  destinationReference: string | null;
+  testStatus: string;
+  localTestOnly: boolean;
+  testedAt: string | null;
+  failureReason: string | null;
+};
+
+export type OpeningDeviceVerification = {
+  id: string;
+  branchId: string;
+  deviceType: OpeningDeviceType;
+  deviceLabel: string;
+  location: string | null;
+  verificationStatus: string;
+  evidenceType: OpeningEvidenceType | null;
+  evidenceSummary: string | null;
+  verifiedAt: string | null;
+  failureReason: string | null;
+};
+
+function openingQuery(branchId: string) {
+  return new URLSearchParams({ branchId });
+}
+
+export function listOpeningPaymentMethods(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningPaymentMethod[]>(
+    `/admin/opening/payment-methods?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningPaymentMethod(
+  accessToken: string,
+  input: {
+    branchId: string;
+    methodCode: OpeningPaymentMethodCode;
+    displayName: string;
+    enabled: boolean;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningPaymentMethod>(`/admin/opening/payment-methods`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function setOpeningPaymentMethodEnabled(accessToken: string, id: string, enabled: boolean) {
+  return fetchApiData<OpeningPaymentMethod>(`/admin/opening/payment-methods/${id}/enabled`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningPaymentProviders(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningPaymentProvider[]>(
+    `/admin/opening/payment-providers?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningPaymentProvider(
+  accessToken: string,
+  input: {
+    id?: string;
+    branchId: string;
+    providerName: string;
+    providerEnvironment?: "TEST" | "SANDBOX" | "PRODUCTION";
+    terminalRequired?: boolean;
+    verificationMethod?: string | null;
+  },
+) {
+  return fetchApiData<OpeningPaymentProvider>(`/admin/opening/payment-providers`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function verifyOpeningPaymentProvider(
+  accessToken: string,
+  id: string,
+  input: { summary: string; expiresAt?: string | null; terminalVerified?: boolean },
+) {
+  return fetchApiData<OpeningPaymentProvider>(`/admin/opening/payment-providers/${id}/verify`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningPaymentProvider(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningPaymentProvider>(`/admin/opening/payment-providers/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningCardTerminals(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningCardTerminal[]>(
+    `/admin/opening/card-terminals?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function recordOpeningCardTerminal(
+  accessToken: string,
+  input: {
+    id?: string;
+    branchId: string;
+    terminalLabel: string;
+    terminalProvider?: string | null;
+    physicalLocation?: string | null;
+    evidenceType: OpeningEvidenceType;
+    verificationNote?: string | null;
+  },
+) {
+  return fetchApiData<OpeningCardTerminal>(`/admin/opening/card-terminals`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningCardTerminal(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningCardTerminal>(`/admin/opening/card-terminals/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function fetchOpeningCashProcedure(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningCashProcedure | null>(
+    `/admin/opening/cash-procedure?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningCashProcedure(
+  accessToken: string,
+  input: {
+    branchId: string;
+    procedureDocumented?: boolean;
+    procedureReviewed?: boolean;
+    cashDrawerProcessApproved?: boolean;
+    shiftReconciliationApproved?: boolean;
+    discrepancyEscalationDefined?: boolean;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningCashProcedure>(`/admin/opening/cash-procedure`, {
+    method: "PUT",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function approveOpeningCashProcedure(accessToken: string, branchId: string) {
+  return fetchApiData<OpeningCashProcedure>(`/admin/opening/cash-procedure/${branchId}/approve`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningNotificationChannels(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningNotificationChannelRow[]>(
+    `/admin/opening/notification-channels?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningNotificationChannel(
+  accessToken: string,
+  input: {
+    branchId: string;
+    purposeCode: OpeningNotificationPurpose;
+    channelCode: OpeningNotificationChannel;
+    enabled: boolean;
+    providerName?: string | null;
+    destinationReference?: string | null;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningNotificationChannelRow>(`/admin/opening/notification-channels`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function localTestOpeningNotificationChannel(accessToken: string, id: string, passed: boolean) {
+  return fetchApiData<OpeningNotificationChannelRow>(`/admin/opening/notification-channels/${id}/local-test`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ passed }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function verifyOpeningNotificationChannel(accessToken: string, id: string) {
+  return fetchApiData<OpeningNotificationChannelRow>(`/admin/opening/notification-channels/${id}/verify`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningNotificationChannel(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningNotificationChannelRow>(`/admin/opening/notification-channels/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningDevices(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningDeviceVerification[]>(
+    `/admin/opening/devices?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function listOpeningMissingDeviceTypes(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningDeviceType[]>(
+    `/admin/opening/devices/missing?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningDevice(
+  accessToken: string,
+  input: {
+    id?: string;
+    branchId: string;
+    deviceType: OpeningDeviceType;
+    deviceLabel: string;
+    location?: string | null;
+    serialOrAssetReference?: string | null;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningDeviceVerification>(`/admin/opening/devices`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function verifyOpeningDevice(
+  accessToken: string,
+  id: string,
+  input: {
+    evidenceType: OpeningEvidenceType;
+    evidenceSummary: string;
+    expiresAt?: string | null;
+    recheckDueAt?: string | null;
+  },
+) {
+  return fetchApiData<OpeningDeviceVerification>(`/admin/opening/devices/${id}/verify`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningDevice(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningDeviceVerification>(`/admin/opening/devices/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}

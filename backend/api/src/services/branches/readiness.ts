@@ -47,10 +47,91 @@ export interface BranchReadinessReport {
     paymentConfigured: boolean;
     notificationConfigured: boolean;
     deviceVerified: boolean;
+    paymentMethodsConfigured: boolean;
+    paymentProviderVerified: boolean;
+    cardTerminalVerified: boolean;
+    cashProcedureApproved: boolean;
+    notifCustomerConfigured: boolean;
+    notifKitchenConfigured: boolean;
+    notifRiderConfigured: boolean;
+    notifEscalationConfigured: boolean;
+    devicePosVerified: boolean;
+    deviceKdsVerified: boolean;
+    devicePrinterVerified: boolean;
+    deviceCardTerminalVerified: boolean;
+    deviceRiderVerified: boolean;
+    deviceInternetVerified: boolean;
+    deviceBackupInternetVerified: boolean;
+    deviceUpsVerified: boolean;
+    paymentProviderFailed: boolean;
+    cardTerminalFailed: boolean;
+    cashProcedureFailed: boolean;
+    notifCustomerFailed: boolean;
+    notifKitchenFailed: boolean;
+    notifRiderFailed: boolean;
+    notifEscalationFailed: boolean;
+    devicePosFailed: boolean;
+    deviceKdsFailed: boolean;
+    devicePrinterFailed: boolean;
+    deviceCardTerminalFailed: boolean;
+    deviceRiderFailed: boolean;
+    deviceInternetFailed: boolean;
+    deviceBackupInternetFailed: boolean;
+    deviceUpsFailed: boolean;
   };
 }
 
 const PHONE_PLACEHOLDERS = new Set(["coming soon", "n/a", "tbd", "todo", "placeholder"]);
+
+/** Production readiness: excludes expired, FAILED, and LOCAL_TEST_ONLY evidence. */
+export function isCurrentVerified(
+  status: string,
+  expiresAt?: string | null,
+  evidenceType?: string | null,
+): boolean {
+  if (status === "FAILED" || status === "EXPIRED" || status === "NOT_VERIFIED" || status === "NOT_CONFIGURED") {
+    return false;
+  }
+  if (evidenceType === "LOCAL_TEST_ONLY") return false;
+  if (expiresAt && new Date(expiresAt).getTime() < Date.now()) return false;
+  return status === "VERIFIED";
+}
+
+function defaultM2ChecksFalse() {
+  return {
+    paymentMethodsConfigured: false,
+    paymentProviderVerified: false,
+    cardTerminalVerified: false,
+    cashProcedureApproved: false,
+    notifCustomerConfigured: false,
+    notifKitchenConfigured: false,
+    notifRiderConfigured: false,
+    notifEscalationConfigured: false,
+    devicePosVerified: false,
+    deviceKdsVerified: false,
+    devicePrinterVerified: false,
+    deviceCardTerminalVerified: false,
+    deviceRiderVerified: false,
+    deviceInternetVerified: false,
+    deviceBackupInternetVerified: false,
+    deviceUpsVerified: false,
+    paymentProviderFailed: false,
+    cardTerminalFailed: false,
+    cashProcedureFailed: false,
+    notifCustomerFailed: false,
+    notifKitchenFailed: false,
+    notifRiderFailed: false,
+    notifEscalationFailed: false,
+    devicePosFailed: false,
+    deviceKdsFailed: false,
+    devicePrinterFailed: false,
+    deviceCardTerminalFailed: false,
+    deviceRiderFailed: false,
+    deviceInternetFailed: false,
+    deviceBackupInternetFailed: false,
+    deviceUpsFailed: false,
+  };
+}
 
 function isConfiguredPhone(value: string | null | undefined): boolean {
   if (value == null) return false;
@@ -129,6 +210,7 @@ function errorReport(
       paymentConfigured: false,
       notificationConfigured: false,
       deviceVerified: false,
+      ...defaultM2ChecksFalse(),
     },
   };
 }
@@ -206,7 +288,18 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
         return errorReport(branch, message, "Retry readiness after role membership queries succeed");
       }
 
-      const [floorResult, tableResult, policyResult, notificationResult] = await Promise.all([
+      const [
+        floorResult,
+        tableResult,
+        policyResult,
+        notificationResult,
+        paymentMethodsResult,
+        paymentProvidersResult,
+        cardTerminalsResult,
+        cashProcedureResult,
+        notificationChannelsResult,
+        devicesResult,
+      ] = await Promise.all([
         supabase
           .from("restaurant_floors")
           .select("id", { count: "exact", head: true })
@@ -228,14 +321,55 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
           .select("email_enabled, whatsapp_enabled, provider_mode")
           .eq("branch_id", branchId)
           .maybeSingle(),
+        supabase.from("branch_payment_methods").select("enabled").eq("branch_id", branchId),
+        supabase
+          .from("branch_payment_provider_verifications")
+          .select("provider_status, expires_at")
+          .eq("branch_id", branchId),
+        supabase
+          .from("branch_card_terminal_verifications")
+          .select("verification_result, evidence_type, verified_at, recheck_due_at")
+          .eq("branch_id", branchId),
+        supabase
+          .from("branch_cash_procedure_approvals")
+          .select("documentation_status, approved_at")
+          .eq("branch_id", branchId)
+          .maybeSingle(),
+        supabase
+          .from("branch_notification_channels")
+          .select(
+            "purpose_code, enabled, provider_status, test_status, local_test_only",
+          )
+          .eq("branch_id", branchId),
+        supabase
+          .from("branch_device_verifications")
+          .select("device_type, verification_status, expires_at, evidence_type")
+          .eq("branch_id", branchId),
       ]);
 
-      if (floorResult.error || tableResult.error || policyResult.error || notificationResult.error) {
+      if (
+        floorResult.error ||
+        tableResult.error ||
+        policyResult.error ||
+        notificationResult.error ||
+        paymentMethodsResult.error ||
+        paymentProvidersResult.error ||
+        cardTerminalsResult.error ||
+        cashProcedureResult.error ||
+        notificationChannelsResult.error ||
+        devicesResult.error
+      ) {
         const message =
           floorResult.error?.message ??
           tableResult.error?.message ??
           policyResult.error?.message ??
           notificationResult.error?.message ??
+          paymentMethodsResult.error?.message ??
+          paymentProvidersResult.error?.message ??
+          cardTerminalsResult.error?.message ??
+          cashProcedureResult.error?.message ??
+          notificationChannelsResult.error?.message ??
+          devicesResult.error?.message ??
           "Configuration probe failed.";
         return errorReport(
           branch,
@@ -279,15 +413,119 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
           }
         | null;
       const providerMode = String(notif?.provider_mode ?? "disabled").toLowerCase();
-      const notificationConfigured = Boolean(
+      const legacyNotificationConfigured = Boolean(
         notif &&
           providerMode !== "disabled" &&
           (notif.email_enabled === true || notif.whatsapp_enabled === true),
       );
 
-      // No branch payment_settings / provider table exists in repository evidence.
-      // Do not equate cashier staffing to payment readiness.
-      const paymentConfigured = false;
+      const paymentMethods = (paymentMethodsResult.data ?? []) as Array<{ enabled?: boolean }>;
+      const paymentMethodsConfigured = paymentMethods.some((m) => m.enabled === true);
+
+      const providers = (paymentProvidersResult.data ?? []) as Array<{
+        provider_status: string;
+        expires_at: string | null;
+      }>;
+      const paymentProviderVerified = providers.some((p) =>
+        isCurrentVerified(p.provider_status, p.expires_at),
+      );
+      const paymentProviderFailed = providers.some((p) => p.provider_status === "FAILED");
+
+      const cardTerminals = (cardTerminalsResult.data ?? []) as Array<{
+        verification_result: string;
+        evidence_type: string | null;
+      }>;
+      const cardTerminalVerified = cardTerminals.some((t) =>
+        isCurrentVerified(t.verification_result, null, t.evidence_type),
+      );
+      const cardTerminalFailed = cardTerminals.some((t) => t.verification_result === "FAILED");
+
+      const cashRow = cashProcedureResult.data as
+        | { documentation_status?: string; approved_at?: string | null }
+        | null;
+      const cashProcedureApproved = Boolean(
+        cashRow &&
+          cashRow.documentation_status === "VERIFIED_ONSITE" &&
+          cashRow.approved_at,
+      );
+      const cashProcedureFailed = false;
+
+      const channels = (notificationChannelsResult.data ?? []) as Array<{
+        purpose_code: string;
+        enabled: boolean;
+        provider_status: string;
+        test_status: string;
+        local_test_only: boolean;
+      }>;
+
+      const purposeConfigured = (purpose: string): boolean =>
+        channels.some(
+          (c) =>
+            c.purpose_code === purpose &&
+            c.enabled &&
+            (isCurrentVerified(c.provider_status) ||
+              (c.test_status === "PASSED" && c.local_test_only === false)),
+        );
+
+      const purposeFailed = (purpose: string): boolean =>
+        channels.some((c) => c.purpose_code === purpose && (c.provider_status === "FAILED" || c.test_status === "FAILED"));
+
+      const notifCustomerConfigured = purposeConfigured("CUSTOMER_ORDER");
+      const notifKitchenConfigured = purposeConfigured("KITCHEN_ALERT");
+      const notifRiderConfigured = purposeConfigured("RIDER_ALERT");
+      const notifEscalationConfigured = purposeConfigured("ESCALATION");
+      const notifCustomerFailed = purposeFailed("CUSTOMER_ORDER");
+      const notifKitchenFailed = purposeFailed("KITCHEN_ALERT");
+      const notifRiderFailed = purposeFailed("RIDER_ALERT");
+      const notifEscalationFailed = purposeFailed("ESCALATION");
+
+      const notificationConfigured = notifCustomerConfigured || legacyNotificationConfigured;
+
+      const devices = (devicesResult.data ?? []) as Array<{
+        device_type: string;
+        verification_status: string;
+        expires_at: string | null;
+        evidence_type: string | null;
+      }>;
+
+      const deviceTypeVerified = (deviceType: string): boolean =>
+        devices.some(
+          (d) =>
+            d.device_type === deviceType &&
+            isCurrentVerified(d.verification_status, d.expires_at, d.evidence_type),
+        );
+
+      const deviceTypeFailed = (deviceType: string): boolean =>
+        devices.some((d) => d.device_type === deviceType && d.verification_status === "FAILED");
+
+      const devicePosVerified = deviceTypeVerified("POS_DEVICE");
+      const deviceKdsVerified = deviceTypeVerified("KDS_DEVICE");
+      const devicePrinterVerified = deviceTypeVerified("RECEIPT_PRINTER");
+      const deviceCardTerminalVerified = deviceTypeVerified("CARD_TERMINAL");
+      const deviceRiderVerified = deviceTypeVerified("RIDER_DEVICE");
+      const deviceInternetVerified = deviceTypeVerified("PRIMARY_INTERNET");
+      const deviceBackupInternetVerified = deviceTypeVerified("BACKUP_INTERNET");
+      const deviceUpsVerified = deviceTypeVerified("UPS_POWER_BACKUP");
+      const devicePosFailed = deviceTypeFailed("POS_DEVICE");
+      const deviceKdsFailed = deviceTypeFailed("KDS_DEVICE");
+      const devicePrinterFailed = deviceTypeFailed("RECEIPT_PRINTER");
+      const deviceCardTerminalFailed = deviceTypeFailed("CARD_TERMINAL");
+      const deviceRiderFailed = deviceTypeFailed("RIDER_DEVICE");
+      const deviceInternetFailed = deviceTypeFailed("PRIMARY_INTERNET");
+      const deviceBackupInternetFailed = deviceTypeFailed("BACKUP_INTERNET");
+      const deviceUpsFailed = deviceTypeFailed("UPS_POWER_BACKUP");
+
+      const paymentConfigured = paymentProviderVerified && paymentMethodsConfigured;
+
+      const deviceVerified =
+        devicePosVerified &&
+        deviceKdsVerified &&
+        devicePrinterVerified &&
+        deviceCardTerminalVerified &&
+        deviceRiderVerified &&
+        deviceInternetVerified &&
+        deviceBackupInternetVerified &&
+        deviceUpsVerified;
 
       const checks = {
         phone,
@@ -304,13 +542,43 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
         tablesConfigured,
         bookingPolicyConfigured,
         menuAssigned,
-        // POS/KDS/delivery staffing readiness (device verification stays explicit / separate).
         posReady: cashier > 0 && statusOperating,
         kdsReady: kitchen > 0 && statusOperating,
         deliveryReady: rider > 0 && statusOperating,
         paymentConfigured,
         notificationConfigured,
-        deviceVerified: false,
+        deviceVerified,
+        paymentMethodsConfigured,
+        paymentProviderVerified,
+        cardTerminalVerified,
+        cashProcedureApproved,
+        notifCustomerConfigured,
+        notifKitchenConfigured,
+        notifRiderConfigured,
+        notifEscalationConfigured,
+        devicePosVerified,
+        deviceKdsVerified,
+        devicePrinterVerified,
+        deviceCardTerminalVerified,
+        deviceRiderVerified,
+        deviceInternetVerified,
+        deviceBackupInternetVerified,
+        deviceUpsVerified,
+        paymentProviderFailed,
+        cardTerminalFailed,
+        cashProcedureFailed,
+        notifCustomerFailed,
+        notifKitchenFailed,
+        notifRiderFailed,
+        notifEscalationFailed,
+        devicePosFailed,
+        deviceKdsFailed,
+        devicePrinterFailed,
+        deviceCardTerminalFailed,
+        deviceRiderFailed,
+        deviceInternetFailed,
+        deviceBackupInternetFailed,
+        deviceUpsFailed,
       };
 
       const blockers: Array<{ code: string; message: string; nextAction?: string }> = [];
@@ -413,23 +681,67 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
         );
       }
       if (!checks.paymentConfigured) {
+        if (!checks.paymentMethodsConfigured) {
+          pushBlocker(
+            "PAYMENT_METHODS_MISSING",
+            "At least one enabled payment method is required.",
+            "Enable accepted payment methods for this branch",
+          );
+        }
+        if (!checks.paymentProviderVerified) {
+          pushBlocker(
+            "PAYMENT_PROVIDER_NOT_VERIFIED",
+            "Payment provider verification is missing or expired.",
+            "Verify payment provider (Production, not local test only)",
+          );
+        }
+      }
+      if (!checks.cardTerminalVerified) {
         pushBlocker(
-          "PAYMENT_NOT_VERIFIED",
-          "Branch payment provider configuration is not verified (no payment settings table probe available).",
-          "Configure payment provider",
+          "CARD_TERMINAL_NOT_VERIFIED",
+          "On-site card terminal verification is missing (LOCAL_TEST_ONLY does not count).",
+          "Complete on-site card terminal verification",
+        );
+      }
+      if (!checks.cashProcedureApproved) {
+        pushBlocker(
+          "CASH_PROCEDURE_NOT_APPROVED",
+          "Founder-approved cash handling procedure is required.",
+          "Complete and approve cash handling procedure",
         );
       }
       if (!checks.notificationConfigured) {
         pushBlocker(
           "NOTIFICATION_NOT_VERIFIED",
-          "Branch notification provider is not configured (requires branch_notification_settings with a non-disabled provider mode and an enabled channel).",
+          "Customer order notifications must be configured (M2 channel or legacy branch_notification_settings).",
           "Configure notification provider",
+        );
+      }
+      if (!checks.notifKitchenConfigured) {
+        pushBlocker(
+          "NOTIF_KITCHEN_MISSING",
+          "Kitchen alert notification channel is not Production-ready.",
+          "Configure KITCHEN_ALERT notification channel",
+        );
+      }
+      if (!checks.notifRiderConfigured) {
+        pushBlocker(
+          "NOTIF_RIDER_MISSING",
+          "Rider alert notification channel is not Production-ready.",
+          "Configure RIDER_ALERT notification channel",
+        );
+      }
+      if (!checks.notifEscalationConfigured) {
+        pushBlocker(
+          "NOTIF_ESCALATION_MISSING",
+          "Escalation notification channel is not Production-ready.",
+          "Configure ESCALATION notification channel",
         );
       }
       if (!checks.deviceVerified) {
         pushBlocker(
           "DEVICE_NOT_VERIFIED",
-          "On-site device/POS/KDS verification has not been recorded.",
+          "All required device/infrastructure types must be verified on-site (LOCAL_TEST_ONLY excluded).",
           "Complete on-site device/POS/KDS validation",
         );
       }
@@ -444,8 +756,14 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
       ]);
       const hardBlocks = blockers.filter((b) => hardBlockCodes.has(b.code));
       const verificationCodes = new Set([
-        "PAYMENT_NOT_VERIFIED",
+        "PAYMENT_METHODS_MISSING",
+        "PAYMENT_PROVIDER_NOT_VERIFIED",
+        "CARD_TERMINAL_NOT_VERIFIED",
+        "CASH_PROCEDURE_NOT_APPROVED",
         "NOTIFICATION_NOT_VERIFIED",
+        "NOTIF_KITCHEN_MISSING",
+        "NOTIF_RIDER_MISSING",
+        "NOTIF_ESCALATION_MISSING",
         "DEVICE_NOT_VERIFIED",
       ]);
       const onlyVerificationGaps =
