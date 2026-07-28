@@ -376,7 +376,13 @@ export default function AdminPos() {
     setTableId("");
   }
 
-  if (!allowed) return null;
+  if (!allowed) {
+    return (
+      <AdminShell title="Point of Sale">
+        <p className="text-sm text-[var(--admin-muted)]">Sign in required for POS.</p>
+      </AdminShell>
+    );
+  }
 
   return (
     <AdminShell title="Point of Sale">
