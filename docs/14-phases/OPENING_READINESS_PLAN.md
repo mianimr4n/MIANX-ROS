@@ -91,14 +91,19 @@ Do not claim restaurant ready to open, staff ready, payment ready, devices ready
 1. Assign real Royal Orchard operating staff (canonical roles only — no Founder/Owner role codes)
 2. Configure floor and tables
 3. Approve booking policy
-4. Decide payment methods and verify provider/terminal
-5. Configure notification channels (do not claim WhatsApp Connected)
-6. Verify onsite POS/KDS/printer/rider devices
-7. Verify internet and UPS contingency
+4. Decide payment methods and verify provider/terminal — see [OPENING_OPERATIONS_M2.md](../ops/OPENING_OPERATIONS_M2.md)
+5. Configure notification channels (do not claim WhatsApp Connected) — M2 persistence under `/admin/settings`
+6. Verify onsite POS/KDS/printer/rider devices — M2 device verification (LOCAL_TEST_ONLY ≠ Production COMPLETE)
+7. Verify internet and UPS contingency — M2 infrastructure checks
 8. Schedule staff training and full rehearsal
 9. Review final go/no-go evidence
 10. Authorize opening
 11. Keep Northern Bypass coming-soon unless separately authorized
+
+## Milestone status (repository evidence)
+
+- Milestone 1 (people / floor / booking): accepted on `feature/opening-operations-completion`
+- Milestone 2 (payments / notifications / devices): workflows + readiness probes on the same branch — Production evidence still required before COMPLETE claims for Royal Orchard
 
 ## Already complete (verified)
 - Decision Log append-only (PR #102)
