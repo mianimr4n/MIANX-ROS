@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import type { Branch } from "@/lib/telepizza-types";
 import { SEEDED_PERMISSIONS, SEEDED_ROLES } from "@/lib/admin-settings";
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
@@ -9,16 +11,196 @@ import {
   SettingsReadOnlyNotice,
   SettingsScopeBadge,
   SettingsStatusBadge,
+  SettingsUnavailablePanel,
 } from "@/components/admin/settings/SettingsPrimitives";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAdminBranch } from "@/contexts/AdminBranchContext";
+import { ApiRequestError } from "@/lib/api";
+import {
+  fetchBranchProfile,
+  fetchDeliverySettings,
+  fetchOrganizationSettings,
+  updateBranchProfile,
+  updateDeliverySettings,
+  updateOrganizationSettings,
+  type BranchProfile,
+  type DeliverySettings,
+  type OrganizationSettings as OrganizationSettingsRecord,
+} from "@/lib/admin-api";
+import { Link } from "wouter";
+import { toast } from "sonner";
+
+function settingsErr(err: unknown): string {
+  if (err instanceof ApiRequestError) return err.message || `Request failed (${err.statusCode})`;
+  return err instanceof Error ? err.message : "The action failed.";
+}
+
+const fieldClass =
+  "mt-1 w-full rounded-lg border border-[var(--admin-border)] bg-[var(--admin-panel)] px-3 py-2 text-sm text-[var(--admin-ink)]";
+const labelClass = "block text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]";
 
 export function OrganizationSettings() {
+  const { session } = useAuth();
+  const token = session?.access_token;
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    companyName: "",
+    phone: "",
+    email: "",
+    address: "",
+  });
+
+  useEffect(() => {
+    if (!token) {
+      setLoading(false);
+      setError("Sign in required to load organization settings.");
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    void fetchOrganizationSettings(token)
+      .then((data: OrganizationSettingsRecord) => {
+        if (cancelled) return;
+        setForm({
+          companyName: data.companyName ?? "",
+          phone: data.phone ?? "",
+          email: data.email ?? "",
+          address: data.address ?? "",
+        });
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(settingsErr(err));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  const onSave = async () => {
+    if (!token) return;
+    setSaving(true);
+    setError(null);
+    setSavedAt(null);
+    try {
+      const data = await updateOrganizationSettings(token, {
+        companyName: form.companyName.trim(),
+        phone: form.phone.trim() || null,
+        email: form.email.trim() || null,
+        address: form.address.trim() || null,
+      });
+      setForm({
+        companyName: data.companyName ?? "",
+        phone: data.phone ?? "",
+        email: data.email ?? "",
+        address: data.address ?? "",
+      });
+      setSavedAt(data.updatedAt);
+      toast.success("Organization settings saved");
+    } catch (err) {
+      setError(settingsErr(err));
+      toast.error(settingsErr(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <SettingsFoundationPanel
-      title="Organization"
-      description="Legal business profile, brand assets, and organization defaults."
-      body="No organization / tenant settings table or write API exists. Legal name, tax registration, support contacts, logo, default currency, and timezone cannot be persisted from Admin Settings."
-      scope="Organization"
-    />
+    <AdminSurface aria-labelledby="organization-settings-heading">
+      <AdminSurfaceHeader
+        title="Organization"
+        description="Company name, phone, email, and address — persisted to organization_settings."
+      />
+      <AdminSurfaceBody>
+        <h2 id="organization-settings-heading" className="sr-only">
+          Organization settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification={error && !form.companyName ? "UNAVAILABLE" : "LIVE"} />
+          <SettingsScopeBadge scope="Organization" />
+        </div>
+        {loading ? (
+          <p className="text-sm text-[var(--admin-muted)]" aria-live="polite">
+            Loading organization…
+          </p>
+        ) : (
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void onSave();
+            }}
+          >
+            <label className={labelClass}>
+              Company name
+              <input
+                className={fieldClass}
+                value={form.companyName}
+                onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
+                required
+                maxLength={200}
+                autoComplete="organization"
+              />
+            </label>
+            <label className={labelClass}>
+              Phone
+              <input
+                className={fieldClass}
+                value={form.phone}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                maxLength={30}
+                autoComplete="tel"
+              />
+            </label>
+            <label className={labelClass}>
+              Email
+              <input
+                type="email"
+                className={fieldClass}
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                maxLength={150}
+                autoComplete="email"
+              />
+            </label>
+            <label className={labelClass}>
+              Address
+              <textarea
+                className={fieldClass}
+                rows={3}
+                value={form.address}
+                onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+                maxLength={2000}
+                autoComplete="street-address"
+              />
+            </label>
+            {error ? (
+              <p className="text-sm text-red-700" role="alert">
+                {error}
+              </p>
+            ) : null}
+            {savedAt ? (
+              <p className="text-sm text-emerald-800" role="status">
+                Saved · {new Date(savedAt).toLocaleString()}
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={saving || !token || !form.companyName.trim()}
+              className="min-h-11 rounded-lg bg-[var(--admin-ink)] px-4 text-sm font-semibold text-[var(--admin-panel)] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+          </form>
+        )}
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 
@@ -29,21 +211,134 @@ export function BranchSettings({
   branches: Branch[];
   loading: boolean;
 }) {
+  const { session } = useAuth();
+  const token = session?.access_token;
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [profile, setProfile] = useState<BranchProfile | null>(null);
+  const [form, setForm] = useState({
+    phone: "",
+    email: "",
+    address: "",
+    opensAt: "",
+    closesAt: "",
+    deliveryRadiusKm: "",
+  });
+
+  useEffect(() => {
+    if (!selectedId && branches.length > 0) {
+      setSelectedId(branches[0].id);
+    }
+  }, [branches, selectedId]);
+
+  useEffect(() => {
+    if (!token || !selectedId) {
+      setProfile(null);
+      return;
+    }
+    let cancelled = false;
+    // Clear immediately so Save cannot PUT the previous branch's fields onto the new id.
+    setProfile(null);
+    setForm({
+      phone: "",
+      email: "",
+      address: "",
+      opensAt: "",
+      closesAt: "",
+      deliveryRadiusKm: "",
+    });
+    setProfileLoading(true);
+    setError(null);
+    setSavedAt(null);
+    void fetchBranchProfile(token, selectedId)
+      .then((data) => {
+        if (cancelled) return;
+        setProfile(data);
+        setForm({
+          phone: data.phone ?? "",
+          email: data.email ?? "",
+          address: data.address ?? "",
+          opensAt: data.opensAt ?? "",
+          closesAt: data.closesAt ?? "",
+          deliveryRadiusKm:
+            data.deliveryRadiusKm === null || data.deliveryRadiusKm === undefined
+              ? ""
+              : String(data.deliveryRadiusKm),
+        });
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setProfile(null);
+          setError(settingsErr(err));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setProfileLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, selectedId]);
+
+  const onSave = async () => {
+    if (!token || !selectedId) return;
+    setSaving(true);
+    setError(null);
+    setSavedAt(null);
+    try {
+      const radiusRaw = form.deliveryRadiusKm.trim();
+      const deliveryRadiusKm =
+        radiusRaw === "" ? null : Number(radiusRaw);
+      if (radiusRaw !== "" && (!Number.isFinite(deliveryRadiusKm) || (deliveryRadiusKm as number) < 0)) {
+        throw new Error("Delivery radius must be a non-negative number (km).");
+      }
+      const data = await updateBranchProfile(token, selectedId, {
+        phone: form.phone.trim() || null,
+        email: form.email.trim() || null,
+        address: form.address.trim(),
+        opensAt: form.opensAt.trim() || null,
+        closesAt: form.closesAt.trim() || null,
+        deliveryRadiusKm,
+      });
+      setProfile(data);
+      setForm({
+        phone: data.phone ?? "",
+        email: data.email ?? "",
+        address: data.address ?? "",
+        opensAt: data.opensAt ?? "",
+        closesAt: data.closesAt ?? "",
+        deliveryRadiusKm:
+          data.deliveryRadiusKm === null || data.deliveryRadiusKm === undefined
+            ? ""
+            : String(data.deliveryRadiusKm),
+      });
+      setSavedAt(data.updatedAt);
+      toast.success("Branch profile saved");
+    } catch (err) {
+      setError(settingsErr(err));
+      toast.error(settingsErr(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <AdminSurface aria-labelledby="branch-settings-heading">
       <AdminSurfaceHeader
         title="Branches"
-        description="Verified branch catalog — read-only until branch write APIs ship."
+        description="Update phone, hours, delivery radius, and contact fields via PUT /admin/branches/:id."
       />
       <AdminSurfaceBody>
         <h2 id="branch-settings-heading" className="sr-only">
           Branch settings
         </h2>
         <div className="mb-3 flex flex-wrap gap-2">
-          <SettingsStatusBadge classification="READ-ONLY" />
+          <SettingsStatusBadge classification="LIVE" />
           <SettingsScopeBadge scope="Branch" />
         </div>
-        <SettingsReadOnlyNotice message="GET /api/v1/branches provides directory fields. Opening hours JSON is not fully exposed as structured admin hours — display uses catalog hours string. No PATCH branch profile API." />
         {loading ? (
           <p className="text-sm text-[var(--admin-muted)]" aria-live="polite">
             Loading branches…
@@ -51,46 +346,132 @@ export function BranchSettings({
         ) : branches.length === 0 ? (
           <p className="text-sm text-[var(--admin-muted)]">No branches in current admin scope.</p>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-[var(--admin-border)]">
-            <table className="min-w-full text-left text-sm">
-              <caption className="sr-only">Branch directory</caption>
-              <thead className="bg-[var(--admin-soft)] text-xs uppercase tracking-wide text-[var(--admin-muted)]">
-                <tr>
-                  <th scope="col" className="px-3 py-2 font-semibold">
-                    Name
-                  </th>
-                  <th scope="col" className="px-3 py-2 font-semibold">
-                    City
-                  </th>
-                  <th scope="col" className="px-3 py-2 font-semibold">
-                    Phone
-                  </th>
-                  <th scope="col" className="px-3 py-2 font-semibold">
-                    Status
-                  </th>
-                  <th scope="col" className="px-3 py-2 font-semibold">
-                    Hours
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+          <div className="space-y-4">
+            <label className={labelClass}>
+              Branch
+              <select
+                className={fieldClass}
+                value={selectedId}
+                onChange={(e) => setSelectedId(e.target.value)}
+              >
                 {branches.map((branch) => (
-                  <tr key={branch.id} className="border-t border-[var(--admin-border)]">
-                    <td className="px-3 py-2 font-medium">{branch.shortName || branch.name}</td>
-                    <td className="px-3 py-2">{branch.city}</td>
-                    <td className="px-3 py-2">{branch.phone || "—"}</td>
-                    <td className="px-3 py-2 capitalize">{branch.status}</td>
-                    <td className="px-3 py-2 text-xs text-[var(--admin-muted)]">{branch.hours || "—"}</td>
-                  </tr>
+                  <option key={branch.id} value={branch.id}>
+                    {branch.shortName || branch.name} · {branch.status}
+                  </option>
                 ))}
-              </tbody>
-            </table>
+              </select>
+            </label>
+            {profileLoading ? (
+              <p className="text-sm text-[var(--admin-muted)]" aria-live="polite">
+                Loading branch profile…
+              </p>
+            ) : profile ? (
+              <form
+                className="space-y-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void onSave();
+                }}
+              >
+                <p className="text-sm text-[var(--admin-muted)]">
+                  {profile.name} · {profile.city}
+                  {profile.hoursDaily ? ` · Catalog hours: ${profile.hoursDaily}` : null}
+                </p>
+                <label className={labelClass}>
+                  Phone
+                  <input
+                    className={fieldClass}
+                    value={form.phone}
+                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                    maxLength={30}
+                  />
+                </label>
+                <label className={labelClass}>
+                  Email
+                  <input
+                    type="email"
+                    className={fieldClass}
+                    value={form.email}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    maxLength={150}
+                  />
+                </label>
+                <label className={labelClass}>
+                  Address
+                  <textarea
+                    className={fieldClass}
+                    rows={2}
+                    value={form.address}
+                    onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+                    required
+                    maxLength={2000}
+                  />
+                </label>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className={labelClass}>
+                    Opens at (HH:MM)
+                    <input
+                      className={fieldClass}
+                      value={form.opensAt}
+                      onChange={(e) => setForm((f) => ({ ...f, opensAt: e.target.value }))}
+                      placeholder="10:00"
+                      pattern="([01]\d|2[0-3]):([0-5]\d)"
+                    />
+                  </label>
+                  <label className={labelClass}>
+                    Closes at (HH:MM)
+                    <input
+                      className={fieldClass}
+                      value={form.closesAt}
+                      onChange={(e) => setForm((f) => ({ ...f, closesAt: e.target.value }))}
+                      placeholder="02:30"
+                      pattern="([01]\d|2[0-3]):([0-5]\d)"
+                    />
+                  </label>
+                </div>
+                <label className={labelClass}>
+                  Delivery radius (km)
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.1}
+                    className={fieldClass}
+                    value={form.deliveryRadiusKm}
+                    onChange={(e) => setForm((f) => ({ ...f, deliveryRadiusKm: e.target.value }))}
+                  />
+                </label>
+                {error ? (
+                  <p className="text-sm text-red-700" role="alert">
+                    {error}
+                  </p>
+                ) : null}
+                {savedAt ? (
+                  <p className="text-sm text-emerald-800" role="status">
+                    Saved · {new Date(savedAt).toLocaleString()}
+                  </p>
+                ) : null}
+                <button
+                  type="submit"
+                  disabled={
+                    saving ||
+                    !token ||
+                    profileLoading ||
+                    !profile ||
+                    profile.id !== selectedId ||
+                    !form.address.trim()
+                  }
+                  className="min-h-11 rounded-lg bg-[var(--admin-ink)] px-4 text-sm font-semibold text-[var(--admin-panel)] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {saving ? "Saving…" : "Save"}
+                </button>
+              </form>
+            ) : (
+              <p className="text-sm text-[var(--admin-muted)]" role="status">
+                {error ?? "Branch profile unavailable."}
+              </p>
+            )}
           </div>
         )}
-        <p className="mt-3 text-xs text-[var(--admin-muted)]">
-          Editable fields (address, email, coordinates, tax profile, capability flags) require future branch settings write
-          APIs — Foundation.
-        </p>
       </AdminSurfaceBody>
     </AdminSurface>
   );
@@ -175,33 +556,256 @@ export function KitchenSettings() {
 }
 
 export function DeliverySettings() {
+  const { session } = useAuth();
+  const { allowedBranches, isLoading: branchesLoading } = useAdminBranch();
+  const token = session?.access_token;
+  const [selectedId, setSelectedId] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    deliveryRadiusKm: "",
+    minimumOrderAmount: "",
+    deliveryFee: "",
+  });
+  const [loadedBranchId, setLoadedBranchId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedId && allowedBranches.length > 0) {
+      setSelectedId(allowedBranches[0].id);
+    }
+  }, [allowedBranches, selectedId]);
+
+  useEffect(() => {
+    if (!token || !selectedId) return;
+    let cancelled = false;
+    // Clear immediately so Save cannot write the previous branch's fee/radius onto the new id.
+    setLoadedBranchId(null);
+    setForm({
+      deliveryRadiusKm: "",
+      minimumOrderAmount: "",
+      deliveryFee: "",
+    });
+    setLoading(true);
+    setError(null);
+    setSavedAt(null);
+    void fetchDeliverySettings(token, selectedId)
+      .then((data: DeliverySettings) => {
+        if (cancelled) return;
+        setForm({
+          deliveryRadiusKm:
+            data.deliveryRadiusKm === null || data.deliveryRadiusKm === undefined
+              ? ""
+              : String(data.deliveryRadiusKm),
+          minimumOrderAmount:
+            data.minimumOrderAmount === null || data.minimumOrderAmount === undefined
+              ? ""
+              : String(data.minimumOrderAmount),
+          deliveryFee:
+            data.deliveryFee === null || data.deliveryFee === undefined ? "" : String(data.deliveryFee),
+        });
+        setLoadedBranchId(data.branchId);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(settingsErr(err));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, selectedId]);
+
+  const parseOptionalNumber = (raw: string, label: string): number | null => {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    const n = Number(trimmed);
+    if (!Number.isFinite(n) || n < 0) {
+      throw new Error(`${label} must be a non-negative number.`);
+    }
+    return n;
+  };
+
+  const onSave = async () => {
+    if (!token || !selectedId) return;
+    setSaving(true);
+    setError(null);
+    setSavedAt(null);
+    try {
+      const data = await updateDeliverySettings(token, {
+        branchId: selectedId,
+        deliveryRadiusKm: parseOptionalNumber(form.deliveryRadiusKm, "Delivery radius"),
+        minimumOrderAmount: parseOptionalNumber(form.minimumOrderAmount, "Minimum order"),
+        deliveryFee: parseOptionalNumber(form.deliveryFee, "Delivery fee"),
+      });
+      setForm({
+        deliveryRadiusKm:
+          data.deliveryRadiusKm === null || data.deliveryRadiusKm === undefined
+            ? ""
+            : String(data.deliveryRadiusKm),
+        minimumOrderAmount:
+          data.minimumOrderAmount === null || data.minimumOrderAmount === undefined
+            ? ""
+            : String(data.minimumOrderAmount),
+        deliveryFee:
+          data.deliveryFee === null || data.deliveryFee === undefined ? "" : String(data.deliveryFee),
+      });
+      setLoadedBranchId(data.branchId);
+      setSavedAt(data.updatedAt);
+      toast.success("Delivery settings saved");
+    } catch (err) {
+      setError(settingsErr(err));
+      toast.error(settingsErr(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <SettingsFoundationPanel
-      title="Delivery"
-      description="Zones, fees, dispatch strategy, and COD policy."
-      body="Delivery assignments are operational. Service areas, fee matrices, and dispatch algorithms are not Settings-writable. Map zones will not be invented in UI."
-      scope="Branch"
-    />
+    <AdminSurface aria-labelledby="delivery-settings-heading">
+      <AdminSurfaceHeader
+        title="Delivery"
+        description="Per-branch delivery radius, minimum order, and fee — persisted on public.branches."
+      />
+      <AdminSurfaceBody>
+        <h2 id="delivery-settings-heading" className="sr-only">
+          Delivery settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Branch" />
+        </div>
+        <p className="mb-4 text-sm text-[var(--admin-muted)]">
+          Zone maps and dispatch algorithms remain out of scope. Fee is stored for operations configuration —
+          live quote pricing still requires a separate pricing-engine wire-up.
+        </p>
+        {branchesLoading ? (
+          <p className="text-sm text-[var(--admin-muted)]">Loading branches…</p>
+        ) : allowedBranches.length === 0 ? (
+          <p className="text-sm text-[var(--admin-muted)]">No branches in current admin scope.</p>
+        ) : (
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void onSave();
+            }}
+          >
+            <label className={labelClass}>
+              Branch
+              <select
+                className={fieldClass}
+                value={selectedId}
+                onChange={(e) => setSelectedId(e.target.value)}
+              >
+                {allowedBranches.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.shortName || branch.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {loading ? (
+              <p className="text-sm text-[var(--admin-muted)]">Loading delivery settings…</p>
+            ) : (
+              <>
+                <label className={labelClass}>
+                  Delivery radius (km)
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.1}
+                    className={fieldClass}
+                    value={form.deliveryRadiusKm}
+                    onChange={(e) => setForm((f) => ({ ...f, deliveryRadiusKm: e.target.value }))}
+                  />
+                </label>
+                <label className={labelClass}>
+                  Minimum order (PKR)
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    className={fieldClass}
+                    value={form.minimumOrderAmount}
+                    onChange={(e) => setForm((f) => ({ ...f, minimumOrderAmount: e.target.value }))}
+                  />
+                </label>
+                <label className={labelClass}>
+                  Delivery fee (PKR)
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    className={fieldClass}
+                    value={form.deliveryFee}
+                    onChange={(e) => setForm((f) => ({ ...f, deliveryFee: e.target.value }))}
+                  />
+                </label>
+              </>
+            )}
+            {error ? (
+              <p className="text-sm text-red-700" role="alert">
+                {error}
+              </p>
+            ) : null}
+            {savedAt ? (
+              <p className="text-sm text-emerald-800" role="status">
+                Saved · {new Date(savedAt).toLocaleString()}
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={
+                saving || !token || !selectedId || loading || loadedBranchId !== selectedId
+              }
+              className="min-h-11 rounded-lg bg-[var(--admin-ink)] px-4 text-sm font-semibold text-[var(--admin-panel)] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+          </form>
+        )}
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 
 export function MenuSettings() {
   return (
-    <SettingsFoundationPanel
-      title="Menu"
-      description="Publishing behaviour, tax-inclusive pricing, channel availability."
-      body="Menu catalog is managed in Menu Management. Settings does not replace the catalog editor. Publishing and channel policies require configuration APIs."
-      scope="Organization"
-    />
+    <AdminSurface aria-labelledby="menu-settings-heading">
+      <AdminSurfaceHeader
+        title="Menu"
+        description="Prices, availability, and categories are managed in Menu Management — live write APIs."
+      />
+      <AdminSurfaceBody>
+        <h2 id="menu-settings-heading" className="sr-only">
+          Menu settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Organization" />
+        </div>
+        <p className="text-sm text-[var(--admin-muted)]">
+          Use{" "}
+          <Link href="/admin/menu" className="font-semibold text-[var(--admin-ink)] underline">
+            Admin → Menu
+          </Link>{" "}
+          to save SKU prices (`PUT /admin/menu/skus/:id`) and create categories (`POST /admin/menu/categories`).
+          Publishing matrices and tax classes remain future work.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 
 export function InventorySettings() {
   return (
-    <SettingsFoundationPanel
+    <SettingsUnavailablePanel
       title="Inventory"
       description="Tracking, negative stock, valuation, and reorder defaults."
-      body="Inventory module is Foundation — no stock ledger. Policy toggles cannot be enforced without inventory backend."
+      body="Inventory module is not implemented — no stock ledger or policy engine. Coming soon; Settings will not invent stock toggles."
       scope="Branch"
     />
   );
@@ -220,10 +824,10 @@ export function PurchasingSettings() {
 
 export function FinanceTaxSettings() {
   return (
-    <SettingsFoundationPanel
+    <SettingsUnavailablePanel
       title="Finance & Tax"
       description="Fiscal year, VAT/GST rates, and account mapping."
-      body="Finance module is Foundation — no chart of accounts or tax engine. Settings will never invent tax rates or claim legal compliance."
+      body="Finance module is not implemented — no chart of accounts or tax engine. Coming soon; Settings will never invent tax rates."
       scope="Organization"
     />
   );

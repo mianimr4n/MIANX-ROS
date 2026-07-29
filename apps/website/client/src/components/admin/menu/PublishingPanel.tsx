@@ -37,7 +37,7 @@ function channelRows(product: MenuCatalogItemView): ChannelRow[] {
     {
       channel: "Menu Management master",
       status: "future",
-      note: "This module will become source of truth after menu.write APIs",
+      note: "This module consumes live menu.write APIs (PUT /admin/menu/skus/:id, POST /admin/menu/categories)",
     },
   ];
 }

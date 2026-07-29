@@ -91,10 +91,23 @@ export default function AdminSettings() {
           {activeCategory === "operations" ||
           activeCategory === "payments" ||
           activeCategory === "communications" ||
-          activeCategory === "pos" ? (
+          activeCategory === "pos" ||
+          activeCategory === "organization" ||
+          activeCategory === "branches" ||
+          activeCategory === "delivery" ||
+          activeCategory === "menu" ||
+          activeCategory === "inventory" ||
+          activeCategory === "finance" ? (
             <p className="mt-4 text-xs text-[var(--admin-muted)]" role="status">
-              Opening operations use per-row Save / Delete in the panels above — the foundation settings save bar does
-              not apply to those workflows.
+              {activeCategory === "organization" || activeCategory === "branches"
+                ? "Organization and branch profiles use the Save button in the panel above."
+                : activeCategory === "delivery"
+                  ? "Delivery settings use the Save button in the panel above."
+                  : activeCategory === "menu"
+                    ? "Menu prices and categories are saved in Admin → Menu."
+                    : activeCategory === "inventory" || activeCategory === "finance"
+                      ? "No Save control — this module is unavailable until its backend ships."
+                      : "Opening operations use per-row Save / Delete in the panels above — the foundation settings save bar does not apply to those workflows."}
             </p>
           ) : (
             <SettingsSaveBar />

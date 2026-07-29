@@ -203,6 +203,8 @@ export function createAdminPosOrder(
     notes?: string;
     couponCode?: string;
     quoteId?: string;
+    /** Launch cash path — only `cash` is accepted at place-order today. */
+    paymentMethod?: "cash";
     /** D3 — attach a dine-in order to an active dining session (dine-in only). */
     diningSessionId?: string;
     items: Array<{
@@ -1566,6 +1568,114 @@ export function recordOpeningDryRunFounderDecision(
 ) {
   return fetchApiData<OpeningDryRunEvidence>(`/admin/opening/dry-runs/${id}/founder-decision`, {
     method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+// --- Phase 2: Organization + Branch profile settings ---
+
+export type OrganizationSettings = {
+  companyName: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  updatedAt: string;
+  updatedBy: string | null;
+};
+
+export type OrganizationSettingsUpdate = {
+  companyName?: string;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+};
+
+export function fetchOrganizationSettings(accessToken: string, opts?: AdminReadOptions) {
+  return fetchApiData<OrganizationSettings>(
+    `/admin/settings/organization`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function updateOrganizationSettings(accessToken: string, input: OrganizationSettingsUpdate) {
+  return fetchApiData<OrganizationSettings>(`/admin/settings/organization`, {
+    method: "PUT",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export type BranchProfile = {
+  id: string;
+  branchCode: string;
+  name: string;
+  city: string;
+  area: string | null;
+  address: string;
+  phone: string | null;
+  email: string | null;
+  status: string;
+  timezone: string;
+  opensAt: string | null;
+  closesAt: string | null;
+  hoursDaily: string | null;
+  deliveryRadiusKm: number | null;
+  updatedAt: string;
+};
+
+export type BranchProfileUpdate = {
+  phone?: string | null;
+  email?: string | null;
+  address?: string;
+  opensAt?: string | null;
+  closesAt?: string | null;
+  deliveryRadiusKm?: number | null;
+};
+
+export function fetchBranchProfile(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<BranchProfile>(`/admin/branches/${branchId}`, readInit(accessToken, opts));
+}
+
+export function updateBranchProfile(accessToken: string, branchId: string, input: BranchProfileUpdate) {
+  return fetchApiData<BranchProfile>(`/admin/branches/${branchId}`, {
+    method: "PUT",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export type DeliverySettings = {
+  branchId: string;
+  branchCode: string;
+  branchName: string;
+  deliveryRadiusKm: number | null;
+  minimumOrderAmount: number | null;
+  deliveryFee: number | null;
+  updatedAt: string;
+};
+
+export type DeliverySettingsUpdate = {
+  branchId: string;
+  deliveryRadiusKm?: number | null;
+  minimumOrderAmount?: number | null;
+  deliveryFee?: number | null;
+};
+
+export function fetchDeliverySettings(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  const params = new URLSearchParams({ branchId });
+  return fetchApiData<DeliverySettings>(
+    `/admin/settings/delivery?${params}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function updateDeliverySettings(accessToken: string, input: DeliverySettingsUpdate) {
+  return fetchApiData<DeliverySettings>(`/admin/settings/delivery`, {
+    method: "PUT",
     headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
     body: JSON.stringify(input),
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,

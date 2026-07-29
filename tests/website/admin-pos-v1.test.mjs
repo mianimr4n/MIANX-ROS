@@ -36,6 +36,10 @@ describe("Point of Sale V1 (static)", () => {
     assert.match(payment, /cash|card_terminal|bank_manual|complimentary/);
     assert.match(payment, /No online card gateway/i);
     assert.doesNotMatch(payment, /No POS payment capture API/);
+    const page = read("apps/website/client/src/pages/admin/AdminPos.tsx");
+    assert.match(page, /paymentMethod:\s*"cash"/);
+    assert.doesNotMatch(page, /Payment intent=.*Foundation/);
+    assert.doesNotMatch(page, /Card Payment Successful/i);
     const actions = read("apps/website/client/src/components/admin/pos/POSActions.tsx");
     assert.match(actions, /Save draft · Foundation/);
     assert.match(actions, /Print receipt · Foundation/);

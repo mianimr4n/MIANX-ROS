@@ -100,7 +100,7 @@ function readInit(accessToken: string, opts?: AdminReadOptions) {
   };
 }
 
-function writeInit(accessToken: string, method: "POST" | "PATCH", body: unknown) {
+function writeInit(accessToken: string, method: "POST" | "PATCH" | "PUT", body: unknown) {
   return {
     method,
     headers: bearerHeaders(accessToken),
@@ -148,9 +148,22 @@ export function createMenuSku(accessToken: string, body: CreateMenuSkuBody) {
 
 export function updateMenuSku(accessToken: string, skuId: string, body: UpdateMenuSkuBody) {
   return fetchApiData<AdminMenuSku>(
-    `/admin/menu/products/${skuId}`,
-    writeInit(accessToken, "PATCH", body),
+    `/admin/menu/skus/${skuId}`,
+    writeInit(accessToken, "PUT", body),
   );
+}
+
+export function uploadMenuSkuImage(
+  accessToken: string,
+  skuId: string,
+  body: { contentType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string },
+) {
+  return fetchApiData<AdminMenuSku>(`/admin/menu/skus/${skuId}/image`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
 }
 
 export function listMenuAuditEvents(

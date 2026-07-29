@@ -48,6 +48,15 @@ function mockHappyCatalog() {
         }),
       };
     }
+    if (table === "payments") {
+      return {
+        update: () => ({
+          eq: () => ({
+            eq: async () => ({ data: null, error: null }),
+          }),
+        }),
+      };
+    }
     if (table === "branches") {
       return {
         select: () => ({

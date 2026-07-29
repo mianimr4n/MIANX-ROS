@@ -52,9 +52,15 @@ import { createAdminBookingPolicyRouter } from "./booking-policy.js";
 import { createAdminOpeningOperationsRouter } from "./opening-operations.js";
 import { createAdminOpeningGovernanceRouter } from "./opening-governance.js";
 import { createAdminOpeningDryRunRouter } from "./opening-dry-run.js";
+import { createAdminOrganizationSettingsRouter } from "./organization-settings.js";
+import { createAdminBranchProfileRouter } from "./branch-profile.js";
+import { createAdminDeliverySettingsRouter } from "./delivery-settings.js";
 import type { OpeningOperationsService } from "../../services/opening/operations.js";
 import type { OpeningGovernanceService } from "../../services/opening/governance.js";
 import type { OpeningDryRunService } from "../../services/opening/dry-run.js";
+import type { OrganizationSettingsService } from "../../services/settings/organization.js";
+import type { BranchProfileService } from "../../services/branches/profile.js";
+import type { DeliverySettingsService } from "../../services/settings/delivery.js";
 
 const createInviteSchema = z.object({
   email: z.email(),
@@ -106,6 +112,9 @@ export interface AdminRouterDependencies {
   openingOperations: OpeningOperationsService;
   openingGovernance: OpeningGovernanceService;
   openingDryRun: OpeningDryRunService;
+  organizationSettings: OrganizationSettingsService;
+  branchProfile: BranchProfileService;
+  deliverySettings: DeliverySettingsService;
 }
 
 function toSafeInvite(invite: {
@@ -504,6 +513,30 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       bookingPolicy: dependencies.bookingPolicy,
+    }),
+  );
+
+  router.use(
+    createAdminOrganizationSettingsRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      organizationSettings: dependencies.organizationSettings,
+    }),
+  );
+
+  router.use(
+    createAdminBranchProfileRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      branchProfile: dependencies.branchProfile,
+    }),
+  );
+
+  router.use(
+    createAdminDeliverySettingsRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      deliverySettings: dependencies.deliverySettings,
     }),
   );
 

@@ -110,6 +110,18 @@ import {
   createOpeningDryRunService,
   type OpeningDryRunService,
 } from "./services/opening/dry-run.js";
+import {
+  createOrganizationSettingsService,
+  type OrganizationSettingsService,
+} from "./services/settings/organization.js";
+import {
+  createBranchProfileService,
+  type BranchProfileService,
+} from "./services/branches/profile.js";
+import {
+  createDeliverySettingsService,
+  type DeliverySettingsService,
+} from "./services/settings/delivery.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -137,6 +149,9 @@ export interface AppDependencies {
   openingOperations: OpeningOperationsService;
   openingGovernance: OpeningGovernanceService;
   openingDryRun: OpeningDryRunService;
+  organizationSettings: OrganizationSettingsService;
+  branchProfile: BranchProfileService;
+  deliverySettings: DeliverySettingsService;
   tableService: TableServiceOperations;
   paymentSettlement: PaymentSettlementService;
   deposits: DepositService;
@@ -174,6 +189,9 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     openingOperations: createOpeningOperationsService(envStatus),
     openingGovernance: createOpeningGovernanceService(envStatus),
     openingDryRun: createOpeningDryRunService(envStatus),
+    organizationSettings: createOrganizationSettingsService(envStatus),
+    branchProfile: createBranchProfileService(envStatus),
+    deliverySettings: createDeliverySettingsService(envStatus),
     tableService: createTableServiceOperations(envStatus),
     paymentSettlement: createPaymentSettlementService(envStatus),
     deposits: createDepositService(envStatus),

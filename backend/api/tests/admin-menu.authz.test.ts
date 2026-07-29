@@ -155,6 +155,7 @@ const menuManagement = {
     });
     return after;
   }),
+  uploadSkuImage: vi.fn(async () => sku({ imageUrl: "https://example.supabase.co/storage/v1/object/public/menu-product-images/x.jpg" })),
   listAuditEvents: vi.fn(async () =>
     auditWrites.map((entry, index) => ({
       id: `audit-${index}`,
@@ -232,6 +233,15 @@ describe("admin menu workspace authz", () => {
       .send({ price: 1400 });
     expect(res.status).toBe(200);
     expect(res.body.data.price).toBe(1400);
+  });
+
+  it("accepts PUT /admin/menu/skus/:id as the price/availability alias", async () => {
+    const res = await request(app)
+      .put(`/admin/menu/skus/${SKU_ID}`)
+      .set("Authorization", "Bearer owner")
+      .send({ price: 1550, isAvailable: true });
+    expect(res.status).toBe(200);
+    expect(menuManagement.updateSku).toHaveBeenCalled();
   });
 
   it("records a price change in the audit trail", async () => {

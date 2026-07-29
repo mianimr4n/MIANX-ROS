@@ -76,7 +76,7 @@ const createSkuSchema = z
     sizeLabel: z.string().trim().max(80).nullable().optional(),
     sizeCode: z.enum(SIZE_CODES).nullable().optional(),
     description: z.string().trim().max(500).nullable().optional(),
-    imageUrl: z.string().trim().max(300).nullable().optional(),
+    imageUrl: z.string().trim().max(500).nullable().optional(),
     badge: z.string().trim().max(40).nullable().optional(),
     productType: z.enum(PRODUCT_TYPES),
     sortOrder: z.number().int().min(0).max(9999).optional(),
@@ -94,7 +94,7 @@ const updateSkuSchema = z
     sizeLabel: z.string().trim().max(80).nullable().optional(),
     sizeCode: z.enum(SIZE_CODES).nullable().optional(),
     description: z.string().trim().max(500).nullable().optional(),
-    imageUrl: z.string().trim().max(300).nullable().optional(),
+    imageUrl: z.string().trim().max(500).nullable().optional(),
     badge: z.string().trim().max(40).nullable().optional(),
     sortOrder: z.number().int().min(0).max(9999).optional(),
     isAvailable: z.boolean().optional(),
@@ -223,6 +223,54 @@ export function createAdminMenuRouter(deps: AdminMenuRouterDependencies) {
       try {
         const principal = (req as AuthorizedRequest).principal!;
         const data = await deps.menuManagement.updateSku(
+          actorFrom(principal),
+          req.params.id,
+          req.body,
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  // Canonical alias — Admin Menu / Settings contracts use /skus/:id for price & availability.
+  router.put(
+    "/skus/:id",
+    requireAuthenticatedUser,
+    requirePermission("menu.write"),
+    validateBody(updateSkuSchema),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.menuManagement.updateSku(
+          actorFrom(principal),
+          req.params.id,
+          req.body,
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  const uploadSkuImageSchema = z
+    .object({
+      contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
+      dataBase64: z.string().min(32).max(2_800_000),
+    })
+    .strict();
+
+  router.post(
+    "/skus/:id/image",
+    requireAuthenticatedUser,
+    requirePermission("menu.write"),
+    validateBody(uploadSkuImageSchema),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.menuManagement.uploadSkuImage(
           actorFrom(principal),
           req.params.id,
           req.body,

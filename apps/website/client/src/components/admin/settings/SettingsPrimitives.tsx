@@ -58,6 +58,37 @@ export function SettingsFoundationPanel({
   );
 }
 
+export function SettingsUnavailablePanel({
+  title,
+  description,
+  body,
+  scope = "Organization",
+}: {
+  title: string;
+  description: string;
+  body: string;
+  scope?: string;
+}) {
+  return (
+    <AdminSurface aria-labelledby={`settings-unavailable-${title.replace(/\s+/g, "-").toLowerCase()}`}>
+      <AdminSurfaceHeader title={title} description={description} />
+      <AdminSurfaceBody>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="UNAVAILABLE" />
+          <SettingsScopeBadge scope={scope} />
+        </div>
+        <div className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6">
+          <p className="font-semibold text-[var(--admin-ink)]">{title} — coming soon</p>
+          <p className="mt-2 text-sm text-[var(--admin-muted)]">{body}</p>
+          <p className="mt-3 text-xs text-[var(--admin-muted)]">
+            No Save control — backend module is not implemented yet. Settings will not invent toggles or rates.
+          </p>
+        </div>
+      </AdminSurfaceBody>
+    </AdminSurface>
+  );
+}
+
 export function SettingsReadOnlyNotice({ message }: { message: string }) {
   return (
     <p className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-950" role="status">

@@ -129,7 +129,7 @@ export function nextKitchenActions(status: string): Array<{ toStatus: string; la
     case "accepted":
       return [{ toStatus: "preparing", label: "Start preparing" }];
     case "preparing":
-      return [{ toStatus: "ready", label: "Mark ready" }];
+      return [{ toStatus: "ready", label: "Ready" }];
     case "ready":
       return [{ toStatus: "completed", label: "Complete handoff" }];
     default:
