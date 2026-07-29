@@ -1,20 +1,51 @@
-import { fetchApiData } from "@/lib/api";
+import { fetchApiData, isApiConfigured } from "@/lib/api";
 import type {
   Branch,
   CancelOrderResponse,
   CreateOrderPayload,
   CreatedOrderResponse,
   QuoteOrderResponse,
-  MenuCategory,
-  MenuItem,
+  ModifierGroup,
   OrderTrackingResponse,
 } from "@/lib/telepizza-types";
 
-interface MenuCatalogResponse {
-  categories: MenuCategory[];
-  items: MenuItem[];
-  /** Internal topping SKUs — not customer browse categories. */
-  toppings: MenuItem[];
+/** Matches GET /api/v1/menu/catalog canonical-single-price-v1 contract. */
+export interface ApiMenuCatalogSku {
+  id: string;
+  slug: string;
+  name: string;
+  productGroupSlug: string;
+  sizeLabel?: string;
+  sizeCode?: string;
+  price: number;
+  available: boolean;
+  sortOrder: number;
+  category: string;
+  categorySlug: string;
+  description: string;
+  image: string;
+  badge?: string;
+  productType: string;
+  featured: boolean;
+  modifierGroups?: ModifierGroup[];
+}
+
+export interface ApiMenuCatalogCategory {
+  id: string;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  items: Array<{
+    productGroupSlug: string;
+    name: string;
+    options: ApiMenuCatalogSku[];
+  }>;
+}
+
+export interface MenuCatalogResponse {
+  categories: ApiMenuCatalogCategory[];
+  skus: ApiMenuCatalogSku[];
+  toppings: ApiMenuCatalogSku[];
 }
 
 export function fetchBranches() {
@@ -24,6 +55,8 @@ export function fetchBranches() {
 export function fetchMenuCatalog() {
   return fetchApiData<MenuCatalogResponse>("/menu/catalog");
 }
+
+export { isApiConfigured };
 
 export function createOrder(payload: CreateOrderPayload) {
   return fetchApiData<CreatedOrderResponse>("/orders", {

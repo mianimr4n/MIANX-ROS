@@ -303,14 +303,14 @@ export default function AdminPos() {
       setPlaceError("Delivery address is required for delivery/phone orders.");
       return;
     }
+    if (paymentMethod !== "cash") {
+      setPlaceError("Only Cash is available at place-order. Use dine-in bill settlement for other methods.");
+      return;
+    }
     setPlacing(true);
     setPlaceError(null);
     try {
-      const notesParts = [
-        `POS channel=${channel}`,
-        paymentMethod ? `Payment intent=${paymentMethod} (Foundation label)` : "",
-        tableNote,
-      ].filter(Boolean);
+      const notesParts = [`POS channel=${channel}`, tableNote].filter(Boolean);
       const created = await createAdminPosOrder(
         token,
         {
@@ -322,6 +322,7 @@ export default function AdminPos() {
           notes: notesParts.join(" · ") || undefined,
           couponCode: couponCode.trim() || undefined,
           quoteId: quote.quoteId,
+          paymentMethod: "cash",
           diningSessionId:
             channel === "dine-in" && diningSessionId ? diningSessionId : undefined,
           items: lines.map((line) => ({

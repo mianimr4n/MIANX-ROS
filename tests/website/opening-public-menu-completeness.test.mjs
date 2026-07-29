@@ -27,6 +27,16 @@ describe("Public menu completeness contracts", () => {
     assert.doesNotMatch(loader, /\.limit\s*\(\s*\d+\s*\)/);
     assert.doesNotMatch(loader, /\.range\s*\(\s*0\s*,\s*\d+\s*\)/);
     assert.match(loader, /groupSkusIntoFamilies|fetchMenuCatalogFromSupabase|buildStaticCatalog/);
+    assert.match(loader, /fetchMenuCatalogFromApi|isApiConfigured/);
+  });
+
+  it("catalog prefers live API then Supabase before static fallback", () => {
+    const loader = read("apps/website/client/src/lib/menu-catalog.ts");
+    const ctx = read("apps/website/client/src/contexts/MenuCatalogContext.tsx");
+    assert.match(loader, /fetchMenuCatalogFromApi/);
+    assert.match(loader, /isApiConfigured/);
+    assert.match(ctx, /isApiConfigured \|\| isSupabaseConfigured/);
+    assert.match(ctx, /Live menu unavailable/);
   });
 
   it("product detail resolves family slug or exact SKU", () => {

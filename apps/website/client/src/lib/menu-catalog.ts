@@ -22,6 +22,7 @@ import {
   isCustomerBrowseItem,
 } from "@/lib/menu-visibility";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
+import { fetchMenuCatalog, isApiConfigured, type ApiMenuCatalogSku } from "@/lib/telepizza-api";
 import type {
   MenuCategory,
   MenuItem,
@@ -30,7 +31,7 @@ import type {
   ModifierGroup,
 } from "@/lib/telepizza-types";
 
-export type MenuCatalogSource = "supabase" | "static";
+export type MenuCatalogSource = "api" | "supabase" | "static";
 
 export interface MenuCatalogResult {
   /** Public customer categories only. */
@@ -396,10 +397,84 @@ export async function fetchMenuCatalogFromSupabase(): Promise<MenuCatalogResult>
   return splitCatalog(categories, items, "supabase");
 }
 
+function mapApiSkuToMenuItem(sku: ApiMenuCatalogSku): MenuItem {
+  return {
+    id: sku.id,
+    slug: sku.slug,
+    name: sku.name,
+    productGroupSlug: sku.productGroupSlug ?? sku.slug,
+    sizeLabel: sku.sizeLabel,
+    sizeCode: (sku.sizeCode as MenuSizeCode | undefined) ?? undefined,
+    category: sku.category,
+    categorySlug: sku.categorySlug,
+    description: sku.description ?? "",
+    image: resolveMenuItemImage(sku.slug, sku.category, sku.image),
+    badge: sku.badge,
+    price: sku.price,
+    available: sku.available,
+    sortOrder: sku.sortOrder ?? 0,
+    productType: sku.productType,
+    featured: sku.featured,
+    modifierGroups:
+      sku.modifierGroups && sku.modifierGroups.length > 0
+        ? sku.modifierGroups
+        : mapModifierGroups(getStaticModifierGroupsForItem(sku.slug)),
+  };
+}
+
+/**
+ * Live catalog via backend REST (same Supabase tables Admin Menu writes).
+ * Prefer this so Admin price/availability edits reach the customer site without redeploy.
+ */
+export async function fetchMenuCatalogFromApi(): Promise<MenuCatalogResult> {
+  const catalog = await fetchMenuCatalog();
+  const categories: MenuCategory[] = (catalog.categories ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    sortOrder: row.sortOrder,
+  }));
+  const browseSkus = (catalog.skus ?? []).map(mapApiSkuToMenuItem);
+  const toppingSkus = (catalog.toppings ?? []).map(mapApiSkuToMenuItem);
+  const allItems = [...browseSkus, ...toppingSkus];
+
+  if (categories.length === 0 || allItems.length === 0) {
+    throw new Error("API returned an empty menu catalog.");
+  }
+
+  return splitCatalog(categories, allItems, "api");
+}
+
+/**
+ * Prefer live API, then direct Supabase, then static fallback only when neither live source is configured.
+ * When a live source is configured and fails, callers should catch and may show static offline catalog.
+ */
 export async function loadMenuCatalog(): Promise<MenuCatalogResult> {
-  if (!isSupabaseConfigured) {
+  const errors: string[] = [];
+
+  if (isApiConfigured) {
+    try {
+      return await fetchMenuCatalogFromApi();
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : "API catalog failed.");
+    }
+  }
+
+  if (isSupabaseConfigured) {
+    try {
+      return await fetchMenuCatalogFromSupabase();
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : "Supabase catalog failed.");
+    }
+  }
+
+  if (!isApiConfigured && !isSupabaseConfigured) {
     return buildStaticCatalog();
   }
 
-  return fetchMenuCatalogFromSupabase();
+  throw new Error(
+    errors.length > 0
+      ? `Live menu unavailable: ${errors.join(" | ")}`
+      : "Live menu unavailable.",
+  );
 }

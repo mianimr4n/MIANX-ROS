@@ -66,6 +66,11 @@ const createPosOrderSchema = z.object({
   notes: z.string().max(500).optional(),
   couponCode: z.string().max(50).optional(),
   quoteId: z.string().max(4096).optional(),
+  /**
+   * Launch payment contract: cash only at place-order.
+   * Pickup cash → paid; delivery cash → pending COD; dine-in cash → pending until bill settle.
+   */
+  paymentMethod: z.literal("cash").optional().default("cash"),
   /** D3 — attach the order to an active dining session (dine-in only). */
   diningSessionId: z.string().uuid().optional(),
   items: z.array(orderItemSchema).min(1).max(50),

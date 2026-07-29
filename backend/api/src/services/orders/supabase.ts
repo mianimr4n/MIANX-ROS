@@ -498,6 +498,7 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         notes: input.notes?.trim() ?? null,
         couponCode: input.couponCode?.trim() ?? null,
         quoteId: input.quoteId?.trim() || null,
+        paymentMethod: input.paymentMethod ?? (input.orderSource === "pos" || input.orderSource === "admin" ? "cash" : null),
         items: input.items.map((item) => ({
           menuItemId: item.menuItemId ?? null,
           menuItemSlug: item.menuItemSlug ?? null,
@@ -558,6 +559,17 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         .join("\n");
 
       const isPos = input.orderSource === "pos" || input.orderSource === "admin";
+      const paymentMethod = "cash" as const;
+      /**
+       * Honest cash semantics for launch:
+       * - pickup POS cash → paid at counter
+       * - delivery cash → pending COD
+       * - dine-in cash → pending until bill settle
+       * - website/public → pending (customer COD / pay on collect)
+       */
+      const paymentStatus =
+        isPos && input.orderType === "pickup" ? "paid" : "pending";
+
       const itemsPayload = priced.lines.map((line) => ({
         menu_item_id: line.menuItemId,
         variant_id: line.variantId,
@@ -601,7 +613,7 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
           tax_amount: priced.taxAmount,
           delivery_fee: priced.deliveryFee,
           total_amount: priced.totalAmount,
-          payment_status: "pending",
+          payment_status: paymentStatus,
           contact_name: input.contactName.trim(),
           contact_phone: input.contactPhone.trim(),
           contact_phone_e164: contactPhoneE164,
@@ -610,7 +622,7 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
           pricing_snapshot: priced.pricingSnapshot,
           auth_user_id: input.authUserId?.trim() || null,
           customer_id: input.customerId ?? null,
-          payment_method: "cash",
+          payment_method: paymentMethod,
         },
         p_items: itemsPayload,
         p_create_delivery: input.orderType === "delivery" && Boolean(deliveryAddress),
@@ -626,6 +638,31 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
 
       if (atomicError) {
         mapAtomicCreateError(atomicError);
+      }
+
+      const created = atomic as {
+        id: string;
+        orderNumber: string;
+        status: string;
+        subtotal: number;
+        discountAmount: number;
+        taxAmount: number;
+        deliveryFee: number;
+        totalAmount: number;
+        createdAt: string;
+        idempotentReplay?: boolean;
+      };
+
+      if (isPos && paymentStatus === "paid" && created?.id && !created.idempotentReplay) {
+        const paidAt = new Date().toISOString();
+        const { error: payUpdateError } = await supabase
+          .from("payments")
+          .update({ status: "paid", paid_at: paidAt })
+          .eq("order_id", created.id)
+          .eq("status", "pending");
+        if (payUpdateError) {
+          throw new ApiError(500, "PAYMENT_MARK_PAID_FAILED", payUpdateError.message);
+        }
       }
 
       const row = atomic as {

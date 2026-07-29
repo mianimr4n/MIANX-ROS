@@ -203,6 +203,8 @@ export function createAdminPosOrder(
     notes?: string;
     couponCode?: string;
     quoteId?: string;
+    /** Launch cash path — only `cash` is accepted at place-order today. */
+    paymentMethod?: "cash";
     /** D3 — attach a dine-in order to an active dining session (dine-in only). */
     diningSessionId?: string;
     items: Array<{

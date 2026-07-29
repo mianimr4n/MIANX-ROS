@@ -181,11 +181,13 @@ export default function AdminMenu() {
   }, [accessToken, drawerProduct?.id]);
 
   const sourceLabel =
-    source === "supabase"
-      ? "Supabase / GET /api/v1/menu/catalog"
-      : usingFallback
-        ? "Static fallback"
-        : "Static catalog";
+    source === "api"
+      ? "API GET /api/v1/menu/catalog"
+      : source === "supabase"
+        ? "Supabase (same catalog tables)"
+        : usingFallback
+          ? "Static fallback"
+          : "Static catalog";
 
   const openProduct = (product: MenuCatalogItemView) => {
     setSaveError(null);
