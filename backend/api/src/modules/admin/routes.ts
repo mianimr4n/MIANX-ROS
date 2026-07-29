@@ -51,8 +51,10 @@ import { createAdminStaffAssignmentsRouter } from "./staff-assignments.js";
 import { createAdminBookingPolicyRouter } from "./booking-policy.js";
 import { createAdminOpeningOperationsRouter } from "./opening-operations.js";
 import { createAdminOpeningGovernanceRouter } from "./opening-governance.js";
+import { createAdminOpeningDryRunRouter } from "./opening-dry-run.js";
 import type { OpeningOperationsService } from "../../services/opening/operations.js";
 import type { OpeningGovernanceService } from "../../services/opening/governance.js";
+import type { OpeningDryRunService } from "../../services/opening/dry-run.js";
 
 const createInviteSchema = z.object({
   email: z.email(),
@@ -103,6 +105,7 @@ export interface AdminRouterDependencies {
   bookingPolicy: BookingPolicyService;
   openingOperations: OpeningOperationsService;
   openingGovernance: OpeningGovernanceService;
+  openingDryRun: OpeningDryRunService;
 }
 
 function toSafeInvite(invite: {
@@ -517,6 +520,14 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       openingGovernance: dependencies.openingGovernance,
+    }),
+  );
+
+  router.use(
+    createAdminOpeningDryRunRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      openingDryRun: dependencies.openingDryRun,
     }),
   );
 
