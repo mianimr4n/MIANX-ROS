@@ -88,7 +88,17 @@ export default function AdminSettings() {
             permissions={permissions}
             isSuperAdmin={isSuperAdmin}
           />
-          <SettingsSaveBar />
+          {activeCategory === "operations" ||
+          activeCategory === "payments" ||
+          activeCategory === "communications" ||
+          activeCategory === "pos" ? (
+            <p className="mt-4 text-xs text-[var(--admin-muted)]" role="status">
+              Opening operations use per-row Save / Delete in the panels above — the foundation settings save bar does
+              not apply to those workflows.
+            </p>
+          ) : (
+            <SettingsSaveBar />
+          )}
         </div>
       </div>
 

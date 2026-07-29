@@ -30,10 +30,24 @@ describe("Settings & Configuration V1 (static)", () => {
   it("does not invent settings write persistence or fake save handlers", () => {
     const page = read("apps/website/client/src/pages/admin/AdminSettings.tsx");
     assert.doesNotMatch(page, /localStorage\.setItem\(["']telepizza\.settings/);
-    assert.doesNotMatch(page, /onSave\s*=|saveSettings\(/);
+    assert.doesNotMatch(page, /saveSettings\(/);
     const save = read("apps/website/client/src/components/admin/settings/SettingsPrimitives.tsx");
     assert.match(save, /Save · Foundation/);
     assert.match(save, /disabled/);
+  });
+
+  it("exposes Save/Delete on opening notification channels and devices", () => {
+    const ops = read("apps/website/client/src/components/admin/OpeningOperationsPanel.tsx");
+    assert.match(ops, /upsertOpeningNotificationChannel/);
+    assert.match(ops, /upsertOpeningDevice/);
+    assert.match(ops, />\s*Save\s*</);
+    assert.match(ops, />\s*Delete\s*</);
+    assert.match(ops, /Add channel/);
+    assert.doesNotMatch(ops, /Enable channel|Register \/ verify/);
+    const panels = read("apps/website/client/src/components/admin/settings/SettingsPanels.tsx");
+    assert.match(panels, /Use Save \/ Delete on notification channels|Add a channel, then use Save \/ Delete/);
+    const page = read("apps/website/client/src/pages/admin/AdminSettings.tsx");
+    assert.match(page, /per-row Save \/ Delete/);
   });
 
   it("never renders secret keys or credential values", () => {

@@ -190,7 +190,7 @@ function purposeHonesty(purpose: OpeningNotificationPurpose, channels: OpeningNo
     return honesty(
       "WAITING_ON_HUMAN",
       `No enabled channel for ${PURPOSE_LABELS[purpose]}.`,
-      "Enable a channel and destination reference (no secrets).",
+      "Enable a channel, Save destination reference (no secrets), then verify.",
     );
   }
   const production = rows.some((c) => c.providerStatus === "VERIFIED" && !c.localTestOnly);
@@ -216,7 +216,7 @@ function deviceTypeHonesty(type: OpeningDeviceType, devices: OpeningDeviceVerifi
     return honesty(
       "WAITING_ON_HUMAN",
       `${DEVICE_LABELS[type]} not registered.`,
-      "Register device label, then record onsite verification.",
+      "Save a device label, then verify onsite.",
     );
   }
   if (row.verificationStatus === "FAILED") {
@@ -232,7 +232,12 @@ function deviceTypeHonesty(type: OpeningDeviceType, devices: OpeningDeviceVerifi
   if (row.verificationStatus === "VERIFIED") {
     return honesty("COMPLETE", "None.", "Watch expiry / recheck dates.");
   }
-  return honesty("WAITING_ON_HUMAN", "Device not verified onsite.", "Record verification with honest evidence type.");
+  // Registered (NOT_VERIFIED / VERIFICATION_REQUIRED) — saved metadata, verification still pending.
+  return honesty(
+    "ACTIVE",
+    `${DEVICE_LABELS[type]} saved — onsite verification pending.`,
+    "Use Verify with honest evidence type (not LOCAL_TEST_ONLY for Production).",
+  );
 }
 
 export function OpeningOperationsPanel() {
@@ -670,6 +675,122 @@ function CashProcedureForm({
   );
 }
 
+function NotificationChannelRowEditor({
+  row,
+  canWrite,
+  busy,
+  token,
+  branchId,
+  onRun,
+}: {
+  row: OpeningNotificationChannelRow;
+  canWrite: boolean;
+  busy: string | null;
+  token: string;
+  branchId: string;
+  onRun: (action: () => Promise<unknown>, key: string) => Promise<void>;
+}) {
+  const [destination, setDestination] = useState(row.destinationReference ?? "");
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    setDestination(row.destinationReference ?? "");
+    setDirty(false);
+  }, [row.id, row.destinationReference]);
+
+  if (!canWrite) {
+    return (
+      <li className="rounded border border-[var(--admin-border)] px-2 py-2 text-sm">
+        {row.channelCode.replaceAll("_", " ")} · {channelStatusLabel(row)}
+        {row.destinationReference ? (
+          <span className="ml-2 text-xs text-[var(--admin-muted)]">ref: {row.destinationReference}</span>
+        ) : null}
+      </li>
+    );
+  }
+
+  return (
+    <li className="rounded border border-[var(--admin-border)] px-2 py-2 text-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-medium">
+          {row.channelCode.replaceAll("_", " ")} · {channelStatusLabel(row)}
+        </span>
+        {!row.enabled ? (
+          <span className="text-xs text-[var(--admin-muted)]">(disabled)</span>
+        ) : null}
+      </div>
+      <input
+        value={destination}
+        onChange={(e) => {
+          setDestination(e.target.value);
+          setDirty(true);
+        }}
+        placeholder="Destination reference (not a secret)"
+        className="mt-2 min-h-9 w-full rounded border px-2 text-sm"
+        aria-label={`Destination for ${row.channelCode}`}
+      />
+      <div className="mt-2 flex flex-wrap gap-1">
+        <button
+          type="button"
+          className="rounded border border-[var(--brand-red)] bg-[var(--brand-red)] px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
+          disabled={busy !== null || (!dirty && row.enabled)}
+          onClick={() =>
+            void onRun(
+              () =>
+                upsertOpeningNotificationChannel(token, {
+                  branchId,
+                  purposeCode: row.purposeCode,
+                  channelCode: row.channelCode,
+                  enabled: true,
+                  destinationReference: destination.trim() || null,
+                }),
+              `save-ch-${row.id}`,
+            )
+          }
+        >
+          Save
+        </button>
+        <button
+          type="button"
+          className="rounded border px-2 py-1 text-xs text-red-800 disabled:opacity-50"
+          disabled={busy !== null || !row.enabled}
+          onClick={() =>
+            void onRun(
+              () =>
+                upsertOpeningNotificationChannel(token, {
+                  branchId,
+                  purposeCode: row.purposeCode,
+                  channelCode: row.channelCode,
+                  enabled: false,
+                  destinationReference: destination.trim() || null,
+                }),
+              `del-ch-${row.id}`,
+            )
+          }
+        >
+          Delete
+        </button>
+        <button
+          type="button"
+          className="rounded border px-2 py-1 text-xs disabled:opacity-50"
+          disabled={busy !== null || !row.enabled}
+          onClick={() => void onRun(() => localTestOpeningNotificationChannel(token, row.id, true), `lt-${row.id}`)}
+        >
+          Local verification only
+        </button>
+        <button
+          type="button"
+          className="rounded border px-2 py-1 text-xs disabled:opacity-50"
+          disabled={busy !== null || !row.enabled}
+          onClick={() => void onRun(() => verifyOpeningNotificationChannel(token, row.id), `v-${row.id}`)}
+        >
+          Production verify
+        </button>
+      </div>
+    </li>
+  );
+}
+
 function NotificationPurposeEditor({
   purpose,
   channels,
@@ -689,56 +810,82 @@ function NotificationPurposeEditor({
 }) {
   const [channelCode, setChannelCode] = useState<(typeof OPENING_NOTIFICATION_CHANNELS)[number]>("IN_APP");
   const [destination, setDestination] = useState("");
+  const [draft, setDraft] = useState<{
+    channelCode: (typeof OPENING_NOTIFICATION_CHANNELS)[number];
+    destination: string;
+  } | null>(null);
   const rows = channels.filter((c) => c.purposeCode === purpose);
 
   return (
     <div className="mt-2">
       <ul className="space-y-2 text-sm">
-        {rows.map((row) => (
-          <li key={row.id} className="rounded border border-[var(--admin-border)] px-2 py-1">
-            {row.channelCode.replaceAll("_", " ")} · {channelStatusLabel(row)}
-            {row.destinationReference ? (
-              <span className="ml-2 text-xs text-[var(--admin-muted)]">ref: {row.destinationReference}</span>
-            ) : null}
-            {canWrite ? (
-              <div className="mt-1 flex flex-wrap gap-1">
-                <button
-                  type="button"
-                  className="rounded border px-2 py-0.5 text-xs"
-                  disabled={busy !== null}
-                  onClick={() => void onRun(() => localTestOpeningNotificationChannel(token!, row.id, true), `lt-${row.id}`)}
-                >
-                  Local verification only
-                </button>
-                <button
-                  type="button"
-                  className="rounded border px-2 py-0.5 text-xs"
-                  disabled={busy !== null}
-                  onClick={() => void onRun(() => verifyOpeningNotificationChannel(token!, row.id), `v-${row.id}`)}
-                >
-                  Production verify
-                </button>
-              </div>
-            ) : null}
+        {rows.map((row) =>
+          token && branchId ? (
+            <NotificationChannelRowEditor
+              key={row.id}
+              row={row}
+              canWrite={canWrite}
+              busy={busy}
+              token={token}
+              branchId={branchId}
+              onRun={onRun}
+            />
+          ) : (
+            <li key={row.id} className="rounded border border-[var(--admin-border)] px-2 py-1">
+              {row.channelCode.replaceAll("_", " ")} · {channelStatusLabel(row)}
+            </li>
+          ),
+        )}
+        {draft && canWrite && token && branchId ? (
+          <li className="rounded border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-2 py-2 text-sm">
+            <p className="font-medium">
+              New · {draft.channelCode.replaceAll("_", " ")} · pending save
+            </p>
+            <input
+              value={draft.destination}
+              onChange={(e) => setDraft({ ...draft, destination: e.target.value })}
+              placeholder="Destination reference (not a secret)"
+              className="mt-2 min-h-9 w-full rounded border bg-white px-2 text-sm"
+            />
+            <div className="mt-2 flex flex-wrap gap-1">
+              <button
+                type="button"
+                className="rounded border border-[var(--brand-red)] bg-[var(--brand-red)] px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                disabled={busy !== null}
+                onClick={() =>
+                  void onRun(async () => {
+                    await upsertOpeningNotificationChannel(token, {
+                      branchId,
+                      purposeCode: purpose,
+                      channelCode: draft.channelCode,
+                      enabled: true,
+                      destinationReference: draft.destination.trim() || null,
+                    });
+                    setDraft(null);
+                    setDestination("");
+                  }, `save-draft-${purpose}`)
+                }
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                className="rounded border px-2 py-1 text-xs text-red-800 disabled:opacity-50"
+                disabled={busy !== null}
+                onClick={() => setDraft(null)}
+              >
+                Delete
+              </button>
+            </div>
           </li>
-        ))}
+        ) : null}
       </ul>
-      {canWrite && branchId && token ? (
+      {canWrite && branchId && token && !draft ? (
         <form
           className="mt-2 flex flex-wrap gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            void onRun(
-              () =>
-                upsertOpeningNotificationChannel(token, {
-                  branchId,
-                  purposeCode: purpose,
-                  channelCode,
-                  enabled: true,
-                  destinationReference: destination.trim() || null,
-                }),
-              `ch-${purpose}`,
-            );
+            setDraft({ channelCode, destination });
           }}
         >
           <select
@@ -758,10 +905,15 @@ function NotificationPurposeEditor({
             placeholder="Destination reference (not a secret)"
             className="min-h-9 flex-1 rounded border px-2 text-sm"
           />
-          <button type="submit" disabled={busy !== null} className="rounded border px-2 py-1 text-sm">
-            Enable channel
+          <button type="submit" disabled={busy !== null} className="rounded border px-2 py-1 text-sm font-medium">
+            Add channel
           </button>
         </form>
+      ) : null}
+      {!canWrite ? (
+        <p className="mt-2 text-xs text-[var(--admin-muted)]">
+          Save / Delete require super-admin or branch-manager.
+        </p>
       ) : null}
     </div>
   );
@@ -788,9 +940,13 @@ function DeviceTypeRow({
   const [label, setLabel] = useState(row?.deviceLabel ?? DEVICE_LABELS[type]);
   const [summary, setSummary] = useState("Onsite check recorded");
   const [evidence, setEvidence] = useState<OpeningEvidenceType>("ONSITE_CHECK");
+  const [labelDirty, setLabelDirty] = useState(false);
 
   useEffect(() => {
-    if (row?.deviceLabel) setLabel(row.deviceLabel);
+    if (row?.deviceLabel) {
+      setLabel(row.deviceLabel);
+      setLabelDirty(false);
+    }
   }, [row?.deviceLabel]);
 
   return (
@@ -798,58 +954,97 @@ function DeviceTypeRow({
       <h4 className="font-medium">{DEVICE_LABELS[type]}</h4>
       {deviceTypeHonesty(type, devices)}
       {canWrite && token && branchId ? (
-        <form
-          className="mt-2 flex flex-wrap gap-2 text-sm"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void onRun(async () => {
-              const device = row
-                ? row
-                : await upsertOpeningDevice(token, {
-                    branchId,
-                    deviceType: type,
-                    deviceLabel: label,
-                  });
-              if (evidence === "LOCAL_TEST_ONLY") {
-                await verifyOpeningDevice(token, device.id, {
-                  evidenceType: evidence,
-                  evidenceSummary: "Local verification only",
-                });
-              } else {
-                await verifyOpeningDevice(token, device.id, {
-                  evidenceType: evidence,
-                  evidenceSummary: summary,
-                });
-              }
-            }, `dev-${type}`);
-          }}
-        >
+        <div className="mt-2 space-y-2 text-sm">
           <input
             value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            className="min-h-9 flex-1 rounded border px-2"
+            onChange={(e) => {
+              setLabel(e.target.value);
+              setLabelDirty(true);
+            }}
+            className="min-h-9 w-full rounded border px-2"
+            aria-label={`${DEVICE_LABELS[type]} label`}
           />
-          <select value={evidence} onChange={(e) => setEvidence(e.target.value as OpeningEvidenceType)} className="rounded border px-2">
-            {OPENING_EVIDENCE_TYPES.map((ev) => (
-              <option key={ev} value={ev}>
-                {ev === "LOCAL_TEST_ONLY" ? "Local verification only" : ev.replaceAll("_", " ")}
-              </option>
-            ))}
-          </select>
-          <button type="submit" disabled={busy !== null} className="rounded border px-2 py-1">
-            Register / verify
-          </button>
-          {row ? (
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              disabled={busy !== null}
-              className="rounded border px-2 py-1 text-red-800"
-              onClick={() => void onRun(() => failOpeningDevice(token, row.id, "Failed onsite check"), `fail-${row.id}`)}
+              disabled={busy !== null || (!labelDirty && Boolean(row)) || label.trim().length < 2}
+              className="rounded border border-[var(--brand-red)] bg-[var(--brand-red)] px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
+              onClick={() =>
+                void onRun(
+                  () =>
+                    upsertOpeningDevice(token, {
+                      id: row?.id,
+                      branchId,
+                      deviceType: type,
+                      deviceLabel: label.trim(),
+                    }),
+                  `save-dev-${type}`,
+                )
+              }
             >
-              Mark failed
+              Save
             </button>
+            {row ? (
+              <>
+                <select
+                  value={evidence}
+                  onChange={(e) => setEvidence(e.target.value as OpeningEvidenceType)}
+                  className="rounded border px-2 text-xs"
+                  aria-label="Evidence type"
+                >
+                  {OPENING_EVIDENCE_TYPES.map((ev) => (
+                    <option key={ev} value={ev}>
+                      {ev === "LOCAL_TEST_ONLY" ? "Local verification only" : ev.replaceAll("_", " ")}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  className="rounded border px-2 py-1 text-xs disabled:opacity-50"
+                  onClick={() =>
+                    void onRun(
+                      () =>
+                        verifyOpeningDevice(token, row.id, {
+                          evidenceType: evidence,
+                          evidenceSummary:
+                            evidence === "LOCAL_TEST_ONLY" ? "Local verification only" : summary,
+                        }),
+                      `verify-dev-${type}`,
+                    )
+                  }
+                >
+                  Verify
+                </button>
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  className="rounded border px-2 py-1 text-xs text-red-800 disabled:opacity-50"
+                  onClick={() =>
+                    void onRun(
+                      () => failOpeningDevice(token, row.id, "Removed from opening device inventory"),
+                      `del-dev-${row.id}`,
+                    )
+                  }
+                >
+                  Delete
+                </button>
+              </>
+            ) : null}
+          </div>
+          {row && evidence !== "LOCAL_TEST_ONLY" ? (
+            <input
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+              placeholder="Evidence summary for Verify"
+              className="min-h-9 w-full rounded border px-2 text-xs"
+            />
           ) : null}
-        </form>
+        </div>
+      ) : !canWrite ? (
+        <p className="mt-2 text-xs text-[var(--admin-muted)]">
+          Save / Delete require super-admin or branch-manager.
+        </p>
       ) : null}
     </div>
   );
