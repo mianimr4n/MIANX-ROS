@@ -11,17 +11,23 @@ import {
   SettingsReadOnlyNotice,
   SettingsScopeBadge,
   SettingsStatusBadge,
+  SettingsUnavailablePanel,
 } from "@/components/admin/settings/SettingsPrimitives";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { ApiRequestError } from "@/lib/api";
 import {
   fetchBranchProfile,
+  fetchDeliverySettings,
   fetchOrganizationSettings,
   updateBranchProfile,
+  updateDeliverySettings,
   updateOrganizationSettings,
   type BranchProfile,
+  type DeliverySettings,
   type OrganizationSettings as OrganizationSettingsRecord,
 } from "@/lib/admin-api";
+import { Link } from "wouter";
 
 function settingsErr(err: unknown): string {
   if (err instanceof ApiRequestError) return err.message || `Request failed (${err.statusCode})`;
@@ -528,33 +534,242 @@ export function KitchenSettings() {
 }
 
 export function DeliverySettings() {
+  const { session } = useAuth();
+  const { allowedBranches, isLoading: branchesLoading } = useAdminBranch();
+  const token = session?.access_token;
+  const [selectedId, setSelectedId] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    deliveryRadiusKm: "",
+    minimumOrderAmount: "",
+    deliveryFee: "",
+  });
+
+  useEffect(() => {
+    if (!selectedId && allowedBranches.length > 0) {
+      setSelectedId(allowedBranches[0].id);
+    }
+  }, [allowedBranches, selectedId]);
+
+  useEffect(() => {
+    if (!token || !selectedId) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setSavedAt(null);
+    void fetchDeliverySettings(token, selectedId)
+      .then((data: DeliverySettings) => {
+        if (cancelled) return;
+        setForm({
+          deliveryRadiusKm:
+            data.deliveryRadiusKm === null || data.deliveryRadiusKm === undefined
+              ? ""
+              : String(data.deliveryRadiusKm),
+          minimumOrderAmount:
+            data.minimumOrderAmount === null || data.minimumOrderAmount === undefined
+              ? ""
+              : String(data.minimumOrderAmount),
+          deliveryFee:
+            data.deliveryFee === null || data.deliveryFee === undefined ? "" : String(data.deliveryFee),
+        });
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(settingsErr(err));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, selectedId]);
+
+  const parseOptionalNumber = (raw: string, label: string): number | null => {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    const n = Number(trimmed);
+    if (!Number.isFinite(n) || n < 0) {
+      throw new Error(`${label} must be a non-negative number.`);
+    }
+    return n;
+  };
+
+  const onSave = async () => {
+    if (!token || !selectedId) return;
+    setSaving(true);
+    setError(null);
+    setSavedAt(null);
+    try {
+      const data = await updateDeliverySettings(token, {
+        branchId: selectedId,
+        deliveryRadiusKm: parseOptionalNumber(form.deliveryRadiusKm, "Delivery radius"),
+        minimumOrderAmount: parseOptionalNumber(form.minimumOrderAmount, "Minimum order"),
+        deliveryFee: parseOptionalNumber(form.deliveryFee, "Delivery fee"),
+      });
+      setForm({
+        deliveryRadiusKm:
+          data.deliveryRadiusKm === null || data.deliveryRadiusKm === undefined
+            ? ""
+            : String(data.deliveryRadiusKm),
+        minimumOrderAmount:
+          data.minimumOrderAmount === null || data.minimumOrderAmount === undefined
+            ? ""
+            : String(data.minimumOrderAmount),
+        deliveryFee:
+          data.deliveryFee === null || data.deliveryFee === undefined ? "" : String(data.deliveryFee),
+      });
+      setSavedAt(data.updatedAt);
+    } catch (err) {
+      setError(settingsErr(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <SettingsFoundationPanel
-      title="Delivery"
-      description="Zones, fees, dispatch strategy, and COD policy."
-      body="Delivery assignments are operational. Service areas, fee matrices, and dispatch algorithms are not Settings-writable. Map zones will not be invented in UI."
-      scope="Branch"
-    />
+    <AdminSurface aria-labelledby="delivery-settings-heading">
+      <AdminSurfaceHeader
+        title="Delivery"
+        description="Per-branch delivery radius, minimum order, and fee — persisted on public.branches."
+      />
+      <AdminSurfaceBody>
+        <h2 id="delivery-settings-heading" className="sr-only">
+          Delivery settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Branch" />
+        </div>
+        <p className="mb-4 text-sm text-[var(--admin-muted)]">
+          Zone maps and dispatch algorithms remain out of scope. Fee is stored for operations configuration —
+          live quote pricing still requires a separate pricing-engine wire-up.
+        </p>
+        {branchesLoading ? (
+          <p className="text-sm text-[var(--admin-muted)]">Loading branches…</p>
+        ) : allowedBranches.length === 0 ? (
+          <p className="text-sm text-[var(--admin-muted)]">No branches in current admin scope.</p>
+        ) : (
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void onSave();
+            }}
+          >
+            <label className={labelClass}>
+              Branch
+              <select
+                className={fieldClass}
+                value={selectedId}
+                onChange={(e) => setSelectedId(e.target.value)}
+              >
+                {allowedBranches.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.shortName || branch.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {loading ? (
+              <p className="text-sm text-[var(--admin-muted)]">Loading delivery settings…</p>
+            ) : (
+              <>
+                <label className={labelClass}>
+                  Delivery radius (km)
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.1}
+                    className={fieldClass}
+                    value={form.deliveryRadiusKm}
+                    onChange={(e) => setForm((f) => ({ ...f, deliveryRadiusKm: e.target.value }))}
+                  />
+                </label>
+                <label className={labelClass}>
+                  Minimum order (PKR)
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    className={fieldClass}
+                    value={form.minimumOrderAmount}
+                    onChange={(e) => setForm((f) => ({ ...f, minimumOrderAmount: e.target.value }))}
+                  />
+                </label>
+                <label className={labelClass}>
+                  Delivery fee (PKR)
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    className={fieldClass}
+                    value={form.deliveryFee}
+                    onChange={(e) => setForm((f) => ({ ...f, deliveryFee: e.target.value }))}
+                  />
+                </label>
+              </>
+            )}
+            {error ? (
+              <p className="text-sm text-red-700" role="alert">
+                {error}
+              </p>
+            ) : null}
+            {savedAt ? (
+              <p className="text-sm text-emerald-800" role="status">
+                Saved · {new Date(savedAt).toLocaleString()}
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={saving || !token || !selectedId || loading}
+              className="min-h-11 rounded-lg bg-[var(--admin-ink)] px-4 text-sm font-semibold text-[var(--admin-panel)] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+          </form>
+        )}
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 
 export function MenuSettings() {
   return (
-    <SettingsFoundationPanel
-      title="Menu"
-      description="Publishing behaviour, tax-inclusive pricing, channel availability."
-      body="Menu catalog is managed in Menu Management. Settings does not replace the catalog editor. Publishing and channel policies require configuration APIs."
-      scope="Organization"
-    />
+    <AdminSurface aria-labelledby="menu-settings-heading">
+      <AdminSurfaceHeader
+        title="Menu"
+        description="Prices, availability, and categories are managed in Menu Management — live write APIs."
+      />
+      <AdminSurfaceBody>
+        <h2 id="menu-settings-heading" className="sr-only">
+          Menu settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Organization" />
+        </div>
+        <p className="text-sm text-[var(--admin-muted)]">
+          Use{" "}
+          <Link href="/admin/menu" className="font-semibold text-[var(--admin-ink)] underline">
+            Admin → Menu
+          </Link>{" "}
+          to save SKU prices (`PUT /admin/menu/skus/:id`) and create categories (`POST /admin/menu/categories`).
+          Publishing matrices and tax classes remain future work.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 
 export function InventorySettings() {
   return (
-    <SettingsFoundationPanel
+    <SettingsUnavailablePanel
       title="Inventory"
       description="Tracking, negative stock, valuation, and reorder defaults."
-      body="Inventory module is Foundation — no stock ledger. Policy toggles cannot be enforced without inventory backend."
+      body="Inventory module is not implemented — no stock ledger or policy engine. Coming soon; Settings will not invent stock toggles."
       scope="Branch"
     />
   );
@@ -573,10 +788,10 @@ export function PurchasingSettings() {
 
 export function FinanceTaxSettings() {
   return (
-    <SettingsFoundationPanel
+    <SettingsUnavailablePanel
       title="Finance & Tax"
       description="Fiscal year, VAT/GST rates, and account mapping."
-      body="Finance module is Foundation — no chart of accounts or tax engine. Settings will never invent tax rates or claim legal compliance."
+      body="Finance module is not implemented — no chart of accounts or tax engine. Coming soon; Settings will never invent tax rates."
       scope="Organization"
     />
   );

@@ -100,7 +100,7 @@ function readInit(accessToken: string, opts?: AdminReadOptions) {
   };
 }
 
-function writeInit(accessToken: string, method: "POST" | "PATCH", body: unknown) {
+function writeInit(accessToken: string, method: "POST" | "PATCH" | "PUT", body: unknown) {
   return {
     method,
     headers: bearerHeaders(accessToken),
@@ -148,8 +148,8 @@ export function createMenuSku(accessToken: string, body: CreateMenuSkuBody) {
 
 export function updateMenuSku(accessToken: string, skuId: string, body: UpdateMenuSkuBody) {
   return fetchApiData<AdminMenuSku>(
-    `/admin/menu/products/${skuId}`,
-    writeInit(accessToken, "PATCH", body),
+    `/admin/menu/skus/${skuId}`,
+    writeInit(accessToken, "PUT", body),
   );
 }
 

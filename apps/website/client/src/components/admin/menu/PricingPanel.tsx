@@ -109,7 +109,7 @@ export function PricingPanel({
           >
             <span>{row.label}</span>
             <span className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-              Foundation
+              Unavailable
             </span>
           </li>
         ))}

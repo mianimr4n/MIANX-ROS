@@ -234,6 +234,15 @@ describe("admin menu workspace authz", () => {
     expect(res.body.data.price).toBe(1400);
   });
 
+  it("accepts PUT /admin/menu/skus/:id as the price/availability alias", async () => {
+    const res = await request(app)
+      .put(`/admin/menu/skus/${SKU_ID}`)
+      .set("Authorization", "Bearer owner")
+      .send({ price: 1550, isAvailable: true });
+    expect(res.status).toBe(200);
+    expect(menuManagement.updateSku).toHaveBeenCalled();
+  });
+
   it("records a price change in the audit trail", async () => {
     await request(app)
       .patch(`/admin/menu/products/${SKU_ID}`)

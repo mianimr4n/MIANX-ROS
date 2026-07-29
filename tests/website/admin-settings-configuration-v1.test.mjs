@@ -65,9 +65,14 @@ describe("Settings & Configuration V1 (static)", () => {
     assert.match(panels, /fetchBranchProfile/);
     assert.match(panels, /updateBranchProfile/);
     assert.match(panels, /PUT \/admin\/branches\/:id/);
+    assert.match(panels, /fetchDeliverySettings/);
+    assert.match(panels, /updateDeliverySettings/);
+    assert.match(panels, /PUT \/admin\/menu\/skus\/:id/);
+    assert.match(panels, /SettingsUnavailablePanel/);
     const api = read("apps/website/client/src/lib/admin-api.ts");
     assert.match(api, /\/admin\/settings\/organization/);
     assert.match(api, /\/admin\/branches\/\$\{branchId\}/);
+    assert.match(api, /\/admin\/settings\/delivery/);
     assert.match(panels, /no invented roles/i);
   });
 

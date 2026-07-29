@@ -234,6 +234,27 @@ export function createAdminMenuRouter(deps: AdminMenuRouterDependencies) {
     },
   );
 
+  // Canonical alias — Admin Menu / Settings contracts use /skus/:id for price & availability.
+  router.put(
+    "/skus/:id",
+    requireAuthenticatedUser,
+    requirePermission("menu.write"),
+    validateBody(updateSkuSchema),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.menuManagement.updateSku(
+          actorFrom(principal),
+          req.params.id,
+          req.body,
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
   router.get(
     "/audit",
     requireAuthenticatedUser,
