@@ -43,6 +43,10 @@ describe("Loyalty & Rewards V1 (static)", () => {
     assert.match(kpis, /Points issued/);
     assert.match(kpis, /UNAVAILABLE/);
     assert.match(kpis, /Reward liability/);
+    assert.match(kpis, /Loyalty order window unavailable/);
+    assert.doesNotMatch(kpis, /derivedCustomers \?\? 0|loyaltyRevenue \?\? 0/);
+    const page = read("apps/website/client/src/pages/admin/AdminLoyalty.tsx");
+    assert.match(page, /snapshot=\{live \? kpis : null\}/);
   });
 
   it("labels reward catalogue and tier overview as Foundation", () => {

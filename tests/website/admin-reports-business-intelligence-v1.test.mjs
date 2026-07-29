@@ -44,6 +44,10 @@ describe("Reports & Business Intelligence V1 (static)", () => {
     const kpis = read("apps/website/client/src/components/admin/reports/ExecutiveKPIs.tsx");
     assert.match(kpis, /Sales growth/);
     assert.match(kpis, /FOUNDATION/);
+    assert.match(kpis, /Operations dashboard payload unavailable/);
+    assert.doesNotMatch(kpis, /todayOrders \?\? 0|kitchenWaiting \?\? 0|activeDeliveries \?\? 0/);
+    const page = read("apps/website/client/src/pages/admin/AdminReports.tsx");
+    assert.match(page, /customerSnapshot=\{data != null \? customerSnapshot : null\}/);
   });
 
   it("charts use real dashboard data only", () => {

@@ -70,6 +70,10 @@ describe("Menu Management V1 (static)", () => {
     assert.match(kpis, /Hidden products/);
     assert.match(kpis, /UNAVAILABLE/);
     assert.match(kpis, /Published \/ Draft/);
+    assert.match(kpis, /catalogMode|PARTIAL/);
+    assert.match(kpis, /fallback/);
+    const page = read("apps/website/client/src/pages/admin/AdminMenu.tsx");
+    assert.match(page, /catalogMode=\{usingFallback \? "fallback" : "live"\}/);
     const header = read("apps/website/client/src/components/admin/menu/MenuHeader.tsx");
     assert.match(header, /Export · Foundation/);
     assert.match(header, /Import · Foundation/);

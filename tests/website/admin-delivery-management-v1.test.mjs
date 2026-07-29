@@ -25,6 +25,11 @@ describe("Delivery Management V1 (static)", () => {
     assert.match(page, /listDeliveryAssignments/);
     assert.match(page, /assignDeliveryRider/);
     assert.match(page, /updateDeliveryStatus/);
+    assert.match(page, /assignmentsOp\.data != null \? kpiSnapshot : null/);
+    const kpis = read("apps/website/client/src/components/admin/delivery/DeliveryKPIs.tsx");
+    assert.match(kpis, /Delivery assignment payload unavailable/);
+    assert.match(kpis, /UnavailableDeliveryKpis/);
+    assert.doesNotMatch(kpis, /snapshot\?\.waiting \?\? 0/);
   });
 
   it("keeps map, export, failed, and call actions Foundation", () => {
