@@ -198,6 +198,7 @@ export function createPublicBookingService(envStatus: EnvironmentStatus): Public
         .from("branch_booking_policies")
         .select("booking_enabled, online_booking_enabled, max_party_size_online, slot_interval_minutes, default_duration_minutes")
         .eq("branch_id", branch.id)
+        .eq("status", "ACTIVE")
         .maybeSingle();
 
       if (!policyRow?.booking_enabled || !policyRow?.online_booking_enabled) {
@@ -248,6 +249,7 @@ export function createPublicBookingService(envStatus: EnvironmentStatus): Public
         .from("branch_booking_policies")
         .select("*")
         .eq("branch_id", branch.id)
+        .eq("status", "ACTIVE")
         .maybeSingle();
 
       if (!policyRow?.booking_enabled || !policyRow?.online_booking_enabled) {

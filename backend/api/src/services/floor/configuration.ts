@@ -96,6 +96,8 @@ export interface FloorTableRecord {
   rotation: number;
   isAccessible: boolean;
   highChairSupported: boolean;
+  accessibilityNotes: string | null;
+  isCombinable: boolean;
   isActive: boolean;
   operationalStatus: TableOperationalStatus;
   updatedAt: string;
@@ -167,6 +169,27 @@ export interface FloorConfigurationService {
       rotation?: number;
       isAccessible?: boolean;
       highChairSupported?: boolean;
+      accessibilityNotes?: string | null;
+      isCombinable?: boolean;
+      isActive?: boolean;
+    },
+    actorUserId: string,
+  ): Promise<FloorTableRecord>;
+  createTable(
+    scope: BranchActorScope,
+    input: {
+      branchId: string;
+      floorId: string;
+      tableNumber: string;
+      displayName?: string | null;
+      capacity: number;
+      capacityMin?: number;
+      capacityMax?: number | null;
+      serviceAreaId?: string | null;
+      isAccessible?: boolean;
+      highChairSupported?: boolean;
+      accessibilityNotes?: string | null;
+      isCombinable?: boolean;
       isActive?: boolean;
     },
     actorUserId: string,
@@ -204,7 +227,7 @@ export interface FloorConfigurationService {
 }
 
 const TABLE_SELECT =
-  "id, branch_id, floor_id, service_area_id, table_number, display_name, capacity, capacity_min, capacity_max, shape, position_x, position_y, width, height, rotation, is_accessible, high_chair_supported, is_active, operational_status, updated_at";
+  "id, branch_id, floor_id, service_area_id, table_number, display_name, capacity, capacity_min, capacity_max, shape, position_x, position_y, width, height, rotation, is_accessible, high_chair_supported, accessibility_notes, is_combinable, is_active, operational_status, updated_at";
 
 type TableRow = {
   id: string;
@@ -224,6 +247,8 @@ type TableRow = {
   rotation: number | string;
   is_accessible: boolean;
   high_chair_supported: boolean;
+  accessibility_notes: string | null;
+  is_combinable: boolean;
   is_active: boolean;
   operational_status: TableOperationalStatus;
   updated_at: string;
@@ -252,6 +277,8 @@ function toTable(row: TableRow): FloorTableRecord {
     rotation: n(row.rotation),
     isAccessible: row.is_accessible,
     highChairSupported: row.high_chair_supported,
+    accessibilityNotes: row.accessibility_notes ?? null,
+    isCombinable: row.is_combinable ?? false,
     isActive: row.is_active,
     operationalStatus: row.operational_status,
     updatedAt: row.updated_at,
@@ -628,7 +655,28 @@ export function createFloorConfigurationService(
       if (patch.rotation !== undefined) update.rotation = patch.rotation;
       if (patch.isAccessible !== undefined) update.is_accessible = patch.isAccessible;
       if (patch.highChairSupported !== undefined) update.high_chair_supported = patch.highChairSupported;
-      if (patch.isActive !== undefined) update.is_active = patch.isActive;
+      if (patch.accessibilityNotes !== undefined) {
+        update.accessibility_notes = patch.accessibilityNotes?.trim() || null;
+      }
+      if (patch.isCombinable !== undefined) update.is_combinable = patch.isCombinable;
+      if (patch.isActive !== undefined) {
+        if (patch.isActive === true) {
+          const floorId = (patch.floorId !== undefined ? patch.floorId : existing.floor_id) as
+            | string
+            | null;
+          if (floorId) {
+            const floor = await loadFloor(floorId);
+            if (!floor.is_active) {
+              throw new ApiError(
+                409,
+                "INACTIVE_FLOOR",
+                "Cannot activate a table on an inactive floor.",
+              );
+            }
+          }
+        }
+        update.is_active = patch.isActive;
+      }
 
       const { data, error } = await getClient()
         .from("restaurant_tables")
@@ -644,6 +692,74 @@ export function createFloorConfigurationService(
         resourceId: tableId,
         action: "table_layout_updated",
         after: patch,
+      });
+      return toTable(data as TableRow);
+    },
+
+    async createTable(scope, input, actorUserId) {
+      assertBranchInScope(scope, input.branchId);
+      if (input.capacity < 1) {
+        throw new ApiError(422, "VALIDATION_ERROR", "capacity must be >= 1.");
+      }
+      const floor = await loadFloor(input.floorId);
+      if (floor.branch_id !== input.branchId) {
+        throw new ApiError(409, "TABLE_BRANCH_MISMATCH", "Floor belongs to another branch.");
+      }
+      const wantActive = input.isActive !== false;
+      if (wantActive && !floor.is_active) {
+        throw new ApiError(409, "INACTIVE_FLOOR", "Inactive floors cannot receive new active tables.");
+      }
+      if (input.serviceAreaId) {
+        const area = await loadArea(input.serviceAreaId);
+        if (area.branch_id !== input.branchId) {
+          throw new ApiError(409, "TABLE_BRANCH_MISMATCH", "Service area belongs to another branch.");
+        }
+      }
+
+      const capacityMin = input.capacityMin ?? input.capacity;
+      const capacityMax = input.capacityMax ?? input.capacity;
+      if (capacityMin < 1 || capacityMax < capacityMin) {
+        throw new ApiError(422, "VALIDATION_ERROR", "Invalid capacity range.");
+      }
+
+      const { data, error } = await getClient()
+        .from("restaurant_tables")
+        .insert({
+          branch_id: input.branchId,
+          floor_id: input.floorId,
+          service_area_id: input.serviceAreaId ?? null,
+          table_number: input.tableNumber.trim(),
+          display_name: input.displayName?.trim() || null,
+          capacity: input.capacity,
+          capacity_min: capacityMin,
+          capacity_max: capacityMax,
+          is_accessible: input.isAccessible ?? false,
+          high_chair_supported: input.highChairSupported ?? false,
+          accessibility_notes: input.accessibilityNotes?.trim() || null,
+          is_combinable: input.isCombinable ?? false,
+          is_active: wantActive,
+          created_by: actorUserId,
+          updated_by: actorUserId,
+        })
+        .select(TABLE_SELECT)
+        .single();
+      if (error) {
+        if (error.code === "23505") {
+          throw new ApiError(
+            409,
+            "DUPLICATE_TABLE",
+            "Table identifier must be unique per branch/floor.",
+          );
+        }
+        throw new ApiError(500, "TABLE_CREATE_FAILED", error.message);
+      }
+      await writeAudit(getClient(), {
+        branchId: input.branchId,
+        actorUserId,
+        resourceType: "table",
+        resourceId: (data as TableRow).id,
+        action: "table_created",
+        after: input,
       });
       return toTable(data as TableRow);
     },

@@ -31,6 +31,7 @@ import {
   type ReservationRecord,
   type ReservationStatus,
 } from "@/lib/table-service-api";
+import { BookingPolicyPanel } from "@/components/admin/reservations/BookingPolicyPanel";
 import { AdminShell } from "./AdminShell";
 
 const STATUS_BADGES: Record<ReservationStatus, string> = {
@@ -228,6 +229,7 @@ export default function AdminReservations() {
   return (
     <AdminShell title="Reservations">
       <div className="space-y-6">
+        <BookingPolicyPanel />
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold">Reservations — {branchLabel}</h2>

@@ -270,15 +270,21 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
         const critical = signals.openingCriticalBlockers ?? 0;
         const waiting = signals.openingWaitingOnHuman ?? 0;
         const next = signals.openingNextDecision ?? null;
+        const founder = itemById(items, "gov-founder-approval");
         const pctLabel = signals.openingPercentage?.label ?? "Required opening checks incomplete";
         if (waiting > 0 || critical > 0) {
           return card(def, {
             status: "WAITING_ON_HUMAN",
             verifiedSignal: `${pctLabel} · critical blockers ${critical} · waiting on human ${waiting}`,
             currentProblem:
-              next?.whyItMatters ??
-              "Shared readiness model still has unresolved required opening checks.",
-            nextAction: next?.nextAction ?? "Resolve Owner Decision Queue items on this page",
+              founder && founder.status !== "COMPLETE"
+                ? founder.problem
+                : next?.whyItMatters ??
+                  "Shared readiness model still has unresolved required opening checks.",
+            nextAction:
+              founder && founder.status !== "COMPLETE"
+                ? founder.nextAction
+                : next?.nextAction ?? "Resolve Owner Decision Queue items on this page",
             humanApprovalRequired: true,
             sourceType: "DERIVED_API",
             lastUpdatedIso: updated,

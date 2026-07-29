@@ -72,6 +72,6 @@ Repository evidence under `docs/`, `apps/website`, `backend/api`, `supabase/`, p
 | DevOps | [RELEASE_AND_ROLLBACK_RUNBOOK.md](./10-devops/RELEASE_AND_ROLLBACK_RUNBOOK.md) |
 | AI | [MIANX_AI_TEAM_OPERATING_MODEL.md](./11-ai/MIANX_AI_TEAM_OPERATING_MODEL.md), [AGENT_REGISTRY.md](./11-ai/AGENT_REGISTRY.md) |
 | Quality | [ACCEPTANCE_MATRIX.md](./12-quality/ACCEPTANCE_MATRIX.md) |
-| Opening | [OPENING_READINESS_PLAN.md](./14-phases/OPENING_READINESS_PLAN.md), [OPENING_DAY_RUNBOOK.md](./15-runbooks/OPENING_DAY_RUNBOOK.md) |
+| Opening | [OPENING_READINESS_PLAN.md](./14-phases/OPENING_READINESS_PLAN.md), [OPENING_DAY_RUNBOOK.md](./15-runbooks/OPENING_DAY_RUNBOOK.md), [OPENING_OPERATIONS_M2.md](./ops/OPENING_OPERATIONS_M2.md) |
 | Releases | [RELEASE_HISTORY.md](./17-releases/RELEASE_HISTORY.md) |
 | Reference | [GLOSSARY_AND_DATA_STATES.md](./18-reference/GLOSSARY_AND_DATA_STATES.md) |

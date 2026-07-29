@@ -1,6 +1,9 @@
 import type { Branch } from "@/lib/telepizza-types";
 import { SEEDED_PERMISSIONS, SEEDED_ROLES } from "@/lib/admin-settings";
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
+import { OpeningDryRunPanel } from "@/components/admin/OpeningDryRunPanel";
+import { OpeningGovernancePanel } from "@/components/admin/OpeningGovernancePanel";
+import { OpeningOperationsPanel } from "@/components/admin/OpeningOperationsPanel";
 import {
   SettingsFoundationPanel,
   SettingsReadOnlyNotice,
@@ -95,12 +98,17 @@ export function BranchSettings({
 
 export function RestaurantOperationsSettings() {
   return (
-    <SettingsFoundationPanel
-      title="Restaurant Operations"
-      description="Service modes, holiday closures, and preparation defaults."
-      body="Dine-in, pickup, delivery toggles and holiday calendars are not persisted via Settings APIs. Operational behaviour remains in domain services until configuration store exists."
-      scope="Branch"
-    />
+    <div className="space-y-6">
+      <SettingsFoundationPanel
+        title="Restaurant Operations"
+        description="Service modes, holiday closures, and opening verification workflows."
+        body="Dine-in, pickup, delivery toggles and holiday calendars remain foundation. Opening payment, notification, device, SOP, training, and governance verification is persisted below — secrets stay environment-managed."
+        scope="Branch"
+      />
+      <OpeningOperationsPanel />
+      <OpeningGovernancePanel />
+      <OpeningDryRunPanel />
+    </div>
   );
 }
 
@@ -117,12 +125,15 @@ export function OrderSettings() {
 
 export function POSSettings() {
   return (
-    <SettingsFoundationPanel
-      title="POS"
-      description="Receipts, cash drawer, offline mode, and printer routing."
-      body="POS workstation uses live order APIs. Hardware, cash drawer, and printer routing are not configured here. Do not claim device integration without verified backends."
-      scope="Branch"
-    />
+    <div className="space-y-6">
+      <SettingsFoundationPanel
+        title="POS"
+        description="Receipts, cash drawer, offline mode, and printer routing."
+        body="POS workstation uses live order APIs. Device and card-terminal readiness is recorded in Opening Operations below — route availability alone never verifies hardware."
+        scope="Branch"
+      />
+      <OpeningOperationsPanel />
+    </div>
   );
 }
 
@@ -194,35 +205,28 @@ export function FinanceTaxSettings() {
 
 export function PaymentSettings() {
   return (
-    <AdminSurface aria-labelledby="payment-settings-heading">
-      <AdminSurfaceHeader title="Payments" description="Methods and provider status — secrets never rendered." />
-      <AdminSurfaceBody>
-        <h2 id="payment-settings-heading" className="sr-only">
-          Payment settings
-        </h2>
-        <div className="mb-3 flex flex-wrap gap-2">
-          <SettingsStatusBadge classification="UNAVAILABLE" />
-          <SettingsScopeBadge scope="Organization / Branch" />
-        </div>
-        <div className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6">
-          <p className="font-semibold text-[var(--admin-ink)]">Payment provider credentials unavailable in Admin UI</p>
-          <p className="mt-2 text-sm text-[var(--admin-muted)]">
-            Cash, card, COD, wallet, and gateway toggles require verified method configuration APIs. Private keys, webhook
-            secrets, and access tokens are never shown. Status: Not configured / Environment managed — not Connected.
+    <div className="space-y-6">
+      <AdminSurface aria-labelledby="payment-settings-heading">
+        <AdminSurfaceHeader
+          title="Payments"
+          description="Accepted methods, provider metadata, terminal and cash procedure — secrets never rendered."
+        />
+        <AdminSurfaceBody>
+          <h2 id="payment-settings-heading" className="sr-only">
+            Payment settings
+          </h2>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <SettingsStatusBadge classification="FOUNDATION" />
+            <SettingsScopeBadge scope="Branch" />
+          </div>
+          <p className="text-sm text-[var(--admin-muted)]">
+            Provider credentials stay environment-managed. This surface stores verification metadata only — never API
+            keys, card numbers, or CVV. Local mock checks do not satisfy Production readiness.
           </p>
-          <ul className="mt-4 flex flex-wrap gap-2">
-            {["Cash", "Card", "COD", "Bank transfer", "Wallet", "Online gateway"].map((method) => (
-              <li
-                key={method}
-                className="rounded-full border border-dashed border-[var(--admin-border)] px-3 py-1 text-xs text-[var(--admin-muted)]"
-              >
-                {method} · foundation
-              </li>
-            ))}
-          </ul>
-        </div>
-      </AdminSurfaceBody>
-    </AdminSurface>
+        </AdminSurfaceBody>
+      </AdminSurface>
+      <OpeningOperationsPanel />
+    </div>
   );
 }
 
@@ -239,12 +243,15 @@ export function CustomerLoyaltySettings() {
 
 export function CommunicationSettings() {
   return (
-    <SettingsFoundationPanel
-      title="Communications"
-      description="Email, SMS, WhatsApp, and push notification channels."
-      body="Provider credentials are environment-managed. WhatsApp conversation backend is Foundation. Settings will not send messages or expose sender secrets."
-      scope="Organization"
-    />
+    <div className="space-y-6">
+      <SettingsFoundationPanel
+        title="Communications"
+        description="Email, SMS, WhatsApp, and push notification channels."
+        body="Provider credentials are environment-managed. WhatsApp is never CONNECTED without verified provider metadata. Local verification only does not satisfy Production readiness. No live customer notifications are sent from this surface."
+        scope="Branch"
+      />
+      <OpeningOperationsPanel />
+    </div>
   );
 }
 

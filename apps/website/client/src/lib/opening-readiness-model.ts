@@ -101,6 +101,9 @@ export type OpeningReadinessItemId =
   | "reliability-api"
   | "reliability-rollback"
   | "reliability-incident"
+  | "gov-staff-seed"
+  | "gov-live-config"
+  | "gov-dry-run"
   | "gov-founder-approval"
   | "gov-owner-handover"
   | "gov-northern-bypass";
@@ -281,13 +284,12 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Named customer-support coverage for opening week.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
     deepLink: "/admin/hr",
-    defaultProblem:
-      "Customer-support assignment is not probed by the readiness API — Founder must assign named coverage.",
+    defaultProblem: "No customer-support assigned to Royal Orchard.",
     defaultNextAction: "Founder invites named customer-support using the canonical role.",
   },
   {
@@ -324,7 +326,7 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     id: "booking-policy",
     category: "FLOOR_AND_BOOKING",
     title: "Booking policy configured",
-    description: "Branch booking policy row present.",
+    description: "Founder-approved ACTIVE booking policy present for the branch.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
     sourceType: "LIVE_API",
@@ -332,8 +334,8 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     blockingSeverity: "high",
     ownerDecision: true,
     deepLink: "/admin/reservations",
-    defaultProblem: "Booking policy not configured.",
-    defaultNextAction: "Approve and save Royal Orchard booking policy.",
+    defaultProblem: "No Founder-approved ACTIVE booking policy for Royal Orchard.",
+    defaultNextAction: "Draft, submit for Founder approval, and activate a booking policy.",
   },
   {
     id: "reservations-route",
@@ -372,11 +374,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Founder decides cash/card/other methods for opening.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "critical",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Payment methods not recorded as Founder-approved.",
     defaultNextAction: "Decide accepted payment methods for Royal Orchard opening day.",
   },
@@ -387,11 +389,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Provider credentials verified — not order.payment_status.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "critical",
     ownerDecision: true,
-    deepLink: "/admin/settings",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "No verified payment-provider settings API — not accounting from order rows.",
     defaultNextAction: "Verify payment provider outside Admin UI; do not invent Connected status.",
   },
@@ -402,11 +404,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Physical card terminal verified onsite.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Card terminal not verified onsite.",
     defaultNextAction: "Verify the Royal Orchard card terminal before opening day.",
   },
@@ -417,11 +419,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Cash drawer and reconciliation procedure agreed.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Cash handling SOP not confirmed.",
     defaultNextAction: "Confirm cash handling and reconciliation procedure with branch manager.",
   },
@@ -432,11 +434,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Customer order updates channel selected — do not claim WhatsApp connected.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "DERIVED_API",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/settings",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Customer notification channel not verified.",
     defaultNextAction: "Configure customer notification channel without claiming WhatsApp Connected.",
   },
@@ -447,11 +449,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "How kitchen is notified of new tickets.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "medium",
     ownerDecision: true,
-    deepLink: "/admin/kitchen",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Kitchen notification method not confirmed.",
     defaultNextAction: "Confirm KDS/audio/staff method for new tickets.",
   },
@@ -462,11 +464,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "How riders receive dispatch assignments.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "medium",
     ownerDecision: true,
-    deepLink: "/admin/delivery",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Rider notification method not confirmed.",
     defaultNextAction: "Confirm how riders receive assignment alerts.",
   },
@@ -477,11 +479,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Named escalation contact for opening incidents.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Escalation contact not named.",
     defaultNextAction: "Name Founder/BM escalation contact for opening week.",
   },
@@ -492,11 +494,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Onsite POS hardware verified — not frontend route availability.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "critical",
     ownerDecision: true,
-    deepLink: "/admin/pos",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "POS device not verified onsite.",
     defaultNextAction: "Verify POS device on Royal Orchard floor before opening.",
   },
@@ -507,11 +509,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Onsite kitchen display verified.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "critical",
     ownerDecision: true,
-    deepLink: "/admin/kitchen-dashboard",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "KDS device not verified onsite.",
     defaultNextAction: "Verify kitchen display hardware onsite.",
   },
@@ -522,11 +524,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Receipt printer prints a test ticket.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/pos",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Receipt printer not verified.",
     defaultNextAction: "Print a test receipt on the opening POS station.",
   },
@@ -537,11 +539,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Physical card terminal connectivity verified.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Card terminal device not verified.",
     defaultNextAction: "Run a test authorization on the card terminal (no Production order mutation).",
   },
@@ -552,11 +554,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Rider phone/app readiness verified.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/delivery",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Rider device not verified.",
     defaultNextAction: "Confirm rider phone and dispatch access for opening riders.",
   },
@@ -567,11 +569,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Primary internet verified onsite.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "critical",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Primary internet not verified onsite.",
     defaultNextAction: "Verify Royal Orchard primary internet with POS and KDS online.",
   },
@@ -582,11 +584,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Failover plan documented.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Backup internet contingency not documented.",
     defaultNextAction: "Document backup hotspot / ISP contingency for opening day.",
   },
@@ -597,11 +599,11 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Power contingency verified for POS/KDS.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "LIVE_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "UPS / power backup not verified.",
     defaultNextAction: "Verify UPS coverage for POS and kitchen displays.",
   },
@@ -612,13 +614,13 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Staff SOP for confirming pending website orders.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "DERIVED_API",
     contributesToPercentage: true,
     blockingSeverity: "medium",
     ownerDecision: false,
-    deepLink: "/admin/orders",
-    defaultProblem: "Order confirmation SOP not rehearsed.",
-    defaultNextAction: "Review order confirmation SOP on Orders Management.",
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Order confirmation SOP not approved for opening.",
+    defaultNextAction: "Review and approve order confirmation SOP in Opening governance.",
   },
   {
     id: "ops-kitchen-sop",
@@ -627,13 +629,13 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Kitchen ticket progression SOP.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "DERIVED_API",
     contributesToPercentage: true,
     blockingSeverity: "medium",
     ownerDecision: false,
-    deepLink: "/admin/kitchen",
-    defaultProblem: "Kitchen progression SOP not rehearsed.",
-    defaultNextAction: "Review kitchen ticket progression on Kitchen board.",
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Kitchen progression SOP not approved for opening.",
+    defaultNextAction: "Review and approve kitchen progression SOP in Opening governance.",
   },
   {
     id: "ops-delivery-sop",
@@ -642,13 +644,13 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Rider assignment and dispatch SOP.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "DERIVED_API",
     contributesToPercentage: true,
     blockingSeverity: "medium",
     ownerDecision: false,
-    deepLink: "/admin/delivery",
-    defaultProblem: "Delivery dispatch SOP not rehearsed.",
-    defaultNextAction: "Review delivery dispatch SOP — provisional rows are not active dispatch.",
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Delivery dispatch SOP not approved for opening.",
+    defaultNextAction: "Review delivery dispatch SOP in Opening governance — provisional rows are not active dispatch.",
   },
   {
     id: "ops-cancel-refund-sop",
@@ -657,13 +659,13 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Cancellation and refund operating procedure.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "DERIVED_API",
     contributesToPercentage: true,
     blockingSeverity: "medium",
     ownerDecision: true,
-    deepLink: "/admin/orders",
-    defaultProblem: "Cancellation/refund SOP not confirmed.",
-    defaultNextAction: "Confirm cancellation and refund procedure with Founder.",
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Cancellation/refund SOP not approved.",
+    defaultNextAction: "Confirm cancellation and refund SOP approval in Opening governance.",
   },
   {
     id: "ops-opening-checklist",
@@ -672,13 +674,13 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Daily opening checklist agreed.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "DERIVED_API",
     contributesToPercentage: true,
     blockingSeverity: "medium",
     ownerDecision: false,
-    deepLink: "/admin/branch",
-    defaultProblem: "Opening checklist not confirmed.",
-    defaultNextAction: "Confirm daily opening checklist with branch manager.",
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Opening checklist SOP not Founder-approved.",
+    defaultNextAction: "Approve opening checklist SOP in Opening governance.",
   },
   {
     id: "ops-closing-checklist",
@@ -687,13 +689,13 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Daily closing checklist agreed.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "DERIVED_API",
     contributesToPercentage: true,
     blockingSeverity: "medium",
     ownerDecision: false,
-    deepLink: "/admin/branch",
-    defaultProblem: "Closing checklist not confirmed.",
-    defaultNextAction: "Confirm daily closing checklist with branch manager.",
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Closing checklist SOP not Founder-approved.",
+    defaultNextAction: "Approve closing checklist SOP in Opening governance.",
   },
   {
     id: "training-bm",
@@ -702,13 +704,13 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "BM rehearsal recorded.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "DERIVED_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
-    defaultProblem: "Branch-manager rehearsal not recorded.",
-    defaultNextAction: "Schedule and record branch-manager opening rehearsal.",
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Branch-manager training/rehearsal not complete.",
+    defaultNextAction: "Schedule and record branch-manager rehearsal in Opening governance.",
   },
   {
     id: "training-cashier",
@@ -717,13 +719,13 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Cashier POS rehearsal recorded.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "DERIVED_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/pos",
-    defaultProblem: "Cashier/POS rehearsal not recorded.",
-    defaultNextAction: "Schedule cashier POS rehearsal on Royal Orchard devices.",
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Cashier/POS rehearsal not complete.",
+    defaultNextAction: "Schedule cashier POS rehearsal in Opening governance.",
   },
   {
     id: "training-kitchen",
@@ -732,13 +734,13 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Kitchen ticket rehearsal recorded.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "DERIVED_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/kitchen",
-    defaultProblem: "Kitchen rehearsal not recorded.",
-    defaultNextAction: "Schedule kitchen KDS rehearsal.",
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Kitchen rehearsal not complete.",
+    defaultNextAction: "Schedule kitchen rehearsal in Opening governance.",
   },
   {
     id: "training-rider",
@@ -747,13 +749,13 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Rider dispatch rehearsal recorded.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "DERIVED_API",
     contributesToPercentage: true,
     blockingSeverity: "high",
     ownerDecision: true,
-    deepLink: "/admin/delivery",
-    defaultProblem: "Rider rehearsal not recorded.",
-    defaultNextAction: "Schedule rider dispatch rehearsal.",
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Rider rehearsal not complete.",
+    defaultNextAction: "Schedule rider dispatch rehearsal in Opening governance.",
   },
   {
     id: "training-host-waiter",
@@ -762,13 +764,13 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Floor service rehearsal recorded.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "DERIVED_API",
     contributesToPercentage: true,
     blockingSeverity: "medium",
     ownerDecision: true,
-    deepLink: "/admin/floor",
-    defaultProblem: "Host/waiter rehearsal not recorded.",
-    defaultNextAction: "Schedule host and waiter floor rehearsal.",
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Host/waiter rehearsal not complete.",
+    defaultNextAction: "Schedule host and waiter floor rehearsal in Opening governance.",
   },
   {
     id: "training-e2e",
@@ -777,13 +779,13 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Full order→kitchen→delivery rehearsal recorded.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "FOUNDATION",
+    sourceType: "DERIVED_API",
     contributesToPercentage: true,
     blockingSeverity: "critical",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
-    defaultProblem: "Full end-to-end rehearsal not recorded.",
-    defaultNextAction: "Schedule full order-to-delivery rehearsal before 14 August.",
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Full end-to-end rehearsal not complete.",
+    defaultNextAction: "Schedule and verify full order-to-delivery rehearsal in Opening governance.",
   },
   {
     id: "reliability-website",
@@ -846,19 +848,64 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     defaultNextAction: "Confirm opening-day incident escalation contacts in Opening Day Runbook.",
   },
   {
+    id: "gov-staff-seed",
+    category: "GOVERNANCE",
+    title: "Royal Orchard staff seeding (local simulation)",
+    description: "Sealed local staff seed with encrypted handover — Production apply blocked without Founder auth.",
+    requiredForOpening: true,
+    branchApplicability: "royal-orchard",
+    sourceType: "DERIVED_API",
+    contributesToPercentage: true,
+    blockingSeverity: "high",
+    ownerDecision: true,
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Staff seed not simulated for Royal Orchard.",
+    defaultNextAction: "Run local staff seed simulation and seal handover outside Git.",
+  },
+  {
+    id: "gov-live-config",
+    category: "GOVERNANCE",
+    title: "Live environment configuration snapshot",
+    description: "Branch hours, CASH-only dry-run payments, mock notifications, and documented devices.",
+    requiredForOpening: true,
+    branchApplicability: "royal-orchard",
+    sourceType: "DERIVED_API",
+    contributesToPercentage: true,
+    blockingSeverity: "high",
+    ownerDecision: false,
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Live configuration snapshot not captured.",
+    defaultNextAction: "Capture local live-config snapshot in Opening dry-run panel.",
+  },
+  {
+    id: "gov-dry-run",
+    category: "GOVERNANCE",
+    title: "GO/NO-GO dry-run evidence",
+    description: "Multi-role local dry-run with immutable Founder decision evidence.",
+    requiredForOpening: true,
+    branchApplicability: "royal-orchard",
+    sourceType: "DERIVED_API",
+    contributesToPercentage: true,
+    blockingSeverity: "critical",
+    ownerDecision: true,
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "GO/NO-GO dry-run not completed with immutable evidence.",
+    defaultNextAction: "Execute local dry-run steps and record Founder GO/NO-GO evidence.",
+  },
+  {
     id: "gov-founder-approval",
     category: "GOVERNANCE",
     title: "Founder opening approval",
     description: "Explicit Founder go/no-go for 14 August.",
     requiredForOpening: true,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "DERIVED_API",
     contributesToPercentage: true,
     blockingSeverity: "critical",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
+    deepLink: "/admin/settings?category=operations",
     defaultProblem: "Founder go/no-go not recorded.",
-    defaultNextAction: "Review final go/no-go evidence and authorize opening only when ready.",
+    defaultNextAction: "Review readiness evidence and record an immutable Founder decision when ready.",
   },
   {
     id: "gov-owner-handover",
@@ -867,13 +914,13 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     description: "Owner handover plan for post-opening operations.",
     requiredForOpening: false,
     branchApplicability: "royal-orchard",
-    sourceType: "CONFIGURED_PLAN",
+    sourceType: "DERIVED_API",
     contributesToPercentage: false,
     blockingSeverity: "low",
     ownerDecision: true,
-    deepLink: "/admin/ai-team",
-    defaultProblem: "Future Owner handover not scheduled.",
-    defaultNextAction: "Plan Owner handover after Royal Orchard opening stability.",
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Future Owner handover not ready.",
+    defaultNextAction: "Plan Owner handover checklist after Royal Orchard opening stability.",
   },
   {
     id: "gov-northern-bypass",
@@ -997,8 +1044,180 @@ function configuredPlan(def: OpeningReadinessDefinition, signals: OpeningReadine
   };
 }
 
+type OpeningM2ProbeKeys = {
+  verified: string;
+  configured?: string;
+  failed?: string;
+  activeProblem?: string;
+  activeNextAction?: string;
+};
+
+/** M2 payments / notifications / devices — probe booleans only; LOCAL_TEST_ONLY never yields COMPLETE. */
+function openingM2ProbeItem(
+  def: OpeningReadinessDefinition,
+  signals: OpeningReadinessSignals,
+  keys: OpeningM2ProbeKeys,
+): EvaluatedReadinessItem {
+  if (signals.readinessOffline) {
+    return {
+      ...def,
+      status: "OFFLINE",
+      problem: "Readiness API offline.",
+      nextAction: "Retry when network recovers.",
+      lastVerifiedAt: null,
+    };
+  }
+  if (signals.readinessError || signals.readinessReport == null) {
+    return {
+      ...def,
+      status: "ERROR",
+      problem: "Readiness API error — not treating as missing setup.",
+      nextAction: "Retry opening readiness for the selected branch.",
+      lastVerifiedAt: null,
+    };
+  }
+  const checks = signals.readinessReport.checks;
+  const verified = checks[keys.verified] === true;
+  const configured = keys.configured ? checks[keys.configured] === true : false;
+  const failed = keys.failed ? checks[keys.failed] === true : false;
+
+  if (verified) {
+    return {
+      ...def,
+      status: "COMPLETE",
+      problem: "None.",
+      nextAction: "No action required.",
+      lastVerifiedAt: signals.nowIso,
+    };
+  }
+  if (failed) {
+    return {
+      ...def,
+      status: "BLOCKED",
+      problem: def.defaultProblem,
+      nextAction: def.defaultNextAction,
+      lastVerifiedAt: signals.nowIso,
+    };
+  }
+  if (keys.configured && configured) {
+    return {
+      ...def,
+      status: "ACTIVE",
+      problem: keys.activeProblem ?? "Configured — Production verification still pending.",
+      nextAction: keys.activeNextAction ?? def.defaultNextAction,
+      lastVerifiedAt: signals.nowIso,
+    };
+  }
+  return {
+    ...def,
+    status: "WAITING_ON_HUMAN",
+    problem: def.defaultProblem,
+    nextAction: def.defaultNextAction,
+    lastVerifiedAt: signals.nowIso,
+  };
+}
+
+function openingFounderGoItem(
+  def: OpeningReadinessDefinition,
+  signals: OpeningReadinessSignals,
+): EvaluatedReadinessItem {
+  if (signals.readinessOffline) {
+    return {
+      ...def,
+      status: "OFFLINE",
+      problem: "Readiness API offline.",
+      nextAction: "Retry when network recovers.",
+      lastVerifiedAt: null,
+    };
+  }
+  if (signals.readinessError || signals.readinessReport == null) {
+    return {
+      ...def,
+      status: "ERROR",
+      problem: "Readiness API error — not treating as missing setup.",
+      nextAction: "Retry opening readiness for the selected branch.",
+      lastVerifiedAt: null,
+    };
+  }
+  const checks = signals.readinessReport.checks;
+  if (checks.founderGoApproved === true) {
+    return {
+      ...def,
+      status: "COMPLETE",
+      problem: "None.",
+      nextAction: "No action required.",
+      lastVerifiedAt: signals.nowIso,
+    };
+  }
+  if (checks.founderGoFailed === true) {
+    return {
+      ...def,
+      status: "BLOCKED",
+      problem: "Latest Founder decision is NO_GO or failed verification.",
+      nextAction: "Resolve blockers and record a new Founder decision when ready.",
+      lastVerifiedAt: signals.nowIso,
+    };
+  }
+  return {
+    ...def,
+    status: "WAITING_ON_HUMAN",
+    problem: def.defaultProblem,
+    nextAction: def.defaultNextAction,
+    lastVerifiedAt: signals.nowIso,
+  };
+}
+
+function openingOwnerHandoverItem(
+  def: OpeningReadinessDefinition,
+  signals: OpeningReadinessSignals,
+): EvaluatedReadinessItem {
+  if (signals.readinessOffline) {
+    return {
+      ...def,
+      status: "OFFLINE",
+      problem: "Readiness API offline.",
+      nextAction: "Retry when network recovers.",
+      lastVerifiedAt: null,
+    };
+  }
+  if (signals.readinessError || signals.readinessReport == null) {
+    return {
+      ...def,
+      status: "ERROR",
+      problem: "Readiness API error.",
+      nextAction: "Retry opening readiness for the selected branch.",
+      lastVerifiedAt: null,
+    };
+  }
+  const checks = signals.readinessReport.checks;
+  if (checks.ownerHandoverReady === true) {
+    return {
+      ...def,
+      status: "COMPLETE",
+      problem: "None.",
+      nextAction: "No action required.",
+      lastVerifiedAt: signals.nowIso,
+    };
+  }
+  if (checks.ownerHandoverFailed === true) {
+    return {
+      ...def,
+      status: "BLOCKED",
+      problem: "Owner handover checklist blocked.",
+      nextAction: def.defaultNextAction,
+      lastVerifiedAt: signals.nowIso,
+    };
+  }
+  return {
+    ...def,
+    status: "WAITING_ON_HUMAN",
+    problem: def.defaultProblem,
+    nextAction: def.defaultNextAction,
+    lastVerifiedAt: signals.nowIso,
+  };
+}
+
 /**
- * Documentation presence ≠ rehearsal ≠ operational verification.
  * Documented runbooks stay ACTIVE (not COMPLETE) until a verified ops source exists.
  */
 function runbookDocumentationItem(
@@ -1047,8 +1266,6 @@ export function evaluateOpeningReadiness(signals: OpeningReadinessSignals): Eval
     registryCopyValidated = true;
   }
   const checks = signals.readinessReport?.checks ?? {};
-  const notifOk = checks.notificationConfigured === true;
-  const floorOk = checks.floorConfigured === true;
 
   const items: EvaluatedReadinessItem[] = [];
 
@@ -1085,12 +1302,13 @@ export function evaluateOpeningReadiness(signals: OpeningReadinessSignals): Eval
         items.push(fromCheck(def, checks.waiterAssigned, signals));
         break;
       case "people-customer-support":
-        items.push(humanFoundation(def, signals));
+        items.push(fromCheck(def, checks.customerSupportAssigned, signals));
         break;
       case "floor-plan":
+        items.push(fromCheck(def, checks.floorConfigured, signals));
+        break;
       case "floor-tables":
-        // API exposes combined floorConfigured (floors AND tables).
-        items.push(fromCheck(def, floorOk, signals));
+        items.push(fromCheck(def, checks.tablesConfigured, signals));
         break;
       case "booking-policy":
         items.push(fromCheck(def, checks.bookingPolicyConfigured, signals));
@@ -1113,23 +1331,129 @@ export function evaluateOpeningReadiness(signals: OpeningReadinessSignals): Eval
           items.push({ ...def, status: "ERROR", problem: def.defaultProblem, nextAction: def.defaultNextAction, lastVerifiedAt: signals.nowIso });
         }
         break;
+      case "payments-methods-decided":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "paymentMethodsConfigured",
+          }),
+        );
+        break;
       case "payments-provider":
-        if (signals.readinessError || signals.readinessOffline) {
-          items.push(fromCheck(def, false, signals));
-        } else if (checks.paymentConfigured) {
-          items.push({ ...def, status: "COMPLETE", problem: "None.", nextAction: "No action required.", lastVerifiedAt: signals.nowIso });
-        } else {
-          items.push(humanFoundation(def, signals));
-        }
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "paymentProviderVerified",
+            configured: "paymentMethodsConfigured",
+            failed: "paymentProviderFailed",
+            activeProblem: "Accepted payment methods recorded — provider not Production-verified yet.",
+            activeNextAction: "Configure provider metadata and complete Founder verification in Opening Operations.",
+          }),
+        );
+        break;
+      case "payments-card-terminal":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "cardTerminalVerified",
+            failed: "cardTerminalFailed",
+          }),
+        );
+        break;
+      case "payments-cash-sop":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "cashProcedureApproved",
+            failed: "cashProcedureFailed",
+          }),
+        );
         break;
       case "notif-customer":
-        if (signals.readinessError || signals.readinessOffline) {
-          items.push(fromCheck(def, false, signals));
-        } else if (notifOk) {
-          items.push({ ...def, status: "COMPLETE", problem: "None.", nextAction: "No action required.", lastVerifiedAt: signals.nowIso });
-        } else {
-          items.push(humanFoundation(def, signals));
-        }
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "notifCustomerConfigured",
+            failed: "notifCustomerFailed",
+            activeProblem: "Channel configured — Production notification verification still pending.",
+            activeNextAction:
+              "Complete notification setup in Opening Operations — do not claim WhatsApp Connected.",
+          }),
+        );
+        break;
+      case "notif-kitchen":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "notifKitchenConfigured",
+            failed: "notifKitchenFailed",
+          }),
+        );
+        break;
+      case "notif-rider":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "notifRiderConfigured",
+            failed: "notifRiderFailed",
+          }),
+        );
+        break;
+      case "notif-escalation":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "notifEscalationConfigured",
+            failed: "notifEscalationFailed",
+          }),
+        );
+        break;
+      case "device-pos":
+        items.push(
+          openingM2ProbeItem(def, signals, { verified: "devicePosVerified", failed: "devicePosFailed" }),
+        );
+        break;
+      case "device-kds":
+        items.push(
+          openingM2ProbeItem(def, signals, { verified: "deviceKdsVerified", failed: "deviceKdsFailed" }),
+        );
+        break;
+      case "device-printer":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "devicePrinterVerified",
+            failed: "devicePrinterFailed",
+          }),
+        );
+        break;
+      case "device-card-terminal":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "deviceCardTerminalVerified",
+            failed: "deviceCardTerminalFailed",
+          }),
+        );
+        break;
+      case "device-rider":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "deviceRiderVerified",
+            failed: "deviceRiderFailed",
+          }),
+        );
+        break;
+      case "device-internet":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "deviceInternetVerified",
+            failed: "deviceInternetFailed",
+          }),
+        );
+        break;
+      case "device-backup-internet":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "deviceBackupInternetVerified",
+            failed: "deviceBackupInternetFailed",
+          }),
+        );
+        break;
+      case "device-ups":
+        items.push(
+          openingM2ProbeItem(def, signals, { verified: "deviceUpsVerified", failed: "deviceUpsFailed" }),
+        );
         break;
       case "reliability-website":
       case "reliability-api":
@@ -1180,39 +1504,149 @@ export function evaluateOpeningReadiness(signals: OpeningReadinessSignals): Eval
         }
         break;
       }
-      case "payments-methods-decided":
-      case "payments-card-terminal":
-      case "payments-cash-sop":
-      case "notif-kitchen":
-      case "notif-rider":
-      case "notif-escalation":
-      case "device-pos":
-      case "device-kds":
-      case "device-printer":
-      case "device-card-terminal":
-      case "device-rider":
-      case "device-internet":
-      case "device-backup-internet":
-      case "device-ups":
       case "ops-order-confirm-sop":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "sopOrderConfirmApproved",
+            configured: "sopOrderConfirmReviewed",
+            failed: "sopOrderConfirmFailed",
+            activeProblem: "SOP documented or reviewed — Founder approval and rehearsal still required.",
+            activeNextAction: "Approve SOP and complete operational verification in Opening governance.",
+          }),
+        );
+        break;
       case "ops-kitchen-sop":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "sopKitchenApproved",
+            configured: "sopKitchenReviewed",
+            failed: "sopKitchenFailed",
+            activeProblem: "SOP documented or reviewed — approval and kitchen rehearsal still required.",
+            activeNextAction: "Approve kitchen SOP and record rehearsal evidence.",
+          }),
+        );
+        break;
       case "ops-delivery-sop":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "sopDeliveryApproved",
+            configured: "sopDeliveryReviewed",
+            failed: "sopDeliveryFailed",
+            activeProblem: "SOP documented or reviewed — approval and dispatch rehearsal still required.",
+            activeNextAction: "Approve delivery SOP and rehearse dispatch.",
+          }),
+        );
+        break;
       case "ops-cancel-refund-sop":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "sopCancelRefundApproved",
+            configured: "sopCancelRefundReviewed",
+            failed: "sopCancelRefundFailed",
+            activeProblem: "Cancellation/refund SOP reviewed — Founder approval still required.",
+            activeNextAction: "Obtain Founder approval for cancellation and refund SOP.",
+          }),
+        );
+        break;
       case "ops-opening-checklist":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "sopOpeningChecklistApproved",
+            failed: "sopOpeningChecklistFailed",
+          }),
+        );
+        break;
       case "ops-closing-checklist":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "sopClosingChecklistApproved",
+            failed: "sopClosingChecklistFailed",
+          }),
+        );
+        break;
       case "training-bm":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "trainingBmComplete",
+            failed: "trainingBmFailed",
+          }),
+        );
+        break;
       case "training-cashier":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "trainingCashierComplete",
+            failed: "trainingCashierFailed",
+          }),
+        );
+        break;
       case "training-kitchen":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "trainingKitchenComplete",
+            failed: "trainingKitchenFailed",
+          }),
+        );
+        break;
       case "training-rider":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "trainingRiderComplete",
+            failed: "trainingRiderFailed",
+          }),
+        );
+        break;
       case "training-host-waiter":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "trainingHostWaiterComplete",
+            failed: "trainingHostWaiterFailed",
+          }),
+        );
+        break;
       case "training-e2e":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "e2eRehearsalComplete",
+            failed: "e2eRehearsalFailed",
+            activeProblem: "End-to-end rehearsal scheduled or in progress — Production verification pending.",
+            activeNextAction: "Complete full rehearsal with non-local evidence in Opening governance.",
+          }),
+        );
+        break;
+      case "gov-staff-seed":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "staffSeedSimulated",
+            failed: "staffSeedFailed",
+            activeProblem: "Local staff seed simulated — Production apply still blocked without Founder auth.",
+            activeNextAction: "Keep handover sealed outside Git; do not apply to Production in this delivery.",
+          }),
+        );
+        break;
+      case "gov-live-config":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "liveConfigCaptured",
+          }),
+        );
+        break;
+      case "gov-dry-run":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "dryRunProductionComplete",
+            configured: "dryRunLocalPassed",
+            failed: "dryRunFailed",
+            activeProblem: "Local dry-run passed — Production dry-run evidence still required for COMPLETE.",
+            activeNextAction: "Record Founder decision evidence; local_test_only never opens Production.",
+          }),
+        );
+        break;
       case "gov-founder-approval":
+        items.push(openingFounderGoItem(def, signals));
+        break;
       case "gov-owner-handover":
-        if (def.sourceType === "FOUNDATION") {
-          items.push(humanFoundation(def, signals));
-        } else {
-          items.push(configuredPlan(def, signals, false));
-        }
+        items.push(openingOwnerHandoverItem(def, signals));
         break;
       default: {
         const _x: never = def.id;

@@ -207,7 +207,11 @@ export default function AdminBranchManager() {
   }
 
   if (!allowed) {
-    return null;
+    return (
+      <AdminShell title="Branch dashboard">
+        <p className="text-sm text-[var(--admin-muted)]">Sign in required for branch dashboard.</p>
+      </AdminShell>
+    );
   }
 
   return (

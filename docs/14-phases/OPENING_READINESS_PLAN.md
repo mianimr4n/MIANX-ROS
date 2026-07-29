@@ -37,7 +37,18 @@ Verified against repository main `17cc5e9cee8f65eb5c10fcc069ea3b863931a8b8` (inc
 Confirm opening-day staffing, devices, and provider readiness for Royal Orchard before 14 August 2026 10:00 Asia/Karachi.
 
 ## Next implementation action
-Continue opening-readiness work on the same branch: OMS/KDS/delivery truth, RBAC wording, full opening dashboard completion.
+Opening Operations Milestone 1 (people, floor, booking) adds local persisted workflows:
+staff assignments on `user_roles`, floor/table management, and Founder-approved booking
+policy lifecycle — wired into the shared readiness model. Do not mark Royal Orchard
+staff/floor/booking COMPLETE in Production without verified ACTIVE assignments and an
+approved ACTIVE policy. Payments, notifications, devices, and training remain later milestones.
+
+### Opening M1 notes
+- Canonical roles only; forbidden codes rejected (owner/founder/admin/delivery/general-staff/staff).
+- Booking COMPLETE only with ACTIVE + approved_at; unapproved cannot appear ACTIVE.
+- Floor and tables are separate readiness probes; empty surfaces show SETUP REQUIRED.
+- Migration `20260728180000_opening_m1_people_floor_booking.sql` is local-only in this task.
+- Exactly 14 Mianx.ai agents; no fake LIVE/background activity.
 
 ## Source of truth
 Repository evidence under `docs/`, `apps/website`, `backend/api`, `supabase/`, plus Production smoke evidence outside Git.
@@ -80,14 +91,19 @@ Do not claim restaurant ready to open, staff ready, payment ready, devices ready
 1. Assign real Royal Orchard operating staff (canonical roles only — no Founder/Owner role codes)
 2. Configure floor and tables
 3. Approve booking policy
-4. Decide payment methods and verify provider/terminal
-5. Configure notification channels (do not claim WhatsApp Connected)
-6. Verify onsite POS/KDS/printer/rider devices
-7. Verify internet and UPS contingency
+4. Decide payment methods and verify provider/terminal — see [OPENING_OPERATIONS_M2.md](../ops/OPENING_OPERATIONS_M2.md)
+5. Configure notification channels (do not claim WhatsApp Connected) — M2 persistence under `/admin/settings`
+6. Verify onsite POS/KDS/printer/rider devices — M2 device verification (LOCAL_TEST_ONLY ≠ Production COMPLETE)
+7. Verify internet and UPS contingency — M2 infrastructure checks
 8. Schedule staff training and full rehearsal
 9. Review final go/no-go evidence
 10. Authorize opening
 11. Keep Northern Bypass coming-soon unless separately authorized
+
+## Milestone status (repository evidence)
+
+- Milestone 1 (people / floor / booking): accepted on `feature/opening-operations-completion`
+- Milestone 2 (payments / notifications / devices): workflows + readiness probes on the same branch — Production evidence still required before COMPLETE claims for Royal Orchard
 
 ## Already complete (verified)
 - Decision Log append-only (PR #102)

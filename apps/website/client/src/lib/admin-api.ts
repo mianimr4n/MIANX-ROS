@@ -403,3 +403,1162 @@ export async function listAdminStaffInvites(
     readInit(accessToken, opts),
   );
 }
+
+export const ASSIGNABLE_STAFF_ROLE_CODES = [
+  "branch-manager",
+  "cashier",
+  "kitchen",
+  "rider",
+  "customer-support",
+  "host",
+  "waiter",
+] as const;
+
+export type StaffAssignment = {
+  id: string;
+  branchId: string | null;
+  userId: string;
+  roleId: string;
+  roleCode: string;
+  assignmentStatus: string;
+  invitationId: string | null;
+  assignedBy: string | null;
+  assignedAt: string;
+  verifiedBy: string | null;
+  verifiedAt: string | null;
+  deactivatedBy: string | null;
+  deactivatedAt: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  userEmail: string | null;
+  userFullName: string | null;
+  branchCode: string | null;
+  branchName: string | null;
+};
+
+export type StaffAssignmentEvent = {
+  id: string;
+  userRoleId: string;
+  branchId: string | null;
+  userId: string;
+  roleId: string;
+  eventType: string;
+  fromStatus: string | null;
+  toStatus: string | null;
+  actorUserId: string | null;
+  notes: string | null;
+  createdAt: string;
+};
+
+export type BookingPolicy = {
+  id: string;
+  branchId: string;
+  version: number;
+  status: string;
+  bookingEnabled: boolean;
+  onlineBookingEnabled: boolean;
+  minimumPartySize: number;
+  maximumPartySize: number;
+  bookingIntervalMinutes: number;
+  minimumAdvanceMinutes: number;
+  maximumAdvanceDays: number;
+  cancellationWindowMinutes: number;
+  gracePeriodMinutes: number;
+  tableHoldMinutes: number;
+  waitlistEnabled: boolean;
+  sameDayBookingEnabled: boolean;
+  specialNotes: string | null;
+  effectiveFrom: string | null;
+  effectiveUntil: string | null;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export function listStaffAssignments(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  const params = new URLSearchParams({ branchId });
+  return fetchApiData<StaffAssignment[]>(
+    `/admin/staff/assignments?${params}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function listAvailableStaffUsers(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  const params = new URLSearchParams({ branchId });
+  return fetchApiData<Array<{ userId: string; email: string | null; fullName: string | null }>>(
+    `/admin/staff/available-users?${params}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createStaffAssignment(
+  accessToken: string,
+  input: { branchId: string; userId: string; roleCode: string; notes?: string | null },
+) {
+  return fetchApiData<StaffAssignment>(`/admin/staff/assignments`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function deactivateStaffAssignment(accessToken: string, id: string, notes?: string | null) {
+  return fetchApiData<StaffAssignment>(`/admin/staff/assignments/${id}/deactivate`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ notes: notes ?? null }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function reactivateStaffAssignment(accessToken: string, id: string, notes?: string | null) {
+  return fetchApiData<StaffAssignment>(`/admin/staff/assignments/${id}/reactivate`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ notes: notes ?? null }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listStaffAssignmentHistory(accessToken: string, id: string, opts?: AdminReadOptions) {
+  return fetchApiData<StaffAssignmentEvent[]>(
+    `/admin/staff/assignments/${id}/history`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function fetchCurrentBookingPolicy(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  const params = new URLSearchParams({ branchId });
+  return fetchApiData<BookingPolicy | null>(
+    `/admin/booking-policies/current?${params}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function listBookingPolicyVersions(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  const params = new URLSearchParams({ branchId });
+  return fetchApiData<BookingPolicy[]>(`/admin/booking-policies?${params}`, readInit(accessToken, opts));
+}
+
+export function createBookingPolicyDraft(
+  accessToken: string,
+  input: Partial<BookingPolicy> & { branchId: string },
+) {
+  return fetchApiData<BookingPolicy>(`/admin/booking-policies`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function submitBookingPolicy(accessToken: string, id: string) {
+  return fetchApiData<BookingPolicy>(`/admin/booking-policies/${id}/submit`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function approveBookingPolicy(accessToken: string, id: string) {
+  return fetchApiData<BookingPolicy>(`/admin/booking-policies/${id}/approve`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function activateBookingPolicy(accessToken: string, id: string) {
+  return fetchApiData<BookingPolicy>(`/admin/booking-policies/${id}/activate`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function retireBookingPolicy(accessToken: string, id: string) {
+  return fetchApiData<BookingPolicy>(`/admin/booking-policies/${id}/retire`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+// --- Opening Operations M2 (payments, notifications, devices) ---
+
+export const OPENING_PAYMENT_METHOD_CODES = ["CASH", "CARD", "BANK_TRANSFER", "ONLINE_PAYMENT"] as const;
+export type OpeningPaymentMethodCode = (typeof OPENING_PAYMENT_METHOD_CODES)[number];
+
+export const OPENING_NOTIFICATION_PURPOSES = [
+  "CUSTOMER_ORDER",
+  "KITCHEN_ALERT",
+  "RIDER_ALERT",
+  "ESCALATION",
+] as const;
+export type OpeningNotificationPurpose = (typeof OPENING_NOTIFICATION_PURPOSES)[number];
+
+export const OPENING_NOTIFICATION_CHANNELS = [
+  "IN_APP",
+  "EMAIL",
+  "SMS",
+  "WHATSAPP",
+  "PHONE_MANUAL",
+] as const;
+export type OpeningNotificationChannel = (typeof OPENING_NOTIFICATION_CHANNELS)[number];
+
+export const OPENING_DEVICE_TYPES = [
+  "POS_DEVICE",
+  "KDS_DEVICE",
+  "RECEIPT_PRINTER",
+  "CARD_TERMINAL",
+  "RIDER_DEVICE",
+  "PRIMARY_INTERNET",
+  "BACKUP_INTERNET",
+  "UPS_POWER_BACKUP",
+] as const;
+export type OpeningDeviceType = (typeof OPENING_DEVICE_TYPES)[number];
+
+export const OPENING_EVIDENCE_TYPES = [
+  "ONSITE_CHECK",
+  "SUPPLIER_CONFIRMATION",
+  "MANUAL_TEST",
+  "DOCUMENTED_CONTINGENCY",
+  "LOCAL_TEST_ONLY",
+] as const;
+export type OpeningEvidenceType = (typeof OPENING_EVIDENCE_TYPES)[number];
+
+export type OpeningPaymentMethod = {
+  id: string;
+  branchId: string;
+  methodCode: OpeningPaymentMethodCode;
+  displayName: string;
+  enabled: boolean;
+  configurationStatus: string;
+  verificationStatus: string;
+  verifiedAt: string | null;
+  notes: string | null;
+};
+
+export type OpeningPaymentProvider = {
+  id: string;
+  branchId: string;
+  providerName: string;
+  providerEnvironment: string;
+  providerStatus: string;
+  terminalRequired: boolean;
+  terminalVerified: boolean;
+  verificationSummary: string | null;
+  verifiedAt: string | null;
+  failureReason: string | null;
+};
+
+export type OpeningCardTerminal = {
+  id: string;
+  branchId: string;
+  terminalLabel: string;
+  terminalProvider: string | null;
+  physicalLocation: string | null;
+  verificationResult: string;
+  evidenceType: OpeningEvidenceType | null;
+  verifiedAt: string | null;
+  failureReason: string | null;
+};
+
+export type OpeningCashProcedure = {
+  id: string;
+  branchId: string;
+  procedureDocumented: boolean;
+  procedureReviewed: boolean;
+  cashDrawerProcessApproved: boolean;
+  shiftReconciliationApproved: boolean;
+  discrepancyEscalationDefined: boolean;
+  documentationStatus: string;
+  approvedAt: string | null;
+  notes: string | null;
+};
+
+export type OpeningNotificationChannelRow = {
+  id: string;
+  branchId: string;
+  purposeCode: OpeningNotificationPurpose;
+  channelCode: OpeningNotificationChannel;
+  enabled: boolean;
+  providerName: string | null;
+  providerStatus: string;
+  destinationReference: string | null;
+  testStatus: string;
+  localTestOnly: boolean;
+  testedAt: string | null;
+  failureReason: string | null;
+};
+
+export type OpeningDeviceVerification = {
+  id: string;
+  branchId: string;
+  deviceType: OpeningDeviceType;
+  deviceLabel: string;
+  location: string | null;
+  verificationStatus: string;
+  evidenceType: OpeningEvidenceType | null;
+  evidenceSummary: string | null;
+  verifiedAt: string | null;
+  failureReason: string | null;
+};
+
+function openingQuery(branchId: string) {
+  return new URLSearchParams({ branchId });
+}
+
+export function listOpeningPaymentMethods(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningPaymentMethod[]>(
+    `/admin/opening/payment-methods?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningPaymentMethod(
+  accessToken: string,
+  input: {
+    branchId: string;
+    methodCode: OpeningPaymentMethodCode;
+    displayName: string;
+    enabled: boolean;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningPaymentMethod>(`/admin/opening/payment-methods`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function setOpeningPaymentMethodEnabled(accessToken: string, id: string, enabled: boolean) {
+  return fetchApiData<OpeningPaymentMethod>(`/admin/opening/payment-methods/${id}/enabled`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningPaymentProviders(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningPaymentProvider[]>(
+    `/admin/opening/payment-providers?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningPaymentProvider(
+  accessToken: string,
+  input: {
+    id?: string;
+    branchId: string;
+    providerName: string;
+    providerEnvironment?: "TEST" | "SANDBOX" | "PRODUCTION";
+    terminalRequired?: boolean;
+    verificationMethod?: string | null;
+  },
+) {
+  return fetchApiData<OpeningPaymentProvider>(`/admin/opening/payment-providers`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function verifyOpeningPaymentProvider(
+  accessToken: string,
+  id: string,
+  input: { summary: string; expiresAt?: string | null; terminalVerified?: boolean },
+) {
+  return fetchApiData<OpeningPaymentProvider>(`/admin/opening/payment-providers/${id}/verify`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningPaymentProvider(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningPaymentProvider>(`/admin/opening/payment-providers/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningCardTerminals(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningCardTerminal[]>(
+    `/admin/opening/card-terminals?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function recordOpeningCardTerminal(
+  accessToken: string,
+  input: {
+    id?: string;
+    branchId: string;
+    terminalLabel: string;
+    terminalProvider?: string | null;
+    physicalLocation?: string | null;
+    evidenceType: OpeningEvidenceType;
+    verificationNote?: string | null;
+  },
+) {
+  return fetchApiData<OpeningCardTerminal>(`/admin/opening/card-terminals`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningCardTerminal(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningCardTerminal>(`/admin/opening/card-terminals/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function fetchOpeningCashProcedure(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningCashProcedure | null>(
+    `/admin/opening/cash-procedure?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningCashProcedure(
+  accessToken: string,
+  input: {
+    branchId: string;
+    procedureDocumented?: boolean;
+    procedureReviewed?: boolean;
+    cashDrawerProcessApproved?: boolean;
+    shiftReconciliationApproved?: boolean;
+    discrepancyEscalationDefined?: boolean;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningCashProcedure>(`/admin/opening/cash-procedure`, {
+    method: "PUT",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function approveOpeningCashProcedure(accessToken: string, branchId: string) {
+  return fetchApiData<OpeningCashProcedure>(`/admin/opening/cash-procedure/${branchId}/approve`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningNotificationChannels(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningNotificationChannelRow[]>(
+    `/admin/opening/notification-channels?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningNotificationChannel(
+  accessToken: string,
+  input: {
+    branchId: string;
+    purposeCode: OpeningNotificationPurpose;
+    channelCode: OpeningNotificationChannel;
+    enabled: boolean;
+    providerName?: string | null;
+    destinationReference?: string | null;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningNotificationChannelRow>(`/admin/opening/notification-channels`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function localTestOpeningNotificationChannel(accessToken: string, id: string, passed: boolean) {
+  return fetchApiData<OpeningNotificationChannelRow>(`/admin/opening/notification-channels/${id}/local-test`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ passed }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function verifyOpeningNotificationChannel(accessToken: string, id: string) {
+  return fetchApiData<OpeningNotificationChannelRow>(`/admin/opening/notification-channels/${id}/verify`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningNotificationChannel(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningNotificationChannelRow>(`/admin/opening/notification-channels/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningDevices(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningDeviceVerification[]>(
+    `/admin/opening/devices?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function listOpeningMissingDeviceTypes(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningDeviceType[]>(
+    `/admin/opening/devices/missing?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningDevice(
+  accessToken: string,
+  input: {
+    id?: string;
+    branchId: string;
+    deviceType: OpeningDeviceType;
+    deviceLabel: string;
+    location?: string | null;
+    serialOrAssetReference?: string | null;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningDeviceVerification>(`/admin/opening/devices`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function verifyOpeningDevice(
+  accessToken: string,
+  id: string,
+  input: {
+    evidenceType: OpeningEvidenceType;
+    evidenceSummary: string;
+    expiresAt?: string | null;
+    recheckDueAt?: string | null;
+  },
+) {
+  return fetchApiData<OpeningDeviceVerification>(`/admin/opening/devices/${id}/verify`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningDevice(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningDeviceVerification>(`/admin/opening/devices/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+// --- Opening Operations M3 (SOPs, training, rehearsals, governance) ---
+
+export const OPENING_SOP_CODES = [
+  "ORDER_CONFIRMATION",
+  "KITCHEN_PROGRESSION",
+  "DELIVERY_DISPATCH",
+  "CANCELLATION_REFUND",
+  "OPENING_CHECKLIST",
+  "CLOSING_CHECKLIST",
+  "CASH_RECONCILIATION",
+  "RESERVATION_AND_WAITLIST",
+  "INCIDENT_ESCALATION",
+] as const;
+export type OpeningSopCode = (typeof OPENING_SOP_CODES)[number];
+
+export const OPENING_TRAINING_CODES = [
+  "BRANCH_MANAGER",
+  "CASHIER_POS",
+  "KITCHEN",
+  "RIDER_DELIVERY",
+  "HOST_WAITER",
+  "CUSTOMER_SUPPORT",
+  "OPENING_AND_CLOSING",
+  "SAFETY_AND_INCIDENT",
+  "CASH_RECONCILIATION",
+] as const;
+export type OpeningTrainingCode = (typeof OPENING_TRAINING_CODES)[number];
+
+export const OPENING_ROLE_REHEARSAL_CODES = [
+  "BRANCH_MANAGER_OPENING",
+  "CASHIER_POS",
+  "KITCHEN_ORDER_FLOW",
+  "RIDER_DISPATCH",
+  "HOST_WAITER_FLOOR",
+  "CUSTOMER_SUPPORT_ESCALATION",
+] as const;
+export type OpeningRoleRehearsalCode = (typeof OPENING_ROLE_REHEARSAL_CODES)[number];
+
+export const OPENING_FOUNDER_DECISIONS = [
+  "NOT_READY",
+  "REVIEW_REQUIRED",
+  "GO_CONDITIONAL",
+  "GO_APPROVED",
+  "NO_GO",
+  "WITHDRAWN",
+] as const;
+export type OpeningFounderDecision = (typeof OPENING_FOUNDER_DECISIONS)[number];
+
+export type OpeningSopReview = {
+  id: string;
+  branchId: string;
+  sopCode: OpeningSopCode;
+  documentReference: string | null;
+  documentVersion: string | null;
+  reviewStatus: string;
+  reviewedAt: string | null;
+  approvedAt: string | null;
+  operationalVerificationStatus: string;
+  operationallyVerifiedAt: string | null;
+  reviewDueAt: string | null;
+  notes: string | null;
+};
+
+export type OpeningTrainingSession = {
+  id: string;
+  branchId: string;
+  trainingCode: OpeningTrainingCode;
+  title: string;
+  scheduledAt: string | null;
+  completedAt: string | null;
+  trainingStatus: string;
+  result: string;
+  localTestOnly: boolean;
+  followUpRequired: boolean;
+  notes: string | null;
+};
+
+export type OpeningRoleRehearsal = {
+  id: string;
+  branchId: string;
+  rehearsalCode: OpeningRoleRehearsalCode;
+  scenario: string;
+  scheduledAt: string | null;
+  completedAt: string | null;
+  rehearsalStatus: string;
+  result: string;
+  localTestOnly: boolean;
+  retestRequired: boolean;
+  issuesFound: string | null;
+  notes: string | null;
+};
+
+export type OpeningE2eRehearsal = {
+  id: string;
+  branchId: string;
+  scheduledAt: string | null;
+  completedAt: string | null;
+  status: string;
+  result: string;
+  localTestOnly: boolean;
+  criticalFailures: number;
+  stagesCompleted: unknown[];
+  stagesFailed: unknown[];
+  retestRequired: boolean;
+  notes: string | null;
+};
+
+export type OpeningFounderDecisionRecord = {
+  id: string;
+  branchId: string;
+  decision: OpeningFounderDecision;
+  decisionNotes: string | null;
+  conditions: string | null;
+  decidedAt: string;
+  completedItems: number;
+  requiredItems: number;
+  readinessPercentage: number | null;
+};
+
+export type OpeningOwnerHandoverRecord = {
+  id: string;
+  branchId: string;
+  handoverStatus: string;
+  intendedOwnerName: string | null;
+  intendedOwnerContactReference: string | null;
+  handoverScope: string | null;
+  accessReviewStatus: string;
+  operationalDocumentsReviewed: boolean;
+  financialProcedureReviewed: boolean;
+  staffStructureReviewed: boolean;
+  deviceInventoryReviewed: boolean;
+  acceptedAt: string | null;
+  notes: string | null;
+};
+
+export function listOpeningSops(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningSopReview[]>(`/admin/opening/sops?${openingQuery(branchId)}`, readInit(accessToken, opts));
+}
+
+export function upsertOpeningSop(
+  accessToken: string,
+  input: {
+    id?: string;
+    branchId: string;
+    sopCode: OpeningSopCode;
+    documentReference?: string | null;
+    documentVersion?: string | null;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningSopReview>(`/admin/opening/sops`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function approveOpeningSop(accessToken: string, id: string, notes?: string) {
+  return fetchApiData<OpeningSopReview>(`/admin/opening/sops/${id}/approve`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(notes ? { notes } : {}),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function verifyOpeningSopOperational(
+  accessToken: string,
+  id: string,
+  input: { summary: string; evidenceType?: OpeningEvidenceType },
+) {
+  return fetchApiData<OpeningSopReview>(`/admin/opening/sops/${id}/verify-operational`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningSop(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningSopReview>(`/admin/opening/sops/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningTraining(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningTrainingSession[]>(
+    `/admin/opening/training?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningTrainingSession(
+  accessToken: string,
+  input: {
+    id?: string;
+    branchId: string;
+    trainingCode: OpeningTrainingCode;
+    title: string;
+    scheduledAt?: string | null;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningTrainingSession>(`/admin/opening/training`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function completeOpeningTrainingSession(
+  accessToken: string,
+  id: string,
+  input: { result?: "PASS" | "CONDITIONAL_PASS" | "FAIL"; localTestOnly?: boolean; notes?: string },
+) {
+  return fetchApiData<OpeningTrainingSession>(`/admin/opening/training/${id}/complete`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningTrainingSession(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningTrainingSession>(`/admin/opening/training/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningRoleRehearsals(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningRoleRehearsal[]>(
+    `/admin/opening/role-rehearsals?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningRoleRehearsal(
+  accessToken: string,
+  input: {
+    id?: string;
+    branchId: string;
+    rehearsalCode: OpeningRoleRehearsalCode;
+    scenario: string;
+    scheduledAt?: string | null;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningRoleRehearsal>(`/admin/opening/role-rehearsals`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function completeOpeningRoleRehearsal(
+  accessToken: string,
+  id: string,
+  input: { result?: "PASS" | "CONDITIONAL_PASS" | "FAIL"; localTestOnly?: boolean; notes?: string },
+) {
+  return fetchApiData<OpeningRoleRehearsal>(`/admin/opening/role-rehearsals/${id}/complete`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningRoleRehearsal(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningRoleRehearsal>(`/admin/opening/role-rehearsals/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningE2eRehearsals(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningE2eRehearsal[]>(
+    `/admin/opening/e2e-rehearsals?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function scheduleOpeningE2eRehearsal(
+  accessToken: string,
+  input: { branchId: string; scheduledAt?: string | null; notes?: string | null },
+) {
+  return fetchApiData<OpeningE2eRehearsal>(`/admin/opening/e2e-rehearsals`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function completeOpeningE2eRehearsal(
+  accessToken: string,
+  id: string,
+  input: {
+    result?: "PASS" | "CONDITIONAL_PASS" | "FAIL";
+    localTestOnly?: boolean;
+    stagesCompleted?: string[];
+    notes?: string;
+  },
+) {
+  return fetchApiData<OpeningE2eRehearsal>(`/admin/opening/e2e-rehearsals/${id}/complete`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function failOpeningE2eRehearsal(accessToken: string, id: string, reason: string) {
+  return fetchApiData<OpeningE2eRehearsal>(`/admin/opening/e2e-rehearsals/${id}/fail`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningFounderDecisions(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningFounderDecisionRecord[]>(
+    `/admin/opening/founder-decisions?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function recordOpeningFounderDecision(
+  accessToken: string,
+  input: {
+    branchId: string;
+    decision: OpeningFounderDecision;
+    decisionNotes?: string | null;
+    conditions?: string | null;
+  },
+) {
+  return fetchApiData<OpeningFounderDecisionRecord>(`/admin/opening/founder-decisions`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function fetchOpeningOwnerHandover(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningOwnerHandoverRecord | null>(
+    `/admin/opening/owner-handover?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function upsertOpeningOwnerHandover(
+  accessToken: string,
+  input: {
+    branchId: string;
+    intendedOwnerName?: string | null;
+    intendedOwnerContactReference?: string | null;
+    handoverScope?: string | null;
+    operationalDocumentsReviewed?: boolean;
+    financialProcedureReviewed?: boolean;
+    staffStructureReviewed?: boolean;
+    deviceInventoryReviewed?: boolean;
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<OpeningOwnerHandoverRecord>(`/admin/opening/owner-handover`, {
+    method: "PUT",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function markOpeningOwnerHandoverReady(accessToken: string, branchId: string) {
+  return fetchApiData<OpeningOwnerHandoverRecord>(`/admin/opening/owner-handover/${branchId}/ready`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function acceptOpeningOwnerHandover(
+  accessToken: string,
+  branchId: string,
+  acceptedByReference: string,
+) {
+  return fetchApiData<OpeningOwnerHandoverRecord>(`/admin/opening/owner-handover/${branchId}/accept`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ acceptedByReference }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function reviewOpeningSop(accessToken: string, id: string, notes?: string) {
+  return fetchApiData<OpeningSopReview>(`/admin/opening/sops/${id}/review`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(notes ? { notes } : {}),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export type OpeningStaffSeedRun = {
+  id: string;
+  branchId: string;
+  runStatus: string;
+  environmentMode: string;
+  productionApplyAuthorized: boolean;
+  seedScriptHash: string;
+  handoverFileHash: string | null;
+  handoverCipherPath: string | null;
+  keyFilePathHint: string | null;
+  localTestOnly: boolean;
+  createdAt: string;
+};
+
+export type OpeningLiveConfigSnapshot = {
+  id: string;
+  branchId: string;
+  snapshotStatus: string;
+  timezone: string;
+  operatingHoursStart: string;
+  operatingHoursEnd: string;
+  serviceModes: unknown;
+  paymentMethods: unknown;
+  notificationChannels: unknown;
+  deviceRecords: unknown;
+  localTestOnly: boolean;
+  snapshotHash: string;
+  capturedAt: string;
+};
+
+export type OpeningDryRunSession = {
+  id: string;
+  branchId: string;
+  sessionStatus: string;
+  result: string;
+  simulatedOrderId: string | null;
+  simulatedTicketId: string | null;
+  simulatedDeliveryId: string | null;
+  readinessPercentage: number | null;
+  localTestOnly: boolean;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+};
+
+export type OpeningDryRunDecision = "GO" | "NO_GO" | "REVIEW_REQUIRED";
+
+export type OpeningDryRunEvidence = {
+  id: string;
+  dryRunId: string;
+  branchId: string;
+  evidenceHash: string;
+  decision: OpeningDryRunDecision | "NOT_DECIDED";
+  decidedAt: string;
+  readinessPercentage: number | null;
+  logHash: string;
+  localTestOnly: boolean;
+  northernBypassUnchanged: boolean;
+  branchStatusUnchanged: boolean;
+  createdAt: string;
+};
+
+export function listOpeningStaffSeedRuns(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningStaffSeedRun[]>(
+    `/admin/opening/staff-seed/runs?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function simulateOpeningStaffSeedLocal(
+  accessToken: string,
+  input: { branchId: string; handoverDir: string; keyDir: string; notes?: string | null },
+) {
+  return fetchApiData<{
+    run: OpeningStaffSeedRun;
+    accountCount: number;
+    handoverCipherPath: string;
+    keyFilePath: string;
+    passwordsReturned: false;
+  }>(`/admin/opening/staff-seed/simulate-local`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningLiveConfigSnapshots(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningLiveConfigSnapshot[]>(
+    `/admin/opening/live-config?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function captureOpeningLiveConfigSnapshot(
+  accessToken: string,
+  input: { branchId: string; notes?: string | null },
+) {
+  return fetchApiData<OpeningLiveConfigSnapshot>(`/admin/opening/live-config/snapshot`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningDryRuns(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningDryRunSession[]>(
+    `/admin/opening/dry-runs?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function startOpeningDryRun(
+  accessToken: string,
+  input: { branchId: string; seedRunId?: string | null; liveConfigSnapshotId?: string | null },
+) {
+  return fetchApiData<OpeningDryRunSession>(`/admin/opening/dry-runs`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function recordOpeningDryRunStep(
+  accessToken: string,
+  id: string,
+  input: {
+    stepCode: string;
+    stepStatus: "PASSED" | "FAILED" | "SKIPPED";
+    evidenceSummary?: string | null;
+    screenshotHash?: string | null;
+  },
+) {
+  return fetchApiData<OpeningDryRunSession>(`/admin/opening/dry-runs/${id}/steps`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function completeOpeningDryRun(
+  accessToken: string,
+  id: string,
+  input?: { readinessPercentage?: number | null },
+) {
+  return fetchApiData<OpeningDryRunSession>(`/admin/opening/dry-runs/${id}/complete`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input ?? {}),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function recordOpeningDryRunFounderDecision(
+  accessToken: string,
+  id: string,
+  input: { decision: OpeningDryRunDecision; notes?: string | null },
+) {
+  return fetchApiData<OpeningDryRunEvidence>(`/admin/opening/dry-runs/${id}/founder-decision`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}

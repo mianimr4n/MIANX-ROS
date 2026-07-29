@@ -37,7 +37,13 @@ export default function AdminStaffHome() {
       </AdminShell>
     );
   }
-  if (!allowed) return null;
+  if (!allowed) {
+    return (
+      <AdminShell title={isSupportAgent ? "Support home" : "Staff home"}>
+        <p className="text-sm text-[var(--admin-muted)]">Sign in required for staff home.</p>
+      </AdminShell>
+    );
+  }
 
   // Rank day-to-day work surfaces first: operational modules before overview/management entries.
   const groupRank = (group: string) => {

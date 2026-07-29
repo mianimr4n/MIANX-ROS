@@ -100,6 +100,8 @@ const INVITABLE_ROLES = new Set([
   "kitchen",
   "customer-support",
   "rider",
+  "host",
+  "waiter",
 ]);
 
 export function isInviteableRoleCode(roleCode: string): boolean {
