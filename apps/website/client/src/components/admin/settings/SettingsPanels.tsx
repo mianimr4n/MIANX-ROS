@@ -237,6 +237,16 @@ export function BranchSettings({
       return;
     }
     let cancelled = false;
+    // Clear immediately so Save cannot PUT the previous branch's fields onto the new id.
+    setProfile(null);
+    setForm({
+      phone: "",
+      email: "",
+      address: "",
+      opensAt: "",
+      closesAt: "",
+      deliveryRadiusKm: "",
+    });
     setProfileLoading(true);
     setError(null);
     setSavedAt(null);
@@ -437,7 +447,14 @@ export function BranchSettings({
                 ) : null}
                 <button
                   type="submit"
-                  disabled={saving || !token || !form.address.trim()}
+                  disabled={
+                    saving ||
+                    !token ||
+                    profileLoading ||
+                    !profile ||
+                    profile.id !== selectedId ||
+                    !form.address.trim()
+                  }
                   className="min-h-11 rounded-lg bg-[var(--admin-ink)] px-4 text-sm font-semibold text-[var(--admin-panel)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {saving ? "Saving…" : "Save"}
@@ -547,6 +564,7 @@ export function DeliverySettings() {
     minimumOrderAmount: "",
     deliveryFee: "",
   });
+  const [loadedBranchId, setLoadedBranchId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedId && allowedBranches.length > 0) {
@@ -557,6 +575,13 @@ export function DeliverySettings() {
   useEffect(() => {
     if (!token || !selectedId) return;
     let cancelled = false;
+    // Clear immediately so Save cannot write the previous branch's fee/radius onto the new id.
+    setLoadedBranchId(null);
+    setForm({
+      deliveryRadiusKm: "",
+      minimumOrderAmount: "",
+      deliveryFee: "",
+    });
     setLoading(true);
     setError(null);
     setSavedAt(null);
@@ -575,6 +600,7 @@ export function DeliverySettings() {
           deliveryFee:
             data.deliveryFee === null || data.deliveryFee === undefined ? "" : String(data.deliveryFee),
         });
+        setLoadedBranchId(data.branchId);
       })
       .catch((err: unknown) => {
         if (!cancelled) setError(settingsErr(err));
@@ -621,6 +647,7 @@ export function DeliverySettings() {
         deliveryFee:
           data.deliveryFee === null || data.deliveryFee === undefined ? "" : String(data.deliveryFee),
       });
+      setLoadedBranchId(data.branchId);
       setSavedAt(data.updatedAt);
     } catch (err) {
       setError(settingsErr(err));
@@ -724,7 +751,9 @@ export function DeliverySettings() {
             ) : null}
             <button
               type="submit"
-              disabled={saving || !token || !selectedId || loading}
+              disabled={
+                saving || !token || !selectedId || loading || loadedBranchId !== selectedId
+              }
               className="min-h-11 rounded-lg bg-[var(--admin-ink)] px-4 text-sm font-semibold text-[var(--admin-panel)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save"}

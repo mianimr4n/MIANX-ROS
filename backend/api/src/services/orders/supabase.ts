@@ -124,6 +124,25 @@ function createSupabaseAdminClient(envStatus: EnvironmentStatus): SupabaseClient
   });
 }
 
+/**
+ * Keep payments ledger aligned when orders.payment_status is already paid
+ * (POS pickup cash). Safe to call on create and on idempotent replay.
+ */
+async function syncPendingCashPaymentToPaid(
+  supabase: SupabaseClient,
+  orderId: string,
+): Promise<void> {
+  const paidAt = new Date().toISOString();
+  const { error } = await supabase
+    .from("payments")
+    .update({ status: "paid", paid_at: paidAt })
+    .eq("order_id", orderId)
+    .eq("status", "pending");
+  if (error) {
+    throw new ApiError(500, "PAYMENT_MARK_PAID_FAILED", error.message);
+  }
+}
+
 async function loadOperatingBranch(
   supabase: SupabaseClient,
   branchCode: string,
@@ -498,7 +517,7 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         notes: input.notes?.trim() ?? null,
         couponCode: input.couponCode?.trim() ?? null,
         quoteId: input.quoteId?.trim() || null,
-        paymentMethod: input.paymentMethod ?? (input.orderSource === "pos" || input.orderSource === "admin" ? "cash" : null),
+        // Do not include paymentMethod: legacy POS hashes omitted it (cash was always implied).
         items: input.items.map((item) => ({
           menuItemId: item.menuItemId ?? null,
           menuItemSlug: item.menuItemSlug ?? null,
@@ -519,7 +538,9 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
 
       const { data: existing, error: existingError } = await supabase
         .from("orders")
-        .select("id, order_number, status, subtotal, discount_amount, tax_amount, delivery_fee, total_amount, created_at, idempotency_request_hash")
+        .select(
+          "id, order_number, status, payment_status, subtotal, discount_amount, tax_amount, delivery_fee, total_amount, created_at, idempotency_request_hash",
+        )
         .eq("idempotency_key", input.idempotencyKey.trim())
         .maybeSingle();
 
@@ -534,6 +555,10 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
             "IDEMPOTENCY_CONFLICT",
             "Idempotency-Key was reused with a different order payload.",
           );
+        }
+        // Heal ledger if order was paid but a prior mark-paid attempt failed mid-flight.
+        if (existing.payment_status === "paid") {
+          await syncPendingCashPaymentToPaid(supabase, existing.id);
         }
         return {
           id: existing.id,
@@ -653,16 +678,8 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         idempotentReplay?: boolean;
       };
 
-      if (isPos && paymentStatus === "paid" && created?.id && !created.idempotentReplay) {
-        const paidAt = new Date().toISOString();
-        const { error: payUpdateError } = await supabase
-          .from("payments")
-          .update({ status: "paid", paid_at: paidAt })
-          .eq("order_id", created.id)
-          .eq("status", "pending");
-        if (payUpdateError) {
-          throw new ApiError(500, "PAYMENT_MARK_PAID_FAILED", payUpdateError.message);
-        }
+      if (isPos && paymentStatus === "paid" && created?.id) {
+        await syncPendingCashPaymentToPaid(supabase, created.id);
       }
 
       const row = atomic as {
