@@ -470,6 +470,16 @@ export function createAdminOpeningOperationsRouter(
     },
   );
 
+  router.post("/opening/devices/:id/remove", requireAuthenticatedUser, async (req, res, next) => {
+    try {
+      const principal = (req as AuthorizedRequest).principal!;
+      const row = await service.removeDevice(principal, req.params.id);
+      return res.json({ ok: true, data: row });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
   router.post("/opening/devices/:id/expire", requireAuthenticatedUser, async (req, res, next) => {
     try {
       const principal = (req as AuthorizedRequest).principal!;

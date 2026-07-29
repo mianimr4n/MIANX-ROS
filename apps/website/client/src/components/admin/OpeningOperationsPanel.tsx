@@ -15,7 +15,6 @@ import {
   OPENING_NOTIFICATION_PURPOSES,
   OPENING_PAYMENT_METHOD_CODES,
   approveOpeningCashProcedure,
-  failOpeningDevice,
   failOpeningPaymentProvider,
   fetchOpeningCashProcedure,
   listOpeningCardTerminals,
@@ -26,6 +25,7 @@ import {
   listOpeningPaymentProviders,
   localTestOpeningNotificationChannel,
   recordOpeningCardTerminal,
+  removeOpeningDevice,
   upsertOpeningCashProcedure,
   upsertOpeningDevice,
   upsertOpeningNotificationChannel,
@@ -1021,10 +1021,7 @@ function DeviceTypeRow({
                   disabled={busy !== null}
                   className="rounded border px-2 py-1 text-xs text-red-800 disabled:opacity-50"
                   onClick={() =>
-                    void onRun(
-                      () => failOpeningDevice(token, row.id, "Removed from opening device inventory"),
-                      `del-dev-${row.id}`,
-                    )
+                    void onRun(() => removeOpeningDevice(token, row.id), `del-dev-${row.id}`)
                   }
                 >
                   Delete

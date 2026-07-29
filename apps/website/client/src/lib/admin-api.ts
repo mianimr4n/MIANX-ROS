@@ -980,6 +980,15 @@ export function failOpeningDevice(accessToken: string, id: string, reason: strin
   });
 }
 
+/** Soft-remove device from active inventory (NOT_APPLICABLE) — not a FAILED block. */
+export function removeOpeningDevice(accessToken: string, id: string) {
+  return fetchApiData<OpeningDeviceVerification>(`/admin/opening/devices/${id}/remove`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
 // --- Opening Operations M3 (SOPs, training, rehearsals, governance) ---
 
 export const OPENING_SOP_CODES = [

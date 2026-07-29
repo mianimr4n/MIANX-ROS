@@ -39,7 +39,8 @@ describe("Settings & Configuration V1 (static)", () => {
   it("exposes Save/Delete on opening notification channels and devices", () => {
     const ops = read("apps/website/client/src/components/admin/OpeningOperationsPanel.tsx");
     assert.match(ops, /upsertOpeningNotificationChannel/);
-    assert.match(ops, /upsertOpeningDevice/);
+    assert.match(ops, /removeOpeningDevice/);
+    assert.doesNotMatch(ops, /failOpeningDevice\(token, row\.id/);
     assert.match(ops, />\s*Save\s*</);
     assert.match(ops, />\s*Delete\s*</);
     assert.match(ops, /Add channel/);
