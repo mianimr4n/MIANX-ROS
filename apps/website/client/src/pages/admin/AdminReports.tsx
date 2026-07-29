@@ -101,7 +101,11 @@ export default function AdminReports() {
         onReset={() => setFilters(DEFAULT_EXECUTIVE_FILTERS)}
       />
 
-      <ExecutiveKPIs data={data} customerSnapshot={customerSnapshot} loading={loading} />
+      <ExecutiveKPIs
+        data={data}
+        customerSnapshot={data != null ? customerSnapshot : null}
+        loading={loading}
+      />
 
       <SalesReport data={data} paymentMix={paymentMix} />
 

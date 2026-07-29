@@ -357,7 +357,7 @@ export default function AdminKitchen() {
         className="mb-4"
       />
 
-      <KitchenKPIs snapshot={kpiSnapshot} loading={loading} />
+      <KitchenKPIs snapshot={ticketsOp.data != null ? kpiSnapshot : null} loading={loading} />
 
       <KitchenFilters
         filters={filters}

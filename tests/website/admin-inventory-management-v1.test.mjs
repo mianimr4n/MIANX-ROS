@@ -43,6 +43,10 @@ describe("Inventory Management V1 (static)", () => {
     const kpis = read("apps/website/client/src/components/admin/inventory/InventoryKPIs.tsx");
     assert.match(kpis, /Not derived from menu flags/);
     assert.match(kpis, /Retail menu price is not inventory cost|Purchase cost history required/i);
+    assert.match(kpis, /Menu catalog payload unavailable|UnavailableInventoryKpis/);
+    assert.doesNotMatch(kpis, /menuBrowseSkus \?\? 0/);
+    const page = read("apps/website/client/src/pages/admin/AdminInventory.tsx");
+    assert.match(page, /snapshot=\{isLoading \? null : snapshot\}/);
     const valuation = read("apps/website/client/src/components/admin/inventory/InventoryWorkflowPanels.tsx");
     assert.match(valuation, /Retail menu price is not inventory cost/);
     assert.match(valuation, /Menu selling prices must not be used/);

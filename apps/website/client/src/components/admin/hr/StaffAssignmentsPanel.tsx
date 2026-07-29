@@ -90,7 +90,16 @@ export function StaffAssignmentsPanel() {
   }, [load]);
 
   const summary = useMemo(() => {
-    const list = rows ?? [];
+    if (rows == null) {
+      return {
+        assigned: null as number | null,
+        missing: null as number | null,
+        invited: null as number | null,
+        inactive: null as number | null,
+        required: REQUIRED_OPENING_ROLES.length,
+      };
+    }
+    const list = rows;
     const activeByRole = new Set(
       list.filter((r) => r.assignmentStatus === "ACTIVE").map((r) => r.roleCode),
     );
@@ -103,7 +112,8 @@ export function StaffAssignmentsPanel() {
     return { assigned, missing, invited, inactive, required: REQUIRED_OPENING_ROLES.length };
   }, [rows]);
 
-  const empty = !loading && (rows?.length ?? 0) === 0;
+  const loadFailed = !loading && rows === null;
+  const empty = !loading && rows !== null && rows.length === 0;
 
   async function onAssign(e: React.FormEvent) {
     e.preventDefault();
@@ -164,13 +174,17 @@ export function StaffAssignmentsPanel() {
   }
 
   const problem =
-    summary.missing > 0
-      ? `${summary.missing} required opening role(s) missing for ${branchLabel}.`
-      : "None.";
+    loadFailed
+      ? "Staff assignment payload unavailable."
+      : summary.missing != null && summary.missing > 0
+        ? `${summary.missing} required opening role(s) missing for ${branchLabel}.`
+        : "None.";
   const next =
-    summary.missing > 0
-      ? "Assign named users to each required canonical role for Royal Orchard."
-      : "Verify assignments and proceed to floor / booking readiness.";
+    loadFailed
+      ? "Retry loading assignments before treating coverage as empty."
+      : summary.missing != null && summary.missing > 0
+        ? "Assign named users to each required canonical role for Royal Orchard."
+        : "Verify assignments and proceed to floor / booking readiness.";
 
   return (
     <section
@@ -185,9 +199,17 @@ export function StaffAssignmentsPanel() {
         readiness complete.
       </p>
       {honesty(
-        summary.assigned === summary.required ? "ACTIVE staff coverage" : "SETUP REQUIRED",
-        empty ? "No real operating staff assigned" : problem,
-        empty ? "Assign the first named operating staff member." : next,
+        loadFailed
+          ? "UNAVAILABLE"
+          : summary.assigned === summary.required
+            ? "ACTIVE staff coverage"
+            : "SETUP REQUIRED",
+        loadFailed
+          ? "Assignment list could not be loaded — not treated as zero staff"
+          : empty
+            ? "No real operating staff assigned"
+            : problem,
+        loadFailed ? next : empty ? "Assign the first named operating staff member." : next,
       )}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-4">
@@ -197,16 +219,18 @@ export function StaffAssignmentsPanel() {
         </div>
         <div className="rounded-lg bg-slate-50 p-3 text-sm">
           <div className="text-[var(--admin-muted)]">Assigned</div>
-          <div className="text-xl font-semibold">{summary.assigned}</div>
+          <div className="text-xl font-semibold">{summary.assigned ?? "—"}</div>
         </div>
         <div className="rounded-lg bg-slate-50 p-3 text-sm">
           <div className="text-[var(--admin-muted)]">Missing</div>
-          <div className="text-xl font-semibold">{summary.missing}</div>
+          <div className="text-xl font-semibold">{summary.missing ?? "—"}</div>
         </div>
         <div className="rounded-lg bg-slate-50 p-3 text-sm">
           <div className="text-[var(--admin-muted)]">Invited / inactive</div>
           <div className="text-xl font-semibold">
-            {summary.invited} / {summary.inactive}
+            {summary.invited == null || summary.inactive == null
+              ? "—"
+              : `${summary.invited} / ${summary.inactive}`}
           </div>
         </div>
       </div>
@@ -275,11 +299,15 @@ export function StaffAssignmentsPanel() {
 
       <div className="mt-4 overflow-x-auto">
         {loading ? <p className="text-sm text-[var(--admin-muted)]">Loading assignments…</p> : null}
-        {empty ? (
+        {loadFailed ? (
+          <p className="rounded-md border border-stone-200 bg-stone-50 px-3 py-3 text-sm text-stone-800">
+            Staff assignment data unavailable — not shown as an empty roster
+          </p>
+        ) : empty ? (
           <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950">
             No real operating staff assigned
           </p>
-        ) : (
+        ) : rows == null ? null : (
           <table className="min-w-full text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--admin-border)] text-[var(--admin-muted)]">
@@ -293,7 +321,7 @@ export function StaffAssignmentsPanel() {
               </tr>
             </thead>
             <tbody>
-              {(rows ?? []).map((row) => (
+              {rows.map((row) => (
                 <tr key={row.id} className="border-b border-[var(--admin-border)]/60">
                   <td className="py-2 pr-3">
                     <div className="font-medium text-[var(--admin-ink)]">{row.userFullName || "—"}</div>

@@ -2,6 +2,39 @@ import { AdminKpiCard, AdminSectionTitle } from "@/components/admin/AdminKpiCard
 import type { CrmKpiSnapshot } from "@/lib/admin-crm";
 import { formatPkr } from "@/lib/admin-order-format";
 
+function UnavailableCustomerKpis() {
+  const cards = [
+    "Total customers",
+    "Active customers",
+    "New customers today",
+    "Repeat customers",
+    "VIP customers",
+    "Blocked customers",
+    "Average order value",
+    "Lifetime value",
+  ] as const;
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {cards.map((title) => (
+        <AdminKpiCard
+          key={title}
+          title={title}
+          value="—"
+          source={title === "VIP customers" || title === "Blocked customers" ? "FOUNDATION" : "UNAVAILABLE"}
+          unavailable
+          detail={
+            title === "VIP customers"
+              ? "No VIP flag on customers yet"
+              : title === "Blocked customers"
+                ? "No blocklist API yet"
+                : "Customer order window unavailable — not shown as zero"
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
 export function CustomerKPIs({
   snapshot,
   loading,
@@ -24,29 +57,31 @@ export function CustomerKPIs({
             <div key={i} className="h-[7.25rem] animate-pulse rounded-2xl bg-[var(--admin-soft)]" />
           ))}
         </div>
+      ) : !snapshot ? (
+        <UnavailableCustomerKpis />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <AdminKpiCard
             title="Total customers"
-            value={String(snapshot?.totalCustomers ?? 0)}
+            value={String(snapshot.totalCustomers)}
             source="DERIVED"
             detail="Unique phones in loaded order window"
           />
           <AdminKpiCard
             title="Active customers"
-            value={String(snapshot?.activeCustomers ?? 0)}
+            value={String(snapshot.activeCustomers)}
             source="DERIVED"
             detail="Ordered in last 30 days"
           />
           <AdminKpiCard
             title="New customers today"
-            value={String(snapshot?.newToday ?? 0)}
+            value={String(snapshot.newToday)}
             source="DERIVED"
             detail="First seen order today (Karachi)"
           />
           <AdminKpiCard
             title="Repeat customers"
-            value={String(snapshot?.repeatCustomers ?? 0)}
+            value={String(snapshot.repeatCustomers)}
             source="DERIVED"
             detail="2+ orders in loaded window"
           />
@@ -66,16 +101,16 @@ export function CustomerKPIs({
           />
           <AdminKpiCard
             title="Average order value"
-            value={snapshot?.averageOrderValue != null ? formatPkr(snapshot.averageOrderValue) : "—"}
-            source={snapshot?.averageOrderValue != null ? "DERIVED" : "UNAVAILABLE"}
-            unavailable={snapshot?.averageOrderValue == null}
+            value={snapshot.averageOrderValue != null ? formatPkr(snapshot.averageOrderValue) : "—"}
+            source={snapshot.averageOrderValue != null ? "DERIVED" : "UNAVAILABLE"}
+            unavailable={snapshot.averageOrderValue == null}
             detail="Mean of per-customer average spend"
           />
           <AdminKpiCard
             title="Lifetime value"
-            value={snapshot?.lifetimeValueAvg != null ? formatPkr(snapshot.lifetimeValueAvg) : "—"}
-            source={snapshot?.lifetimeValueAvg != null ? "DERIVED" : "UNAVAILABLE"}
-            unavailable={snapshot?.lifetimeValueAvg == null}
+            value={snapshot.lifetimeValueAvg != null ? formatPkr(snapshot.lifetimeValueAvg) : "—"}
+            source={snapshot.lifetimeValueAvg != null ? "DERIVED" : "UNAVAILABLE"}
+            unavailable={snapshot.lifetimeValueAvg == null}
             detail="Mean lifetime spend in loaded window"
           />
         </div>
