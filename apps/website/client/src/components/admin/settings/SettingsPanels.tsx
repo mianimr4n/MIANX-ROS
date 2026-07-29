@@ -99,12 +99,25 @@ export function BranchSettings({
 export function RestaurantOperationsSettings() {
   return (
     <div className="space-y-6">
-      <SettingsFoundationPanel
-        title="Restaurant Operations"
-        description="Service modes, holiday closures, and opening verification workflows."
-        body="Dine-in, pickup, delivery toggles and holiday calendars remain foundation. Opening payment, notification, device, SOP, training, and governance verification is persisted below — secrets stay environment-managed."
-        scope="Branch"
-      />
+      <AdminSurface aria-labelledby="restaurant-ops-settings-heading">
+        <AdminSurfaceHeader
+          title="Restaurant Operations"
+          description="Service modes stay foundation — opening payment, notification, and device verification persist below."
+        />
+        <AdminSurfaceBody>
+          <h2 id="restaurant-ops-settings-heading" className="sr-only">
+            Restaurant operations settings
+          </h2>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <SettingsStatusBadge classification="LIVE" />
+            <SettingsScopeBadge scope="Branch" />
+          </div>
+          <p className="text-sm text-[var(--admin-muted)]">
+            Use Save / Delete on notification channels and devices in Opening operations. Dine-in, pickup, delivery
+            toggles and holiday calendars remain foundation. Secrets stay environment-managed.
+          </p>
+        </AdminSurfaceBody>
+      </AdminSurface>
       <OpeningOperationsPanel />
       <OpeningGovernancePanel />
       <OpeningDryRunPanel />
@@ -126,12 +139,25 @@ export function OrderSettings() {
 export function POSSettings() {
   return (
     <div className="space-y-6">
-      <SettingsFoundationPanel
-        title="POS"
-        description="Receipts, cash drawer, offline mode, and printer routing."
-        body="POS workstation uses live order APIs. Device and card-terminal readiness is recorded in Opening Operations below — route availability alone never verifies hardware."
-        scope="Branch"
-      />
+      <AdminSurface aria-labelledby="pos-settings-heading">
+        <AdminSurfaceHeader
+          title="POS"
+          description="Receipts and offline mode stay foundation — device readiness is saved in Opening operations."
+        />
+        <AdminSurfaceBody>
+          <h2 id="pos-settings-heading" className="sr-only">
+            POS settings
+          </h2>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <SettingsStatusBadge classification="LIVE" />
+            <SettingsScopeBadge scope="Branch" />
+          </div>
+          <p className="text-sm text-[var(--admin-muted)]">
+            POS workstation uses live order APIs. Save / Delete device rows below — route availability alone never
+            verifies hardware.
+          </p>
+        </AdminSurfaceBody>
+      </AdminSurface>
       <OpeningOperationsPanel />
     </div>
   );
@@ -216,12 +242,12 @@ export function PaymentSettings() {
             Payment settings
           </h2>
           <div className="mb-3 flex flex-wrap gap-2">
-            <SettingsStatusBadge classification="FOUNDATION" />
+            <SettingsStatusBadge classification="LIVE" />
             <SettingsScopeBadge scope="Branch" />
           </div>
           <p className="text-sm text-[var(--admin-muted)]">
-            Provider credentials stay environment-managed. This surface stores verification metadata only — never API
-            keys, card numbers, or CVV. Local mock checks do not satisfy Production readiness.
+            Provider credentials stay environment-managed. Opening operations below persist verification metadata —
+            never API keys, card numbers, or CVV. Local mock checks do not satisfy Production readiness.
           </p>
         </AdminSurfaceBody>
       </AdminSurface>
@@ -244,12 +270,26 @@ export function CustomerLoyaltySettings() {
 export function CommunicationSettings() {
   return (
     <div className="space-y-6">
-      <SettingsFoundationPanel
-        title="Communications"
-        description="Email, SMS, WhatsApp, and push notification channels."
-        body="Provider credentials are environment-managed. WhatsApp is never CONNECTED without verified provider metadata. Local verification only does not satisfy Production readiness. No live customer notifications are sent from this surface."
-        scope="Branch"
-      />
+      <AdminSurface aria-labelledby="communication-settings-heading">
+        <AdminSurfaceHeader
+          title="Communications"
+          description="Email, SMS, WhatsApp, and push notification channels — persist per purpose below."
+        />
+        <AdminSurfaceBody>
+          <h2 id="communication-settings-heading" className="sr-only">
+            Communication settings
+          </h2>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <SettingsStatusBadge classification="LIVE" />
+            <SettingsScopeBadge scope="Branch" />
+          </div>
+          <p className="text-sm text-[var(--admin-muted)]">
+            Add a channel, then use Save / Delete on the row. Provider credentials are environment-managed. WhatsApp is
+            never CONNECTED without verified provider metadata. No live customer notifications are sent from this
+            surface.
+          </p>
+        </AdminSurfaceBody>
+      </AdminSurface>
       <OpeningOperationsPanel />
     </div>
   );
