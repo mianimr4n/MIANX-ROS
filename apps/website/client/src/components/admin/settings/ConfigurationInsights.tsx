@@ -8,6 +8,7 @@ const SOURCE_CLASS: Record<SettingsInsightItem["source"], string> = {
   derived: "bg-sky-50 text-sky-800",
   foundation: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
   "read-only": "bg-sky-50 text-sky-800",
+  live: "bg-emerald-50 text-emerald-800",
 };
 
 export function ConfigurationInsights({ items }: { items: SettingsInsightItem[] }) {

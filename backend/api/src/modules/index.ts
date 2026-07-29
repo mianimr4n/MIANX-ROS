@@ -135,6 +135,8 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
       openingOperations: dependencies.openingOperations,
       openingGovernance: dependencies.openingGovernance,
       openingDryRun: dependencies.openingDryRun,
+      organizationSettings: dependencies.organizationSettings,
+      branchProfile: dependencies.branchProfile,
       branchOrderManagement: dependencies.branchOrderManagement,
       restaurantTables: dependencies.restaurantTables,
       restaurantBills: dependencies.restaurantBills,

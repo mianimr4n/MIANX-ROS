@@ -52,7 +52,7 @@ export type SettingsInsightItem = {
   id: string;
   title: string;
   detail: string;
-  source: "derived" | "foundation" | "read-only";
+  source: "derived" | "foundation" | "read-only" | "live";
 };
 
 export type SettingsIntegrationCheck = {
@@ -67,14 +67,14 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     id: "organization",
     label: "Organization",
     description: "Legal identity, brand, and defaults",
-    classification: "FOUNDATION",
+    classification: "LIVE",
     keywords: ["organization", "legal", "brand", "logo", "timezone", "currency"],
   },
   {
     id: "branches",
     label: "Branches",
     description: "Branch directory and operating profile",
-    classification: "READ-ONLY",
+    classification: "LIVE",
     keywords: ["branch", "store", "hours", "address", "phone", "status"],
   },
   {
@@ -209,15 +209,15 @@ export function capabilityMatrix(): SettingsCapabilityRow[] {
   return [
     {
       domain: "Branches",
-      capability: "Branch directory (name, address, phone, status, hours)",
-      source: "public.branches + GET /api/v1/branches",
-      readApi: "GET /api/v1/branches",
-      writeApi: "None",
-      permission: "Public catalog read; admin.access for Settings UI",
+      capability: "Branch profile (phone, hours, delivery radius, contact)",
+      source: "public.branches + admin branch profile API",
+      readApi: "GET /api/v1/admin/branches/:id",
+      writeApi: "PUT /api/v1/admin/branches/:id",
+      permission: "branch.manage",
       scope: "Branch",
       sensitive: false,
-      classification: "READ-ONLY",
-      decision: "Display verified branch fields; no admin write API",
+      classification: "LIVE",
+      decision: "Owner can update branch profile fields from Settings",
     },
     {
       domain: "Users & Access",
@@ -233,15 +233,15 @@ export function capabilityMatrix(): SettingsCapabilityRow[] {
     },
     {
       domain: "Organization",
-      capability: "Legal/trading profile, brand assets",
-      source: "Absent",
-      readApi: "None",
-      writeApi: "None",
-      permission: "admin.access (proposed)",
+      capability: "Company name, phone, email, address",
+      source: "public.organization_settings",
+      readApi: "GET /api/v1/admin/settings/organization",
+      writeApi: "PUT /api/v1/admin/settings/organization",
+      permission: "admin.access",
       scope: "Organization",
       sensitive: false,
-      classification: "FOUNDATION",
-      decision: "Foundation panel until organization table/API",
+      classification: "LIVE",
+      decision: "Persist organization profile via Supabase-backed admin API",
     },
     {
       domain: "Orders / POS / Kitchen / Delivery",
@@ -312,19 +312,19 @@ export function integrationChecks(): SettingsIntegrationCheck[] {
       id: "branches-read",
       label: "Branch catalog read",
       status: "present",
-      note: "GET /api/v1/branches returns verified branch rows for Settings read-only display.",
+      note: "GET /api/v1/branches returns verified branch rows for directory scope.",
     },
     {
       id: "branch-write",
       label: "Branch profile write API",
-      status: "missing",
-      note: "No PATCH /admin/branches or opening-hours write endpoint.",
+      status: "present",
+      note: "PUT /api/v1/admin/branches/:id updates phone, hours, delivery radius, and contact fields.",
     },
     {
       id: "organization",
       label: "Organization profile",
-      status: "missing",
-      note: "No organization / tenant settings table or admin API.",
+      status: "present",
+      note: "GET/PUT /api/v1/admin/settings/organization backed by public.organization_settings.",
     },
     {
       id: "rbac-seed",
@@ -390,16 +390,16 @@ export function buildConfigurationInsights(input: {
 }): SettingsInsightItem[] {
   const items: SettingsInsightItem[] = [
     {
-      id: "org-missing",
-      title: "Organization profile is incomplete",
-      detail: "No organization settings API — legal name, tax registration, and brand assets cannot be managed here.",
-      source: "foundation",
+      id: "org-profile",
+      title: "Organization profile is live",
+      detail: "Company name, phone, email, and address persist via GET/PUT /admin/settings/organization.",
+      source: "live",
     },
     {
-      id: "branches-readonly",
-      title: `${input.branchCount} branch(es) visible as read-only`,
-      detail: `Current scope: ${input.branchLabel}. Branch hours and contact fields display from catalog — write API absent.`,
-      source: "read-only",
+      id: "branches-live",
+      title: `${input.branchCount} branch(es) editable in scope`,
+      detail: `Current scope: ${input.branchLabel}. Phone, hours, delivery radius, and contact fields save via PUT /admin/branches/:id.`,
+      source: "live",
     },
     {
       id: "rbac",

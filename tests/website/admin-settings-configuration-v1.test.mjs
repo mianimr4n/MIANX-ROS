@@ -47,7 +47,7 @@ describe("Settings & Configuration V1 (static)", () => {
     const panels = read("apps/website/client/src/components/admin/settings/SettingsPanels.tsx");
     assert.match(panels, /Use Save \/ Delete on notification channels|Add a channel, then use Save \/ Delete/);
     const page = read("apps/website/client/src/pages/admin/AdminSettings.tsx");
-    assert.match(page, /per-row Save \/ Delete/);
+    assert.match(page, /per-row Save \/ Delete|Organization and branch profiles use the Save button/);
   });
 
   it("never renders secret keys or credential values", () => {
@@ -58,10 +58,16 @@ describe("Settings & Configuration V1 (static)", () => {
     assert.doesNotMatch(insights, /sk_live|SERVICE_ROLE_KEY/);
   });
 
-  it("classifies branches and access as read-only", () => {
+  it("wires organization and branch settings to live admin APIs", () => {
     const panels = read("apps/website/client/src/components/admin/settings/SettingsPanels.tsx");
-    assert.match(panels, /READ-ONLY/);
-    assert.match(panels, /GET \/api\/v1\/branches/);
+    assert.match(panels, /fetchOrganizationSettings/);
+    assert.match(panels, /updateOrganizationSettings/);
+    assert.match(panels, /fetchBranchProfile/);
+    assert.match(panels, /updateBranchProfile/);
+    assert.match(panels, /PUT \/admin\/branches\/:id/);
+    const api = read("apps/website/client/src/lib/admin-api.ts");
+    assert.match(api, /\/admin\/settings\/organization/);
+    assert.match(api, /\/admin\/branches\/\$\{branchId\}/);
     assert.match(panels, /no invented roles/i);
   });
 
