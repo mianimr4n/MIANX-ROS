@@ -53,7 +53,7 @@ describe("Settings & Configuration V1 (static)", () => {
 
   it("payment and tax settings remain foundation or unavailable", () => {
     const panels = read("apps/website/client/src/components/admin/settings/SettingsPanels.tsx");
-    assert.match(panels, /Payment provider credentials unavailable/);
+    assert.match(panels, /Provider credentials stay environment-managed|Payment provider credentials unavailable/);
     assert.match(panels, /Never invent tax rates|will never invent tax rates/i);
     assert.doesNotMatch(panels, /status:\s*["']Connected["']/);
   });

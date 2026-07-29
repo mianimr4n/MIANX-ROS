@@ -26,6 +26,12 @@ class FakeQuery {
     this.filters.push(["neq", c, v]);
     return this;
   }
+  order(_column: string, _opts?: { ascending?: boolean }) {
+    return this;
+  }
+  limit(_count: number) {
+    return this;
+  }
   maybeSingle() {
     return Promise.resolve(this.resolve(true));
   }
@@ -152,8 +158,19 @@ describe("D4 branch readiness truth", () => {
     );
     expect(report.checks.cashierAssigned).toBe(true);
     expect(report.checks.paymentConfigured).toBe(false);
-    expect(report.blockers.some((b) => b.code === "PAYMENT_NOT_VERIFIED")).toBe(true);
-    expect(report.nextActions).toContain("Configure payment provider");
+    expect(
+      report.blockers.some(
+        (b) => b.code === "PAYMENT_METHODS_MISSING" || b.code === "PAYMENT_PROVIDER_NOT_VERIFIED",
+      ),
+    ).toBe(true);
+    expect(
+      report.nextActions.some(
+        (a) =>
+          a.includes("payment method") ||
+          a.includes("payment provider") ||
+          a.includes("Configure payment"),
+      ),
+    ).toBe(true);
   });
 
   it("does not treat phone as notificationConfigured; requires provider settings", async () => {

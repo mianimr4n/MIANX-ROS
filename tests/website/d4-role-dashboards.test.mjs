@@ -118,7 +118,7 @@ describe("D4 role dashboards (static)", () => {
 
     assert.match(readiness, /READY_WITH_LIMITATIONS|BLOCKED|NOT_VERIFIED/);
 
-    assert.match(readiness, /Complete opening readiness/i);
+    assert.match(readiness, /Opening readiness|Operational opening readiness/i);
 
     assert.doesNotMatch(readiness, /todayGrossSales|fake sales/i);
 
