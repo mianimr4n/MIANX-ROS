@@ -124,6 +124,25 @@ function createSupabaseAdminClient(envStatus: EnvironmentStatus): SupabaseClient
   });
 }
 
+/**
+ * Keep payments ledger aligned when orders.payment_status is already paid
+ * (POS pickup cash). Safe to call on create and on idempotent replay.
+ */
+async function syncPendingCashPaymentToPaid(
+  supabase: SupabaseClient,
+  orderId: string,
+): Promise<void> {
+  const paidAt = new Date().toISOString();
+  const { error } = await supabase
+    .from("payments")
+    .update({ status: "paid", paid_at: paidAt })
+    .eq("order_id", orderId)
+    .eq("status", "pending");
+  if (error) {
+    throw new ApiError(500, "PAYMENT_MARK_PAID_FAILED", error.message);
+  }
+}
+
 async function loadOperatingBranch(
   supabase: SupabaseClient,
   branchCode: string,
@@ -498,6 +517,7 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         notes: input.notes?.trim() ?? null,
         couponCode: input.couponCode?.trim() ?? null,
         quoteId: input.quoteId?.trim() || null,
+        // Do not include paymentMethod: legacy POS hashes omitted it (cash was always implied).
         items: input.items.map((item) => ({
           menuItemId: item.menuItemId ?? null,
           menuItemSlug: item.menuItemSlug ?? null,
@@ -518,7 +538,9 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
 
       const { data: existing, error: existingError } = await supabase
         .from("orders")
-        .select("id, order_number, status, subtotal, discount_amount, tax_amount, delivery_fee, total_amount, created_at, idempotency_request_hash")
+        .select(
+          "id, order_number, status, payment_status, subtotal, discount_amount, tax_amount, delivery_fee, total_amount, created_at, idempotency_request_hash",
+        )
         .eq("idempotency_key", input.idempotencyKey.trim())
         .maybeSingle();
 
@@ -533,6 +555,10 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
             "IDEMPOTENCY_CONFLICT",
             "Idempotency-Key was reused with a different order payload.",
           );
+        }
+        // Heal ledger if order was paid but a prior mark-paid attempt failed mid-flight.
+        if (existing.payment_status === "paid") {
+          await syncPendingCashPaymentToPaid(supabase, existing.id);
         }
         return {
           id: existing.id,
@@ -558,6 +584,17 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
         .join("\n");
 
       const isPos = input.orderSource === "pos" || input.orderSource === "admin";
+      const paymentMethod = "cash" as const;
+      /**
+       * Honest cash semantics for launch:
+       * - pickup POS cash → paid at counter
+       * - delivery cash → pending COD
+       * - dine-in cash → pending until bill settle
+       * - website/public → pending (customer COD / pay on collect)
+       */
+      const paymentStatus =
+        isPos && input.orderType === "pickup" ? "paid" : "pending";
+
       const itemsPayload = priced.lines.map((line) => ({
         menu_item_id: line.menuItemId,
         variant_id: line.variantId,
@@ -601,7 +638,7 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
           tax_amount: priced.taxAmount,
           delivery_fee: priced.deliveryFee,
           total_amount: priced.totalAmount,
-          payment_status: "pending",
+          payment_status: paymentStatus,
           contact_name: input.contactName.trim(),
           contact_phone: input.contactPhone.trim(),
           contact_phone_e164: contactPhoneE164,
@@ -610,7 +647,7 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
           pricing_snapshot: priced.pricingSnapshot,
           auth_user_id: input.authUserId?.trim() || null,
           customer_id: input.customerId ?? null,
-          payment_method: "cash",
+          payment_method: paymentMethod,
         },
         p_items: itemsPayload,
         p_create_delivery: input.orderType === "delivery" && Boolean(deliveryAddress),
@@ -626,6 +663,23 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
 
       if (atomicError) {
         mapAtomicCreateError(atomicError);
+      }
+
+      const created = atomic as {
+        id: string;
+        orderNumber: string;
+        status: string;
+        subtotal: number;
+        discountAmount: number;
+        taxAmount: number;
+        deliveryFee: number;
+        totalAmount: number;
+        createdAt: string;
+        idempotentReplay?: boolean;
+      };
+
+      if (isPos && paymentStatus === "paid" && created?.id) {
+        await syncPendingCashPaymentToPaid(supabase, created.id);
       }
 
       const row = atomic as {

@@ -12,6 +12,7 @@ import { getLineItemTotal } from "@/data/cart-config";
 import { CheckoutSubmitError, submitWebsiteOrder } from "@/lib/submit-order";
 import { isApiConfigured } from "@/lib/api";
 import { quoteOrder } from "@/lib/telepizza-api";
+import { toast } from "sonner";
 import {
   buildQuoteRequest,
   buildWhatsAppOrderUrl,
@@ -329,6 +330,7 @@ export default function Checkout() {
       }
 
       clearCart();
+      toast.success("Order placed successfully");
       const successParams = new URLSearchParams({
         phone: contactPhoneE164,
         source: result.source,
@@ -341,11 +343,14 @@ export default function Checkout() {
     } catch (submitError) {
       if (submitError instanceof CheckoutSubmitError) {
         setError(submitError.message);
+        toast.error(submitError.message);
         if (submitError.code === "QUOTE_EXPIRED" || submitError.code === "QUOTE_PAYLOAD_MISMATCH") {
           void refreshQuote();
         }
       } else {
-        setError(submitError instanceof Error ? submitError.message : "Could not place order.");
+        const message = submitError instanceof Error ? submitError.message : "Could not place order.";
+        setError(message);
+        toast.error(message);
       }
     } finally {
       submitInFlight.current = false;

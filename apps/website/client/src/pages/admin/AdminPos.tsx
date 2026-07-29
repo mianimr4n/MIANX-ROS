@@ -14,6 +14,7 @@ import { ProductGrid } from "@/components/admin/pos/ProductGrid";
 import { ReceiptPreview } from "@/components/admin/pos/ReceiptPreview";
 import { ShoppingCart } from "@/components/admin/pos/ShoppingCart";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
@@ -303,14 +304,14 @@ export default function AdminPos() {
       setPlaceError("Delivery address is required for delivery/phone orders.");
       return;
     }
+    if (paymentMethod !== "cash") {
+      setPlaceError("Only Cash is available at place-order. Use dine-in bill settlement for other methods.");
+      return;
+    }
     setPlacing(true);
     setPlaceError(null);
     try {
-      const notesParts = [
-        `POS channel=${channel}`,
-        paymentMethod ? `Payment intent=${paymentMethod} (Foundation label)` : "",
-        tableNote,
-      ].filter(Boolean);
+      const notesParts = [`POS channel=${channel}`, tableNote].filter(Boolean);
       const created = await createAdminPosOrder(
         token,
         {
@@ -322,6 +323,7 @@ export default function AdminPos() {
           notes: notesParts.join(" · ") || undefined,
           couponCode: couponCode.trim() || undefined,
           quoteId: quote.quoteId,
+          paymentMethod: "cash",
           diningSessionId:
             channel === "dine-in" && diningSessionId ? diningSessionId : undefined,
           items: lines.map((line) => ({
@@ -342,8 +344,14 @@ export default function AdminPos() {
       );
       setLastOrderNumber(created.orderNumber);
       setLastOrderId(created.id);
+      setLines([]);
+      setQuote(null);
+      setQuoteError(null);
+      setCouponCode("");
+      toast.success(`Order ${created.orderNumber} placed successfully`);
     } catch (err) {
       setPlaceError(err instanceof ApiRequestError ? err.message : "Place order failed");
+      toast.error(err instanceof ApiRequestError ? err.message : "Place order failed");
     } finally {
       setPlacing(false);
     }

@@ -283,6 +283,8 @@ export interface OpeningOperationsService {
     },
   ): Promise<DeviceVerificationRecord>;
   recordDeviceFailure(actor: AuthPrincipal, id: string, reason: string): Promise<DeviceVerificationRecord>;
+  /** Soft-remove: NOT_APPLICABLE — hidden from active inventory lists (not FAILED). */
+  removeDevice(actor: AuthPrincipal, id: string): Promise<DeviceVerificationRecord>;
   markDeviceExpired(actor: AuthPrincipal, id: string): Promise<DeviceVerificationRecord>;
   listMissingRequiredDeviceTypes(scope: BranchActorScope, branchId: string): Promise<DeviceType[]>;
 }
@@ -583,10 +585,33 @@ function deviceCountsForReadiness(
   expiresAt: string | null | undefined,
   evidenceType: string | null | undefined,
 ): boolean {
-  if (status === "FAILED" || status === "EXPIRED" || status === "NOT_VERIFIED") return false;
+  if (
+    status === "FAILED" ||
+    status === "EXPIRED" ||
+    status === "NOT_VERIFIED" ||
+    status === "NOT_APPLICABLE"
+  ) {
+    return false;
+  }
   if (evidenceType === "LOCAL_TEST_ONLY") return false;
   if (expiresAt && new Date(expiresAt).getTime() < Date.now()) return false;
   return status === "VERIFIED";
+}
+
+/**
+ * Provider status to write on notification-channel upsert.
+ * Returns null when an existing row's status must be preserved (e.g. Production VERIFIED).
+ */
+export function providerStatusForNotificationUpsert(input: {
+  enabled: boolean;
+  /** null when inserting a new channel row */
+  existingStatus: string | null;
+}): string | null {
+  if (!input.enabled) return "NOT_CONFIGURED";
+  if (input.existingStatus == null || input.existingStatus === "NOT_CONFIGURED") {
+    return "CONFIGURED";
+  }
+  return null;
 }
 
 export function createOpeningOperationsService(envStatus: EnvironmentStatus): OpeningOperationsService {
@@ -979,7 +1004,23 @@ export function createOpeningOperationsService(envStatus: EnvironmentStatus): Op
       const admin = createServiceClient(envStatus);
       await loadBranchRow(admin, input.branchId);
 
-      const payload = {
+      const { data: existing } = await admin
+        .from("branch_notification_channels")
+        .select("id, provider_status, enabled")
+        .eq("branch_id", input.branchId)
+        .eq("purpose_code", input.purposeCode)
+        .eq("channel_code", input.channelCode)
+        .maybeSingle();
+
+      const existingStatus = existing
+        ? String((existing as { provider_status: string }).provider_status)
+        : null;
+      const nextStatus = providerStatusForNotificationUpsert({
+        enabled: input.enabled,
+        existingStatus,
+      });
+
+      const payload: Record<string, unknown> = {
         branch_id: input.branchId,
         purpose_code: input.purposeCode,
         channel_code: input.channelCode,
@@ -987,20 +1028,14 @@ export function createOpeningOperationsService(envStatus: EnvironmentStatus): Op
         provider_name: input.providerName ?? null,
         destination_reference: input.destinationReference ?? null,
         notes: input.notes ?? null,
-        provider_status: input.enabled ? "CONFIGURED" : "NOT_CONFIGURED",
         updated_by: actor.userId,
       };
-
-      const { data: existing } = await admin
-        .from("branch_notification_channels")
-        .select("id, provider_status")
-        .eq("branch_id", input.branchId)
-        .eq("purpose_code", input.purposeCode)
-        .eq("channel_code", input.channelCode)
-        .maybeSingle();
+      if (nextStatus != null) {
+        payload.provider_status = nextStatus;
+      }
 
       if (existing) {
-        const fromStatus = (existing as { provider_status: string }).provider_status;
+        const fromStatus = existingStatus ?? "NOT_CONFIGURED";
         const { data, error } = await admin
           .from("branch_notification_channels")
           .update(payload)
@@ -1021,7 +1056,11 @@ export function createOpeningOperationsService(envStatus: EnvironmentStatus): Op
 
       const { data, error } = await admin
         .from("branch_notification_channels")
-        .insert({ ...payload, created_by: actor.userId })
+        .insert({
+          ...payload,
+          provider_status: nextStatus ?? "CONFIGURED",
+          created_by: actor.userId,
+        })
         .select("*")
         .single();
       if (error) throw new ApiError(500, "NOTIFICATION_CHANNEL_CREATE_FAILED", error.message);
@@ -1128,6 +1167,7 @@ export function createOpeningOperationsService(envStatus: EnvironmentStatus): Op
         .from("branch_device_verifications")
         .select("*")
         .eq("branch_id", branchId)
+        .neq("verification_status", "NOT_APPLICABLE")
         .order("device_type");
       if (error) throw new ApiError(500, "DEVICE_LIST_FAILED", error.message);
       return (data ?? []).map((row) => mapDevice(row as Record<string, unknown>));
@@ -1230,6 +1270,42 @@ export function createOpeningOperationsService(envStatus: EnvironmentStatus): Op
         toStatus: "FAILED",
         actorUserId: actor.userId,
         notes: reason,
+      });
+      return mapDevice(data as Record<string, unknown>);
+    },
+
+    async removeDevice(actor, id) {
+      const admin = createServiceClient(envStatus);
+      const row = await loadDevice(admin, id);
+      assertCanManage(actor, String(row.branch_id));
+      if (String(row.verification_status) === "NOT_APPLICABLE") {
+        return mapDevice(row as Record<string, unknown>);
+      }
+      const fromStatus = String(row.verification_status);
+      const { data, error } = await admin
+        .from("branch_device_verifications")
+        .update({
+          verification_status: "NOT_APPLICABLE",
+          evidence_type: null,
+          evidence_summary: null,
+          verified_by: null,
+          verified_at: null,
+          expires_at: null,
+          recheck_due_at: null,
+          failure_reason: "Removed from opening device inventory",
+        })
+        .eq("id", id)
+        .select("*")
+        .single();
+      if (error) throw new ApiError(500, "DEVICE_REMOVE_FAILED", error.message);
+      await appendDeviceEvent(admin, {
+        deviceId: id,
+        branchId: String(row.branch_id),
+        eventType: "REMOVED",
+        fromStatus,
+        toStatus: "NOT_APPLICABLE",
+        actorUserId: actor.userId,
+        notes: "Soft-removed — not FAILED blocked inventory",
       });
       return mapDevice(data as Record<string, unknown>);
     },

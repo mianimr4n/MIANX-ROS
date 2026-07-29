@@ -155,6 +155,7 @@ const menuManagement = {
     });
     return after;
   }),
+  uploadSkuImage: vi.fn(async () => sku({ imageUrl: "https://example.supabase.co/storage/v1/object/public/menu-product-images/x.jpg" })),
   listAuditEvents: vi.fn(async () =>
     auditWrites.map((entry, index) => ({
       id: `audit-${index}`,

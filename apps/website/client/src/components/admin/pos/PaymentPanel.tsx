@@ -1,14 +1,15 @@
 /**
  * POS payment method selector — opening-ready operational methods.
- * Actual capture goes through POST /api/v1/admin/payments/settle (idempotent).
+ * Cash is available for takeaway / delivery / phone at place-order time.
+ * Card terminal / bank / complimentary require an open dine-in bill settle path.
  * Online card gateway is NOT claimed.
  */
 
 const METHODS = [
-  { id: "cash", label: "Cash", hint: "Tendered + change calculated server-side" },
-  { id: "card_terminal", label: "Card terminal", hint: "Manual terminal confirmation" },
-  { id: "bank_manual", label: "Bank / reference", hint: "Authorized manual reference" },
-  { id: "complimentary", label: "Complimentary", hint: "Manager override with reason" },
+  { id: "cash", label: "Cash", hint: "Cash at counter or COD — recorded on the order" },
+  { id: "card_terminal", label: "Card terminal", hint: "Manual terminal confirmation (dine-in settle)" },
+  { id: "bank_manual", label: "Bank / reference", hint: "Authorized manual reference (dine-in settle)" },
+  { id: "complimentary", label: "Complimentary", hint: "Manager override with reason (dine-in settle)" },
 ] as const;
 
 export function PaymentPanel({
@@ -32,14 +33,14 @@ export function PaymentPanel({
       <p className="mt-1 text-xs text-[var(--admin-muted)]">
         {settlementReady
           ? "Settlement posts to the payment ledger (cash / card terminal / bank / complimentary). No online card gateway."
-          : "Place the dine-in order first. Settlement becomes available once the session bill is open."}
+          : "Cash is live for POS place-order (pickup paid at counter; delivery stays pending COD). Other methods unlock after a dine-in bill is open."}
       </p>
       {remainingBalance != null ? (
         <p className="mt-2 text-sm font-semibold text-[var(--admin-text)]">
           Remaining balance: {remainingBalance.toFixed(2)} PKR
         </p>
       ) : null}
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {METHODS.map((method) => (
           <button
             key={method.id}

@@ -203,6 +203,8 @@ export function createAdminPosOrder(
     notes?: string;
     couponCode?: string;
     quoteId?: string;
+    /** Launch cash path — only `cash` is accepted at place-order today. */
+    paymentMethod?: "cash";
     /** D3 — attach a dine-in order to an active dining session (dine-in only). */
     diningSessionId?: string;
     items: Array<{
@@ -976,6 +978,15 @@ export function failOpeningDevice(accessToken: string, id: string, reason: strin
     method: "POST",
     headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
     body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+/** Soft-remove device from active inventory (NOT_APPLICABLE) — not a FAILED block. */
+export function removeOpeningDevice(accessToken: string, id: string) {
+  return fetchApiData<OpeningDeviceVerification>(`/admin/opening/devices/${id}/remove`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }

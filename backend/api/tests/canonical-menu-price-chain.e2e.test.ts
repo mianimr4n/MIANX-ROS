@@ -111,6 +111,7 @@ type StoreRow = {
   isAvailable: boolean;
   sortOrder: number;
   productType: string;
+  imageUrl: string | null;
 };
 
 function seedStore(): StoreRow[] {
@@ -126,6 +127,7 @@ function seedStore(): StoreRow[] {
       isAvailable: true,
       sortOrder: 1,
       productType: "pizza",
+      imageUrl: null,
     },
     {
       id: MEDIUM_ID,
@@ -138,6 +140,7 @@ function seedStore(): StoreRow[] {
       isAvailable: true,
       sortOrder: 2,
       productType: "pizza",
+      imageUrl: null,
     },
     {
       id: LARGE_ID,
@@ -150,6 +153,7 @@ function seedStore(): StoreRow[] {
       isAvailable: true,
       sortOrder: 3,
       productType: "pizza",
+      imageUrl: null,
     },
     {
       id: "aaaaaaaa-0000-4000-8000-000000000004",
@@ -162,6 +166,7 @@ function seedStore(): StoreRow[] {
       isAvailable: true,
       sortOrder: 1,
       productType: "burger",
+      imageUrl: null,
     },
   ];
 }
@@ -194,7 +199,7 @@ function toSkuRecord(row: StoreRow): MenuSkuRecord {
     price: row.price,
     isAvailable: row.isAvailable,
     isFeatured: false,
-    imageUrl: null,
+    imageUrl: row.imageUrl,
     badge: null,
     productType: row.productType,
     sortOrder: row.sortOrder,
@@ -291,6 +296,23 @@ const menuManagement: MenuManagementService = {
       createdAt: new Date().toISOString(),
     });
 
+    return toSkuRecord(row);
+  },
+  async uploadSkuImage(actor, skuId) {
+    const row = store.find((candidate) => candidate.id === skuId);
+    if (!row) throw new ApiError(404, "MENU_ITEM_NOT_FOUND", "Menu item not found.");
+    row.imageUrl = `https://example.supabase.co/storage/v1/object/public/menu-product-images/${skuId}.jpg`;
+    auditLog.unshift({
+      id: `audit-${auditLog.length + 1}`,
+      actorUserId: actor.userId,
+      resourceType: "menu_item",
+      resourceId: skuId,
+      action: "item.image_upload",
+      scope: "global",
+      beforeData: {},
+      afterData: { imageUrl: row.imageUrl },
+      createdAt: new Date().toISOString(),
+    });
     return toSkuRecord(row);
   },
   async listAuditEvents(filters) {

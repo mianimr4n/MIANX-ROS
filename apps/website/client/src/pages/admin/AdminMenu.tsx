@@ -33,6 +33,7 @@ import {
   listMenuCategories,
   updateMenuCategory,
   updateMenuSku,
+  uploadMenuSkuImage,
   type AdminMenuAuditEvent,
   type AdminMenuCategory,
   type CreateMenuSkuBody,
@@ -40,6 +41,7 @@ import {
 } from "@/lib/admin-menu-api";
 import { ApiRequestError, isApiConfigured } from "@/lib/api";
 import { AdminShell } from "./AdminShell";
+import { toast } from "sonner";
 
 function readFilters(search: string): MenuFilterState & { selected: string } {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
@@ -181,11 +183,13 @@ export default function AdminMenu() {
   }, [accessToken, drawerProduct?.id]);
 
   const sourceLabel =
-    source === "supabase"
-      ? "Supabase / GET /api/v1/menu/catalog"
-      : usingFallback
-        ? "Static fallback"
-        : "Static catalog";
+    source === "api"
+      ? "API GET /api/v1/menu/catalog"
+      : source === "supabase"
+        ? "Supabase (same catalog tables)"
+        : usingFallback
+          ? "Static fallback"
+          : "Static catalog";
 
   const openProduct = (product: MenuCatalogItemView) => {
     setSaveError(null);
@@ -206,8 +210,49 @@ export default function AdminMenu() {
       await reloadCatalog();
       const rows = await listMenuAuditEvents(accessToken, { resourceId: drawerProduct.id, limit: 20 });
       setAuditEvents(rows);
+      if (patch.price !== undefined) {
+        toast.success("Price updated successfully");
+      } else {
+        toast.success("Changes saved successfully");
+      }
     } catch (err) {
-      setSaveError(errorMessage(err));
+      const message = errorMessage(err);
+      setSaveError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function uploadSkuImage(file: File) {
+    if (!accessToken || !drawerProduct) {
+      throw new Error("Sign in required to upload images.");
+    }
+    const contentType =
+      file.type === "image/png" ? "image/png" : file.type === "image/webp" ? "image/webp" : "image/jpeg";
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const dataBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result ?? "");
+          const comma = result.indexOf(",");
+          resolve(comma >= 0 ? result.slice(comma + 1) : result);
+        };
+        reader.onerror = () => reject(new Error("Could not read image file."));
+        reader.readAsDataURL(file);
+      });
+      await uploadMenuSkuImage(accessToken, drawerProduct.id, { contentType, dataBase64 });
+      await reloadCatalog();
+      const rows = await listMenuAuditEvents(accessToken, { resourceId: drawerProduct.id, limit: 20 });
+      setAuditEvents(rows);
+      toast.success("Image uploaded successfully");
+    } catch (err) {
+      const message = errorMessage(err);
+      setSaveError(message);
+      toast.error(message);
+      throw err instanceof Error ? err : new Error(message);
     } finally {
       setSaving(false);
     }
@@ -353,6 +398,7 @@ export default function AdminMenu() {
         saveError={saveError}
         auditEvents={auditEvents}
         onSave={(patch) => void saveSku(patch)}
+        onUploadImage={(file) => uploadSkuImage(file)}
         onOpenSibling={openProduct}
         onClose={closeDrawer}
       />

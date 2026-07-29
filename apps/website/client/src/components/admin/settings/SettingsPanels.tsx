@@ -28,6 +28,7 @@ import {
   type OrganizationSettings as OrganizationSettingsRecord,
 } from "@/lib/admin-api";
 import { Link } from "wouter";
+import { toast } from "sonner";
 
 function settingsErr(err: unknown): string {
   if (err instanceof ApiRequestError) return err.message || `Request failed (${err.statusCode})`;
@@ -101,8 +102,10 @@ export function OrganizationSettings() {
         address: data.address ?? "",
       });
       setSavedAt(data.updatedAt);
+      toast.success("Organization settings saved");
     } catch (err) {
       setError(settingsErr(err));
+      toast.error(settingsErr(err));
     } finally {
       setSaving(false);
     }
@@ -237,6 +240,16 @@ export function BranchSettings({
       return;
     }
     let cancelled = false;
+    // Clear immediately so Save cannot PUT the previous branch's fields onto the new id.
+    setProfile(null);
+    setForm({
+      phone: "",
+      email: "",
+      address: "",
+      opensAt: "",
+      closesAt: "",
+      deliveryRadiusKm: "",
+    });
     setProfileLoading(true);
     setError(null);
     setSavedAt(null);
@@ -303,8 +316,10 @@ export function BranchSettings({
             : String(data.deliveryRadiusKm),
       });
       setSavedAt(data.updatedAt);
+      toast.success("Branch profile saved");
     } catch (err) {
       setError(settingsErr(err));
+      toast.error(settingsErr(err));
     } finally {
       setSaving(false);
     }
@@ -437,7 +452,14 @@ export function BranchSettings({
                 ) : null}
                 <button
                   type="submit"
-                  disabled={saving || !token || !form.address.trim()}
+                  disabled={
+                    saving ||
+                    !token ||
+                    profileLoading ||
+                    !profile ||
+                    profile.id !== selectedId ||
+                    !form.address.trim()
+                  }
                   className="min-h-11 rounded-lg bg-[var(--admin-ink)] px-4 text-sm font-semibold text-[var(--admin-panel)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {saving ? "Saving…" : "Save"}
@@ -547,6 +569,7 @@ export function DeliverySettings() {
     minimumOrderAmount: "",
     deliveryFee: "",
   });
+  const [loadedBranchId, setLoadedBranchId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedId && allowedBranches.length > 0) {
@@ -557,6 +580,13 @@ export function DeliverySettings() {
   useEffect(() => {
     if (!token || !selectedId) return;
     let cancelled = false;
+    // Clear immediately so Save cannot write the previous branch's fee/radius onto the new id.
+    setLoadedBranchId(null);
+    setForm({
+      deliveryRadiusKm: "",
+      minimumOrderAmount: "",
+      deliveryFee: "",
+    });
     setLoading(true);
     setError(null);
     setSavedAt(null);
@@ -575,6 +605,7 @@ export function DeliverySettings() {
           deliveryFee:
             data.deliveryFee === null || data.deliveryFee === undefined ? "" : String(data.deliveryFee),
         });
+        setLoadedBranchId(data.branchId);
       })
       .catch((err: unknown) => {
         if (!cancelled) setError(settingsErr(err));
@@ -621,9 +652,12 @@ export function DeliverySettings() {
         deliveryFee:
           data.deliveryFee === null || data.deliveryFee === undefined ? "" : String(data.deliveryFee),
       });
+      setLoadedBranchId(data.branchId);
       setSavedAt(data.updatedAt);
+      toast.success("Delivery settings saved");
     } catch (err) {
       setError(settingsErr(err));
+      toast.error(settingsErr(err));
     } finally {
       setSaving(false);
     }
@@ -724,7 +758,9 @@ export function DeliverySettings() {
             ) : null}
             <button
               type="submit"
-              disabled={saving || !token || !selectedId || loading}
+              disabled={
+                saving || !token || !selectedId || loading || loadedBranchId !== selectedId
+              }
               className="min-h-11 rounded-lg bg-[var(--admin-ink)] px-4 text-sm font-semibold text-[var(--admin-panel)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save"}

@@ -8,6 +8,7 @@ import type { AuthPrincipalRepository } from "../src/services/auth/supabase.js";
 import type { AuthPrincipal } from "../src/services/auth/principal.js";
 import { ApiError } from "../src/common/http.js";
 import {
+  providerStatusForNotificationUpsert,
   type OpeningOperationsService,
   type PaymentMethodRecord,
   type CashProcedureRecord,
@@ -225,6 +226,9 @@ function unusedOpeningOps(overrides: Partial<OpeningOperationsService> = {}): Op
     async recordDeviceFailure() {
       throw new Error("unused");
     },
+    async removeDevice() {
+      throw new Error("unused");
+    },
     async markDeviceExpired() {
       throw new Error("unused");
     },
@@ -234,6 +238,38 @@ function unusedOpeningOps(overrides: Partial<OpeningOperationsService> = {}): Op
   };
   return { ...base, ...overrides };
 }
+
+describe("opening M2 — notification upsert status honesty", () => {
+  it("preserves Production VERIFIED when re-saving an enabled channel", () => {
+    expect(
+      providerStatusForNotificationUpsert({ enabled: true, existingStatus: "VERIFIED" }),
+    ).toBeNull();
+    expect(
+      providerStatusForNotificationUpsert({
+        enabled: true,
+        existingStatus: "VERIFICATION_REQUIRED",
+      }),
+    ).toBeNull();
+    expect(
+      providerStatusForNotificationUpsert({ enabled: true, existingStatus: "CONFIGURED" }),
+    ).toBeNull();
+  });
+
+  it("sets CONFIGURED only for create or re-enable from NOT_CONFIGURED", () => {
+    expect(
+      providerStatusForNotificationUpsert({ enabled: true, existingStatus: null }),
+    ).toBe("CONFIGURED");
+    expect(
+      providerStatusForNotificationUpsert({ enabled: true, existingStatus: "NOT_CONFIGURED" }),
+    ).toBe("CONFIGURED");
+  });
+
+  it("clears to NOT_CONFIGURED on disable", () => {
+    expect(
+      providerStatusForNotificationUpsert({ enabled: false, existingStatus: "VERIFIED" }),
+    ).toBe("NOT_CONFIGURED");
+  });
+});
 
 describe("opening M2 — payment method APIs", () => {
   it("rejects forbidden payment method codes", async () => {
@@ -532,6 +568,28 @@ describe("opening M2 — devices", () => {
     expect(res.status).toBe(200);
     expect(res.body.data.verificationStatus).toBe("VERIFIED");
     expect(res.body.data.evidenceType).toBe("ONSITE_CHECK");
+  });
+
+  it("removes device from active inventory (NOT_APPLICABLE), not FAILED", async () => {
+    const { app } = createApp(readyEnv, {
+      authTokenVerifier: verifier("auth-founder", "founder@example.com"),
+      authProfileRepository: authRepo(principal()),
+      openingOperations: unusedOpeningOps({
+        async removeDevice() {
+          return device({
+            verificationStatus: "NOT_APPLICABLE",
+            failureReason: "Removed from opening device inventory",
+          });
+        },
+      }),
+    });
+
+    const res = await request(app)
+      .post("/api/v1/admin/opening/devices/dev-1/remove")
+      .set("Authorization", "Bearer test");
+    expect(res.status).toBe(200);
+    expect(res.body.data.verificationStatus).toBe("NOT_APPLICABLE");
+    expect(res.body.data.verificationStatus).not.toBe("FAILED");
   });
 
   it("rejects Northern Bypass cross-branch device mutation for BM", async () => {

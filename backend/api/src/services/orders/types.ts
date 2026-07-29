@@ -96,6 +96,11 @@ export interface CreateOrderInput {
    * Validated server-side in create_order_atomic (existence, branch, active).
    */
   diningSessionId?: string;
+  /**
+   * POS / staff payment method at create time.
+   * Launch allowlist: `cash` only. Card terminal / bank use bill settle, not place-order.
+   */
+  paymentMethod?: "cash";
 }
 
 export interface CreatedOrderSummary {

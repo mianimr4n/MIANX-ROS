@@ -309,11 +309,11 @@ export default function Menu() {
 
 
 
-          {!isLoading && source === "supabase" && !usingFallback && (
+          {!isLoading && (source === "supabase" || source === "api") && !usingFallback && (
 
             <p className="mt-3 text-xs text-brand-charcoal/70 font-[var(--font-accent)]">
 
-              Live menu loaded from Supabase ({groups.length} products)
+              Live menu loaded from {source === "api" ? "API" : "Supabase"} ({groups.length} products)
 
             </p>
 
