@@ -44,6 +44,10 @@ describe("HR & Workforce Management V1 (static)", () => {
     const attendance = read("apps/website/client/src/components/admin/hr/WorkforcePanels.tsx");
     assert.match(attendance, /will not simulate clock-in/);
     assert.doesNotMatch(attendance, /clockIn|clockOut|attendanceRecord/i);
+    const assignments = read("apps/website/client/src/components/admin/hr/StaffAssignmentsPanel.tsx");
+    assert.match(assignments, /Staff assignment data unavailable/);
+    assert.match(assignments, /loadFailed/);
+    assert.doesNotMatch(assignments, /const empty = !loading && \(rows\?\.length \?\? 0\) === 0/);
   });
 
   it("does not calculate payroll or leave balances", () => {

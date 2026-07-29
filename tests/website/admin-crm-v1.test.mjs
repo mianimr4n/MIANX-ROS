@@ -40,6 +40,10 @@ describe("CRM & Customer Management V1 (static)", () => {
     assert.match(kpis, /VIP customers/);
     assert.match(kpis, /FOUNDATION/);
     assert.match(kpis, /Blocked customers/);
+    assert.match(kpis, /Customer order window unavailable/);
+    assert.doesNotMatch(kpis, /totalCustomers \?\? 0/);
+    const page = read("apps/website/client/src/pages/admin/AdminCrm.tsx");
+    assert.match(page, /snapshot=\{live \? kpis : null\}/);
     const loyalty = read("apps/website/client/src/components/admin/crm/CustomerLoyalty.tsx");
     assert.match(loyalty, /Foundation/);
     assert.match(loyalty, /SMS opt-in/);

@@ -28,6 +28,7 @@ describe("Point of Sale V1 (static)", () => {
     assert.match(page, /createAdminPosOrder/);
     assert.doesNotMatch(page, /createOrderWithIdempotency/);
     assert.match(page, /operating/);
+    assert.doesNotMatch(page, /03000000000/);
   });
 
   it("exposes opening-ready payment methods without claiming an online gateway", () => {

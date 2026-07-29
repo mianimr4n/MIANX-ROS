@@ -442,7 +442,11 @@ export default function AdminDelivery() {
         className="mb-4"
       />
 
-      <DeliveryKPIs snapshot={kpiSnapshot} loading={loading} ridersLive={ridersLive} />
+      <DeliveryKPIs
+        snapshot={assignmentsOp.data != null ? kpiSnapshot : null}
+        loading={loading}
+        ridersLive={ridersLive}
+      />
 
       <DeliveryFilters
         filters={filters}

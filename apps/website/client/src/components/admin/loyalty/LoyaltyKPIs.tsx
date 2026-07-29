@@ -2,6 +2,42 @@ import { AdminKpiCard, AdminSectionTitle } from "@/components/admin/AdminKpiCard
 import type { LoyaltyKpiSnapshot } from "@/lib/admin-loyalty";
 import { formatPkr } from "@/lib/admin-order-format";
 
+function UnavailableLoyaltyKpis() {
+  const cards = [
+    "Loyalty customers",
+    "Active members",
+    "Repeat customers",
+    "Loyalty revenue",
+    "Avg lifetime spend",
+    "Points issued",
+    "Points redeemed",
+    "Reward liability",
+    "Redemption rate",
+    "Expiring points",
+  ] as const;
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {cards.map((title) => (
+        <AdminKpiCard
+          key={title}
+          title={title}
+          value="—"
+          source="UNAVAILABLE"
+          unavailable
+          detail={
+            title.startsWith("Points") ||
+            title === "Reward liability" ||
+            title === "Redemption rate" ||
+            title === "Expiring points"
+              ? "No loyalty ledger API"
+              : "Loyalty order window unavailable — not shown as zero"
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
 export function LoyaltyKPIs({
   snapshot,
   loading,
@@ -24,37 +60,39 @@ export function LoyaltyKPIs({
             <div key={i} className="h-[7.25rem] animate-pulse rounded-2xl bg-[var(--admin-soft)]" />
           ))}
         </div>
+      ) : !snapshot ? (
+        <UnavailableLoyaltyKpis />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <AdminKpiCard
             title="Loyalty customers"
-            value={String(snapshot?.derivedCustomers ?? 0)}
+            value={String(snapshot.derivedCustomers)}
             source="DERIVED"
             detail="Unique phones in loaded order window"
           />
           <AdminKpiCard
             title="Active members"
-            value={String(snapshot?.activeMembers ?? 0)}
+            value={String(snapshot.activeMembers)}
             source="DERIVED"
             detail="Ordered within last 30 days (not membership tier)"
           />
           <AdminKpiCard
             title="Repeat customers"
-            value={String(snapshot?.repeatCustomers ?? 0)}
+            value={String(snapshot.repeatCustomers)}
             source="DERIVED"
             detail="2+ orders in loaded window"
           />
           <AdminKpiCard
             title="Loyalty revenue"
-            value={formatPkr(snapshot?.loyaltyRevenue ?? 0)}
+            value={formatPkr(snapshot.loyaltyRevenue)}
             source="DERIVED"
             detail="Sum of lifetime spend in window"
           />
           <AdminKpiCard
             title="Avg lifetime spend"
-            value={snapshot?.averageLifetimeSpend != null ? formatPkr(snapshot.averageLifetimeSpend) : "—"}
-            source={snapshot?.averageLifetimeSpend != null ? "DERIVED" : "UNAVAILABLE"}
-            unavailable={snapshot?.averageLifetimeSpend == null}
+            value={snapshot.averageLifetimeSpend != null ? formatPkr(snapshot.averageLifetimeSpend) : "—"}
+            source={snapshot.averageLifetimeSpend != null ? "DERIVED" : "UNAVAILABLE"}
+            unavailable={snapshot.averageLifetimeSpend == null}
             detail="Mean per derived customer"
           />
           <AdminKpiCard

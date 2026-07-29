@@ -47,6 +47,8 @@ describe("Orders Management V1 (static)", () => {
     assert.match(kpis, /Avg preparation time/);
     assert.match(kpis, /UNAVAILABLE/);
     assert.match(kpis, /source="LIVE"/);
+    assert.match(kpis, /Order KPI payload unavailable/);
+    assert.doesNotMatch(kpis, /\?\? 0/);
   });
 
   it("does not invent schema migrations or auth changes in this slice", () => {

@@ -72,7 +72,7 @@ export default function AdminPos() {
   const [configureGroup, setConfigureGroup] = useState<MenuProductGroup | null>(null);
   const [guestMode, setGuestMode] = useState(true);
   const [customerName, setCustomerName] = useState("Walk-in Guest");
-  const [customerPhone, setCustomerPhone] = useState("03000000000");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [address, setAddress] = useState("");
   const [tableId, setTableId] = useState("");
   const [couponCode, setCouponCode] = useState("");

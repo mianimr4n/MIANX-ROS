@@ -277,7 +277,14 @@ export default function AdminMenu() {
       <MenuKPIs
         snapshot={kpis}
         loading={isLoading}
-        sourceNote={usingFallback ? "Static fallback catalog" : "Live catalog"}
+        catalogMode={usingFallback ? "fallback" : "live"}
+        sourceNote={
+          isLoading
+            ? "Loading catalog…"
+            : usingFallback
+              ? "Static fallback catalog (NON-AUTHORITATIVE)"
+              : "Live catalog"
+        }
       />
 
       <CategoryManager

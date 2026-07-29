@@ -54,7 +54,7 @@ export default function AdminInventory() {
 
       <InventoryStatusBanner />
 
-      <InventoryKPIs snapshot={snapshot} loading={isLoading} />
+      <InventoryKPIs snapshot={isLoading ? null : snapshot} loading={isLoading} />
 
       <InventoryFilters />
 

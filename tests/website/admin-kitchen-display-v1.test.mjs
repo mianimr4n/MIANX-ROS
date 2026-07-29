@@ -34,6 +34,10 @@ describe("Kitchen Display System V1 (static)", () => {
     const kpis = read("apps/website/client/src/components/admin/kitchen/KitchenKPIs.tsx");
     assert.match(kpis, /Kitchen capacity/);
     assert.match(kpis, /FOUNDATION/);
+    assert.match(kpis, /Kitchen ticket payload unavailable/);
+    assert.doesNotMatch(kpis, /\?\? 0/);
+    const page = read("apps/website/client/src/pages/admin/AdminKitchen.tsx");
+    assert.match(page, /ticketsOp\.data != null \? kpiSnapshot : null/);
   });
 
   it("labels AI panel as rule-based only", () => {

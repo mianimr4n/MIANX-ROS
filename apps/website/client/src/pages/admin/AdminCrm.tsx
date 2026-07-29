@@ -64,7 +64,7 @@ export default function AdminCrm() {
   const [orders, setOrders] = useState<AdminOrderListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [live, setLive] = useState(true);
+  const [live, setLive] = useState(false);
   const [searchDraft, setSearchDraft] = useState(urlState.search);
   const [sortKey, setSortKey] = useState<CrmSortKey>("lastOrderAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -115,6 +115,7 @@ export default function AdminCrm() {
       setError(null);
       setLive(true);
     } catch (err) {
+      setOrders([]);
       setError(err instanceof ApiRequestError ? err.message : "Failed to load customer order window");
       setLive(false);
     } finally {
@@ -236,7 +237,7 @@ export default function AdminCrm() {
       />
 
       <CustomerKPIs
-        snapshot={kpis}
+        snapshot={live ? kpis : null}
         loading={loading}
         windowNote={`Derived from up to ${ORDER_FETCH_LIMIT} orders in the current branch scope.`}
       />
