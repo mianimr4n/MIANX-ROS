@@ -153,6 +153,19 @@ export function updateMenuSku(accessToken: string, skuId: string, body: UpdateMe
   );
 }
 
+export function uploadMenuSkuImage(
+  accessToken: string,
+  skuId: string,
+  body: { contentType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string },
+) {
+  return fetchApiData<AdminMenuSku>(`/admin/menu/skus/${skuId}/image`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
 export function listMenuAuditEvents(
   accessToken: string,
   query?: { resourceId?: string; limit?: number },

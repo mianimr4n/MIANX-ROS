@@ -24,7 +24,8 @@ export function createApp(
       origin: envStatus.config.corsOrigin,
     }),
   );
-  app.use(express.json());
+  // 2mb covers admin menu JPG/PNG uploads (base64) without opening unbounded payloads.
+  app.use(express.json({ limit: "2mb" }));
 
   app.get("/healthz", (_req, res) => {
     res.json({

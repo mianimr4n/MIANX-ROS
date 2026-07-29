@@ -113,6 +113,12 @@ export interface MenuAuditEventRecord {
   createdAt: string;
 }
 
+export interface UploadSkuImageInput {
+  contentType: "image/jpeg" | "image/png" | "image/webp";
+  /** Raw base64 payload (no data: URL prefix). Max ~1.5 MiB decoded. */
+  dataBase64: string;
+}
+
 export interface MenuManagementService {
   listCategories(): Promise<MenuCategoryRecord[]>;
   createCategory(actor: MenuActor, input: CreateMenuCategoryInput): Promise<MenuCategoryRecord>;
@@ -124,6 +130,11 @@ export interface MenuManagementService {
   listProductGroups(filters?: { categoryId?: string }): Promise<MenuProductGroupRecord[]>;
   createSku(actor: MenuActor, input: CreateMenuSkuInput): Promise<MenuSkuRecord>;
   updateSku(actor: MenuActor, skuId: string, input: UpdateMenuSkuInput): Promise<MenuSkuRecord>;
+  uploadSkuImage(
+    actor: MenuActor,
+    skuId: string,
+    input: UploadSkuImageInput,
+  ): Promise<MenuSkuRecord>;
   listAuditEvents(filters?: { resourceId?: string; limit?: number }): Promise<MenuAuditEventRecord[]>;
 }
 
@@ -570,6 +581,65 @@ export function createMenuManagementService(envStatus: EnvironmentStatus): MenuM
           isAvailable: row.is_available,
         },
         correlationId: input.correlationId ?? null,
+      });
+
+      const categorySlugs = await loadCategorySlugs();
+      return toSkuRecord(row, categorySlugs.get(row.category_id) ?? "uncategorized");
+    },
+
+    async uploadSkuImage(actor, skuId, input) {
+      const before = await loadSku(skuId);
+      const decoded = Buffer.from(input.dataBase64, "base64");
+      if (decoded.byteLength === 0) {
+        throw new ApiError(400, "VALIDATION_ERROR", "Image payload is empty.");
+      }
+      if (decoded.byteLength > 2 * 1024 * 1024) {
+        throw new ApiError(400, "VALIDATION_ERROR", "Image must be 2 MB or smaller.");
+      }
+
+      const ext =
+        input.contentType === "image/png" ? "png" : input.contentType === "image/webp" ? "webp" : "jpg";
+      const objectPath = `${skuId}/${Date.now()}.${ext}`;
+      const bucket = "menu-product-images";
+      const supabase = getClient();
+
+      const { error: uploadError } = await supabase.storage.from(bucket).upload(objectPath, decoded, {
+        contentType: input.contentType,
+        upsert: true,
+      });
+      if (uploadError) {
+        throw new ApiError(
+          503,
+          "MENU_IMAGE_UPLOAD_FAILED",
+          uploadError.message.includes("Bucket not found")
+            ? "Image storage bucket is not configured. Apply the menu-product-images migration."
+            : uploadError.message,
+        );
+      }
+
+      const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(objectPath);
+      const imageUrl = publicData.publicUrl;
+      if (!imageUrl || imageUrl.length > 500) {
+        throw new ApiError(500, "MENU_IMAGE_UPLOAD_FAILED", "Public image URL is missing or too long.");
+      }
+
+      const { data, error } = await supabase
+        .from("menu_items")
+        .update({ image_url: imageUrl })
+        .eq("id", skuId)
+        .select(SKU_COLUMNS)
+        .maybeSingle();
+      if (error) throw new ApiError(500, "MENU_ITEM_UPDATE_FAILED", error.message);
+      if (!data) throw new ApiError(404, "MENU_ITEM_NOT_FOUND", "Menu item not found.");
+
+      const row = data as SkuRow;
+      await writeAudit({
+        actor,
+        resourceType: "menu_item",
+        resourceId: skuId,
+        action: "item.image_upload",
+        before: { imageUrl: before.image_url },
+        after: { imageUrl: row.image_url },
       });
 
       const categorySlugs = await loadCategorySlugs();

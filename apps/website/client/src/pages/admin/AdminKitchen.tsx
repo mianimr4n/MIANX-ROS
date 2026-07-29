@@ -28,6 +28,7 @@ import {
 } from "@/lib/admin-kitchen";
 import { getAdminOrder, listAdminOrders, type AdminOrderDetail } from "@/lib/admin-api";
 import { ApiRequestError } from "@/lib/api";
+import { toast } from "sonner";
 import { useOperationalData } from "@/lib/op-status";
 import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
 import {
@@ -244,6 +245,15 @@ export default function AdminKitchen() {
     try {
       await patchKitchenTicketStatus(token, ticket.id, toStatus);
       setActionError(null);
+      const label =
+        toStatus === "accepted"
+          ? "Ticket accepted"
+          : toStatus === "ready"
+            ? "Ticket marked Ready"
+            : toStatus === "preparing"
+              ? "Ticket moved to Preparing"
+              : `Ticket updated to ${toStatus}`;
+      toast.success(label);
       ticketsOp.retry();
       if (selectedTicket?.id === ticket.id) {
         const refreshed = (await listKitchenTickets(token, { branchId: branchIdFilter, limit: 100 })).find(
@@ -253,6 +263,7 @@ export default function AdminKitchen() {
       }
     } catch (err) {
       setActionError(err instanceof ApiRequestError ? err.message : "Kitchen status update failed");
+      toast.error(err instanceof ApiRequestError ? err.message : "Kitchen status update failed");
     } finally {
       setBusyTicketId(null);
     }

@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 
 import { AvailabilityPanel } from "@/components/admin/menu/AvailabilityPanel";
 import { ModifierManager } from "@/components/admin/menu/ModifierManager";
@@ -9,6 +9,8 @@ import { SkuFamilyPanel } from "@/components/admin/menu/SkuFamilyPanel";
 import { itemSku, type MenuCatalogItemView } from "@/lib/admin-menu";
 import type { AdminMenuAuditEvent, UpdateMenuSkuBody } from "@/lib/admin-menu-api";
 import { formatPkr } from "@/lib/admin-order-format";
+
+const ACCEPTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png"]);
 
 export function ProductDrawer({
   open,
@@ -20,6 +22,7 @@ export function ProductDrawer({
   saveError,
   auditEvents,
   onSave,
+  onUploadImage,
   onOpenSibling,
   onClose,
 }: {
@@ -33,17 +36,21 @@ export function ProductDrawer({
   saveError: string | null;
   auditEvents: AdminMenuAuditEvent[];
   onSave: (patch: UpdateMenuSkuBody) => void;
+  onUploadImage: (file: File) => void | Promise<void>;
   onOpenSibling: (sibling: MenuCatalogItemView) => void;
   onClose: () => void;
 }) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [sizeLabel, setSizeLabel] = useState("");
   const [productGroupSlug, setProductGroupSlug] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -63,7 +70,15 @@ export function ProductDrawer({
     setProductGroupSlug(product.productGroupSlug ?? product.slug ?? product.id);
     setCategoryId(categories.find((c) => c.slug === product.categorySlug)?.id ?? "");
     setImageUrl(product.image ?? "");
+    setLocalPreview(null);
+    setImageError(null);
   }, [product, categories]);
+
+  useEffect(() => {
+    return () => {
+      if (localPreview) URL.revokeObjectURL(localPreview);
+    };
+  }, [localPreview]);
 
   if (!open || !product) return null;
 
@@ -74,6 +89,8 @@ export function ProductDrawer({
     productGroupSlug !== (product.productGroupSlug ?? product.slug ?? product.id) ||
     imageUrl !== (product.image ?? "") ||
     (categoryId !== "" && categoryId !== categories.find((c) => c.slug === product.categorySlug)?.id);
+
+  const displayImage = localPreview || imageUrl || product.image;
 
   const saveDetails = () => {
     const patch: UpdateMenuSkuBody = {
@@ -86,6 +103,26 @@ export function ProductDrawer({
     const originalCategoryId = categories.find((c) => c.slug === product.categorySlug)?.id;
     if (categoryId && categoryId !== originalCategoryId) patch.categoryId = categoryId;
     onSave(patch);
+  };
+
+  const onFilePicked = async (file: File | undefined) => {
+    if (!file) return;
+    setImageError(null);
+    if (!ACCEPTED_IMAGE_TYPES.has(file.type)) {
+      setImageError("Please choose a JPG or PNG image.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setImageError("Image must be 2 MB or smaller.");
+      return;
+    }
+    if (localPreview) URL.revokeObjectURL(localPreview);
+    setLocalPreview(URL.createObjectURL(file));
+    try {
+      await onUploadImage(file);
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : "Image upload failed.");
+    }
   };
 
   return (
@@ -121,13 +158,48 @@ export function ProductDrawer({
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           <div className="space-y-6">
-            {product.image ? (
-              <img src={product.image} alt="" className="aspect-video w-full rounded-xl object-cover" />
-            ) : (
-              <div className="flex aspect-video items-center justify-center rounded-xl bg-[var(--admin-soft)] text-sm text-[var(--admin-muted)]">
-                No image in catalog
-              </div>
-            )}
+            <section aria-labelledby="product-image-heading" className="space-y-3">
+              <h3 id="product-image-heading" className="text-sm font-semibold">
+                Product image
+              </h3>
+              {displayImage ? (
+                <img src={displayImage} alt="" className="aspect-video w-full rounded-xl object-cover" />
+              ) : (
+                <div className="flex aspect-video items-center justify-center rounded-xl bg-[var(--admin-soft)] text-sm text-[var(--admin-muted)]">
+                  No image in catalog
+                </div>
+              )}
+              {canWrite ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                    className="sr-only"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      event.target.value = "";
+                      void onFilePicked(file);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[var(--brand-red)] px-4 text-sm font-semibold text-white disabled:opacity-40"
+                  >
+                    <ImagePlus className="h-4 w-4" aria-hidden />
+                    {saving ? "Uploading…" : "Upload Image"}
+                  </button>
+                  <p className="text-xs text-[var(--admin-muted)]">JPG or PNG · max 2 MB</p>
+                </div>
+              ) : null}
+              {imageError ? (
+                <p className="text-xs text-red-700" role="alert">
+                  {imageError}
+                </p>
+              ) : null}
+            </section>
 
             <section aria-labelledby="general-heading">
               <h3 id="general-heading" className="text-sm font-semibold">
@@ -190,7 +262,7 @@ export function ProductDrawer({
                     </select>
                   </label>
                   <label className="block text-sm font-medium">
-                    Image URL
+                    Image URL (optional)
                     <input
                       value={imageUrl}
                       disabled={!canWrite || saving}
@@ -206,7 +278,7 @@ export function ProductDrawer({
                     onClick={saveDetails}
                     className="min-h-11 rounded-xl border border-[var(--admin-border)] px-4 text-sm font-semibold disabled:opacity-40"
                   >
-                    {saving ? "Saving…" : "Save details"}
+                    {saving ? "Saving…" : "Save Changes"}
                   </button>
                 ) : (
                   <p className="text-xs text-[var(--admin-muted)]">

@@ -76,7 +76,7 @@ export function PricingPanel({
             onClick={() => onSave({ price: parsed, isAvailable: available })}
             className="min-h-11 rounded-xl bg-[var(--brand-red)] px-4 text-sm font-semibold text-white disabled:opacity-40"
           >
-            {saving ? "Saving…" : "Save price & availability"}
+            {saving ? "Saving…" : "Save Changes"}
           </button>
         ) : (
           <p className="text-xs text-[var(--admin-muted)]">

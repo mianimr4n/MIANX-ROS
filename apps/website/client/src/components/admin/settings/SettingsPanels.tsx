@@ -28,6 +28,7 @@ import {
   type OrganizationSettings as OrganizationSettingsRecord,
 } from "@/lib/admin-api";
 import { Link } from "wouter";
+import { toast } from "sonner";
 
 function settingsErr(err: unknown): string {
   if (err instanceof ApiRequestError) return err.message || `Request failed (${err.statusCode})`;
@@ -101,8 +102,10 @@ export function OrganizationSettings() {
         address: data.address ?? "",
       });
       setSavedAt(data.updatedAt);
+      toast.success("Organization settings saved");
     } catch (err) {
       setError(settingsErr(err));
+      toast.error(settingsErr(err));
     } finally {
       setSaving(false);
     }
@@ -313,8 +316,10 @@ export function BranchSettings({
             : String(data.deliveryRadiusKm),
       });
       setSavedAt(data.updatedAt);
+      toast.success("Branch profile saved");
     } catch (err) {
       setError(settingsErr(err));
+      toast.error(settingsErr(err));
     } finally {
       setSaving(false);
     }
@@ -649,8 +654,10 @@ export function DeliverySettings() {
       });
       setLoadedBranchId(data.branchId);
       setSavedAt(data.updatedAt);
+      toast.success("Delivery settings saved");
     } catch (err) {
       setError(settingsErr(err));
+      toast.error(settingsErr(err));
     } finally {
       setSaving(false);
     }
