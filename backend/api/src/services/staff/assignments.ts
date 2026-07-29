@@ -148,7 +148,7 @@ type UserRoleRow = {
 };
 
 const SELECT =
-  "id, user_id, role_id, branch_id, assignment_status, invitation_id, assigned_by, assigned_at, verified_by, verified_at, deactivated_by, deactivated_at, notes, created_at, updated_at, roles(code), users(email, full_name), branches(branch_code, name)";
+  "id, user_id, role_id, branch_id, assignment_status, invitation_id, assigned_by, assigned_at, verified_by, verified_at, deactivated_by, deactivated_at, notes, created_at, updated_at, roles(code), users!user_roles_user_id_fkey(email, full_name), branches(branch_code, name)";
 
 function createServiceClient(envStatus: EnvironmentStatus): SupabaseClient {
   if (!envStatus.config.supabaseUrl || !envStatus.config.supabaseServiceRoleKey) {
