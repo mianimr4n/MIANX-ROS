@@ -1393,3 +1393,172 @@ export function reviewOpeningSop(accessToken: string, id: string, notes?: string
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }
+
+export type OpeningStaffSeedRun = {
+  id: string;
+  branchId: string;
+  runStatus: string;
+  environmentMode: string;
+  productionApplyAuthorized: boolean;
+  seedScriptHash: string;
+  handoverFileHash: string | null;
+  handoverCipherPath: string | null;
+  keyFilePathHint: string | null;
+  localTestOnly: boolean;
+  createdAt: string;
+};
+
+export type OpeningLiveConfigSnapshot = {
+  id: string;
+  branchId: string;
+  snapshotStatus: string;
+  timezone: string;
+  operatingHoursStart: string;
+  operatingHoursEnd: string;
+  serviceModes: unknown;
+  paymentMethods: unknown;
+  notificationChannels: unknown;
+  deviceRecords: unknown;
+  localTestOnly: boolean;
+  snapshotHash: string;
+  capturedAt: string;
+};
+
+export type OpeningDryRunSession = {
+  id: string;
+  branchId: string;
+  sessionStatus: string;
+  result: string;
+  simulatedOrderId: string | null;
+  simulatedTicketId: string | null;
+  simulatedDeliveryId: string | null;
+  readinessPercentage: number | null;
+  localTestOnly: boolean;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+};
+
+export type OpeningDryRunDecision = "GO" | "NO_GO" | "REVIEW_REQUIRED";
+
+export type OpeningDryRunEvidence = {
+  id: string;
+  dryRunId: string;
+  branchId: string;
+  evidenceHash: string;
+  decision: OpeningDryRunDecision | "NOT_DECIDED";
+  decidedAt: string;
+  readinessPercentage: number | null;
+  logHash: string;
+  localTestOnly: boolean;
+  northernBypassUnchanged: boolean;
+  branchStatusUnchanged: boolean;
+  createdAt: string;
+};
+
+export function listOpeningStaffSeedRuns(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningStaffSeedRun[]>(
+    `/admin/opening/staff-seed/runs?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function simulateOpeningStaffSeedLocal(
+  accessToken: string,
+  input: { branchId: string; handoverDir: string; keyDir: string; notes?: string | null },
+) {
+  return fetchApiData<{
+    run: OpeningStaffSeedRun;
+    accountCount: number;
+    handoverCipherPath: string;
+    keyFilePath: string;
+    passwordsReturned: false;
+  }>(`/admin/opening/staff-seed/simulate-local`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningLiveConfigSnapshots(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningLiveConfigSnapshot[]>(
+    `/admin/opening/live-config?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function captureOpeningLiveConfigSnapshot(
+  accessToken: string,
+  input: { branchId: string; notes?: string | null },
+) {
+  return fetchApiData<OpeningLiveConfigSnapshot>(`/admin/opening/live-config/snapshot`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listOpeningDryRuns(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<OpeningDryRunSession[]>(
+    `/admin/opening/dry-runs?${openingQuery(branchId)}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function startOpeningDryRun(
+  accessToken: string,
+  input: { branchId: string; seedRunId?: string | null; liveConfigSnapshotId?: string | null },
+) {
+  return fetchApiData<OpeningDryRunSession>(`/admin/opening/dry-runs`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function recordOpeningDryRunStep(
+  accessToken: string,
+  id: string,
+  input: {
+    stepCode: string;
+    stepStatus: "PASSED" | "FAILED" | "SKIPPED";
+    evidenceSummary?: string | null;
+    screenshotHash?: string | null;
+  },
+) {
+  return fetchApiData<OpeningDryRunSession>(`/admin/opening/dry-runs/${id}/steps`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function completeOpeningDryRun(
+  accessToken: string,
+  id: string,
+  input?: { readinessPercentage?: number | null },
+) {
+  return fetchApiData<OpeningDryRunSession>(`/admin/opening/dry-runs/${id}/complete`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input ?? {}),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function recordOpeningDryRunFounderDecision(
+  accessToken: string,
+  id: string,
+  input: { decision: OpeningDryRunDecision; notes?: string | null },
+) {
+  return fetchApiData<OpeningDryRunEvidence>(`/admin/opening/dry-runs/${id}/founder-decision`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}

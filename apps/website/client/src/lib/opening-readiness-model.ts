@@ -101,6 +101,9 @@ export type OpeningReadinessItemId =
   | "reliability-api"
   | "reliability-rollback"
   | "reliability-incident"
+  | "gov-staff-seed"
+  | "gov-live-config"
+  | "gov-dry-run"
   | "gov-founder-approval"
   | "gov-owner-handover"
   | "gov-northern-bypass";
@@ -845,6 +848,51 @@ export const OPENING_READINESS_DEFINITIONS: readonly OpeningReadinessDefinition[
     defaultNextAction: "Confirm opening-day incident escalation contacts in Opening Day Runbook.",
   },
   {
+    id: "gov-staff-seed",
+    category: "GOVERNANCE",
+    title: "Royal Orchard staff seeding (local simulation)",
+    description: "Sealed local staff seed with encrypted handover — Production apply blocked without Founder auth.",
+    requiredForOpening: true,
+    branchApplicability: "royal-orchard",
+    sourceType: "DERIVED_API",
+    contributesToPercentage: true,
+    blockingSeverity: "high",
+    ownerDecision: true,
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Staff seed not simulated for Royal Orchard.",
+    defaultNextAction: "Run local staff seed simulation and seal handover outside Git.",
+  },
+  {
+    id: "gov-live-config",
+    category: "GOVERNANCE",
+    title: "Live environment configuration snapshot",
+    description: "Branch hours, CASH-only dry-run payments, mock notifications, and documented devices.",
+    requiredForOpening: true,
+    branchApplicability: "royal-orchard",
+    sourceType: "DERIVED_API",
+    contributesToPercentage: true,
+    blockingSeverity: "high",
+    ownerDecision: false,
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "Live configuration snapshot not captured.",
+    defaultNextAction: "Capture local live-config snapshot in Opening dry-run panel.",
+  },
+  {
+    id: "gov-dry-run",
+    category: "GOVERNANCE",
+    title: "GO/NO-GO dry-run evidence",
+    description: "Multi-role local dry-run with immutable Founder decision evidence.",
+    requiredForOpening: true,
+    branchApplicability: "royal-orchard",
+    sourceType: "DERIVED_API",
+    contributesToPercentage: true,
+    blockingSeverity: "critical",
+    ownerDecision: true,
+    deepLink: "/admin/settings?category=operations",
+    defaultProblem: "GO/NO-GO dry-run not completed with immutable evidence.",
+    defaultNextAction: "Execute local dry-run steps and record Founder GO/NO-GO evidence.",
+  },
+  {
     id: "gov-founder-approval",
     category: "GOVERNANCE",
     title: "Founder opening approval",
@@ -1563,6 +1611,34 @@ export function evaluateOpeningReadiness(signals: OpeningReadinessSignals): Eval
             failed: "e2eRehearsalFailed",
             activeProblem: "End-to-end rehearsal scheduled or in progress — Production verification pending.",
             activeNextAction: "Complete full rehearsal with non-local evidence in Opening governance.",
+          }),
+        );
+        break;
+      case "gov-staff-seed":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "staffSeedSimulated",
+            failed: "staffSeedFailed",
+            activeProblem: "Local staff seed simulated — Production apply still blocked without Founder auth.",
+            activeNextAction: "Keep handover sealed outside Git; do not apply to Production in this delivery.",
+          }),
+        );
+        break;
+      case "gov-live-config":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "liveConfigCaptured",
+          }),
+        );
+        break;
+      case "gov-dry-run":
+        items.push(
+          openingM2ProbeItem(def, signals, {
+            verified: "dryRunProductionComplete",
+            configured: "dryRunLocalPassed",
+            failed: "dryRunFailed",
+            activeProblem: "Local dry-run passed — Production dry-run evidence still required for COMPLETE.",
+            activeNextAction: "Record Founder decision evidence; local_test_only never opens Production.",
           }),
         );
         break;

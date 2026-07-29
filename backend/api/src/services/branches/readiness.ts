@@ -114,6 +114,14 @@ export interface BranchReadinessReport {
     founderGoApproved: boolean;
     founderGoFailed: boolean;
     ownerHandoverReady: boolean;
+    // M4: staff seed / live config / dry-run
+    staffSeedSimulated: boolean;
+    staffSeedFailed: boolean;
+    liveConfigCaptured: boolean;
+    dryRunLocalPassed: boolean;
+    dryRunProductionComplete: boolean;
+    dryRunFailed: boolean;
+    dryRunGoRecorded: boolean;
   };
 }
 
@@ -199,6 +207,13 @@ function defaultM2ChecksFalse() {
     founderGoApproved: false,
     founderGoFailed: false,
     ownerHandoverReady: false,
+    staffSeedSimulated: false,
+    staffSeedFailed: false,
+    liveConfigCaptured: false,
+    dryRunLocalPassed: false,
+    dryRunProductionComplete: false,
+    dryRunFailed: false,
+    dryRunGoRecorded: false,
   };
 }
 
@@ -373,6 +388,10 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
         e2eRehearsalsResult,
         founderDecisionsResult,
         ownerHandoverResult,
+        staffSeedRunsResult,
+        liveConfigResult,
+        dryRunSessionsResult,
+        dryRunEvidenceResult,
       ] = await Promise.all([
         supabase
           .from("restaurant_floors")
@@ -443,6 +462,27 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
           .select("handover_status")
           .eq("branch_id", branchId)
           .maybeSingle(),
+        // M4 queries
+        supabase
+          .from("branch_staff_seed_runs")
+          .select("run_status, local_test_only, production_apply_authorized")
+          .eq("branch_id", branchId),
+        supabase
+          .from("branch_live_config_snapshots")
+          .select("id, local_test_only, snapshot_status")
+          .eq("branch_id", branchId)
+          .order("captured_at", { ascending: false })
+          .limit(1),
+        supabase
+          .from("branch_dry_run_sessions")
+          .select("session_status, result, local_test_only")
+          .eq("branch_id", branchId),
+        supabase
+          .from("branch_dry_run_evidence")
+          .select("decision, local_test_only")
+          .eq("branch_id", branchId)
+          .order("decided_at", { ascending: false })
+          .limit(1),
       ]);
 
       if (
@@ -722,6 +762,45 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
       const handoverRow = ownerHandoverResult.data as { handover_status?: string } | null;
       const ownerHandoverReady = handoverRow?.handover_status === "READY_FOR_HANDOVER";
 
+      // M4 staff seed / live config / dry-run (local_test_only never Production COMPLETE)
+      const seedRuns = (staffSeedRunsResult.data ?? []) as Array<{
+        run_status: string;
+        local_test_only: boolean;
+        production_apply_authorized: boolean;
+      }>;
+      const staffSeedSimulated = seedRuns.some(
+        (r) => r.run_status === "SIMULATED_LOCAL" || r.run_status === "APPLIED_LOCAL",
+      );
+      const staffSeedFailed = seedRuns.some(
+        (r) => r.run_status === "FAILED" || r.run_status === "BLOCKED_PRODUCTION",
+      );
+
+      const liveConfigRows = (liveConfigResult.data ?? []) as Array<{
+        id: string;
+        local_test_only: boolean;
+        snapshot_status: string;
+      }>;
+      const liveConfigCaptured = liveConfigRows.some((r) => r.snapshot_status === "CAPTURED");
+
+      const dryRuns = (dryRunSessionsResult.data ?? []) as Array<{
+        session_status: string;
+        result: string;
+        local_test_only: boolean;
+      }>;
+      const dryRunLocalPassed = dryRuns.some(
+        (r) => r.session_status === "COMPLETED" && r.result === "PASS" && r.local_test_only,
+      );
+      const dryRunProductionComplete = dryRuns.some(
+        (r) => r.session_status === "COMPLETED" && r.result === "PASS" && !r.local_test_only,
+      );
+      const dryRunFailed = dryRuns.some((r) => r.session_status === "FAILED" || r.result === "FAIL");
+
+      const dryEvidence = (dryRunEvidenceResult.data ?? []) as Array<{
+        decision: string;
+        local_test_only: boolean;
+      }>;
+      const dryRunGoRecorded = dryEvidence.some((e) => e.decision === "GO");
+
       const checks = {
         phone,
         operatingHours: hoursOk,
@@ -807,6 +886,13 @@ export function createBranchReadinessService(envStatus: EnvironmentStatus) {
         founderGoApproved,
         founderGoFailed,
         ownerHandoverReady,
+        staffSeedSimulated,
+        staffSeedFailed,
+        liveConfigCaptured,
+        dryRunLocalPassed,
+        dryRunProductionComplete,
+        dryRunFailed,
+        dryRunGoRecorded,
       };
 
       const blockers: Array<{ code: string; message: string; nextAction?: string }> = [];

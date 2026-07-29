@@ -1,6 +1,7 @@
 import type { Branch } from "@/lib/telepizza-types";
 import { SEEDED_PERMISSIONS, SEEDED_ROLES } from "@/lib/admin-settings";
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
+import { OpeningDryRunPanel } from "@/components/admin/OpeningDryRunPanel";
 import { OpeningGovernancePanel } from "@/components/admin/OpeningGovernancePanel";
 import { OpeningOperationsPanel } from "@/components/admin/OpeningOperationsPanel";
 import {
@@ -106,6 +107,7 @@ export function RestaurantOperationsSettings() {
       />
       <OpeningOperationsPanel />
       <OpeningGovernancePanel />
+      <OpeningDryRunPanel />
     </div>
   );
 }
