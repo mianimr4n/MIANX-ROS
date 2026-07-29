@@ -389,7 +389,14 @@ describe("Bugbot #7 — Opening Readiness Lead uses shared model", () => {
     const lead = cards.find((c) => c.id === "opening-readiness");
     assert.equal(lead.status, "WAITING_ON_HUMAN");
     assert.match(lead.verifiedSignal, /critical blockers/);
-    assert.equal(lead.nextAction, next.nextAction);
+    // Governance decision: Founder approval nextAction takes priority over the top Owner
+    // Decision Queue item whenever founder approval isn't COMPLETE — "human governance
+    // supersedes operations" is a core Telepizza ROS / Mianx.ai governance principle.
+    assert.match(
+      lead.nextAction,
+      /Review readiness evidence and record an immutable Founder decision/i,
+      "When Founder approval is not COMPLETE, it must take priority over the top Owner Decision Queue item.",
+    );
     assert.doesNotMatch(lead.verifiedSignal, /blockers 0/);
   });
 
