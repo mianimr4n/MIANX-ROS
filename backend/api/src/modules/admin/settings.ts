@@ -11,12 +11,18 @@ import type { AuthTokenVerifier } from "../../middleware/auth.js";
 import type { AuthPrincipalRepository } from "../../services/auth/supabase.js";
 import type { AuthPrincipal } from "../../services/auth/principal.js";
 import type { BranchActorScope } from "../../services/tables/management.js";
-import type { BranchProfileService } from "../../services/branches/profile.js";
+import type { BranchSettingsService } from "../../services/settings/branch.js";
 
-export interface AdminBranchProfileRouterDependencies {
+/**
+ * Owner ERP — GET/PUT /admin/branches/:id/settings
+ * Hours + delivery radius / min order / fee from public.branches.
+ * Gated by branch.manage or admin.access.
+ */
+
+export interface AdminBranchSettingsRouterDependencies {
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
-  branchProfile: BranchProfileService;
+  branchSettings: BranchSettingsService;
 }
 
 function scopeFrom(principal: AuthPrincipal): BranchActorScope {
@@ -28,47 +34,42 @@ function scopeFrom(principal: AuthPrincipal): BranchActorScope {
   };
 }
 
+const timeSchema = z
+  .string()
+  .trim()
+  .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Must be HH:MM (24-hour)")
+  .nullable()
+  .optional();
+
 const updateSchema = z
   .object({
-    phone: z.string().trim().max(30).nullable().optional(),
-    email: z.string().trim().max(150).nullable().optional(),
-    address: z.string().trim().min(1).max(2000).optional(),
-    opensAt: z
-      .string()
-      .trim()
-      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "opensAt must be HH:MM (24-hour)")
-      .nullable()
-      .optional(),
-    closesAt: z
-      .string()
-      .trim()
-      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "closesAt must be HH:MM (24-hour)")
-      .nullable()
-      .optional(),
+    opensAt: timeSchema,
+    closesAt: timeSchema,
     deliveryRadiusKm: z.number().finite().min(0).max(500).nullable().optional(),
+    minimumOrderAmount: z.number().finite().min(0).max(1_000_000).nullable().optional(),
+    deliveryFee: z.number().finite().min(0).max(1_000_000).nullable().optional(),
   })
   .strict()
   .refine((body) => Object.keys(body).length > 0, {
-    message: "At least one branch profile field is required.",
+    message: "At least one branch settings field is required.",
   });
 
-export function createAdminBranchProfileRouter(deps: AdminBranchProfileRouterDependencies): Router {
+export function createAdminBranchSettingsRouter(deps: AdminBranchSettingsRouterDependencies): Router {
   const router = Router();
   const requireAuthenticatedUser = createRequireAuthenticatedUser(
     deps.authTokenVerifier,
     deps.authProfileRepository,
   );
-  const requireBranchWrite = requireAnyPermission(["branch.manage", "admin.access"]);
+  const requireBranchSettingsAccess = requireAnyPermission(["branch.manage", "admin.access"]);
 
-  // Companion read for the Settings editor (catalog GET lacks email / radius / structured hours).
   router.get(
-    "/branches/:id",
+    "/branches/:id/settings",
     requireAuthenticatedUser,
-    requireBranchWrite,
+    requireBranchSettingsAccess,
     async (req, res, next) => {
       try {
         const principal = (req as AuthorizedRequest).principal!;
-        const data = await deps.branchProfile.get(scopeFrom(principal), req.params.id);
+        const data = await deps.branchSettings.get(scopeFrom(principal), req.params.id);
         return res.json({ ok: true, data });
       } catch (error) {
         return next(error);
@@ -77,15 +78,15 @@ export function createAdminBranchProfileRouter(deps: AdminBranchProfileRouterDep
   );
 
   router.put(
-    "/branches/:id",
+    "/branches/:id/settings",
     requireAuthenticatedUser,
-    requireBranchWrite,
+    requireBranchSettingsAccess,
     validateBody(updateSchema),
     async (req, res, next) => {
       try {
         const principal = (req as AuthorizedRequest).principal!;
         const body = req.body as z.infer<typeof updateSchema>;
-        const data = await deps.branchProfile.update(principal, req.params.id, body);
+        const data = await deps.branchSettings.update(principal, req.params.id, body);
         return res.json({ ok: true, data });
       } catch (error) {
         return next(error);

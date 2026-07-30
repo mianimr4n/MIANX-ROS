@@ -20,12 +20,12 @@ export function SettingsHeader({
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
         </p>
         <p className="mt-1 text-xs text-[var(--admin-muted)]">
-          Settings foundation — verified read-only catalog and RBAC; persistence APIs required for edits
+          Live organization, branch hours, and delivery settings — payment credentials stay Environment Managed
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-2 rounded-full bg-[var(--admin-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-muted)]">
-          Foundation workspace
+        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
+          Partial LIVE workspace
         </span>
         <span className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800">
           Organization / Branch scope
@@ -42,14 +42,7 @@ export function SettingsHeader({
           disabled
           className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
         >
-          Save changes · Foundation
-        </button>
-        <button
-          type="button"
-          disabled
-          className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
-        >
-          Export config · Foundation
+          Export config · Coming Soon
         </button>
       </div>
     </header>

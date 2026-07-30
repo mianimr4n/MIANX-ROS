@@ -147,7 +147,7 @@ describe("Phase 2 delivery settings API", () => {
     expect(putRes.body.data.deliveryFee).toBe(200);
   });
 
-  it("rejects delivery settings without branch.manage", async () => {
+  it("rejects delivery settings without branch.manage or admin.access", async () => {
     const { app } = createApp(readyEnv, {
       authTokenVerifier: verifier("auth-cashier", "cashier@example.com"),
       authProfileRepository: authRepo(

@@ -1709,6 +1709,47 @@ export function updateBranchProfile(accessToken: string, branchId: string, input
   });
 }
 
+export type BranchOperationalSettings = {
+  branchId: string;
+  branchCode: string;
+  branchName: string;
+  opensAt: string | null;
+  closesAt: string | null;
+  hoursDaily: string | null;
+  deliveryRadiusKm: number | null;
+  minimumOrderAmount: number | null;
+  deliveryFee: number | null;
+  updatedAt: string;
+};
+
+export type BranchOperationalSettingsUpdate = {
+  opensAt?: string | null;
+  closesAt?: string | null;
+  deliveryRadiusKm?: number | null;
+  minimumOrderAmount?: number | null;
+  deliveryFee?: number | null;
+};
+
+export function fetchBranchSettings(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<BranchOperationalSettings>(
+    `/admin/branches/${branchId}/settings`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function updateBranchSettings(
+  accessToken: string,
+  branchId: string,
+  input: BranchOperationalSettingsUpdate,
+) {
+  return fetchApiData<BranchOperationalSettings>(`/admin/branches/${branchId}/settings`, {
+    method: "PUT",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
 export type DeliverySettings = {
   branchId: string;
   branchCode: string;

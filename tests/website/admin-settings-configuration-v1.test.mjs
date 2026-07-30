@@ -65,23 +65,25 @@ describe("Settings & Configuration V1 (static)", () => {
     assert.match(panels, /updateOrganizationSettings/);
     assert.match(panels, /fetchBranchProfile/);
     assert.match(panels, /updateBranchProfile/);
-    assert.match(panels, /PUT \/admin\/branches\/:id/);
-    assert.match(panels, /fetchDeliverySettings/);
-    assert.match(panels, /updateDeliverySettings/);
+    assert.match(panels, /fetchBranchSettings/);
+    assert.match(panels, /updateBranchSettings/);
+    assert.match(panels, /Branch settings updated successfully/);
     assert.match(panels, /PUT \/admin\/menu\/skus\/:id/);
     assert.match(panels, /SettingsUnavailablePanel/);
     const api = read("apps/website/client/src/lib/admin-api.ts");
     assert.match(api, /\/admin\/settings\/organization/);
-    assert.match(api, /\/admin\/branches\/\$\{branchId\}/);
-    assert.match(api, /\/admin\/settings\/delivery/);
+    assert.match(api, /\/admin\/branches\/\$\{branchId\}\/settings/);
     assert.match(panels, /no invented roles/i);
   });
 
-  it("payment and tax settings remain foundation or unavailable", () => {
+  it("payment and tax settings remain Coming Soon or Environment Managed", () => {
     const panels = read("apps/website/client/src/components/admin/settings/SettingsPanels.tsx");
-    assert.match(panels, /Provider credentials stay environment-managed|Payment provider credentials unavailable/);
+    assert.match(panels, /Provider credentials stay environment-managed|Payment provider credentials unavailable|Environment Managed/i);
     assert.match(panels, /Never invent tax rates|will never invent tax rates/i);
     assert.doesNotMatch(panels, /status:\s*["']Connected["']/);
+    const header = read("apps/website/client/src/components/admin/settings/SettingsHeader.tsx");
+    assert.match(header, /Environment Managed|Coming Soon/);
+    assert.doesNotMatch(header, /Foundation workspace/);
   });
 
   it("Mianx configuration insights remain rule-based only", () => {

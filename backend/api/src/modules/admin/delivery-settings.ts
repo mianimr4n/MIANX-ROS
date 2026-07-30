@@ -4,7 +4,7 @@ import { z } from "zod";
 import { validateBody } from "../../common/http.js";
 import {
   createRequireAuthenticatedUser,
-  requirePermission,
+  requireAnyPermission,
   type AuthorizedRequest,
 } from "../../middleware/authorization.js";
 import type { AuthTokenVerifier } from "../../middleware/auth.js";
@@ -56,11 +56,12 @@ export function createAdminDeliverySettingsRouter(
     deps.authTokenVerifier,
     deps.authProfileRepository,
   );
+  const requireBranchWrite = requireAnyPermission(["branch.manage", "admin.access"]);
 
   router.get(
     "/settings/delivery",
     requireAuthenticatedUser,
-    requirePermission("branch.manage"),
+    requireBranchWrite,
     async (req, res, next) => {
       try {
         const principal = (req as AuthorizedRequest).principal!;
@@ -76,7 +77,7 @@ export function createAdminDeliverySettingsRouter(
   router.put(
     "/settings/delivery",
     requireAuthenticatedUser,
-    requirePermission("branch.manage"),
+    requireBranchWrite,
     validateBody(updateSchema),
     async (req, res, next) => {
       try {
