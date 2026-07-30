@@ -53,16 +53,19 @@ describe("Menu Management V1 (static)", () => {
     const api = read("apps/website/client/src/lib/admin-menu-api.ts");
     assert.match(api, /\/admin\/menu\/categories/);
     assert.match(api, /\/admin\/menu\/products/);
+    assert.match(api, /\/admin\/menu\/items\//);
+    assert.match(api, /\/availability/);
     assert.match(api, /\/admin\/menu\/audit/);
-    assert.doesNotMatch(api, /\/variants|variantId|menu_item_variants/);
+    assert.doesNotMatch(api, /menu_item_variants/);
 
     const page = read("apps/website/client/src/pages/admin/AdminMenu.tsx");
     assert.match(page, /updateMenuSku/);
+    assert.match(page, /updateMenuItemAvailability/);
     assert.match(page, /createMenuSku/);
     assert.match(page, /createMenuCategory/);
     assert.match(page, /updateMenuCategory/);
     assert.match(page, /listMenuAuditEvents/);
-    assert.match(page, /menu\.write/);
+    assert.match(page, /canManageMenu/);
   });
 
   it("labels unavailable KPIs and disabled bulk actions honestly", () => {
@@ -75,9 +78,10 @@ describe("Menu Management V1 (static)", () => {
     const page = read("apps/website/client/src/pages/admin/AdminMenu.tsx");
     assert.match(page, /catalogMode=\{usingFallback \? "fallback" : "live"\}/);
     const header = read("apps/website/client/src/components/admin/menu/MenuHeader.tsx");
-    assert.match(header, /Export · Foundation/);
-    assert.match(header, /Import · Foundation/);
-    assert.match(header, /Bulk actions · Foundation/);
+    assert.match(header, /Export · Coming Soon/);
+    assert.match(header, /Import · Coming Soon/);
+    assert.match(header, /Bulk actions · Coming Soon/);
+    assert.match(header, /Live write APIs/);
   });
 
   it("publishing panel does not claim full channel admin control", () => {
@@ -113,10 +117,19 @@ describe("Menu Management V1 (static)", () => {
     assert.match(page, /useAdminAccessGate/);
   });
 
-  it("category tree documents flat catalog and foundation hierarchy", () => {
+  it("category tree documents flat catalog and coming-soon hierarchy", () => {
     const tree = read("apps/website/client/src/components/admin/menu/CategoryTree.tsx");
     assert.match(tree, /role="tree"/);
     assert.match(tree, /Multi-level trees/);
-    assert.match(tree, /Foundation/);
+    assert.match(tree, /Coming Soon/);
+  });
+
+  it("wires availability toggle and menu update toast", () => {
+    const page = read("apps/website/client/src/pages/admin/AdminMenu.tsx");
+    assert.match(page, /updateMenuItemAvailability/);
+    assert.match(page, /Menu updated successfully/);
+    const grid = read("apps/website/client/src/components/admin/menu/ProductGrid.tsx");
+    assert.match(grid, /onToggleAvailability/);
+    assert.match(grid, /Available/);
   });
 });

@@ -298,6 +298,9 @@ const menuManagement: MenuManagementService = {
 
     return toSkuRecord(row);
   },
+  async updateLegacyVariant(actor, variantId, input) {
+    return this.updateSku(actor, variantId, input);
+  },
   async uploadSkuImage(actor, skuId) {
     const row = store.find((candidate) => candidate.id === skuId);
     if (!row) throw new ApiError(404, "MENU_ITEM_NOT_FOUND", "Menu item not found.");

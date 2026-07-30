@@ -123,8 +123,13 @@ export function canReadBranches(input: AdminPrincipalInput): boolean {
   );
 }
 
+/** Menu Management catalog workspace — menu.write or admin.access (matches backend write gate). */
 export function canManageMenu(input: AdminPrincipalInput): boolean {
-  return input.isSuperAdmin || input.permissions.includes("menu.write");
+  return (
+    input.isSuperAdmin ||
+    input.permissions.includes("menu.write") ||
+    input.permissions.includes("admin.access")
+  );
 }
 
 export function canReadFinance(input: AdminPrincipalInput): boolean {

@@ -28,7 +28,8 @@ export function MenuHeader({
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
         </p>
         <p className="mt-1 text-xs text-[var(--admin-muted)]">
-          Source: <span className="font-semibold text-[var(--admin-ink)]">{sourceLabel}</span> · Read-only catalog view
+          Source: <span className="font-semibold text-[var(--admin-ink)]">{sourceLabel}</span> · Live write APIs for
+          prices, availability, and categories
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -53,21 +54,21 @@ export function MenuHeader({
           disabled
           className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
         >
-          Export · Foundation
+          Export · Coming Soon
         </button>
         <button
           type="button"
           disabled
           className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
         >
-          Import · Foundation
+          Import · Coming Soon
         </button>
         <button
           type="button"
           disabled
           className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
         >
-          Bulk actions · Foundation
+          Bulk actions · Coming Soon
         </button>
         <form
           className="flex gap-2"

@@ -3,14 +3,21 @@ import { isLikelyOutOfStock, itemSku, modifierGroupCount, type MenuCatalogItemVi
 
 export function MenuProductCard({
   product,
+  canWrite,
+  availabilityBusy,
   onOpen,
+  onToggleAvailability,
 }: {
   product: MenuCatalogItemView;
+  canWrite: boolean;
+  availabilityBusy: boolean;
   onOpen: () => void;
+  onToggleAvailability: (product: MenuCatalogItemView, isAvailable: boolean) => void;
 }) {
   const price = product.price;
   const outOfStock = isLikelyOutOfStock(product);
   const mods = modifierGroupCount(product);
+  const available = product.available !== false;
 
   return (
     <article
@@ -30,7 +37,7 @@ export function MenuProductCard({
         ) : null}
         {outOfStock ? (
           <span className="absolute right-2 top-2 rounded-full bg-red-600 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
-            Unavailable
+            86'd
           </span>
         ) : null}
       </div>
@@ -42,12 +49,6 @@ export function MenuProductCard({
         <p className="mt-2 text-base font-semibold tabular-nums">{formatPkr(price)}</p>
         <dl className="mt-2 grid grid-cols-2 gap-1 text-[11px] text-[var(--admin-muted)]">
           <div>
-            <dt className="inline">Availability: </dt>
-            <dd className={`inline font-medium ${outOfStock ? "text-red-800" : "text-emerald-800"}`}>
-              {outOfStock ? "Unavailable" : "Available"}
-            </dd>
-          </div>
-          <div>
             <dt className="inline">Size: </dt>
             <dd className="inline font-medium">{product.sizeLabel ?? "Single"}</dd>
           </div>
@@ -55,17 +56,37 @@ export function MenuProductCard({
             <dt className="inline">Modifiers: </dt>
             <dd className="inline tabular-nums">{mods}</dd>
           </div>
-          <div>
+          <div className="col-span-2">
             <dt className="inline">Family: </dt>
             <dd className="inline">{product.productGroupSlug ?? "—"}</dd>
           </div>
         </dl>
+
+        {canWrite ? (
+          <label className="mt-3 flex min-h-11 items-center justify-between gap-2 rounded-xl border border-[var(--admin-border)] px-3 text-sm">
+            <span className="font-medium">{available ? "Available" : "Unavailable"}</span>
+            <input
+              type="checkbox"
+              role="switch"
+              aria-label={available ? `Mark ${product.name} unavailable` : `Mark ${product.name} available`}
+              checked={available}
+              disabled={availabilityBusy}
+              onChange={(event) => onToggleAvailability(product, event.target.checked)}
+              className="h-4 w-4 rounded"
+            />
+          </label>
+        ) : (
+          <p className={`mt-3 text-xs font-medium ${outOfStock ? "text-red-800" : "text-emerald-800"}`}>
+            {outOfStock ? "Unavailable" : "Available"}
+          </p>
+        )}
+
         <button
           type="button"
           onClick={onOpen}
           className="mt-3 min-h-11 rounded-xl border border-[var(--admin-border)] px-3 text-sm font-semibold hover:bg-[var(--admin-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-red)]"
         >
-          View details
+          {canWrite ? "Edit" : "View details"}
         </button>
       </div>
     </article>
@@ -76,14 +97,20 @@ export function MenuProductGrid({
   products,
   loading,
   error,
+  canWrite,
+  availabilityBusyId,
   onRetry,
   onOpen,
+  onToggleAvailability,
 }: {
   products: MenuCatalogItemView[];
   loading: boolean;
   error: string | null;
+  canWrite: boolean;
+  availabilityBusyId: string | null;
   onRetry: () => void;
   onOpen: (product: MenuCatalogItemView) => void;
+  onToggleAvailability: (product: MenuCatalogItemView, isAvailable: boolean) => void;
 }) {
   if (loading) {
     return (
@@ -122,7 +149,14 @@ export function MenuProductGrid({
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Product grid">
       {products.map((product) => (
-        <MenuProductCard key={`${product.catalogScope}-${product.id}`} product={product} onOpen={() => onOpen(product)} />
+        <MenuProductCard
+          key={`${product.catalogScope}-${product.id}`}
+          product={product}
+          canWrite={canWrite}
+          availabilityBusy={availabilityBusyId === product.id}
+          onOpen={() => onOpen(product)}
+          onToggleAvailability={onToggleAvailability}
+        />
       ))}
     </div>
   );

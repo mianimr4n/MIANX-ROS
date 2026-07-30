@@ -297,7 +297,12 @@ export function ProductDrawer({
             />
             <SkuFamilyPanel product={product} family={family} onOpen={onOpenSibling} />
             <ModifierManager product={product} />
-            <AvailabilityPanel product={product} />
+            <AvailabilityPanel
+              product={product}
+              canWrite={canWrite}
+              saving={saving}
+              onToggle={(isAvailable) => onSave({ isAvailable })}
+            />
             <PublishingPanel product={product} />
 
             <section aria-labelledby="audit-heading">
