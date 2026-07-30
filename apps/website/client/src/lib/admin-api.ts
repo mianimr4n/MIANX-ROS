@@ -1810,6 +1810,25 @@ export function createInventoryItem(accessToken: string, input: CreateInventoryI
   });
 }
 
+export type UpdateInventoryItemInput = {
+  name?: string;
+  category?: string | null;
+  unit?: string;
+  minimumStock?: number;
+  reorderLevel?: number;
+  costPrice?: number | null;
+  status?: InventoryItemStatus;
+};
+
+export function updateInventoryItem(accessToken: string, id: string, input: UpdateInventoryItemInput) {
+  return fetchApiData<InventoryItem>(`/admin/inventory/items/${id}`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
 export function createStockAdjustment(accessToken: string, input: CreateStockAdjustmentInput) {
   return fetchApiData<{ item: InventoryItem; movement: StockMovement }>(`/admin/inventory/adjustments`, {
     method: "POST",

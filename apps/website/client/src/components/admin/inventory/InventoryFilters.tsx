@@ -1,21 +1,37 @@
 import { AdminSectionTitle } from "@/components/admin/AdminKpiCard";
 
-export function InventoryFilters() {
+export function InventoryFilters({
+  search,
+  onSearchChange,
+  lowStockOnly,
+  onLowStockOnlyChange,
+}: {
+  search: string;
+  onSearchChange: (value: string) => void;
+  lowStockOnly: boolean;
+  onLowStockOnlyChange: (value: boolean) => void;
+}) {
   return (
     <section aria-label="Inventory filters" className="mb-6 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
       <AdminSectionTitle
         eyebrow="Browse"
         title="Filters"
-        description="Stock filters require a persistent ledger — controls are disabled until backend ships."
+        description="Search and low-stock filter apply to live stock items. Advanced filters Coming Soon."
       />
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <label className="flex min-h-11 items-center gap-2 rounded-lg border border-[var(--admin-border)] px-3 text-sm">
+          <input
+            type="checkbox"
+            className="rounded"
+            checked={lowStockOnly}
+            onChange={(e) => onLowStockOnlyChange(e.target.checked)}
+          />
+          Low stock
+        </label>
         {[
           "Warehouse / location",
           "Category",
-          "Stock status",
           "Supplier",
-          "Low stock",
-          "Out of stock",
           "Expiring soon",
           "Recipe linked",
         ].map((label) => (
@@ -24,15 +40,16 @@ export function InventoryFilters() {
             className="flex min-h-11 items-center gap-2 rounded-lg border border-dashed border-[var(--admin-border)] px-3 text-sm text-[var(--admin-muted)]"
           >
             <input type="checkbox" disabled className="rounded" />
-            {label} · Foundation
+            {label} · Coming Soon
           </label>
         ))}
-        <label className="block text-sm md:col-span-2">
+        <label className="block text-sm md:col-span-2 xl:col-span-4">
           <span className="mb-1 block text-xs font-medium text-[var(--admin-muted)]">Search stock items</span>
           <input
-            disabled
-            placeholder="Foundation — stock item search unavailable"
-            className="min-h-11 w-full cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 text-sm text-[var(--admin-muted)]"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search by name or SKU…"
+            className="min-h-11 w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 text-sm"
           />
         </label>
       </div>
