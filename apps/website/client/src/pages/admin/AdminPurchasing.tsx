@@ -24,11 +24,17 @@ import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { canAccessAdminPurchasing, primaryRoleLabel } from "@/lib/admin-access";
 import {
+  createGoodsReceiving,
   createPurchaseOrder,
+  createPurchaseRequisition,
   createSupplier,
+  listGoodsReceiving,
   listPurchaseOrders,
+  listPurchaseRequisitions,
   listSuppliers,
+  type GoodsReceiving,
   type PurchaseOrder,
+  type PurchaseRequisition,
   type Supplier,
 } from "@/lib/admin-api";
 import { ApiRequestError } from "@/lib/api";
@@ -58,18 +64,31 @@ export default function AdminPurchasing() {
   const [orders, setOrders] = useState<PurchaseOrder[] | null>(null);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [requisitions, setRequisitions] = useState<PurchaseRequisition[] | null>(null);
+  const [requisitionsLoading, setRequisitionsLoading] = useState(false);
+  const [requisitionsError, setRequisitionsError] = useState<string | null>(null);
+  const [receipts, setReceipts] = useState<GoodsReceiving[] | null>(null);
+  const [receiptsLoading, setReceiptsLoading] = useState(false);
+  const [receiptsError, setReceiptsError] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
   const [addBusy, setAddBusy] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createBusy, setCreateBusy] = useState(false);
+  const [reqCreateError, setReqCreateError] = useState<string | null>(null);
+  const [reqCreateBusy, setReqCreateBusy] = useState(false);
+  const [grnCreateError, setGrnCreateError] = useState<string | null>(null);
+  const [grnCreateBusy, setGrnCreateBusy] = useState(false);
   const [search, setSearch] = useState("");
 
   const checks = useMemo(() => integrationChecks(), []);
   const groups = useMemo(() => readinessGroups(), []);
-  const snapshot = useMemo(() => buildPurchasingKpis(suppliers, orders), [orders, suppliers]);
+  const snapshot = useMemo(
+    () => buildPurchasingKpis(suppliers, orders, requisitions),
+    [orders, requisitions, suppliers],
+  );
   const insights = useMemo(
-    () => buildProcurementInsights(branchLabel, suppliers, orders),
-    [branchLabel, orders, suppliers],
+    () => buildProcurementInsights(branchLabel, suppliers, orders, receipts),
+    [branchLabel, orders, receipts, suppliers],
   );
   const filteredSuppliers = useMemo(() => {
     if (!suppliers) return null;
@@ -105,11 +124,7 @@ export default function AdminPurchasing() {
     }
     setSuppliersLoading(true);
     try {
-      const rows = await listSuppliers(
-        token,
-        branchIdFilter ? { branchId: branchIdFilter } : undefined,
-      );
-      setSuppliers(rows);
+      setSuppliers(await listSuppliers(token, branchIdFilter ? { branchId: branchIdFilter } : undefined));
       setSuppliersError(null);
     } catch (err) {
       setSuppliers(null);
@@ -130,11 +145,7 @@ export default function AdminPurchasing() {
     }
     setOrdersLoading(true);
     try {
-      const rows = await listPurchaseOrders(
-        token,
-        branchIdFilter ? { branchId: branchIdFilter } : undefined,
-      );
-      setOrders(rows);
+      setOrders(await listPurchaseOrders(token, branchIdFilter ? { branchId: branchIdFilter } : undefined));
       setOrdersError(null);
     } catch (err) {
       setOrders(null);
@@ -144,15 +155,57 @@ export default function AdminPurchasing() {
     }
   }, [branchIdFilter, canManagePurchasing, session?.access_token]);
 
+  const loadRequisitions = useCallback(async () => {
+    const token = session?.access_token;
+    if (!token || !canManagePurchasing) {
+      setRequisitions(null);
+      setRequisitionsError(null);
+      return;
+    }
+    setRequisitionsLoading(true);
+    try {
+      setRequisitions(await listPurchaseRequisitions(token, branchIdFilter ? { branchId: branchIdFilter } : undefined));
+      setRequisitionsError(null);
+    } catch (err) {
+      setRequisitions(null);
+      setRequisitionsError(err instanceof ApiRequestError ? err.message : "Failed to load requisitions");
+    } finally {
+      setRequisitionsLoading(false);
+    }
+  }, [branchIdFilter, canManagePurchasing, session?.access_token]);
+
+  const loadReceipts = useCallback(async () => {
+    const token = session?.access_token;
+    if (!token || !canManagePurchasing) {
+      setReceipts(null);
+      setReceiptsError(null);
+      return;
+    }
+    setReceiptsLoading(true);
+    try {
+      setReceipts(await listGoodsReceiving(token, branchIdFilter ? { branchId: branchIdFilter } : undefined));
+      setReceiptsError(null);
+    } catch (err) {
+      setReceipts(null);
+      setReceiptsError(err instanceof ApiRequestError ? err.message : "Failed to load goods receiving");
+    } finally {
+      setReceiptsLoading(false);
+    }
+  }, [branchIdFilter, canManagePurchasing, session?.access_token]);
+
   useEffect(() => {
     if (!gateReady) return;
     void loadSuppliers();
     void loadOrders();
-  }, [gateReady, loadOrders, loadSuppliers]);
+    void loadRequisitions();
+    void loadReceipts();
+  }, [gateReady, loadOrders, loadReceipts, loadRequisitions, loadSuppliers]);
 
   const onRefresh = () => {
     void loadSuppliers();
     void loadOrders();
+    void loadRequisitions();
+    void loadReceipts();
   };
 
   const onAddSupplier = async (input: {
@@ -218,6 +271,56 @@ export default function AdminPurchasing() {
     }
   };
 
+  const onCreateRequisition = async (input: { branchId: string; title: string; notes: string }) => {
+    const token = session?.access_token;
+    if (!token) {
+      setReqCreateError("Sign in required.");
+      return false;
+    }
+    setReqCreateBusy(true);
+    setReqCreateError(null);
+    try {
+      await createPurchaseRequisition(token, {
+        branchId: input.branchId,
+        title: input.title,
+        notes: input.notes || null,
+        status: "draft",
+      });
+      await loadRequisitions();
+      return true;
+    } catch (err) {
+      setReqCreateError(err instanceof ApiRequestError ? err.message : "Failed to create requisition");
+      return false;
+    } finally {
+      setReqCreateBusy(false);
+    }
+  };
+
+  const onCreateGrn = async (input: { branchId: string; purchaseOrderId: string; notes: string }) => {
+    const token = session?.access_token;
+    if (!token) {
+      setGrnCreateError("Sign in required.");
+      return false;
+    }
+    setGrnCreateBusy(true);
+    setGrnCreateError(null);
+    try {
+      await createGoodsReceiving(token, {
+        branchId: input.branchId,
+        purchaseOrderId: input.purchaseOrderId || null,
+        notes: input.notes || null,
+        status: "posted",
+      });
+      await Promise.all([loadReceipts(), loadOrders()]);
+      return true;
+    } catch (err) {
+      setGrnCreateError(err instanceof ApiRequestError ? err.message : "Failed to record GRN");
+      return false;
+    } finally {
+      setGrnCreateBusy(false);
+    }
+  };
+
   return (
     <AdminShell title="Purchasing & Suppliers">
       <PurchasingHeader branchLabel={branchLabel} roleLabel={roleLabel} onRefresh={onRefresh} />
@@ -230,7 +333,16 @@ export default function AdminPurchasing() {
 
       <PurchaseDemandPanel />
 
-      <RequisitionPanel />
+      <RequisitionPanel
+        requisitions={requisitions}
+        loading={requisitionsLoading}
+        error={requisitionsError}
+        canManage={canManagePurchasing}
+        defaultBranchId={branchIdFilter}
+        onCreate={onCreateRequisition}
+        createError={reqCreateError}
+        createBusy={reqCreateBusy}
+      />
 
       <PurchaseOrderTable
         orders={filteredOrders}
@@ -256,7 +368,17 @@ export default function AdminPurchasing() {
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <ReceivingGrnPanel />
+        <ReceivingGrnPanel
+          receipts={receipts}
+          orders={orders}
+          loading={receiptsLoading}
+          error={receiptsError}
+          canManage={canManagePurchasing}
+          defaultBranchId={branchIdFilter}
+          onCreate={onCreateGrn}
+          createError={grnCreateError}
+          createBusy={grnCreateBusy}
+        />
         <ApprovalTimelinePanel />
       </div>
 

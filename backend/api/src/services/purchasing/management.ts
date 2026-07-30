@@ -71,6 +71,64 @@ export interface CreatePurchaseOrderInput {
   expectedDeliveryDate?: string | null;
 }
 
+export const REQUISITION_STATUSES = [
+  "draft",
+  "submitted",
+  "approved",
+  "rejected",
+  "converted",
+  "cancelled",
+] as const;
+export type RequisitionStatus = (typeof REQUISITION_STATUSES)[number];
+
+export const GOODS_RECEIVING_STATUSES = ["draft", "posted", "cancelled"] as const;
+export type GoodsReceivingStatus = (typeof GOODS_RECEIVING_STATUSES)[number];
+
+export interface PurchaseRequisitionRecord {
+  id: string;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  title: string;
+  status: RequisitionStatus;
+  notes: string | null;
+  requestedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GoodsReceivingRecord {
+  id: string;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  purchaseOrderId: string | null;
+  poNumber: string | null;
+  grnNumber: string;
+  status: GoodsReceivingStatus;
+  receivedAt: string;
+  notes: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateRequisitionInput {
+  branchId: string;
+  title: string;
+  notes?: string | null;
+  status?: RequisitionStatus;
+}
+
+export interface CreateGoodsReceivingInput {
+  branchId: string;
+  purchaseOrderId?: string | null;
+  grnNumber?: string | null;
+  status?: GoodsReceivingStatus;
+  notes?: string | null;
+  receivedAt?: string | null;
+}
+
 export interface PurchasingService {
   listSuppliers(scope: BranchActorScope, branchId?: string): Promise<SupplierRecord[]>;
   createSupplier(scope: BranchActorScope, input: CreateSupplierInput): Promise<SupplierRecord>;
@@ -80,6 +138,18 @@ export interface PurchasingService {
     actorUserId: string | null,
     input: CreatePurchaseOrderInput,
   ): Promise<PurchaseOrderRecord>;
+  listRequisitions(scope: BranchActorScope, branchId?: string): Promise<PurchaseRequisitionRecord[]>;
+  createRequisition(
+    scope: BranchActorScope,
+    actorUserId: string | null,
+    input: CreateRequisitionInput,
+  ): Promise<PurchaseRequisitionRecord>;
+  listReceiving(scope: BranchActorScope, branchId?: string): Promise<GoodsReceivingRecord[]>;
+  createReceiving(
+    scope: BranchActorScope,
+    actorUserId: string | null,
+    input: CreateGoodsReceivingInput,
+  ): Promise<GoodsReceivingRecord>;
 }
 
 type SupplierRow = {
@@ -111,11 +181,44 @@ type PurchaseOrderRow = {
   supplier: { id: string; name: string } | null;
 };
 
+type RequisitionRow = {
+  id: string;
+  branch_id: string;
+  title: string;
+  status: string;
+  notes: string | null;
+  requested_by: string | null;
+  created_at: string;
+  updated_at: string;
+  branch: { id: string; branch_code: string; name: string } | null;
+};
+
+type GoodsReceivingRow = {
+  id: string;
+  branch_id: string;
+  purchase_order_id: string | null;
+  grn_number: string;
+  status: string;
+  received_at: string;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  branch: { id: string; branch_code: string; name: string } | null;
+  purchase_order: { id: string; po_number: string } | null;
+};
+
 const SUPPLIER_SELECT =
   "id, branch_id, name, contact_person, phone, email, address, status, created_at, updated_at, branch:branches(id, branch_code, name)";
 
 const ORDER_SELECT =
   "id, branch_id, supplier_id, po_number, status, total_amount, expected_delivery_date, created_by, created_at, updated_at, branch:branches(id, branch_code, name), supplier:suppliers(id, name)";
+
+const REQUISITION_SELECT =
+  "id, branch_id, title, status, notes, requested_by, created_at, updated_at, branch:branches(id, branch_code, name)";
+
+const RECEIVING_SELECT =
+  "id, branch_id, purchase_order_id, grn_number, status, received_at, notes, created_by, created_at, updated_at, branch:branches(id, branch_code, name), purchase_order:purchase_orders(id, po_number)";
 
 function createServiceClient(envStatus: EnvironmentStatus): SupabaseClient {
   if (!envStatus.config.supabaseUrl || !envStatus.config.supabaseServiceRoleKey) {
@@ -167,6 +270,39 @@ function mapOrder(row: PurchaseOrderRow): PurchaseOrderRecord {
   };
 }
 
+function mapRequisition(row: RequisitionRow): PurchaseRequisitionRecord {
+  return {
+    id: row.id,
+    branchId: row.branch_id,
+    branchCode: row.branch?.branch_code ?? null,
+    branchName: row.branch?.name ?? null,
+    title: row.title,
+    status: row.status as RequisitionStatus,
+    notes: row.notes,
+    requestedBy: row.requested_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapReceiving(row: GoodsReceivingRow): GoodsReceivingRecord {
+  return {
+    id: row.id,
+    branchId: row.branch_id,
+    branchCode: row.branch?.branch_code ?? null,
+    branchName: row.branch?.name ?? null,
+    purchaseOrderId: row.purchase_order_id,
+    poNumber: row.purchase_order?.po_number ?? null,
+    grnNumber: row.grn_number,
+    status: row.status as GoodsReceivingStatus,
+    receivedAt: row.received_at,
+    notes: row.notes,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 function resolveListBranchIds(scope: BranchActorScope, branchId?: string): string[] | "all" | "none" {
   if (branchId) {
     assertBranchMembership(scope, branchId);
@@ -181,6 +317,12 @@ function generatePoNumber(): string {
   const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const suffix = Math.floor(Math.random() * 9000 + 1000);
   return `PO-${stamp}-${suffix}`;
+}
+
+function generateGrnNumber(): string {
+  const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const suffix = Math.floor(Math.random() * 9000 + 1000);
+  return `GRN-${stamp}-${suffix}`;
 }
 
 export function createPurchasingService(envStatus: EnvironmentStatus): PurchasingService {
@@ -283,6 +425,115 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
         throwMappedDbError("PURCHASE_ORDER_CREATE_FAILED", error);
       }
       return mapOrder(data as unknown as PurchaseOrderRow);
+    },
+
+    async listRequisitions(scope, branchId) {
+      const branchScope = resolveListBranchIds(scope, branchId);
+      if (branchScope === "none") return [];
+
+      const client = supabase();
+      let query = client
+        .from("purchase_requisitions")
+        .select(REQUISITION_SELECT)
+        .order("created_at", { ascending: false });
+      if (branchScope !== "all") query = query.in("branch_id", branchScope);
+
+      const { data, error } = await query;
+      if (error) throwMappedDbError("REQUISITIONS_READ_FAILED", error);
+      return ((data ?? []) as unknown as RequisitionRow[]).map(mapRequisition);
+    },
+
+    async createRequisition(scope, actorUserId, input) {
+      assertBranchMembership(scope, input.branchId);
+      const client = supabase();
+      await loadBranchRow(client, input.branchId);
+
+      const title = input.title.trim();
+      if (!title) throw new ApiError(400, "VALIDATION_ERROR", "Requisition title is required.");
+
+      const { data, error } = await client
+        .from("purchase_requisitions")
+        .insert({
+          branch_id: input.branchId,
+          title,
+          notes: input.notes?.trim() || null,
+          status: input.status ?? "draft",
+          requested_by: actorUserId,
+        })
+        .select(REQUISITION_SELECT)
+        .single();
+
+      if (error) throwMappedDbError("REQUISITION_CREATE_FAILED", error);
+      return mapRequisition(data as unknown as RequisitionRow);
+    },
+
+    async listReceiving(scope, branchId) {
+      const branchScope = resolveListBranchIds(scope, branchId);
+      if (branchScope === "none") return [];
+
+      const client = supabase();
+      let query = client
+        .from("goods_receiving")
+        .select(RECEIVING_SELECT)
+        .order("created_at", { ascending: false });
+      if (branchScope !== "all") query = query.in("branch_id", branchScope);
+
+      const { data, error } = await query;
+      if (error) throwMappedDbError("GOODS_RECEIVING_READ_FAILED", error);
+      return ((data ?? []) as unknown as GoodsReceivingRow[]).map(mapReceiving);
+    },
+
+    async createReceiving(scope, actorUserId, input) {
+      assertBranchMembership(scope, input.branchId);
+      const client = supabase();
+      await loadBranchRow(client, input.branchId);
+
+      if (input.purchaseOrderId) {
+        const { data: po, error: poError } = await client
+          .from("purchase_orders")
+          .select("id, branch_id")
+          .eq("id", input.purchaseOrderId)
+          .maybeSingle();
+        if (poError) throwMappedDbError("PURCHASE_ORDER_READ_FAILED", poError);
+        if (!po) throw new ApiError(404, "PURCHASE_ORDER_NOT_FOUND", "Purchase order not found.");
+        if (po.branch_id !== input.branchId) {
+          throw new ApiError(400, "VALIDATION_ERROR", "Purchase order must belong to the same branch as the GRN.");
+        }
+      }
+
+      const grnNumber = (input.grnNumber?.trim() || generateGrnNumber()).toUpperCase();
+      const status = input.status ?? "posted";
+
+      const { data, error } = await client
+        .from("goods_receiving")
+        .insert({
+          branch_id: input.branchId,
+          purchase_order_id: input.purchaseOrderId || null,
+          grn_number: grnNumber,
+          status,
+          notes: input.notes?.trim() || null,
+          received_at: input.receivedAt || new Date().toISOString(),
+          created_by: actorUserId,
+        })
+        .select(RECEIVING_SELECT)
+        .single();
+
+      if (error) {
+        if (error.code === "23505") {
+          throw new ApiError(409, "GRN_NUMBER_EXISTS", "A GRN with this number already exists for the branch.");
+        }
+        throwMappedDbError("GOODS_RECEIVING_CREATE_FAILED", error);
+      }
+
+      if (input.purchaseOrderId && status === "posted") {
+        await client
+          .from("purchase_orders")
+          .update({ status: "partially_received" })
+          .eq("id", input.purchaseOrderId)
+          .in("status", ["draft", "submitted", "approved", "ordered"]);
+      }
+
+      return mapReceiving(data as unknown as GoodsReceivingRow);
     },
   };
 }

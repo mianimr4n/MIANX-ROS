@@ -1960,3 +1960,104 @@ export function createPurchaseOrder(accessToken: string, input: CreatePurchaseOr
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }
+
+export type RequisitionStatus =
+  | "draft"
+  | "submitted"
+  | "approved"
+  | "rejected"
+  | "converted"
+  | "cancelled";
+
+export type PurchaseRequisition = {
+  id: string;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  title: string;
+  status: RequisitionStatus;
+  notes: string | null;
+  requestedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GoodsReceivingStatus = "draft" | "posted" | "cancelled";
+
+export type GoodsReceiving = {
+  id: string;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  purchaseOrderId: string | null;
+  poNumber: string | null;
+  grnNumber: string;
+  status: GoodsReceivingStatus;
+  receivedAt: string;
+  notes: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateRequisitionInput = {
+  branchId: string;
+  title: string;
+  notes?: string | null;
+  status?: RequisitionStatus;
+};
+
+export type CreateGoodsReceivingInput = {
+  branchId: string;
+  purchaseOrderId?: string | null;
+  grnNumber?: string | null;
+  status?: GoodsReceivingStatus;
+  notes?: string | null;
+  receivedAt?: string | null;
+};
+
+export function listPurchaseRequisitions(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+): Promise<PurchaseRequisition[]> {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<PurchaseRequisition[]>(
+    `/admin/purchasing/requisitions${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createPurchaseRequisition(accessToken: string, input: CreateRequisitionInput) {
+  return fetchApiData<PurchaseRequisition>(`/admin/purchasing/requisitions`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listGoodsReceiving(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+): Promise<GoodsReceiving[]> {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<GoodsReceiving[]>(
+    `/admin/purchasing/receiving${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createGoodsReceiving(accessToken: string, input: CreateGoodsReceivingInput) {
+  return fetchApiData<GoodsReceiving>(`/admin/purchasing/receiving`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}

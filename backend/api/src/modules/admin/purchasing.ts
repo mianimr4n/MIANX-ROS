@@ -12,7 +12,9 @@ import type { AuthPrincipalRepository } from "../../services/auth/supabase.js";
 import type { AuthPrincipal } from "../../services/auth/principal.js";
 import type { BranchActorScope } from "../../services/tables/management.js";
 import {
+  GOODS_RECEIVING_STATUSES,
   PURCHASE_ORDER_STATUSES,
+  REQUISITION_STATUSES,
   SUPPLIER_STATUSES,
   type PurchasingService,
 } from "../../services/purchasing/management.js";
@@ -68,8 +70,28 @@ const createOrderSchema = z
   })
   .strict();
 
+const createRequisitionSchema = z
+  .object({
+    branchId: z.string().uuid(),
+    title: z.string().trim().min(1).max(200),
+    notes: z.string().trim().max(2000).nullable().optional(),
+    status: z.enum(REQUISITION_STATUSES).optional(),
+  })
+  .strict();
+
+const createReceivingSchema = z
+  .object({
+    branchId: z.string().uuid(),
+    purchaseOrderId: z.string().uuid().nullable().optional(),
+    grnNumber: z.string().trim().min(1).max(40).nullable().optional(),
+    status: z.enum(GOODS_RECEIVING_STATUSES).optional(),
+    notes: z.string().trim().max(2000).nullable().optional(),
+    receivedAt: z.string().trim().min(1).nullable().optional(),
+  })
+  .strict();
+
 /**
- * Purchasing — suppliers + purchase orders.
+ * Purchasing — suppliers, POs, requisitions, goods receiving.
  * Gated by purchasing.manage or admin.access.
  */
 export function createAdminPurchasingRouter(deps: AdminPurchasingRouterDependencies): Router {
@@ -145,6 +167,78 @@ export function createAdminPurchasingRouter(deps: AdminPurchasingRouterDependenc
         const principal = (req as AuthorizedRequest).principal!;
         const body = req.body as z.infer<typeof createOrderSchema>;
         const data = await deps.purchasing.createOrder(scopeFrom(principal), principal.userId, body);
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.get(
+    "/purchasing/requisitions",
+    requireAuthenticatedUser,
+    requirePurchasingAccess,
+    async (req, res, next) => {
+      try {
+        const parsed = listQuerySchema.safeParse(req.query);
+        if (!parsed.success) {
+          throw new ApiError(400, "VALIDATION_ERROR", "Invalid requisitions query.", parsed.error.flatten());
+        }
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.purchasing.listRequisitions(scopeFrom(principal), parsed.data.branchId);
+        return res.json({ ok: true, data, meta: { count: data.length } });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/purchasing/requisitions",
+    requireAuthenticatedUser,
+    requirePurchasingAccess,
+    validateBody(createRequisitionSchema),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const body = req.body as z.infer<typeof createRequisitionSchema>;
+        const data = await deps.purchasing.createRequisition(scopeFrom(principal), principal.userId, body);
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.get(
+    "/purchasing/receiving",
+    requireAuthenticatedUser,
+    requirePurchasingAccess,
+    async (req, res, next) => {
+      try {
+        const parsed = listQuerySchema.safeParse(req.query);
+        if (!parsed.success) {
+          throw new ApiError(400, "VALIDATION_ERROR", "Invalid receiving query.", parsed.error.flatten());
+        }
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.purchasing.listReceiving(scopeFrom(principal), parsed.data.branchId);
+        return res.json({ ok: true, data, meta: { count: data.length } });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/purchasing/receiving",
+    requireAuthenticatedUser,
+    requirePurchasingAccess,
+    validateBody(createReceivingSchema),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const body = req.body as z.infer<typeof createReceivingSchema>;
+        const data = await deps.purchasing.createReceiving(scopeFrom(principal), principal.userId, body);
         return res.status(201).json({ ok: true, data });
       } catch (error) {
         return next(error);

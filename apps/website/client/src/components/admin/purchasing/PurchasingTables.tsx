@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link } from "wouter";
 
 import { AdminSectionTitle } from "@/components/admin/AdminKpiCard";
-import type { PurchaseOrder, Supplier } from "@/lib/admin-api";
+import type { PurchaseOrder, PurchaseRequisition, Supplier } from "@/lib/admin-api";
 import { formatMoney } from "@/lib/admin-purchasing";
 
 export function SupplierTable({
@@ -404,13 +404,127 @@ export function PurchaseOrderTable({
   );
 }
 
-export function RequisitionPanel() {
+export function RequisitionPanel({
+  requisitions,
+  loading,
+  error,
+  canManage,
+  defaultBranchId,
+  onCreate,
+  createError,
+  createBusy,
+}: {
+  requisitions: PurchaseRequisition[] | null;
+  loading: boolean;
+  error: string | null;
+  canManage: boolean;
+  defaultBranchId: string | null;
+  onCreate: (input: { branchId: string; title: string; notes: string }) => Promise<boolean>;
+  createError: string | null;
+  createBusy: boolean;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [branchId, setBranchId] = useState(defaultBranchId ?? "");
+  const [title, setTitle] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const resetForm = () => {
+    setBranchId(defaultBranchId ?? "");
+    setTitle("");
+    setNotes("");
+    setShowForm(false);
+  };
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!branchId || !title.trim()) return;
+    const ok = await onCreate({ branchId, title: title.trim(), notes: notes.trim() });
+    if (ok) resetForm();
+  };
+
   return (
     <section className="mb-6 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
-      <h3 className="text-sm font-semibold">Purchase requisitions</h3>
-      <p className="mt-2 text-sm text-[var(--admin-muted)]">
-        Coming Soon — server-side requisition workflow required (draft → submitted → approved → converted to PO).
-      </p>
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold">Purchase requisitions</h3>
+          <p className="mt-1 text-xs text-[var(--admin-muted)]">
+            Live from GET /admin/purchasing/requisitions — approval conversion Coming Soon.
+          </p>
+        </div>
+        {canManage ? (
+          <button
+            type="button"
+            className="rounded-lg bg-[var(--brand-red)] px-3 py-1.5 text-sm font-semibold text-white"
+            onClick={() => {
+              setBranchId(defaultBranchId ?? "");
+              setShowForm(true);
+            }}
+          >
+            Create requisition
+          </button>
+        ) : null}
+      </div>
+
+      {showForm && canManage ? (
+        <form onSubmit={(e) => void submit(e)} className="mb-4 grid gap-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] p-4 sm:grid-cols-2">
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">Branch ID</span>
+            <input
+              required
+              value={branchId}
+              onChange={(e) => setBranchId(e.target.value)}
+              className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+            />
+          </label>
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">Title</span>
+            <input
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+            />
+          </label>
+          <label className="text-sm sm:col-span-2">
+            <span className="mb-1 block font-medium">Notes</span>
+            <input
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+            />
+          </label>
+          {createError ? <p className="sm:col-span-2 text-sm text-red-700">{createError}</p> : null}
+          <div className="sm:col-span-2 flex gap-2">
+            <button
+              type="submit"
+              disabled={createBusy}
+              className="rounded-lg bg-[var(--brand-red)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {createBusy ? "Saving…" : "Create"}
+            </button>
+            <button type="button" onClick={resetForm} className="rounded-lg border border-[var(--admin-border)] px-4 py-2 text-sm font-semibold">
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {loading ? (
+        <p className="text-sm text-[var(--admin-muted)]">Loading requisitions…</p>
+      ) : error ? (
+        <p className="text-sm text-red-700">{error}</p>
+      ) : !requisitions || requisitions.length === 0 ? (
+        <p className="text-sm text-[var(--admin-muted)]">No purchase requisitions created yet.</p>
+      ) : (
+        <ul className="space-y-2 text-sm">
+          {requisitions.map((r) => (
+            <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--admin-border)] pb-2 last:border-0">
+              <span className="font-medium">{r.title}</span>
+              <span className="capitalize text-[var(--admin-muted)]">{r.status}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
