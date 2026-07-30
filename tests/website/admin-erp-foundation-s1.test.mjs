@@ -43,7 +43,8 @@ describe("Admin ERP Foundation S1 (static)", () => {
     assert.match(app, /AdminAiTeam/);
     assert.match(app, /AdminComingSoon/);
     const soon = read("apps/website/client/src/pages/admin/AdminComingSoon.tsx");
-    assert.match(soon, /not available in Foundation S1/i);
+    assert.match(soon, /Planned for Phase 2/);
+    assert.match(soon, /reserved for a future release/i);
     assert.doesNotMatch(soon, /fake|mock revenue|autonomous/i);
   });
 

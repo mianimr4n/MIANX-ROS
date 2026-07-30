@@ -304,7 +304,7 @@ export default function AdminKitchen() {
           <p className="mt-1 text-sm text-[var(--admin-muted)]">
             {roleLabel} · {branchLabel} · {currentShiftLabel()}
             <span className="ml-2 rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-              Foundation shift label
+              Shift label
             </span>
           </p>
         </div>

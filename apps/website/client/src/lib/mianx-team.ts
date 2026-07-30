@@ -133,7 +133,7 @@ export const MIANX_AGENT_REGISTRY: readonly MianxAgentDefinition[] = [
     id: "inventory-purchasing",
     name: "Inventory & Purchasing Agent",
     department: "Supply",
-    mission: "report current FOUNDATION state and implementation dependencies",
+    mission: "monitor stock health and procurement approvals",
   },
   {
     id: "finance-payments",
@@ -466,12 +466,12 @@ export function buildMianxAgentCards(signals: MianxTeamSignals): MianxAgentCard[
       }
       case "inventory-purchasing":
         return card(def, {
-          status: "FOUNDATION",
-          verifiedSignal: "No stock ledger / purchasing settlement backend",
-          currentProblem: "Inventory & purchasing remain FOUNDATION modules",
-          nextAction: "Approve inventory domain before claiming LIVE stock counts",
+          status: "ACTIVE",
+          verifiedSignal: "Inventory stock ledger + purchasing suppliers/POs/GRN are live",
+          currentProblem: "Watch low-stock counts and pending PO approvals in branch scope",
+          nextAction: "Review Inventory low-stock and Purchasing approvals before claiming day-close readiness",
           humanApprovalRequired: true,
-          sourceType: "FOUNDATION",
+          sourceType: "LIVE_API",
           lastUpdatedIso: updated,
         });
       case "finance-payments":

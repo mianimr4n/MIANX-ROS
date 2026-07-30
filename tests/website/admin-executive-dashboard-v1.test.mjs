@@ -1,5 +1,6 @@
 /**
  * Executive Admin Dashboard v1 — D1 polish static contract.
+ * Phase 1 Owner Command Center supersedes the D1 KPI grid composition on the page.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -18,45 +19,48 @@ describe("Executive Admin Dashboard v1 (static)", () => {
     const dashboard = read("apps/website/client/src/pages/admin/AdminDashboard.tsx");
     assert.match(dashboard, /AdminKpiCard/);
     assert.match(dashboard, /ExecutiveFilterBar/);
-    assert.match(dashboard, /OperationsModuleGrid/);
-    assert.match(dashboard, /ExecutiveKPIs/);
-    assert.match(dashboard, /AiInsightsPanel/);
-    assert.match(dashboard, /LiveActivityPanel/);
+    assert.match(dashboard, /OwnerCommandCenter/);
     assert.match(dashboard, /fetchAdminOperationsDashboard/);
     assert.match(dashboard, /listAdminOrders/);
     assert.match(dashboard, /listKitchenTickets/);
     assert.match(dashboard, /listDeliveryAssignments/);
-    assert.match(dashboard, /buildMianxInsightItems/);
   });
 
   it("keeps the approved KPI contract with live low-stock from inventory_items", () => {
     const kpis = read("apps/website/client/src/components/admin/dashboard/ExecutiveKPIs.tsx");
     assert.match(kpis, /Today’s Orders/);
     assert.match(kpis, /Today’s Sales/);
-    assert.match(kpis, /Active Orders/);
+    assert.match(kpis, /Open Orders/);
     assert.match(kpis, /Low-stock items/);
     assert.match(kpis, /Inventory levels are healthy/);
     assert.match(kpis, /below minimum stock level/);
     assert.match(kpis, /Kitchen Queue/);
     assert.match(kpis, /Active Deliveries/);
     assert.match(kpis, /Average Order Value/);
-    assert.match(kpis, /Source: Orders API/);
+    assert.match(kpis, /Ready Orders/);
+    assert.match(kpis, /Delayed Orders/);
+    assert.match(kpis, /Pending PO approvals/);
     assert.match(kpis, /Source unavailable/);
     assert.doesNotMatch(kpis, /Customer satisfaction/);
     assert.doesNotMatch(kpis, /percentageLabel|trendLabel/);
     assert.match(kpis, /formatCount|formatPkr/);
+
+    const builders = read("apps/website/client/src/components/admin/dashboard/owner-command-builders.ts");
+    assert.match(builders, /Low Stock Items/);
+    assert.match(builders, /Inventory is healthy/);
   });
 
   it("labels Mianx insights as deterministic rule summaries with structured fields", () => {
     const panel = read("apps/website/client/src/components/admin/dashboard/MianxInsightsPanel.tsx");
-    assert.match(panel, /Mianx\.ai Operations Insights/);
+    assert.match(panel, /Mianx\.ai Owner Brief|Mianx\.ai Operations Insights/);
     assert.match(panel, /Rule ID/);
-    assert.match(panel, /Recommended action/);
+    assert.match(panel, /sr-only/);
+    assert.match(panel, /recommendedAction/);
     assert.match(panel, /buildMianxInsightItems|buildDeterministicMianxInsights/);
     assert.match(panel, /Loading insights/);
-    assert.match(panel, /pending order/);
+    assert.match(panel, /pending confirmation|pending order|waiting for your confirmation/i);
     assert.match(panel, /INVENTORY\.LOW_STOCK/);
-    assert.match(panel, /Inventory levels are healthy/);
+    assert.match(panel, /No low-stock|Stock levels look healthy|Inventory is healthy/);
     assert.doesNotMatch(panel, /demand predicted|autonomous|generative model|openai|llm/i);
   });
 

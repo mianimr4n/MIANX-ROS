@@ -47,6 +47,13 @@ export function SettingsCategoryNav({
     );
   }
 
+  const ownerStatus = (classification: SettingsCategory["classification"]) => {
+    if (classification === "LIVE") return "Available";
+    if (classification === "READ-ONLY") return "Read-only";
+    if (classification === "DERIVED") return "Calculated";
+    return "Planned for Phase 2";
+  };
+
   return (
     <nav aria-label="Settings categories" className="mb-4 lg:mb-0">
       <ul className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1 lg:overflow-visible">
@@ -65,8 +72,8 @@ export function SettingsCategoryNav({
                 aria-current={active ? "page" : undefined}
               >
                 <span className="block">{category.label}</span>
-                <span className={`mt-0.5 block text-[10px] uppercase tracking-wide ${active ? "text-white/80" : "text-[var(--admin-muted)]"}`}>
-                  {category.classification.toLowerCase()}
+                <span className={`mt-0.5 block text-[10px] tracking-wide ${active ? "text-white/80" : "text-[var(--admin-muted)]"}`}>
+                  {ownerStatus(category.classification)}
                 </span>
               </button>
             </li>

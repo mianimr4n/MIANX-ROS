@@ -128,7 +128,7 @@ export function OrderFilters({
         >
           <option value="">Same as order type</option>
         </select>
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Foundation</span>
+        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
       </label>
 
       <label className="text-xs font-medium text-[var(--admin-muted)]">
@@ -141,7 +141,7 @@ export function OrderFilters({
         >
           <option value="">Not available yet</option>
         </select>
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Foundation</span>
+        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
       </label>
 
       <label className="text-xs font-medium text-[var(--admin-muted)]">
@@ -154,7 +154,7 @@ export function OrderFilters({
         >
           <option value="today">Today (list API default)</option>
         </select>
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Foundation</span>
+        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
       </label>
 
       <label className="text-xs font-medium text-[var(--admin-muted)]">
@@ -165,7 +165,7 @@ export function OrderFilters({
           placeholder="Customer search later"
           aria-label="Customer filter unavailable"
         />
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Foundation</span>
+        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
       </label>
 
       <div className="flex items-end gap-2 xl:col-span-2">

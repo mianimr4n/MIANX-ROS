@@ -37,6 +37,15 @@ function kpiState(opState: OperationalState, unavailable?: boolean): AdminKpiSta
   return "available";
 }
 
+const DELAYED_ALERT_CODES = new Set(["PENDING_TOO_LONG", "PREPARING_TOO_LONG", "READY_AWAITING_DISPATCH"]);
+
+export type ProcurementDashboardSnapshot = {
+  pendingPoApprovals: number | null;
+  awaitingDeliveryPos: number | null;
+  outstandingInvoices: number | null;
+  unavailable: boolean;
+};
+
 export type ExecutiveKpisProps = {
   data: AdminOperationsDashboard | null;
   opState: OperationalState;
@@ -49,6 +58,8 @@ export type ExecutiveKpisProps = {
   activeAssignmentCount: number | null;
   assignmentsUpdatedAt: string | null;
   assignmentsUnavailable: boolean;
+  /** Purchasing KPIs from verified purchasing list APIs — null counts mean unavailable. */
+  procurement?: ProcurementDashboardSnapshot | null;
 };
 
 /**
@@ -65,10 +76,17 @@ export function ExecutiveKPIs({
   activeAssignmentCount,
   assignmentsUpdatedAt,
   assignmentsUnavailable,
+  procurement = null,
 }: ExecutiveKpisProps) {
   const updated = formatUpdatedAt(data?.generatedAt);
   const opsUnavailable = !data || opState === "ERROR" || opState === "OFFLINE" || opState === "UNAVAILABLE";
   const sourceUnavailable = "Source unavailable";
+  const readyOrders = data?.statusCounts.ready ?? null;
+  const delayedOrders =
+    data == null
+      ? null
+      : data.alerts.filter((a) => DELAYED_ALERT_CODES.has(a.code)).length;
+  const procurementUnavailable = Boolean(procurement?.unavailable);
 
   return (
     <section aria-label="Key performance indicators" className="mb-8">
@@ -79,26 +97,12 @@ export function ExecutiveKPIs({
       />
       {loading && !data ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-live="polite">
-          {Array.from({ length: 6 }).map((_, index) => (
+          {Array.from({ length: 9 }).map((_, index) => (
             <AdminKpiSkeleton key={index} />
           ))}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <AdminKpiCard
-            title="Today’s Orders"
-            value={opsUnavailable ? null : formatCount(data?.kpis.todayOrders)}
-            secondary="Asia/Karachi business day"
-            source={opsUnavailable ? "UNAVAILABLE" : "LIVE"}
-            state={kpiState(opState, opsUnavailable)}
-            lastUpdated={updated}
-            detail={opsUnavailable ? sourceUnavailable : "Source: Orders API (dashboard/operations)"}
-            action={
-              <Link href="/admin/orders" className="text-xs font-semibold text-[var(--brand-red)]">
-                Open orders
-              </Link>
-            }
-          />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           <AdminKpiCard
             title="Today’s Sales"
             value={opsUnavailable ? null : formatPkr(data?.kpis.todayGrossSales)}
@@ -106,40 +110,47 @@ export function ExecutiveKPIs({
             source={opsUnavailable ? "UNAVAILABLE" : "LIVE"}
             state={kpiState(opState, opsUnavailable)}
             lastUpdated={updated}
-            detail={opsUnavailable ? sourceUnavailable : "Source: Orders API (dashboard/operations)"}
+            detail={opsUnavailable ? sourceUnavailable : "Pakistan business day · Orders"}
           />
           <AdminKpiCard
-            title="Active Orders"
+            title="Today’s Orders"
+            value={opsUnavailable ? null : formatCount(data?.kpis.todayOrders)}
+            secondary="Asia/Karachi business day"
+            source={opsUnavailable ? "UNAVAILABLE" : "LIVE"}
+            state={kpiState(opState, opsUnavailable)}
+            lastUpdated={updated}
+            detail={opsUnavailable ? sourceUnavailable : "Orders for the current business day"}
+            action={
+              <Link href="/admin/orders" className="text-xs font-semibold text-[var(--brand-red)]">
+                Open orders
+              </Link>
+            }
+          />
+          <AdminKpiCard
+            title="Average Order Value"
+            value={opsUnavailable ? null : formatPkr(data?.kpis.averageOrderValue)}
+            secondary="Sales ÷ non-cancelled orders"
+            source={
+              opsUnavailable || data?.kpis.averageOrderValue == null ? "UNAVAILABLE" : "DERIVED"
+            }
+            state={kpiState(opState, opsUnavailable || data?.kpis.averageOrderValue == null)}
+            lastUpdated={updated}
+            detail={
+              opsUnavailable
+                ? sourceUnavailable
+                : data?.kpis.averageOrderValue == null
+                  ? "Source unavailable — needs non-cancelled orders today"
+                  : "Calculated from today’s non-cancelled orders"
+            }
+          />
+          <AdminKpiCard
+            title="Open Orders"
             value={opsUnavailable ? null : formatCount(data?.kpis.activeOrders)}
             secondary="In-flight pipeline"
             source={opsUnavailable ? "UNAVAILABLE" : "DERIVED"}
             state={kpiState(opState, opsUnavailable)}
             lastUpdated={updated}
-            detail={opsUnavailable ? sourceUnavailable : "Source: Orders API — derived active statuses"}
-          />
-          <AdminKpiCard
-            title="Low-stock items"
-            value={opsUnavailable ? null : formatCount(data?.kpis.lowStockCount)}
-            secondary={
-              opsUnavailable
-                ? sourceUnavailable
-                : (data?.kpis.lowStockCount ?? 0) > 0
-                  ? `Attention: ${data?.kpis.lowStockCount} inventory items are below minimum stock level.`
-                  : "Inventory levels are healthy."
-            }
-            source={opsUnavailable ? "UNAVAILABLE" : "LIVE"}
-            state={kpiState(opState, opsUnavailable)}
-            lastUpdated={updated}
-            detail={
-              opsUnavailable
-                ? sourceUnavailable
-                : "Source: inventory_items where current_stock ≤ minimum_stock"
-            }
-            action={
-              <Link href="/admin/inventory" className="text-xs font-semibold text-[var(--brand-red)]">
-                Open inventory
-              </Link>
-            }
+            detail={opsUnavailable ? sourceUnavailable : "Active order statuses in scope"}
           />
           <AdminKpiCard
             title="Kitchen Queue"
@@ -157,7 +168,7 @@ export function ExecutiveKPIs({
                 ? "Kitchen tickets unavailable"
                 : kitchenTicketCount != null
                   ? "Open kitchen tickets"
-                  : "Confirmed + preparing (order-derived)"
+                  : "Confirmed + preparing"
             }
             source={
               kitchenTicketsUnavailable && opsUnavailable
@@ -184,16 +195,26 @@ export function ExecutiveKPIs({
               kitchenTicketsUnavailable && opsUnavailable
                 ? sourceUnavailable
                 : kitchenTicketCount != null
-                  ? "Source: Kitchen Tickets API"
+                  ? "Open kitchen tickets"
                   : opsUnavailable
                     ? sourceUnavailable
-                    : "Source: Orders API — order-derived kitchen waiting"
+                    : "Orders confirmed or preparing"
             }
             action={
               <Link href="/admin/kitchen-dashboard" className="text-xs font-semibold text-[var(--brand-red)]">
                 Open kitchen display
               </Link>
             }
+          />
+          <AdminKpiCard
+            title="Ready Orders"
+            value={opsUnavailable ? null : formatCount(readyOrders)}
+            secondary="Waiting for dispatch / pickup"
+            source={opsUnavailable ? "UNAVAILABLE" : "LIVE"}
+            state={kpiState(opState, opsUnavailable)}
+            lastUpdated={updated}
+            detail={opsUnavailable ? sourceUnavailable : "Orders currently marked ready"}
+            showResolvedZero
           />
           <AdminKpiCard
             title="Active Deliveries"
@@ -211,7 +232,7 @@ export function ExecutiveKPIs({
                 ? "Assignments unavailable"
                 : activeAssignmentCount != null
                   ? "Open rider assignments"
-                  : "Dispatched (order-derived)"
+                  : "Dispatched orders"
             }
             source={
               assignmentsUnavailable && opsUnavailable
@@ -236,10 +257,10 @@ export function ExecutiveKPIs({
               assignmentsUnavailable && opsUnavailable
                 ? sourceUnavailable
                 : activeAssignmentCount != null
-                  ? "Source: Riders Assignments API"
+                  ? "Open rider assignments"
                   : opsUnavailable
                     ? sourceUnavailable
-                    : "Source: Orders API — order-derived dispatched"
+                    : "Orders currently dispatched"
             }
             action={
               <Link href="/admin/delivery" className="text-xs font-semibold text-[var(--brand-red)]">
@@ -248,21 +269,87 @@ export function ExecutiveKPIs({
             }
           />
           <AdminKpiCard
-            title="Average Order Value"
-            value={opsUnavailable ? null : formatPkr(data?.kpis.averageOrderValue)}
-            secondary="Sales ÷ non-cancelled orders"
-            source={
-              opsUnavailable || data?.kpis.averageOrderValue == null ? "UNAVAILABLE" : "DERIVED"
-            }
-            state={kpiState(opState, opsUnavailable || data?.kpis.averageOrderValue == null)}
+            title="Delayed Orders"
+            value={opsUnavailable ? null : formatCount(delayedOrders)}
+            secondary="Pending / preparing / ready too long"
+            source={opsUnavailable ? "UNAVAILABLE" : "DERIVED"}
+            state={kpiState(opState, opsUnavailable)}
             lastUpdated={updated}
             detail={
               opsUnavailable
                 ? sourceUnavailable
-                : data?.kpis.averageOrderValue == null
-                  ? "Source unavailable — needs non-cancelled orders today"
-                  : "Source: Orders API — derived AOV"
+                : "From operational delay alerts in the current branch scope"
             }
+            showResolvedZero
+          />
+          <AdminKpiCard
+            title="Low-stock items"
+            value={opsUnavailable ? null : formatCount(data?.kpis.lowStockCount)}
+            secondary={
+              opsUnavailable
+                ? sourceUnavailable
+                : (data?.kpis.lowStockCount ?? 0) > 0
+                  ? `Attention: ${data?.kpis.lowStockCount} inventory items are below minimum stock level.`
+                  : "Inventory levels are healthy."
+            }
+            source={opsUnavailable ? "UNAVAILABLE" : "LIVE"}
+            state={kpiState(opState, opsUnavailable)}
+            lastUpdated={updated}
+            detail={
+              opsUnavailable
+                ? sourceUnavailable
+                : "Items at or below minimum stock in this branch scope"
+            }
+            action={
+              <Link href="/admin/inventory" className="text-xs font-semibold text-[var(--brand-red)]">
+                Open inventory
+              </Link>
+            }
+            showResolvedZero
+          />
+          <AdminKpiCard
+            title="Pending PO approvals"
+            value={procurementUnavailable ? null : formatCount(procurement?.pendingPoApprovals ?? null)}
+            secondary={procurementUnavailable ? sourceUnavailable : "Draft / submitted purchase orders"}
+            source={procurementUnavailable ? "UNAVAILABLE" : "LIVE"}
+            state={procurementUnavailable ? "unavailable" : "available"}
+            detail={
+              procurementUnavailable
+                ? sourceUnavailable
+                : "Purchase orders waiting for approve / reject"
+            }
+            action={
+              <Link href="/admin/purchasing" className="text-xs font-semibold text-[var(--brand-red)]">
+                Open purchasing
+              </Link>
+            }
+            showResolvedZero
+          />
+          <AdminKpiCard
+            title="Awaiting delivery POs"
+            value={procurementUnavailable ? null : formatCount(procurement?.awaitingDeliveryPos ?? null)}
+            secondary={procurementUnavailable ? sourceUnavailable : "Approved / ordered without GRN"}
+            source={procurementUnavailable ? "UNAVAILABLE" : "LIVE"}
+            state={procurementUnavailable ? "unavailable" : "available"}
+            detail={
+              procurementUnavailable
+                ? sourceUnavailable
+                : "Purchase orders still waiting for goods receiving"
+            }
+            showResolvedZero
+          />
+          <AdminKpiCard
+            title="Outstanding invoices"
+            value={procurementUnavailable ? null : formatCount(procurement?.outstandingInvoices ?? null)}
+            secondary={procurementUnavailable ? sourceUnavailable : "Pending / partially paid"}
+            source={procurementUnavailable ? "UNAVAILABLE" : "LIVE"}
+            state={procurementUnavailable ? "unavailable" : "available"}
+            detail={
+              procurementUnavailable
+                ? sourceUnavailable
+                : "Supplier invoices not fully paid in this branch scope"
+            }
+            showResolvedZero
           />
         </div>
       )}
@@ -270,4 +357,4 @@ export function ExecutiveKPIs({
   );
 }
 
-export { formatCount, formatPkr, kpiState, formatUpdatedAt };
+export { formatCount, formatPkr, kpiState, formatUpdatedAt, DELAYED_ALERT_CODES };

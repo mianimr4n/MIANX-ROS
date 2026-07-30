@@ -8,12 +8,7 @@ function formatMoney(amount: number): string {
 function UnavailableInventoryKpis() {
   const cards = [
     "Total stock items",
-    "In stock",
     "Low stock",
-    "Out of stock",
-    "Menu browse SKUs",
-    "Internal / topping SKUs",
-    "Unmapped recipes",
     "Stock value",
     "Waste today",
     "Received today",
@@ -24,16 +19,10 @@ function UnavailableInventoryKpis() {
         <AdminKpiCard
           key={title}
           title={title}
-          value="—"
+          value={null}
           source="UNAVAILABLE"
-          unavailable
-          detail={
-            title === "Menu browse SKUs" ||
-            title === "Internal / topping SKUs" ||
-            title === "Unmapped recipes"
-              ? "Menu catalog payload unavailable — not shown as zero"
-              : "Stock ledger not loaded"
-          }
+          state="unavailable"
+          detail="Data unavailable"
         />
       ))}
     </div>
@@ -56,11 +45,11 @@ export function InventoryKPIs({
       <AdminSectionTitle
         eyebrow="Inventory"
         title="Operational KPIs"
-        description="Live stock counts, derived cost×qty value, and today waste/receipt movement totals."
+        description="Stock health for the selected branch. Unavailable sources show — — never a fabricated zero."
       />
       {loading && !snapshot ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-busy="true">
-          {Array.from({ length: 8 }).map((_, i) => (
+          {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-[7.25rem] animate-pulse rounded-2xl bg-[var(--admin-soft)]" />
           ))}
         </div>
@@ -70,65 +59,46 @@ export function InventoryKPIs({
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <AdminKpiCard
             title="Total stock items"
-            value={stockLoaded ? String(snapshot.stockItemCount) : "—"}
+            value={stockLoaded ? String(snapshot.stockItemCount) : null}
             source={stockLoaded ? "LIVE" : "UNAVAILABLE"}
-            unavailable={!stockLoaded}
-            detail={stockLoaded ? "GET /admin/inventory/items" : "Requires inventory.manage"}
+            state={stockLoaded ? "available" : "unavailable"}
+            detail={stockLoaded ? "Updated from current branch operations" : "Access unavailable"}
+            showResolvedZero
           />
           <AdminKpiCard
             title="Low stock"
-            value={stockLoaded ? String(snapshot.lowStockCount) : "—"}
+            value={stockLoaded ? String(snapshot.lowStockCount) : null}
             source={stockLoaded ? "LIVE" : "UNAVAILABLE"}
-            unavailable={!stockLoaded}
-            detail={stockLoaded ? "current_stock ≤ reorder/minimum" : "Requires reorder thresholds"}
-          />
-          <AdminKpiCard title="Out of stock" value="—" source="UNAVAILABLE" unavailable detail="Not derived from menu flags" />
-          <AdminKpiCard
-            title="Menu browse SKUs"
-            value={String(snapshot.menuBrowseSkus)}
-            source="DERIVED"
-            detail="Sellable catalog items — not stock rows"
-          />
-          <AdminKpiCard
-            title="Internal / topping SKUs"
-            value={String(snapshot.menuInternalSkus)}
-            source="DERIVED"
-            detail="Customizer toppings — not ingredient ledger"
-          />
-          <AdminKpiCard
-            title="Unmapped recipes"
-            value={String(snapshot.unmappedRecipeProducts)}
-            source="DERIVED"
-            detail="All catalog SKUs lack recipe BOM"
+            state={stockLoaded ? "available" : "unavailable"}
+            detail={stockLoaded ? "Items at or below reorder / minimum" : "Access unavailable"}
+            showResolvedZero
           />
           <AdminKpiCard
             title="Stock value"
-            value={valueLoaded ? formatMoney(snapshot.stockValue ?? 0) : "—"}
+            value={valueLoaded ? formatMoney(snapshot.stockValue ?? 0) : null}
             source={valueLoaded ? "DERIVED" : "UNAVAILABLE"}
-            unavailable={!valueLoaded}
+            state={valueLoaded ? "available" : "unavailable"}
             detail={
               valueLoaded
-                ? "Σ(current_stock × cost_price) where cost is set"
-                : "Requires inventory.manage"
+                ? "Calculated from on-hand quantity × cost where cost is set"
+                : "Access unavailable"
             }
           />
           <AdminKpiCard
             title="Waste today"
-            value={movementsLoaded ? String(snapshot.wasteTodayQty) : "—"}
+            value={movementsLoaded ? String(snapshot.wasteTodayQty) : null}
             source={movementsLoaded ? "LIVE" : "UNAVAILABLE"}
-            unavailable={!movementsLoaded}
-            detail={movementsLoaded ? "stock_movements movementType=waste (today)" : "Requires movements load"}
+            state={movementsLoaded ? "available" : "unavailable"}
+            detail={movementsLoaded ? "Waste logged today" : "Access unavailable"}
+            showResolvedZero
           />
           <AdminKpiCard
             title="Received today"
-            value={movementsLoaded ? String(snapshot.receivedTodayQty) : "—"}
+            value={movementsLoaded ? String(snapshot.receivedTodayQty) : null}
             source={movementsLoaded ? "LIVE" : "UNAVAILABLE"}
-            unavailable={!movementsLoaded}
-            detail={
-              movementsLoaded
-                ? "stock_movements receipt/purchase (today)"
-                : "Requires movements load"
-            }
+            state={movementsLoaded ? "available" : "unavailable"}
+            detail={movementsLoaded ? "Receipts logged today" : "Access unavailable"}
+            showResolvedZero
           />
         </div>
       )}

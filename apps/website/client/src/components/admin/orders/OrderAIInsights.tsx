@@ -98,7 +98,7 @@ export function OrderAIInsights({ items }: { items: OrderInsightItem[] }) {
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm font-semibold text-[var(--admin-ink)]">{item.title}</p>
                 <span className="shrink-0 rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-                  {item.source === "live" ? "Rule-based Summary" : "Foundation"}
+                  {item.source === "live" ? "Rule-based Summary" : "Planned for Phase 2"}
                 </span>
               </div>
               <p className="mt-1 text-sm text-[var(--admin-muted)]">{item.detail}</p>

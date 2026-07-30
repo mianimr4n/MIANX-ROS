@@ -96,7 +96,7 @@ export function CustomerDrawer({
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-[var(--admin-muted)]">Email</dt>
-                  <dd className="text-[var(--admin-muted)]">Foundation</dd>
+                  <dd className="text-[var(--admin-muted)]">Planned for Phase 2</dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-[var(--admin-muted)]">Customer ID</dt>
@@ -125,7 +125,7 @@ export function CustomerDrawer({
                 <p className="mt-2 rounded-xl bg-[var(--admin-soft)] px-3 py-2 text-sm">{address}</p>
               ) : (
                 <p className="mt-2 text-sm text-[var(--admin-muted)]">
-                  No delivery address on the latest order detail. Saved Home/Office addresses · Foundation
+                  No delivery address on the latest order detail. Saved Home/Office addresses · Planned for Phase 2
                   (admin cannot read `/me/addresses` for other users).
                 </p>
               )}
@@ -142,7 +142,7 @@ export function CustomerDrawer({
             <section>
               <h3 className="text-sm font-semibold">Favourite products</h3>
               <p className="mt-2 text-sm text-[var(--admin-muted)]">
-                Favourites API is customer-owned (`/me/favorites`) · Foundation for CRM.
+                Favourites API is customer-owned (`/me/favorites`) · Planned for Phase 2 for CRM.
               </p>
             </section>
 
@@ -176,7 +176,7 @@ export function CustomerDrawer({
                 disabled
                 className="min-h-11 cursor-not-allowed rounded-xl border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
               >
-                Edit · Foundation
+                Edit · Planned for Phase 2
               </button>
               <Link
                 href={`/admin/orders?orderNumber=${encodeURIComponent(customer.lastOrderNumber)}`}
@@ -192,7 +192,7 @@ export function CustomerDrawer({
                 Create POS order
               </button>
               <span className="min-h-11 rounded-xl border border-dashed border-[var(--admin-border)] px-4 py-2 text-sm text-[var(--admin-muted)]">
-                Send WhatsApp · Foundation
+                Send WhatsApp · Planned for Phase 2
               </span>
             </div>
           </div>

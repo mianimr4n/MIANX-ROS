@@ -35,7 +35,7 @@ describe("CRM & Customer Management V1 (static)", () => {
     assert.doesNotMatch(helper, /fakeCustomers|mockVip|Math\.random/);
   });
 
-  it("labels loyalty, marketing, VIP, export, and WhatsApp as Foundation", () => {
+  it("labels loyalty, marketing, VIP, export, and WhatsApp as Planned for Phase 2", () => {
     const kpis = read("apps/website/client/src/components/admin/crm/CustomerKPIs.tsx");
     assert.match(kpis, /VIP customers/);
     assert.match(kpis, /FOUNDATION/);
@@ -45,14 +45,14 @@ describe("CRM & Customer Management V1 (static)", () => {
     const page = read("apps/website/client/src/pages/admin/AdminCrm.tsx");
     assert.match(page, /snapshot=\{live \? kpis : null\}/);
     const loyalty = read("apps/website/client/src/components/admin/crm/CustomerLoyalty.tsx");
-    assert.match(loyalty, /Foundation/);
+    assert.match(loyalty, /Planned for Phase 2/);
     assert.match(loyalty, /SMS opt-in/);
     assert.match(loyalty, /WhatsApp opt-in/);
     const header = read("apps/website/client/src/components/admin/crm/CRMHeader.tsx");
-    assert.match(header, /Export · Foundation/);
+    assert.match(header, /Export · Planned for Phase 2/);
     const drawer = read("apps/website/client/src/components/admin/crm/CustomerDrawer.tsx");
-    assert.match(drawer, /Send WhatsApp · Foundation/);
-    assert.match(drawer, /Edit · Foundation/);
+    assert.match(drawer, /Send WhatsApp · Planned for Phase 2/);
+    assert.match(drawer, /Edit · Planned for Phase 2/);
   });
 
   it("labels AI panel as rule-based only", () => {

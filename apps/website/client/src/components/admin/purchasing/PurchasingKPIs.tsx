@@ -19,89 +19,97 @@ export function PurchasingKPIs({ snapshot }: { snapshot: PurchasingKpiSnapshot }
       <AdminSectionTitle
         eyebrow="Procurement"
         title="Operational KPIs"
-        description="Live supplier, PO, GRN, invoice, payment, and three-way matching counts from purchasing APIs."
+        description="Supplier and purchase-order health for the selected branch. Unavailable sources show — — never a fabricated zero."
       />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <AdminKpiCard
           title="Active suppliers"
-          value={suppliersLoaded ? String(snapshot.supplierCount) : "—"}
+          value={suppliersLoaded ? String(snapshot.supplierCount) : null}
           source={suppliersLoaded ? "LIVE" : "UNAVAILABLE"}
-          unavailable={!suppliersLoaded}
-          detail={suppliersLoaded ? "GET /admin/purchasing/suppliers" : "Requires purchasing.manage"}
+          state={suppliersLoaded ? "available" : "unavailable"}
+          detail={suppliersLoaded ? "Updated from current branch operations" : "Access unavailable"}
+          showResolvedZero
         />
         <AdminKpiCard
           title="Open requisitions"
-          value={reqLoaded ? String(snapshot.openRequisitionCount) : "—"}
+          value={reqLoaded ? String(snapshot.openRequisitionCount) : null}
           source={reqLoaded ? "LIVE" : "UNAVAILABLE"}
-          unavailable={!reqLoaded}
-          detail={reqLoaded ? "GET /admin/purchasing/requisitions" : "Requires purchasing.manage"}
+          state={reqLoaded ? "available" : "unavailable"}
+          detail={reqLoaded ? "Draft, submitted, or approved requisitions" : "Access unavailable"}
+          showResolvedZero
         />
         <AdminKpiCard
           title="Pending approvals"
-          value={pendingLoaded ? String(snapshot.pendingApprovalCount) : "—"}
+          value={pendingLoaded ? String(snapshot.pendingApprovalCount) : null}
           source={pendingLoaded ? "LIVE" : "UNAVAILABLE"}
-          unavailable={!pendingLoaded}
-          detail={pendingLoaded ? "draft/submitted POs" : "Requires purchasing.manage"}
+          state={pendingLoaded ? "available" : "unavailable"}
+          detail={pendingLoaded ? "Draft or submitted purchase orders" : "Access unavailable"}
+          showResolvedZero
         />
         <AdminKpiCard
           title="Open purchase orders"
-          value={ordersLoaded ? String(snapshot.openPoCount) : "—"}
+          value={ordersLoaded ? String(snapshot.openPoCount) : null}
           source={ordersLoaded ? "LIVE" : "UNAVAILABLE"}
-          unavailable={!ordersLoaded}
-          detail={ordersLoaded ? "GET /admin/purchasing/orders" : "Requires purchasing.manage"}
+          state={ordersLoaded ? "available" : "unavailable"}
+          detail={ordersLoaded ? "Purchase orders still in progress" : "Access unavailable"}
+          showResolvedZero
         />
         <AdminKpiCard
           title="Awaiting delivery"
-          value={awaitingLoaded ? String(snapshot.awaitingDeliveryCount) : "—"}
+          value={awaitingLoaded ? String(snapshot.awaitingDeliveryCount) : null}
           source={awaitingLoaded ? "LIVE" : "UNAVAILABLE"}
-          unavailable={!awaitingLoaded}
+          state={awaitingLoaded ? "available" : "unavailable"}
           detail={
             awaitingLoaded
-              ? "Approved/ordered POs with no linked GRN"
-              : "Requires purchasing.manage"
+              ? "Approved orders waiting for goods receiving"
+              : "Access unavailable"
           }
+          showResolvedZero
         />
         <AdminKpiCard
           title="Partially received"
-          value={partialLoaded ? String(snapshot.partiallyReceivedCount) : "—"}
+          value={partialLoaded ? String(snapshot.partiallyReceivedCount) : null}
           source={partialLoaded ? "LIVE" : "UNAVAILABLE"}
-          unavailable={!partialLoaded}
-          detail={partialLoaded ? "POs with status partially_received" : "Requires purchasing.manage"}
+          state={partialLoaded ? "available" : "unavailable"}
+          detail={partialLoaded ? "Orders with partial goods receiving" : "Access unavailable"}
+          showResolvedZero
         />
         <AdminKpiCard
           title="Overdue POs"
-          value={overdueLoaded ? String(snapshot.overduePoCount) : "—"}
+          value={overdueLoaded ? String(snapshot.overduePoCount) : null}
           source={overdueLoaded ? "LIVE" : "UNAVAILABLE"}
-          unavailable={!overdueLoaded}
+          state={overdueLoaded ? "available" : "unavailable"}
           detail={
             overdueLoaded
-              ? "Open POs past expectedDeliveryDate"
-              : "Requires purchasing.manage"
+              ? "Open orders past expected delivery date"
+              : "Access unavailable"
           }
+          showResolvedZero
         />
         <AdminKpiCard
           title="Purchase spend"
-          value={spendLoaded ? formatMoney(snapshot.purchaseSpend ?? 0) : "—"}
+          value={spendLoaded ? formatMoney(snapshot.purchaseSpend ?? 0) : null}
           source={spendLoaded ? "LIVE" : "UNAVAILABLE"}
-          unavailable={!spendLoaded}
-          detail={spendLoaded ? "Sum of recorded supplier invoices" : "Requires purchasing.manage"}
+          state={spendLoaded ? "available" : "unavailable"}
+          detail={spendLoaded ? "Sum of recorded supplier invoices" : "Access unavailable"}
         />
         <AdminKpiCard
           title="Outstanding invoices"
-          value={outstandingLoaded ? String(snapshot.outstandingInvoiceCount) : "—"}
+          value={outstandingLoaded ? String(snapshot.outstandingInvoiceCount) : null}
           source={outstandingLoaded ? "LIVE" : "UNAVAILABLE"}
-          unavailable={!outstandingLoaded}
-          detail={outstandingLoaded ? "pending + partially_paid invoices" : "Requires purchasing.manage"}
+          state={outstandingLoaded ? "available" : "unavailable"}
+          detail={outstandingLoaded ? "Pending or partially paid invoices" : "Access unavailable"}
+          showResolvedZero
         />
         <AdminKpiCard
           title="On-time delivery"
-          value={onTimeLoaded ? `${snapshot.onTimeDeliveryPct}%` : "—"}
+          value={onTimeLoaded ? `${snapshot.onTimeDeliveryPct}%` : null}
           source={onTimeLoaded ? "LIVE" : "UNAVAILABLE"}
-          unavailable={!onTimeLoaded}
+          state={onTimeLoaded ? "available" : "unavailable"}
           detail={
             onTimeLoaded
-              ? "Received POs with GRN on/before expectedDeliveryDate"
-              : "Requires purchasing.manage"
+              ? "Received orders with goods on or before expected date"
+              : "Access unavailable"
           }
         />
       </div>

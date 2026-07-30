@@ -12,7 +12,7 @@ export function WhatsAppTemplates() {
           Message templates
         </h3>
         <div className="rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6 text-sm text-[var(--admin-muted)]">
-          <p className="font-semibold text-[var(--admin-ink)]">Message Templates Foundation</p>
+          <p className="font-semibold text-[var(--admin-ink)]">Message Templates — Planned for Phase 2</p>
           <p className="mt-2">
             Approved WhatsApp Business templates and provider synchronization are required before template messages can
             be sent from this workspace.

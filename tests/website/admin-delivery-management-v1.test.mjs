@@ -34,11 +34,11 @@ describe("Delivery Management V1 (static)", () => {
 
   it("keeps map, export, failed, and call actions Foundation", () => {
     const page = read("apps/website/client/src/pages/admin/AdminDelivery.tsx");
-    assert.match(page, /Export · Foundation/);
+    assert.match(page, /Export · Planned for Phase 2/);
     assert.match(page, /DeliveryMapFoundation/);
     const cards = read("apps/website/client/src/components/admin/delivery/DeliveryCards.tsx");
-    assert.match(cards, /Mark failed · Foundation/);
-    assert.match(cards, /Call customer · Foundation/);
+    assert.match(cards, /Mark failed · Planned for Phase 2/);
+    assert.match(cards, /Call customer · Planned for Phase 2/);
     const map = read("apps/website/client/src/components/admin/delivery/DeliverySidePanels.tsx");
     assert.match(map, /No Google Maps/);
   });

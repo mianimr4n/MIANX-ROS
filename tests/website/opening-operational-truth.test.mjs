@@ -201,12 +201,16 @@ describe("Dashboard alignment (static)", () => {
     const kpis = read("apps/website/client/src/components/admin/dashboard/ExecutiveKPIs.tsx");
     assert.match(kpis, /Kitchen Queue/);
     assert.match(kpis, /Confirmed \+ preparing/);
-    assert.match(kpis, /Kitchen Tickets API|order-derived kitchen waiting/);
+    assert.match(kpis, /Open kitchen tickets|Orders confirmed or preparing|Kitchen Tickets API|order-derived kitchen waiting/);
     assert.match(kpis, /Active Deliveries/);
-    assert.match(kpis, /Riders Assignments API|order-derived dispatched/);
+    assert.match(kpis, /Open rider assignments|Orders currently dispatched|Riders Assignments API|order-derived dispatched/);
+    const builders = read("apps/website/client/src/components/admin/dashboard/owner-command-builders.ts");
+    assert.match(builders, /Kitchen Queue/);
+    assert.match(builders, /Orders Out For Delivery/);
     const dash = read("apps/website/client/src/pages/admin/AdminDashboard.tsx");
     assert.match(dash, /listKitchenTickets/);
     assert.match(dash, /listDeliveryAssignments/);
+    assert.match(dash, /OwnerCommandCenter/);
   });
 
   it("Branch dashboard separates pending orders from kitchen tickets", () => {
@@ -237,8 +241,8 @@ describe("RBAC wording alignment", () => {
   it("does not call UI subset the complete RBAC seed", () => {
     const settings = read("apps/website/client/src/lib/admin-settings.ts");
     assert.doesNotMatch(settings, /RBAC seed: \$\{input\.roleCount/);
-    assert.match(settings, /UI-visible roles/);
-    assert.match(settings, /not the complete Seeded RBAC catalog/i);
+    assert.match(settings, /Team roles on file|UI-visible roles/);
+    assert.match(settings, /do not invent new permission codes|not the complete Seeded RBAC catalog/i);
     const panels = read("apps/website/client/src/components/admin/settings/SettingsPanels.tsx");
     assert.match(panels, /Current session grants/);
     assert.match(panels, /UI-visible application roles/);

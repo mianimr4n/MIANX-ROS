@@ -278,47 +278,76 @@ export function LiveActivityPanel({ items }: { items: ActivityItem[] }) {
   );
 }
 
-export function ExecutiveAside({ alertCount }: { alertCount: number }) {
+export function ExecutiveAside({
+  alertCount,
+  pendingPoApprovals = null,
+  procurementUnavailable = false,
+}: {
+  alertCount: number;
+  pendingPoApprovals?: number | null;
+  procurementUnavailable?: boolean;
+}) {
   return (
     <aside className="space-y-4" aria-label="Executive sidebar">
       <AdminSurface>
-        <AdminSurfaceHeader title="Critical alerts" description="Count from deterministic operational alerts." />
+        <AdminSurfaceHeader title="Operational alerts" description="Delay and backlog alerts in the current branch." />
         <AdminSurfaceBody>
           <p className="text-3xl font-semibold tabular-nums text-[var(--admin-ink)]">{alertCount}</p>
           <p className="mt-1 text-sm text-[var(--admin-muted)]">Open alerts in current branch scope</p>
+          <Link
+            href="/admin/orders"
+            className="mt-3 inline-flex text-xs font-semibold text-[var(--brand-red)]"
+          >
+            Review orders
+          </Link>
         </AdminSurfaceBody>
       </AdminSurface>
 
       <AdminSurface>
-        <AdminSurfaceHeader title="Today’s goals" description="Foundation checklist — not tracked tasks." />
+        <AdminSurfaceHeader title="Quick actions" description="Jump to today’s operational workspaces." />
         <AdminSurfaceBody>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-            Foundation
-          </p>
-          <ul className="space-y-2 text-sm text-[var(--admin-muted)]">
-            <li>Keep pending queue under control</li>
-            <li>Clear ready orders waiting for dispatch</li>
-            <li>Review critical operational alerts</li>
+          <ul className="grid gap-2 text-sm sm:grid-cols-2">
+            {[
+              { href: "/admin/pos", label: "Open POS" },
+              { href: "/admin/kitchen-dashboard", label: "Open Kitchen" },
+              { href: "/admin/orders", label: "Open Orders" },
+              { href: "/admin/inventory", label: "Add stock item" },
+              { href: "/admin/purchasing", label: "Add supplier" },
+              { href: "/admin/purchasing", label: "Create requisition" },
+              { href: "/admin/purchasing", label: "Create purchase order" },
+              { href: "/admin/reports", label: "Open Reports" },
+              { href: "/admin/settings", label: "Open Settings" },
+            ].map((item) => (
+              <li key={`${item.href}-${item.label}`}>
+                <Link
+                  href={item.href}
+                  className="inline-flex min-h-11 items-center font-semibold text-[var(--brand-red)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)]"
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </AdminSurfaceBody>
       </AdminSurface>
 
       <AdminSurface>
-        <AdminSurfaceHeader title="Quick notes" description="Foundation" />
+        <AdminSurfaceHeader title="Pending PO approvals" description="Draft and submitted purchase orders." />
         <AdminSurfaceBody>
-          <p className="text-sm text-[var(--admin-muted)]">
-            Staff notes and shift handoff are not available in v1.
+          <p className="text-3xl font-semibold tabular-nums text-[var(--admin-ink)]">
+            {procurementUnavailable || pendingPoApprovals == null ? "—" : pendingPoApprovals}
           </p>
-        </AdminSurfaceBody>
-      </AdminSurface>
-
-      <AdminSurface>
-        <AdminSurfaceHeader title="Pending approvals" description="Foundation" />
-        <AdminSurfaceBody>
-          <p className="text-3xl font-semibold tabular-nums text-[var(--admin-muted)]">—</p>
           <p className="mt-1 text-sm text-[var(--admin-muted)]">
-            Refund / cancel approval workflow is not implemented.
+            {procurementUnavailable || pendingPoApprovals == null
+              ? "Source unavailable"
+              : "Waiting for approve / reject"}
           </p>
+          <Link
+            href="/admin/purchasing"
+            className="mt-3 inline-flex text-xs font-semibold text-[var(--brand-red)]"
+          >
+            Open purchasing
+          </Link>
         </AdminSurfaceBody>
       </AdminSurface>
     </aside>

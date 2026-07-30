@@ -56,7 +56,7 @@ export function WhatsAppHeader({
           className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
           title="Template management requires provider integration"
         >
-          Templates · Foundation
+          Templates · Planned for Phase 2
         </button>
         <button
           type="button"
@@ -64,7 +64,7 @@ export function WhatsAppHeader({
           className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
           title="Integration settings require provider backend"
         >
-          Settings · Foundation
+          Settings · Planned for Phase 2
         </button>
         <form
           className="flex gap-2"

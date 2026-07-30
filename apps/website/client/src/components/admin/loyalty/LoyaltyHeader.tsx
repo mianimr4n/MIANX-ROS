@@ -51,7 +51,7 @@ export function LoyaltyHeader({
           className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
           title="Export arrives with Reports"
         >
-          Export · Foundation
+          Export · Planned for Phase 2
         </button>
         <button
           type="button"
@@ -59,7 +59,7 @@ export function LoyaltyHeader({
           className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
           title="Programme configuration requires loyalty backend"
         >
-          Configure · Foundation
+          Configure · Planned for Phase 2
         </button>
         <form
           className="flex gap-2"

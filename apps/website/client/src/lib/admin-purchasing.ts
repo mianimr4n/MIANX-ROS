@@ -208,17 +208,30 @@ export function buildProcurementInsights(
   if (suppliers != null) {
     items.push({
       id: "live-suppliers",
-      title: `${suppliers.length} supplier${suppliers.length === 1 ? "" : "s"} in branch scope.`,
-      detail: "Live from GET /admin/purchasing/suppliers — empty until staff add vendors.",
+      title:
+        suppliers.length === 0
+          ? `No suppliers have been added for ${branchLabel}.`
+          : `${suppliers.length} supplier${suppliers.length === 1 ? "" : "s"} ready for ${branchLabel}`,
+      detail:
+        suppliers.length === 0
+          ? "Add suppliers before creating purchase orders."
+          : "Updated from current branch operations.",
       source: "live",
     });
   }
 
   if (orders != null) {
+    const pending = orders.filter((o) => o.status === "draft" || o.status === "submitted").length;
     items.push({
       id: "live-pos",
-      title: `${orders.length} purchase order${orders.length === 1 ? "" : "s"} on record.`,
-      detail: "Live from GET /admin/purchasing/orders.",
+      title:
+        pending > 0
+          ? `${pending} purchase order${pending === 1 ? "" : "s"} waiting for approval`
+          : `${orders.length} purchase order${orders.length === 1 ? "" : "s"} on record`,
+      detail:
+        pending > 0
+          ? "Review Approve / Reject on draft or submitted orders in Purchasing."
+          : "Live purchase orders for this branch scope.",
       source: "live",
     });
   }
@@ -226,38 +239,39 @@ export function buildProcurementInsights(
   if (receipts != null) {
     items.push({
       id: "live-grn",
-      title: `${receipts.length} goods receipt${receipts.length === 1 ? "" : "s"} recorded.`,
-      detail: "Live GRN headers and atomic stock posting for mapped inventory lines.",
+      title:
+        receipts.length === 0
+          ? "No goods receipts yet"
+          : `${receipts.length} goods receipt${receipts.length === 1 ? "" : "s"} recorded`,
+      detail:
+        receipts.length === 0
+          ? "After a PO is approved, record a GRN when goods arrive. Mapped lines update stock automatically."
+          : "Receiving records for approved purchase orders.",
       source: "live",
     });
   }
 
   if (invoices != null) {
-    const matched = invoices.filter((i) => i.matchingStatus === "MATCHED").length;
-    const discrepancy = invoices.filter((i) => i.matchingStatus === "DISCREPANCY").length;
+    const outstanding = invoices.filter((i) => i.status === "pending" || i.status === "partially_paid").length;
     items.push({
       id: "live-invoices",
-      title: `${invoices.length} supplier invoice${invoices.length === 1 ? "" : "s"} · ${matched} matched · ${discrepancy} discrepancy.`,
-      detail: "Three-way matching runs on invoice create (PO total ↔ posted GRN ↔ invoice amount).",
+      title:
+        outstanding > 0
+          ? `${outstanding} supplier invoice${outstanding === 1 ? "" : "s"} still outstanding`
+          : `${invoices.length} supplier invoice${invoices.length === 1 ? "" : "s"} on file`,
+      detail: "Matching compares PO total, posted GRN, and invoice amount when an invoice is created.",
       source: "live",
     });
   }
 
-  if (payments != null) {
+  if (payments != null && payments.length > 0) {
     items.push({
       id: "live-payments",
-      title: `${payments.length} supplier payment${payments.length === 1 ? "" : "s"} recorded.`,
-      detail: "Payments update invoice status to partially_paid / paid atomically.",
+      title: `${payments.length} supplier payment${payments.length === 1 ? "" : "s"} recorded`,
+      detail: "Payments update invoice status to partially paid or paid.",
       source: "live",
     });
   }
-
-  items.push({
-    id: "branch",
-    title: `Branch context: ${branchLabel} — purchasing APIs are branch-scoped.`,
-    detail: "purchasing.manage, finance.manage, or admin.access required.",
-    source: "live",
-  });
 
   return items.slice(0, 6);
 }

@@ -26,10 +26,10 @@ describe("Kitchen Display System V1 (static)", () => {
     assert.match(page, /patchKitchenTicketStatus/);
   });
 
-  it("keeps station filter and capacity labeled Foundation", () => {
+  it("keeps station filter and capacity labeled Planned for Phase 2", () => {
     const filters = read("apps/website/client/src/components/admin/kitchen/KitchenFilters.tsx");
     assert.match(filters, /Station/);
-    assert.match(filters, /Foundation/);
+    assert.match(filters, /Planned for Phase 2/);
     assert.match(filters, /disabled/);
     const kpis = read("apps/website/client/src/components/admin/kitchen/KitchenKPIs.tsx");
     assert.match(kpis, /Kitchen capacity/);

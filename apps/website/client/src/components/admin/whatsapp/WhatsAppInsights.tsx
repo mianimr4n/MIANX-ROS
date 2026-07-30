@@ -18,7 +18,7 @@ export function WhatsAppInsights({ items }: { items: WhatsAppInsightItem[] }) {
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm font-semibold text-[var(--admin-ink)]">{item.title}</p>
                 <span className="shrink-0 rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-                  {item.source === "derived" ? "Rule-based Summary" : "Foundation"}
+                  {item.source === "derived" ? "Rule-based Summary" : "Planned for Phase 2"}
                 </span>
               </div>
               <p className="mt-1 text-sm text-[var(--admin-muted)]">{item.detail}</p>

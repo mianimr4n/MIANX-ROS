@@ -165,8 +165,14 @@ export function buildInventoryInsights(
   if (snapshot.stockItemCount != null) {
     items.push({
       id: "live-stock-count",
-      title: `${snapshot.stockItemCount} stock item${snapshot.stockItemCount === 1 ? "" : "s"} in branch scope.`,
-      detail: "Live from GET /admin/inventory/items — empty until staff add SKUs.",
+      title:
+        snapshot.stockItemCount === 0
+          ? `No inventory items have been added for ${branchLabel}.`
+          : `${snapshot.stockItemCount} stock item${snapshot.stockItemCount === 1 ? "" : "s"} on hand for ${branchLabel}`,
+      detail:
+        snapshot.stockItemCount === 0
+          ? "Add opening stock to begin low-stock monitoring."
+          : "Updated from current branch operations.",
       source: "live",
     });
   }
@@ -174,8 +180,24 @@ export function buildInventoryInsights(
   if (snapshot.lowStockCount != null && snapshot.lowStockCount > 0) {
     items.push({
       id: "live-low-stock",
-      title: `${snapshot.lowStockCount} item(s) at or below reorder/minimum threshold.`,
-      detail: "Rule-based comparison of current_stock vs reorder_level / minimum_stock.",
+      title: `${snapshot.lowStockCount} item${snapshot.lowStockCount === 1 ? "" : "s"} need replenishment`,
+      detail: "On-hand quantity is at or below the reorder / minimum level you set on each item.",
+      source: "live",
+    });
+  } else if (snapshot.lowStockCount === 0) {
+    items.push({
+      id: "live-low-stock-clear",
+      title: "No low-stock alerts right now",
+      detail: "Every tracked item is above its minimum / reorder level in this scope.",
+      source: "live",
+    });
+  }
+
+  if (snapshot.wasteTodayQty != null && snapshot.wasteTodayQty > 0) {
+    items.push({
+      id: "waste-today",
+      title: `Waste logged today: ${snapshot.wasteTodayQty}`,
+      detail: "From waste movements recorded today.",
       source: "live",
     });
   }
@@ -183,37 +205,11 @@ export function buildInventoryInsights(
   if (snapshot.unmappedRecipeProducts > 0) {
     items.push({
       id: "unmapped-recipes",
-      title: `${snapshot.unmappedRecipeProducts} catalog SKUs have no recipe mapping in the repository.`,
-      detail: "Rule-based: no recipes table or menu→ingredient linkage exists.",
-      source: "derived",
+      title: "Recipe consumption tracking is not configured yet.",
+      detail: "Sales will not reduce ingredients until recipes are mapped.",
+      source: "foundation",
     });
   }
-
-  if (snapshot.modifierGroupsInCatalog > 0) {
-    items.push({
-      id: "modifiers-not-ingredients",
-      title: `${snapshot.modifierGroupsInCatalog} modifier groups exist on menu SKUs — these are not ingredient stock records.`,
-      detail: "Modifier options adjust selling price; they do not prove inventory quantity.",
-      source: "derived",
-    });
-  }
-
-  items.push({
-    id: "partial-valuation",
-    title:
-      snapshot.stockValue != null
-        ? `Derived stock value ${snapshot.stockValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} (cost_price × qty).`
-        : "Derived stock value unavailable until stock items load.",
-    detail: "Standard-cost derived total only — FIFO/WAC valuation Planned for Phase 2. Retail menu prices are not cost.",
-    source: snapshot.stockValue != null ? "derived" : "foundation",
-  });
-
-  items.push({
-    id: "branch-scope",
-    title: `Branch context: ${branchLabel} — stock reads/writes are branch-scoped.`,
-    detail: "inventory.manage or admin.access required for write APIs.",
-    source: "live",
-  });
 
   return items.slice(0, 6);
 }

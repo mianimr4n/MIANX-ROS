@@ -662,19 +662,41 @@ export function ApprovalTimelinePanel({
 }
 
 export function PurchaseDemandPanel() {
+  const steps = [
+    "Add supplier",
+    "Create requisition",
+    "Create purchase order",
+    "Approve purchase order",
+    "Record GRN",
+    "Record supplier invoice",
+    "Record supplier payment",
+  ];
   return (
-    <AdminSurface aria-labelledby="purchase-demand-heading" className="mb-6">
+    <AdminSurface aria-labelledby="purchase-workflow-heading" className="mb-6">
       <AdminSurfaceHeader
-        title="Purchase demand"
-        description="Reorder-driven demand requires inventory balances and thresholds."
+        title="Suggested purchasing flow"
+        description="Follow this sequence when setting up procurement for a branch."
       />
       <AdminSurfaceBody>
-        <h3 id="purchase-demand-heading" className="sr-only">
-          Purchase demand
+        <h3 id="purchase-workflow-heading" className="sr-only">
+          Suggested purchasing flow
         </h3>
-        <p className="text-sm text-[var(--admin-muted)]">
-          Items below reorder level with suggested order quantities require stock balances, par levels, and preferred
-          supplier linkage — all unavailable. No automatic PO creation.
+        <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {steps.map((step, index) => (
+            <li
+              key={step}
+              className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-3 text-sm"
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+                Step {index + 1}
+              </p>
+              <p className="mt-1 font-medium text-[var(--admin-ink)]">{step}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-3 text-xs text-[var(--admin-muted)]">
+          If a control is unavailable, complete the earlier step first — for example, add a supplier before creating a
+          purchase order.
         </p>
       </AdminSurfaceBody>
     </AdminSurface>

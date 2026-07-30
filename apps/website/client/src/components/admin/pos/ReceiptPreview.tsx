@@ -28,7 +28,7 @@ export function ReceiptPreview({
           className="cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-muted)]"
           title="Hardware print integration is Foundation"
         >
-          Print · Foundation
+          Print · Planned for Phase 2
         </button>
       </div>
       <p className="mt-1 text-xs text-[var(--admin-muted)]">

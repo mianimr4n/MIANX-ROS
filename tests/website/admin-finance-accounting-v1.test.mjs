@@ -27,7 +27,7 @@ describe("Finance & Accounting V1 (static)", () => {
     assert.match(page, /TaxPanel/);
     assert.match(page, /LedgerPanel/);
     assert.match(page, /StatementsPanel/);
-    assert.match(page, /FinanceFoundationPanel/);
+    assert.doesNotMatch(page, /FinanceFoundationPanel|FinanceReadinessSections|Integration readiness/);
     assert.match(page, /FinanceInsights/);
     assert.match(page, /canAccessAdminFinance/);
     assert.match(page, /listFinanceJournalEntries/);

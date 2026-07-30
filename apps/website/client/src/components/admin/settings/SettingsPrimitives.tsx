@@ -12,9 +12,18 @@ export function SettingsStatusBadge({
     FOUNDATION: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
     UNAVAILABLE: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
   };
+  const label =
+    classification === "LIVE"
+      ? null
+      : classification === "READ-ONLY"
+        ? "Read-only"
+        : classification === "DERIVED"
+          ? "Calculated"
+          : "Planned for Phase 2";
+  if (!label) return null;
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${styles[classification]}`}>
-      {classification === "READ-ONLY" ? "Read-only" : classification.toLowerCase()}
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide ${styles[classification]}`}>
+      {label}
     </span>
   );
 }
@@ -47,11 +56,8 @@ export function SettingsFoundationPanel({
           <SettingsScopeBadge scope={scope} />
         </div>
         <div className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6">
-          <p className="font-semibold text-[var(--admin-ink)]">{title} foundation</p>
+          <p className="font-semibold text-[var(--admin-ink)]">{title} — Planned for Phase 2</p>
           <p className="mt-2 text-sm text-[var(--admin-muted)]">{body}</p>
-          <p className="mt-3 text-xs text-[var(--admin-muted)]">
-            Save is unavailable — no verified write API. Settings UI does not create this capability.
-          </p>
         </div>
       </AdminSurfaceBody>
     </AdminSurface>
@@ -78,11 +84,8 @@ export function SettingsUnavailablePanel({
           <SettingsScopeBadge scope={scope} />
         </div>
         <div className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6">
-          <p className="font-semibold text-[var(--admin-ink)]">{title} — coming soon</p>
+          <p className="font-semibold text-[var(--admin-ink)]">{title} — Planned for Phase 2</p>
           <p className="mt-2 text-sm text-[var(--admin-muted)]">{body}</p>
-          <p className="mt-3 text-xs text-[var(--admin-muted)]">
-            No Save control — backend module is not implemented yet. Settings will not invent toggles or rates.
-          </p>
         </div>
       </AdminSurfaceBody>
     </AdminSurface>
@@ -100,24 +103,14 @@ export function SettingsReadOnlyNotice({ message }: { message: string }) {
 export function SettingsSaveBar() {
   return (
     <div
-      className="sticky bottom-0 z-10 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-3"
+      className="sticky bottom-0 z-10 mt-6 rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-3"
       role="region"
       aria-label="Save controls"
     >
       <p className="text-sm text-[var(--admin-muted)]">
-        No unsaved changes — write workflows are Foundation. Dirty-state save/reset appears when persistence ships.
+        No editable settings on this page. When a write workflow exists, Save appears inside the panel above — Settings
+        never shows fake Cancel / Reset / Save controls.
       </p>
-      <div className="flex flex-wrap gap-2">
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Cancel · Foundation
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Reset · Foundation
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg bg-[var(--admin-soft)] px-4 text-sm font-semibold text-[var(--admin-muted)]">
-          Save · Foundation
-        </button>
-      </div>
     </div>
   );
 }

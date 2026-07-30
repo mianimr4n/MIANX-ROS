@@ -7,7 +7,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
-import { chromium } from "playwright";
 import {
   RC1_STAFF_EMAILS,
   accountByEmail,
@@ -16,7 +15,10 @@ import {
   operatingBranchId,
 } from "./lib/fixtures.mjs";
 
+const require = createRequire(import.meta.url);
 const requireFromApi = createRequire(resolve("backend/api/package.json"));
+const requireFromPlaywrightTest = createRequire(require.resolve("@playwright/test/package.json"));
+const { chromium } = requireFromPlaywrightTest("playwright");
 const { createClient } = requireFromApi("@supabase/supabase-js");
 
 function loadEnv(path) {

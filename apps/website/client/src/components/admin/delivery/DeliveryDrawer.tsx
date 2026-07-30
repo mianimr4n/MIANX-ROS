@@ -234,7 +234,7 @@ export function DeliveryDrawer({
                 </button>
               ) : null}
               <span className="min-h-11 rounded-xl border border-dashed border-[var(--admin-border)] px-4 py-2 text-sm text-[var(--admin-muted)]">
-                Mark failed · Foundation
+                Mark failed · Planned for Phase 2
               </span>
             </div>
           </div>

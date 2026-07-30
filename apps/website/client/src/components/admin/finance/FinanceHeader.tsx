@@ -18,34 +18,31 @@ export function FinanceHeader({
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
         </p>
         <p className="mt-1 text-xs text-[var(--admin-muted)]">
-          Finance foundation — accounting backend and general ledger required
+          Sales overview and general ledger for the selected branch
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-2 rounded-full bg-[var(--admin-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-muted)]">
-          Foundation workspace
-        </span>
         <button
           type="button"
           onClick={onRefresh}
           className="min-h-11 rounded-lg border border-[var(--admin-border)] bg-white px-4 text-sm font-semibold hover:bg-[var(--admin-soft)]"
         >
-          Refresh readiness
+          Refresh
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Record journal · Foundation
+          Record journal · Planned for Phase 2
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Supplier payment · Foundation
+          Supplier payment · Planned for Phase 2
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Expense entry · Foundation
+          Expense entry · Planned for Phase 2
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Bank reconcile · Foundation
+          Bank reconcile · Planned for Phase 2
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Export statements · Foundation
+          Export statements · Planned for Phase 2
         </button>
       </div>
     </header>

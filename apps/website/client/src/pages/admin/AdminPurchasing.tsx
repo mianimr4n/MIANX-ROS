@@ -3,8 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ApprovalTimelinePanel,
   InvoiceMatchingPanel,
-  ProcurementFoundationPanel,
-  ProcurementReadinessSections,
   PurchaseDemandPanel,
   ReceivingGrnPanel,
   SupplierPerformancePanel,
@@ -49,8 +47,6 @@ import { ApiRequestError } from "@/lib/api";
 import {
   buildProcurementInsights,
   buildPurchasingKpis,
-  integrationChecks,
-  readinessGroups,
 } from "@/lib/admin-purchasing";
 import { AdminShell } from "./AdminShell";
 
@@ -101,8 +97,6 @@ export default function AdminPurchasing() {
     invoiceStatus: "all",
   });
 
-  const checks = useMemo(() => integrationChecks(), []);
-  const groups = useMemo(() => readinessGroups(), []);
   const snapshot = useMemo(
     () => buildPurchasingKpis(suppliers, orders, requisitions, awaitingDeliveryCount, invoices, receipts),
     [awaitingDeliveryCount, invoices, orders, receipts, requisitions, suppliers],
@@ -171,7 +165,7 @@ export default function AdminPurchasing() {
     if (!token || !canManagePurchasing) {
       setSuppliers(null);
       setSuppliersError(
-        canManagePurchasing ? null : "Suppliers require purchasing.manage, finance.manage, or admin.access.",
+        canManagePurchasing ? null : "Access unavailable",
       );
       return;
     }
@@ -193,7 +187,7 @@ export default function AdminPurchasing() {
       setOrders(null);
       setAwaitingDeliveryCount(null);
       setOrdersError(
-        canManagePurchasing ? null : "Purchase orders require purchasing.manage, finance.manage, or admin.access.",
+        canManagePurchasing ? null : "Access unavailable",
       );
       return;
     }
@@ -442,6 +436,17 @@ export default function AdminPurchasing() {
         onFiltersChange={setFilters}
       />
 
+      <SupplierTable
+        suppliers={filteredSuppliers}
+        loading={suppliersLoading}
+        error={suppliersError}
+        canManage={canManagePurchasing}
+        defaultBranchId={branchIdFilter}
+        onAddSupplier={onAddSupplier}
+        addError={addError}
+        addBusy={addBusy}
+      />
+
       <PurchaseDemandPanel />
 
       <RequisitionPanel
@@ -468,17 +473,6 @@ export default function AdminPurchasing() {
         onDecideApproval={onDecideApproval}
         approvalBusyId={approvalBusyId}
         approvalError={approvalError}
-      />
-
-      <SupplierTable
-        suppliers={filteredSuppliers}
-        loading={suppliersLoading}
-        error={suppliersError}
-        canManage={canManagePurchasing}
-        defaultBranchId={branchIdFilter}
-        onAddSupplier={onAddSupplier}
-        addError={addError}
-        addBusy={addBusy}
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -510,10 +504,6 @@ export default function AdminPurchasing() {
       />
 
       <SupplierPerformancePanel />
-
-      <ProcurementFoundationPanel checks={checks} />
-
-      <ProcurementReadinessSections groups={groups} />
 
       <ProcurementInsights items={insights} />
 

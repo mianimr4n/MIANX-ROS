@@ -26,12 +26,12 @@ describe("Orders Management V1 (static)", () => {
     assert.match(page, /transitionAdminOrder/);
   });
 
-  it("keeps unsupported filters and export labeled Foundation", () => {
+  it("keeps unsupported filters and export labeled Planned for Phase 2", () => {
     const filters = read("apps/website/client/src/components/admin/orders/OrderFilters.tsx");
-    assert.match(filters, /Foundation/);
+    assert.match(filters, /Planned for Phase 2/);
     assert.match(filters, /disabled/);
     const page = read("apps/website/client/src/pages/admin/AdminOrders.tsx");
-    assert.match(page, /Export · Foundation/);
+    assert.match(page, /Export · Planned for Phase 2/);
   });
 
   it("labels AI panel as rule-based only", () => {

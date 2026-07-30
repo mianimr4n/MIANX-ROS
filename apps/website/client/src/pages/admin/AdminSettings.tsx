@@ -1,13 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
-import {
-  ConfigurationInsights,
-  SettingsCapabilityMatrix,
-  SettingsIntegrationReadiness,
-} from "@/components/admin/settings/ConfigurationInsights";
+import { ConfigurationInsights } from "@/components/admin/settings/ConfigurationInsights";
 import { SettingsCategoryNav, SettingsSearch } from "@/components/admin/settings/SettingsNav";
 import { SettingsHeader } from "@/components/admin/settings/SettingsHeader";
-import { SettingsReadinessBanner } from "@/components/admin/settings/SettingsReadinessBanner";
 import { SettingsSaveBar } from "@/components/admin/settings/SettingsPrimitives";
 import { SettingsWorkspace } from "@/components/admin/settings/SettingsWorkspace";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,13 +14,29 @@ import {
   SEEDED_ROLES,
   SETTINGS_CATEGORIES,
   buildConfigurationInsights,
-  capabilityMatrix,
-  integrationChecks,
   searchSettingsCategories,
   summarizeBranches,
   type SettingsCategoryId,
 } from "@/lib/admin-settings";
 import { AdminShell } from "./AdminShell";
+
+const LIVE_MODULE_HINTS: Partial<Record<SettingsCategoryId, string>> = {
+  organization: "Organization and branch profiles use the Save button in the panel above.",
+  branches: "Organization and branch profiles use the Save button in the panel above.",
+  delivery: "Delivery settings use the Save button in the panel above.",
+  menu: "Menu prices and categories are saved in Admin → Menu.",
+  inventory: "Manage stock in Admin → Inventory. Policy toggles are Planned for Phase 2.",
+  purchasing: "Manage suppliers and POs in Admin → Purchasing. Approval-limit config is Planned for Phase 2.",
+  orders: "Manage the order pipeline in Admin → Orders.",
+  pos: "Opening device rows use Save / Delete above. Receipt policy is Planned for Phase 2.",
+  kitchen: "Manage tickets in Admin → Kitchen. Station and printer config is Planned for Phase 2.",
+  reports: "Open Admin → Reports for sales analytics and CSV export.",
+  hr: "Open Admin → HR for the team directory and workforce tools.",
+  finance: "Finance & tax configuration is Planned for Phase 2 — no invented tax rates.",
+  operations: "Opening operations use per-row Save / Delete in the panels above.",
+  payments: "Opening operations use per-row Save / Delete in the panels above.",
+  communications: "Opening operations use per-row Save / Delete in the panels above.",
+};
 
 export default function AdminSettings() {
   const { permissions, isSuperAdmin, roles } = useAuth();
@@ -39,8 +50,6 @@ export default function AdminSettings() {
   const [activeCategory, setActiveCategory] = useState<SettingsCategoryId>("organization");
 
   const filteredCategories = useMemo(() => searchSettingsCategories(search), [search]);
-  const checks = useMemo(() => integrationChecks(), []);
-  const matrix = useMemo(() => capabilityMatrix(), []);
   const branchSummary = useMemo(() => summarizeBranches(allowedBranches), [allowedBranches]);
 
   const insights = useMemo(
@@ -62,14 +71,14 @@ export default function AdminSettings() {
   }, [activeCategory, filteredCategories]);
 
   const onRefresh = () => {
-    // Readiness-only refresh — no settings persistence API.
+    // Soft refresh of settings workspace — no persistence API for foundation categories.
   };
+
+  const moduleHint = LIVE_MODULE_HINTS[activeCategory];
 
   return (
     <AdminShell title="Settings & Configuration">
       <SettingsHeader branchLabel={branchLabel} roleLabel={roleLabel} onRefresh={onRefresh} />
-
-      <SettingsReadinessBanner />
 
       <SettingsSearch value={search} onChange={setSearch} resultCount={filteredCategories.length} />
 
@@ -88,36 +97,15 @@ export default function AdminSettings() {
             permissions={permissions}
             isSuperAdmin={isSuperAdmin}
           />
-          {activeCategory === "operations" ||
-          activeCategory === "payments" ||
-          activeCategory === "communications" ||
-          activeCategory === "pos" ||
-          activeCategory === "organization" ||
-          activeCategory === "branches" ||
-          activeCategory === "delivery" ||
-          activeCategory === "menu" ||
-          activeCategory === "inventory" ||
-          activeCategory === "finance" ? (
+          {moduleHint ? (
             <p className="mt-4 text-xs text-[var(--admin-muted)]" role="status">
-              {activeCategory === "organization" || activeCategory === "branches"
-                ? "Organization and branch profiles use the Save button in the panel above."
-                : activeCategory === "delivery"
-                  ? "Delivery settings use the Save button in the panel above."
-                  : activeCategory === "menu"
-                    ? "Menu prices and categories are saved in Admin → Menu."
-                    : activeCategory === "inventory" || activeCategory === "finance"
-                      ? "No Save control — this module is unavailable until its backend ships."
-                      : "Opening operations use per-row Save / Delete in the panels above — the foundation settings save bar does not apply to those workflows."}
+              {moduleHint}
             </p>
           ) : (
             <SettingsSaveBar />
           )}
         </div>
       </div>
-
-      <SettingsIntegrationReadiness checks={checks} />
-
-      <SettingsCapabilityMatrix rows={matrix} />
 
       <ConfigurationInsights items={insights} />
 

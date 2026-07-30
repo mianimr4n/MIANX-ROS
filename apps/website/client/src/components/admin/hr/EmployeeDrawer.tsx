@@ -52,7 +52,12 @@ export function EmployeeDrawer({
             <X className="h-5 w-5" />
           </button>
         </div>
-        <dl className="space-y-4 overflow-y-auto px-5 py-4 text-sm">
+        <dl
+          className="space-y-4 overflow-y-auto px-5 py-4 text-sm"
+          tabIndex={0}
+          role="region"
+          aria-label="Employee details"
+        >
           <div>
             <dt className="text-[var(--admin-muted)]">Email</dt>
             <dd className="mt-1 font-medium">{employee.email}</dd>

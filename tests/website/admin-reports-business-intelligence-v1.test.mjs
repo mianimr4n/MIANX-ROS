@@ -30,7 +30,7 @@ describe("Reports & Business Intelligence V1 (static)", () => {
     assert.match(page, /BranchComparison/);
     assert.match(page, /TrendAnalysis/);
     assert.match(page, /ExportPanel/);
-    assert.match(page, /ReportsFoundationPanel/);
+    assert.doesNotMatch(page, /ReportsFoundationPanel|ReportsReadinessSections|Integration readiness/);
     assert.match(page, /BusinessInsights/);
     assert.match(page, /canAccessAdminReports/);
     assert.match(page, /fetchAdminOperationsDashboard/);

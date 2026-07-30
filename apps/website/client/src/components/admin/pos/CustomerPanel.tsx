@@ -60,7 +60,7 @@ export function CustomerPanel({
           className="min-h-10 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-3 text-sm text-[var(--admin-muted)]"
           title="Customer lookup is not available yet"
         >
-          Existing customer · Foundation
+          Existing customer · Planned for Phase 2
         </button>
       </div>
 
@@ -139,7 +139,7 @@ export function CustomerPanel({
           />
         </label>
         <p className="text-xs text-[var(--admin-muted)]">
-          Manual discount / promotion picker · Foundation (coupon field uses quote API only).
+          Manual discount / promotion picker · Planned for Phase 2 (coupon field uses quote API only).
         </p>
       </div>
     </section>

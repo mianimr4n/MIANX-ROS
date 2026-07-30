@@ -93,7 +93,7 @@ export function ExecutiveFilterBar({
           <option value="today">Today (API scope)</option>
         </select>
         <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">
-          Disabled · Foundation
+          Disabled · Planned for Phase 2
         </span>
       </label>
 

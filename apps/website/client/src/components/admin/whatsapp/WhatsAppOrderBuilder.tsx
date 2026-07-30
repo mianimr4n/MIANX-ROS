@@ -4,7 +4,7 @@ export function WhatsAppOrderBuilder() {
   return (
     <section aria-labelledby="whatsapp-order-builder-heading" className="rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] p-4">
       <h2 id="whatsapp-order-builder-heading" className="text-sm font-semibold">
-        WhatsApp order builder · Foundation
+        WhatsApp order builder · Planned for Phase 2
       </h2>
       <p className="mt-2 text-sm text-[var(--admin-muted)]">
         Backend supports <code className="rounded bg-white/70 px-1">orderSource=whatsapp</code>, but this workspace does

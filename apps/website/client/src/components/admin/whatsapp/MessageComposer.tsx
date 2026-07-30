@@ -2,7 +2,7 @@ export function MessageComposer() {
   return (
     <div className="mt-4 rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] p-3">
       <label htmlFor="whatsapp-message-composer" className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-        Message composer · Foundation
+        Message composer · Planned for Phase 2
       </label>
       <textarea
         id="whatsapp-message-composer"
@@ -21,7 +21,7 @@ export function MessageComposer() {
         disabled
         className="mt-2 min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
       >
-        Send message · Foundation
+        Send message · Planned for Phase 2
       </button>
     </div>
   );

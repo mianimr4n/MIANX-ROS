@@ -4,10 +4,7 @@ import { useLocation, useSearch } from "wouter";
 import { ConversationWorkspace } from "@/components/admin/whatsapp/ConversationWorkspace";
 import { CustomerContextPanel } from "@/components/admin/whatsapp/CustomerContextPanel";
 import { LinkedOrderPanel } from "@/components/admin/whatsapp/LinkedOrderPanel";
-import {
-  WhatsAppFoundationPanel,
-  WhatsAppIntegrationBanner,
-} from "@/components/admin/whatsapp/WhatsAppIntegrationBanner";
+import { WhatsAppIntegrationBanner } from "@/components/admin/whatsapp/WhatsAppIntegrationBanner";
 import { WhatsAppActivity } from "@/components/admin/whatsapp/WhatsAppActivity";
 import { WhatsAppFilters, type WhatsAppFilterState } from "@/components/admin/whatsapp/WhatsAppFilters";
 import { WhatsAppHeader } from "@/components/admin/whatsapp/WhatsAppHeader";
@@ -26,7 +23,6 @@ import {
   buildWhatsAppInsights,
   buildWhatsAppKpis,
   findCustomerForOrder,
-  integrationChecks,
   WHATSAPP_ORDER_SOURCE,
 } from "@/lib/admin-whatsapp";
 import {
@@ -171,7 +167,6 @@ export default function AdminWhatsApp() {
   const insights = useMemo(() => buildWhatsAppInsights(orders, branchLabelById), [orders, branchLabelById]);
   const customer = useMemo(() => findCustomerForOrder(orders, selected), [orders, selected]);
   const activity = useMemo(() => buildWhatsAppActivity(detail), [detail]);
-  const checks = useMemo(() => integrationChecks(), []);
 
   const pageRows = useMemo(
     () => orders.slice(urlState.offset, urlState.offset + PAGE_SIZE),
@@ -277,9 +272,8 @@ export default function AdminWhatsApp() {
         <WhatsAppTemplates />
       </div>
 
-      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+      <div className="mb-6">
         <WhatsAppActivity events={activity} loading={detailLoading} />
-        <WhatsAppFoundationPanel checks={checks} />
       </div>
     </AdminShell>
   );

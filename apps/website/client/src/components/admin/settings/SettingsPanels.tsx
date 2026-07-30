@@ -573,12 +573,29 @@ export function RestaurantOperationsSettings() {
 
 export function OrderSettings() {
   return (
-    <SettingsFoundationPanel
-      title="Orders"
-      description="Order numbering, auto-accept, cancellation and refund rules."
-      body="Order status workflows are implemented in backend transition services — not configurable from Settings. Frontend must not invent cancellation or refund policy."
-      scope="Organization"
-    />
+    <AdminSurface aria-labelledby="order-settings-heading">
+      <AdminSurfaceHeader
+        title="Orders"
+        description="Order intake, confirmation, and pipeline — managed in the Orders workspace."
+      />
+      <AdminSurfaceBody>
+        <h2 id="order-settings-heading" className="sr-only">
+          Order settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Organization" />
+        </div>
+        <p className="text-sm text-[var(--admin-muted)]">
+          Use{" "}
+          <Link href="/admin/orders" className="font-semibold text-[var(--admin-ink)] underline">
+            Admin → Orders
+          </Link>{" "}
+          to confirm, prepare, and complete orders. Cancellation and refund policy toggles are Planned for Phase 2 —
+          Settings will not invent those controls here.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 
@@ -611,12 +628,29 @@ export function POSSettings() {
 
 export function KitchenSettings() {
   return (
-    <SettingsFoundationPanel
-      title="Kitchen"
-      description="Stations, ticket sorting, prep SLA, and auto-bump."
-      body="Kitchen tickets API exists for operations — station routing, SLA, and printer settings lack a configuration API."
-      scope="Branch"
-    />
+    <AdminSurface aria-labelledby="kitchen-settings-heading">
+      <AdminSurfaceHeader
+        title="Kitchen"
+        description="Kitchen tickets and prep queue — managed in Kitchen Display."
+      />
+      <AdminSurfaceBody>
+        <h2 id="kitchen-settings-heading" className="sr-only">
+          Kitchen settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Branch" />
+        </div>
+        <p className="text-sm text-[var(--admin-muted)]">
+          Use{" "}
+          <Link href="/admin/kitchen-dashboard" className="font-semibold text-[var(--admin-ink)] underline">
+            Admin → Kitchen
+          </Link>{" "}
+          for live tickets. Station routing, SLA timers, and printer configuration are Planned for Phase 2 — no fake
+          toggles here.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 
@@ -731,7 +765,7 @@ export function DeliverySettings() {
     <AdminSurface aria-labelledby="delivery-settings-heading">
       <AdminSurfaceHeader
         title="Delivery"
-        description="Per-branch delivery radius, minimum order, and fee — PUT /admin/branches/:id/settings."
+        description="Per-branch delivery radius, minimum order, and fee."
       />
       <AdminSurfaceBody>
         <h2 id="delivery-settings-heading" className="sr-only">
@@ -856,8 +890,8 @@ export function MenuSettings() {
           <Link href="/admin/menu" className="font-semibold text-[var(--admin-ink)] underline">
             Admin → Menu
           </Link>{" "}
-          to save SKU prices (`PUT /admin/menu/skus/:id`) and create categories (`POST /admin/menu/categories`).
-          Publishing matrices and tax classes remain future work.
+          to save SKU prices and create categories.
+          Publishing matrices and tax classes remain Planned for Phase 2.
         </p>
       </AdminSurfaceBody>
     </AdminSurface>
@@ -866,23 +900,105 @@ export function MenuSettings() {
 
 export function InventorySettings() {
   return (
-    <SettingsUnavailablePanel
-      title="Inventory"
-      description="Tracking, negative stock, valuation, and reorder defaults."
-      body="Inventory module is not implemented — no stock ledger or policy engine. Coming soon; Settings will not invent stock toggles."
-      scope="Branch"
-    />
+    <AdminSurface aria-labelledby="inventory-settings-heading">
+      <AdminSurfaceHeader
+        title="Inventory"
+        description="Stock items, movements, adjustments, and waste — managed in Inventory."
+      />
+      <AdminSurfaceBody>
+        <h2 id="inventory-settings-heading" className="sr-only">
+          Inventory settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Branch" />
+        </div>
+        <p className="text-sm text-[var(--admin-muted)]">
+          Use{" "}
+          <Link href="/admin/inventory" className="font-semibold text-[var(--admin-ink)] underline">
+            Admin → Inventory
+          </Link>{" "}
+          to add stock, post adjustments, and review low-stock alerts. Policy toggles (negative stock, valuation
+          method, reorder automation) are Planned for Phase 2 — Settings will not invent those controls.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 
 export function PurchasingSettings() {
   return (
-    <SettingsFoundationPanel
-      title="Purchasing"
-      description="Approval limits, PO numbering, and matching tolerance."
-      body="Purchasing module is Foundation — no supplier or PO backend. Approval chains will not be fabricated."
-      scope="Organization"
-    />
+    <AdminSurface aria-labelledby="purchasing-settings-heading">
+      <AdminSurfaceHeader
+        title="Purchasing"
+        description="Suppliers, purchase orders, approvals, GRN, invoices, and payments."
+      />
+      <AdminSurfaceBody>
+        <h2 id="purchasing-settings-heading" className="sr-only">
+          Purchasing settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Organization" />
+        </div>
+        <p className="text-sm text-[var(--admin-muted)]">
+          Use{" "}
+          <Link href="/admin/purchasing" className="font-semibold text-[var(--admin-ink)] underline">
+            Admin → Purchasing
+          </Link>{" "}
+          to manage suppliers and the procurement loop. Approval-limit and matching-tolerance configuration is Planned
+          for Phase 2 — Settings will not fabricate those controls.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
+  );
+}
+
+export function ReportsSettings() {
+  return (
+    <AdminSurface aria-labelledby="reports-settings-heading">
+      <AdminSurfaceHeader title="Reports" description="Sales analytics and CSV export — managed in Reports." />
+      <AdminSurfaceBody>
+        <h2 id="reports-settings-heading" className="sr-only">
+          Reports settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Organization" />
+        </div>
+        <p className="text-sm text-[var(--admin-muted)]">
+          Use{" "}
+          <Link href="/admin/reports" className="font-semibold text-[var(--admin-ink)] underline">
+            Admin → Reports
+          </Link>{" "}
+          for sales analytics. Custom report builders and scheduled exports are Planned for Phase 2.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
+  );
+}
+
+export function HrSettings() {
+  return (
+    <AdminSurface aria-labelledby="hr-settings-heading">
+      <AdminSurfaceHeader title="HR" description="Team directory and workforce tools — managed in HR." />
+      <AdminSurfaceBody>
+        <h2 id="hr-settings-heading" className="sr-only">
+          HR settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Organization" />
+        </div>
+        <p className="text-sm text-[var(--admin-muted)]">
+          Use{" "}
+          <Link href="/admin/hr" className="font-semibold text-[var(--admin-ink)] underline">
+            Admin → HR
+          </Link>{" "}
+          for the employee directory and workforce workflows. Payroll configuration is Planned for Phase 2.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 
@@ -976,7 +1092,7 @@ export function UsersAccessSettings({
     <AdminSurface aria-labelledby="users-access-settings-heading">
       <AdminSurfaceHeader
         title="Users & Access"
-        description="Separates current session grants from the UI role/permission reference — not the full DB RBAC catalog."
+        description="See who can access Admin for your organization. Role changes are managed in HR."
       />
       <AdminSurfaceBody>
         <h2 id="users-access-settings-heading" className="sr-only">
@@ -986,16 +1102,19 @@ export function UsersAccessSettings({
           <SettingsStatusBadge classification="READ-ONLY" />
           <SettingsScopeBadge scope="Organization" />
         </div>
-        <SettingsReadOnlyNotice message="Reuse existing RBAC. Workforce records belong in HR. Settings shows application access only — no invented roles." />
+        <SettingsReadOnlyNotice message="Reuse existing access roles. Workforce records belong in HR. Settings shows application access only — no invented roles." />
         <div className="mb-4 rounded-xl border border-[var(--admin-border)] bg-white px-4 py-3 text-sm">
           <p className="font-semibold">Current session grants</p>
           <p className="mt-1 text-xs text-[var(--admin-muted)]">
-            From /auth/me — not the complete Seeded RBAC catalog.
+            What this signed-in account can access right now.
           </p>
           <p className="mt-1 text-xs text-[var(--admin-muted)]">
             Super-admin: {isSuperAdmin ? "yes" : "no"} · Roles: {roles.join(", ") || "—"}
           </p>
           <p className="mt-1 text-xs text-[var(--admin-muted)]">
+            Access grants on this session: {permissions.length}
+          </p>
+          <p className="sr-only">
             Permissions ({permissions.length}): {permissions.length ? permissions.join(", ") : "—"}
           </p>
         </div>
@@ -1125,7 +1244,7 @@ export function DataPrivacySettings() {
 export function AdvancedSettings() {
   return (
     <AdminSurface aria-labelledby="advanced-settings-heading">
-      <AdminSurfaceHeader title="Advanced" description="Diagnostics metadata — no dangerous controls." />
+      <AdminSurfaceHeader title="Advanced" description="Environment notes — no dangerous controls." />
       <AdminSurfaceBody>
         <h2 id="advanced-settings-heading" className="sr-only">
           Advanced settings
@@ -1136,25 +1255,26 @@ export function AdvancedSettings() {
         </div>
         <dl className="grid gap-3 sm:grid-cols-2 text-sm">
           <div className="rounded-xl border border-[var(--admin-border)] px-4 py-3">
-            <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">API surface</dt>
-            <dd className="mt-1 font-semibold">/api/v1</dd>
+            <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">Operations timezone</dt>
+            <dd className="mt-1 font-semibold">Asia/Karachi</dd>
           </div>
           <div className="rounded-xl border border-[var(--admin-border)] px-4 py-3">
-            <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">Admin ERP timezone (ops)</dt>
-            <dd className="mt-1 font-semibold">Asia/Karachi (derived display)</dd>
+            <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">Admin access model</dt>
+            <dd className="mt-1 font-semibold">Role-based staff access</dd>
           </div>
           <div className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-3">
             <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">Feature flags</dt>
-            <dd className="mt-1 text-[var(--admin-muted)]">Foundation — no flag admin API</dd>
+            <dd className="mt-1 text-[var(--admin-muted)]">Planned for Phase 2</dd>
           </div>
           <div className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-3">
             <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">Maintenance mode</dt>
-            <dd className="mt-1 text-[var(--admin-muted)]">Unavailable — no safe control</dd>
+            <dd className="mt-1 text-[var(--admin-muted)]">Planned for Phase 2</dd>
           </div>
         </dl>
         <p className="mt-4 text-xs text-[var(--admin-muted)]">
-          Secrets, infrastructure endpoints, and full env dumps are never exposed in this panel.
+          Secrets, infrastructure endpoints, and environment dumps are never shown here.
         </p>
+        <p className="sr-only">API surface /api/v1</p>
       </AdminSurfaceBody>
     </AdminSurface>
   );

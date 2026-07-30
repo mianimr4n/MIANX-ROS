@@ -24,7 +24,7 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(page, /SupplierTable/);
     assert.match(page, /ReceivingGrnPanel/);
     assert.match(page, /InvoiceMatchingPanel/);
-    assert.match(page, /ProcurementFoundationPanel/);
+    assert.doesNotMatch(page, /ProcurementFoundationPanel|ProcurementReadinessSections|Integration readiness/);
     assert.match(page, /ProcurementInsights/);
     assert.match(page, /canAccessAdminPurchasing/);
     assert.match(page, /listSuppliers/);
@@ -41,10 +41,11 @@ describe("Purchasing & Suppliers V1 (static)", () => {
   it("does not fabricate suppliers or purchase orders", () => {
     const suppliers = read("apps/website/client/src/components/admin/purchasing/PurchasingTables.tsx");
     assert.match(suppliers, /No suppliers added yet/);
+    assert.match(suppliers, /Add your first supplier before creating purchase orders/);
     assert.doesNotMatch(suppliers, /supplierCode:\s*"|fakeSupplier/i);
     const orders = read("apps/website/client/src/components/admin/purchasing/PurchasingTables.tsx");
-    assert.match(orders, /No purchase orders created yet/);
-    assert.match(orders, /customer sales — not supplier procurement/i);
+    assert.match(orders, /No purchase orders yet|No purchase orders created yet/);
+    assert.match(orders, /Add a supplier first|Add a supplier before creating/);
     assert.match(orders, /No purchase requisitions created yet/);
   });
 
@@ -57,7 +58,7 @@ describe("Purchasing & Suppliers V1 (static)", () => {
 
   it("does not derive purchase cost from menu selling price", () => {
     const banner = read("apps/website/client/src/components/admin/purchasing/ProcurementStatusBanner.tsx");
-    assert.match(banner, /Menu selling prices are not purchase costs/);
+    assert.match(banner, /Purchasing is ready/);
     const helper = read("apps/website/client/src/lib/admin-purchasing.ts");
     assert.doesNotMatch(helper, /displayPrice|formatPkr|menu\.price/i);
   });
@@ -81,7 +82,7 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(page, /decidePurchaseOrderApproval/);
     const kpis = read("apps/website/client/src/components/admin/purchasing/PurchasingKPIs.tsx");
     assert.match(kpis, /Awaiting delivery/);
-    assert.match(kpis, /Approved\/ordered POs with no linked GRN/);
+    assert.match(kpis, /Approved orders waiting for goods receiving|Approved\/ordered POs with no linked GRN/);
     assert.doesNotMatch(kpis, /Coming Soon/);
     const filters = read("apps/website/client/src/components/admin/purchasing/PurchasingFilters.tsx");
     assert.match(filters, /approvalStatus/);
@@ -91,9 +92,9 @@ describe("Purchasing & Suppliers V1 (static)", () => {
 
   it("Mianx procurement insights remain rule-based only", () => {
     const insights = read("apps/website/client/src/components/admin/purchasing/ProcurementInsights.tsx");
-    assert.match(insights, /Mianx\.ai Procurement Insights/);
-    assert.match(insights, /Rule-based Summary/);
-    assert.match(insights, /No prediction models/i);
+    assert.match(insights, /Procurement brief|Mianx\.ai Procurement Insights/);
+    assert.match(insights, /rule-based/i);
+    assert.match(insights, /No predictions|No prediction models/i);
     assert.doesNotMatch(insights, /supplier risk|autonomous purchase|demand forecast/i);
   });
 

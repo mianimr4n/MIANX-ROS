@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import {
-  InventoryFoundationPanel,
-  InventoryReadinessSections,
-} from "@/components/admin/inventory/InventoryFoundationPanel";
 import { InventoryFilters } from "@/components/admin/inventory/InventoryFilters";
 import { InventoryHeader } from "@/components/admin/inventory/InventoryHeader";
 import { InventoryInsights } from "@/components/admin/inventory/InventoryInsights";
@@ -38,9 +34,7 @@ import { ApiRequestError } from "@/lib/api";
 import {
   buildInventoryInsights,
   buildInventoryKpis,
-  integrationChecks,
   isLowStock,
-  readinessGroups,
 } from "@/lib/admin-inventory";
 import { AdminShell } from "./AdminShell";
 
@@ -70,8 +64,6 @@ export default function AdminInventory() {
   const [search, setSearch] = useState("");
   const [lowStockOnly, setLowStockOnly] = useState(false);
 
-  const checks = useMemo(() => integrationChecks(), []);
-  const groups = useMemo(() => readinessGroups(), []);
   const snapshot = useMemo(
     () => buildInventoryKpis(items, toppings, stockItems, movements),
     [items, toppings, stockItems, movements],
@@ -92,7 +84,7 @@ export default function AdminInventory() {
     if (!token || !canManageInventory) {
       setStockItems(null);
       setStockError(
-        canManageInventory ? null : "Stock items require inventory.manage or admin.access.",
+        canManageInventory ? null : "Access unavailable",
       );
       return;
     }
@@ -262,10 +254,6 @@ export default function AdminInventory() {
         <InventoryValuationPanel stockValue={snapshot.stockValue} />
         <ReorderPlanningPanel />
       </div>
-
-      <InventoryFoundationPanel checks={checks} />
-
-      <InventoryReadinessSections groups={groups} />
 
       <InventoryInsights items={insights} />
     </AdminShell>

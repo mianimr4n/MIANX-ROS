@@ -31,7 +31,7 @@ export function POSActions({
         className="min-h-12 cursor-not-allowed rounded-xl border border-dashed border-[var(--admin-border)] px-4 text-sm font-semibold text-[var(--admin-muted)]"
         title="Server draft orders are not available"
       >
-        Save draft · Foundation
+        Save draft · Planned for Phase 2
       </button>
       <button
         type="button"
@@ -70,7 +70,7 @@ export function POSActions({
         disabled
         className="min-h-12 cursor-not-allowed rounded-xl border border-dashed border-[var(--admin-border)] px-4 text-sm font-semibold text-[var(--admin-muted)]"
       >
-        Print receipt · Foundation
+        Print receipt · Planned for Phase 2
       </button>
     </section>
   );

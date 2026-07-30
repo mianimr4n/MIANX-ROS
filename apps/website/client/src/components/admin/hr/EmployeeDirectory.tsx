@@ -67,7 +67,7 @@ export function EmployeeDirectory({
     <AdminSurface aria-labelledby="employee-directory-heading" className="mb-6">
       <AdminSurfaceHeader
         title="Employee directory"
-        description="Live employee records from GET /admin/hr/employees — branch-scoped."
+        description="Employee records for the selected branch."
         action={
           canManage ? (
             <button
@@ -83,7 +83,13 @@ export function EmployeeDirectory({
           ) : null
         }
       />
-      <AdminSurfaceBody className="overflow-x-auto pt-0">
+      <AdminSurfaceBody className="pt-0">
+        <div
+          className="overflow-x-auto"
+          tabIndex={0}
+          role="region"
+          aria-label="Employee directory table"
+        >
         <h2 id="employee-directory-heading" className="sr-only">
           Employee directory
         </h2>
@@ -165,21 +171,21 @@ export function EmployeeDirectory({
 
         {!canLoad ? (
           <p className="text-sm text-[var(--admin-muted)]">
-            Employee directory requires staff.manage or admin.access.
+            You don&apos;t have access to the employee directory for this branch.
           </p>
         ) : employeesLoading ? (
           <p className="text-sm text-[var(--admin-muted)]" aria-live="polite">
             Loading employees…
           </p>
         ) : employeesError ? (
-          <p className="text-sm text-amber-800" role="status">
-            {employeesError}
+          <p className="text-sm text-[var(--admin-muted)]" role="status">
+            We couldn&apos;t load employees right now. Please try again.
           </p>
         ) : !employees || employees.length === 0 ? (
           <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6 text-center">
-            <p className="font-semibold text-[var(--admin-ink)]">No employees added yet</p>
+            <p className="font-semibold text-[var(--admin-ink)]">Welcome! No staff added yet.</p>
             <p className="mt-1 text-sm text-[var(--admin-muted)]">
-              Add staff to the directory to see live headcount here.
+              Click &apos;Add Employee&apos; to get started.
             </p>
             {canManage ? (
               <button
@@ -242,6 +248,7 @@ export function EmployeeDirectory({
             </tbody>
           </table>
         )}
+        </div>
       </AdminSurfaceBody>
     </AdminSurface>
   );

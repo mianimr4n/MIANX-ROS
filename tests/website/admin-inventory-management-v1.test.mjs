@@ -23,18 +23,18 @@ describe("Inventory Management V1 (static)", () => {
     assert.match(page, /InventoryTable/);
     assert.match(page, /StockMovementTimeline/);
     assert.match(page, /RecipeMappingPanel/);
-    assert.match(page, /InventoryFoundationPanel/);
+    assert.doesNotMatch(page, /InventoryFoundationPanel|InventoryReadinessSections|Integration readiness/);
     assert.match(page, /InventoryInsights/);
     assert.match(page, /canAccessAdminInventory/);
     assert.match(page, /listInventoryItems/);
     assert.match(page, /createStockAdjustment/);
     assert.match(page, /listStockMovements/);
-    assert.match(page, /integrationChecks/);
   });
 
   it("wires live stock table and does not fabricate balances", () => {
     const table = read("apps/website/client/src/components/admin/inventory/InventoryTable.tsx");
     assert.match(table, /No stock items added yet/);
+    assert.match(table, /Add ingredients and opening quantities/);
     assert.doesNotMatch(table, /onHand:\s*\d|quantity_on_hand|fakeStock/i);
     const timeline = read("apps/website/client/src/components/admin/inventory/InventoryWorkflowPanels.tsx");
     assert.match(timeline, /No stock movements yet/);
@@ -44,9 +44,9 @@ describe("Inventory Management V1 (static)", () => {
 
   it("does not use menu availability or selling price as inventory cost", () => {
     const kpis = read("apps/website/client/src/components/admin/inventory/InventoryKPIs.tsx");
-    assert.match(kpis, /Not derived from menu flags/);
-    assert.match(kpis, /cost_price|Stock value/);
-    assert.match(kpis, /Menu catalog payload unavailable|UnavailableInventoryKpis/);
+    assert.match(kpis, /Data unavailable|Access unavailable/);
+    assert.match(kpis, /Stock value/);
+    assert.match(kpis, /UnavailableInventoryKpis/);
     assert.doesNotMatch(kpis, /menuBrowseSkus \?\? 0/);
     const page = read("apps/website/client/src/pages/admin/AdminInventory.tsx");
     assert.match(page, /snapshot=\{isLoading \? null : snapshot\}/);
@@ -54,7 +54,7 @@ describe("Inventory Management V1 (static)", () => {
     assert.match(valuation, /Retail menu price is not inventory cost/);
     assert.match(valuation, /Menu selling prices must not be used/);
     const helper = read("apps/website/client/src/lib/admin-inventory.ts");
-    assert.match(helper, /no ingredient recipes|Recipe \/ BOM/);
+    assert.match(helper, /no ingredient recipes|Recipe \/ BOM|Recipe consumption tracking/);
     assert.doesNotMatch(helper, /displayPrice|formatPkr.*stock/i);
   });
 
@@ -81,9 +81,9 @@ describe("Inventory Management V1 (static)", () => {
 
   it("Mianx inventory insights remain rule-based only", () => {
     const insights = read("apps/website/client/src/components/admin/inventory/InventoryInsights.tsx");
-    assert.match(insights, /Mianx\.ai Inventory Insights/);
-    assert.match(insights, /Rule-based Summary/);
-    assert.match(insights, /No prediction models/i);
+    assert.match(insights, /Inventory brief|Mianx\.ai Inventory Insights/);
+    assert.match(insights, /rule-based/i);
+    assert.match(insights, /No forecasts|No prediction models/i);
     assert.doesNotMatch(insights, /demand forecast|autonomous replenishment|AI pricing/i);
   });
 

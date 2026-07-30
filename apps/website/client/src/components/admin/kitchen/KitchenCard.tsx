@@ -99,7 +99,7 @@ export function KitchenCard({
           className="rounded-full border border-dashed border-[var(--admin-border)] px-2.5 py-1 text-xs text-[var(--admin-muted)]"
           title="Kitchen stations are not assigned on tickets yet"
         >
-          Station · Foundation
+          Station · Planned for Phase 2
         </span>
       </div>
 
