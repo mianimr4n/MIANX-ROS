@@ -193,11 +193,12 @@ describe("Telepizza API app", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.ok).toBe(true);
-    expect(response.body.modules).toHaveLength(10);
+    expect(response.body.modules).toHaveLength(11);
     expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("me");
     expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("kitchen");
     expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("dine-in");
     expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("reservations");
+    expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("ai");
   });
 
   it("returns readiness issues when required variables are missing", async () => {

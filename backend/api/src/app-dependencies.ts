@@ -122,6 +122,10 @@ import {
   createDeliverySettingsService,
   type DeliverySettingsService,
 } from "./services/settings/delivery.js";
+import {
+  createAiPlatformService,
+  type AiPlatformService,
+} from "./services/ai/platform.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -152,6 +156,7 @@ export interface AppDependencies {
   organizationSettings: OrganizationSettingsService;
   branchProfile: BranchProfileService;
   deliverySettings: DeliverySettingsService;
+  aiPlatform: AiPlatformService;
   tableService: TableServiceOperations;
   paymentSettlement: PaymentSettlementService;
   deposits: DepositService;
@@ -192,6 +197,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     organizationSettings: createOrganizationSettingsService(envStatus),
     branchProfile: createBranchProfileService(envStatus),
     deliverySettings: createDeliverySettingsService(envStatus),
+    aiPlatform: createAiPlatformService(envStatus),
     tableService: createTableServiceOperations(envStatus),
     paymentSettlement: createPaymentSettlementService(envStatus),
     deposits: createDepositService(envStatus),
