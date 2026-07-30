@@ -1866,6 +1866,155 @@ export function createHrEmployee(accessToken: string, input: CreateHrEmployeeInp
   });
 }
 
+export type HrAttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "LEAVE";
+
+export type HrAttendance = {
+  id: string;
+  employeeId: string;
+  employeeName: string | null;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  checkInTime: string | null;
+  checkOutTime: string | null;
+  status: HrAttendanceStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateHrAttendanceInput = {
+  employeeId: string;
+  branchId: string;
+  action?: "check_in" | "check_out";
+  status?: HrAttendanceStatus;
+  checkInTime?: string | null;
+  checkOutTime?: string | null;
+};
+
+export type HrLeaveType = "CASUAL" | "SICK" | "ANNUAL";
+export type HrLeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export type HrLeaveRequest = {
+  id: string;
+  employeeId: string;
+  employeeName: string | null;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  startDate: string;
+  endDate: string;
+  leaveType: HrLeaveType;
+  status: HrLeaveStatus;
+  reason: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateHrLeaveInput = {
+  employeeId: string;
+  branchId: string;
+  startDate: string;
+  endDate: string;
+  leaveType: HrLeaveType;
+  reason?: string | null;
+};
+
+export type HrDocumentType = "CNIC" | "CONTRACT" | "CERTIFICATE";
+
+export type HrEmployeeDocument = {
+  id: string;
+  employeeId: string;
+  employeeName: string | null;
+  documentType: HrDocumentType;
+  fileUrl: string;
+  uploadedAt: string;
+  createdAt: string;
+};
+
+export type CreateHrDocumentInput = {
+  documentType: HrDocumentType;
+  fileUrl: string;
+};
+
+export function listHrAttendance(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<HrAttendance[]>(
+    `/admin/hr/attendance${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createHrAttendance(accessToken: string, input: CreateHrAttendanceInput) {
+  return fetchApiData<HrAttendance>(`/admin/hr/attendance`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listHrLeaves(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<HrLeaveRequest[]>(
+    `/admin/hr/leaves${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createHrLeave(accessToken: string, input: CreateHrLeaveInput) {
+  return fetchApiData<HrLeaveRequest>(`/admin/hr/leaves`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function decideHrLeave(accessToken: string, leaveId: string, status: "APPROVED" | "REJECTED") {
+  return fetchApiData<HrLeaveRequest>(`/admin/hr/leaves/${leaveId}`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listHrDocuments(
+  accessToken: string,
+  query?: { branchId?: string; employeeId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  if (query?.employeeId) params.set("employeeId", query.employeeId);
+  const qs = params.toString();
+  return fetchApiData<HrEmployeeDocument[]>(
+    `/admin/hr/documents${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createHrDocument(accessToken: string, employeeId: string, input: CreateHrDocumentInput) {
+  return fetchApiData<HrEmployeeDocument>(`/admin/hr/employees/${employeeId}/documents`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
 export type InventoryItemStatus = "active" | "inactive" | "discontinued";
 
 export type InventoryItem = {

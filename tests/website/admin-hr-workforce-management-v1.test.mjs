@@ -35,6 +35,9 @@ describe("HR & Workforce Management V1 (static)", () => {
     assert.match(page, /HRFoundationPanel/);
     assert.match(page, /WorkforceInsights/);
     assert.match(page, /canAccessAdminHr/);
+    assert.match(page, /listHrAttendance/);
+    assert.match(page, /listHrLeaves/);
+    assert.match(page, /listHrDocuments/);
   });
 
   it("does not fabricate employees or attendance records", () => {
@@ -43,20 +46,30 @@ describe("HR & Workforce Management V1 (static)", () => {
     assert.match(directory, /listHrEmployees|HrEmployee|GET \/admin\/hr\/employees/);
     assert.doesNotMatch(directory, /EMP-\d+|employeeCode:\s*"|fakeStaff/i);
     const attendance = read("apps/website/client/src/components/admin/hr/WorkforcePanels.tsx");
-    assert.match(attendance, /will not simulate clock-in/);
-    assert.doesNotMatch(attendance, /clockIn|clockOut|attendanceRecord/i);
+    assert.match(attendance, /No attendance records yet/);
+    assert.match(attendance, /createHrAttendance/);
+    assert.match(attendance, /Mark Attendance/);
+    assert.doesNotMatch(attendance, /Attendance ledger unavailable|will not simulate clock-in/);
     const assignments = read("apps/website/client/src/components/admin/hr/StaffAssignmentsPanel.tsx");
     assert.match(assignments, /Staff assignment data unavailable/);
     assert.match(assignments, /loadFailed/);
     assert.doesNotMatch(assignments, /const empty = !loading && \(rows\?\.length \?\? 0\) === 0/);
   });
 
-  it("does not calculate payroll or leave balances", () => {
-    const payroll = read("apps/website/client/src/components/admin/hr/WorkforcePanels.tsx");
-    assert.match(payroll, /Payroll foundation/);
-    assert.match(payroll, /cannot process or calculate payroll/);
-    assert.match(payroll, /No leave balances/);
-    assert.doesNotMatch(payroll, /salaryAmount|netPay|leaveBalance:\s*\d/i);
+  it("wires leave and documents without inventing payroll", () => {
+    const panels = read("apps/website/client/src/components/admin/hr/WorkforcePanels.tsx");
+    assert.match(panels, /Payroll overview — Planned for Phase 2/);
+    assert.match(panels, /cannot process or calculate payroll/);
+    assert.match(panels, /No leave requests/);
+    assert.match(panels, /createHrLeave/);
+    assert.match(panels, /decideHrLeave/);
+    assert.match(panels, /Approve/);
+    assert.match(panels, /Reject/);
+    assert.match(panels, /No employee documents yet/);
+    assert.match(panels, /createHrDocument/);
+    assert.match(panels, /Performance reviews — Planned for Phase 2/);
+    assert.doesNotMatch(panels, /salaryAmount|netPay|leaveBalance:\s*\d/i);
+    assert.doesNotMatch(panels, /placeholders only|Document storage unavailable|Attendance ledger unavailable/);
   });
 
   it("roles panel uses seeded permissions only", () => {
@@ -67,14 +80,14 @@ describe("HR & Workforce Management V1 (static)", () => {
     const helper = read("apps/website/client/src/lib/admin-hr.ts");
     assert.match(helper, /staff\.read/);
     assert.match(helper, /staff\.create/);
-    assert.doesNotMatch(helper, /hr\.manage|permissions\.includes\("hr\./);
+    assert.match(helper, /hr\.manage/);
   });
 
   it("Mianx workforce insights remain rule-based only", () => {
     const insights = read("apps/website/client/src/components/admin/hr/WorkforceInsights.tsx");
     assert.match(insights, /Mianx\.ai Workforce Insights/);
     assert.match(insights, /Rule-based Summary/);
-    assert.match(insights, /Missing documents/);
+    assert.match(insights, /Live attendance, leave, and documents/);
     assert.doesNotMatch(insights, /employee scoring|hiring recommendations|salary recommendations|termination recommendations/i);
   });
 
@@ -91,12 +104,17 @@ describe("HR & Workforce Management V1 (static)", () => {
     assert.match(page, /useAdminAccessGate/);
   });
 
-  it("integration checks document missing workforce backend", () => {
+  it("integration checks document live attendance/leave/documents and Phase 2 payroll", () => {
     const helper = read("apps/website/client/src/lib/admin-hr.ts");
-    assert.match(helper, /attendance_events/);
-    assert.match(helper, /leave_balances/);
-    assert.match(helper, /payroll_runs/);
+    assert.match(helper, /hr_attendance/);
+    assert.match(helper, /hr_leave_requests/);
+    assert.match(helper, /hr_employee_documents/);
     assert.match(helper, /GET\/POST \/admin\/hr\/employees/);
     assert.match(helper, /hr_employees/);
+    assert.match(helper, /id: "attendance"[\s\S]*status: "present"/);
+    assert.match(helper, /id: "leave"[\s\S]*status: "present"/);
+    assert.match(helper, /id: "documents"[\s\S]*status: "present"/);
+    assert.match(helper, /id: "payroll"[\s\S]*status: "missing"/);
+    assert.match(helper, /Planned for Phase 2/);
   });
 });

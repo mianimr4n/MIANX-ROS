@@ -131,6 +131,10 @@ import {
   type HrEmployeesService,
 } from "./services/hr/employees.js";
 import {
+  createHrWorkforceService,
+  type HrWorkforceService,
+} from "./services/hr/workforce.js";
+import {
   createInventoryService,
   type InventoryService,
 } from "./services/inventory/management.js";
@@ -194,6 +198,7 @@ export interface AppDependencies {
   deliverySettings: DeliverySettingsService;
   branchSettings: BranchSettingsService;
   hrEmployees: HrEmployeesService;
+  hrWorkforce: HrWorkforceService;
   inventory: InventoryService;
   purchasing: PurchasingService;
   finance: FinanceService;
@@ -244,6 +249,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     deliverySettings: createDeliverySettingsService(envStatus),
     branchSettings: createBranchSettingsService(envStatus),
     hrEmployees: createHrEmployeesService(envStatus),
+    hrWorkforce: createHrWorkforceService(envStatus),
     inventory: createInventoryService(envStatus),
     purchasing: createPurchasingService(envStatus),
     finance: createFinanceService(envStatus),
