@@ -2,6 +2,7 @@ import type { Express } from "express";
 
 import type { AppDependencies } from "../app-dependencies.js";
 import { createAdminRouter } from "./admin/routes.js";
+import { createAiRouter } from "./ai/routes.js";
 import { createAuthRouter } from "./auth/routes.js";
 import { createBranchesRouter } from "./branches/routes.js";
 import { createDineInRouter } from "./dine-in/routes.js";
@@ -68,6 +69,11 @@ export const apiModules: ApiModuleDescriptor[] = [
     name: "admin",
     basePath: "/api/v1/admin",
     summary: "Administrative controls, staff invites, restaurant tables, dine-in bills, and dashboards.",
+  },
+  {
+    name: "ai",
+    basePath: "/api/v1/ai",
+    summary: "AI Platform foundation — teams, agents, and pending task reads (admin.access).",
   },
 ];
 
@@ -153,6 +159,14 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
       manualContact: dependencies.manualContact,
       envStatus: dependencies.envStatus,
       inviteAppOrigin: dependencies.inviteAppOrigin,
+    }),
+  );
+  app.use(
+    "/api/v1/ai",
+    createAiRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      aiPlatform: dependencies.aiPlatform,
     }),
   );
 }
