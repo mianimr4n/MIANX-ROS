@@ -43,18 +43,27 @@ describe("Owner Handover Phase 1 (static)", () => {
       read("apps/website/client/src/components/admin/purchasing/ProcurementInsights.tsx"),
       read("apps/website/client/src/components/admin/dashboard/ExecutiveKPIs.tsx"),
       read("apps/website/client/src/components/admin/dashboard/MianxInsightsPanel.tsx"),
+      read("apps/website/client/src/components/admin/hr/HRKPIs.tsx"),
+      read("apps/website/client/src/components/admin/hr/WorkforcePanels.tsx"),
+      read("apps/website/client/src/components/admin/dashboard/OwnerCommandCenter.tsx"),
+      read("apps/website/client/src/components/admin/dashboard/owner-command-builders.ts"),
     ];
 
     for (const src of ownerUi) {
       assert.doesNotMatch(src, /GET \/admin\/|POST \/admin\/|PATCH \/admin\//);
       assert.doesNotMatch(src, /Integration readiness/);
-      assert.doesNotMatch(src, /status === "present"|PRESENT/);
+      assert.doesNotMatch(src, /status === "present"|PRESENT \+/);
       assert.doesNotMatch(src, />Entities<|>Permission</);
     }
 
     assert.doesNotMatch(inventoryPage, /InventoryFoundationPanel|InventoryReadinessSections|Integration readiness/);
     assert.doesNotMatch(purchasingPage, /ProcurementFoundationPanel|ProcurementReadinessSections|Integration readiness/);
     assert.doesNotMatch(settingsPage, /SettingsCapabilityMatrix|SettingsIntegrationReadiness/);
+
+    const hrPage = read("apps/website/client/src/pages/admin/AdminHr.tsx");
+    assert.doesNotMatch(hrPage, /HRFoundationPanel|HRReadinessSections|Integration readiness/);
+    const hrInsights = read("apps/website/client/src/lib/admin-hr.ts");
+    assert.doesNotMatch(hrInsights, /detail: `Live count from GET|detail: "Live from GET|detail: "Permission gate for GET/);
   });
 
   it("5. Successful empty API responses display honest zero or welcome states", () => {

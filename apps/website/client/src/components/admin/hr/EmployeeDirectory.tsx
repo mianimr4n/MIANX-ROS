@@ -83,7 +83,13 @@ export function EmployeeDirectory({
           ) : null
         }
       />
-      <AdminSurfaceBody className="overflow-x-auto pt-0">
+      <AdminSurfaceBody className="pt-0">
+        <div
+          className="overflow-x-auto"
+          tabIndex={0}
+          role="region"
+          aria-label="Employee directory table"
+        >
         <h2 id="employee-directory-heading" className="sr-only">
           Employee directory
         </h2>
@@ -165,7 +171,7 @@ export function EmployeeDirectory({
 
         {!canLoad ? (
           <p className="text-sm text-[var(--admin-muted)]">
-            Employee directory requires staff.manage or admin.access.
+            You don&apos;t have access to the employee directory for this branch.
           </p>
         ) : employeesLoading ? (
           <p className="text-sm text-[var(--admin-muted)]" aria-live="polite">
@@ -242,6 +248,7 @@ export function EmployeeDirectory({
             </tbody>
           </table>
         )}
+        </div>
       </AdminSurfaceBody>
     </AdminSurface>
   );

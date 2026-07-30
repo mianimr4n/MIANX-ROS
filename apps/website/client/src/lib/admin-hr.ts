@@ -304,14 +304,14 @@ export function buildWorkforceInsights(input: {
     items.push({
       id: "employees-live",
       title: `${input.employeeSummary.total} employee(s) in directory (${input.employeeSummary.active} active)`,
-      detail: `Live count from GET /admin/hr/employees for ${input.branchLabel}.`,
+      detail: `Staff directory for ${input.branchLabel}.`,
       source: "live",
     });
   } else if (!input.canManageHr) {
     items.push({
       id: "employees-gate",
-      title: "Employee directory requires hr.manage, staff.manage, or admin.access",
-      detail: "Permission gate for GET /admin/hr/employees.",
+      title: "Employee directory access is required",
+      detail: "Ask an administrator if you need workforce access for this branch.",
       source: "derived",
     });
   }
@@ -320,7 +320,7 @@ export function buildWorkforceInsights(input: {
     items.push({
       id: "attendance-live",
       title: `${input.attendanceSummary.todayPresent} present/late today · ${input.attendanceSummary.todayAbsent} absent`,
-      detail: "Live from GET /admin/hr/attendance.",
+      detail: "Attendance recorded for today.",
       source: "live",
     });
   }
@@ -329,7 +329,7 @@ export function buildWorkforceInsights(input: {
     items.push({
       id: "leave-live",
       title: `${input.leaveSummary.pending} pending leave · ${input.leaveSummary.approvedActive} on leave today`,
-      detail: "Live from GET /admin/hr/leaves.",
+      detail: "Leave requests for the selected branch.",
       source: "live",
     });
   }
@@ -338,7 +338,7 @@ export function buildWorkforceInsights(input: {
     items.push({
       id: "documents-live",
       title: `${input.documentCount} employee document link(s) on file`,
-      detail: "Live from GET /admin/hr/documents.",
+      detail: "Document links stored for employee records.",
       source: "live",
     });
   }
@@ -347,14 +347,14 @@ export function buildWorkforceInsights(input: {
     items.push({
       id: "invites-pending",
       title: `${input.inviteSummary.pending} pending staff invitation(s)`,
-      detail: "Live count from GET /admin/staff/invites — super-admin scope only.",
+      detail: "Invitations waiting for staff to join.",
       source: "live",
     });
   } else if (input.hasStaffRead) {
     items.push({
       id: "invites-gate",
-      title: "Staff invite list requires super-admin backend gate",
-      detail: "staff.read is seeded but invite routes use requireSuperAdmin in API.",
+      title: "Staff invitation list is limited",
+      detail: "Invitation management is available to platform administrators.",
       source: "derived",
     });
   }

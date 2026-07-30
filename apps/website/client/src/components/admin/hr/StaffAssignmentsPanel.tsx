@@ -297,7 +297,12 @@ export function StaffAssignmentsPanel() {
         </form>
       ) : null}
 
-      <div className="mt-4 overflow-x-auto">
+      <div
+        className="mt-4 overflow-x-auto"
+        tabIndex={0}
+        role="region"
+        aria-label="Staff assignments table"
+      >
         {loading ? <p className="text-sm text-[var(--admin-muted)]">Loading assignments…</p> : null}
         {loadFailed ? (
           <p className="rounded-md border border-stone-200 bg-stone-50 px-3 py-3 text-sm text-stone-800">

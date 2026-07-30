@@ -46,7 +46,12 @@ export function RolesPermissionPanel({
             <p className="mb-2 text-xs text-[var(--admin-muted)]">
               UI_VISIBLE subset — not the complete seeded role_permissions catalog.
             </p>
-            <div className="max-h-80 overflow-y-auto rounded-lg border border-[var(--admin-border)]">
+            <div
+              className="max-h-80 overflow-y-auto rounded-lg border border-[var(--admin-border)]"
+              tabIndex={0}
+              role="region"
+              aria-label="Role and permission matrix"
+            >
               <table className="min-w-full text-left text-xs">
                 <caption className="sr-only">UI permission reference codes</caption>
                 <thead className="sticky top-0 bg-[var(--admin-soft)] text-[var(--admin-muted)]">

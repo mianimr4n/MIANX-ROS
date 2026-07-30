@@ -90,7 +90,7 @@ export function AttendancePanel({
     <AdminSurface aria-labelledby="attendance-panel-heading" className="mb-6">
       <AdminSurfaceHeader
         title="Attendance"
-        description="Live check-in/out via GET/POST /admin/hr/attendance."
+        description="Record check-in and check-out for staff today."
         action={
           canManage && branchId ? (
             <button
@@ -148,10 +148,10 @@ export function AttendancePanel({
                   onChange={(e) => setStatus(e.target.value as HrAttendanceStatus)}
                   className="mt-1 min-h-11 w-full rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
                 >
-                  <option value="PRESENT">PRESENT</option>
-                  <option value="LATE">LATE</option>
-                  <option value="ABSENT">ABSENT</option>
-                  <option value="LEAVE">LEAVE</option>
+                  <option value="PRESENT">Present</option>
+                  <option value="LATE">Late</option>
+                  <option value="ABSENT">Absent</option>
+                  <option value="LEAVE">On leave</option>
                 </select>
               </label>
             ) : null}
@@ -277,7 +277,7 @@ export function LeaveManagement({
     <AdminSurface aria-labelledby="leave-management-heading" className="mb-6">
       <AdminSurfaceHeader
         title="Leave management"
-        description="Live leave requests via GET/POST/PATCH /admin/hr/leaves."
+        description="Review and decide staff leave requests."
         action={
           canManage && branchId ? (
             <button
@@ -533,7 +533,7 @@ export function EmployeeDocuments({
     <AdminSurface aria-labelledby="employee-documents-heading" className="mb-6">
       <AdminSurfaceHeader
         title="Employee documents"
-        description="Live document URL links via POST /admin/hr/employees/:id/documents."
+        description="Store document links for employee records."
         action={
           canManage ? (
             <button
