@@ -27,7 +27,7 @@ export function ReportsHeader({
           ) : null}
         </p>
         <p className="mt-1 text-xs text-[var(--admin-muted)]">
-          Partial BI — live today operational data; historical trends and exports require analytics backend
+          Partial BI — live sales analytics and CSV exports from orders; product/finance reports Coming Soon
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -41,14 +41,19 @@ export function ReportsHeader({
         >
           Refresh reports
         </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Schedule report · Foundation
+        <button
+          type="button"
+          disabled
+          className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
+        >
+          Schedule report · Coming Soon
         </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Export CSV · Foundation
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Export PDF · Foundation
+        <button
+          type="button"
+          disabled
+          className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
+        >
+          Export PDF · Coming Soon
         </button>
       </div>
     </header>

@@ -123,6 +123,10 @@ import {
   type DeliverySettingsService,
 } from "./services/settings/delivery.js";
 import {
+  createBranchSettingsService,
+  type BranchSettingsService,
+} from "./services/settings/branch.js";
+import {
   createHrEmployeesService,
   type HrEmployeesService,
 } from "./services/hr/employees.js";
@@ -138,6 +142,10 @@ import {
   createPosZReportService,
   type PosZReportService,
 } from "./services/pos/z-report.js";
+import {
+  createReportsService,
+  type ReportsService,
+} from "./services/reports/sales.js";
 import {
   createAiPlatformService,
   type AiPlatformService,
@@ -172,10 +180,12 @@ export interface AppDependencies {
   organizationSettings: OrganizationSettingsService;
   branchProfile: BranchProfileService;
   deliverySettings: DeliverySettingsService;
+  branchSettings: BranchSettingsService;
   hrEmployees: HrEmployeesService;
   inventory: InventoryService;
   purchasing: PurchasingService;
   posZReport: PosZReportService;
+  reports: ReportsService;
   aiPlatform: AiPlatformService;
   tableService: TableServiceOperations;
   paymentSettlement: PaymentSettlementService;
@@ -217,10 +227,12 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     organizationSettings: createOrganizationSettingsService(envStatus),
     branchProfile: createBranchProfileService(envStatus),
     deliverySettings: createDeliverySettingsService(envStatus),
+    branchSettings: createBranchSettingsService(envStatus),
     hrEmployees: createHrEmployeesService(envStatus),
     inventory: createInventoryService(envStatus),
     purchasing: createPurchasingService(envStatus),
     posZReport: createPosZReportService(envStatus),
+    reports: createReportsService(envStatus),
     aiPlatform: createAiPlatformService(envStatus),
     tableService: createTableServiceOperations(envStatus),
     paymentSettlement: createPaymentSettlementService(envStatus),

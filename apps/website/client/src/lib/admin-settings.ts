@@ -209,15 +209,15 @@ export function capabilityMatrix(): SettingsCapabilityRow[] {
   return [
     {
       domain: "Branches",
-      capability: "Branch profile (phone, hours, delivery radius, contact)",
-      source: "public.branches + admin branch profile API",
-      readApi: "GET /api/v1/admin/branches/:id",
-      writeApi: "PUT /api/v1/admin/branches/:id",
-      permission: "branch.manage",
+      capability: "Branch profile + hours / delivery commercial settings",
+      source: "public.branches (opening_hours + delivery columns)",
+      readApi: "GET /api/v1/admin/branches/:id/settings",
+      writeApi: "PUT /api/v1/admin/branches/:id/settings",
+      permission: "branch.manage | admin.access",
       scope: "Branch",
       sensitive: false,
       classification: "LIVE",
-      decision: "Owner can update branch profile fields from Settings",
+      decision: "Owner can update hours, radius, min order, and fee from Settings",
     },
     {
       domain: "Users & Access",
@@ -316,9 +316,9 @@ export function integrationChecks(): SettingsIntegrationCheck[] {
     },
     {
       id: "branch-write",
-      label: "Branch profile write API",
+      label: "Branch settings write API",
       status: "present",
-      note: "PUT /api/v1/admin/branches/:id updates phone, hours, delivery radius, and contact fields.",
+      note: "GET/PUT /api/v1/admin/branches/:id/settings updates hours, radius, min order, and fee.",
     },
     {
       id: "organization",
@@ -334,15 +334,15 @@ export function integrationChecks(): SettingsIntegrationCheck[] {
     },
     {
       id: "settings-persist",
-      label: "Settings persistence API",
+      label: "Feature-flag / advanced settings persistence",
       status: "missing",
-      note: "No configuration store or feature-flag admin write routes.",
+      note: "No feature-flag admin write routes — Coming Soon.",
     },
     {
       id: "payments",
       label: "Payment provider admin",
       status: "environment",
-      note: "Secrets must stay environment-managed — never expose in Admin UI.",
+      note: "Secrets must stay Environment Managed — never expose in Admin UI.",
     },
     {
       id: "whatsapp",
@@ -398,7 +398,7 @@ export function buildConfigurationInsights(input: {
     {
       id: "branches-live",
       title: `${input.branchCount} branch(es) editable in scope`,
-      detail: `Current scope: ${input.branchLabel}. Phone, hours, delivery radius, and contact fields save via PUT /admin/branches/:id.`,
+      detail: `Current scope: ${input.branchLabel}. Hours, radius, min order, and fee save via PUT /admin/branches/:id/settings.`,
       source: "live",
     },
     {
@@ -411,7 +411,7 @@ export function buildConfigurationInsights(input: {
     {
       id: "payments",
       title: "Payment provider is not configured in Admin UI",
-      detail: "Secrets stay environment-managed. Admin Settings will not claim Connected without verified status API.",
+      detail: "Secrets stay Environment Managed. Admin Settings will not claim Connected without verified status API.",
       source: "foundation",
     },
     {

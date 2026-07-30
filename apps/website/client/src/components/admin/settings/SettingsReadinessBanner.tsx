@@ -1,15 +1,15 @@
 export function SettingsReadinessBanner() {
   return (
     <div
-      className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+      className="mb-6 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950"
       role="status"
       aria-live="polite"
     >
-      <p className="font-semibold">Settings foundation workspace</p>
-      <p className="mt-1 text-amber-900/90">
-        Mode: Settings Foundation. Branch directory and seeded RBAC are read-only from verified APIs. Organization profile,
-        tax, payments, printers, loyalty rules, notification providers, and security policies lack admin write APIs.
-        Secrets stay environment-managed — never shown here. Save is disabled until a verified persistence workflow exists.
+      <p className="font-semibold">Partial LIVE settings workspace</p>
+      <p className="mt-1 text-sky-900/90">
+        Organization profile and branch settings (hours, delivery radius, minimum order, delivery fee) are LIVE from
+        verified admin APIs. Payment provider credentials stay Environment Managed. Tax rates, printers, loyalty rules,
+        and security policies remain Coming Soon — never invent configuration values.
       </p>
     </div>
   );
