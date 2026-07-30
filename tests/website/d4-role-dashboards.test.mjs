@@ -222,9 +222,11 @@ describe("D4 role dashboards (static)", () => {
 
     assert.match(panels, /Counts are not shown as zero/);
 
-    const dash = read("apps/website/client/src/pages/admin/AdminDashboard.tsx");
+    const builders = read("apps/website/client/src/components/admin/dashboard/owner-command-builders.ts");
 
-    assert.match(dash, /failed=\{opsFailed\}/);
+    assert.match(builders, /unavailable \? null/);
+
+    assert.match(builders, /state: "unavailable"/);
 
     const branch = read("apps/website/client/src/pages/admin/AdminBranchManager.tsx");
 

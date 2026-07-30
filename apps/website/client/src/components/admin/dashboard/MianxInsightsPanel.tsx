@@ -43,6 +43,8 @@ export function buildDeterministicMianxInsights(
   extras?: {
     kitchenTicketCount?: number | null;
     activeAssignmentCount?: number | null;
+    pendingPoApprovals?: number | null;
+    outstandingInvoices?: number | null;
   },
 ): MianxInsightItem[] {
   if (!data) return [];
@@ -89,7 +91,7 @@ export function buildDeterministicMianxInsights(
       title:
         extras.kitchenTicketCount > 0
           ? `${extras.kitchenTicketCount} kitchen ticket${extras.kitchenTicketCount === 1 ? "" : "s"} still open`
-          : "Kitchen queue is clear",
+          : "Kitchen is operating normally.",
       trigger: `listKitchenTickets length = ${extras.kitchenTicketCount}`,
       sourceModule: "Kitchen",
       sourceTimestamp: data.generatedAt,
@@ -107,7 +109,7 @@ export function buildDeterministicMianxInsights(
       title:
         inKitchen > 0
           ? `${inKitchen} order${inKitchen === 1 ? "" : "s"} confirmed or preparing`
-          : "No orders currently in kitchen",
+          : "Kitchen is operating normally.",
       trigger: `confirmed=${confirmed}, preparing=${preparing}`,
       sourceModule: "Orders",
       sourceTimestamp: data.generatedAt,
@@ -142,7 +144,7 @@ export function buildDeterministicMianxInsights(
     title:
       lowStock > 0
         ? `${lowStock} stock item${lowStock === 1 ? "" : "s"} below minimum`
-        : "Stock levels look healthy",
+        : "Inventory is healthy.",
     trigger: `kpis.lowStockCount = ${lowStock}`,
     sourceModule: "Inventory",
     sourceTimestamp: data.generatedAt,
@@ -153,6 +155,44 @@ export function buildDeterministicMianxInsights(
         ? "Open Inventory and replenish items at or below minimum stock."
         : "No low-stock action needed in this scope.",
   });
+
+  if (extras?.pendingPoApprovals != null) {
+    items.push({
+      ruleId: "PURCHASING.PENDING_APPROVALS",
+      title:
+        extras.pendingPoApprovals > 0
+          ? `${extras.pendingPoApprovals} purchase approval${extras.pendingPoApprovals === 1 ? "" : "s"} need review.`
+          : "No purchase orders are waiting for approval.",
+      trigger: `pendingPoApprovals = ${extras.pendingPoApprovals}`,
+      sourceModule: "Purchasing",
+      sourceTimestamp: data.generatedAt,
+      branch: branchLabel,
+      severity: extras.pendingPoApprovals > 0 ? "warning" : "info",
+      recommendedAction:
+        extras.pendingPoApprovals > 0
+          ? "Open Purchasing and approve or reject draft/submitted orders."
+          : "No purchasing approval action needed.",
+    });
+  }
+
+  if (extras?.outstandingInvoices != null) {
+    items.push({
+      ruleId: "PURCHASING.OUTSTANDING_INVOICES",
+      title:
+        extras.outstandingInvoices > 0
+          ? `${extras.outstandingInvoices} supplier invoice${extras.outstandingInvoices === 1 ? "" : "s"} still outstanding.`
+          : "No supplier invoices are overdue.",
+      trigger: `outstandingInvoices = ${extras.outstandingInvoices}`,
+      sourceModule: "Purchasing",
+      sourceTimestamp: data.generatedAt,
+      branch: branchLabel,
+      severity: extras.outstandingInvoices > 0 ? "warning" : "info",
+      recommendedAction:
+        extras.outstandingInvoices > 0
+          ? "Open Purchasing and review outstanding supplier invoices."
+          : "Supplier payables look clear.",
+    });
+  }
 
   for (const alert of data.alerts.slice(0, 3)) {
     items.push({
@@ -169,7 +209,7 @@ export function buildDeterministicMianxInsights(
     });
   }
 
-  return items.slice(0, 6);
+  return items.slice(0, 8);
 }
 
 /** Compatible name used by AdminDashboard / static tests. */
@@ -179,6 +219,8 @@ export function buildMianxInsightItems(
   extras?: {
     kitchenTicketCount?: number | null;
     activeAssignmentCount?: number | null;
+    pendingPoApprovals?: number | null;
+    outstandingInvoices?: number | null;
   },
 ): MianxInsightItem[] {
   return buildDeterministicMianxInsights(data, branchLabel, extras);

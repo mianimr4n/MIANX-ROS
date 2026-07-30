@@ -7,22 +7,16 @@ import {
   ExecutiveFilterBar,
   type ExecutiveDashboardFilters,
 } from "@/components/admin/dashboard/ExecutiveFilterBar";
-import { ExecutiveKPIs } from "@/components/admin/dashboard/ExecutiveKPIs";
+import { OwnerCommandCenter } from "@/components/admin/dashboard/OwnerCommandCenter";
 import {
-  DeliveryStatusPanel,
-  KitchenStatusPanel,
-  RecentOrdersPanel,
-} from "@/components/admin/dashboard/LiveOperationsPanels";
-import { OperationsModuleGrid } from "@/components/admin/dashboard/OperationsModuleGrid";
+  karachiDateString,
+  shiftKarachiDate,
+  wasteTodayFromMovements,
+} from "@/components/admin/dashboard/owner-command-builders";
 import {
-  AiInsightsPanel,
   BranchPerformancePanel,
-  ExecutiveAside,
-  LiveActivityPanel,
   SourceBreakdownPanel,
   StatusBreakdownPanel,
-  buildLiveActivity,
-  buildMianxInsightItems,
 } from "@/components/admin/dashboard/ExecutiveWidgets";
 import { OpeningExecSummaryBridge } from "@/components/admin/dashboard/OpeningExecSummaryBridge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,10 +25,14 @@ import { useBranch } from "@/contexts/BranchContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import {
   fetchAdminOperationsDashboard,
+  fetchSalesReport,
   fetchSystemHealth,
   fetchTableServiceDashboard,
   listAdminOrders,
+  listGoodsReceiving,
+  listHrEmployees,
   listPurchaseOrders,
+  listStockMovements,
   listSupplierInvoices,
   type AdminOrderListItem,
 } from "@/lib/admin-api";
@@ -45,8 +43,11 @@ import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBan
 import { AdminShell } from "@/pages/admin/AdminShell";
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
 import {
+  canAccessAdminHr,
+  canAccessAdminInventory,
   canAccessAdminOrdersApi,
   canAccessAdminPurchasing,
+  canAccessAdminReports,
   canAccessTableService,
   primaryRoleLabel,
   resolveStaffHome,
@@ -191,6 +192,9 @@ export default function AdminDashboard() {
     { enabled: Boolean(token) && allowed && gateReady && !comingSoonBranch, pollMs: 30_000 },
   );
   const canLoadPurchasing = canAccessAdminPurchasing({ roles, permissions, isSuperAdmin });
+  const canLoadInventory = canAccessAdminInventory({ roles, permissions, isSuperAdmin });
+  const canLoadReports = canAccessAdminReports({ roles, permissions, isSuperAdmin });
+  const canLoadHr = canAccessAdminHr({ roles, permissions, isSuperAdmin });
   const purchaseOrders = useOperationalData(
     ({ signal, correlationId }) =>
       listPurchaseOrders(token!, branchIdFilter ? { branchId: branchIdFilter } : undefined, {
@@ -213,6 +217,78 @@ export default function AdminDashboard() {
     {
       enabled: Boolean(token) && canLoadPurchasing && gateReady && !comingSoonBranch,
       pollMs: 60_000,
+    },
+  );
+  const goodsReceiving = useOperationalData(
+    ({ signal, correlationId }) =>
+      listGoodsReceiving(token!, branchIdFilter ? { branchId: branchIdFilter } : undefined, {
+        signal,
+        correlationId,
+      }),
+    [token, branchIdFilter],
+    {
+      enabled: Boolean(token) && canLoadPurchasing && gateReady && !comingSoonBranch,
+      pollMs: 60_000,
+    },
+  );
+  const stockMovements = useOperationalData(
+    ({ signal, correlationId }) =>
+      listStockMovements(
+        token!,
+        { branchId: branchIdFilter ?? undefined, limit: 40 },
+        { signal, correlationId },
+      ),
+    [token, branchIdFilter],
+    {
+      enabled: Boolean(token) && canLoadInventory && gateReady && !comingSoonBranch,
+      pollMs: 60_000,
+    },
+  );
+  const hrEmployees = useOperationalData(
+    ({ signal, correlationId }) =>
+      listHrEmployees(token!, branchIdFilter ? { branchId: branchIdFilter } : undefined, {
+        signal,
+        correlationId,
+      }),
+    [token, branchIdFilter],
+    {
+      enabled: Boolean(token) && canLoadHr && gateReady && !comingSoonBranch,
+      pollMs: 120_000,
+    },
+  );
+  const todayKarachi = karachiDateString();
+  const sales7d = useOperationalData(
+    ({ signal, correlationId }) =>
+      fetchSalesReport(
+        token!,
+        {
+          startDate: shiftKarachiDate(6),
+          endDate: todayKarachi,
+          branchId: branchIdFilter,
+        },
+        { signal, correlationId },
+      ),
+    [token, branchIdFilter, todayKarachi],
+    {
+      enabled: Boolean(token) && canLoadReports && gateReady && !comingSoonBranch,
+      pollMs: 120_000,
+    },
+  );
+  const sales30d = useOperationalData(
+    ({ signal, correlationId }) =>
+      fetchSalesReport(
+        token!,
+        {
+          startDate: shiftKarachiDate(29),
+          endDate: todayKarachi,
+          branchId: branchIdFilter,
+        },
+        { signal, correlationId },
+      ),
+    [token, branchIdFilter, todayKarachi],
+    {
+      enabled: Boolean(token) && canLoadReports && gateReady && !comingSoonBranch,
+      pollMs: 120_000,
     },
   );
   const healthOp = useOperationalData(
@@ -251,7 +327,6 @@ export default function AdminDashboard() {
 
   const { data, error, state: opState, lastSuccessAt, retry } = dashboard;
   const loading = opState === "LOADING";
-  const opsFailed = Boolean(error) || (!data && (opState === "ERROR" || opState === "OFFLINE"));
   const occupancyByBranch = tableServiceOp.data?.occupancyByBranch ?? null;
 
   const kitchenTicketCount =
@@ -313,29 +388,48 @@ export default function AdminDashboard() {
     return applyClientFilters(recentOrdersSource, filters);
   }, [recentOrdersSource, filters]);
 
-  const mianxItems = useMemo(
-    () =>
-      buildMianxInsightItems(data, branchLabel, {
-        kitchenTicketCount: kitchenTicketsUnavailable ? null : kitchenTicketCount,
-        activeAssignmentCount: assignmentsUnavailable ? null : activeAssignmentCount,
-      }),
-    [
+  const wasteUnavailable =
+    !canLoadInventory ||
+    stockMovements.state === "ERROR" ||
+    stockMovements.state === "OFFLINE" ||
+    stockMovements.state === "UNAVAILABLE" ||
+    stockMovements.data == null;
+  const wasteTodayQty = wasteUnavailable ? null : wasteTodayFromMovements(stockMovements.data);
+
+  const ownerExtras = useMemo(
+    () => ({
+      kitchenTicketCount: kitchenTicketsUnavailable ? null : kitchenTicketCount,
+      kitchenUnavailable: kitchenTicketsUnavailable,
+      activeAssignmentCount: assignmentsUnavailable ? null : activeAssignmentCount,
       assignmentsUnavailable,
+      wasteTodayQty,
+      wasteUnavailable,
+      procurement: procurementSnapshot,
+    }),
+    [
       activeAssignmentCount,
-      branchLabel,
-      data,
+      assignmentsUnavailable,
       kitchenTicketCount,
       kitchenTicketsUnavailable,
+      procurementSnapshot,
+      wasteTodayQty,
+      wasteUnavailable,
     ],
   );
-  const activity = useMemo(
-    () => buildLiveActivity(filteredOrders, data?.alerts ?? []),
-    [data?.alerts, filteredOrders],
-  );
+
+  const activityUnavailable =
+    (ordersList.state === "ERROR" || ordersList.state === "OFFLINE") &&
+    !canLoadInventory &&
+    !canLoadPurchasing &&
+    !canLoadHr;
+  const activityLoading =
+    (ordersList.state === "LOADING" && !ordersList.data) ||
+    (canLoadInventory && stockMovements.state === "LOADING" && !stockMovements.data) ||
+    (canLoadPurchasing && purchaseOrders.state === "LOADING" && !purchaseOrders.data);
 
   const dataReady = Boolean(data) && !error;
   const updated = formatUpdatedAt(data?.generatedAt);
-  // Retain formatCount/formatPkr references for static honesty contracts.
+  // Retain formatCount/formatPkr / kpiState references for static honesty contracts.
   void formatCount;
   void formatPkr;
   void kpiState;
@@ -354,7 +448,7 @@ export default function AdminDashboard() {
               : "Idle";
 
   return (
-    <AdminShell title="Executive dashboard">
+    <AdminShell title="Owner Command Center">
       <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-red-dark)]">
@@ -371,6 +465,9 @@ export default function AdminDashboard() {
             {branchLabel}
             {" · "}
             {formatHeaderDate(now)}
+          </p>
+          <p className="mt-2 text-sm font-medium text-[var(--admin-ink)]">
+            What needs my attention today?
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -443,24 +540,51 @@ export default function AdminDashboard() {
       ) : null}
 
       {!comingSoonBranch ? (
-        <ExecutiveKPIs
+        <OwnerCommandCenter
           data={data}
           opState={opState}
           loading={loading && !data}
-          kitchenTicketCount={kitchenTicketCount}
-          kitchenTicketsUpdatedAt={kitchenTickets.lastSuccessAt}
-          kitchenTicketsUnavailable={kitchenTicketsUnavailable}
-          activeAssignmentCount={activeAssignmentCount}
-          assignmentsUpdatedAt={deliveryAssignments.lastSuccessAt}
-          assignmentsUnavailable={assignmentsUnavailable}
-          procurement={procurementSnapshot}
+          branchLabel={branchLabel}
+          extras={ownerExtras}
+          orders={filteredOrders.length > 0 ? filteredOrders : recentOrdersSource}
+          movements={wasteUnavailable ? null : (stockMovements.data ?? null)}
+          purchaseOrders={
+            procurementSnapshot.unavailable ? null : (purchaseOrders.data?.orders ?? null)
+          }
+          invoices={procurementSnapshot.unavailable ? null : (supplierInvoices.data ?? null)}
+          receipts={
+            !canLoadPurchasing ||
+            goodsReceiving.state === "ERROR" ||
+            goodsReceiving.state === "OFFLINE" ||
+            goodsReceiving.state === "UNAVAILABLE"
+              ? null
+              : (goodsReceiving.data ?? null)
+          }
+          employees={
+            !canLoadHr ||
+            hrEmployees.state === "ERROR" ||
+            hrEmployees.state === "OFFLINE" ||
+            hrEmployees.state === "UNAVAILABLE"
+              ? null
+              : (hrEmployees.data ?? null)
+          }
+          activityLoading={activityLoading}
+          activityUnavailable={activityUnavailable}
+          report7d={sales7d.data}
+          report30d={sales30d.data}
+          loading7d={sales7d.state === "LOADING" && !sales7d.data}
+          loading30d={sales30d.state === "LOADING" && !sales30d.data}
+          error7d={
+            !canLoadReports || sales7d.state === "ERROR" || sales7d.state === "OFFLINE"
+              ? sales7d.error ?? "Data unavailable"
+              : null
+          }
+          error30d={
+            !canLoadReports || sales30d.state === "ERROR" || sales30d.state === "OFFLINE"
+              ? sales30d.error ?? "Data unavailable"
+              : null
+          }
         />
-      ) : null}
-
-      {!comingSoonBranch ? (
-      <div className="mb-8">
-        <OperationsModuleGrid />
-      </div>
       ) : null}
 
       {/* D3/D4 — table service + opening readiness (branch-scoped; aggregate uses an assigned anchor). */}
@@ -587,100 +711,46 @@ export default function AdminDashboard() {
       ) : null}
 
       {!comingSoonBranch ? (
-      <section className="mb-8" aria-label="Live operations">
-        <AdminSectionTitle
-          eyebrow="Live"
-          title="Operations board"
-          description="Recent orders use API data. Kitchen and delivery panels are status-derived."
-        />
-        <div className="grid min-w-0 gap-4 xl:grid-cols-3">
-          <div className="min-w-0 xl:col-span-1">
-            <RecentOrdersPanel
-              orders={
-                ordersList.state === "ERROR" || ordersList.state === "OFFLINE"
-                  ? filteredOrders.length > 0
-                    ? filteredOrders
-                    : null
-                  : filteredOrders
-              }
-              unavailable={
-                (ordersList.state === "ERROR" || ordersList.state === "OFFLINE") &&
-                filteredOrders.length === 0 &&
-                opsFailed
-              }
-            />
+        <section className="mb-8" aria-label="Business analytics">
+          <AdminSectionTitle
+            eyebrow="Analytics"
+            title="Branch & status detail"
+            description="Verified breakdowns only. Insufficient data shows an honest empty state."
+          />
+          <div className="grid min-w-0 gap-4 xl:grid-cols-3">
+            <div className="min-w-0">
+              <StatusBreakdownPanel counts={data?.statusCounts ?? null} ready={dataReady} />
+            </div>
+            <div className="min-w-0">
+              <SourceBreakdownPanel rows={data?.sourceBreakdown ?? null} ready={dataReady} />
+            </div>
+            <div className="min-w-0">
+              <BranchPerformancePanel
+                rows={data?.branchPerformance ?? null}
+                onSelectBranch={(branchId) => {
+                  setSelection({ mode: "branch", branchId });
+                  setLocation("/admin/branch");
+                }}
+              />
+            </div>
           </div>
-          <div className="min-w-0">
-            <KitchenStatusPanel
-              counts={dataReady ? (data?.statusCounts ?? {}) : null}
-              failed={opsFailed}
-            />
-          </div>
-          <div className="min-w-0">
-            <DeliveryStatusPanel
-              activeDeliveries={dataReady ? (data?.kpis.activeDeliveries ?? null) : null}
-              readyCount={dataReady ? (data?.statusCounts.ready ?? null) : null}
-              completedCount={dataReady ? (data?.statusCounts.completed ?? null) : null}
-              failed={opsFailed}
-            />
-          </div>
-        </div>
-      </section>
+        </section>
       ) : null}
 
-      {!comingSoonBranch ? (
-      <section className="mb-8" aria-label="Business analytics">
-        <AdminSectionTitle
-          eyebrow="Analytics"
-          title="Business analytics"
-          description="Verified breakdowns only. Insufficient data shows an honest empty state."
-        />
-        <div className="grid min-w-0 gap-4 xl:grid-cols-3">
-          <div className="min-w-0">
-            <StatusBreakdownPanel counts={data?.statusCounts ?? null} ready={dataReady} />
-          </div>
-          <div className="min-w-0">
-            <SourceBreakdownPanel rows={data?.sourceBreakdown ?? null} ready={dataReady} />
-          </div>
-          <div className="min-w-0">
-            <BranchPerformancePanel
-              rows={data?.branchPerformance ?? null}
-              onSelectBranch={(branchId) => {
-                // D2 drill-down: scope the workspace to the branch, then open its dashboard.
-                setSelection({ mode: "branch", branchId });
-                setLocation("/admin/branch");
-              }}
-            />
-          </div>
+      {!comingSoonBranch && isSuperAdmin ? (
+        <div className="mb-8">
+          <OpeningExecSummaryBridge
+            token={token}
+            branchId={branchIdFilter ?? occupancyAnchorBranchId}
+            enabled={gateReady}
+            comingSoon={Boolean(comingSoonBranch)}
+            northernBypassStatus={
+              allBranches.find((b) => b.code === "northern-bypass" || /northern/i.test(b.name))?.status ??
+              "coming-soon"
+            }
+            branchLabel={branchLabel}
+          />
         </div>
-      </section>
-      ) : null}
-
-      {!comingSoonBranch ? (
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]">
-        <div className="space-y-6">
-          {isSuperAdmin ? (
-            <OpeningExecSummaryBridge
-              token={token}
-              branchId={branchIdFilter ?? occupancyAnchorBranchId}
-              enabled={gateReady}
-              comingSoon={Boolean(comingSoonBranch)}
-              northernBypassStatus={
-                allBranches.find((b) => b.code === "northern-bypass" || /northern/i.test(b.name))?.status ??
-                "coming-soon"
-              }
-              branchLabel={branchLabel}
-            />
-          ) : null}
-          <AiInsightsPanel items={mianxItems} loading={loading && !data} />
-          <LiveActivityPanel items={activity} />
-        </div>
-        <ExecutiveAside
-          alertCount={data?.alerts.length ?? 0}
-          pendingPoApprovals={procurementSnapshot.pendingPoApprovals}
-          procurementUnavailable={procurementSnapshot.unavailable}
-        />
-      </div>
       ) : null}
 
       {isSuperAdmin ? (
