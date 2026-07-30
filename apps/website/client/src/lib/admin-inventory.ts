@@ -72,8 +72,8 @@ export function integrationChecks(): InventoryIntegrationCheck[] {
     {
       id: "suppliers",
       label: "Suppliers & purchase orders",
-      status: "missing",
-      note: "No supplier or PO tables in repository.",
+      status: "present",
+      note: "suppliers + purchase_orders via /api/v1/admin/purchasing/* (see Purchasing workspace).",
     },
     {
       id: "valuation",

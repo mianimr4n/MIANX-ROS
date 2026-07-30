@@ -39,6 +39,7 @@ import {
   buildInventoryInsights,
   buildInventoryKpis,
   integrationChecks,
+  isLowStock,
   readinessGroups,
 } from "@/lib/admin-inventory";
 import { AdminShell } from "./AdminShell";
@@ -66,6 +67,8 @@ export default function AdminInventory() {
   const [addBusy, setAddBusy] = useState(false);
   const [adjustError, setAdjustError] = useState<string | null>(null);
   const [adjustBusy, setAdjustBusy] = useState(false);
+  const [search, setSearch] = useState("");
+  const [lowStockOnly, setLowStockOnly] = useState(false);
 
   const checks = useMemo(() => integrationChecks(), []);
   const groups = useMemo(() => readinessGroups(), []);
@@ -74,6 +77,15 @@ export default function AdminInventory() {
     [items, toppings, stockItems],
   );
   const insights = useMemo(() => buildInventoryInsights(snapshot, branchLabel), [snapshot, branchLabel]);
+  const filteredStockItems = useMemo(() => {
+    if (!stockItems) return null;
+    const q = search.trim().toLowerCase();
+    return stockItems.filter((item) => {
+      if (lowStockOnly && !isLowStock(item)) return false;
+      if (!q) return true;
+      return item.name.toLowerCase().includes(q) || item.sku.toLowerCase().includes(q);
+    });
+  }, [lowStockOnly, search, stockItems]);
 
   const loadStock = useCallback(async () => {
     const token = session?.access_token;
@@ -201,10 +213,15 @@ export default function AdminInventory() {
 
       <InventoryKPIs snapshot={isLoading ? null : snapshot} loading={isLoading} />
 
-      <InventoryFilters />
+      <InventoryFilters
+        search={search}
+        onSearchChange={setSearch}
+        lowStockOnly={lowStockOnly}
+        onLowStockOnlyChange={setLowStockOnly}
+      />
 
       <InventoryTable
-        items={stockItems}
+        items={filteredStockItems}
         loading={stockLoading}
         error={stockError}
         canManage={canManageInventory}

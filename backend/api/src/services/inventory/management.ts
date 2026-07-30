@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { ApiError } from "../../common/http.js";
+import { throwMappedDbError } from "../../common/supabase-errors.js";
 import type { EnvironmentStatus } from "../../config/env.js";
 import { assertBranchMembership } from "../branches/operational-status.js";
 import { loadBranchRow } from "../branches/lookup.js";
@@ -201,7 +202,7 @@ export function createInventoryService(envStatus: EnvironmentStatus): InventoryS
 
   async function fetchItem(client: SupabaseClient, id: string): Promise<InventoryItemRecord> {
     const { data, error } = await client.from("inventory_items").select(ITEM_SELECT).eq("id", id).maybeSingle();
-    if (error) throw new ApiError(500, "INVENTORY_ITEM_READ_FAILED", error.message);
+    if (error) throwMappedDbError("INVENTORY_ITEM_READ_FAILED", error);
     if (!data) throw new ApiError(404, "INVENTORY_ITEM_NOT_FOUND", "Inventory item not found.");
     return mapItem(data as unknown as ItemRow);
   }
@@ -216,7 +217,7 @@ export function createInventoryService(envStatus: EnvironmentStatus): InventoryS
       if (branchScope !== "all") query = query.in("branch_id", branchScope);
 
       const { data, error } = await query;
-      if (error) throw new ApiError(500, "INVENTORY_ITEMS_READ_FAILED", error.message);
+      if (error) throwMappedDbError("INVENTORY_ITEMS_READ_FAILED", error);
       return ((data ?? []) as unknown as ItemRow[]).map(mapItem);
     },
 
@@ -254,7 +255,7 @@ export function createInventoryService(envStatus: EnvironmentStatus): InventoryS
         if (error.code === "23505") {
           throw new ApiError(409, "INVENTORY_SKU_EXISTS", "An item with this SKU already exists for the branch.");
         }
-        throw new ApiError(500, "INVENTORY_ITEM_CREATE_FAILED", error.message);
+        throwMappedDbError("INVENTORY_ITEM_CREATE_FAILED", error);
       }
 
       const item = mapItem(data as unknown as ItemRow);
@@ -307,7 +308,7 @@ export function createInventoryService(envStatus: EnvironmentStatus): InventoryS
         .eq("id", id)
         .select(ITEM_SELECT)
         .single();
-      if (error) throw new ApiError(500, "INVENTORY_ITEM_UPDATE_FAILED", error.message);
+      if (error) throwMappedDbError("INVENTORY_ITEM_UPDATE_FAILED", error);
       return mapItem(data as unknown as ItemRow);
     },
 
@@ -338,7 +339,7 @@ export function createInventoryService(envStatus: EnvironmentStatus): InventoryS
         })
         .select(MOVEMENT_SELECT)
         .single();
-      if (movementError) throw new ApiError(500, "STOCK_MOVEMENT_CREATE_FAILED", movementError.message);
+      if (movementError) throwMappedDbError("STOCK_MOVEMENT_CREATE_FAILED", movementError);
 
       const { data: itemData, error: itemError } = await client
         .from("inventory_items")
@@ -346,7 +347,7 @@ export function createInventoryService(envStatus: EnvironmentStatus): InventoryS
         .eq("id", existing.id)
         .select(ITEM_SELECT)
         .single();
-      if (itemError) throw new ApiError(500, "INVENTORY_STOCK_UPDATE_FAILED", itemError.message);
+      if (itemError) throwMappedDbError("INVENTORY_STOCK_UPDATE_FAILED", itemError);
 
       return {
         item: mapItem(itemData as unknown as ItemRow),
@@ -370,7 +371,7 @@ export function createInventoryService(envStatus: EnvironmentStatus): InventoryS
       if (opts.inventoryItemId) query = query.eq("inventory_item_id", opts.inventoryItemId);
 
       const { data, error } = await query;
-      if (error) throw new ApiError(500, "STOCK_MOVEMENTS_READ_FAILED", error.message);
+      if (error) throwMappedDbError("STOCK_MOVEMENTS_READ_FAILED", error);
       return ((data ?? []) as unknown as MovementRow[]).map(mapMovement);
     },
   };

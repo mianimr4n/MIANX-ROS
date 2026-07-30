@@ -72,8 +72,8 @@ export function integrationChecks(): ProcurementIntegrationCheck[] {
     {
       id: "inventory-posting",
       label: "Inventory posting from GRN",
-      status: "missing",
-      note: "GRN → stock_movements posting Coming Soon.",
+      status: "partial",
+      note: "Stock ledger is LIVE — GRN → stock_movements posting Coming Soon.",
     },
     {
       id: "invoices",
@@ -96,8 +96,8 @@ export function integrationChecks(): ProcurementIntegrationCheck[] {
     {
       id: "inventory-module",
       label: "Inventory demand context",
-      status: "partial",
-      note: "Reorder-driven demand suggestions Coming Soon.",
+      status: "present",
+      note: "Inventory stock ledger is LIVE — reorder suggestions Coming Soon.",
     },
     {
       id: "permission",
@@ -116,7 +116,7 @@ export function buildPurchasingKpis(
     supplierCount: suppliers == null ? null : suppliers.length,
     openPoCount: orders == null ? null : orders.filter((o) => OPEN_PO_STATUSES.has(o.status)).length,
     inventoryFoundationLinked: true,
-    stockLedgerAvailable: false,
+    stockLedgerAvailable: true,
     menuCatalogAvailable: true,
   };
 }

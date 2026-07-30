@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { ApiError } from "../../common/http.js";
+import { throwMappedDbError } from "../../common/supabase-errors.js";
 import type { EnvironmentStatus } from "../../config/env.js";
 import { assertBranchMembership } from "../branches/operational-status.js";
 import { loadBranchRow } from "../branches/lookup.js";
@@ -195,7 +196,7 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
       if (branchScope !== "all") query = query.in("branch_id", branchScope);
 
       const { data, error } = await query;
-      if (error) throw new ApiError(500, "SUPPLIERS_READ_FAILED", error.message);
+      if (error) throwMappedDbError("SUPPLIERS_READ_FAILED", error);
       return ((data ?? []) as unknown as SupplierRow[]).map(mapSupplier);
     },
 
@@ -221,7 +222,7 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
         .select(SUPPLIER_SELECT)
         .single();
 
-      if (error) throw new ApiError(500, "SUPPLIER_CREATE_FAILED", error.message);
+      if (error) throwMappedDbError("SUPPLIER_CREATE_FAILED", error);
       return mapSupplier(data as unknown as SupplierRow);
     },
 
@@ -237,7 +238,7 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
       if (branchScope !== "all") query = query.in("branch_id", branchScope);
 
       const { data, error } = await query;
-      if (error) throw new ApiError(500, "PURCHASE_ORDERS_READ_FAILED", error.message);
+      if (error) throwMappedDbError("PURCHASE_ORDERS_READ_FAILED", error);
       return ((data ?? []) as unknown as PurchaseOrderRow[]).map(mapOrder);
     },
 
@@ -251,7 +252,7 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
         .select("id, branch_id, status")
         .eq("id", input.supplierId)
         .maybeSingle();
-      if (supplierError) throw new ApiError(500, "SUPPLIER_READ_FAILED", supplierError.message);
+      if (supplierError) throwMappedDbError("SUPPLIER_READ_FAILED", supplierError);
       if (!supplier) throw new ApiError(404, "SUPPLIER_NOT_FOUND", "Supplier not found.");
       if (supplier.branch_id !== input.branchId) {
         throw new ApiError(400, "VALIDATION_ERROR", "Supplier must belong to the same branch as the purchase order.");
@@ -279,7 +280,7 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
         if (error.code === "23505") {
           throw new ApiError(409, "PO_NUMBER_EXISTS", "A purchase order with this number already exists for the branch.");
         }
-        throw new ApiError(500, "PURCHASE_ORDER_CREATE_FAILED", error.message);
+        throwMappedDbError("PURCHASE_ORDER_CREATE_FAILED", error);
       }
       return mapOrder(data as unknown as PurchaseOrderRow);
     },

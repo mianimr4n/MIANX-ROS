@@ -62,6 +62,7 @@ export default function AdminPurchasing() {
   const [addBusy, setAddBusy] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createBusy, setCreateBusy] = useState(false);
+  const [search, setSearch] = useState("");
 
   const checks = useMemo(() => integrationChecks(), []);
   const groups = useMemo(() => readinessGroups(), []);
@@ -70,6 +71,28 @@ export default function AdminPurchasing() {
     () => buildProcurementInsights(branchLabel, suppliers, orders),
     [branchLabel, orders, suppliers],
   );
+  const filteredSuppliers = useMemo(() => {
+    if (!suppliers) return null;
+    const q = search.trim().toLowerCase();
+    if (!q) return suppliers;
+    return suppliers.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        (s.contactPerson ?? "").toLowerCase().includes(q) ||
+        (s.email ?? "").toLowerCase().includes(q),
+    );
+  }, [search, suppliers]);
+  const filteredOrders = useMemo(() => {
+    if (!orders) return null;
+    const q = search.trim().toLowerCase();
+    if (!q) return orders;
+    return orders.filter(
+      (o) =>
+        o.poNumber.toLowerCase().includes(q) ||
+        (o.supplierName ?? "").toLowerCase().includes(q) ||
+        o.status.toLowerCase().includes(q),
+    );
+  }, [orders, search]);
 
   const loadSuppliers = useCallback(async () => {
     const token = session?.access_token;
@@ -203,14 +226,14 @@ export default function AdminPurchasing() {
 
       <PurchasingKPIs snapshot={snapshot} />
 
-      <PurchasingFilters />
+      <PurchasingFilters search={search} onSearchChange={setSearch} />
 
       <PurchaseDemandPanel />
 
       <RequisitionPanel />
 
       <PurchaseOrderTable
-        orders={orders}
+        orders={filteredOrders}
         suppliers={suppliers}
         loading={ordersLoading}
         error={ordersError}
@@ -222,7 +245,7 @@ export default function AdminPurchasing() {
       />
 
       <SupplierTable
-        suppliers={suppliers}
+        suppliers={filteredSuppliers}
         loading={suppliersLoading}
         error={suppliersError}
         canManage={canManagePurchasing}
