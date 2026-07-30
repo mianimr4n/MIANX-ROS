@@ -1,3 +1,5 @@
+import { Link } from "wouter";
+
 import { currentShiftLabel } from "@/lib/admin-crm";
 
 export function InventoryHeader({
@@ -18,7 +20,7 @@ export function InventoryHeader({
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
         </p>
         <p className="mt-1 text-xs text-[var(--admin-muted)]">
-          Live stock ledger — items, adjustments, and movement history
+          Live stock ledger — items, adjustments, movements, and GRN stock posting via Purchasing
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -32,24 +34,18 @@ export function InventoryHeader({
         >
           Refresh
         </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Export · Coming Soon
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Import · Coming Soon
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Stock count · Coming Soon
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Receive · Coming Soon
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Transfer · Coming Soon
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Log waste · Coming Soon
-        </button>
+        <Link
+          href="/admin/purchasing"
+          className="inline-flex min-h-11 items-center rounded-lg border border-[var(--admin-border)] bg-white px-4 text-sm font-semibold hover:bg-[var(--admin-soft)]"
+        >
+          Receive (GRN)
+        </Link>
+        <a
+          href="#inventory-waste-panel"
+          className="inline-flex min-h-11 items-center rounded-lg border border-[var(--admin-border)] bg-white px-4 text-sm font-semibold hover:bg-[var(--admin-soft)]"
+        >
+          Log waste
+        </a>
       </div>
     </header>
   );

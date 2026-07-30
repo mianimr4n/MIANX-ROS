@@ -45,7 +45,7 @@ describe("Inventory Management V1 (static)", () => {
   it("does not use menu availability or selling price as inventory cost", () => {
     const kpis = read("apps/website/client/src/components/admin/inventory/InventoryKPIs.tsx");
     assert.match(kpis, /Not derived from menu flags/);
-    assert.match(kpis, /Retail menu price is not inventory cost|Purchase cost history required/i);
+    assert.match(kpis, /cost_price|Stock value/);
     assert.match(kpis, /Menu catalog payload unavailable|UnavailableInventoryKpis/);
     assert.doesNotMatch(kpis, /menuBrowseSkus \?\? 0/);
     const page = read("apps/website/client/src/pages/admin/AdminInventory.tsx");
@@ -54,25 +54,27 @@ describe("Inventory Management V1 (static)", () => {
     assert.match(valuation, /Retail menu price is not inventory cost/);
     assert.match(valuation, /Menu selling prices must not be used/);
     const helper = read("apps/website/client/src/lib/admin-inventory.ts");
-    assert.match(helper, /Menu catalog has sellable SKUs and modifiers — no ingredient recipes/);
+    assert.match(helper, /no ingredient recipes|Recipe \/ BOM/);
     assert.doesNotMatch(helper, /displayPrice|formatPkr.*stock/i);
   });
 
-  it("keeps unfinished workflows as Coming Soon and enables adjustments", () => {
+  it("wires receiving and waste to live APIs and keeps transfers as Phase 2", () => {
     const panels = read("apps/website/client/src/components/admin/inventory/InventoryWorkflowPanels.tsx");
-    assert.match(panels, /Coming Soon/);
+    assert.match(panels, /LIVE via Purchasing/);
+    assert.match(panels, /movementType=waste|movementType: "waste"/);
+    assert.match(panels, /Planned for Phase 2/);
     assert.match(panels, /Post adjustment/);
     assert.match(panels, /onAdjust/);
     const header = read("apps/website/client/src/components/admin/inventory/InventoryHeader.tsx");
-    assert.match(header, /Receive · Coming Soon/);
-    assert.match(header, /Transfer · Coming Soon/);
-    assert.match(header, /Log waste · Coming Soon/);
-    assert.match(header, /disabled/);
+    assert.match(header, /Receive \(GRN\)/);
+    assert.match(header, /Log waste/);
+    assert.match(header, /\/admin\/purchasing/);
+    assert.doesNotMatch(header, /Coming Soon/);
   });
 
-  it("classifies recipe consumption as Coming Soon without server engine", () => {
+  it("classifies recipe consumption as Phase 2 without server engine", () => {
     const recipe = read("apps/website/client/src/components/admin/inventory/InventoryWorkflowPanels.tsx");
-    assert.match(recipe, /Recipe Mapping — Coming Soon/);
+    assert.match(recipe, /Recipe Mapping — Planned for Phase 2/);
     assert.match(recipe, /server-side recipe consumption engine required/i);
     assert.doesNotMatch(recipe, /deduct.*order|subtract.*quantity/i);
   });
@@ -107,5 +109,6 @@ describe("Inventory Management V1 (static)", () => {
     assert.match(helper, /inventory\.manage/);
     assert.match(helper, /status: "present"/);
     assert.match(helper, /Recipe \/ BOM mapping/);
+    assert.match(helper, /id: "receiving"[\s\S]*status: "present"/);
   });
 });

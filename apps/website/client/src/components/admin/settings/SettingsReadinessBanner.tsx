@@ -9,7 +9,7 @@ export function SettingsReadinessBanner() {
       <p className="mt-1 text-sky-900/90">
         Organization profile and branch settings (hours, delivery radius, minimum order, delivery fee) are LIVE from
         verified admin APIs. Payment provider credentials stay Environment Managed. Tax rates, printers, loyalty rules,
-        and security policies remain Coming Soon — never invent configuration values.
+        and security policies remain Planned for Phase 2 — never invent configuration values.
       </p>
     </div>
   );

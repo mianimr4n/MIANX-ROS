@@ -1,6 +1,6 @@
 /**
  * Loyalty & Rewards V1 — composition and honesty wiring (static).
- * Points ledger is LIVE; Rewards Catalog remains Coming Soon.
+ * Points ledger is LIVE; Rewards Catalog remains Planned for Phase 2.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -15,7 +15,7 @@ function read(rel) {
 }
 
 describe("Loyalty & Rewards V1 (static)", () => {
-  it("composes /admin/loyalty with live accounts list and rewards Coming Soon", () => {
+  it("composes /admin/loyalty with live accounts list and rewards Planned for Phase 2", () => {
     const page = read("apps/website/client/src/pages/admin/AdminLoyalty.tsx");
     assert.match(page, /listLoyaltyAccounts/);
     assert.match(page, /RewardCatalogue/);
@@ -30,10 +30,10 @@ describe("Loyalty & Rewards V1 (static)", () => {
     assert.doesNotMatch(page, /Math\.random|localStorage|getLoyaltyPoints/);
   });
 
-  it("keeps Rewards Catalog as Coming Soon", () => {
+  it("keeps Rewards Catalog as Planned for Phase 2", () => {
     const catalogue = read("apps/website/client/src/components/admin/loyalty/RewardCatalogue.tsx");
-    assert.match(catalogue, /Rewards Catalog — Coming Soon/);
-    assert.match(catalogue, /Coming Soon — no sample rewards/i);
+    assert.match(catalogue, /Rewards Catalog — Planned for Phase 2/);
+    assert.match(catalogue, /Planned for Phase 2 — no sample rewards/i);
   });
 
   it("gates /admin/loyalty with canAccessAdminLoyalty", () => {

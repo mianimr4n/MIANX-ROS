@@ -16,7 +16,7 @@ export function InventoryFilters({
       <AdminSectionTitle
         eyebrow="Browse"
         title="Filters"
-        description="Search and low-stock filter apply to live stock items. Advanced filters Coming Soon."
+        description="Search and low-stock filter apply to live stock items."
       />
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <label className="flex min-h-11 items-center gap-2 rounded-lg border border-[var(--admin-border)] px-3 text-sm">
@@ -28,22 +28,7 @@ export function InventoryFilters({
           />
           Low stock
         </label>
-        {[
-          "Warehouse / location",
-          "Category",
-          "Supplier",
-          "Expiring soon",
-          "Recipe linked",
-        ].map((label) => (
-          <label
-            key={label}
-            className="flex min-h-11 items-center gap-2 rounded-lg border border-dashed border-[var(--admin-border)] px-3 text-sm text-[var(--admin-muted)]"
-          >
-            <input type="checkbox" disabled className="rounded" />
-            {label} · Coming Soon
-          </label>
-        ))}
-        <label className="block text-sm md:col-span-2 xl:col-span-4">
+        <label className="block text-sm md:col-span-2 xl:col-span-3">
           <span className="mb-1 block text-xs font-medium text-[var(--admin-muted)]">Search stock items</span>
           <input
             value={search}

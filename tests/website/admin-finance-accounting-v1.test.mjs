@@ -31,6 +31,7 @@ describe("Finance & Accounting V1 (static)", () => {
     assert.match(page, /FinanceInsights/);
     assert.match(page, /canAccessAdminFinance/);
     assert.match(page, /listFinanceJournalEntries/);
+    assert.match(page, /listSupplierInvoices/);
     assert.match(page, /fetchTrialBalance/);
     assert.match(page, /fetchProfitLoss/);
   });
@@ -43,7 +44,7 @@ describe("Finance & Accounting V1 (static)", () => {
     const statements = read("apps/website/client/src/components/admin/finance/LedgerPanel.tsx");
     assert.match(statements, /Trial balance/);
     assert.match(statements, /No financial data available/);
-    assert.match(statements, /Coming Soon/);
+    assert.match(statements, /Planned for Phase 2/);
     assert.doesNotMatch(statements, /totalAssets:\s*\d|netIncome:\s*5000|operatingCash:\s*\d/i);
   });
 
@@ -56,17 +57,20 @@ describe("Finance & Accounting V1 (static)", () => {
     assert.match(sales, /Operational order totals/);
   });
 
-  it("payables and receivables remain Coming Soon without inventing AP/AR", () => {
+  it("wires operational payables from Purchasing and keeps AR as Phase 2", () => {
     const panels = read("apps/website/client/src/components/admin/finance/FinancePanels.tsx");
-    assert.match(panels, /Accounts payable Coming Soon/);
-    assert.match(panels, /Customer payment records are not[\s\S]*supplier payables/);
-    assert.match(panels, /Accounts receivable unavailable/);
-    assert.doesNotMatch(panels, /onPaySupplier|createInvoice|postJournal/i);
+    assert.match(panels, /Operational supplier invoices/);
+    assert.match(panels, /No outstanding supplier invoices/);
+    assert.match(panels, /Accounts receivable — Planned for Phase 2/);
+    assert.match(panels, /listSupplierInvoices|SupplierInvoice|invoices/);
+    const page = read("apps/website/client/src/pages/admin/AdminFinance.tsx");
+    assert.match(page, /listSupplierInvoices/);
+    assert.match(page, /outstandingPayables/);
   });
 
   it("tax panel does not fabricate VAT/GST figures", () => {
     const tax = read("apps/website/client/src/components/admin/finance/FinancePanels.tsx");
-    assert.match(tax, /VAT\/GST returns Coming Soon/);
+    assert.match(tax, /VAT\/GST returns — Planned for Phase 2/);
     assert.match(tax, /not a tax engine/);
     assert.doesNotMatch(tax, /vatRate|gstRate|taxLiability:\s*\d/i);
   });
@@ -93,12 +97,13 @@ describe("Finance & Accounting V1 (static)", () => {
     assert.match(page, /useAdminAccessGate/);
   });
 
-  it("integration checks document live CoA / GL and Coming Soon gaps", () => {
+  it("integration checks document live CoA / GL and Phase 2 gaps", () => {
     const helper = read("apps/website/client/src/lib/admin-finance.ts");
     assert.match(helper, /chart_of_accounts/);
     assert.match(helper, /journal_entries/);
     assert.match(helper, /finance\.manage/);
     assert.match(helper, /status: "present"/);
-    assert.match(helper, /Coming Soon/);
+    assert.match(helper, /Planned for Phase 2/);
+    assert.match(helper, /id: "accounts-payable"[\s\S]*status: "partial"/);
   });
 });

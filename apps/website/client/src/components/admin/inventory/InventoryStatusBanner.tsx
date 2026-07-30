@@ -10,8 +10,9 @@ export function InventoryStatusBanner() {
             Inventory status
           </h2>
           <p className="mt-1 text-sm text-emerald-900">
-            Stock items, adjustments, and movement history are LIVE. Recipe mapping, PO receiving, transfers, and
-            valuation remain Coming Soon — no fabricated balances.
+            Stock items, adjustments, movement history, waste logging, and PO receiving (via Purchasing GRN) are LIVE.
+            Recipe BOM consumption, branch transfers, and FIFO/WAC valuation are Planned for Phase 2 — no fabricated
+            balances.
           </p>
           <p className="mt-2 text-xs text-emerald-800">
             Menu item availability is not stock quantity. Order lines are not inventory consumption. Retail prices are

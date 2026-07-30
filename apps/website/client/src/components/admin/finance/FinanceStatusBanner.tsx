@@ -7,9 +7,9 @@ export function FinanceStatusBanner() {
     >
       <p className="font-semibold">Finance general ledger is LIVE</p>
       <p className="mt-1 text-emerald-900/90">
-        Chart of accounts, balanced journal entries, trial balance, and profit &amp; loss are available. Order totals remain
-        operational sales — not automatic accounting revenue. Cash flow, balance sheet, AR/AP modules, and VAT/GST returns
-        are Coming Soon.
+        Chart of accounts, balanced journal entries, trial balance, profit &amp; loss, and operational supplier payables
+        (from Purchasing invoices) are available. Order totals remain operational sales — not automatic accounting
+        revenue. Cash flow, balance sheet, AR aging, and VAT/GST returns are Planned for Phase 2.
       </p>
     </div>
   );

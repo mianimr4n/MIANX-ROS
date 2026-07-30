@@ -31,10 +31,12 @@ import {
   fetchTrialBalance,
   listFinanceAccounts,
   listFinanceJournalEntries,
+  listSupplierInvoices,
   type AdminOperationsDashboard,
   type FinanceAccount,
   type FinanceJournalEntry,
   type ProfitLossReport,
+  type SupplierInvoice,
   type TrialBalanceReport,
 } from "@/lib/admin-api";
 import {
@@ -69,8 +71,17 @@ export default function AdminFinance() {
   const [glLoading, setGlLoading] = useState(false);
   const [glError, setGlError] = useState<string | null>(null);
   const [stmtError, setStmtError] = useState<string | null>(null);
+  const [invoices, setInvoices] = useState<SupplierInvoice[] | null>(null);
+  const [apLoading, setApLoading] = useState(false);
+  const [apError, setApError] = useState<string | null>(null);
 
   const snapshot = useMemo(() => buildFinanceKpiSnapshot(), []);
+  const outstandingPayables = useMemo(() => {
+    if (invoices == null) return null;
+    return invoices
+      .filter((i) => i.status === "pending" || i.status === "partially_paid")
+      .reduce((sum, i) => sum + i.totalAmount, 0);
+  }, [invoices]);
   const insights = useMemo(
     () => buildFinanceInsights(branchLabel, profitLoss),
     [branchLabel, profitLoss],
@@ -107,6 +118,7 @@ export default function AdminFinance() {
       setEntries(null);
       setTrialBalance(null);
       setProfitLoss(null);
+      setInvoices(null);
       setGlError("Sign in required.");
       return;
     }
@@ -115,8 +127,10 @@ export default function AdminFinance() {
       setEntries([]);
       setTrialBalance(null);
       setProfitLoss(null);
+      setInvoices([]);
       setGlError(null);
       setStmtError(null);
+      setApError(null);
       return;
     }
 
@@ -150,6 +164,17 @@ export default function AdminFinance() {
     } finally {
       setGlLoading(false);
     }
+
+    setApLoading(true);
+    setApError(null);
+    try {
+      setInvoices(await listSupplierInvoices(token, { branchId: branchIdFilter }));
+    } catch (err) {
+      setInvoices(null);
+      setApError(err instanceof ApiRequestError ? err.message : "Failed to load supplier invoices.");
+    } finally {
+      setApLoading(false);
+    }
   }, [branchIdFilter, session?.access_token]);
 
   useEffect(() => {
@@ -177,7 +202,7 @@ export default function AdminFinance() {
 
       <FinanceStatusBanner />
 
-      <FinanceKPIs profitLoss={profitLoss} />
+      <FinanceKPIs profitLoss={profitLoss} outstandingPayables={outstandingPayables} />
 
       <SalesOverview snapshot={salesSnapshot} ordersApiAvailable={ordersApiAvailable} loading={salesLoading} />
 
@@ -187,7 +212,7 @@ export default function AdminFinance() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <PayablePanel />
+        <PayablePanel invoices={invoices} loading={apLoading} error={apError} />
         <ExpensePanel />
       </div>
 

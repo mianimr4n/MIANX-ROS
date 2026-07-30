@@ -65,11 +65,11 @@ describe("Reports & Business Intelligence V1 (static)", () => {
     assert.match(sales, /statusChartData/);
   });
 
-  it("exports wire live CSV with Excel/PDF Coming Soon", () => {
+  it("exports wire live CSV with Excel/PDF Planned for Phase 2", () => {
     const exports = read("apps/website/client/src/components/admin/reports/ExportPanel.tsx");
     assert.match(exports, /Export sales CSV/);
     assert.match(exports, /Export orders CSV/);
-    assert.match(exports, /Export Excel \/ PDF · Coming Soon/);
+    assert.match(exports, /Export Excel \/ PDF · Planned for Phase 2/);
     assert.match(exports, /onExportSales/);
     assert.match(exports, /onExportOrders/);
     assert.doesNotMatch(exports, /MISSING/);

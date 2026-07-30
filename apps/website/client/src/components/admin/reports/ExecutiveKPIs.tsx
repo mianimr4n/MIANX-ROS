@@ -120,7 +120,7 @@ export function ExecutiveKPIs({
             unavailable={customerSnapshot.repeatRatePercent == null}
             detail="Window-limited — not loyalty ledger"
           />
-          <AdminKpiCard title="Refunds" value="—" source="FOUNDATION" unavailable detail="No refund analytics API" />
+          <AdminKpiCard title="Refunds" value="—" source="FOUNDATION" unavailable detail="Planned for Phase 2 — no refund analytics API" />
           <AdminKpiCard
             title="Kitchen queue"
             value={String(data.kpis.kitchenWaiting)}
@@ -133,10 +133,10 @@ export function ExecutiveKPIs({
             source="DERIVED"
             detail="Dispatched orders — not delivery-time average"
           />
-          <AdminKpiCard title="Sales growth" value="—" source="FOUNDATION" unavailable detail="No historical comparison API" />
-          <AdminKpiCard title="Expenses" value="—" source="FOUNDATION" unavailable detail="Finance module Foundation" />
-          <AdminKpiCard title="Profit" value="—" source="UNAVAILABLE" unavailable detail="Requires GL and COGS" />
-          <AdminKpiCard title="Inventory value" value="—" source="FOUNDATION" unavailable detail="No stock ledger" />
+          <AdminKpiCard title="Sales growth" value="—" source="FOUNDATION" unavailable detail="Planned for Phase 2 — no historical comparison API" />
+          <AdminKpiCard title="Expenses" value="—" source="FOUNDATION" unavailable detail="See Finance P&L for posted expenses" />
+          <AdminKpiCard title="Profit" value="—" source="UNAVAILABLE" unavailable detail="See Finance P&L — COGS auto-post Planned for Phase 2" />
+          <AdminKpiCard title="Inventory value" value="—" source="FOUNDATION" unavailable detail="See Inventory for derived cost×qty valuation" />
         </div>
       )}
     </section>

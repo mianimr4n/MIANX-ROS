@@ -54,21 +54,21 @@ export function MenuHeader({
           disabled
           className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
         >
-          Export · Coming Soon
+          Export · Planned for Phase 2
         </button>
         <button
           type="button"
           disabled
           className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
         >
-          Import · Coming Soon
+          Import · Planned for Phase 2
         </button>
         <button
           type="button"
           disabled
           className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
         >
-          Bulk actions · Coming Soon
+          Bulk actions · Planned for Phase 2
         </button>
         <form
           className="flex gap-2"

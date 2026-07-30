@@ -50,26 +50,6 @@ export function ReportsFilters({
             className="mt-1.5 block min-h-11 rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm"
           />
         </label>
-        <label className="text-xs font-medium text-[var(--admin-muted)]">
-          Category
-          <select
-            disabled
-            className="mt-1.5 block min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2 text-sm text-[var(--admin-muted)]"
-            aria-label="Category filter — Coming Soon"
-          >
-            <option>Coming Soon</option>
-          </select>
-        </label>
-        <label className="text-xs font-medium text-[var(--admin-muted)]">
-          Payment method
-          <select
-            disabled
-            className="mt-1.5 block min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2 text-sm text-[var(--admin-muted)]"
-            aria-label="Payment method filter — Coming Soon"
-          >
-            <option>Coming Soon</option>
-          </select>
-        </label>
       </div>
     </div>
   );

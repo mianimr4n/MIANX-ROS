@@ -9,7 +9,7 @@ export function ReportsStatusBanner() {
       <p className="mt-1 text-sky-900/90">
         Daily sales (GET /admin/reports/sales) and CSV exports are LIVE from orders. Today KPIs still come from GET
         /admin/dashboard/operations. Product-level sales, inventory valuation, finance statements, and Excel/PDF exports
-        remain Coming Soon. No fabricated charts or growth percentages.
+        remain Planned for Phase 2. No fabricated charts or growth percentages.
       </p>
     </div>
   );
