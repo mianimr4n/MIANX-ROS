@@ -482,7 +482,7 @@ export function RequisitionPanel({
         <div>
           <h3 className="text-sm font-semibold">Purchase requisitions</h3>
           <p className="mt-1 text-xs text-[var(--admin-muted)]">
-            Live from GET /admin/purchasing/requisitions — approval conversion Coming Soon.
+            Live from GET /admin/purchasing/requisitions.
           </p>
         </div>
         {canManage ? (

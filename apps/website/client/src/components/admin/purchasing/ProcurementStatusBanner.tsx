@@ -10,8 +10,8 @@ export function ProcurementStatusBanner() {
             Procurement status
           </h2>
           <p className="mt-1 text-sm text-emerald-900">
-            Suppliers, purchase orders, requisitions, GRN, supplier invoices, payments, and awaiting-delivery KPI are
-            LIVE. Automated three-way matching remains Coming Soon — no fabricated spend metrics.
+            Suppliers, purchase orders, requisitions, GRN, supplier invoices, payments, awaiting-delivery KPI, and
+            three-way matching are LIVE — no fabricated spend metrics.
           </p>
           <p className="mt-2 text-xs text-emerald-800">
             Customer order payments are not supplier payables. Menu selling prices are not purchase costs. Inventory

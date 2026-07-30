@@ -9,6 +9,8 @@ export function PurchasingKPIs({ snapshot }: { snapshot: PurchasingKpiSnapshot }
   const pendingLoaded = snapshot.pendingApprovalCount != null;
   const awaitingLoaded = snapshot.awaitingDeliveryCount != null;
   const partialLoaded = snapshot.partiallyReceivedCount != null;
+  const overdueLoaded = snapshot.overduePoCount != null;
+  const onTimeLoaded = snapshot.onTimeDeliveryPct != null;
   const outstandingLoaded = snapshot.outstandingInvoiceCount != null;
   const spendLoaded = snapshot.purchaseSpend != null;
 
@@ -17,7 +19,7 @@ export function PurchasingKPIs({ snapshot }: { snapshot: PurchasingKpiSnapshot }
       <AdminSectionTitle
         eyebrow="Procurement"
         title="Operational KPIs"
-        description="Live supplier, PO, GRN, invoice, and payment counts — three-way matching Coming Soon."
+        description="Live supplier, PO, GRN, invoice, payment, and three-way matching counts from purchasing APIs."
       />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <AdminKpiCard
@@ -66,7 +68,17 @@ export function PurchasingKPIs({ snapshot }: { snapshot: PurchasingKpiSnapshot }
           unavailable={!partialLoaded}
           detail={partialLoaded ? "POs with status partially_received" : "Requires purchasing.manage"}
         />
-        <AdminKpiCard title="Overdue POs" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — delivery date analytics" />
+        <AdminKpiCard
+          title="Overdue POs"
+          value={overdueLoaded ? String(snapshot.overduePoCount) : "—"}
+          source={overdueLoaded ? "LIVE" : "UNAVAILABLE"}
+          unavailable={!overdueLoaded}
+          detail={
+            overdueLoaded
+              ? "Open POs past expectedDeliveryDate"
+              : "Requires purchasing.manage"
+          }
+        />
         <AdminKpiCard
           title="Purchase spend"
           value={spendLoaded ? formatMoney(snapshot.purchaseSpend ?? 0) : "—"}
@@ -81,7 +93,17 @@ export function PurchasingKPIs({ snapshot }: { snapshot: PurchasingKpiSnapshot }
           unavailable={!outstandingLoaded}
           detail={outstandingLoaded ? "pending + partially_paid invoices" : "Requires purchasing.manage"}
         />
-        <AdminKpiCard title="On-time delivery" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — receipt analytics" />
+        <AdminKpiCard
+          title="On-time delivery"
+          value={onTimeLoaded ? `${snapshot.onTimeDeliveryPct}%` : "—"}
+          source={onTimeLoaded ? "LIVE" : "UNAVAILABLE"}
+          unavailable={!onTimeLoaded}
+          detail={
+            onTimeLoaded
+              ? "Received POs with GRN on/before expectedDeliveryDate"
+              : "Requires purchasing.manage"
+          }
+        />
       </div>
     </section>
   );

@@ -190,6 +190,7 @@ const purchasing: PurchasingService = {
       invoiceDate: input.invoiceDate ?? "2026-07-30",
       totalAmount: input.totalAmount,
       status: input.status ?? "pending",
+      matchingStatus: input.purchaseOrderId ? "DISCREPANCY" : "UNMATCHED",
       createdAt: new Date().toISOString(),
     };
   },

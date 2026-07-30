@@ -2224,6 +2224,8 @@ export function createGoodsReceiving(accessToken: string, input: CreateGoodsRece
 
 export type SupplierInvoiceStatus = "pending" | "paid" | "partially_paid";
 
+export type SupplierInvoiceMatchingStatus = "UNMATCHED" | "MATCHED" | "DISCREPANCY";
+
 export type SupplierInvoice = {
   id: string;
   branchId: string;
@@ -2237,6 +2239,7 @@ export type SupplierInvoice = {
   invoiceDate: string;
   totalAmount: number;
   status: SupplierInvoiceStatus;
+  matchingStatus: SupplierInvoiceMatchingStatus;
   createdAt: string;
 };
 
