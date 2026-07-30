@@ -2,6 +2,8 @@
 
 **Status:** Living Document
 
+**Last reconciled:** 2026-07-30 — through [PR #133](https://github.com/mianimr4n/telepizza/pull/133) (`e5c3910`)
+
 ---
 
 ## Purpose
@@ -46,30 +48,56 @@ These states must never be treated as equivalent.
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | Phase 2 — Admin ERP settings backend (Organization/Branch/Menu/Delivery APIs), on top of Phase 0/1 stabilization |
-| Opening Operations M1–M4 | **Complete** — merged to `main` via [PR #113](https://github.com/mianimr4n/telepizza/pull/113) (`3ab4715`) |
-| Phase 0 — Foundation Stabilization & CI | **Complete** — [PR #114](https://github.com/mianimr4n/telepizza/pull/114) |
-| Phase 1 — Admin ERP zero-fake-data audit (15 modules) | **Complete** — [PR #115](https://github.com/mianimr4n/telepizza/pull/115) |
-| Staff-assignment FK fix + Settings save/delete fixes | **Complete** — [PR #116–#118](https://github.com/mianimr4n/telepizza/pull/118) |
-| Phase 2 — Organization/Branch settings APIs | **Complete** — [PR #119](https://github.com/mianimr4n/telepizza/pull/119) |
-| Phase 2 — Menu/Delivery settings APIs | **Complete** — [PR #120](https://github.com/mianimr4n/telepizza/pull/120) |
-| Production Migrations (Opening Ops M1–M4) | **Applied** — `npx supabase db push --linked` run 2026-07-29 |
+| Current Delivery Slice | Admin ERP Core Modules — LIVE with documented actions |
+| Current Focus | Release certification and production migration verification |
 | Northern Bypass | `coming-soon` (unchanged) |
-| Next focus | Owner Decision Queue: devices onsite verification, payment provider, SOPs, training, rehearsals, Founder go/no-go for Royal Orchard opening **14 August 2026** |
+| Royal Orchard target opening | **14 August 2026** — software readiness ≠ restaurant Production-ready |
 
-Owner-facing summary remains in [`PROJECT_STATUS.md`](./PROJECT_STATUS.md) (last verified **2026-07-29**). This document was refreshed after PR #119/#120 merge (**2026-07-29**).
+Owner-facing summary remains in [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 
-### Post-Opening-Ops stabilization and settings backend (this pass)
+### Merged delivery through PR #133 (2026-07-30)
 
-- **CI gate**: `.github/workflows/ci.yml` added (PR #114) — typecheck + full test suite on every PR/push to `main`.
-- **`user_roles`→`users` embed bug fixed**: Opening M1 added `assigned_by`/`verified_by`/`deactivated_by` FKs to `user_roles`, making the bare `users(...)` PostgREST embed ambiguous and breaking `/admin/hr` staff-assignment list/assign entirely. Fixed by hinting `users!user_roles_user_id_fkey(...)`.
-- **Settings save/delete bugs fixed**: notification-channel Save was overwriting `VERIFIED` status back to `CONFIGURED`; Devices Delete was routing through a "fail" path (`FAILED`) instead of a soft-remove. Both fixed — Save now preserves verified status, Delete soft-removes to `NOT_APPLICABLE`.
-- **Organization & Branch settings APIs** (PR #119): `GET/PUT /admin/settings/organization`, `GET/PUT /admin/branches/:id` — real Supabase-backed read/write, migration `20260729140000_phase2_organization_and_branch_settings.sql`. Organization/Branches panels no longer Foundation/read-only.
-- **Menu & Delivery settings APIs** (PR #120): equivalent real write APIs for menu SKU pricing/availability and delivery radius/fee settings.
-- Royal Orchard staff assignments: 7/7 canonical roles assigned via `/admin/hr` (Owner Decision Queue item #1 complete).
-- Notification channels: Customer orders, Rider dispatch, Escalation configured and ACTIVE; Kitchen alerts still pending.
+| PR | Delivery | Merge |
+| --- | --- | --- |
+| [#121](https://github.com/mianimr4n/telepizza/pull/121) | AI platform foundation tables and APIs | `a8a631a` |
+| [#122](https://github.com/mianimr4n/telepizza/pull/122) | HR employee directory backend and API | `0c1003a` |
+| [#123](https://github.com/mianimr4n/telepizza/pull/123) | Governance docs sync through PR #120 | `8bb9ea0` |
+| [#124](https://github.com/mianimr4n/telepizza/pull/124) | Owner Executive Dashboard with honest live UI | `6081621` |
+| [#125](https://github.com/mianimr4n/telepizza/pull/125) | Inventory backend with stock ledger and APIs | `a6947ce` |
+| [#126](https://github.com/mianimr4n/telepizza/pull/126) | Supplier master and purchase order APIs | `4476c2e` |
+| [#127](https://github.com/mianimr4n/telepizza/pull/127) | Inventory/purchasing upgrade and connection | `70b78c8` |
+| [#128](https://github.com/mianimr4n/telepizza/pull/128) | Requisitions + GRN headers (tables, APIs, UI) | `66793ab` |
+| [#129](https://github.com/mianimr4n/telepizza/pull/129) | Menu write APIs (prices, availability, categories) | `6a4e3ba` |
+| [#130](https://github.com/mianimr4n/telepizza/pull/130) | Branch settings write APIs (hours, radius, fees) | `f96c7a1` |
+| [#131](https://github.com/mianimr4n/telepizza/pull/131) | Sales analytics API + CSV export | `3acbc80` |
+| [#132](https://github.com/mianimr4n/telepizza/pull/132) | POS Z-Report + dashboard low-stock alerts | `826f27f` |
+| [#133](https://github.com/mianimr4n/telepizza/pull/133) | Procurement approval loop (PO approve/reject) | `e5c3910` |
 
-### Opening Operations (M1–M4) — verified delivery
+Prior baseline still released: Opening Operations M1–M4 ([PR #113](https://github.com/mianimr4n/telepizza/pull/113)), CI gate ([PR #114](https://github.com/mianimr4n/telepizza/pull/114)), Admin ERP zero-fake-data audit ([PR #115](https://github.com/mianimr4n/telepizza/pull/115)), staff-assignment/settings fixes ([PR #116–#118](https://github.com/mianimr4n/telepizza/pull/118)), organization/branch/menu/delivery settings APIs ([PR #119](https://github.com/mianimr4n/telepizza/pull/119)–[#120](https://github.com/mianimr4n/telepizza/pull/120)).
+
+### Admin ERP core — LIVE with documented gaps
+
+| Module | Live capability | Documented gap / Coming Soon |
+| --- | --- | --- |
+| Owner Executive Dashboard | Live order KPIs + low-stock count | Acceptance remains PASS WITH LIMITATIONS from D1 |
+| Inventory | Items, stock ledger, adjustments | Adjustment atomicity risk; GRN does not post stock |
+| Purchasing | Suppliers, POs, requisitions, GRN headers, PO approve/reject | GRN line → stock_movements posting; invoice matching; payables |
+| Menu | Write APIs for prices, availability, categories | — |
+| Settings | Org/branch/delivery writes; hours/radius/fees | — |
+| Reports | Sales analytics + CSV export | — |
+| POS | Cash checkout + Z-Report shift close | No starting float / counted cash variance |
+| HR | Employee directory | No update/deactivate lifecycle APIs |
+| AI platform | Foundation tables/APIs | No runtime execution / agent loop |
+
+### Known risks (audit — do not overstate as complete)
+
+1. **Inventory adjustment atomicity** — stock mutations may not be fully transactional across ledger + on-hand update paths; race/partial-write risk under concurrent adjust.
+2. **GRN does not post stock** — goods receiving headers are LIVE; line-level posting into `stock_movements` / on-hand is Coming Soon. Inventory quantities must still be adjusted via Inventory APIs.
+3. **Z-Report lacks float / counted cash** — expected drawer cash equals paid cash sales for the Asia/Karachi business day only; no opening float, counted cash, or variance capture.
+4. **HR lacks update/deactivate lifecycle** — directory create/list exist; employee update and deactivate flows are not shipped.
+5. **AI foundation exists without runtime execution** — platform tables and APIs are present; no production agent runtime or autonomous execution path.
+
+### Opening Operations (M1–M4) — verified baseline
 
 | Milestone | Scope | Decision |
 | --- | --- | --- |
@@ -82,7 +110,7 @@ Honest non-claims from M4 evidence: no Production staff apply, no real customer 
 
 ### Executive Dashboard v1 (released baseline)
 
-Executive Dashboard v1 remains **Released** to production as of merge commit `f685599` (2026-07-24). Acceptance remains **PASS WITH LIMITATIONS**.
+Executive Dashboard v1 remains **Released** to production as of merge commit `f685599` (2026-07-24). Acceptance remains **PASS WITH LIMITATIONS**. Subsequent PRs (#124, #132) extended Owner dashboard honesty (live APIs, low-stock) on the same governance contract — zero invented metrics.
 
 ### Production verification evidence (D1 post-deploy)
 
@@ -98,9 +126,28 @@ Executive Dashboard v1 remains **Released** to production as of merge commit `f6
 - Live API error state was not induced during AV1 (code now prefers KPI `error` over stale payload; production induction still pending).
 - Planned/disabled module cards are represented in Admin shell navigation rather than the D1 operations grid.
 
-### Phase 0 / Phase 1 note
+### Production migrations
 
-Phase 0 Foundation Stabilization covers CI gate recovery and documentation sync. Phase 1 Dashboard finalization is the authorized next product slice for the 14 August Royal Orchard opening. Opening readiness % remains live-evidence-driven — software milestone complete does not equal restaurant Production-ready.
+**Verified 2026-07-30** via `npx supabase migration list --linked` against the linked production project.
+
+| Result | Detail |
+| --- | --- |
+| Pre-push gap | Local-only: `20260730193000` (reports.read), `20260730210000` (pos_z_report_events) |
+| Action | `npx supabase db push --linked` applied both migrations to production |
+| Post-push | Local and Remote aligned through `20260730210000` — **0 local-only**, **0 remote-only** |
+
+Key post-#120 migrations (ERP wave) — all present on Local and Remote after push:
+
+| Version | File | Introduced by | Production |
+| --- | --- | --- | --- |
+| `20260730120000` | `ai_platform_foundation.sql` | PR #121 | Applied |
+| `20260730130000` | `hr_workforce_backend.sql` | PR #122 | Applied |
+| `20260730160000` | `inventory_backend.sql` | PR #125 | Applied |
+| `20260730170000` | `purchasing_backend.sql` | PR #126/#127 | Applied |
+| `20260730180000` | `fix_purchasing_missing_tables.sql` | PR #128 | Applied |
+| `20260730190000` | `complete_procurement_loop.sql` | PR #133 | Applied |
+| `20260730193000` | `reports_read_permission.sql` | PR #131 | Applied (this pass) |
+| `20260730210000` | `pos_z_report_events.sql` | PR #132 | Applied (this pass) |
 
 ---
 
@@ -179,4 +226,4 @@ This document should be updated whenever:
 
 Repository Status provides an honest view of the current verified state of the repository.
 
-Opening Operations M1–M4 are merged; current engineering focus is Phase 0 stabilization then Phase 1 dashboard finalization for the 14 August opening. Implementation, verification, and release remain tracked independently.
+Admin ERP core modules are LIVE on `main` through PR #133 with documented gaps. Current engineering focus is release certification and production migration verification — not inventing metrics, not claiming GRN stock posting, float variance, HR lifecycle, or AI runtime that repository evidence does not support.
