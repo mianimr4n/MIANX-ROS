@@ -18,13 +18,13 @@ import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { ApiRequestError } from "@/lib/api";
 import {
   fetchBranchProfile,
-  fetchDeliverySettings,
+  fetchBranchSettings,
   fetchOrganizationSettings,
   updateBranchProfile,
-  updateDeliverySettings,
+  updateBranchSettings,
   updateOrganizationSettings,
+  type BranchOperationalSettings,
   type BranchProfile,
-  type DeliverySettings,
   type OrganizationSettings as OrganizationSettingsRecord,
 } from "@/lib/admin-api";
 import { Link } from "wouter";
@@ -219,6 +219,7 @@ export function BranchSettings({
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [profile, setProfile] = useState<BranchProfile | null>(null);
+  const [settings, setSettings] = useState<BranchOperationalSettings | null>(null);
   const [form, setForm] = useState({
     phone: "",
     email: "",
@@ -226,6 +227,8 @@ export function BranchSettings({
     opensAt: "",
     closesAt: "",
     deliveryRadiusKm: "",
+    minimumOrderAmount: "",
+    deliveryFee: "",
   });
 
   useEffect(() => {
@@ -237,11 +240,12 @@ export function BranchSettings({
   useEffect(() => {
     if (!token || !selectedId) {
       setProfile(null);
+      setSettings(null);
       return;
     }
     let cancelled = false;
-    // Clear immediately so Save cannot PUT the previous branch's fields onto the new id.
     setProfile(null);
+    setSettings(null);
     setForm({
       phone: "",
       email: "",
@@ -249,29 +253,41 @@ export function BranchSettings({
       opensAt: "",
       closesAt: "",
       deliveryRadiusKm: "",
+      minimumOrderAmount: "",
+      deliveryFee: "",
     });
     setProfileLoading(true);
     setError(null);
     setSavedAt(null);
-    void fetchBranchProfile(token, selectedId)
-      .then((data) => {
+    void Promise.all([fetchBranchProfile(token, selectedId), fetchBranchSettings(token, selectedId)])
+      .then(([profileData, settingsData]) => {
         if (cancelled) return;
-        setProfile(data);
+        setProfile(profileData);
+        setSettings(settingsData);
         setForm({
-          phone: data.phone ?? "",
-          email: data.email ?? "",
-          address: data.address ?? "",
-          opensAt: data.opensAt ?? "",
-          closesAt: data.closesAt ?? "",
+          phone: profileData.phone ?? "",
+          email: profileData.email ?? "",
+          address: profileData.address ?? "",
+          opensAt: settingsData.opensAt ?? "",
+          closesAt: settingsData.closesAt ?? "",
           deliveryRadiusKm:
-            data.deliveryRadiusKm === null || data.deliveryRadiusKm === undefined
+            settingsData.deliveryRadiusKm === null || settingsData.deliveryRadiusKm === undefined
               ? ""
-              : String(data.deliveryRadiusKm),
+              : String(settingsData.deliveryRadiusKm),
+          minimumOrderAmount:
+            settingsData.minimumOrderAmount === null || settingsData.minimumOrderAmount === undefined
+              ? ""
+              : String(settingsData.minimumOrderAmount),
+          deliveryFee:
+            settingsData.deliveryFee === null || settingsData.deliveryFee === undefined
+              ? ""
+              : String(settingsData.deliveryFee),
         });
       })
       .catch((err: unknown) => {
         if (!cancelled) {
           setProfile(null);
+          setSettings(null);
           setError(settingsErr(err));
         }
       })
@@ -283,40 +299,65 @@ export function BranchSettings({
     };
   }, [token, selectedId]);
 
+  const parseOptionalNumber = (raw: string, label: string): number | null => {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    const n = Number(trimmed);
+    if (!Number.isFinite(n) || n < 0) {
+      throw new Error(`${label} must be a non-negative number.`);
+    }
+    return n;
+  };
+
+  const toHhMm = (raw: string): string | null => {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    return trimmed.slice(0, 5);
+  };
+
   const onSave = async () => {
     if (!token || !selectedId) return;
     setSaving(true);
     setError(null);
     setSavedAt(null);
     try {
-      const radiusRaw = form.deliveryRadiusKm.trim();
-      const deliveryRadiusKm =
-        radiusRaw === "" ? null : Number(radiusRaw);
-      if (radiusRaw !== "" && (!Number.isFinite(deliveryRadiusKm) || (deliveryRadiusKm as number) < 0)) {
-        throw new Error("Delivery radius must be a non-negative number (km).");
-      }
-      const data = await updateBranchProfile(token, selectedId, {
-        phone: form.phone.trim() || null,
-        email: form.email.trim() || null,
-        address: form.address.trim(),
-        opensAt: form.opensAt.trim() || null,
-        closesAt: form.closesAt.trim() || null,
-        deliveryRadiusKm,
-      });
-      setProfile(data);
+      const [profileData, settingsData] = await Promise.all([
+        updateBranchProfile(token, selectedId, {
+          phone: form.phone.trim() || null,
+          email: form.email.trim() || null,
+          address: form.address.trim(),
+        }),
+        updateBranchSettings(token, selectedId, {
+          opensAt: toHhMm(form.opensAt),
+          closesAt: toHhMm(form.closesAt),
+          deliveryRadiusKm: parseOptionalNumber(form.deliveryRadiusKm, "Delivery radius"),
+          minimumOrderAmount: parseOptionalNumber(form.minimumOrderAmount, "Minimum order"),
+          deliveryFee: parseOptionalNumber(form.deliveryFee, "Delivery fee"),
+        }),
+      ]);
+      setProfile(profileData);
+      setSettings(settingsData);
       setForm({
-        phone: data.phone ?? "",
-        email: data.email ?? "",
-        address: data.address ?? "",
-        opensAt: data.opensAt ?? "",
-        closesAt: data.closesAt ?? "",
+        phone: profileData.phone ?? "",
+        email: profileData.email ?? "",
+        address: profileData.address ?? "",
+        opensAt: settingsData.opensAt ?? "",
+        closesAt: settingsData.closesAt ?? "",
         deliveryRadiusKm:
-          data.deliveryRadiusKm === null || data.deliveryRadiusKm === undefined
+          settingsData.deliveryRadiusKm === null || settingsData.deliveryRadiusKm === undefined
             ? ""
-            : String(data.deliveryRadiusKm),
+            : String(settingsData.deliveryRadiusKm),
+        minimumOrderAmount:
+          settingsData.minimumOrderAmount === null || settingsData.minimumOrderAmount === undefined
+            ? ""
+            : String(settingsData.minimumOrderAmount),
+        deliveryFee:
+          settingsData.deliveryFee === null || settingsData.deliveryFee === undefined
+            ? ""
+            : String(settingsData.deliveryFee),
       });
-      setSavedAt(data.updatedAt);
-      toast.success("Branch profile saved");
+      setSavedAt(settingsData.updatedAt);
+      toast.success("Branch settings updated successfully");
     } catch (err) {
       setError(settingsErr(err));
       toast.error(settingsErr(err));
@@ -329,7 +370,7 @@ export function BranchSettings({
     <AdminSurface aria-labelledby="branch-settings-heading">
       <AdminSurfaceHeader
         title="Branches"
-        description="Update phone, hours, delivery radius, and contact fields via PUT /admin/branches/:id."
+        description="Update contact, hours, delivery radius, minimum order, and fee via live branch settings APIs."
       />
       <AdminSurfaceBody>
         <h2 id="branch-settings-heading" className="sr-only">
@@ -363,9 +404,9 @@ export function BranchSettings({
             </label>
             {profileLoading ? (
               <p className="text-sm text-[var(--admin-muted)]" aria-live="polite">
-                Loading branch profile…
+                Loading branch settings…
               </p>
-            ) : profile ? (
+            ) : profile && settings ? (
               <form
                 className="space-y-4"
                 onSubmit={(e) => {
@@ -375,7 +416,7 @@ export function BranchSettings({
               >
                 <p className="text-sm text-[var(--admin-muted)]">
                   {profile.name} · {profile.city}
-                  {profile.hoursDaily ? ` · Catalog hours: ${profile.hoursDaily}` : null}
+                  {settings.hoursDaily ? ` · Hours: ${settings.hoursDaily}` : null}
                 </p>
                 <label className={labelClass}>
                   Phone
@@ -409,37 +450,59 @@ export function BranchSettings({
                 </label>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className={labelClass}>
-                    Opens at (HH:MM)
+                    Opens at
                     <input
+                      type="time"
                       className={fieldClass}
                       value={form.opensAt}
                       onChange={(e) => setForm((f) => ({ ...f, opensAt: e.target.value }))}
-                      placeholder="10:00"
-                      pattern="([01]\d|2[0-3]):([0-5]\d)"
                     />
                   </label>
                   <label className={labelClass}>
-                    Closes at (HH:MM)
+                    Closes at
                     <input
+                      type="time"
                       className={fieldClass}
                       value={form.closesAt}
                       onChange={(e) => setForm((f) => ({ ...f, closesAt: e.target.value }))}
-                      placeholder="02:30"
-                      pattern="([01]\d|2[0-3]):([0-5]\d)"
                     />
                   </label>
                 </div>
-                <label className={labelClass}>
-                  Delivery radius (km)
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.1}
-                    className={fieldClass}
-                    value={form.deliveryRadiusKm}
-                    onChange={(e) => setForm((f) => ({ ...f, deliveryRadiusKm: e.target.value }))}
-                  />
-                </label>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <label className={labelClass}>
+                    Delivery radius (km)
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.1}
+                      className={fieldClass}
+                      value={form.deliveryRadiusKm}
+                      onChange={(e) => setForm((f) => ({ ...f, deliveryRadiusKm: e.target.value }))}
+                    />
+                  </label>
+                  <label className={labelClass}>
+                    Minimum order (PKR)
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      className={fieldClass}
+                      value={form.minimumOrderAmount}
+                      onChange={(e) => setForm((f) => ({ ...f, minimumOrderAmount: e.target.value }))}
+                    />
+                  </label>
+                  <label className={labelClass}>
+                    Delivery fee (PKR)
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      className={fieldClass}
+                      value={form.deliveryFee}
+                      onChange={(e) => setForm((f) => ({ ...f, deliveryFee: e.target.value }))}
+                    />
+                  </label>
+                </div>
                 {error ? (
                   <p className="text-sm text-red-700" role="alert">
                     {error}
@@ -457,7 +520,9 @@ export function BranchSettings({
                     !token ||
                     profileLoading ||
                     !profile ||
+                    !settings ||
                     profile.id !== selectedId ||
+                    settings.branchId !== selectedId ||
                     !form.address.trim()
                   }
                   className="min-h-11 rounded-lg bg-[var(--admin-ink)] px-4 text-sm font-semibold text-[var(--admin-panel)] disabled:cursor-not-allowed disabled:opacity-50"
@@ -467,7 +532,7 @@ export function BranchSettings({
               </form>
             ) : (
               <p className="text-sm text-[var(--admin-muted)]" role="status">
-                {error ?? "Branch profile unavailable."}
+                {error ?? "Branch settings unavailable."}
               </p>
             )}
           </div>
@@ -590,8 +655,8 @@ export function DeliverySettings() {
     setLoading(true);
     setError(null);
     setSavedAt(null);
-    void fetchDeliverySettings(token, selectedId)
-      .then((data: DeliverySettings) => {
+    void fetchBranchSettings(token, selectedId)
+      .then((data: BranchOperationalSettings) => {
         if (cancelled) return;
         setForm({
           deliveryRadiusKm:
@@ -634,8 +699,7 @@ export function DeliverySettings() {
     setError(null);
     setSavedAt(null);
     try {
-      const data = await updateDeliverySettings(token, {
-        branchId: selectedId,
+      const data = await updateBranchSettings(token, selectedId, {
         deliveryRadiusKm: parseOptionalNumber(form.deliveryRadiusKm, "Delivery radius"),
         minimumOrderAmount: parseOptionalNumber(form.minimumOrderAmount, "Minimum order"),
         deliveryFee: parseOptionalNumber(form.deliveryFee, "Delivery fee"),
@@ -654,7 +718,7 @@ export function DeliverySettings() {
       });
       setLoadedBranchId(data.branchId);
       setSavedAt(data.updatedAt);
-      toast.success("Delivery settings saved");
+      toast.success("Branch settings updated successfully");
     } catch (err) {
       setError(settingsErr(err));
       toast.error(settingsErr(err));
@@ -667,7 +731,7 @@ export function DeliverySettings() {
     <AdminSurface aria-labelledby="delivery-settings-heading">
       <AdminSurfaceHeader
         title="Delivery"
-        description="Per-branch delivery radius, minimum order, and fee — persisted on public.branches."
+        description="Per-branch delivery radius, minimum order, and fee — PUT /admin/branches/:id/settings."
       />
       <AdminSurfaceBody>
         <h2 id="delivery-settings-heading" className="sr-only">
@@ -850,7 +914,7 @@ export function PaymentSettings() {
             <SettingsScopeBadge scope="Branch" />
           </div>
           <p className="text-sm text-[var(--admin-muted)]">
-            Provider credentials stay environment-managed. Opening operations below persist verification metadata —
+            Provider credentials stay Environment Managed. Opening operations below persist verification metadata —
             never API keys, card numbers, or CVV. Local mock checks do not satisfy Production readiness.
           </p>
         </AdminSurfaceBody>

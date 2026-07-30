@@ -55,6 +55,7 @@ import { createAdminOpeningDryRunRouter } from "./opening-dry-run.js";
 import { createAdminOrganizationSettingsRouter } from "./organization-settings.js";
 import { createAdminBranchProfileRouter } from "./branch-profile.js";
 import { createAdminDeliverySettingsRouter } from "./delivery-settings.js";
+import { createAdminBranchSettingsRouter } from "./settings.js";
 import { createAdminHrRouter } from "./hr.js";
 import { createAdminInventoryRouter } from "./inventory.js";
 import { createAdminPurchasingRouter } from "./purchasing.js";
@@ -64,6 +65,7 @@ import type { OpeningDryRunService } from "../../services/opening/dry-run.js";
 import type { OrganizationSettingsService } from "../../services/settings/organization.js";
 import type { BranchProfileService } from "../../services/branches/profile.js";
 import type { DeliverySettingsService } from "../../services/settings/delivery.js";
+import type { BranchSettingsService } from "../../services/settings/branch.js";
 import type { HrEmployeesService } from "../../services/hr/employees.js";
 import type { InventoryService } from "../../services/inventory/management.js";
 import type { PurchasingService } from "../../services/purchasing/management.js";
@@ -121,6 +123,7 @@ export interface AdminRouterDependencies {
   organizationSettings: OrganizationSettingsService;
   branchProfile: BranchProfileService;
   deliverySettings: DeliverySettingsService;
+  branchSettings: BranchSettingsService;
   hrEmployees: HrEmployeesService;
   inventory: InventoryService;
   purchasing: PurchasingService;
@@ -546,6 +549,14 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       deliverySettings: dependencies.deliverySettings,
+    }),
+  );
+
+  router.use(
+    createAdminBranchSettingsRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      branchSettings: dependencies.branchSettings,
     }),
   );
 
