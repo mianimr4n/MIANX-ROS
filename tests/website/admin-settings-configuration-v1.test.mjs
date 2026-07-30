@@ -67,7 +67,7 @@ describe("Settings & Configuration V1 (static)", () => {
     assert.match(panels, /fetchBranchSettings/);
     assert.match(panels, /updateBranchSettings/);
     assert.match(panels, /Branch settings updated successfully/);
-    assert.match(panels, /PUT \/admin\/menu\/skus\/:id/);
+    assert.match(panels, /Admin → Menu/);
     assert.match(panels, /Admin → Inventory/);
     assert.match(panels, /Admin → Purchasing/);
     const api = read("apps/website/client/src/lib/admin-api.ts");

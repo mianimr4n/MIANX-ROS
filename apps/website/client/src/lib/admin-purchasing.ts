@@ -210,12 +210,12 @@ export function buildProcurementInsights(
       id: "live-suppliers",
       title:
         suppliers.length === 0
-          ? "Add your first supplier to start purchasing"
+          ? `No suppliers have been added for ${branchLabel}.`
           : `${suppliers.length} supplier${suppliers.length === 1 ? "" : "s"} ready for ${branchLabel}`,
       detail:
         suppliers.length === 0
-          ? "Welcome. Add a supplier before creating purchase orders, requisitions, or invoices."
-          : "Vendor master for the current branch scope.",
+          ? "Add suppliers before creating purchase orders."
+          : "Updated from current branch operations.",
       source: "live",
     });
   }

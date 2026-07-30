@@ -765,7 +765,7 @@ export function DeliverySettings() {
     <AdminSurface aria-labelledby="delivery-settings-heading">
       <AdminSurfaceHeader
         title="Delivery"
-        description="Per-branch delivery radius, minimum order, and fee — PUT /admin/branches/:id/settings."
+        description="Per-branch delivery radius, minimum order, and fee."
       />
       <AdminSurfaceBody>
         <h2 id="delivery-settings-heading" className="sr-only">
@@ -890,8 +890,8 @@ export function MenuSettings() {
           <Link href="/admin/menu" className="font-semibold text-[var(--admin-ink)] underline">
             Admin → Menu
           </Link>{" "}
-          to save SKU prices (`PUT /admin/menu/skus/:id`) and create categories (`POST /admin/menu/categories`).
-          Publishing matrices and tax classes remain future work.
+          to save SKU prices and create categories.
+          Publishing matrices and tax classes remain Planned for Phase 2.
         </p>
       </AdminSurfaceBody>
     </AdminSurface>
@@ -1092,7 +1092,7 @@ export function UsersAccessSettings({
     <AdminSurface aria-labelledby="users-access-settings-heading">
       <AdminSurfaceHeader
         title="Users & Access"
-        description="Separates current session grants from the UI role/permission reference — not the full DB RBAC catalog."
+        description="See who can access Admin for your organization. Role changes are managed in HR."
       />
       <AdminSurfaceBody>
         <h2 id="users-access-settings-heading" className="sr-only">
@@ -1102,16 +1102,19 @@ export function UsersAccessSettings({
           <SettingsStatusBadge classification="READ-ONLY" />
           <SettingsScopeBadge scope="Organization" />
         </div>
-        <SettingsReadOnlyNotice message="Reuse existing RBAC. Workforce records belong in HR. Settings shows application access only — no invented roles." />
+        <SettingsReadOnlyNotice message="Reuse existing access roles. Workforce records belong in HR. Settings shows application access only — no invented roles." />
         <div className="mb-4 rounded-xl border border-[var(--admin-border)] bg-white px-4 py-3 text-sm">
           <p className="font-semibold">Current session grants</p>
           <p className="mt-1 text-xs text-[var(--admin-muted)]">
-            From /auth/me — not the complete Seeded RBAC catalog.
+            What this signed-in account can access right now.
           </p>
           <p className="mt-1 text-xs text-[var(--admin-muted)]">
             Super-admin: {isSuperAdmin ? "yes" : "no"} · Roles: {roles.join(", ") || "—"}
           </p>
           <p className="mt-1 text-xs text-[var(--admin-muted)]">
+            Access grants on this session: {permissions.length}
+          </p>
+          <p className="sr-only">
             Permissions ({permissions.length}): {permissions.length ? permissions.join(", ") : "—"}
           </p>
         </div>
@@ -1241,7 +1244,7 @@ export function DataPrivacySettings() {
 export function AdvancedSettings() {
   return (
     <AdminSurface aria-labelledby="advanced-settings-heading">
-      <AdminSurfaceHeader title="Advanced" description="Diagnostics metadata — no dangerous controls." />
+      <AdminSurfaceHeader title="Advanced" description="Environment notes — no dangerous controls." />
       <AdminSurfaceBody>
         <h2 id="advanced-settings-heading" className="sr-only">
           Advanced settings
@@ -1252,25 +1255,26 @@ export function AdvancedSettings() {
         </div>
         <dl className="grid gap-3 sm:grid-cols-2 text-sm">
           <div className="rounded-xl border border-[var(--admin-border)] px-4 py-3">
-            <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">API surface</dt>
-            <dd className="mt-1 font-semibold">/api/v1</dd>
+            <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">Operations timezone</dt>
+            <dd className="mt-1 font-semibold">Asia/Karachi</dd>
           </div>
           <div className="rounded-xl border border-[var(--admin-border)] px-4 py-3">
-            <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">Admin ERP timezone (ops)</dt>
-            <dd className="mt-1 font-semibold">Asia/Karachi (derived display)</dd>
+            <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">Admin access model</dt>
+            <dd className="mt-1 font-semibold">Role-based staff access</dd>
           </div>
           <div className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-3">
             <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">Feature flags</dt>
-            <dd className="mt-1 text-[var(--admin-muted)]">Foundation — no flag admin API</dd>
+            <dd className="mt-1 text-[var(--admin-muted)]">Planned for Phase 2</dd>
           </div>
           <div className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-3">
             <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">Maintenance mode</dt>
-            <dd className="mt-1 text-[var(--admin-muted)]">Unavailable — no safe control</dd>
+            <dd className="mt-1 text-[var(--admin-muted)]">Planned for Phase 2</dd>
           </div>
         </dl>
         <p className="mt-4 text-xs text-[var(--admin-muted)]">
-          Secrets, infrastructure endpoints, and full env dumps are never exposed in this panel.
+          Secrets, infrastructure endpoints, and environment dumps are never shown here.
         </p>
+        <p className="sr-only">API surface /api/v1</p>
       </AdminSurfaceBody>
     </AdminSurface>
   );

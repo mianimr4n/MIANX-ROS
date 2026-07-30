@@ -167,12 +167,12 @@ export function buildInventoryInsights(
       id: "live-stock-count",
       title:
         snapshot.stockItemCount === 0
-          ? "Stock list is ready — add your first item"
+          ? `No inventory items have been added for ${branchLabel}.`
           : `${snapshot.stockItemCount} stock item${snapshot.stockItemCount === 1 ? "" : "s"} on hand for ${branchLabel}`,
       detail:
         snapshot.stockItemCount === 0
-          ? "Welcome. Add ingredient stock for this branch so low-stock alerts and adjustments have something to track."
-          : "Live stock counts for the current branch scope.",
+          ? "Add opening stock to begin low-stock monitoring."
+          : "Updated from current branch operations.",
       source: "live",
     });
   }
@@ -197,7 +197,7 @@ export function buildInventoryInsights(
     items.push({
       id: "waste-today",
       title: `Waste logged today: ${snapshot.wasteTodayQty}`,
-      detail: "From waste movements recorded today (Asia/Karachi calendar day).",
+      detail: "From waste movements recorded today.",
       source: "live",
     });
   }
@@ -205,8 +205,8 @@ export function buildInventoryInsights(
   if (snapshot.unmappedRecipeProducts > 0) {
     items.push({
       id: "unmapped-recipes",
-      title: "Recipe costing is Planned for Phase 2",
-      detail: "Menu products are not yet linked to ingredient recipes, so order sales do not auto-deduct stock.",
+      title: "Recipe consumption tracking is not configured yet.",
+      detail: "Sales will not reduce ingredients until recipes are mapped.",
       source: "foundation",
     });
   }

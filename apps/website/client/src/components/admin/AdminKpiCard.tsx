@@ -63,10 +63,10 @@ const STATE_LABEL: Record<AdminKpiState, string> = {
   available: "Available",
   loading: "Loading",
   empty: "No data yet",
-  unavailable: "Not available",
-  error: "Couldn't load",
+  unavailable: "Data unavailable",
+  error: "Data unavailable",
   stale: "Earlier data",
-  planned: "Planned",
+  planned: "Planned for Phase 2",
 };
 
 function resolveDisplayValue(

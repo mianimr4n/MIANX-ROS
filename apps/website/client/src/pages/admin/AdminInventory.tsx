@@ -84,7 +84,7 @@ export default function AdminInventory() {
     if (!token || !canManageInventory) {
       setStockItems(null);
       setStockError(
-        canManageInventory ? null : "Stock items require inventory.manage or admin.access.",
+        canManageInventory ? null : "Access unavailable",
       );
       return;
     }

@@ -23,7 +23,7 @@ export function StockMovementTimeline({
     <AdminSurface aria-labelledby="stock-movement-heading" className="mb-6">
       <AdminSurfaceHeader
         title="Stock movement history"
-        description="Live ledger from GET /admin/inventory/movements."
+        description="Adjustments, receipts, and waste for the selected branch."
       />
       <AdminSurfaceBody>
         <h3 id="stock-movement-heading" className="sr-only">

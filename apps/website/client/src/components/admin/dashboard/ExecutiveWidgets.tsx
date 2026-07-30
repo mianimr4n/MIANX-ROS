@@ -306,27 +306,27 @@ export function ExecutiveAside({
       <AdminSurface>
         <AdminSurfaceHeader title="Quick actions" description="Jump to today’s operational workspaces." />
         <AdminSurfaceBody>
-          <ul className="space-y-2 text-sm">
-            <li>
-              <Link href="/admin/orders" className="font-semibold text-[var(--brand-red)]">
-                Orders
-              </Link>
-            </li>
-            <li>
-              <Link href="/admin/kitchen-dashboard" className="font-semibold text-[var(--brand-red)]">
-                Kitchen
-              </Link>
-            </li>
-            <li>
-              <Link href="/admin/inventory" className="font-semibold text-[var(--brand-red)]">
-                Inventory
-              </Link>
-            </li>
-            <li>
-              <Link href="/admin/purchasing" className="font-semibold text-[var(--brand-red)]">
-                Purchasing
-              </Link>
-            </li>
+          <ul className="grid gap-2 text-sm sm:grid-cols-2">
+            {[
+              { href: "/admin/pos", label: "Open POS" },
+              { href: "/admin/kitchen-dashboard", label: "Open Kitchen" },
+              { href: "/admin/orders", label: "Open Orders" },
+              { href: "/admin/inventory", label: "Add stock item" },
+              { href: "/admin/purchasing", label: "Add supplier" },
+              { href: "/admin/purchasing", label: "Create requisition" },
+              { href: "/admin/purchasing", label: "Create purchase order" },
+              { href: "/admin/reports", label: "Open Reports" },
+              { href: "/admin/settings", label: "Open Settings" },
+            ].map((item) => (
+              <li key={`${item.href}-${item.label}`}>
+                <Link
+                  href={item.href}
+                  className="inline-flex min-h-11 items-center font-semibold text-[var(--brand-red)] underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)]"
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </AdminSurfaceBody>
       </AdminSurface>

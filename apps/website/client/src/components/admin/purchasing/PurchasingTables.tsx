@@ -170,17 +170,29 @@ export function SupplierTable({
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={5} className="px-3 py-10 text-center text-sm text-[var(--admin-muted)]">
-                  We couldn&apos;t load suppliers right now. Please try again.
+                <td colSpan={5} className="px-3 py-10 text-center text-sm text-[var(--admin-muted)]" role="alert">
+                  Data unavailable
                 </td>
               </tr>
             ) : !suppliers || suppliers.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-3 py-10 text-center">
-                  <p className="font-semibold">Welcome! No suppliers added yet.</p>
+                  <p className="font-semibold">No suppliers added yet</p>
                   <p className="mt-2 text-sm text-[var(--admin-muted)]">
-                    Click &apos;Add Supplier&apos; to get started before creating purchase orders.
+                    Add your first supplier before creating purchase orders.
                   </p>
+                  {canManage ? (
+                    <button
+                      type="button"
+                      className="mt-4 min-h-11 rounded-lg bg-[var(--brand-red)] px-4 py-2 text-sm font-semibold text-white"
+                      onClick={() => {
+                        setBranchId(defaultBranchId ?? "");
+                        setShowForm(true);
+                      }}
+                    >
+                      Add supplier
+                    </button>
+                  ) : null}
                 </td>
               </tr>
             ) : (
@@ -480,7 +492,7 @@ export function RequisitionPanel({
         <div>
           <h3 className="text-sm font-semibold">Purchase requisitions</h3>
           <p className="mt-1 text-xs text-[var(--admin-muted)]">
-            Live from GET /admin/purchasing/requisitions.
+            Request stock needs before creating a purchase order.
           </p>
         </div>
         {canManage ? (

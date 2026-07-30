@@ -40,7 +40,8 @@ describe("Purchasing & Suppliers V1 (static)", () => {
 
   it("does not fabricate suppliers or purchase orders", () => {
     const suppliers = read("apps/website/client/src/components/admin/purchasing/PurchasingTables.tsx");
-    assert.match(suppliers, /Welcome! No suppliers added yet/);
+    assert.match(suppliers, /No suppliers added yet/);
+    assert.match(suppliers, /Add your first supplier before creating purchase orders/);
     assert.doesNotMatch(suppliers, /supplierCode:\s*"|fakeSupplier/i);
     const orders = read("apps/website/client/src/components/admin/purchasing/PurchasingTables.tsx");
     assert.match(orders, /No purchase orders yet|No purchase orders created yet/);
@@ -81,7 +82,7 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(page, /decidePurchaseOrderApproval/);
     const kpis = read("apps/website/client/src/components/admin/purchasing/PurchasingKPIs.tsx");
     assert.match(kpis, /Awaiting delivery/);
-    assert.match(kpis, /Approved\/ordered POs with no linked GRN/);
+    assert.match(kpis, /Approved orders waiting for goods receiving|Approved\/ordered POs with no linked GRN/);
     assert.doesNotMatch(kpis, /Coming Soon/);
     const filters = read("apps/website/client/src/components/admin/purchasing/PurchasingFilters.tsx");
     assert.match(filters, /approvalStatus/);

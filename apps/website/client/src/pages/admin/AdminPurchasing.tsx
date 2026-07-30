@@ -165,7 +165,7 @@ export default function AdminPurchasing() {
     if (!token || !canManagePurchasing) {
       setSuppliers(null);
       setSuppliersError(
-        canManagePurchasing ? null : "Suppliers require purchasing.manage, finance.manage, or admin.access.",
+        canManagePurchasing ? null : "Access unavailable",
       );
       return;
     }
@@ -187,7 +187,7 @@ export default function AdminPurchasing() {
       setOrders(null);
       setAwaitingDeliveryCount(null);
       setOrdersError(
-        canManagePurchasing ? null : "Purchase orders require purchasing.manage, finance.manage, or admin.access.",
+        canManagePurchasing ? null : "Access unavailable",
       );
       return;
     }

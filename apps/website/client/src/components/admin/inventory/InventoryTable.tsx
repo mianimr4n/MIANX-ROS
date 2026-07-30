@@ -1,5 +1,4 @@
 import { useState, type FormEvent } from "react";
-import { Link } from "wouter";
 
 import { AdminSectionTitle } from "@/components/admin/AdminKpiCard";
 import type { InventoryItem } from "@/lib/admin-api";
@@ -219,21 +218,32 @@ export function InventoryTable({
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={7} className="px-3 py-10 text-center text-sm text-red-700">
-                  {error}
+                <td colSpan={7} className="px-3 py-10 text-center text-sm text-red-700" role="alert">
+                  {/permission|access|unauthorized|403/i.test(error)
+                    ? "Access unavailable"
+                    : "Data unavailable"}
+                  <span className="sr-only"> {error}</span>
                 </td>
               </tr>
             ) : !items || items.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-3 py-10 text-center">
-                  <p className="font-semibold text-[var(--admin-ink)]">Welcome — no stock items yet</p>
+                  <p className="font-semibold text-[var(--admin-ink)]">No stock items added yet</p>
                   <p className="mt-2 max-w-xl mx-auto text-sm text-[var(--admin-muted)]">
-                    Add your first ingredient stock item for this branch. Menu catalog SKUs in{" "}
-                    <Link href="/admin/menu" className="font-semibold text-[var(--brand-red)] underline-offset-2 hover:underline">
-                      Menu Management
-                    </Link>{" "}
-                    are sellable products — not on-hand inventory.
+                    Add ingredients and opening quantities to begin stock tracking.
                   </p>
+                  {canManage ? (
+                    <button
+                      type="button"
+                      className="mt-4 min-h-11 rounded-lg bg-[var(--brand-red)] px-4 py-2 text-sm font-semibold text-white"
+                      onClick={() => {
+                        setBranchId(defaultBranchId ?? "");
+                        setShowForm(true);
+                      }}
+                    >
+                      Add stock item
+                    </button>
+                  ) : null}
                 </td>
               </tr>
             ) : (
