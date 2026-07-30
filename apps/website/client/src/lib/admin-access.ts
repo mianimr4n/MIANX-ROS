@@ -40,9 +40,14 @@ export function canAccessAdminMenu(input: AdminPrincipalInput): boolean {
   return canManageMenu(input);
 }
 
-/** Inventory workspace — branch.manage until inventory.manage permission is seeded. */
+/** Inventory workspace — inventory.manage or branch.manage (legacy gate) or admin.access. */
 export function canAccessAdminInventory(input: AdminPrincipalInput): boolean {
-  return input.isSuperAdmin || input.permissions.includes("branch.manage");
+  return (
+    input.isSuperAdmin ||
+    input.permissions.includes("inventory.manage") ||
+    input.permissions.includes("admin.access") ||
+    input.permissions.includes("branch.manage")
+  );
 }
 
 /** Purchasing workspace — branch.manage until purchasing.manage permission is seeded. */

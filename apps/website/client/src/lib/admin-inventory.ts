@@ -1,5 +1,6 @@
-/** Inventory helpers — honesty-first; no invented stock balances or movements. */
+/** Inventory helpers — honesty-first; live stock APIs where present, no invented balances. */
 
+import type { InventoryItem, StockMovement } from "@/lib/admin-api";
 import type { MenuItem } from "@/lib/telepizza-types";
 
 export type InventoryIntegrationCheck = {
@@ -14,13 +15,15 @@ export type InventoryKpiSnapshot = {
   menuInternalSkus: number;
   modifierGroupsInCatalog: number;
   unmappedRecipeProducts: number;
+  stockItemCount: number | null;
+  lowStockCount: number | null;
 };
 
 export type InventoryInsightItem = {
   id: string;
   title: string;
   detail: string;
-  source: "derived" | "foundation";
+  source: "derived" | "foundation" | "live";
 };
 
 export type InventoryReadinessGroup = {
@@ -39,20 +42,20 @@ export function integrationChecks(): InventoryIntegrationCheck[] {
     {
       id: "stock-items",
       label: "Stock item master",
-      status: "missing",
-      note: "No inventory_items / stock_items tables in committed migrations.",
+      status: "present",
+      note: "inventory_items + GET/POST/PATCH /api/v1/admin/inventory/items.",
     },
     {
       id: "branch-balance",
       label: "Branch stock balances",
-      status: "missing",
-      note: "No branch_inventory or quantity_on_hand columns in schema.",
+      status: "present",
+      note: "current_stock on inventory_items is branch-scoped.",
     },
     {
       id: "movements",
       label: "Stock movement ledger",
-      status: "missing",
-      note: "No stock_movements table or admin movement API.",
+      status: "present",
+      note: "stock_movements + GET /api/v1/admin/inventory/movements + POST adjustments.",
     },
     {
       id: "recipes",
@@ -75,8 +78,8 @@ export function integrationChecks(): InventoryIntegrationCheck[] {
     {
       id: "valuation",
       label: "Cost valuation",
-      status: "missing",
-      note: "Menu prices are retail — no purchase cost history.",
+      status: "partial",
+      note: "cost_price optional on items — no FIFO/WAC valuation engine yet.",
     },
     {
       id: "menu-catalog",
@@ -87,13 +90,22 @@ export function integrationChecks(): InventoryIntegrationCheck[] {
     {
       id: "permission",
       label: "Inventory permission",
-      status: "partial",
-      note: "No inventory.manage — workspace gated on branch.manage until seeded.",
+      status: "present",
+      note: "inventory.manage seeded; routes also accept admin.access.",
     },
   ];
 }
 
-export function buildInventoryKpis(items: MenuItem[], toppings: MenuItem[]): InventoryKpiSnapshot {
+export function isLowStock(item: InventoryItem): boolean {
+  const threshold = Math.max(item.reorderLevel, item.minimumStock);
+  return item.currentStock <= threshold;
+}
+
+export function buildInventoryKpis(
+  items: MenuItem[],
+  toppings: MenuItem[],
+  stockItems: InventoryItem[] | null = null,
+): InventoryKpiSnapshot {
   const modifierGroups = [...items, ...toppings].reduce(
     (sum, item) => sum + (item.modifierGroups?.length ?? 0),
     0,
@@ -103,6 +115,8 @@ export function buildInventoryKpis(items: MenuItem[], toppings: MenuItem[]): Inv
     menuInternalSkus: toppings.length,
     modifierGroupsInCatalog: modifierGroups,
     unmappedRecipeProducts: items.length + toppings.length,
+    stockItemCount: stockItems == null ? null : stockItems.length,
+    lowStockCount: stockItems == null ? null : stockItems.filter(isLowStock).length,
   };
 }
 
@@ -111,6 +125,24 @@ export function buildInventoryInsights(
   branchLabel: string,
 ): InventoryInsightItem[] {
   const items: InventoryInsightItem[] = [];
+
+  if (snapshot.stockItemCount != null) {
+    items.push({
+      id: "live-stock-count",
+      title: `${snapshot.stockItemCount} stock item${snapshot.stockItemCount === 1 ? "" : "s"} in branch scope.`,
+      detail: "Live from GET /admin/inventory/items — empty until staff add SKUs.",
+      source: "live",
+    });
+  }
+
+  if (snapshot.lowStockCount != null && snapshot.lowStockCount > 0) {
+    items.push({
+      id: "live-low-stock",
+      title: `${snapshot.lowStockCount} item(s) at or below reorder/minimum threshold.`,
+      detail: "Rule-based comparison of current_stock vs reorder_level / minimum_stock.",
+      source: "live",
+    });
+  }
 
   if (snapshot.unmappedRecipeProducts > 0) {
     items.push({
@@ -131,24 +163,17 @@ export function buildInventoryInsights(
   }
 
   items.push({
-    id: "no-ledger",
-    title: "No persistent stock movement ledger was found.",
-    detail: "Receiving, transfers, adjustments, waste, and consumption cannot be audited yet.",
-    source: "foundation",
-  });
-
-  items.push({
     id: "no-valuation",
-    title: "Stock valuation is unavailable because purchase cost history does not exist.",
-    detail: "Retail menu prices must not be used as inventory cost.",
+    title: "Full stock valuation (FIFO/WAC) is Coming Soon.",
+    detail: "Optional cost_price may exist per item — retail menu prices must not be used as inventory cost.",
     source: "foundation",
   });
 
   items.push({
     id: "branch-scope",
-    title: `Branch context: ${branchLabel} — stock balances are not branch-scoped in API yet.`,
-    detail: "Future inventory APIs must enforce branch_id on reads and writes.",
-    source: "foundation",
+    title: `Branch context: ${branchLabel} — stock reads/writes are branch-scoped.`,
+    detail: "inventory.manage or admin.access required for write APIs.",
+    source: "live",
   });
 
   return items.slice(0, 6);
@@ -159,11 +184,15 @@ export function readinessGroups(): InventoryReadinessGroup[] {
     {
       id: "ledger",
       title: "Stock ledger",
-      unavailable: "On-hand quantities and movement history",
-      why: "Operational inventory requires immutable movement rows — not menu availability flags.",
-      entities: ["inventory_items", "branch_stock_balances", "stock_movements"],
-      apis: ["GET/POST /api/v1/admin/inventory/items", "GET /api/v1/admin/inventory/movements"],
-      permission: "inventory.manage (proposed)",
+      unavailable: "— LIVE",
+      why: "inventory_items + stock_movements with branch-scoped RLS and admin APIs.",
+      entities: ["inventory_items", "stock_movements"],
+      apis: [
+        "GET/POST/PATCH /api/v1/admin/inventory/items",
+        "POST /api/v1/admin/inventory/adjustments",
+        "GET /api/v1/admin/inventory/movements",
+      ],
+      permission: "inventory.manage or admin.access",
       related: "Menu SKUs remain separate from ingredient stock items.",
     },
     {
@@ -179,8 +208,8 @@ export function readinessGroups(): InventoryReadinessGroup[] {
     {
       id: "receiving",
       title: "Receiving & purchase receipts",
-      unavailable: "Goods receipt against PO or ad-hoc receiving",
-      why: "Cannot increment balances in the browser without validated server ledger entries.",
+      unavailable: "Goods receipt against PO (Coming Soon)",
+      why: "PO-linked receiving is not shipped — use stock adjustments / opening stock for now.",
       entities: ["purchase_orders", "goods_receipts", "receipt_lines"],
       apis: ["POST /api/v1/admin/inventory/receipts"],
       permission: "inventory.manage",
@@ -189,7 +218,7 @@ export function readinessGroups(): InventoryReadinessGroup[] {
     {
       id: "transfers",
       title: "Stock transfers",
-      unavailable: "Branch-to-branch or location transfers",
+      unavailable: "Branch-to-branch transfers (Coming Soon)",
       why: "Transfers require dual-sided movement records and approval workflow.",
       entities: ["stock_transfers", "transfer_lines", "transfer_status_log"],
       apis: ["POST /api/v1/admin/inventory/transfers"],
@@ -199,18 +228,18 @@ export function readinessGroups(): InventoryReadinessGroup[] {
     {
       id: "adjustments",
       title: "Adjustments & stock counts",
-      unavailable: "Count corrections, damage, theft, opening balance",
-      why: "Adjustments mutate ledger with actor, reason, and audit trail.",
-      entities: ["stock_adjustments", "stock_count_sessions"],
+      unavailable: "— LIVE",
+      why: "POST /admin/inventory/adjustments writes stock_movements and updates current_stock.",
+      entities: ["stock_movements", "inventory_items"],
       apis: ["POST /api/v1/admin/inventory/adjustments"],
-      permission: "inventory.manage",
-      related: "Variance from physical counts vs system on-hand.",
+      permission: "inventory.manage or admin.access",
+      related: "Physical count variance workflows Coming Soon.",
     },
     {
       id: "waste",
       title: "Waste & spoilage",
-      unavailable: "Logged waste with category and optional cost",
-      why: "Waste must create negative movement rows — not estimated in UI.",
+      unavailable: "Dedicated waste API (Coming Soon)",
+      why: "Use adjustments with movementType=waste until waste reason codes ship.",
       entities: ["waste_events", "waste_reason_codes"],
       apis: ["POST /api/v1/admin/inventory/waste"],
       permission: "inventory.manage",
@@ -219,8 +248,8 @@ export function readinessGroups(): InventoryReadinessGroup[] {
     {
       id: "reorder",
       title: "Reorder planning",
-      unavailable: "Par levels, reorder points, suggested PO quantities",
-      why: "Low-stock alerts require configured thresholds on real balances.",
+      unavailable: "Suggested PO quantities (Coming Soon)",
+      why: "Low-stock list uses reorder_level / minimum_stock on live balances; suggestions API not shipped.",
       entities: ["reorder_rules", "par_levels", "preferred_suppliers"],
       apis: ["GET /api/v1/admin/inventory/reorder-suggestions"],
       permission: "inventory.manage",
@@ -229,12 +258,23 @@ export function readinessGroups(): InventoryReadinessGroup[] {
     {
       id: "valuation",
       title: "Stock valuation",
-      unavailable: "Weighted average / FIFO / standard cost",
-      why: "Selling price is not cost — purchase history and method required.",
+      unavailable: "Weighted average / FIFO / standard cost (Coming Soon)",
+      why: "Selling price is not cost — valuation method engine required.",
       entities: ["item_cost_history", "valuation_snapshots"],
       apis: ["GET /api/v1/admin/inventory/valuation"],
       permission: "inventory.manage + payment.read",
       related: "Finance module consumes valuation snapshots.",
     },
   ];
+}
+
+export function formatStockQty(value: number, unit: string): string {
+  const rounded = Number.isInteger(value) ? String(value) : value.toFixed(3).replace(/\.?0+$/, "");
+  return `${rounded} ${unit}`;
+}
+
+export function formatMovementLabel(movement: StockMovement): string {
+  const sign = movement.quantity > 0 ? "+" : "";
+  const name = movement.itemName ?? movement.itemSku ?? movement.inventoryItemId.slice(0, 8);
+  return `${movement.movementType}: ${sign}${movement.quantity} · ${name}`;
 }

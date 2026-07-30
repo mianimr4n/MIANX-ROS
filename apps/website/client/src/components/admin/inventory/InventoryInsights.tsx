@@ -4,6 +4,7 @@ import type { InventoryInsightItem } from "@/lib/admin-inventory";
 const SOURCE_CLASS: Record<InventoryInsightItem["source"], string> = {
   derived: "bg-sky-50 text-sky-800",
   foundation: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
+  live: "bg-emerald-50 text-emerald-800",
 };
 
 export function InventoryInsights({ items }: { items: InventoryInsightItem[] }) {
