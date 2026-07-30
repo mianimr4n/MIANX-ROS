@@ -121,6 +121,7 @@ function buildApp(management: Partial<BranchOrderManagementDataSource> = {}) {
         averageOrderValue: null,
         kitchenWaiting: 0,
         activeDeliveries: 0,
+        lowStockCount: 0,
       },
       statusCounts: {},
       sourceBreakdown: [],

@@ -70,6 +70,7 @@ import type { BranchSettingsService } from "../../services/settings/branch.js";
 import type { HrEmployeesService } from "../../services/hr/employees.js";
 import type { InventoryService } from "../../services/inventory/management.js";
 import type { PurchasingService } from "../../services/purchasing/management.js";
+import type { PosZReportService } from "../../services/pos/z-report.js";
 import type { ReportsService } from "../../services/reports/sales.js";
 
 const createInviteSchema = z.object({
@@ -129,6 +130,7 @@ export interface AdminRouterDependencies {
   hrEmployees: HrEmployeesService;
   inventory: InventoryService;
   purchasing: PurchasingService;
+  posZReport: PosZReportService;
   reports: ReportsService;
 }
 
@@ -442,6 +444,7 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authProfileRepository: dependencies.authProfileRepository,
       ordersDataSource: dependencies.ordersDataSource,
       envStatus: dependencies.envStatus,
+      posZReport: dependencies.posZReport,
     }),
   );
 
