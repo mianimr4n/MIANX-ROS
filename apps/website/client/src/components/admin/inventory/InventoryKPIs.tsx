@@ -1,6 +1,10 @@
 import { AdminKpiCard, AdminSectionTitle } from "@/components/admin/AdminKpiCard";
 import type { InventoryKpiSnapshot } from "@/lib/admin-inventory";
 
+function formatMoney(amount: number): string {
+  return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 function UnavailableInventoryKpis() {
   const cards = [
     "Total stock items",
@@ -44,12 +48,15 @@ export function InventoryKPIs({
   loading: boolean;
 }) {
   const stockLoaded = snapshot?.stockItemCount != null;
+  const movementsLoaded = snapshot?.wasteTodayQty != null;
+  const valueLoaded = snapshot?.stockValue != null;
+
   return (
     <section aria-label="Inventory key performance indicators" className="mb-6">
       <AdminSectionTitle
         eyebrow="Inventory"
         title="Operational KPIs"
-        description="Live stock counts when loaded — menu metrics remain derived, valuation Coming Soon."
+        description="Live stock counts, derived cost×qty value, and today waste/receipt movement totals."
       />
       {loading && !snapshot ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-busy="true">
@@ -96,13 +103,33 @@ export function InventoryKPIs({
           />
           <AdminKpiCard
             title="Stock value"
-            value="—"
-            source="UNAVAILABLE"
-            unavailable
-            detail="Retail menu price is not inventory cost — purchase cost history required"
+            value={valueLoaded ? formatMoney(snapshot.stockValue ?? 0) : "—"}
+            source={valueLoaded ? "DERIVED" : "UNAVAILABLE"}
+            unavailable={!valueLoaded}
+            detail={
+              valueLoaded
+                ? "Σ(current_stock × cost_price) where cost is set"
+                : "Requires inventory.manage"
+            }
           />
-          <AdminKpiCard title="Waste today" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — no waste_events API" />
-          <AdminKpiCard title="Received today" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — no goods receipt API" />
+          <AdminKpiCard
+            title="Waste today"
+            value={movementsLoaded ? String(snapshot.wasteTodayQty) : "—"}
+            source={movementsLoaded ? "LIVE" : "UNAVAILABLE"}
+            unavailable={!movementsLoaded}
+            detail={movementsLoaded ? "stock_movements movementType=waste (today)" : "Requires movements load"}
+          />
+          <AdminKpiCard
+            title="Received today"
+            value={movementsLoaded ? String(snapshot.receivedTodayQty) : "—"}
+            source={movementsLoaded ? "LIVE" : "UNAVAILABLE"}
+            unavailable={!movementsLoaded}
+            detail={
+              movementsLoaded
+                ? "stock_movements receipt/purchase (today)"
+                : "Requires movements load"
+            }
+          />
         </div>
       )}
     </section>

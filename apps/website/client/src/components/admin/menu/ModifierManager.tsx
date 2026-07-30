@@ -41,7 +41,7 @@ export function ModifierManager({ product }: { product: MenuCatalogItemView }) {
         </ul>
       )}
       <p className="mt-3 text-xs text-[var(--admin-muted)]">
-        Modifier groups are live from the catalog. Modifier editing and branch overrides remain Coming Soon.
+        Modifier groups are live from the catalog. Modifier editing and branch overrides remain Planned for Phase 2.
       </p>
     </section>
   );

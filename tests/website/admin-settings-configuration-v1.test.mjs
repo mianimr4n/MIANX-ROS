@@ -76,13 +76,13 @@ describe("Settings & Configuration V1 (static)", () => {
     assert.match(panels, /no invented roles/i);
   });
 
-  it("payment and tax settings remain Coming Soon or Environment Managed", () => {
+  it("payment and tax settings remain Planned for Phase 2 or Environment Managed", () => {
     const panels = read("apps/website/client/src/components/admin/settings/SettingsPanels.tsx");
     assert.match(panels, /Provider credentials stay environment-managed|Payment provider credentials unavailable|Environment Managed/i);
     assert.match(panels, /Never invent tax rates|will never invent tax rates/i);
     assert.doesNotMatch(panels, /status:\s*["']Connected["']/);
     const header = read("apps/website/client/src/components/admin/settings/SettingsHeader.tsx");
-    assert.match(header, /Environment Managed|Coming Soon/);
+    assert.match(header, /Environment Managed|Planned for Phase 2|Coming Soon/);
     assert.doesNotMatch(header, /Foundation workspace/);
   });
 

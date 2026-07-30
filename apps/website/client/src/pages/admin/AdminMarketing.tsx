@@ -104,7 +104,7 @@ export default function AdminMarketing() {
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">Commerce</p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">Marketing &amp; Coupons</h1>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
-          {roleLabel} · {branchLabel} · Coupon master LIVE — checkout validation Coming Soon
+          {roleLabel} · {branchLabel} · Coupon master LIVE — checkout validation Planned for Phase 2
         </p>
         <span className="mt-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-900">
           LIVE coupons
@@ -112,7 +112,7 @@ export default function AdminMarketing() {
       </header>
 
       <AdminSurface aria-labelledby="coupons-heading" className="mb-6">
-        <AdminSurfaceHeader title="Coupons" description="Create and list coupon codes. Quote/checkout enforcement Coming Soon." />
+        <AdminSurfaceHeader title="Coupons" description="Create and list coupon codes. Quote/checkout enforcement Planned for Phase 2." />
         <AdminSurfaceBody>
           <h2 id="coupons-heading" className="sr-only">
             Coupons

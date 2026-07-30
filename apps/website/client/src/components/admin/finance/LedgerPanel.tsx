@@ -490,7 +490,7 @@ export function StatementsPanel({
             >
               <span className="text-sm font-semibold">{item.label}</span>
               <span className="rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--admin-muted)]">
-                Coming Soon
+                Planned for Phase 2
               </span>
             </li>
           ))}

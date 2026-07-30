@@ -42,7 +42,7 @@ export function SettingsHeader({
           disabled
           className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
         >
-          Export config · Coming Soon
+          Export config · Planned for Phase 2
         </button>
       </div>
     </header>

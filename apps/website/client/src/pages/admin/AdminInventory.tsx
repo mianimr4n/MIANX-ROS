@@ -73,8 +73,8 @@ export default function AdminInventory() {
   const checks = useMemo(() => integrationChecks(), []);
   const groups = useMemo(() => readinessGroups(), []);
   const snapshot = useMemo(
-    () => buildInventoryKpis(items, toppings, stockItems),
-    [items, toppings, stockItems],
+    () => buildInventoryKpis(items, toppings, stockItems, movements),
+    [items, toppings, stockItems, movements],
   );
   const insights = useMemo(() => buildInventoryInsights(snapshot, branchLabel), [snapshot, branchLabel]);
   const filteredStockItems = useMemo(() => {
@@ -180,6 +180,7 @@ export default function AdminInventory() {
     inventoryItemId: string;
     quantityDelta: number;
     reason: string;
+    movementType: "adjustment" | "receipt" | "waste";
   }) => {
     const token = session?.access_token;
     if (!token) {
@@ -193,7 +194,7 @@ export default function AdminInventory() {
         inventoryItemId: input.inventoryItemId,
         quantityDelta: input.quantityDelta,
         reason: input.reason || null,
-        movementType: "adjustment",
+        movementType: input.movementType,
       });
       await Promise.all([loadStock(), loadMovements()]);
       return true;
@@ -248,11 +249,17 @@ export default function AdminInventory() {
           adjustBusy={adjustBusy}
         />
         <StockTransferPanel />
-        <WastePanel />
+        <WastePanel
+          items={stockItems}
+          canManage={canManageInventory}
+          onAdjust={onAdjust}
+          adjustError={adjustError}
+          adjustBusy={adjustBusy}
+        />
       </div>
 
       <div className="mb-6 grid gap-4 lg:grid-cols-2">
-        <InventoryValuationPanel />
+        <InventoryValuationPanel stockValue={snapshot.stockValue} />
         <ReorderPlanningPanel />
       </div>
 

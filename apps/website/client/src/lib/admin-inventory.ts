@@ -17,6 +17,9 @@ export type InventoryKpiSnapshot = {
   unmappedRecipeProducts: number;
   stockItemCount: number | null;
   lowStockCount: number | null;
+  stockValue: number | null;
+  wasteTodayQty: number | null;
+  receivedTodayQty: number | null;
 };
 
 export type InventoryInsightItem = {
@@ -61,13 +64,13 @@ export function integrationChecks(): InventoryIntegrationCheck[] {
       id: "recipes",
       label: "Recipe / BOM mapping",
       status: "missing",
-      note: "Menu catalog has sellable SKUs and modifiers — no ingredient recipes.",
+      note: "Planned for Phase 2 — menu catalog has sellable SKUs; no ingredient recipes yet.",
     },
     {
       id: "consumption",
       label: "Order consumption engine",
       status: "missing",
-      note: "Orders create line snapshots — no server-side inventory deduction.",
+      note: "Planned for Phase 2 — orders create line snapshots; no server-side inventory deduction.",
     },
     {
       id: "suppliers",
@@ -76,10 +79,16 @@ export function integrationChecks(): InventoryIntegrationCheck[] {
       note: "suppliers + purchase_orders via /api/v1/admin/purchasing/* (see Purchasing workspace).",
     },
     {
+      id: "receiving",
+      label: "Goods receiving / GRN",
+      status: "present",
+      note: "GET/POST /api/v1/admin/purchasing/receiving — GRN posts stock for mapped inventory lines.",
+    },
+    {
       id: "valuation",
       label: "Cost valuation",
       status: "partial",
-      note: "cost_price optional on items — no FIFO/WAC valuation engine yet.",
+      note: "Derived Σ(current_stock × cost_price) when cost set — FIFO/WAC engine Planned for Phase 2.",
     },
     {
       id: "menu-catalog",
@@ -105,11 +114,35 @@ export function buildInventoryKpis(
   items: MenuItem[],
   toppings: MenuItem[],
   stockItems: InventoryItem[] | null = null,
+  movements: StockMovement[] | null = null,
 ): InventoryKpiSnapshot {
   const modifierGroups = [...items, ...toppings].reduce(
     (sum, item) => sum + (item.modifierGroups?.length ?? 0),
     0,
   );
+  const today = new Date().toISOString().slice(0, 10);
+  let stockValue: number | null = null;
+  let wasteTodayQty: number | null = null;
+  let receivedTodayQty: number | null = null;
+
+  if (stockItems != null) {
+    stockValue = stockItems.reduce((sum, item) => {
+      if (item.costPrice == null) return sum;
+      return sum + item.currentStock * item.costPrice;
+    }, 0);
+  }
+
+  if (movements != null) {
+    wasteTodayQty = 0;
+    receivedTodayQty = 0;
+    for (const m of movements) {
+      if (m.createdAt.slice(0, 10) !== today) continue;
+      const type = m.movementType.toLowerCase();
+      if (type === "waste") wasteTodayQty += Math.abs(m.quantity);
+      if (type === "receipt" || type === "purchase") receivedTodayQty += Math.abs(m.quantity);
+    }
+  }
+
   return {
     menuBrowseSkus: items.length,
     menuInternalSkus: toppings.length,
@@ -117,6 +150,9 @@ export function buildInventoryKpis(
     unmappedRecipeProducts: items.length + toppings.length,
     stockItemCount: stockItems == null ? null : stockItems.length,
     lowStockCount: stockItems == null ? null : stockItems.filter(isLowStock).length,
+    stockValue,
+    wasteTodayQty,
+    receivedTodayQty,
   };
 }
 
@@ -163,10 +199,13 @@ export function buildInventoryInsights(
   }
 
   items.push({
-    id: "no-valuation",
-    title: "Full stock valuation (FIFO/WAC) is Coming Soon.",
-    detail: "Optional cost_price may exist per item — retail menu prices must not be used as inventory cost.",
-    source: "foundation",
+    id: "partial-valuation",
+    title:
+      snapshot.stockValue != null
+        ? `Derived stock value ${snapshot.stockValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} (cost_price × qty).`
+        : "Derived stock value unavailable until stock items load.",
+    detail: "Standard-cost derived total only — FIFO/WAC valuation Planned for Phase 2. Retail menu prices are not cost.",
+    source: snapshot.stockValue != null ? "derived" : "foundation",
   });
 
   items.push({
@@ -208,20 +247,20 @@ export function readinessGroups(): InventoryReadinessGroup[] {
     {
       id: "receiving",
       title: "Receiving & purchase receipts",
-      unavailable: "Goods receipt against PO (Coming Soon)",
-      why: "PO-linked receiving is not shipped — use stock adjustments / opening stock for now.",
-      entities: ["purchase_orders", "goods_receipts", "receipt_lines"],
-      apis: ["POST /api/v1/admin/inventory/receipts"],
-      permission: "inventory.manage",
-      related: "Supplier master and unit cost capture on receipt.",
+      unavailable: "— LIVE via Purchasing GRN",
+      why: "Goods receiving posts stock for mapped inventory lines via /admin/purchasing/receiving.",
+      entities: ["goods_receiving", "goods_receiving_lines", "stock_movements"],
+      apis: ["GET/POST /api/v1/admin/purchasing/receiving"],
+      permission: "purchasing.manage or inventory.manage",
+      related: "Open Purchasing workspace to record GRNs.",
     },
     {
       id: "transfers",
       title: "Stock transfers",
-      unavailable: "Branch-to-branch transfers (Coming Soon)",
+      unavailable: "Branch-to-branch transfers — Planned for Phase 2",
       why: "Transfers require dual-sided movement records and approval workflow.",
       entities: ["stock_transfers", "transfer_lines", "transfer_status_log"],
-      apis: ["POST /api/v1/admin/inventory/transfers"],
+      apis: ["POST /api/v1/admin/inventory/transfers (Planned for Phase 2)"],
       permission: "inventory.manage + branch scope",
       related: "Dispatch and receive quantities must reconcile.",
     },
@@ -229,41 +268,41 @@ export function readinessGroups(): InventoryReadinessGroup[] {
       id: "adjustments",
       title: "Adjustments & stock counts",
       unavailable: "— LIVE",
-      why: "POST /admin/inventory/adjustments writes stock_movements and updates current_stock.",
+      why: "POST /admin/inventory/adjustments writes stock_movements and updates current_stock (adjustment|receipt|waste).",
       entities: ["stock_movements", "inventory_items"],
       apis: ["POST /api/v1/admin/inventory/adjustments"],
       permission: "inventory.manage or admin.access",
-      related: "Physical count variance workflows Coming Soon.",
+      related: "Physical count variance workflows Planned for Phase 2.",
     },
     {
       id: "waste",
       title: "Waste & spoilage",
-      unavailable: "Dedicated waste API (Coming Soon)",
-      why: "Use adjustments with movementType=waste until waste reason codes ship.",
-      entities: ["waste_events", "waste_reason_codes"],
-      apis: ["POST /api/v1/admin/inventory/waste"],
+      unavailable: "— LIVE via adjustments (movementType=waste)",
+      why: "Post negative quantity adjustments with movementType waste; dedicated reason-code master Planned for Phase 2.",
+      entities: ["stock_movements"],
+      apis: ["POST /api/v1/admin/inventory/adjustments"],
       permission: "inventory.manage",
       related: "Kitchen overproduction may link to prep tickets later.",
     },
     {
       id: "reorder",
       title: "Reorder planning",
-      unavailable: "Suggested PO quantities (Coming Soon)",
+      unavailable: "Suggested PO quantities — Planned for Phase 2",
       why: "Low-stock list uses reorder_level / minimum_stock on live balances; suggestions API not shipped.",
       entities: ["reorder_rules", "par_levels", "preferred_suppliers"],
-      apis: ["GET /api/v1/admin/inventory/reorder-suggestions"],
+      apis: ["GET /api/v1/admin/inventory/reorder-suggestions (Planned for Phase 2)"],
       permission: "inventory.manage",
       related: "Purchasing module consumes suggestions — no AI demand forecast.",
     },
     {
       id: "valuation",
       title: "Stock valuation",
-      unavailable: "Weighted average / FIFO / standard cost (Coming Soon)",
-      why: "Selling price is not cost — valuation method engine required.",
-      entities: ["item_cost_history", "valuation_snapshots"],
-      apis: ["GET /api/v1/admin/inventory/valuation"],
+      unavailable: "FIFO/WAC engine — Planned for Phase 2 (derived cost×qty LIVE)",
+      why: "Derived Σ(current_stock × cost_price) when cost is set. Selling price is not cost.",
+      entities: ["inventory_items"],
+      apis: ["GET /api/v1/admin/inventory/items"],
       permission: "inventory.manage + payment.read",
-      related: "Finance module consumes valuation snapshots.",
+      related: "Finance GL auto-post of COGS Planned for Phase 2.",
     },
   ];
 }

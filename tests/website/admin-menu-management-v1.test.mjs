@@ -78,9 +78,9 @@ describe("Menu Management V1 (static)", () => {
     const page = read("apps/website/client/src/pages/admin/AdminMenu.tsx");
     assert.match(page, /catalogMode=\{usingFallback \? "fallback" : "live"\}/);
     const header = read("apps/website/client/src/components/admin/menu/MenuHeader.tsx");
-    assert.match(header, /Export · Coming Soon/);
-    assert.match(header, /Import · Coming Soon/);
-    assert.match(header, /Bulk actions · Coming Soon/);
+    assert.match(header, /Export · Planned for Phase 2/);
+    assert.match(header, /Import · Planned for Phase 2/);
+    assert.match(header, /Bulk actions · Planned for Phase 2/);
     assert.match(header, /Live write APIs/);
   });
 
@@ -121,7 +121,7 @@ describe("Menu Management V1 (static)", () => {
     const tree = read("apps/website/client/src/components/admin/menu/CategoryTree.tsx");
     assert.match(tree, /role="tree"/);
     assert.match(tree, /Multi-level trees/);
-    assert.match(tree, /Coming Soon/);
+    assert.match(tree, /Planned for Phase 2/);
   });
 
   it("wires availability toggle and menu update toast", () => {

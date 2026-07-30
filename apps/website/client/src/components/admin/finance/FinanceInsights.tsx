@@ -13,7 +13,7 @@ export function FinanceInsights({ items }: { items: FinanceInsightItem[] }) {
       <AdminSectionTitle
         eyebrow="Mianx.ai"
         title="Mianx.ai Finance Insights"
-        description="Rule-based Summary only — live GL signals and honest Coming Soon gaps."
+        description="Rule-based Summary only — live GL signals and honest Planned for Phase 2 gaps."
       />
       <h2 id="finance-insights-heading" className="sr-only">
         Finance insights
@@ -34,7 +34,7 @@ export function FinanceInsights({ items }: { items: FinanceInsightItem[] }) {
         ))}
       </ul>
       <p className="mt-4 text-xs text-[var(--admin-muted)]">
-        Live GL · Coming Soon: AP auto-post, AR aging, cash flow, VAT/GST returns — no prediction models from this
+        Live GL · Planned for Phase 2: AP auto-post, AR aging, cash flow, VAT/GST returns — no prediction models from this
         workspace.
       </p>
     </section>

@@ -17,7 +17,7 @@ export function ExportPanel({
     <AdminSurface aria-labelledby="export-panel-heading" className="mb-6">
       <AdminSurfaceHeader
         title="Exports"
-        description="CSV downloads from live orders — Excel and PDF remain Coming Soon."
+        description="CSV downloads from live orders — Excel and PDF remain Planned for Phase 2."
       />
       <AdminSurfaceBody>
         <h2 id="export-panel-heading" className="sr-only">
@@ -45,7 +45,7 @@ export function ExportPanel({
             disabled
             className="min-h-11 cursor-not-allowed rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6 text-sm font-semibold text-[var(--admin-muted)]"
           >
-            Export Excel / PDF · Coming Soon
+            Export Excel / PDF · Planned for Phase 2
           </button>
         </div>
         {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}

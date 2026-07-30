@@ -112,7 +112,7 @@ export function RecipeMappingPanel({ snapshot }: { snapshot: InventoryKpiSnapsho
           Recipe mapping
         </h3>
         <div className="rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-5 text-sm">
-          <p className="font-semibold text-[var(--admin-ink)]">Recipe Mapping — Coming Soon</p>
+          <p className="font-semibold text-[var(--admin-ink)]">Recipe Mapping — Planned for Phase 2</p>
           <p className="mt-2 text-[var(--admin-muted)]">
             Inventory cannot be deducted from sales until menu products and variants are linked to versioned recipes with
             units, yields, and ingredient quantities.
@@ -124,7 +124,7 @@ export function RecipeMappingPanel({ snapshot }: { snapshot: InventoryKpiSnapsho
             <li>{snapshot?.modifierGroupsInCatalog ?? 0} modifier groups — pricing options, not ingredient stock</li>
           </ul>
           <p className="mt-3 text-xs uppercase tracking-wide text-[var(--admin-muted)]">
-            Coming Soon — server-side recipe consumption engine required
+            Planned for Phase 2 — server-side recipe consumption engine required
           </p>
         </div>
       </AdminSurfaceBody>
@@ -132,7 +132,7 @@ export function RecipeMappingPanel({ snapshot }: { snapshot: InventoryKpiSnapsho
   );
 }
 
-export function InventoryValuationPanel() {
+export function InventoryValuationPanel({ stockValue }: { stockValue: number | null }) {
   return (
     <AdminSurface aria-labelledby="valuation-heading" className="mb-6">
       <AdminSurfaceHeader title="Stock valuation" description="Retail menu price is not inventory cost." />
@@ -140,18 +140,21 @@ export function InventoryValuationPanel() {
         <h3 id="valuation-heading" className="sr-only">
           Stock valuation
         </h3>
-        <p className="text-sm font-semibold text-[var(--admin-ink)]">Inventory valuation — Coming Soon</p>
+        <p className="text-sm font-semibold text-[var(--admin-ink)]">
+          {stockValue == null
+            ? "Derived valuation unavailable"
+            : `Derived stock value: ${stockValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+        </p>
         <p className="mt-2 text-sm text-[var(--admin-muted)]">
-          Purchase cost history and an approved valuation method (weighted average, FIFO, or standard cost) are required.
-          Menu selling prices must not be used as unit cost. Optional cost_price on stock items is not a full valuation
-          engine.
+          LIVE derived total uses Σ(current_stock × cost_price) where cost is set. FIFO / WAC valuation engine is Planned
+          for Phase 2. Menu selling prices must not be used as unit cost.
         </p>
       </AdminSurfaceBody>
     </AdminSurface>
   );
 }
 
-function WorkflowComingSoonPanel({
+function WorkflowPhase2Panel({
   title,
   description,
   body,
@@ -168,7 +171,9 @@ function WorkflowComingSoonPanel({
           {title}
         </h3>
         <p className="text-sm text-[var(--admin-muted)]">{body}</p>
-        <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">Coming Soon</p>
+        <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+          Planned for Phase 2
+        </p>
       </AdminSurfaceBody>
     </AdminSurface>
   );
@@ -176,11 +181,27 @@ function WorkflowComingSoonPanel({
 
 export function ReceivingPanel() {
   return (
-    <WorkflowComingSoonPanel
-      title="Receiving"
-      description="Goods receipt against purchase orders."
-      body="PO-linked receiving API is not shipped. Use Add stock item (opening stock) or Stock adjustments for receipts."
-    />
+    <AdminSurface aria-labelledby="receiving-heading">
+      <AdminSurfaceHeader
+        title="Receiving"
+        description="Goods receipt against purchase orders."
+        action={
+          <Link href="/admin/purchasing" className="text-sm font-semibold text-[var(--brand-red)] hover:underline">
+            Open Purchasing GRN
+          </Link>
+        }
+      />
+      <AdminSurfaceBody>
+        <h3 id="receiving-heading" className="sr-only">
+          Receiving
+        </h3>
+        <p className="text-sm text-[var(--admin-muted)]">
+          PO-linked GRN is LIVE in Purchasing. Mapped inventory lines post stock atomically on receive; unmapped lines
+          are skipped. Use receipt movement type below for non-PO stock receipts.
+        </p>
+        <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-emerald-800">LIVE via Purchasing</p>
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 
@@ -193,13 +214,19 @@ export function StockAdjustmentPanel({
 }: {
   items: InventoryItem[] | null;
   canManage: boolean;
-  onAdjust: (input: { inventoryItemId: string; quantityDelta: number; reason: string }) => Promise<boolean>;
+  onAdjust: (input: {
+    inventoryItemId: string;
+    quantityDelta: number;
+    reason: string;
+    movementType: "adjustment" | "receipt" | "waste";
+  }) => Promise<boolean>;
   adjustError: string | null;
   adjustBusy: boolean;
 }) {
   const [inventoryItemId, setInventoryItemId] = useState("");
   const [quantityDelta, setQuantityDelta] = useState("");
   const [reason, setReason] = useState("");
+  const [movementType, setMovementType] = useState<"adjustment" | "receipt" | "waste">("adjustment");
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -210,6 +237,7 @@ export function StockAdjustmentPanel({
       inventoryItemId,
       quantityDelta: delta,
       reason: reason.trim(),
+      movementType,
     });
     if (ok) {
       setQuantityDelta("");
@@ -261,6 +289,18 @@ export function StockAdjustmentPanel({
               </select>
             </label>
             <label className="text-sm">
+              <span className="mb-1 block font-medium">Movement type</span>
+              <select
+                value={movementType}
+                onChange={(e) => setMovementType(e.target.value as typeof movementType)}
+                className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+              >
+                <option value="adjustment">Adjustment</option>
+                <option value="receipt">Receipt</option>
+                <option value="waste">Waste</option>
+              </select>
+            </label>
+            <label className="text-sm">
               <span className="mb-1 block font-medium">Quantity delta (+/-)</span>
               <input
                 required
@@ -297,7 +337,7 @@ export function StockAdjustmentPanel({
 
 export function StockTransferPanel() {
   return (
-    <WorkflowComingSoonPanel
+    <WorkflowPhase2Panel
       title="Stock transfers"
       description="Branch and location transfers."
       body="Transfer workflow (draft → dispatched → received) requires dual-sided movement records and approval — not branch selector alone."
@@ -305,22 +345,122 @@ export function StockTransferPanel() {
   );
 }
 
-export function WastePanel() {
+export function WastePanel({
+  items,
+  canManage,
+  onAdjust,
+  adjustError,
+  adjustBusy,
+}: {
+  items: InventoryItem[] | null;
+  canManage: boolean;
+  onAdjust: (input: {
+    inventoryItemId: string;
+    quantityDelta: number;
+    reason: string;
+    movementType: "adjustment" | "receipt" | "waste";
+  }) => Promise<boolean>;
+  adjustError: string | null;
+  adjustBusy: boolean;
+}) {
+  const [inventoryItemId, setInventoryItemId] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [reason, setReason] = useState("");
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!inventoryItemId) return;
+    const qty = Number(quantity);
+    if (!Number.isFinite(qty) || qty <= 0) return;
+    const ok = await onAdjust({
+      inventoryItemId,
+      quantityDelta: -Math.abs(qty),
+      reason: reason.trim() || "Waste / spoilage",
+      movementType: "waste",
+    });
+    if (ok) {
+      setQuantity("");
+      setReason("");
+    }
+  };
+
   return (
-    <WorkflowComingSoonPanel
-      title="Waste & spoilage"
-      description="Logged waste with audit trail."
-      body="Dedicated waste reason codes Coming Soon. Until then, post a negative stock adjustment with movementType waste via API or note reason on adjustments."
-    />
+    <AdminSurface aria-labelledby="inventory-waste-panel" id="inventory-waste-panel">
+      <AdminSurfaceHeader
+        title="Waste & spoilage"
+        description="Posts movementType=waste via POST /admin/inventory/adjustments."
+      />
+      <AdminSurfaceBody>
+        <h3 id="inventory-waste-heading" className="sr-only">
+          Waste and spoilage
+        </h3>
+        {!canManage ? (
+          <p className="text-sm text-[var(--admin-muted)]">inventory.manage required to log waste.</p>
+        ) : !items || items.length === 0 ? (
+          <p className="text-sm text-[var(--admin-muted)]">Add a stock item before logging waste.</p>
+        ) : (
+          <form onSubmit={(e) => void submit(e)} className="grid gap-3">
+            <label className="text-sm">
+              <span className="mb-1 block font-medium">Stock item</span>
+              <select
+                required
+                value={inventoryItemId}
+                onChange={(e) => setInventoryItemId(e.target.value)}
+                className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+              >
+                <option value="">Select item…</option>
+                {items.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name} ({item.sku}) — {formatStockQty(item.currentStock, item.unit)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block font-medium">Quantity wasted</span>
+              <input
+                required
+                type="number"
+                min={0.001}
+                step="any"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+              />
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block font-medium">Reason</span>
+              <input
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+                placeholder="Spoilage, overproduction…"
+              />
+            </label>
+            {adjustError ? <p className="text-sm text-red-700">{adjustError}</p> : null}
+            <button
+              type="submit"
+              disabled={adjustBusy}
+              className="rounded-lg bg-[var(--brand-red)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {adjustBusy ? "Posting…" : "Log waste"}
+            </button>
+          </form>
+        )}
+        <p className="mt-3 text-xs text-[var(--admin-muted)]">
+          Dedicated waste reason-code master is Planned for Phase 2.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 
 export function ReorderPlanningPanel() {
   return (
-    <WorkflowComingSoonPanel
+    <WorkflowPhase2Panel
       title="Reorder planning"
       description="Par levels and suggested purchase quantities."
-      body="Low-stock list uses configured reorder levels on live balances. Suggested PO quantities and purchasing integration Coming Soon — no AI demand forecast."
+      body="Low-stock list uses configured reorder levels on live balances. Suggested PO quantities API is Planned for Phase 2 — no AI demand forecast."
     />
   );
 }
