@@ -19,34 +19,41 @@ describe("Executive Admin Dashboard v1 (static)", () => {
     assert.match(dashboard, /AdminKpiCard/);
     assert.match(dashboard, /ExecutiveFilterBar/);
     assert.match(dashboard, /OperationsModuleGrid/);
+    assert.match(dashboard, /ExecutiveKPIs/);
     assert.match(dashboard, /AiInsightsPanel/);
     assert.match(dashboard, /LiveActivityPanel/);
     assert.match(dashboard, /fetchAdminOperationsDashboard/);
+    assert.match(dashboard, /listAdminOrders/);
+    assert.match(dashboard, /listKitchenTickets/);
+    assert.match(dashboard, /listDeliveryAssignments/);
     assert.match(dashboard, /buildMianxInsightItems/);
   });
 
   it("keeps the approved KPI contract without inventing inventory or CSAT", () => {
-    const dashboard = read("apps/website/client/src/pages/admin/AdminDashboard.tsx");
-    assert.match(dashboard, /Today’s Orders/);
-    assert.match(dashboard, /Today’s Sales/);
-    assert.match(dashboard, /Active Orders/);
-    assert.match(dashboard, /Kitchen Queue/);
-    assert.match(dashboard, /Active Deliveries/);
-    assert.match(dashboard, /Average Order Value/);
-    assert.doesNotMatch(dashboard, /Inventory alerts/);
-    assert.doesNotMatch(dashboard, /Customer satisfaction/);
-    assert.doesNotMatch(dashboard, /percentageLabel|trendLabel/);
-    assert.match(dashboard, /formatCount|formatPkr/);
+    const kpis = read("apps/website/client/src/components/admin/dashboard/ExecutiveKPIs.tsx");
+    assert.match(kpis, /Today’s Orders/);
+    assert.match(kpis, /Today’s Sales/);
+    assert.match(kpis, /Active Orders/);
+    assert.match(kpis, /Kitchen Queue/);
+    assert.match(kpis, /Active Deliveries/);
+    assert.match(kpis, /Average Order Value/);
+    assert.match(kpis, /Source: Orders API/);
+    assert.match(kpis, /Source unavailable/);
+    assert.doesNotMatch(kpis, /Inventory alerts/);
+    assert.doesNotMatch(kpis, /Customer satisfaction/);
+    assert.doesNotMatch(kpis, /percentageLabel|trendLabel/);
+    assert.match(kpis, /formatCount|formatPkr/);
   });
 
   it("labels Mianx insights as deterministic rule summaries with structured fields", () => {
-    const widgets = read("apps/website/client/src/components/admin/dashboard/ExecutiveWidgets.tsx");
-    assert.match(widgets, /Mianx\.ai Operations Insights/);
-    assert.match(widgets, /Rule ID/);
-    assert.match(widgets, /Recommended action/);
-    assert.match(widgets, /buildMianxInsightItems/);
-    assert.match(widgets, /Loading insights/);
-    assert.doesNotMatch(widgets, /demand predicted|autonomous|generative model/i);
+    const panel = read("apps/website/client/src/components/admin/dashboard/MianxInsightsPanel.tsx");
+    assert.match(panel, /Mianx\.ai Operations Insights/);
+    assert.match(panel, /Rule ID/);
+    assert.match(panel, /Recommended action/);
+    assert.match(panel, /buildMianxInsightItems|buildDeterministicMianxInsights/);
+    assert.match(panel, /Loading insights/);
+    assert.match(panel, /pending order/);
+    assert.doesNotMatch(panel, /demand predicted|autonomous|generative model|openai|llm/i);
   });
 
   it("maps canonical D2 states onto KPI cards (error and stale stay distinct)", () => {
@@ -60,7 +67,8 @@ describe("Executive Admin Dashboard v1 (static)", () => {
     const grid = read("apps/website/client/src/components/admin/dashboard/OperationsModuleGrid.tsx");
     assert.match(grid, /title: "Orders"/);
     assert.match(grid, /title: "Employees"/);
-    assert.match(grid, /moduleState/);
+    assert.match(grid, /OperationModuleCard/);
+    assert.match(grid, /status:/);
     assert.doesNotMatch(grid, /title: "WhatsApp"/);
     assert.doesNotMatch(grid, /title: "Loyalty"/);
     assert.doesNotMatch(grid, /\/admin\/ai-command-center/);

@@ -11,17 +11,20 @@ import {
   Wallet,
 } from "lucide-react";
 
-import { AdminModuleCard, type AdminModuleState } from "@/components/admin/AdminModuleCard";
 import { AdminSectionTitle } from "@/components/admin/AdminKpiCard";
+import {
+  OperationModuleCard,
+  type OperationModuleStatus,
+} from "@/components/admin/dashboard/OperationModuleCard";
 
 type ModuleDef = {
   title: string;
   description: string;
   href: string;
   icon: typeof ClipboardList;
-  moduleState: AdminModuleState;
-  actionLabel: string;
-  navigable: boolean;
+  status: OperationModuleStatus;
+  primaryAction: string;
+  enabled: boolean;
 };
 
 /** D1-supported operations cards only. Routes must exist; planned cards stay disabled. */
@@ -31,90 +34,90 @@ const MODULES: ModuleDef[] = [
     description: "Live queue, detail, and payment state.",
     href: "/admin/orders",
     icon: ClipboardList,
-    moduleState: "operational",
-    actionLabel: "Open orders",
-    navigable: true,
+    status: "operational",
+    primaryAction: "Open orders",
+    enabled: true,
   },
   {
     title: "Kitchen",
     description: "Live kitchen display — tickets, prep, and delays.",
     href: "/admin/kitchen-dashboard",
     icon: CookingPot,
-    moduleState: "operational",
-    actionLabel: "Open kitchen display",
-    navigable: true,
+    status: "operational",
+    primaryAction: "Open kitchen display",
+    enabled: true,
   },
   {
     title: "Delivery",
     description: "Dispatch queue, riders, and delivery status.",
     href: "/admin/delivery",
     icon: Bike,
-    moduleState: "operational",
-    actionLabel: "Open delivery",
-    navigable: true,
+    status: "operational",
+    primaryAction: "Open delivery",
+    enabled: true,
   },
   {
     title: "POS",
     description: "Counter sales and dine-in billing.",
     href: "/admin/pos",
     icon: ShoppingBag,
-    moduleState: "limited",
-    actionLabel: "Open POS",
-    navigable: true,
+    status: "limited",
+    primaryAction: "Open POS",
+    enabled: true,
   },
   {
     title: "CRM",
     description: "Customer intelligence from live order history.",
     href: "/admin/crm",
     icon: Users,
-    moduleState: "limited",
-    actionLabel: "Open CRM",
-    navigable: true,
+    status: "limited",
+    primaryAction: "Open CRM",
+    enabled: true,
   },
   {
     title: "Inventory",
     description: "Stock records — automatic alerts arrive later.",
     href: "/admin/inventory",
     icon: Package,
-    moduleState: "limited",
-    actionLabel: "Open inventory",
-    navigable: true,
+    status: "limited",
+    primaryAction: "Open inventory",
+    enabled: true,
   },
   {
     title: "Finance",
     description: "Sales records — full ledger arrives later.",
     href: "/admin/finance",
     icon: Wallet,
-    moduleState: "limited",
-    actionLabel: "Open finance",
-    navigable: true,
+    status: "limited",
+    primaryAction: "Open finance",
+    enabled: true,
   },
   {
     title: "Employees",
     description: "Staff directory — payroll arrives later.",
     href: "/admin/hr",
     icon: UtensilsCrossed,
-    moduleState: "limited",
-    actionLabel: "Open employees",
-    navigable: true,
+    status: "limited",
+    primaryAction: "Open employees",
+    enabled: true,
   },
   {
     title: "Reports",
     description: "Today's sales and orders — trends arrive later.",
     href: "/admin/reports",
     icon: Banknote,
-    moduleState: "limited",
-    actionLabel: "Open reports",
-    navigable: true,
+    status: "limited",
+    primaryAction: "Open reports",
+    enabled: true,
   },
   {
     title: "Settings",
     description: "Branch and system configuration.",
     href: "/admin/settings",
     icon: Settings,
-    moduleState: "limited",
-    actionLabel: "Open settings",
-    navigable: true,
+    status: "limited",
+    primaryAction: "Open settings",
+    enabled: true,
   },
 ];
 
@@ -128,7 +131,16 @@ export function OperationsModuleGrid() {
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {MODULES.map((module) => (
-          <AdminModuleCard key={module.title} {...module} />
+          <OperationModuleCard
+            key={module.title}
+            title={module.title}
+            description={module.description}
+            route={module.href}
+            icon={module.icon}
+            status={module.status}
+            primaryAction={module.primaryAction}
+            enabled={module.enabled}
+          />
         ))}
       </div>
     </section>
