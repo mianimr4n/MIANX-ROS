@@ -61,6 +61,8 @@ import { createAdminInventoryRouter } from "./inventory.js";
 import { createAdminPurchasingRouter } from "./purchasing.js";
 import { createAdminFinanceRouter } from "./finance.js";
 import { createAdminReportsRouter } from "./reports.js";
+import { createAdminLoyaltyRouter } from "./loyalty.js";
+import { createAdminMarketingRouter } from "./marketing.js";
 import type { OpeningOperationsService } from "../../services/opening/operations.js";
 import type { OpeningGovernanceService } from "../../services/opening/governance.js";
 import type { OpeningDryRunService } from "../../services/opening/dry-run.js";
@@ -74,6 +76,8 @@ import type { PurchasingService } from "../../services/purchasing/management.js"
 import type { FinanceService } from "../../services/finance/management.js";
 import type { PosZReportService } from "../../services/pos/z-report.js";
 import type { ReportsService } from "../../services/reports/sales.js";
+import type { LoyaltyService } from "../../services/loyalty/management.js";
+import type { MarketingService } from "../../services/marketing/coupons.js";
 
 const createInviteSchema = z.object({
   email: z.email(),
@@ -135,6 +139,8 @@ export interface AdminRouterDependencies {
   finance: FinanceService;
   posZReport: PosZReportService;
   reports: ReportsService;
+  loyalty: LoyaltyService;
+  marketing: MarketingService;
 }
 
 function toSafeInvite(invite: {
@@ -606,6 +612,22 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       reports: dependencies.reports,
+    }),
+  );
+
+  router.use(
+    createAdminLoyaltyRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      loyalty: dependencies.loyalty,
+    }),
+  );
+
+  router.use(
+    createAdminMarketingRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      marketing: dependencies.marketing,
     }),
   );
 

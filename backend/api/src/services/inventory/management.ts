@@ -18,6 +18,7 @@ export const STOCK_MOVEMENT_TYPES = [
   "waste",
   "sale_consumption",
   "purchase",
+  "sale",
 ] as const;
 export type StockMovementType = (typeof STOCK_MOVEMENT_TYPES)[number];
 

@@ -166,8 +166,76 @@ class FakeQuery {
   }
 }
 
+/** Mirrors kitchen_ticket_set_preparing_atomic for unit tests (no live DB). */
+function fakeKitchenPreparingRpc(args: {
+  p_ticket_id: string;
+  p_actor_user_id: string;
+  p_note?: string | null;
+}): Promise<{ data: unknown; error: unknown }> {
+  const ticket = state.kitchenTickets.find((t) => t.id === args.p_ticket_id);
+  if (!ticket) {
+    return Promise.resolve({
+      data: null,
+      error: { message: "KITCHEN_TICKET_NOT_FOUND" },
+    });
+  }
+  if (ticket.status === "preparing") {
+    return Promise.resolve({
+      data: {
+        ticketId: ticket.id,
+        status: "preparing",
+        orderId: ticket.order_id,
+        orderStatus: null,
+        idempotentReplay: true,
+      },
+      error: null,
+    });
+  }
+  const order = state.orders.find((o) => o.id === ticket.order_id);
+  const fromStatus = order?.status;
+  ticket.status = "preparing";
+  ticket.started_at = "2026-07-18T03:00:00Z";
+  ticket.updated_at = "2026-07-18T03:00:00Z";
+  let orderStatus: string | null = null;
+  if (order && order.status !== "preparing" && order.status !== "ready" && order.status !== "completed") {
+    const previous = String(order.status);
+    order.status = "preparing";
+    orderStatus = "preparing";
+    state.logs.push({
+      order_id: order.id,
+      from_status: previous,
+      to_status: "preparing",
+      actor_user_id: args.p_actor_user_id,
+      note: args.p_note ?? null,
+    });
+  }
+  void fromStatus;
+  return Promise.resolve({
+    data: {
+      ticketId: ticket.id,
+      status: "preparing",
+      orderId: ticket.order_id,
+      orderStatus,
+      idempotentReplay: false,
+    },
+    error: null,
+  });
+}
+
 vi.mock("@supabase/supabase-js", () => ({
-  createClient: () => ({ from: (table: string) => new FakeQuery(table) }),
+  createClient: () => ({
+    from: (table: string) => new FakeQuery(table),
+    rpc: (fn: string, args: Record<string, unknown>) => {
+      if (fn === "kitchen_ticket_set_preparing_atomic") {
+        return fakeKitchenPreparingRpc(args as {
+          p_ticket_id: string;
+          p_actor_user_id: string;
+          p_note?: string | null;
+        });
+      }
+      return Promise.resolve({ data: null, error: { message: `Unknown RPC ${fn}` } });
+    },
+  }),
 }));
 
 import { ApiError } from "../src/common/http.js";
