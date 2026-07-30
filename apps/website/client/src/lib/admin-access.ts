@@ -60,9 +60,14 @@ export function canAccessAdminPurchasing(input: AdminPrincipalInput): boolean {
   );
 }
 
-/** Finance workspace — payment.read / payment.manage (customer payment ops; not GL). */
+/** Finance workspace — finance.manage / admin.access / payment.read|manage. */
 export function canAccessAdminFinance(input: AdminPrincipalInput): boolean {
-  return canReadFinance(input);
+  return (
+    input.isSuperAdmin ||
+    input.permissions.includes("finance.manage") ||
+    input.permissions.includes("admin.access") ||
+    canReadFinance(input)
+  );
 }
 
 /** Reports & BI workspace — reports.read, order.manage, or admin.access. */
