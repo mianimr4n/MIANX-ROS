@@ -8,6 +8,7 @@ import {
   DataPrivacySettings,
   DeliverySettings,
   FinanceTaxSettings,
+  HrSettings,
   IntegrationSettings,
   InventorySettings,
   KitchenSettings,
@@ -18,6 +19,7 @@ import {
   PaymentSettings,
   POSSettings,
   PurchasingSettings,
+  ReportsSettings,
   RestaurantOperationsSettings,
   SecurityAuditSettings,
   UsersAccessSettings,
@@ -59,6 +61,10 @@ export function SettingsWorkspace({
       return <InventorySettings />;
     case "purchasing":
       return <PurchasingSettings />;
+    case "reports":
+      return <ReportsSettings />;
+    case "hr":
+      return <HrSettings />;
     case "finance":
       return <FinanceTaxSettings />;
     case "payments":

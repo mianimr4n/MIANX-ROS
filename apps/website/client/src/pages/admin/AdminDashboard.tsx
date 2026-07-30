@@ -30,18 +30,12 @@ import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { useBranch } from "@/contexts/BranchContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import {
-  canAccessAdminOrdersApi,
-  canAccessTableService,
-  primaryRoleLabel,
-  resolveStaffHome,
-} from "@/lib/admin-access";
-import { TableServiceSummary } from "@/components/admin/dashboard/TableServiceSummary";
-import { OpeningReadinessSummary } from "@/components/admin/dashboard/OpeningReadinessSummary";
-import {
   fetchAdminOperationsDashboard,
   fetchSystemHealth,
   fetchTableServiceDashboard,
   listAdminOrders,
+  listPurchaseOrders,
+  listSupplierInvoices,
   type AdminOrderListItem,
 } from "@/lib/admin-api";
 import { listDeliveryAssignments, listKitchenTickets } from "@/lib/ops-api";
@@ -50,6 +44,15 @@ import { useOperationalData, type OperationalState } from "@/lib/op-status";
 import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
 import { AdminShell } from "@/pages/admin/AdminShell";
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
+import {
+  canAccessAdminOrdersApi,
+  canAccessAdminPurchasing,
+  canAccessTableService,
+  primaryRoleLabel,
+  resolveStaffHome,
+} from "@/lib/admin-access";
+import { TableServiceSummary } from "@/components/admin/dashboard/TableServiceSummary";
+import { OpeningReadinessSummary } from "@/components/admin/dashboard/OpeningReadinessSummary";
 
 function formatPkr(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return null;
@@ -187,6 +190,31 @@ export default function AdminDashboard() {
     [token, branchIdFilter],
     { enabled: Boolean(token) && allowed && gateReady && !comingSoonBranch, pollMs: 30_000 },
   );
+  const canLoadPurchasing = canAccessAdminPurchasing({ roles, permissions, isSuperAdmin });
+  const purchaseOrders = useOperationalData(
+    ({ signal, correlationId }) =>
+      listPurchaseOrders(token!, branchIdFilter ? { branchId: branchIdFilter } : undefined, {
+        signal,
+        correlationId,
+      }),
+    [token, branchIdFilter],
+    {
+      enabled: Boolean(token) && canLoadPurchasing && gateReady && !comingSoonBranch,
+      pollMs: 60_000,
+    },
+  );
+  const supplierInvoices = useOperationalData(
+    ({ signal, correlationId }) =>
+      listSupplierInvoices(token!, branchIdFilter ? { branchId: branchIdFilter } : undefined, {
+        signal,
+        correlationId,
+      }),
+    [token, branchIdFilter],
+    {
+      enabled: Boolean(token) && canLoadPurchasing && gateReady && !comingSoonBranch,
+      pollMs: 60_000,
+    },
+  );
   const healthOp = useOperationalData(
     ({ signal, correlationId }) => fetchSystemHealth(token!, { signal, correlationId }),
     [token],
@@ -245,6 +273,39 @@ export default function AdminDashboard() {
     deliveryAssignments.state === "ERROR" ||
     deliveryAssignments.state === "OFFLINE" ||
     deliveryAssignments.state === "UNAVAILABLE";
+
+  const procurementUnavailable =
+    !canLoadPurchasing ||
+    purchaseOrders.state === "ERROR" ||
+    purchaseOrders.state === "OFFLINE" ||
+    purchaseOrders.state === "UNAVAILABLE" ||
+    supplierInvoices.state === "ERROR" ||
+    supplierInvoices.state === "OFFLINE" ||
+    supplierInvoices.state === "UNAVAILABLE" ||
+    (purchaseOrders.data == null && supplierInvoices.data == null);
+
+  const procurementSnapshot = useMemo(() => {
+    if (procurementUnavailable) {
+      return {
+        pendingPoApprovals: null as number | null,
+        awaitingDeliveryPos: null as number | null,
+        outstandingInvoices: null as number | null,
+        unavailable: true,
+      };
+    }
+    const orders = purchaseOrders.data?.orders ?? [];
+    const pendingPoApprovals = orders.filter((o) => o.status === "draft" || o.status === "submitted").length;
+    const awaitingDeliveryPos = purchaseOrders.data?.awaitingDeliveryCount ?? 0;
+    const outstandingInvoices = (supplierInvoices.data ?? []).filter(
+      (i) => i.status === "pending" || i.status === "partially_paid",
+    ).length;
+    return {
+      pendingPoApprovals,
+      awaitingDeliveryPos,
+      outstandingInvoices,
+      unavailable: false,
+    };
+  }, [procurementUnavailable, purchaseOrders.data, supplierInvoices.data]);
 
   const recentOrdersSource = ordersList.data ?? data?.recentOrders ?? null;
   const filteredOrders = useMemo(() => {
@@ -392,6 +453,7 @@ export default function AdminDashboard() {
           activeAssignmentCount={activeAssignmentCount}
           assignmentsUpdatedAt={deliveryAssignments.lastSuccessAt}
           assignmentsUnavailable={assignmentsUnavailable}
+          procurement={procurementSnapshot}
         />
       ) : null}
 
@@ -613,7 +675,11 @@ export default function AdminDashboard() {
           <AiInsightsPanel items={mianxItems} loading={loading && !data} />
           <LiveActivityPanel items={activity} />
         </div>
-        <ExecutiveAside alertCount={data?.alerts.length ?? 0} />
+        <ExecutiveAside
+          alertCount={data?.alerts.length ?? 0}
+          pendingPoApprovals={procurementSnapshot.pendingPoApprovals}
+          procurementUnavailable={procurementSnapshot.unavailable}
+        />
       </div>
       ) : null}
 

@@ -33,7 +33,7 @@ describe("Inventory Management V1 (static)", () => {
 
   it("wires live stock table and does not fabricate balances", () => {
     const table = read("apps/website/client/src/components/admin/inventory/InventoryTable.tsx");
-    assert.match(table, /No stock items added yet/);
+    assert.match(table, /Welcome — no stock items yet|No stock items added yet/);
     assert.doesNotMatch(table, /onHand:\s*\d|quantity_on_hand|fakeStock/i);
     const timeline = read("apps/website/client/src/components/admin/inventory/InventoryWorkflowPanels.tsx");
     assert.match(timeline, /No stock movements yet/);
@@ -80,9 +80,9 @@ describe("Inventory Management V1 (static)", () => {
 
   it("Mianx inventory insights remain rule-based only", () => {
     const insights = read("apps/website/client/src/components/admin/inventory/InventoryInsights.tsx");
-    assert.match(insights, /Mianx\.ai Inventory Insights/);
-    assert.match(insights, /Rule-based Summary/);
-    assert.match(insights, /No prediction models/i);
+    assert.match(insights, /Inventory brief|Mianx\.ai Inventory Insights/);
+    assert.match(insights, /rule-based/i);
+    assert.match(insights, /No forecasts|No prediction models/i);
     assert.doesNotMatch(insights, /demand forecast|autonomous replenishment|AI pricing/i);
   });
 

@@ -436,6 +436,17 @@ export default function AdminPurchasing() {
         onFiltersChange={setFilters}
       />
 
+      <SupplierTable
+        suppliers={filteredSuppliers}
+        loading={suppliersLoading}
+        error={suppliersError}
+        canManage={canManagePurchasing}
+        defaultBranchId={branchIdFilter}
+        onAddSupplier={onAddSupplier}
+        addError={addError}
+        addBusy={addBusy}
+      />
+
       <PurchaseDemandPanel />
 
       <RequisitionPanel
@@ -462,17 +473,6 @@ export default function AdminPurchasing() {
         onDecideApproval={onDecideApproval}
         approvalBusyId={approvalBusyId}
         approvalError={approvalError}
-      />
-
-      <SupplierTable
-        suppliers={filteredSuppliers}
-        loading={suppliersLoading}
-        error={suppliersError}
-        canManage={canManagePurchasing}
-        defaultBranchId={branchIdFilter}
-        onAddSupplier={onAddSupplier}
-        addError={addError}
-        addBusy={addBusy}
       />
 
       <div className="grid gap-4 lg:grid-cols-2">

@@ -56,26 +56,31 @@ export function buildDeterministicMianxInsights(
     ruleId: "ORDERS.PENDING_COUNT",
     title:
       pending > 0
-        ? `${pending} order${pending === 1 ? "" : "s"} pending confirmation`
-        : "No orders waiting for confirmation",
+        ? `${pending} order${pending === 1 ? "" : "s"} waiting for your confirmation`
+        : "Order intake is clear — nothing waiting to confirm",
     trigger: `statusCounts.pending = ${pending}`,
     sourceModule: "Orders",
     sourceTimestamp: data.generatedAt,
     branch: branchLabel,
     severity: pending > 0 ? "warning" : "info",
     recommendedAction:
-      pending > 0 ? "Open Orders and confirm or cancel pending rows." : "Order intake looks clear.",
+      pending > 0
+        ? "Open Orders and confirm or cancel anything still pending."
+        : "No action needed on pending orders.",
   });
 
   items.push({
     ruleId: "ORDERS.ACTIVE_PIPELINE",
-    title: `${data.kpis.activeOrders} active order${data.kpis.activeOrders === 1 ? "" : "s"} in the pipeline`,
+    title: `${data.kpis.activeOrders} open order${data.kpis.activeOrders === 1 ? "" : "s"} moving through the kitchen and delivery pipeline`,
     trigger: `kpis.activeOrders = ${data.kpis.activeOrders}`,
     sourceModule: "Orders",
     sourceTimestamp: data.generatedAt,
     branch: branchLabel,
     severity: data.kpis.activeOrders > 10 ? "warning" : "info",
-    recommendedAction: "Review the live operations board for bottlenecks.",
+    recommendedAction:
+      data.kpis.activeOrders > 10
+        ? "Check the operations board for bottlenecks before the queue grows."
+        : "Pipeline looks manageable for this scope.",
   });
 
   if (extras?.kitchenTicketCount != null) {
@@ -83,7 +88,7 @@ export function buildDeterministicMianxInsights(
       ruleId: "KITCHEN.TICKET_COUNT",
       title:
         extras.kitchenTicketCount > 0
-          ? `${extras.kitchenTicketCount} open kitchen ticket${extras.kitchenTicketCount === 1 ? "" : "s"}`
+          ? `${extras.kitchenTicketCount} kitchen ticket${extras.kitchenTicketCount === 1 ? "" : "s"} still open`
           : "Kitchen queue is clear",
       trigger: `listKitchenTickets length = ${extras.kitchenTicketCount}`,
       sourceModule: "Kitchen",
@@ -92,7 +97,7 @@ export function buildDeterministicMianxInsights(
       severity: extras.kitchenTicketCount > 8 ? "warning" : "info",
       recommendedAction:
         extras.kitchenTicketCount > 0
-          ? "Open Kitchen Display to clear tickets."
+          ? "Open Kitchen Display and clear tickets that are ready."
           : "No kitchen backlog right now.",
     });
   } else {
@@ -117,7 +122,7 @@ export function buildDeterministicMianxInsights(
       ruleId: "DELIVERY.ASSIGNMENT_COUNT",
       title:
         extras.activeAssignmentCount > 0
-          ? `${extras.activeAssignmentCount} open delivery assignment${extras.activeAssignmentCount === 1 ? "" : "s"}`
+          ? `${extras.activeAssignmentCount} delivery assignment${extras.activeAssignmentCount === 1 ? "" : "s"} still open`
           : "No open delivery assignments",
       trigger: `listDeliveryAssignments length = ${extras.activeAssignmentCount}`,
       sourceModule: "Delivery",
@@ -126,7 +131,7 @@ export function buildDeterministicMianxInsights(
       severity: extras.activeAssignmentCount > 5 ? "warning" : "info",
       recommendedAction:
         extras.activeAssignmentCount > 0
-          ? "Open Delivery to manage rider assignments."
+          ? "Open Delivery and check rider assignments."
           : "Delivery queue looks clear.",
     });
   }
@@ -136,8 +141,8 @@ export function buildDeterministicMianxInsights(
     ruleId: "INVENTORY.LOW_STOCK",
     title:
       lowStock > 0
-        ? `${lowStock} inventory item${lowStock === 1 ? "" : "s"} below minimum stock`
-        : "No low-stock alerts",
+        ? `${lowStock} stock item${lowStock === 1 ? "" : "s"} below minimum`
+        : "Stock levels look healthy",
     trigger: `kpis.lowStockCount = ${lowStock}`,
     sourceModule: "Inventory",
     sourceTimestamp: data.generatedAt,
@@ -146,7 +151,7 @@ export function buildDeterministicMianxInsights(
     recommendedAction:
       lowStock > 0
         ? "Open Inventory and replenish items at or below minimum stock."
-        : "Stock levels look healthy in this scope.",
+        : "No low-stock action needed in this scope.",
   });
 
   for (const alert of data.alerts.slice(0, 3)) {
@@ -194,12 +199,12 @@ export function MianxInsightsPanel({
       aria-labelledby="ai-insights-heading"
     >
       <AdminSurfaceHeader
-        title="Mianx.ai Operations Insights"
-        description="Live rule-based summaries from orders, kitchen, delivery, and inventory — not generative AI."
+        title="Mianx.ai Owner Brief"
+        description="Live rule-based summary from today’s operations — not generative AI, not forecasts."
       />
       <AdminSurfaceBody>
         <h3 id="ai-insights-heading" className="sr-only">
-          Mianx.ai Operations Insights
+          Mianx.ai Owner Brief
         </h3>
         {unavailable ? (
           <p className="text-sm text-[var(--admin-muted)]" role="status">
@@ -223,12 +228,12 @@ export function MianxInsightsPanel({
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-[var(--admin-muted)]">{item.recommendedAction}</p>
-                <p className="mt-2 text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">
-                  {item.sourceModule} · {item.branch} · {formatInsightTime(item.sourceTimestamp)}
+                <p className="mt-2 text-[10px] text-[var(--admin-muted)]">
+                  {item.branch} · {formatInsightTime(item.sourceTimestamp)}
                 </p>
-                {/* Keep rule metadata for tests / debugging without showing engineering fields to owners. */}
+                {/* Developer / a11y metadata only — not shown as Owner diagnostics. */}
                 <span className="sr-only">
-                  Rule ID {item.ruleId}. Trigger {item.trigger}.
+                  Rule ID {item.ruleId}. Trigger {item.trigger}. Source module {item.sourceModule}.
                 </span>
               </li>
             ))}

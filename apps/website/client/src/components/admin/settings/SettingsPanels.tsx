@@ -573,12 +573,29 @@ export function RestaurantOperationsSettings() {
 
 export function OrderSettings() {
   return (
-    <SettingsFoundationPanel
-      title="Orders"
-      description="Order numbering, auto-accept, cancellation and refund rules."
-      body="Order status workflows are implemented in backend transition services — not configurable from Settings. Frontend must not invent cancellation or refund policy."
-      scope="Organization"
-    />
+    <AdminSurface aria-labelledby="order-settings-heading">
+      <AdminSurfaceHeader
+        title="Orders"
+        description="Order intake, confirmation, and pipeline — managed in the Orders workspace."
+      />
+      <AdminSurfaceBody>
+        <h2 id="order-settings-heading" className="sr-only">
+          Order settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Organization" />
+        </div>
+        <p className="text-sm text-[var(--admin-muted)]">
+          Use{" "}
+          <Link href="/admin/orders" className="font-semibold text-[var(--admin-ink)] underline">
+            Admin → Orders
+          </Link>{" "}
+          to confirm, prepare, and complete orders. Cancellation and refund policy toggles are Planned for Phase 2 —
+          Settings will not invent those controls here.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 
@@ -611,12 +628,29 @@ export function POSSettings() {
 
 export function KitchenSettings() {
   return (
-    <SettingsFoundationPanel
-      title="Kitchen"
-      description="Stations, ticket sorting, prep SLA, and auto-bump."
-      body="Kitchen tickets API exists for operations — station routing, SLA, and printer settings lack a configuration API."
-      scope="Branch"
-    />
+    <AdminSurface aria-labelledby="kitchen-settings-heading">
+      <AdminSurfaceHeader
+        title="Kitchen"
+        description="Kitchen tickets and prep queue — managed in Kitchen Display."
+      />
+      <AdminSurfaceBody>
+        <h2 id="kitchen-settings-heading" className="sr-only">
+          Kitchen settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Branch" />
+        </div>
+        <p className="text-sm text-[var(--admin-muted)]">
+          Use{" "}
+          <Link href="/admin/kitchen-dashboard" className="font-semibold text-[var(--admin-ink)] underline">
+            Admin → Kitchen
+          </Link>{" "}
+          for live tickets. Station routing, SLA timers, and printer configuration are Planned for Phase 2 — no fake
+          toggles here.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 
@@ -866,23 +900,105 @@ export function MenuSettings() {
 
 export function InventorySettings() {
   return (
-    <SettingsUnavailablePanel
-      title="Inventory"
-      description="Tracking, negative stock, valuation, and reorder defaults."
-      body="Inventory module is not implemented — no stock ledger or policy engine. Coming soon; Settings will not invent stock toggles."
-      scope="Branch"
-    />
+    <AdminSurface aria-labelledby="inventory-settings-heading">
+      <AdminSurfaceHeader
+        title="Inventory"
+        description="Stock items, movements, adjustments, and waste — managed in Inventory."
+      />
+      <AdminSurfaceBody>
+        <h2 id="inventory-settings-heading" className="sr-only">
+          Inventory settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Branch" />
+        </div>
+        <p className="text-sm text-[var(--admin-muted)]">
+          Use{" "}
+          <Link href="/admin/inventory" className="font-semibold text-[var(--admin-ink)] underline">
+            Admin → Inventory
+          </Link>{" "}
+          to add stock, post adjustments, and review low-stock alerts. Policy toggles (negative stock, valuation
+          method, reorder automation) are Planned for Phase 2 — Settings will not invent those controls.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 
 export function PurchasingSettings() {
   return (
-    <SettingsFoundationPanel
-      title="Purchasing"
-      description="Approval limits, PO numbering, and matching tolerance."
-      body="Purchasing module is Foundation — no supplier or PO backend. Approval chains will not be fabricated."
-      scope="Organization"
-    />
+    <AdminSurface aria-labelledby="purchasing-settings-heading">
+      <AdminSurfaceHeader
+        title="Purchasing"
+        description="Suppliers, purchase orders, approvals, GRN, invoices, and payments."
+      />
+      <AdminSurfaceBody>
+        <h2 id="purchasing-settings-heading" className="sr-only">
+          Purchasing settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Organization" />
+        </div>
+        <p className="text-sm text-[var(--admin-muted)]">
+          Use{" "}
+          <Link href="/admin/purchasing" className="font-semibold text-[var(--admin-ink)] underline">
+            Admin → Purchasing
+          </Link>{" "}
+          to manage suppliers and the procurement loop. Approval-limit and matching-tolerance configuration is Planned
+          for Phase 2 — Settings will not fabricate those controls.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
+  );
+}
+
+export function ReportsSettings() {
+  return (
+    <AdminSurface aria-labelledby="reports-settings-heading">
+      <AdminSurfaceHeader title="Reports" description="Sales analytics and CSV export — managed in Reports." />
+      <AdminSurfaceBody>
+        <h2 id="reports-settings-heading" className="sr-only">
+          Reports settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Organization" />
+        </div>
+        <p className="text-sm text-[var(--admin-muted)]">
+          Use{" "}
+          <Link href="/admin/reports" className="font-semibold text-[var(--admin-ink)] underline">
+            Admin → Reports
+          </Link>{" "}
+          for sales analytics. Custom report builders and scheduled exports are Planned for Phase 2.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
+  );
+}
+
+export function HrSettings() {
+  return (
+    <AdminSurface aria-labelledby="hr-settings-heading">
+      <AdminSurfaceHeader title="HR" description="Team directory and workforce tools — managed in HR." />
+      <AdminSurfaceBody>
+        <h2 id="hr-settings-heading" className="sr-only">
+          HR settings
+        </h2>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <SettingsStatusBadge classification="LIVE" />
+          <SettingsScopeBadge scope="Organization" />
+        </div>
+        <p className="text-sm text-[var(--admin-muted)]">
+          Use{" "}
+          <Link href="/admin/hr" className="font-semibold text-[var(--admin-ink)] underline">
+            Admin → HR
+          </Link>{" "}
+          for the employee directory and workforce workflows. Payroll configuration is Planned for Phase 2.
+        </p>
+      </AdminSurfaceBody>
+    </AdminSurface>
   );
 }
 

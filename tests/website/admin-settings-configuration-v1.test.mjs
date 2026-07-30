@@ -17,7 +17,7 @@ describe("Settings & Configuration V1 (static)", () => {
   it("composes /admin/settings from reusable settings components", () => {
     const page = read("apps/website/client/src/pages/admin/AdminSettings.tsx");
     assert.match(page, /SettingsHeader/);
-    assert.doesNotMatch(page, /SettingsReadinessBanner|SettingsIntegrationReadiness/);
+    assert.doesNotMatch(page, /SettingsReadinessBanner|SettingsIntegrationReadiness|SettingsCapabilityMatrix/);
     assert.match(page, /SettingsSearch/);
     assert.match(page, /SettingsCategoryNav/);
     assert.match(page, /SettingsWorkspace/);
@@ -31,8 +31,8 @@ describe("Settings & Configuration V1 (static)", () => {
     assert.doesNotMatch(page, /localStorage\.setItem\(["']telepizza\.settings/);
     assert.doesNotMatch(page, /saveSettings\(/);
     const save = read("apps/website/client/src/components/admin/settings/SettingsPrimitives.tsx");
-    assert.match(save, /Save · Planned for Phase 2/);
-    assert.match(save, /disabled/);
+    assert.match(save, /never shows fake Cancel \/ Reset \/ Save/);
+    assert.doesNotMatch(save, /Save · Foundation|Save · Planned for Phase 2/);
   });
 
   it("exposes Save/Delete on opening notification channels and devices", () => {
@@ -68,7 +68,8 @@ describe("Settings & Configuration V1 (static)", () => {
     assert.match(panels, /updateBranchSettings/);
     assert.match(panels, /Branch settings updated successfully/);
     assert.match(panels, /PUT \/admin\/menu\/skus\/:id/);
-    assert.match(panels, /SettingsUnavailablePanel/);
+    assert.match(panels, /Admin → Inventory/);
+    assert.match(panels, /Admin → Purchasing/);
     const api = read("apps/website/client/src/lib/admin-api.ts");
     assert.match(api, /\/admin\/settings\/organization/);
     assert.match(api, /\/admin\/branches\/\$\{branchId\}\/settings/);

@@ -77,7 +77,7 @@ export function InventoryTable({
         <AdminSectionTitle
           eyebrow="Stock"
           title="Stock items"
-          description="Live from GET /admin/inventory/items — branch-scoped ingredient stock."
+          description="Ingredient stock for the selected branch. Menu products are not on-hand inventory."
         />
         {canManage ? (
           <button
@@ -226,9 +226,9 @@ export function InventoryTable({
             ) : !items || items.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-3 py-10 text-center">
-                  <p className="font-semibold text-[var(--admin-ink)]">No stock items added yet</p>
+                  <p className="font-semibold text-[var(--admin-ink)]">Welcome — no stock items yet</p>
                   <p className="mt-2 max-w-xl mx-auto text-sm text-[var(--admin-muted)]">
-                    Add ingredient stock items for this branch. Menu catalog SKUs in{" "}
+                    Add your first ingredient stock item for this branch. Menu catalog SKUs in{" "}
                     <Link href="/admin/menu" className="font-semibold text-[var(--brand-red)] underline-offset-2 hover:underline">
                       Menu Management
                     </Link>{" "}

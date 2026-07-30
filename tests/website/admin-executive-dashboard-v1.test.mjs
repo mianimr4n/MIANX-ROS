@@ -33,14 +33,16 @@ describe("Executive Admin Dashboard v1 (static)", () => {
     const kpis = read("apps/website/client/src/components/admin/dashboard/ExecutiveKPIs.tsx");
     assert.match(kpis, /Today’s Orders/);
     assert.match(kpis, /Today’s Sales/);
-    assert.match(kpis, /Active Orders/);
+    assert.match(kpis, /Open Orders/);
     assert.match(kpis, /Low-stock items/);
     assert.match(kpis, /Inventory levels are healthy/);
     assert.match(kpis, /below minimum stock level/);
     assert.match(kpis, /Kitchen Queue/);
     assert.match(kpis, /Active Deliveries/);
     assert.match(kpis, /Average Order Value/);
-    assert.match(kpis, /Source: Orders API/);
+    assert.match(kpis, /Ready Orders/);
+    assert.match(kpis, /Delayed Orders/);
+    assert.match(kpis, /Pending PO approvals/);
     assert.match(kpis, /Source unavailable/);
     assert.doesNotMatch(kpis, /Customer satisfaction/);
     assert.doesNotMatch(kpis, /percentageLabel|trendLabel/);
@@ -49,14 +51,15 @@ describe("Executive Admin Dashboard v1 (static)", () => {
 
   it("labels Mianx insights as deterministic rule summaries with structured fields", () => {
     const panel = read("apps/website/client/src/components/admin/dashboard/MianxInsightsPanel.tsx");
-    assert.match(panel, /Mianx\.ai Operations Insights/);
+    assert.match(panel, /Mianx\.ai Owner Brief|Mianx\.ai Operations Insights/);
     assert.match(panel, /Rule ID/);
+    assert.match(panel, /sr-only/);
     assert.match(panel, /recommendedAction/);
     assert.match(panel, /buildMianxInsightItems|buildDeterministicMianxInsights/);
     assert.match(panel, /Loading insights/);
-    assert.match(panel, /pending confirmation|pending order/i);
+    assert.match(panel, /pending confirmation|pending order|waiting for your confirmation/i);
     assert.match(panel, /INVENTORY\.LOW_STOCK/);
-    assert.match(panel, /No low-stock alerts/);
+    assert.match(panel, /No low-stock|Stock levels look healthy/);
     assert.doesNotMatch(panel, /demand predicted|autonomous|generative model|openai|llm/i);
   });
 

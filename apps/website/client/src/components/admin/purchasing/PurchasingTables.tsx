@@ -65,7 +65,7 @@ export function SupplierTable({
         <AdminSectionTitle
           eyebrow="Suppliers"
           title="Supplier overview"
-          description="Live from GET /admin/purchasing/suppliers — branch-scoped vendor master."
+          description="Vendors for the selected branch. Add a supplier before creating purchase orders."
         />
         {canManage ? (
           <button
@@ -267,7 +267,7 @@ export function PurchaseOrderTable({
         <AdminSectionTitle
           eyebrow="Orders"
           title="Purchase orders"
-          description="Live from GET /admin/purchasing/orders — approve/reject draft and submitted POs."
+          description="Approve or reject draft and submitted POs for the selected branch."
         />
         {canManage ? (
           <button
@@ -385,13 +385,11 @@ export function PurchaseOrderTable({
             ) : !orders || orders.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-3 py-10 text-center">
-                  <p className="font-semibold">No purchase orders created yet</p>
+                  <p className="font-semibold">No purchase orders yet</p>
                   <p className="mt-2 text-sm text-[var(--admin-muted)]">
-                    See{" "}
-                    <Link href="/admin/orders" className="font-semibold text-[var(--brand-red)] underline-offset-2 hover:underline">
-                      Orders Management
-                    </Link>{" "}
-                    for customer sales — not supplier procurement.
+                    {(!suppliers || suppliers.length === 0)
+                      ? "Add a supplier first, then create your first purchase order."
+                      : "Create a purchase order against a supplier when you need stock."}
                   </p>
                 </td>
               </tr>

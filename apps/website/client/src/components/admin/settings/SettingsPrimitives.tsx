@@ -103,24 +103,14 @@ export function SettingsReadOnlyNotice({ message }: { message: string }) {
 export function SettingsSaveBar() {
   return (
     <div
-      className="sticky bottom-0 z-10 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-3"
+      className="sticky bottom-0 z-10 mt-6 rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-3"
       role="region"
       aria-label="Save controls"
     >
       <p className="text-sm text-[var(--admin-muted)]">
-        These save controls are Planned for Phase 2.
+        No editable settings on this page. When a write workflow exists, Save appears inside the panel above — Settings
+        never shows fake Cancel / Reset / Save controls.
       </p>
-      <div className="flex flex-wrap gap-2">
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Cancel · Planned for Phase 2
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Reset · Planned for Phase 2
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg bg-[var(--admin-soft)] px-4 text-sm font-semibold text-[var(--admin-muted)]">
-          Save · Planned for Phase 2
-        </button>
-      </div>
     </div>
   );
 }

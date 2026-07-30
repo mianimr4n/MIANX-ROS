@@ -50,7 +50,8 @@ export function ConfigurationInsights({ items }: { items: SettingsInsightItem[] 
         ))}
       </ul>
       <p className="mt-4 text-xs text-[var(--admin-muted)]">
-        Payment credentials stay environment-managed. Tax rates, printers, and loyalty rules are Planned for Phase 2.
+        Payment credentials stay environment-managed. Finance & tax, printers, loyalty rules, and advanced payment
+        setup are Planned for Phase 2.
       </p>
     </section>
   );

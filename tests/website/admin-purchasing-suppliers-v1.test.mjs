@@ -43,8 +43,8 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(suppliers, /Welcome! No suppliers added yet/);
     assert.doesNotMatch(suppliers, /supplierCode:\s*"|fakeSupplier/i);
     const orders = read("apps/website/client/src/components/admin/purchasing/PurchasingTables.tsx");
-    assert.match(orders, /No purchase orders created yet/);
-    assert.match(orders, /customer sales — not supplier procurement/i);
+    assert.match(orders, /No purchase orders yet|No purchase orders created yet/);
+    assert.match(orders, /Add a supplier first|Add a supplier before creating/);
     assert.match(orders, /No purchase requisitions created yet/);
   });
 
@@ -91,9 +91,9 @@ describe("Purchasing & Suppliers V1 (static)", () => {
 
   it("Mianx procurement insights remain rule-based only", () => {
     const insights = read("apps/website/client/src/components/admin/purchasing/ProcurementInsights.tsx");
-    assert.match(insights, /Mianx\.ai Procurement Insights/);
-    assert.match(insights, /Rule-based Summary/);
-    assert.match(insights, /No prediction models/i);
+    assert.match(insights, /Procurement brief|Mianx\.ai Procurement Insights/);
+    assert.match(insights, /rule-based/i);
+    assert.match(insights, /No predictions|No prediction models/i);
     assert.doesNotMatch(insights, /supplier risk|autonomous purchase|demand forecast/i);
   });
 
