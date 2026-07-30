@@ -1,8 +1,18 @@
 import { useState, type FormEvent } from "react";
 
-import type { ProcurementIntegrationCheck, ProcurementReadinessGroup } from "@/lib/admin-purchasing";
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
-import type { GoodsReceiving, PurchaseOrder } from "@/lib/admin-api";
+import {
+  createSupplierInvoice,
+  createSupplierPayment,
+  type GoodsReceiving,
+  type PurchaseOrder,
+  type Supplier,
+  type SupplierInvoice,
+  type SupplierPayment,
+} from "@/lib/admin-api";
+import type { ProcurementIntegrationCheck, ProcurementReadinessGroup } from "@/lib/admin-purchasing";
+import { formatMoney } from "@/lib/admin-purchasing";
+import { ApiRequestError } from "@/lib/api";
 
 export function ProcurementFoundationPanel({ checks }: { checks: ProcurementIntegrationCheck[] }) {
   return (
@@ -226,21 +236,349 @@ export function ReceivingGrnPanel({
   );
 }
 
-export function InvoiceMatchingPanel() {
+export function InvoiceMatchingPanel({
+  invoices,
+  payments,
+  suppliers,
+  orders,
+  branchId,
+  accessToken,
+  canManage,
+  loading,
+  error,
+  onRefresh,
+}: {
+  invoices: SupplierInvoice[] | null;
+  payments: SupplierPayment[] | null;
+  suppliers: Supplier[] | null;
+  orders: PurchaseOrder[] | null;
+  branchId: string | null;
+  accessToken: string | undefined;
+  canManage: boolean;
+  loading: boolean;
+  error: string | null;
+  onRefresh: () => void;
+}) {
+  const [showInvoiceForm, setShowInvoiceForm] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [supplierId, setSupplierId] = useState("");
+  const [purchaseOrderId, setPurchaseOrderId] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [totalAmount, setTotalAmount] = useState("");
+  const [payInvoiceId, setPayInvoiceId] = useState("");
+  const [payAmount, setPayAmount] = useState("");
+  const [payMethod, setPayMethod] = useState<"cash" | "bank_transfer" | "cheque" | "other">("bank_transfer");
+  const [busy, setBusy] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const openInvoices = (invoices ?? []).filter((i) => i.status === "pending" || i.status === "partially_paid");
+
+  async function onCreateInvoice(e: FormEvent) {
+    e.preventDefault();
+    if (!accessToken || !branchId) {
+      setFormError("Select a branch and sign in to record an invoice.");
+      return;
+    }
+    const amount = Number(totalAmount);
+    if (!Number.isFinite(amount) || amount < 0) {
+      setFormError("totalAmount must be a non-negative number.");
+      return;
+    }
+    setBusy(true);
+    setFormError(null);
+    try {
+      await createSupplierInvoice(accessToken, {
+        branchId,
+        supplierId,
+        purchaseOrderId: purchaseOrderId || null,
+        invoiceNumber,
+        invoiceDate,
+        totalAmount: amount,
+        status: "pending",
+      });
+      setInvoiceNumber("");
+      setTotalAmount("");
+      setPurchaseOrderId("");
+      setShowInvoiceForm(false);
+      onRefresh();
+    } catch (err) {
+      setFormError(err instanceof ApiRequestError ? err.message : "Failed to create invoice.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onCreatePayment(e: FormEvent) {
+    e.preventDefault();
+    if (!accessToken || !branchId) {
+      setFormError("Select a branch and sign in to record a payment.");
+      return;
+    }
+    const invoice = (invoices ?? []).find((i) => i.id === payInvoiceId);
+    if (!invoice) {
+      setFormError("Select an invoice to pay.");
+      return;
+    }
+    const amount = Number(payAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setFormError("Payment amount must be positive.");
+      return;
+    }
+    setBusy(true);
+    setFormError(null);
+    try {
+      await createSupplierPayment(accessToken, {
+        branchId,
+        supplierId: invoice.supplierId,
+        supplierInvoiceId: invoice.id,
+        amount,
+        paymentMethod: payMethod,
+      });
+      setPayAmount("");
+      setPayInvoiceId("");
+      setShowPaymentForm(false);
+      onRefresh();
+    } catch (err) {
+      setFormError(err instanceof ApiRequestError ? err.message : "Failed to record payment.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <AdminSurface aria-labelledby="invoice-matching-heading" className="mb-6">
-      <AdminSurfaceHeader title="Invoice matching" description="Three-way match: PO ↔ GRN ↔ supplier invoice." />
+      <AdminSurfaceHeader
+        title="Supplier invoices & payments"
+        description="Live AP invoices and payments. Automated three-way matching Coming Soon."
+        action={
+          canManage && branchId ? (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowInvoiceForm((v) => !v);
+                  setShowPaymentForm(false);
+                  setFormError(null);
+                }}
+                className="min-h-9 rounded-lg border border-[var(--admin-border)] bg-white px-3 text-sm font-semibold"
+              >
+                {showInvoiceForm ? "Cancel" : "Record invoice"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPaymentForm((v) => !v);
+                  setShowInvoiceForm(false);
+                  setFormError(null);
+                }}
+                className="min-h-9 rounded-lg bg-[var(--admin-ink)] px-3 text-sm font-semibold text-[var(--admin-panel)]"
+              >
+                {showPaymentForm ? "Cancel" : "Record payment"}
+              </button>
+            </div>
+          ) : null
+        }
+      />
       <AdminSurfaceBody>
         <h3 id="invoice-matching-heading" className="sr-only">
-          Invoice matching
+          Supplier invoices and payments
         </h3>
-        <p className="text-sm font-semibold">Invoice Matching — Coming Soon</p>
-        <p className="mt-2 text-sm text-[var(--admin-muted)]">
-          Purchase-order, receipt, and supplier-invoice records are required before three-way matching can be performed.
-          Customer payment records are not supplier payables.
-        </p>
-        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-          Coming Soon · Finance &amp; Accounting
+
+        {showInvoiceForm ? (
+          <form onSubmit={(e) => void onCreateInvoice(e)} className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <label className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+              Supplier
+              <select
+                required
+                value={supplierId}
+                onChange={(e) => setSupplierId(e.target.value)}
+                className="mt-1 min-h-11 w-full rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
+              >
+                <option value="">Select…</option>
+                {(suppliers ?? []).map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+              Linked PO (optional)
+              <select
+                value={purchaseOrderId}
+                onChange={(e) => setPurchaseOrderId(e.target.value)}
+                className="mt-1 min-h-11 w-full rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
+              >
+                <option value="">No linked PO</option>
+                {(orders ?? [])
+                  .filter((o) => !supplierId || o.supplierId === supplierId)
+                  .map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.poNumber} · {o.status}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+              Invoice #
+              <input
+                required
+                value={invoiceNumber}
+                onChange={(e) => setInvoiceNumber(e.target.value)}
+                className="mt-1 min-h-11 w-full rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
+              />
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+              Date
+              <input
+                required
+                type="date"
+                value={invoiceDate}
+                onChange={(e) => setInvoiceDate(e.target.value)}
+                className="mt-1 min-h-11 w-full rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
+              />
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+              Amount (PKR)
+              <input
+                required
+                type="number"
+                min={0}
+                step="0.01"
+                value={totalAmount}
+                onChange={(e) => setTotalAmount(e.target.value)}
+                className="mt-1 min-h-11 w-full rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={busy}
+              className="min-h-11 self-end rounded-lg bg-[var(--admin-ink)] px-4 text-sm font-semibold text-[var(--admin-panel)] disabled:opacity-40"
+            >
+              {busy ? "Saving…" : "Save invoice"}
+            </button>
+          </form>
+        ) : null}
+
+        {showPaymentForm ? (
+          <form onSubmit={(e) => void onCreatePayment(e)} className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <label className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)] sm:col-span-2">
+              Open invoice
+              <select
+                required
+                value={payInvoiceId}
+                onChange={(e) => setPayInvoiceId(e.target.value)}
+                className="mt-1 min-h-11 w-full rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
+              >
+                <option value="">Select…</option>
+                {openInvoices.map((i) => (
+                  <option key={i.id} value={i.id}>
+                    {i.invoiceNumber} · {i.supplierName ?? "—"} · {formatMoney(i.totalAmount)} · {i.status}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+              Amount
+              <input
+                required
+                type="number"
+                min={0.01}
+                step="0.01"
+                value={payAmount}
+                onChange={(e) => setPayAmount(e.target.value)}
+                className="mt-1 min-h-11 w-full rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
+              />
+            </label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+              Method
+              <select
+                value={payMethod}
+                onChange={(e) => setPayMethod(e.target.value as typeof payMethod)}
+                className="mt-1 min-h-11 w-full rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
+              >
+                <option value="bank_transfer">Bank transfer</option>
+                <option value="cash">Cash</option>
+                <option value="cheque">Cheque</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <button
+              type="submit"
+              disabled={busy || openInvoices.length === 0}
+              className="min-h-11 self-end rounded-lg bg-[var(--admin-ink)] px-4 text-sm font-semibold text-[var(--admin-panel)] disabled:opacity-40"
+            >
+              {busy ? "Posting…" : "Post payment"}
+            </button>
+          </form>
+        ) : null}
+
+        {formError ? (
+          <p className="mb-3 text-sm text-red-700" role="alert">
+            {formError}
+          </p>
+        ) : null}
+
+        {!branchId ? (
+          <p className="text-sm text-[var(--admin-muted)]">Select a branch to view invoices.</p>
+        ) : loading ? (
+          <p className="text-sm text-[var(--admin-muted)]">Loading invoices…</p>
+        ) : error ? (
+          <p className="text-sm text-red-700" role="alert">
+            {error}
+          </p>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            <section>
+              <h4 className="mb-2 text-sm font-semibold">Invoices</h4>
+              {!invoices || invoices.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6 text-sm text-[var(--admin-muted)]">
+                  No invoices recorded yet
+                </p>
+              ) : (
+                <ul className="space-y-2 text-sm">
+                  {invoices.map((i) => (
+                    <li key={i.id} className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2">
+                      <p className="font-semibold">
+                        {i.invoiceNumber} · {formatMoney(i.totalAmount)}
+                      </p>
+                      <p className="mt-1 text-xs text-[var(--admin-muted)]">
+                        {i.supplierName ?? "—"} · {i.invoiceDate} · {i.status}
+                        {i.poNumber ? ` · PO ${i.poNumber}` : ""}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+            <section>
+              <h4 className="mb-2 text-sm font-semibold">Payments</h4>
+              {!payments || payments.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6 text-sm text-[var(--admin-muted)]">
+                  No payments recorded yet
+                </p>
+              ) : (
+                <ul className="space-y-2 text-sm">
+                  {payments.map((p) => (
+                    <li key={p.id} className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2">
+                      <p className="font-semibold">
+                        {formatMoney(p.amount)} · {p.paymentMethod.replace("_", " ")}
+                      </p>
+                      <p className="mt-1 text-xs text-[var(--admin-muted)]">
+                        {p.invoiceNumber ?? "—"} · {p.paymentDate} · {p.supplierName ?? "—"}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+        )}
+
+        <p className="mt-4 text-xs text-[var(--admin-muted)]">
+          Three-way matching (PO ↔ GRN ↔ invoice) remains Coming Soon — records can be linked manually via optional PO on
+          invoice.
         </p>
       </AdminSurfaceBody>
     </AdminSurface>

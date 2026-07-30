@@ -116,7 +116,7 @@ const purchasing: PurchasingService = {
     };
   },
   async listOrders() {
-    return [order];
+    return { orders: [order], awaitingDeliveryCount: 0 };
   },
   async createOrder(_scope, _actor, input) {
     return {
@@ -171,6 +171,47 @@ const purchasing: PurchasingService = {
       createdBy: "user-admin",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+    };
+  },
+  async listInvoices() {
+    return [];
+  },
+  async createInvoice(_scope, input) {
+    return {
+      id: "6ba7b816-9dad-11d1-80b4-00c04fd430c8",
+      branchId: input.branchId,
+      branchCode: "royal-orchard",
+      branchName: "Royal Orchard",
+      supplierId: input.supplierId,
+      supplierName: "Test Supplier",
+      purchaseOrderId: input.purchaseOrderId ?? null,
+      poNumber: null,
+      invoiceNumber: input.invoiceNumber,
+      invoiceDate: input.invoiceDate ?? "2026-07-30",
+      totalAmount: input.totalAmount,
+      status: input.status ?? "pending",
+      createdAt: new Date().toISOString(),
+    };
+  },
+  async listPayments() {
+    return [];
+  },
+  async createPayment(_scope, input) {
+    return {
+      id: "6ba7b817-9dad-11d1-80b4-00c04fd430c8",
+      branchId: input.branchId,
+      branchCode: "royal-orchard",
+      branchName: "Royal Orchard",
+      supplierId: input.supplierId,
+      supplierName: "Test Supplier",
+      supplierInvoiceId: input.supplierInvoiceId,
+      invoiceNumber: "INV-1",
+      amount: input.amount,
+      paymentDate: input.paymentDate ?? "2026-07-30",
+      paymentMethod: input.paymentMethod ?? "bank_transfer",
+      reference: input.reference ?? null,
+      createdAt: new Date().toISOString(),
+      invoiceStatus: "paid",
     };
   },
 };
