@@ -28,6 +28,7 @@ import {
   createPurchaseOrder,
   createPurchaseRequisition,
   createSupplier,
+  decidePurchaseOrderApproval,
   listGoodsReceiving,
   listPurchaseOrders,
   listPurchaseRequisitions,
@@ -74,6 +75,8 @@ export default function AdminPurchasing() {
   const [addBusy, setAddBusy] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createBusy, setCreateBusy] = useState(false);
+  const [approvalError, setApprovalError] = useState<string | null>(null);
+  const [approvalBusyId, setApprovalBusyId] = useState<string | null>(null);
   const [reqCreateError, setReqCreateError] = useState<string | null>(null);
   const [reqCreateBusy, setReqCreateBusy] = useState(false);
   const [grnCreateError, setGrnCreateError] = useState<string | null>(null);
@@ -259,7 +262,7 @@ export default function AdminPurchasing() {
         supplierId: input.supplierId,
         totalAmount: input.totalAmount,
         expectedDeliveryDate: input.expectedDeliveryDate || null,
-        status: "draft",
+        status: "submitted",
       });
       await loadOrders();
       return true;
@@ -268,6 +271,26 @@ export default function AdminPurchasing() {
       return false;
     } finally {
       setCreateBusy(false);
+    }
+  };
+
+  const onDecideApproval = async (orderId: string, decision: "approved" | "rejected") => {
+    const token = session?.access_token;
+    if (!token) {
+      setApprovalError("Sign in required.");
+      return false;
+    }
+    setApprovalBusyId(orderId);
+    setApprovalError(null);
+    try {
+      await decidePurchaseOrderApproval(token, orderId, { decision });
+      await loadOrders();
+      return true;
+    } catch (err) {
+      setApprovalError(err instanceof ApiRequestError ? err.message : "Failed to update approval");
+      return false;
+    } finally {
+      setApprovalBusyId(null);
     }
   };
 
@@ -354,6 +377,9 @@ export default function AdminPurchasing() {
         onCreateOrder={onCreateOrder}
         createError={createError}
         createBusy={createBusy}
+        onDecideApproval={onDecideApproval}
+        approvalBusyId={approvalBusyId}
+        approvalError={approvalError}
       />
 
       <SupplierTable
@@ -379,7 +405,7 @@ export default function AdminPurchasing() {
           createError={grnCreateError}
           createBusy={grnCreateBusy}
         />
-        <ApprovalTimelinePanel />
+        <ApprovalTimelinePanel orders={orders} loading={ordersLoading} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

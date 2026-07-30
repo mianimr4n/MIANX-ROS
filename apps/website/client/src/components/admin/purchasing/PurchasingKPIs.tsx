@@ -5,12 +5,13 @@ export function PurchasingKPIs({ snapshot }: { snapshot: PurchasingKpiSnapshot }
   const suppliersLoaded = snapshot.supplierCount != null;
   const ordersLoaded = snapshot.openPoCount != null;
   const reqLoaded = snapshot.openRequisitionCount != null;
+  const pendingLoaded = snapshot.pendingApprovalCount != null;
   return (
     <section aria-label="Purchasing key performance indicators" className="mb-6">
       <AdminSectionTitle
         eyebrow="Procurement"
         title="Operational KPIs"
-        description="Live supplier, requisition, and PO counts — invoice matching Coming Soon."
+        description="Live supplier, requisition, PO, and pending-approval counts — invoice matching Coming Soon."
       />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <AdminKpiCard
@@ -27,7 +28,13 @@ export function PurchasingKPIs({ snapshot }: { snapshot: PurchasingKpiSnapshot }
           unavailable={!reqLoaded}
           detail={reqLoaded ? "GET /admin/purchasing/requisitions" : "Requires purchasing.manage"}
         />
-        <AdminKpiCard title="Pending approvals" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — no approval workflow" />
+        <AdminKpiCard
+          title="Pending approvals"
+          value={pendingLoaded ? String(snapshot.pendingApprovalCount) : "—"}
+          source={pendingLoaded ? "LIVE" : "UNAVAILABLE"}
+          unavailable={!pendingLoaded}
+          detail={pendingLoaded ? "draft/submitted POs" : "Requires purchasing.manage"}
+        />
         <AdminKpiCard
           title="Open purchase orders"
           value={ordersLoaded ? String(snapshot.openPoCount) : "—"}

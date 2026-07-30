@@ -129,6 +129,13 @@ const purchasing: PurchasingService = {
       status: input.status ?? "draft",
     };
   },
+  async decideOrderApproval(_scope, _actor, orderId, input) {
+    return {
+      ...order,
+      id: orderId,
+      status: input.decision === "approved" ? "approved" : "rejected",
+    };
+  },
   async listRequisitions() {
     return [];
   },
@@ -286,5 +293,27 @@ describe("Purchasing admin APIs", () => {
       .send({ branchId: BRANCH_ID, purchaseOrderId: order.id, notes: "Partial delivery" });
     expect(grn.status).toBe(201);
     expect(grn.body.data.grnNumber).toBeTruthy();
+  });
+
+  it("approves and rejects purchase orders", async () => {
+    const { app } = createApp(readyEnv, {
+      purchasing,
+      authTokenVerifier: verifier("auth-admin", "admin@example.com"),
+      authProfileRepository: authRepo(principal()),
+    });
+
+    const approved = await request(app)
+      .patch(`/api/v1/admin/purchasing/orders/${order.id}/approve`)
+      .set("Authorization", "Bearer token")
+      .send({ decision: "approved" });
+    expect(approved.status).toBe(200);
+    expect(approved.body.data.status).toBe("approved");
+
+    const rejected = await request(app)
+      .patch(`/api/v1/admin/purchasing/orders/${order.id}/approve`)
+      .set("Authorization", "Bearer token")
+      .send({ decision: "rejected" });
+    expect(rejected.status).toBe(200);
+    expect(rejected.body.data.status).toBe("rejected");
   });
 });

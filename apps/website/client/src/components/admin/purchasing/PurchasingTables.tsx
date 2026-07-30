@@ -211,6 +211,9 @@ export function PurchaseOrderTable({
   onCreateOrder,
   createError,
   createBusy,
+  onDecideApproval,
+  approvalBusyId,
+  approvalError,
 }: {
   orders: PurchaseOrder[] | null;
   suppliers: Supplier[] | null;
@@ -226,6 +229,9 @@ export function PurchaseOrderTable({
   }) => Promise<boolean>;
   createError: string | null;
   createBusy: boolean;
+  onDecideApproval: (orderId: string, decision: "approved" | "rejected") => Promise<boolean>;
+  approvalBusyId: string | null;
+  approvalError: string | null;
 }) {
   const [showForm, setShowForm] = useState(false);
   const [branchId, setBranchId] = useState(defaultBranchId ?? "");
@@ -253,13 +259,15 @@ export function PurchaseOrderTable({
     if (ok) resetForm();
   };
 
+  const pending = (status: string) => status === "draft" || status === "submitted";
+
   return (
     <section aria-label="Purchase order table" className="mb-6 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <AdminSectionTitle
           eyebrow="Orders"
           title="Purchase orders"
-          description="Live from GET /admin/purchasing/orders — distinct from customer sales orders."
+          description="Live from GET /admin/purchasing/orders — approve/reject draft and submitted POs."
         />
         {canManage ? (
           <button
@@ -348,11 +356,13 @@ export function PurchaseOrderTable({
         </form>
       ) : null}
 
+      {approvalError ? <p className="mb-3 text-sm text-red-700">{approvalError}</p> : null}
+
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--admin-border)] text-xs uppercase tracking-wide text-[var(--admin-muted)]">
-              {["PO number", "Supplier", "Branch", "Status", "Total", "Expected"].map((col) => (
+              {["PO number", "Supplier", "Branch", "Status", "Total", "Expected", "Actions"].map((col) => (
                 <th key={col} scope="col" className="px-3 py-3 font-semibold">
                   {col}
                 </th>
@@ -362,19 +372,19 @@ export function PurchaseOrderTable({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-3 py-10 text-center text-sm text-[var(--admin-muted)]">
+                <td colSpan={7} className="px-3 py-10 text-center text-sm text-[var(--admin-muted)]">
                   Loading purchase orders…
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={6} className="px-3 py-10 text-center text-sm text-red-700">
+                <td colSpan={7} className="px-3 py-10 text-center text-sm text-red-700">
                   {error}
                 </td>
               </tr>
             ) : !orders || orders.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-10 text-center">
+                <td colSpan={7} className="px-3 py-10 text-center">
                   <p className="font-semibold">No purchase orders created yet</p>
                   <p className="mt-2 text-sm text-[var(--admin-muted)]">
                     See{" "}
@@ -394,6 +404,30 @@ export function PurchaseOrderTable({
                   <td className="px-3 py-3 capitalize text-[var(--admin-muted)]">{o.status.replaceAll("_", " ")}</td>
                   <td className="px-3 py-3 font-semibold">{formatMoney(o.totalAmount)}</td>
                   <td className="px-3 py-3 text-[var(--admin-muted)]">{o.expectedDeliveryDate ?? "—"}</td>
+                  <td className="px-3 py-3">
+                    {canManage && pending(o.status) ? (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={approvalBusyId === o.id}
+                          className="rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-60"
+                          onClick={() => void onDecideApproval(o.id, "approved")}
+                        >
+                          {approvalBusyId === o.id ? "…" : "Approve"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={approvalBusyId === o.id}
+                          className="rounded-md border border-[var(--admin-border)] px-2.5 py-1 text-xs font-semibold disabled:opacity-60"
+                          onClick={() => void onDecideApproval(o.id, "rejected")}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-[var(--admin-muted)]">—</span>
+                    )}
+                  </td>
                 </tr>
               ))
             )}

@@ -18,8 +18,17 @@ export const PURCHASE_ORDER_STATUSES = [
   "partially_received",
   "received",
   "cancelled",
+  "rejected",
 ] as const;
 export type PurchaseOrderStatus = (typeof PURCHASE_ORDER_STATUSES)[number];
+
+export const PURCHASE_ORDER_APPROVAL_DECISIONS = ["approved", "rejected"] as const;
+export type PurchaseOrderApprovalDecision = (typeof PURCHASE_ORDER_APPROVAL_DECISIONS)[number];
+
+export interface DecidePurchaseOrderApprovalInput {
+  decision: PurchaseOrderApprovalDecision;
+  notes?: string | null;
+}
 
 export interface SupplierRecord {
   id: string;
@@ -137,6 +146,12 @@ export interface PurchasingService {
     scope: BranchActorScope,
     actorUserId: string | null,
     input: CreatePurchaseOrderInput,
+  ): Promise<PurchaseOrderRecord>;
+  decideOrderApproval(
+    scope: BranchActorScope,
+    actorUserId: string | null,
+    orderId: string,
+    input: DecidePurchaseOrderApprovalInput,
   ): Promise<PurchaseOrderRecord>;
   listRequisitions(scope: BranchActorScope, branchId?: string): Promise<PurchaseRequisitionRecord[]>;
   createRequisition(
@@ -424,6 +439,44 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
         }
         throwMappedDbError("PURCHASE_ORDER_CREATE_FAILED", error);
       }
+      return mapOrder(data as unknown as PurchaseOrderRow);
+    },
+
+    async decideOrderApproval(scope, actorUserId, orderId, input) {
+      const client = supabase();
+      const { data: existing, error: readError } = await client
+        .from("purchase_orders")
+        .select("id, branch_id, status")
+        .eq("id", orderId)
+        .maybeSingle();
+      if (readError) throwMappedDbError("PURCHASE_ORDER_READ_FAILED", readError);
+      if (!existing) throw new ApiError(404, "PURCHASE_ORDER_NOT_FOUND", "Purchase order not found.");
+
+      assertBranchMembership(scope, existing.branch_id);
+
+      const current = existing.status as PurchaseOrderStatus;
+      if (current !== "draft" && current !== "submitted") {
+        throw new ApiError(
+          409,
+          "PO_NOT_PENDING_APPROVAL",
+          `Purchase order status '${current}' cannot be approved or rejected.`,
+        );
+      }
+
+      const nextStatus: PurchaseOrderStatus = input.decision === "approved" ? "approved" : "rejected";
+      const { data, error } = await client
+        .from("purchase_orders")
+        .update({
+          status: nextStatus,
+          approved_by: actorUserId,
+          approved_at: new Date().toISOString(),
+          approval_notes: input.notes?.trim() || null,
+        })
+        .eq("id", orderId)
+        .select(ORDER_SELECT)
+        .single();
+
+      if (error) throwMappedDbError("PURCHASE_ORDER_APPROVAL_FAILED", error);
       return mapOrder(data as unknown as PurchaseOrderRow);
     },
 

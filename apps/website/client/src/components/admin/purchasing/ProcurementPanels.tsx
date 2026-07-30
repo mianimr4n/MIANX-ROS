@@ -207,7 +207,7 @@ export function ReceivingGrnPanel({
         ) : error ? (
           <p className="text-sm text-red-700">{error}</p>
         ) : !receipts || receipts.length === 0 ? (
-          <p className="text-sm text-[var(--admin-muted)]">No goods receipts recorded yet.</p>
+          <p className="text-sm text-[var(--admin-muted)]">No goods received yet.</p>
         ) : (
           <ul className="space-y-2 text-sm">
             {receipts.map((r) => (
@@ -264,18 +264,50 @@ export function SupplierPerformancePanel() {
   );
 }
 
-export function ApprovalTimelinePanel() {
+export function ApprovalTimelinePanel({
+  orders,
+  loading,
+}: {
+  orders: PurchaseOrder[] | null;
+  loading: boolean;
+}) {
+  const pending = (orders ?? []).filter((o) => o.status === "draft" || o.status === "submitted");
+  const decided = (orders ?? []).filter((o) => o.status === "approved" || o.status === "rejected");
+
   return (
     <AdminSurface aria-labelledby="approval-timeline-heading" className="mb-6">
-      <AdminSurfaceHeader title="Approval workflow" description="Server-side approval enforcement required." />
+      <AdminSurfaceHeader
+        title="Approval workflow"
+        description="Live PO approve/reject via PATCH /admin/purchasing/orders/:id/approve."
+      />
       <AdminSurfaceBody>
         <h3 id="approval-timeline-heading" className="sr-only">
           Approval timeline
         </h3>
-        <p className="text-sm text-[var(--admin-muted)]">
-          Coming Soon — server-side approval workflow required. No frontend-only approve/reject buttons.
-        </p>
-        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">Coming Soon</p>
+        {loading ? (
+          <p className="text-sm text-[var(--admin-muted)]">Loading approval queue…</p>
+        ) : (
+          <>
+            <p className="text-sm text-[var(--admin-muted)]">
+              {pending.length} pending · {decided.length} decided. Use Approve / Reject on the purchase orders table.
+            </p>
+            {pending.length === 0 ? (
+              <p className="mt-2 text-sm text-[var(--admin-muted)]">No purchase orders awaiting approval.</p>
+            ) : (
+              <ul className="mt-3 space-y-2 text-sm">
+                {pending.slice(0, 8).map((o) => (
+                  <li key={o.id} className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2">
+                    <span className="font-semibold">{o.poNumber}</span>
+                    <span className="ml-2 capitalize text-[var(--admin-muted)]">{o.status}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-3 text-xs text-[var(--admin-muted)]">
+              Multi-step approval chains and requisition conversion remain Coming Soon.
+            </p>
+          </>
+        )}
       </AdminSurfaceBody>
     </AdminSurface>
   );

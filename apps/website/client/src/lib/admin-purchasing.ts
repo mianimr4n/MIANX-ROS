@@ -13,6 +13,7 @@ export type PurchasingKpiSnapshot = {
   supplierCount: number | null;
   openPoCount: number | null;
   openRequisitionCount: number | null;
+  pendingApprovalCount: number | null;
   inventoryFoundationLinked: boolean;
   stockLedgerAvailable: boolean;
   menuCatalogAvailable: boolean;
@@ -38,6 +39,7 @@ export type ProcurementReadinessGroup = {
 
 const OPEN_PO_STATUSES = new Set(["draft", "submitted", "approved", "ordered", "partially_received"]);
 const OPEN_REQ_STATUSES = new Set(["draft", "submitted", "approved"]);
+const PENDING_APPROVAL_STATUSES = new Set(["draft", "submitted"]);
 
 export function integrationChecks(): ProcurementIntegrationCheck[] {
   return [
@@ -56,8 +58,8 @@ export function integrationChecks(): ProcurementIntegrationCheck[] {
     {
       id: "approvals",
       label: "Approval workflow",
-      status: "missing",
-      note: "No procurement approval enforcement yet — Coming Soon.",
+      status: "present",
+      note: "PATCH /api/v1/admin/purchasing/orders/:id/approve (approve|reject draft/submitted POs).",
     },
     {
       id: "purchase-orders",
@@ -120,6 +122,8 @@ export function buildPurchasingKpis(
     openPoCount: orders == null ? null : orders.filter((o) => OPEN_PO_STATUSES.has(o.status)).length,
     openRequisitionCount:
       requisitions == null ? null : requisitions.filter((r) => OPEN_REQ_STATUSES.has(r.status)).length,
+    pendingApprovalCount:
+      orders == null ? null : orders.filter((o) => PENDING_APPROVAL_STATUSES.has(o.status)).length,
     inventoryFoundationLinked: true,
     stockLedgerAvailable: true,
     menuCatalogAvailable: true,
@@ -162,16 +166,16 @@ export function buildProcurementInsights(
   }
 
   items.push({
-    id: "no-matching",
-    title: "Purchase invoice matching is Coming Soon.",
-    detail: "Three-way match requires supplier invoice records in addition to PO and GRN.",
-    source: "foundation",
+    id: "live-approvals",
+    title: "PO approve/reject is LIVE via PATCH /admin/purchasing/orders/:id/approve.",
+    detail: "Draft and submitted purchase orders can be approved or rejected. Multi-step approval chains Coming Soon.",
+    source: "live",
   });
 
   items.push({
-    id: "no-approvals",
-    title: "Server-side approval workflow is Coming Soon.",
-    detail: "Requisitions and POs can be created; approval enforcement is not shipped.",
+    id: "no-matching",
+    title: "Purchase invoice matching is Coming Soon.",
+    detail: "Three-way match requires supplier invoice records in addition to PO and GRN.",
     source: "foundation",
   });
 
@@ -200,12 +204,13 @@ export function readinessGroups(): ProcurementReadinessGroup[] {
     {
       id: "workflow",
       title: "Procurement workflow",
-      unavailable: "Approvals Coming Soon — requisitions & POs LIVE",
-      why: "Requisitions and purchase orders can be created; approval enforcement not shipped.",
+      unavailable: "Multi-step chains Coming Soon — requisitions, POs & approve/reject LIVE",
+      why: "Requisitions and purchase orders can be created; draft/submitted POs can be approved or rejected.",
       entities: ["purchase_requisitions", "purchase_orders"],
       apis: [
         "GET/POST /api/v1/admin/purchasing/requisitions",
         "GET/POST /api/v1/admin/purchasing/orders",
+        "PATCH /api/v1/admin/purchasing/orders/:id/approve",
       ],
       permission: "purchasing.manage or admin.access",
       related: "PO/requisition line items Coming Soon.",
