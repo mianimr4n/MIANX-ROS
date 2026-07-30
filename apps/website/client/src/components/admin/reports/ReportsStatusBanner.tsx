@@ -5,11 +5,11 @@ export function ReportsStatusBanner() {
       role="status"
       aria-live="polite"
     >
-      <p className="font-semibold">Partial BI — today&apos;s operational scope</p>
+      <p className="font-semibold">Partial BI — live sales analytics + today ops</p>
       <p className="mt-1 text-sky-900/90">
-        Live KPIs and charts come from GET /admin/dashboard/operations (Asia/Karachi business day). Date ranges beyond
-        today, historical trends, product-level sales, inventory valuation, finance statements, and CSV/Excel/PDF exports
-        are Foundation until analytics backends ship. No fabricated charts or growth percentages.
+        Daily sales (GET /admin/reports/sales) and CSV exports are LIVE from orders. Today KPIs still come from GET
+        /admin/dashboard/operations. Product-level sales, inventory valuation, finance statements, and Excel/PDF exports
+        remain Coming Soon. No fabricated charts or growth percentages.
       </p>
     </div>
   );
