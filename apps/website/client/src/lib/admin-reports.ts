@@ -1,6 +1,6 @@
-/** Reports & Business Intelligence helpers — no invented KPIs, trends, or exports. */
+/** Reports & Business Intelligence helpers — live sales/CSV from orders; no invented finance. */
 
-import type { AdminOperationsDashboard, AdminOrderListItem } from "@/lib/admin-api";
+import type { AdminOperationsDashboard, AdminOrderListItem, SalesReport } from "@/lib/admin-api";
 import { aggregateCustomersFromOrders, normalizePhoneKey } from "@/lib/admin-crm";
 
 export type ReportsIntegrationCheck = {
@@ -46,67 +46,85 @@ export type PaymentMixSnapshot = {
   note: string;
 };
 
+export function defaultReportsDateRange(): { startDate: string; endDate: string } {
+  const end = new Date();
+  const start = new Date(end.getTime() - 6 * 24 * 60 * 60 * 1000);
+  const fmt = (d: Date) => {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Karachi",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(d);
+    const y = parts.find((p) => p.type === "year")?.value ?? "1970";
+    const m = parts.find((p) => p.type === "month")?.value ?? "01";
+    const day = parts.find((p) => p.type === "day")?.value ?? "01";
+    return `${y}-${m}-${day}`;
+  };
+  return { startDate: fmt(start), endDate: fmt(end) };
+}
+
 export function integrationChecks(): ReportsIntegrationCheck[] {
   return [
     {
       id: "operations-dashboard",
       label: "Operations dashboard API",
       status: "present",
-      note: "GET /admin/dashboard/operations — today scope, order.manage gate.",
+      note: "GET /admin/dashboard/operations — today scope.",
     },
     {
       id: "historical-analytics",
       label: "Historical time-series analytics",
-      status: "missing",
-      note: "No date-range reporting or trend warehouse.",
+      status: "present",
+      note: "GET /admin/reports/sales — daily gross sales from orders (Asia/Karachi).",
     },
     {
       id: "exports",
-      label: "Report exports (CSV / Excel / PDF)",
-      status: "missing",
-      note: "No export endpoints in backend.",
+      label: "Report exports (CSV)",
+      status: "present",
+      note: "GET /admin/reports/sales/export and /orders/export — Excel/PDF Coming Soon.",
     },
     {
       id: "product-analytics",
       label: "Product / category sales",
       status: "missing",
-      note: "No item-level sales aggregation API.",
+      note: "No item-level sales aggregation API — Coming Soon.",
     },
     {
       id: "kitchen-metrics",
       label: "Kitchen prep time analytics",
       status: "missing",
-      note: "KDS tickets exist — no aggregate timing reports.",
+      note: "KDS tickets exist — no aggregate timing reports — Coming Soon.",
     },
     {
       id: "delivery-metrics",
       label: "Delivery SLA analytics",
       status: "missing",
-      note: "Assignments exist — no delivery-time reporting API.",
+      note: "Assignments exist — no delivery-time reporting API — Coming Soon.",
     },
     {
       id: "inventory-reports",
       label: "Inventory reporting",
       status: "missing",
-      note: "Inventory module is Foundation — no stock ledger.",
+      note: "Stock ledger is LIVE — valuation / shrinkage reports Coming Soon.",
     },
     {
       id: "purchasing-reports",
       label: "Purchasing reports",
       status: "missing",
-      note: "Purchasing module is Foundation — no PO/spend data.",
+      note: "Suppliers/POs are LIVE — spend analytics Coming Soon.",
     },
     {
       id: "finance-reports",
       label: "Finance / GL reports",
       status: "missing",
-      note: "Finance module is Foundation — no ledger or statements.",
+      note: "No ledger or statements — Coming Soon.",
     },
     {
       id: "permission",
       label: "Reports permission",
-      status: "partial",
-      note: "reports.read referenced in auth tests but not seeded — gated on order.manage.",
+      status: "present",
+      note: "reports.read seeded; routes also accept order.manage or admin.access.",
     },
   ];
 }
@@ -115,43 +133,46 @@ export function readinessGroups(): ReportsReadinessGroup[] {
   return [
     {
       id: "warehouse",
-      title: "Analytics warehouse",
-      unavailable: "Historical facts, dimensions, rollups",
-      why: "Today-only dashboard cannot power multi-day trends or scheduled reports.",
-      entities: ["report_facts", "report_dimensions", "daily_rollups"],
-      apis: ["GET /api/v1/admin/reports/sales", "GET /api/v1/admin/reports/trends"],
-      permission: "reports.read (proposed) — not seeded",
-      related: "All modules feed facts when backends ship.",
+      title: "Sales analytics",
+      unavailable: "Product/category rollups Coming Soon — daily sales LIVE",
+      why: "Daily sales are aggregated from orders; item-level facts are not shipped.",
+      entities: ["orders"],
+      apis: ["GET /api/v1/admin/reports/sales"],
+      permission: "reports.read | order.manage | admin.access",
+      related: "Cancelled orders excluded from gross sales and AOV.",
     },
     {
       id: "exports",
       title: "Export pipeline",
-      unavailable: "CSV, Excel, PDF generation",
-      why: "Exports require server-side query + file generation with audit trail.",
-      entities: ["report_exports", "export_jobs"],
-      apis: ["POST /api/v1/admin/reports/export"],
-      permission: "reports.read (proposed)",
-      related: "Compliance and founder review workflows.",
+      unavailable: "Excel / PDF Coming Soon — CSV LIVE",
+      why: "CSV is generated server-side from the same order query as sales analytics.",
+      entities: ["orders"],
+      apis: [
+        "GET /api/v1/admin/reports/sales/export",
+        "GET /api/v1/admin/reports/orders/export",
+      ],
+      permission: "reports.read | order.manage | admin.access",
+      related: "Uses selected date range and branch filter.",
     },
     {
       id: "finance-link",
       title: "Finance reporting linkage",
       unavailable: "P&L, expenses, margin reports",
-      why: "Finance module is Foundation — no GL postings to aggregate.",
+      why: "Finance module has no GL postings to aggregate.",
       entities: ["financial_statements", "margin_snapshots"],
       apis: ["GET /api/v1/admin/reports/finance/pl"],
-      permission: "payment.read + reports.read (proposed)",
-      related: "Finance & Accounting module.",
+      permission: "payment.read + reports.read",
+      related: "Finance & Accounting module — Coming Soon.",
     },
     {
       id: "inventory-link",
       title: "Inventory reporting linkage",
       unavailable: "Stock valuation, shrinkage, COGS",
-      why: "No persistent stock ledger — cannot report inventory value.",
+      why: "Ledger exists; valuation reports are not shipped.",
       entities: ["inventory_snapshots", "cogs_facts"],
       apis: ["GET /api/v1/admin/reports/inventory/valuation"],
-      permission: "branch.manage + reports.read (proposed)",
-      related: "Inventory Management module.",
+      permission: "inventory.manage + reports.read",
+      related: "Inventory Management module — Coming Soon.",
     },
   ];
 }
@@ -218,19 +239,38 @@ export function buildPaymentMixSnapshot(orders: AdminOrderListItem[]): PaymentMi
 export function buildBusinessInsights(
   data: AdminOperationsDashboard | null,
   branchLabel: string,
+  salesReport?: SalesReport | null,
 ): ReportsInsightItem[] {
-  if (!data) {
-    return [
-      {
-        id: "no-data",
-        title: "No operational dashboard data in scope",
-        detail: `Load GET /admin/dashboard/operations for ${branchLabel} to surface live BI signals.`,
-        source: "foundation",
-      },
-    ];
+  const items: ReportsInsightItem[] = [];
+
+  if (salesReport && salesReport.totals.totalOrders > 0) {
+    items.push({
+      id: "sales-range",
+      title: `Gross sales ${salesReport.startDate} → ${salesReport.endDate}`,
+      detail: `${salesReport.totals.totalOrders} non-cancelled orders · PKR ${Math.round(salesReport.totals.grossSales).toLocaleString("en-PK")} — from GET /admin/reports/sales.`,
+      source: "live",
+    });
   }
 
-  const items: ReportsInsightItem[] = [];
+  if (!data) {
+    if (items.length === 0) {
+      return [
+        {
+          id: "no-data",
+          title: "No operational dashboard data in scope",
+          detail: `Load GET /admin/dashboard/operations for ${branchLabel} to surface live BI signals.`,
+          source: "foundation",
+        },
+      ];
+    }
+    items.push({
+      id: "finance-link",
+      title: "Finance reporting linkage unavailable",
+      detail: "Margin and expense reports require a GL backend — Coming Soon.",
+      source: "foundation",
+    });
+    return items.slice(0, 6);
+  }
 
   const topSource = data.sourceBreakdown[0];
   if (topSource) {
@@ -275,14 +315,14 @@ export function buildBusinessInsights(
   items.push({
     id: "finance-link",
     title: "Finance reporting linkage unavailable",
-    detail: "Finance module is Foundation — margin and expense reports require GL backend.",
+    detail: "Margin and expense reports require a GL backend — Coming Soon.",
     source: "foundation",
   });
 
   items.push({
     id: "inventory-link",
-    title: "Inventory reporting unavailable",
-    detail: "No stock ledger — shrinkage and valuation reports cannot be generated.",
+    title: "Inventory valuation reporting Coming Soon",
+    detail: "Stock ledger is LIVE — shrinkage and valuation report APIs are not shipped.",
     source: "foundation",
   });
 

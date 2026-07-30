@@ -65,9 +65,14 @@ export function canAccessAdminFinance(input: AdminPrincipalInput): boolean {
   return canReadFinance(input);
 }
 
-/** Reports & BI workspace — order.manage (operations dashboard API); reports.read not seeded. */
+/** Reports & BI workspace — reports.read, order.manage, or admin.access. */
 export function canAccessAdminReports(input: AdminPrincipalInput): boolean {
-  return canAccessAdminOrdersApi(input);
+  return (
+    input.isSuperAdmin ||
+    input.permissions.includes("reports.read") ||
+    input.permissions.includes("order.manage") ||
+    input.permissions.includes("admin.access")
+  );
 }
 
 /** HR & Workforce workspace — staff.read / staff.manage (no invented hr.manage). */

@@ -1,4 +1,4 @@
-import { bearerHeaders, fetchApiData, fetchApiEnvelope } from "@/lib/api";
+import { bearerHeaders, downloadApiFile, fetchApiData, fetchApiEnvelope } from "@/lib/api";
 
 /** Shared reliability options for admin reads (D2). */
 export type AdminReadOptions = {
@@ -123,6 +123,67 @@ export async function fetchAdminOperationsDashboard(
     `/admin/dashboard/operations${qs ? `?${qs}` : ""}`,
     readInit(accessToken, opts),
   );
+}
+
+export type SalesReportDay = {
+  date: string;
+  totalOrders: number;
+  grossSales: number;
+  averageOrderValue: number | null;
+};
+
+export type SalesReport = {
+  timezone: "Asia/Karachi";
+  startDate: string;
+  endDate: string;
+  branchId: string | null;
+  days: SalesReportDay[];
+  totals: {
+    totalOrders: number;
+    grossSales: number;
+    averageOrderValue: number | null;
+  };
+};
+
+export type SalesReportQuery = {
+  startDate?: string;
+  endDate?: string;
+  branchId?: string | null;
+  status?: string;
+};
+
+function salesReportParams(query?: SalesReportQuery) {
+  const params = new URLSearchParams();
+  if (query?.startDate) params.set("startDate", query.startDate);
+  if (query?.endDate) params.set("endDate", query.endDate);
+  if (query?.branchId) params.set("branchId", query.branchId);
+  if (query?.status) params.set("status", query.status);
+  return params;
+}
+
+export function fetchSalesReport(
+  accessToken: string,
+  query?: SalesReportQuery,
+  opts?: AdminReadOptions,
+): Promise<SalesReport> {
+  const qs = salesReportParams(query).toString();
+  return fetchApiData<SalesReport>(`/admin/reports/sales${qs ? `?${qs}` : ""}`, readInit(accessToken, opts));
+}
+
+export async function downloadSalesReportCsv(accessToken: string, query?: SalesReportQuery) {
+  const qs = salesReportParams(query).toString();
+  await downloadApiFile(`/admin/reports/sales/export${qs ? `?${qs}` : ""}`, "telepizza-sales.csv", {
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export async function downloadOrdersReportCsv(accessToken: string, query?: SalesReportQuery) {
+  const qs = salesReportParams(query).toString();
+  await downloadApiFile(`/admin/reports/orders/export${qs ? `?${qs}` : ""}`, "telepizza-orders.csv", {
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
 }
 
 export async function listAdminOrders(
