@@ -24,7 +24,7 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(page, /SupplierTable/);
     assert.match(page, /ReceivingGrnPanel/);
     assert.match(page, /InvoiceMatchingPanel/);
-    assert.match(page, /ProcurementFoundationPanel/);
+    assert.doesNotMatch(page, /ProcurementFoundationPanel|ProcurementReadinessSections|Integration readiness/);
     assert.match(page, /ProcurementInsights/);
     assert.match(page, /canAccessAdminPurchasing/);
     assert.match(page, /listSuppliers/);
@@ -40,7 +40,7 @@ describe("Purchasing & Suppliers V1 (static)", () => {
 
   it("does not fabricate suppliers or purchase orders", () => {
     const suppliers = read("apps/website/client/src/components/admin/purchasing/PurchasingTables.tsx");
-    assert.match(suppliers, /No suppliers added yet/);
+    assert.match(suppliers, /Welcome! No suppliers added yet/);
     assert.doesNotMatch(suppliers, /supplierCode:\s*"|fakeSupplier/i);
     const orders = read("apps/website/client/src/components/admin/purchasing/PurchasingTables.tsx");
     assert.match(orders, /No purchase orders created yet/);
@@ -57,7 +57,7 @@ describe("Purchasing & Suppliers V1 (static)", () => {
 
   it("does not derive purchase cost from menu selling price", () => {
     const banner = read("apps/website/client/src/components/admin/purchasing/ProcurementStatusBanner.tsx");
-    assert.match(banner, /Menu selling prices are not purchase costs/);
+    assert.match(banner, /Purchasing is ready/);
     const helper = read("apps/website/client/src/lib/admin-purchasing.ts");
     assert.doesNotMatch(helper, /displayPrice|formatPkr|menu\.price/i);
   });

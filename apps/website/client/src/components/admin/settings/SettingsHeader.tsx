@@ -20,22 +20,16 @@ export function SettingsHeader({
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
         </p>
         <p className="mt-1 text-xs text-[var(--admin-muted)]">
-          Live organization, branch hours, and delivery settings — payment credentials stay Environment Managed
+          Organization, branch hours, and delivery settings for your restaurants
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
-          Partial LIVE workspace
-        </span>
-        <span className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800">
-          Organization / Branch scope
-        </span>
         <button
           type="button"
           onClick={onRefresh}
           className="min-h-11 rounded-lg border border-[var(--admin-border)] bg-white px-4 text-sm font-semibold hover:bg-[var(--admin-soft)]"
         >
-          Refresh readiness
+          Refresh
         </button>
         <button
           type="button"

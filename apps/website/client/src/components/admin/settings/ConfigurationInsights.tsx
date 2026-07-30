@@ -11,6 +11,13 @@ const SOURCE_CLASS: Record<SettingsInsightItem["source"], string> = {
   live: "bg-emerald-50 text-emerald-800",
 };
 
+const SOURCE_LABEL: Record<SettingsInsightItem["source"], string | null> = {
+  derived: "Calculated",
+  foundation: "Planned for Phase 2",
+  "read-only": "Read-only",
+  live: null,
+};
+
 export function ConfigurationInsights({ items }: { items: SettingsInsightItem[] }) {
   return (
     <section
@@ -19,8 +26,8 @@ export function ConfigurationInsights({ items }: { items: SettingsInsightItem[] 
     >
       <AdminSectionTitle
         eyebrow="Mianx.ai"
-        title="Mianx.ai Configuration Insights"
-        description="Rule-based Summary only — readiness signals from verified repository posture."
+        title="Configuration tips"
+        description="Simple rule-based reminders from your settings posture."
       />
       <h2 id="configuration-insights-heading" className="sr-only">
         Configuration insights
@@ -30,19 +37,20 @@ export function ConfigurationInsights({ items }: { items: SettingsInsightItem[] 
           <li key={item.id} className="rounded-xl border border-[var(--admin-border)] px-4 py-3">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm font-semibold">{item.title}</p>
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${SOURCE_CLASS[item.source]}`}
-              >
-                {item.source}
-              </span>
+              {SOURCE_LABEL[item.source] ? (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide ${SOURCE_CLASS[item.source]}`}
+                >
+                  {SOURCE_LABEL[item.source]}
+                </span>
+              ) : null}
             </div>
             <p className="mt-1 text-xs text-[var(--admin-muted)]">{item.detail}</p>
           </li>
         ))}
       </ul>
       <p className="mt-4 text-xs text-[var(--admin-muted)]">
-        Missing tax configuration · Payment provider not configured · WhatsApp backend unavailable · Loyalty ledger
-        unavailable · No prediction models from this workspace.
+        Payment credentials stay environment-managed. Tax rates, printers, and loyalty rules are Planned for Phase 2.
       </p>
     </section>
   );

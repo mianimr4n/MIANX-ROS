@@ -32,7 +32,7 @@ export function POSHeader({
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
           {primaryRoleLabel(roles, isSuperAdmin)} · {branchLabel} · {currentShiftLabel()}
           <span className="ml-2 rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-            Foundation shift label
+            Shift label
           </span>
         </p>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
@@ -41,7 +41,7 @@ export function POSHeader({
             className="ml-2 rounded-full border border-dashed border-[var(--admin-border)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]"
             title="Hardware register status is not integrated"
           >
-            Register · Foundation
+            Register · Planned for Phase 2
           </span>
         </p>
       </div>

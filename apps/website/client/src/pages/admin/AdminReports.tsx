@@ -5,10 +5,6 @@ import { BusinessInsights } from "@/components/admin/reports/BusinessInsights";
 import { ExecutiveKPIs } from "@/components/admin/reports/ExecutiveKPIs";
 import { ExportPanel } from "@/components/admin/reports/ExportPanel";
 import {
-  ReportsFoundationPanel,
-  ReportsReadinessSections,
-} from "@/components/admin/reports/ReportsFoundationPanel";
-import {
   CustomerReport,
   DeliveryReport,
   FinanceReport,
@@ -46,8 +42,6 @@ import {
   buildPaymentMixSnapshot,
   defaultReportsDateRange,
   filteredOrdersForReports,
-  integrationChecks,
-  readinessGroups,
 } from "@/lib/admin-reports";
 import { AdminShell } from "./AdminShell";
 
@@ -71,9 +65,6 @@ export default function AdminReports() {
   const [salesError, setSalesError] = useState<string | null>(null);
   const [exportBusy, setExportBusy] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
-
-  const checks = useMemo(() => integrationChecks(), []);
-  const groups = useMemo(() => readinessGroups(), []);
 
   const token = session?.access_token;
   const canExport = Boolean(token && isApiConfigured && allowed);
@@ -231,10 +222,6 @@ export default function AdminReports() {
         onExportSales={() => void onExportSales()}
         onExportOrders={() => void onExportOrders()}
       />
-
-      <ReportsFoundationPanel checks={checks} />
-
-      <ReportsReadinessSections groups={groups} />
 
       <BusinessInsights items={insights} />
     </AdminShell>

@@ -110,7 +110,7 @@ export function LoyaltyFilters({
         >
           <option value="">Not available</option>
         </select>
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Foundation</span>
+        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
       </label>
 
       <label className="text-xs font-medium text-[var(--admin-muted)]">
@@ -123,7 +123,7 @@ export function LoyaltyFilters({
         >
           <option value="">Not available</option>
         </select>
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Foundation</span>
+        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
       </label>
 
       <label className="text-xs font-medium text-[var(--admin-muted)]">
@@ -136,7 +136,7 @@ export function LoyaltyFilters({
         >
           <option value="">Not available</option>
         </select>
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Foundation</span>
+        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
       </label>
 
       <div className="flex items-end gap-2">

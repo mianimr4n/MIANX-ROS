@@ -124,8 +124,9 @@ export function MenuProductGrid({
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center" role="alert">
-        <p className="text-sm font-semibold text-red-900">{error}</p>
+      <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-soft)] p-6 text-center" role="status">
+        <p className="text-sm font-semibold text-[var(--admin-ink)]">We couldn&apos;t load the menu right now.</p>
+        <p className="mt-1 text-sm text-[var(--admin-muted)]">Please try again in a moment.</p>
         <button
           type="button"
           onClick={onRetry}
@@ -140,8 +141,10 @@ export function MenuProductGrid({
   if (products.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-[var(--admin-border)] p-8 text-center">
-        <p className="text-sm font-semibold">No products match these filters</p>
-        <p className="mt-1 text-sm text-[var(--admin-muted)]">Adjust category, type, or search terms.</p>
+        <p className="text-sm font-semibold">Welcome! No menu items to show yet.</p>
+        <p className="mt-1 text-sm text-[var(--admin-muted)]">
+          Adjust filters, or add products in Menu to get started.
+        </p>
       </div>
     );
   }

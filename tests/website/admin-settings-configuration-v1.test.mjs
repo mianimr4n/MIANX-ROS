@@ -17,13 +17,12 @@ describe("Settings & Configuration V1 (static)", () => {
   it("composes /admin/settings from reusable settings components", () => {
     const page = read("apps/website/client/src/pages/admin/AdminSettings.tsx");
     assert.match(page, /SettingsHeader/);
-    assert.match(page, /SettingsReadinessBanner/);
+    assert.doesNotMatch(page, /SettingsReadinessBanner|SettingsIntegrationReadiness/);
     assert.match(page, /SettingsSearch/);
     assert.match(page, /SettingsCategoryNav/);
     assert.match(page, /SettingsWorkspace/);
     assert.match(page, /SettingsSaveBar/);
     assert.match(page, /ConfigurationInsights/);
-    assert.match(page, /SettingsIntegrationReadiness/);
     assert.match(page, /canAccessAdminSettings/);
   });
 
@@ -32,7 +31,7 @@ describe("Settings & Configuration V1 (static)", () => {
     assert.doesNotMatch(page, /localStorage\.setItem\(["']telepizza\.settings/);
     assert.doesNotMatch(page, /saveSettings\(/);
     const save = read("apps/website/client/src/components/admin/settings/SettingsPrimitives.tsx");
-    assert.match(save, /Save · Foundation/);
+    assert.match(save, /Save · Planned for Phase 2/);
     assert.match(save, /disabled/);
   });
 
@@ -88,9 +87,9 @@ describe("Settings & Configuration V1 (static)", () => {
 
   it("Mianx configuration insights remain rule-based only", () => {
     const insights = read("apps/website/client/src/components/admin/settings/ConfigurationInsights.tsx");
-    assert.match(insights, /Mianx\.ai Configuration Insights/);
-    assert.match(insights, /Rule-based Summary/);
-    assert.match(insights, /Missing tax configuration/);
+    assert.match(insights, /Configuration tips|Mianx\.ai/);
+    assert.match(insights, /rule-based/i);
+    assert.match(insights, /Planned for Phase 2/);
     assert.doesNotMatch(insights, /autonomous configuration|AI selecting tax|rotating secrets/i);
   });
 

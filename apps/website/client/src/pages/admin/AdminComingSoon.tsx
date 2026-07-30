@@ -6,13 +6,13 @@ export default function AdminComingSoon({ moduleName }: { moduleName: string }) 
   return (
     <AdminShell title={moduleName}>
       <div className="mx-auto max-w-xl rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--admin-muted)]">
-          Reserved module
-        </p>
-        <h2 className="mt-2 text-2xl font-semibold">{moduleName}</h2>
+        <span className="inline-flex rounded-full bg-[var(--admin-soft)] px-3 py-1 text-xs font-semibold text-[var(--admin-muted)]">
+          Planned for Phase 2
+        </span>
+        <h2 className="mt-3 text-2xl font-semibold">{moduleName}</h2>
         <p className="mt-3 text-sm text-[var(--admin-muted)]">
-          This module is part of the Admin ERP roadmap and is not available in Foundation S1.
-          No mock operational data is shown.
+          This area is reserved for a future release. Nothing is missing from today&apos;s operating tools — check back
+          when Phase 2 ships.
         </p>
         <Link
           href="/admin/dashboard"

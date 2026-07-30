@@ -145,7 +145,7 @@ export function KitchenFilters({
         >
           <option value="">Stations not assigned yet</option>
         </select>
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Foundation</span>
+        <span className="mt-1 block text-[10px] tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
       </label>
 
       <div className="flex items-end gap-2">

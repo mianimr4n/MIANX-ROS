@@ -260,7 +260,7 @@ export function OrderDrawer({
                   className="rounded-lg border border-dashed border-[var(--admin-border)] px-3 py-2 text-sm text-[var(--admin-muted)]"
                   title="Rider assign arrives with Delivery module"
                 >
-                  Assign · Foundation
+                  Assign · Planned for Phase 2
                 </span>
               </div>
 

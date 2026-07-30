@@ -304,7 +304,7 @@ export function ExecutiveAside({ alertCount }: { alertCount: number }) {
       </AdminSurface>
 
       <AdminSurface>
-        <AdminSurfaceHeader title="Quick notes" description="Foundation" />
+        <AdminSurfaceHeader title="Quick notes" description="Planned for Phase 2" />
         <AdminSurfaceBody>
           <p className="text-sm text-[var(--admin-muted)]">
             Staff notes and shift handoff are not available in v1.
@@ -313,7 +313,7 @@ export function ExecutiveAside({ alertCount }: { alertCount: number }) {
       </AdminSurface>
 
       <AdminSurface>
-        <AdminSurfaceHeader title="Pending approvals" description="Foundation" />
+        <AdminSurfaceHeader title="Pending approvals" description="Planned for Phase 2" />
         <AdminSurfaceBody>
           <p className="text-3xl font-semibold tabular-nums text-[var(--admin-muted)]">—</p>
           <p className="mt-1 text-sm text-[var(--admin-muted)]">

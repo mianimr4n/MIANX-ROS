@@ -3,8 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ApprovalTimelinePanel,
   InvoiceMatchingPanel,
-  ProcurementFoundationPanel,
-  ProcurementReadinessSections,
   PurchaseDemandPanel,
   ReceivingGrnPanel,
   SupplierPerformancePanel,
@@ -49,8 +47,6 @@ import { ApiRequestError } from "@/lib/api";
 import {
   buildProcurementInsights,
   buildPurchasingKpis,
-  integrationChecks,
-  readinessGroups,
 } from "@/lib/admin-purchasing";
 import { AdminShell } from "./AdminShell";
 
@@ -101,8 +97,6 @@ export default function AdminPurchasing() {
     invoiceStatus: "all",
   });
 
-  const checks = useMemo(() => integrationChecks(), []);
-  const groups = useMemo(() => readinessGroups(), []);
   const snapshot = useMemo(
     () => buildPurchasingKpis(suppliers, orders, requisitions, awaitingDeliveryCount, invoices, receipts),
     [awaitingDeliveryCount, invoices, orders, receipts, requisitions, suppliers],
@@ -510,10 +504,6 @@ export default function AdminPurchasing() {
       />
 
       <SupplierPerformancePanel />
-
-      <ProcurementFoundationPanel checks={checks} />
-
-      <ProcurementReadinessSections groups={groups} />
 
       <ProcurementInsights items={insights} />
 

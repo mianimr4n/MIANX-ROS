@@ -41,8 +41,8 @@ describe("Point of Sale V1 (static)", () => {
     assert.doesNotMatch(page, /Payment intent=.*Foundation/);
     assert.doesNotMatch(page, /Card Payment Successful/i);
     const actions = read("apps/website/client/src/components/admin/pos/POSActions.tsx");
-    assert.match(actions, /Save draft · Foundation/);
-    assert.match(actions, /Print receipt · Foundation/);
+    assert.match(actions, /Save draft · Planned for Phase 2/);
+    assert.match(actions, /Print receipt · Planned for Phase 2/);
     assert.match(actions, /Close Shift \/ Z-Report/);
     assert.match(page, /fetchPosZReport/);
     assert.match(page, /confirmPosZReportClose/);

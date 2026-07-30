@@ -32,7 +32,7 @@ describe("HR & Workforce Management V1 (static)", () => {
     assert.match(page, /TrainingCenter/);
     assert.match(page, /EmployeeDocuments/);
     assert.match(page, /HRAnalytics/);
-    assert.match(page, /HRFoundationPanel/);
+    assert.doesNotMatch(page, /HRFoundationPanel|HRReadinessSections|Integration readiness/);
     assert.match(page, /WorkforceInsights/);
     assert.match(page, /canAccessAdminHr/);
     assert.match(page, /listHrAttendance/);
@@ -42,8 +42,8 @@ describe("HR & Workforce Management V1 (static)", () => {
 
   it("does not fabricate employees or attendance records", () => {
     const directory = read("apps/website/client/src/components/admin/hr/EmployeeDirectory.tsx");
-    assert.match(directory, /No employees added yet/);
-    assert.match(directory, /listHrEmployees|HrEmployee|GET \/admin\/hr\/employees/);
+    assert.match(directory, /Welcome! No staff added yet/);
+    assert.match(directory, /Add Employee/);
     assert.doesNotMatch(directory, /EMP-\d+|employeeCode:\s*"|fakeStaff/i);
     const attendance = read("apps/website/client/src/components/admin/hr/WorkforcePanels.tsx");
     assert.match(attendance, /No attendance records yet/);

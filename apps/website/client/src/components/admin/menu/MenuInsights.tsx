@@ -4,7 +4,7 @@ import type { MenuInsightItem } from "@/lib/admin-menu";
 const SOURCE_LABEL: Record<MenuInsightItem["source"], string> = {
   live: "Live",
   derived: "Derived",
-  foundation: "Foundation",
+  foundation: "Planned for Phase 2",
 };
 
 const SOURCE_CLASS: Record<MenuInsightItem["source"], string> = {

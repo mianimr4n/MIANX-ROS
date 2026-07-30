@@ -7,10 +7,6 @@ import {
   ReceivablePanel,
   TaxPanel,
 } from "@/components/admin/finance/FinancePanels";
-import {
-  FinanceFoundationPanel,
-  FinanceReadinessSections,
-} from "@/components/admin/finance/FinanceFoundationPanel";
 import { FinanceHeader } from "@/components/admin/finance/FinanceHeader";
 import { FinanceInsights } from "@/components/admin/finance/FinanceInsights";
 import { FinanceKPIs } from "@/components/admin/finance/FinanceKPIs";
@@ -43,8 +39,6 @@ import {
   buildFinanceInsights,
   buildFinanceKpiSnapshot,
   buildOperationalSalesSnapshot,
-  integrationChecks,
-  readinessGroups,
 } from "@/lib/admin-finance";
 import { ApiRequestError } from "@/lib/api";
 import { AdminShell } from "./AdminShell";
@@ -86,8 +80,6 @@ export default function AdminFinance() {
     () => buildFinanceInsights(branchLabel, profitLoss),
     [branchLabel, profitLoss],
   );
-  const checks = useMemo(() => integrationChecks(), []);
-  const groups = useMemo(() => readinessGroups(), []);
   const salesSnapshot = useMemo(
     () => buildOperationalSalesSnapshot(dashboard, ordersApiAvailable),
     [dashboard, ordersApiAvailable],
@@ -236,10 +228,6 @@ export default function AdminFinance() {
         error={stmtError}
         hasBranch={Boolean(branchIdFilter)}
       />
-
-      <FinanceFoundationPanel checks={checks} />
-
-      <FinanceReadinessSections groups={groups} />
 
       <FinanceInsights items={insights} />
 

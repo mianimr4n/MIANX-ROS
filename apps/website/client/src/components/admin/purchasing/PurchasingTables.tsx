@@ -170,16 +170,16 @@ export function SupplierTable({
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={5} className="px-3 py-10 text-center text-sm text-red-700">
-                  {error}
+                <td colSpan={5} className="px-3 py-10 text-center text-sm text-[var(--admin-muted)]">
+                  We couldn&apos;t load suppliers right now. Please try again.
                 </td>
               </tr>
             ) : !suppliers || suppliers.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-3 py-10 text-center">
-                  <p className="font-semibold">No suppliers added yet</p>
+                  <p className="font-semibold">Welcome! No suppliers added yet.</p>
                   <p className="mt-2 text-sm text-[var(--admin-muted)]">
-                    Add verified vendor records for this branch before creating purchase orders.
+                    Click &apos;Add Supplier&apos; to get started before creating purchase orders.
                   </p>
                 </td>
               </tr>

@@ -47,14 +47,14 @@ const SOURCE_STYLES: Record<AdminKpiSource, string> = {
 
 /**
  * Human labels for data provenance. LIVE is the expected default and renders
- * no badge; non-live sources keep an honest, plain-language label.
+ * no badge; unfinished capabilities show a clean Phase 2 badge.
  */
 const SOURCE_LABEL: Record<AdminKpiSource, string | null> = {
   LIVE: null,
   DERIVED: "Calculated",
   PARTIAL: "Partial data",
-  FOUNDATION: "Setup only",
-  UNAVAILABLE: "Not available",
+  FOUNDATION: "Planned for Phase 2",
+  UNAVAILABLE: null,
   /** No provenance badge — EMPTY is owned by OperationalStatusBanner + detail. */
   EMPTY: null,
 };

@@ -200,13 +200,13 @@ export function KitchenManagerShell({
             className="ml-2 hidden min-h-11 items-center rounded-lg border border-dashed border-[var(--admin-border)] px-3 text-xs text-[var(--admin-muted)] sm:inline-flex"
             title="Item-level station board requires backend stations"
           >
-            Item View · FOUNDATION
+            Item View · Planned for Phase 2
           </span>
           <span
             className="hidden min-h-11 items-center rounded-lg border border-dashed border-[var(--admin-border)] px-3 text-xs text-[var(--admin-muted)] sm:inline-flex"
             title="Kitchen history requires completed-ticket archive UX"
           >
-            History · FOUNDATION
+            History · Planned for Phase 2
           </span>
         </nav>
       </header>

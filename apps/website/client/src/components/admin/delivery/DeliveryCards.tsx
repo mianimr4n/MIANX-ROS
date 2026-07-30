@@ -105,7 +105,7 @@ export function DeliveryCards({
                     className="rounded-full border border-dashed border-[var(--admin-border)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]"
                     title="Priority not on delivery API"
                   >
-                    Priority · Foundation
+                    Priority · Planned for Phase 2
                   </span>
                 </div>
 
@@ -146,13 +146,13 @@ export function DeliveryCards({
                     className="min-h-11 rounded-xl border border-dashed border-[var(--admin-border)] px-4 py-2 text-sm text-[var(--admin-muted)]"
                     title="Failed transition is not exposed on the delivery status API"
                   >
-                    Mark failed · Foundation
+                    Mark failed · Planned for Phase 2
                   </span>
                   <span
                     className="min-h-11 rounded-xl border border-dashed border-[var(--admin-border)] px-4 py-2 text-sm text-[var(--admin-muted)]"
                     title="Click-to-call arrives later"
                   >
-                    Call customer · Foundation
+                    Call customer · Planned for Phase 2
                   </span>
                   {!canAssign && !canUpdate ? (
                     <span className="text-xs text-[var(--admin-muted)]">Read-only for this principal</span>

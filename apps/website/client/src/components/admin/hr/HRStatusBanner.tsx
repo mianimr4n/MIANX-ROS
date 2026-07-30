@@ -5,11 +5,10 @@ export function HRStatusBanner() {
       role="status"
       aria-live="polite"
     >
-      <p className="font-semibold">HR workforce core is LIVE</p>
+      <p className="font-semibold">Workforce tools are ready</p>
       <p className="mt-1 text-emerald-900/90">
-        Employees, attendance, leave requests, and document URL storage are available for hr.manage, staff.manage, or
-        admin.access. Payroll, performance reviews, shift roster, and training remain Planned for Phase 2 — frontend will
-        not fabricate those figures.
+        Manage employees, attendance, leave, and document links here. Payroll, performance reviews, shift roster, and
+        training are Planned for Phase 2.
       </p>
     </div>
   );

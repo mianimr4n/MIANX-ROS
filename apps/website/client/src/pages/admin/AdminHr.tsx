@@ -5,10 +5,6 @@ import { EmployeeDrawer } from "@/components/admin/hr/EmployeeDrawer";
 import { HRHeader } from "@/components/admin/hr/HRHeader";
 import { HRKPIs } from "@/components/admin/hr/HRKPIs";
 import { HRStatusBanner } from "@/components/admin/hr/HRStatusBanner";
-import {
-  HRFoundationPanel,
-  HRReadinessSections,
-} from "@/components/admin/hr/HRFoundationPanel";
 import { DepartmentManager, OrganizationTree } from "@/components/admin/hr/OrganizationTree";
 import { RolesPermissionPanel } from "@/components/admin/hr/RolesPermissionPanel";
 import {
@@ -43,8 +39,6 @@ import {
 import { ApiRequestError } from "@/lib/api";
 import {
   buildWorkforceInsights,
-  integrationChecks,
-  readinessGroups,
   summarizeAttendance,
   summarizeEmployees,
   summarizeInvites,
@@ -84,8 +78,6 @@ export default function AdminHr() {
   const [addError, setAddError] = useState<string | null>(null);
   const [addBusy, setAddBusy] = useState(false);
 
-  const checks = useMemo(() => integrationChecks(), []);
-  const groups = useMemo(() => readinessGroups(), []);
   const inviteSummary = useMemo(() => summarizeInvites(invites), [invites]);
   const employeeSummary = useMemo(() => summarizeEmployees(employees), [employees]);
   const attendanceSummary = useMemo(() => summarizeAttendance(attendance), [attendance]);
@@ -344,10 +336,6 @@ export default function AdminHr() {
       </div>
 
       <HRAnalytics />
-
-      <HRFoundationPanel checks={checks} />
-
-      <HRReadinessSections groups={groups} />
 
       <WorkforceInsights items={insights} />
     </AdminShell>

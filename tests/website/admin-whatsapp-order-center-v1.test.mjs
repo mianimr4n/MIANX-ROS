@@ -44,7 +44,7 @@ describe("WhatsApp Order Center V1 (static)", () => {
 
   it("disables composer and labels external handoff honestly", () => {
     const composer = read("apps/website/client/src/components/admin/whatsapp/MessageComposer.tsx");
-    assert.match(composer, /Foundation/);
+    assert.match(composer, /Planned for Phase 2/);
     assert.match(composer, /disabled/);
     assert.match(composer, /no outbound WhatsApp API/i);
     const customer = read("apps/website/client/src/components/admin/whatsapp/CustomerContextPanel.tsx");
@@ -53,11 +53,11 @@ describe("WhatsApp Order Center V1 (static)", () => {
     assert.match(customer, /wa\.me/);
   });
 
-  it("does not fabricate whatsapp order source in POS and keeps builder Foundation", () => {
+  it("does not fabricate whatsapp order source in POS and keeps builder Planned for Phase 2", () => {
     const pos = read("apps/website/client/src/pages/admin/AdminPos.tsx");
     assert.match(pos, /createAdminPosOrder/);
     const builder = read("apps/website/client/src/components/admin/whatsapp/WhatsAppOrderBuilder.tsx");
-    assert.match(builder, /Foundation/);
+    assert.match(builder, /Planned for Phase 2/);
     assert.match(builder, /orderSource=whatsapp/);
     assert.doesNotMatch(builder, /createOrderWithIdempotency/);
   });

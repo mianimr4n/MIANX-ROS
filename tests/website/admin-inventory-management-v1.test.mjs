@@ -23,13 +23,12 @@ describe("Inventory Management V1 (static)", () => {
     assert.match(page, /InventoryTable/);
     assert.match(page, /StockMovementTimeline/);
     assert.match(page, /RecipeMappingPanel/);
-    assert.match(page, /InventoryFoundationPanel/);
+    assert.doesNotMatch(page, /InventoryFoundationPanel|InventoryReadinessSections|Integration readiness/);
     assert.match(page, /InventoryInsights/);
     assert.match(page, /canAccessAdminInventory/);
     assert.match(page, /listInventoryItems/);
     assert.match(page, /createStockAdjustment/);
     assert.match(page, /listStockMovements/);
-    assert.match(page, /integrationChecks/);
   });
 
   it("wires live stock table and does not fabricate balances", () => {

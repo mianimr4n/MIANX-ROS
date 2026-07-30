@@ -3,11 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ConfigurationInsights,
   SettingsCapabilityMatrix,
-  SettingsIntegrationReadiness,
 } from "@/components/admin/settings/ConfigurationInsights";
 import { SettingsCategoryNav, SettingsSearch } from "@/components/admin/settings/SettingsNav";
 import { SettingsHeader } from "@/components/admin/settings/SettingsHeader";
-import { SettingsReadinessBanner } from "@/components/admin/settings/SettingsReadinessBanner";
 import { SettingsSaveBar } from "@/components/admin/settings/SettingsPrimitives";
 import { SettingsWorkspace } from "@/components/admin/settings/SettingsWorkspace";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,7 +18,6 @@ import {
   SETTINGS_CATEGORIES,
   buildConfigurationInsights,
   capabilityMatrix,
-  integrationChecks,
   searchSettingsCategories,
   summarizeBranches,
   type SettingsCategoryId,
@@ -39,7 +36,6 @@ export default function AdminSettings() {
   const [activeCategory, setActiveCategory] = useState<SettingsCategoryId>("organization");
 
   const filteredCategories = useMemo(() => searchSettingsCategories(search), [search]);
-  const checks = useMemo(() => integrationChecks(), []);
   const matrix = useMemo(() => capabilityMatrix(), []);
   const branchSummary = useMemo(() => summarizeBranches(allowedBranches), [allowedBranches]);
 
@@ -62,14 +58,12 @@ export default function AdminSettings() {
   }, [activeCategory, filteredCategories]);
 
   const onRefresh = () => {
-    // Readiness-only refresh — no settings persistence API.
+    // Soft refresh of settings workspace — no persistence API for foundation categories.
   };
 
   return (
     <AdminShell title="Settings & Configuration">
       <SettingsHeader branchLabel={branchLabel} roleLabel={roleLabel} onRefresh={onRefresh} />
-
-      <SettingsReadinessBanner />
 
       <SettingsSearch value={search} onChange={setSearch} resultCount={filteredCategories.length} />
 
@@ -106,16 +100,14 @@ export default function AdminSettings() {
                   : activeCategory === "menu"
                     ? "Menu prices and categories are saved in Admin → Menu."
                     : activeCategory === "inventory" || activeCategory === "finance"
-                      ? "No Save control — this module is unavailable until its backend ships."
-                      : "Opening operations use per-row Save / Delete in the panels above — the foundation settings save bar does not apply to those workflows."}
+                      ? "These settings are Planned for Phase 2."
+                      : "Opening operations use per-row Save / Delete in the panels above."}
             </p>
           ) : (
             <SettingsSaveBar />
           )}
         </div>
       </div>
-
-      <SettingsIntegrationReadiness checks={checks} />
 
       <SettingsCapabilityMatrix rows={matrix} />
 

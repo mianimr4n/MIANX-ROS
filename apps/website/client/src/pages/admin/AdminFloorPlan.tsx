@@ -276,14 +276,9 @@ export default function AdminFloorPlan() {
         {(floors.filter((f) => f.isActive).length === 0 ||
           tables.filter((t) => t.isActive).length === 0) && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            <p className="font-semibold">SETUP REQUIRED / FOUNDATION</p>
+            <p className="font-semibold">Floor setup needed</p>
             <p>
-              <span className="font-medium">Problem:</span> No active floor or tables configured for
-              Royal Orchard.
-            </p>
-            <p>
-              <span className="font-medium">Next action:</span> Create the first floor and at least one
-              active table.
+              Add at least one active floor and table before using table service for this branch.
             </p>
           </div>
         )}

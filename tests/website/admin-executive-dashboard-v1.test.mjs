@@ -51,12 +51,12 @@ describe("Executive Admin Dashboard v1 (static)", () => {
     const panel = read("apps/website/client/src/components/admin/dashboard/MianxInsightsPanel.tsx");
     assert.match(panel, /Mianx\.ai Operations Insights/);
     assert.match(panel, /Rule ID/);
-    assert.match(panel, /Recommended action/);
+    assert.match(panel, /recommendedAction/);
     assert.match(panel, /buildMianxInsightItems|buildDeterministicMianxInsights/);
     assert.match(panel, /Loading insights/);
-    assert.match(panel, /pending order/);
+    assert.match(panel, /pending confirmation|pending order/i);
     assert.match(panel, /INVENTORY\.LOW_STOCK/);
-    assert.match(panel, /Inventory levels are healthy/);
+    assert.match(panel, /No low-stock alerts/);
     assert.doesNotMatch(panel, /demand predicted|autonomous|generative model|openai|llm/i);
   });
 

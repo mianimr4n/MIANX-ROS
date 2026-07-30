@@ -5,7 +5,7 @@ export function CustomerLoyalty() {
         Loyalty summary
       </h3>
       <p className="mt-2 rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-3 text-sm text-[var(--admin-muted)]">
-        Points, tiers, and rewards are <span className="font-semibold uppercase tracking-wide">Foundation</span> —
+        Points, tiers, and rewards are <span className="font-semibold tracking-wide">Planned for Phase 2</span> —
         no loyalty ledger API for admin CRM yet.
       </p>
     </section>
@@ -32,7 +32,7 @@ export function MarketingPreferences() {
             className="flex items-center justify-between rounded-xl border border-dashed border-[var(--admin-border)] px-3 py-2 text-sm text-[var(--admin-muted)]"
           >
             <span>{row.label}</span>
-            <span className="text-[10px] font-semibold uppercase tracking-wide">Foundation</span>
+            <span className="text-[10px] font-semibold tracking-wide">Planned for Phase 2</span>
           </li>
         ))}
       </ul>
@@ -51,13 +51,13 @@ export function CustomerTagsFoundation({ repeat, inactive }: { repeat: boolean; 
       </h3>
       <div className="mt-3 flex flex-wrap gap-2">
         <span className="rounded-full border border-dashed border-[var(--admin-border)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-          VIP · Foundation
+          VIP · Planned for Phase 2
         </span>
         <span className="rounded-full border border-dashed border-[var(--admin-border)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-          Corporate · Foundation
+          Corporate · Planned for Phase 2
         </span>
         <span className="rounded-full border border-dashed border-[var(--admin-border)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-          Blocked · Foundation
+          Blocked · Planned for Phase 2
         </span>
         {repeat ? (
           <span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-950">
@@ -75,7 +75,7 @@ export function CustomerTagsFoundation({ repeat, inactive }: { repeat: boolean; 
         )}
       </div>
       <p className="mt-2 text-xs text-[var(--admin-muted)]">
-        Stored CRM tags are Foundation. Activity badges above are rule-based from order history only.
+        Stored CRM tags are Planned for Phase 2. Activity badges above are rule-based from order history only.
       </p>
     </section>
   );

@@ -122,7 +122,7 @@ export function DeliveryFilters({
         >
           <option value="">Not on delivery assignment</option>
         </select>
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Foundation</span>
+        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
       </label>
 
       <label className="text-xs font-medium text-[var(--admin-muted)]">
@@ -133,7 +133,7 @@ export function DeliveryFilters({
           placeholder="Use search for customer name"
           aria-label="Customer filter unavailable"
         />
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Foundation</span>
+        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
       </label>
 
       <label className="text-xs font-medium text-[var(--admin-muted)]">
@@ -146,7 +146,7 @@ export function DeliveryFilters({
         >
           <option value="loaded">Loaded assignment window</option>
         </select>
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Foundation</span>
+        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
       </label>
 
       <div className="flex items-end gap-2">
