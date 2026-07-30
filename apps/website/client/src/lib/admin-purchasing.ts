@@ -76,8 +76,8 @@ export function integrationChecks(): ProcurementIntegrationCheck[] {
     {
       id: "inventory-posting",
       label: "Inventory posting from GRN",
-      status: "partial",
-      note: "GRN headers are LIVE — line → stock_movements posting Coming Soon.",
+      status: "present",
+      note: "GRN lines with inventoryItemId post stock_movements (purchase) + current_stock atomically; unmapped items are skipped.",
     },
     {
       id: "invoices",
@@ -160,7 +160,7 @@ export function buildProcurementInsights(
     items.push({
       id: "live-grn",
       title: `${receipts.length} goods receipt${receipts.length === 1 ? "" : "s"} recorded.`,
-      detail: "Live GRN headers — line-level inventory posting Coming Soon.",
+      detail: "Live GRN headers and atomic stock posting for mapped inventory lines.",
       source: "live",
     });
   }
@@ -218,8 +218,8 @@ export function readinessGroups(): ProcurementReadinessGroup[] {
     {
       id: "receiving",
       title: "Receiving foundation",
-      unavailable: "Line posting Coming Soon — GRN headers LIVE",
-      why: "Goods receiving headers are live; line-level inventory posting Coming Soon.",
+      unavailable: "Unmapped lines skip stock — mapped inventory lines post LIVE",
+      why: "Goods receiving headers and optional lines are live; mapped inventoryItemId lines post stock_movements (purchase) atomically.",
       entities: ["goods_receiving"],
       apis: ["GET/POST /api/v1/admin/purchasing/receiving"],
       permission: "purchasing.manage or admin.access",

@@ -17,6 +17,7 @@ export const STOCK_MOVEMENT_TYPES = [
   "transfer_out",
   "waste",
   "sale_consumption",
+  "purchase",
 ] as const;
 export type StockMovementType = (typeof STOCK_MOVEMENT_TYPES)[number];
 
@@ -80,7 +81,9 @@ export interface CreateStockAdjustmentInput {
   inventoryItemId: string;
   quantityDelta: number;
   reason?: string | null;
-  movementType?: Extract<StockMovementType, "adjustment" | "receipt" | "waste">;
+  movementType?: Extract<StockMovementType, "adjustment" | "receipt" | "waste" | "purchase">;
+  referenceType?: string | null;
+  referenceId?: string | null;
 }
 
 export interface InventoryService {
@@ -318,40 +321,107 @@ export function createInventoryService(envStatus: EnvironmentStatus): InventoryS
       }
 
       const client = supabase();
+      // Branch gate before atomic write — membership must not rely on the RPC.
       const existing = await fetchItem(client, input.inventoryItemId);
       assertBranchMembership(scope, existing.branchId);
 
-      const nextStock = existing.currentStock + input.quantityDelta;
-      if (nextStock < 0) {
-        throw new ApiError(409, "INSUFFICIENT_STOCK", "Adjustment would drive stock below zero.");
+      const movementType = input.movementType ?? "adjustment";
+      const { data, error } = await client.rpc("adjust_inventory_stock_atomic", {
+        p_inventory_item_id: input.inventoryItemId,
+        p_quantity_delta: input.quantityDelta,
+        p_movement_type: movementType,
+        p_reason: input.reason?.trim() || null,
+        p_actor_user_id: actorUserId,
+        p_reference_type: input.referenceType?.trim() || null,
+        p_reference_id: input.referenceId || null,
+      });
+
+      if (error) {
+        const message = error.message ?? "Atomic stock adjustment failed.";
+        if (/QUANTITY_DELTA_INVALID/i.test(message)) {
+          throw new ApiError(400, "VALIDATION_ERROR", "quantityDelta must be a non-zero number.");
+        }
+        if (/INVENTORY_ITEM_NOT_FOUND/i.test(message)) {
+          throw new ApiError(404, "INVENTORY_ITEM_NOT_FOUND", "Inventory item not found.");
+        }
+        if (/INSUFFICIENT_STOCK/i.test(message)) {
+          throw new ApiError(409, "INSUFFICIENT_STOCK", "Adjustment would drive stock below zero.");
+        }
+        if (/MOVEMENT_TYPE_INVALID/i.test(message)) {
+          throw new ApiError(400, "VALIDATION_ERROR", "Invalid movement type.");
+        }
+        // Any RPC failure rolls back both movement insert and stock update.
+        throw new ApiError(500, "STOCK_ADJUSTMENT_FAILED", message);
       }
 
-      const movementType = input.movementType ?? "adjustment";
-      const { data: movementData, error: movementError } = await client
-        .from("stock_movements")
-        .insert({
-          inventory_item_id: existing.id,
-          branch_id: existing.branchId,
-          movement_type: movementType,
-          quantity: input.quantityDelta,
-          reason: input.reason?.trim() || null,
-          created_by: actorUserId,
-        })
-        .select(MOVEMENT_SELECT)
-        .single();
-      if (movementError) throwMappedDbError("STOCK_MOVEMENT_CREATE_FAILED", movementError);
+      const payload = data as {
+        item?: {
+          id: string;
+          branchId: string;
+          sku: string;
+          name: string;
+          category: string | null;
+          unit: string;
+          currentStock: number;
+          minimumStock: number;
+          reorderLevel: number;
+          costPrice: number | null;
+          status: string;
+          createdAt: string;
+          updatedAt: string;
+        };
+        movement?: {
+          id: string;
+          inventoryItemId: string;
+          branchId: string;
+          movementType: string;
+          quantity: number;
+          referenceType: string | null;
+          referenceId: string | null;
+          reason: string | null;
+          createdBy: string | null;
+          itemName: string | null;
+          itemSku: string | null;
+          createdAt?: string;
+        };
+      } | null;
 
-      const { data: itemData, error: itemError } = await client
-        .from("inventory_items")
-        .update({ current_stock: nextStock })
-        .eq("id", existing.id)
-        .select(ITEM_SELECT)
-        .single();
-      if (itemError) throwMappedDbError("INVENTORY_STOCK_UPDATE_FAILED", itemError);
+      if (!payload?.item || !payload.movement) {
+        throw new ApiError(500, "STOCK_ADJUSTMENT_FAILED", "Atomic adjustment returned no payload.");
+      }
 
       return {
-        item: mapItem(itemData as unknown as ItemRow),
-        movement: mapMovement(movementData as unknown as MovementRow),
+        item: {
+          id: payload.item.id,
+          branchId: payload.item.branchId,
+          branchCode: existing.branchCode,
+          branchName: existing.branchName,
+          sku: payload.item.sku,
+          name: payload.item.name,
+          category: payload.item.category,
+          unit: payload.item.unit,
+          currentStock: Number(payload.item.currentStock),
+          minimumStock: Number(payload.item.minimumStock),
+          reorderLevel: Number(payload.item.reorderLevel),
+          costPrice: payload.item.costPrice == null ? null : Number(payload.item.costPrice),
+          status: payload.item.status as InventoryItemStatus,
+          createdAt: payload.item.createdAt,
+          updatedAt: payload.item.updatedAt,
+        },
+        movement: {
+          id: payload.movement.id,
+          inventoryItemId: payload.movement.inventoryItemId,
+          branchId: payload.movement.branchId,
+          movementType: payload.movement.movementType as StockMovementType,
+          quantity: Number(payload.movement.quantity),
+          referenceType: payload.movement.referenceType,
+          referenceId: payload.movement.referenceId,
+          reason: payload.movement.reason,
+          createdBy: payload.movement.createdBy,
+          createdAt: payload.movement.createdAt ?? new Date().toISOString(),
+          itemName: payload.movement.itemName,
+          itemSku: payload.movement.itemSku,
+        },
       };
     },
 

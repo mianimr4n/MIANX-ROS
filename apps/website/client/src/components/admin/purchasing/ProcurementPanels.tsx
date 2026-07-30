@@ -128,7 +128,7 @@ export function ReceivingGrnPanel({
     <AdminSurface aria-labelledby="receiving-grn-heading" className="mb-6">
       <AdminSurfaceHeader
         title="Receiving &amp; GRN"
-        description="Live goods receiving headers — line-level inventory posting Coming Soon."
+        description="Live goods receiving — mapped inventory lines post stock atomically; unmapped items are skipped."
         action={
           canManage ? (
             <button
@@ -197,7 +197,7 @@ export function ReceivingGrnPanel({
               </button>
             </div>
             <p className="text-xs text-[var(--admin-muted)]">
-              GRN headers are live. Stock quantity updates still require Inventory adjustments until GRN line posting ships.
+              Mapped inventory lines post stock atomically on the server. Unmapped lines are skipped without blocking the GRN.
             </p>
           </form>
         ) : null}

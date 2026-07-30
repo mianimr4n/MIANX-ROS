@@ -2167,6 +2167,7 @@ export type CreateGoodsReceivingInput = {
   status?: GoodsReceivingStatus;
   notes?: string | null;
   receivedAt?: string | null;
+  lines?: Array<{ inventoryItemId?: string | null; quantity: number }>;
 };
 
 export function listPurchaseRequisitions(

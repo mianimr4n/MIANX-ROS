@@ -120,6 +120,18 @@ export interface GoodsReceivingRecord {
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
+  postedLines?: Array<{
+    lineId: string;
+    inventoryItemId: string;
+    quantity: number;
+    movementId: string;
+    currentStock: number;
+  }>;
+  skippedLines?: Array<{
+    inventoryItemId: string | null;
+    quantity?: number;
+    reason: string;
+  }>;
 }
 
 export interface CreateRequisitionInput {
@@ -129,6 +141,11 @@ export interface CreateRequisitionInput {
   status?: RequisitionStatus;
 }
 
+export interface CreateGoodsReceivingLineInput {
+  inventoryItemId?: string | null;
+  quantity: number;
+}
+
 export interface CreateGoodsReceivingInput {
   branchId: string;
   purchaseOrderId?: string | null;
@@ -136,6 +153,8 @@ export interface CreateGoodsReceivingInput {
   status?: GoodsReceivingStatus;
   notes?: string | null;
   receivedAt?: string | null;
+  /** Optional mapped lines — posts stock atomically when inventory item exists. */
+  lines?: CreateGoodsReceivingLineInput[];
 }
 
 export interface PurchasingService {
@@ -544,7 +563,7 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
       if (input.purchaseOrderId) {
         const { data: po, error: poError } = await client
           .from("purchase_orders")
-          .select("id, branch_id")
+          .select("id, branch_id, po_number")
           .eq("id", input.purchaseOrderId)
           .maybeSingle();
         if (poError) throwMappedDbError("PURCHASE_ORDER_READ_FAILED", poError);
@@ -556,37 +575,85 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
 
       const grnNumber = (input.grnNumber?.trim() || generateGrnNumber()).toUpperCase();
       const status = input.status ?? "posted";
+      const lines = (input.lines ?? []).map((line) => ({
+        inventoryItemId: line.inventoryItemId ?? null,
+        quantity: line.quantity,
+      }));
 
-      const { data, error } = await client
-        .from("goods_receiving")
-        .insert({
-          branch_id: input.branchId,
-          purchase_order_id: input.purchaseOrderId || null,
-          grn_number: grnNumber,
-          status,
-          notes: input.notes?.trim() || null,
-          received_at: input.receivedAt || new Date().toISOString(),
-          created_by: actorUserId,
-        })
-        .select(RECEIVING_SELECT)
-        .single();
+      const { data, error } = await client.rpc("create_goods_receiving_with_stock_atomic", {
+        p_branch_id: input.branchId,
+        p_purchase_order_id: input.purchaseOrderId || null,
+        p_grn_number: grnNumber,
+        p_status: status,
+        p_notes: input.notes?.trim() || null,
+        p_received_at: input.receivedAt || null,
+        p_actor_user_id: actorUserId,
+        p_lines: lines,
+      });
 
       if (error) {
-        if (error.code === "23505") {
+        const message = error.message ?? "Atomic GRN create failed.";
+        if (/GRN_NUMBER_EXISTS|duplicate key|unique/i.test(message)) {
           throw new ApiError(409, "GRN_NUMBER_EXISTS", "A GRN with this number already exists for the branch.");
         }
-        throwMappedDbError("GOODS_RECEIVING_CREATE_FAILED", error);
+        if (/PURCHASE_ORDER_NOT_FOUND/i.test(message)) {
+          throw new ApiError(404, "PURCHASE_ORDER_NOT_FOUND", "Purchase order not found.");
+        }
+        if (/PO_BRANCH_MISMATCH|LINE_BRANCH_MISMATCH/i.test(message)) {
+          throw new ApiError(400, "VALIDATION_ERROR", "Purchase order / line must belong to the same branch as the GRN.");
+        }
+        if (/GRN_STATUS_INVALID/i.test(message)) {
+          throw new ApiError(400, "VALIDATION_ERROR", "Invalid GRN status.");
+        }
+        throw new ApiError(500, "GOODS_RECEIVING_CREATE_FAILED", message);
       }
 
-      if (input.purchaseOrderId && status === "posted") {
-        await client
-          .from("purchase_orders")
-          .update({ status: "partially_received" })
-          .eq("id", input.purchaseOrderId)
-          .in("status", ["draft", "submitted", "approved", "ordered"]);
+      const payload = data as {
+        id: string;
+        branchId: string;
+        purchaseOrderId: string | null;
+        grnNumber: string;
+        status: string;
+        receivedAt: string;
+        notes: string | null;
+        createdBy: string | null;
+        createdAt: string;
+        updatedAt: string;
+        postedLines?: Array<{
+          lineId: string;
+          inventoryItemId: string;
+          quantity: number;
+          movementId: string;
+          currentStock: number;
+        }>;
+        skippedLines?: Array<{
+          inventoryItemId: string | null;
+          quantity?: number;
+          reason: string;
+        }>;
+      } | null;
+
+      if (!payload?.id) {
+        throw new ApiError(500, "GOODS_RECEIVING_CREATE_FAILED", "Atomic GRN create returned no payload.");
       }
 
-      return mapReceiving(data as unknown as GoodsReceivingRow);
+      // Re-read with branch/PO embeds for response honesty.
+      const { data: row, error: readError } = await client
+        .from("goods_receiving")
+        .select(RECEIVING_SELECT)
+        .eq("id", payload.id)
+        .maybeSingle();
+      if (readError) throwMappedDbError("GOODS_RECEIVING_READ_FAILED", readError);
+      if (!row) {
+        throw new ApiError(500, "GOODS_RECEIVING_CREATE_FAILED", "GRN was created but could not be reloaded.");
+      }
+
+      const record = mapReceiving(row as unknown as GoodsReceivingRow);
+      return {
+        ...record,
+        postedLines: payload.postedLines ?? [],
+        skippedLines: payload.skippedLines ?? [],
+      };
     },
   };
 }
