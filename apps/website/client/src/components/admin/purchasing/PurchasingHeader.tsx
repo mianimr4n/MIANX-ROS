@@ -18,12 +18,12 @@ export function PurchasingHeader({
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
         </p>
         <p className="mt-1 text-xs text-[var(--admin-muted)]">
-          Live supplier master and purchase orders — receiving &amp; approvals Coming Soon
+          Live suppliers, POs, requisitions, and GRN headers — approvals &amp; invoice matching Coming Soon
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
-          LIVE suppliers &amp; POs
+          LIVE procurement
         </span>
         <button
           type="button"
@@ -31,12 +31,6 @@ export function PurchasingHeader({
           className="min-h-11 rounded-lg border border-[var(--admin-border)] bg-white px-4 text-sm font-semibold hover:bg-[var(--admin-soft)]"
         >
           Refresh
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Create requisition · Coming Soon
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Receive goods · Coming Soon
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
           Export · Coming Soon

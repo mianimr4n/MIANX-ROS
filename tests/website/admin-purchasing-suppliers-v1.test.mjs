@@ -29,6 +29,8 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(page, /canAccessAdminPurchasing/);
     assert.match(page, /listSuppliers/);
     assert.match(page, /listPurchaseOrders/);
+    assert.match(page, /listPurchaseRequisitions/);
+    assert.match(page, /listGoodsReceiving/);
   });
 
   it("does not fabricate suppliers or purchase orders", () => {
@@ -38,14 +40,13 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     const orders = read("apps/website/client/src/components/admin/purchasing/PurchasingTables.tsx");
     assert.match(orders, /No purchase orders created yet/);
     assert.match(orders, /customer sales — not supplier procurement/i);
+    assert.match(orders, /No purchase requisitions created yet/);
   });
 
-  it("keeps receiving Coming Soon and does not update inventory from frontend", () => {
-    const header = read("apps/website/client/src/components/admin/purchasing/PurchasingHeader.tsx");
-    assert.match(header, /Receive goods · Coming Soon/);
-    assert.match(header, /disabled/);
+  it("wires live GRN without inventing stock balance updates in the browser", () => {
     const receiving = read("apps/website/client/src/components/admin/purchasing/ProcurementPanels.tsx");
-    assert.match(receiving, /increment stock balances/);
+    assert.match(receiving, /No goods receipts recorded yet/);
+    assert.match(receiving, /line-level inventory posting Coming Soon/i);
     assert.doesNotMatch(receiving, /setOnHand|quantity_on_hand|stockBalance/i);
   });
 
@@ -86,11 +87,13 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(page, /useAdminAccessGate/);
   });
 
-  it("integration checks document live supplier/PO APIs and remaining gaps", () => {
+  it("integration checks document live supplier/PO/requisition/GRN APIs and remaining gaps", () => {
     const helper = read("apps/website/client/src/lib/admin-purchasing.ts");
     assert.match(helper, /purchase_orders/);
-    assert.match(helper, /goods_receipts/);
+    assert.match(helper, /goods_receiving/);
+    assert.match(helper, /purchase_requisitions/);
     assert.match(helper, /purchasing\.manage/);
     assert.match(helper, /status: "present"/);
+    assert.match(helper, /Three-way matching/);
   });
 });

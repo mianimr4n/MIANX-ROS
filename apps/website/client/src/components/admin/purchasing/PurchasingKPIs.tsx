@@ -4,12 +4,13 @@ import type { PurchasingKpiSnapshot } from "@/lib/admin-purchasing";
 export function PurchasingKPIs({ snapshot }: { snapshot: PurchasingKpiSnapshot }) {
   const suppliersLoaded = snapshot.supplierCount != null;
   const ordersLoaded = snapshot.openPoCount != null;
+  const reqLoaded = snapshot.openRequisitionCount != null;
   return (
     <section aria-label="Purchasing key performance indicators" className="mb-6">
       <AdminSectionTitle
         eyebrow="Procurement"
         title="Operational KPIs"
-        description="Live supplier and open-PO counts when loaded — GRN and payables Coming Soon."
+        description="Live supplier, requisition, and PO counts — invoice matching Coming Soon."
       />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <AdminKpiCard
@@ -19,7 +20,13 @@ export function PurchasingKPIs({ snapshot }: { snapshot: PurchasingKpiSnapshot }
           unavailable={!suppliersLoaded}
           detail={suppliersLoaded ? "GET /admin/purchasing/suppliers" : "Requires purchasing.manage"}
         />
-        <AdminKpiCard title="Open requisitions" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — no requisition API" />
+        <AdminKpiCard
+          title="Open requisitions"
+          value={reqLoaded ? String(snapshot.openRequisitionCount) : "—"}
+          source={reqLoaded ? "LIVE" : "UNAVAILABLE"}
+          unavailable={!reqLoaded}
+          detail={reqLoaded ? "GET /admin/purchasing/requisitions" : "Requires purchasing.manage"}
+        />
         <AdminKpiCard title="Pending approvals" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — no approval workflow" />
         <AdminKpiCard
           title="Open purchase orders"
@@ -28,12 +35,12 @@ export function PurchasingKPIs({ snapshot }: { snapshot: PurchasingKpiSnapshot }
           unavailable={!ordersLoaded}
           detail={ordersLoaded ? "GET /admin/purchasing/orders" : "Requires purchasing.manage"}
         />
-        <AdminKpiCard title="Awaiting delivery" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — GRN required" />
-        <AdminKpiCard title="Partially received" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — no GRN records" />
+        <AdminKpiCard title="Awaiting delivery" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — delivery tracking" />
+        <AdminKpiCard title="Partially received" value="—" source="UNAVAILABLE" unavailable detail="Derived PO status may update on GRN — report Coming Soon" />
         <AdminKpiCard title="Overdue POs" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — delivery tracking" />
         <AdminKpiCard title="Purchase spend" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — invoice totals" />
         <AdminKpiCard title="Outstanding invoices" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — no supplier AP" />
-        <AdminKpiCard title="On-time delivery" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — no receipt history" />
+        <AdminKpiCard title="On-time delivery" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — receipt analytics" />
       </div>
     </section>
   );

@@ -129,6 +129,43 @@ const purchasing: PurchasingService = {
       status: input.status ?? "draft",
     };
   },
+  async listRequisitions() {
+    return [];
+  },
+  async createRequisition(_scope, _actor, input) {
+    return {
+      id: "6ba7b814-9dad-11d1-80b4-00c04fd430c8",
+      branchId: input.branchId,
+      branchCode: "royal-orchard",
+      branchName: "Royal Orchard",
+      title: input.title,
+      status: input.status ?? "draft",
+      notes: input.notes ?? null,
+      requestedBy: "user-admin",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  },
+  async listReceiving() {
+    return [];
+  },
+  async createReceiving(_scope, _actor, input) {
+    return {
+      id: "6ba7b815-9dad-11d1-80b4-00c04fd430c8",
+      branchId: input.branchId,
+      branchCode: "royal-orchard",
+      branchName: "Royal Orchard",
+      purchaseOrderId: input.purchaseOrderId ?? null,
+      poNumber: null,
+      grnNumber: "GRN-TEST-1",
+      status: input.status ?? "posted",
+      receivedAt: new Date().toISOString(),
+      notes: input.notes ?? null,
+      createdBy: "user-admin",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  },
 };
 
 describe("Purchasing admin APIs", () => {
@@ -227,5 +264,27 @@ describe("Purchasing admin APIs", () => {
       .get("/api/v1/admin/purchasing/orders")
       .set("Authorization", "Bearer token");
     expect(res.status).toBe(200);
+  });
+
+  it("creates requisitions and goods receiving records", async () => {
+    const { app } = createApp(readyEnv, {
+      purchasing,
+      authTokenVerifier: verifier("auth-admin", "admin@example.com"),
+      authProfileRepository: authRepo(principal()),
+    });
+
+    const req = await request(app)
+      .post("/api/v1/admin/purchasing/requisitions")
+      .set("Authorization", "Bearer token")
+      .send({ branchId: BRANCH_ID, title: "Weekly dairy" });
+    expect(req.status).toBe(201);
+    expect(req.body.data.title).toBe("Weekly dairy");
+
+    const grn = await request(app)
+      .post("/api/v1/admin/purchasing/receiving")
+      .set("Authorization", "Bearer token")
+      .send({ branchId: BRANCH_ID, purchaseOrderId: order.id, notes: "Partial delivery" });
+    expect(grn.status).toBe(201);
+    expect(grn.body.data.grnNumber).toBeTruthy();
   });
 });

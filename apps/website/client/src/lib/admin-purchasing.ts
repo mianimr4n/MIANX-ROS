@@ -1,6 +1,6 @@
-/** Purchasing & Suppliers helpers — live suppliers/POs; no invented receipts or payables. */
+/** Purchasing & Suppliers helpers — live suppliers/POs/requisitions/GRN; no invented payables. */
 
-import type { PurchaseOrder, Supplier } from "@/lib/admin-api";
+import type { GoodsReceiving, PurchaseOrder, PurchaseRequisition, Supplier } from "@/lib/admin-api";
 
 export type ProcurementIntegrationCheck = {
   id: string;
@@ -12,6 +12,7 @@ export type ProcurementIntegrationCheck = {
 export type PurchasingKpiSnapshot = {
   supplierCount: number | null;
   openPoCount: number | null;
+  openRequisitionCount: number | null;
   inventoryFoundationLinked: boolean;
   stockLedgerAvailable: boolean;
   menuCatalogAvailable: boolean;
@@ -36,6 +37,7 @@ export type ProcurementReadinessGroup = {
 };
 
 const OPEN_PO_STATUSES = new Set(["draft", "submitted", "approved", "ordered", "partially_received"]);
+const OPEN_REQ_STATUSES = new Set(["draft", "submitted", "approved"]);
 
 export function integrationChecks(): ProcurementIntegrationCheck[] {
   return [
@@ -48,14 +50,14 @@ export function integrationChecks(): ProcurementIntegrationCheck[] {
     {
       id: "requisitions",
       label: "Purchase requisitions",
-      status: "missing",
-      note: "No requisition entities or admin APIs — Coming Soon.",
+      status: "present",
+      note: "purchase_requisitions + GET/POST /api/v1/admin/purchasing/requisitions.",
     },
     {
       id: "approvals",
       label: "Approval workflow",
       status: "missing",
-      note: "No procurement approval infrastructure in backend — Coming Soon.",
+      note: "No procurement approval enforcement yet — Coming Soon.",
     },
     {
       id: "purchase-orders",
@@ -66,32 +68,32 @@ export function integrationChecks(): ProcurementIntegrationCheck[] {
     {
       id: "receiving",
       label: "Goods receiving / GRN",
-      status: "missing",
-      note: "No goods_receipts table or receiving API — Coming Soon.",
+      status: "present",
+      note: "goods_receiving + GET/POST /api/v1/admin/purchasing/receiving.",
     },
     {
       id: "inventory-posting",
       label: "Inventory posting from GRN",
       status: "partial",
-      note: "Stock ledger is LIVE — GRN → stock_movements posting Coming Soon.",
+      note: "GRN headers are LIVE — line → stock_movements posting Coming Soon.",
     },
     {
       id: "invoices",
       label: "Supplier invoices",
       status: "missing",
-      note: "No purchase invoice or AP tables.",
+      note: "No purchase invoice or AP tables — Coming Soon.",
     },
     {
       id: "matching",
       label: "Three-way matching",
       status: "missing",
-      note: "PO ↔ GRN ↔ invoice matching not implemented.",
+      note: "PO ↔ GRN ↔ invoice matching not implemented — Coming Soon.",
     },
     {
       id: "payments",
       label: "Supplier payments / payables",
       status: "missing",
-      note: "payment.* permissions cover customer payments — not supplier AP.",
+      note: "payment.* permissions cover customer payments — not supplier AP — Coming Soon.",
     },
     {
       id: "inventory-module",
@@ -111,10 +113,13 @@ export function integrationChecks(): ProcurementIntegrationCheck[] {
 export function buildPurchasingKpis(
   suppliers: Supplier[] | null = null,
   orders: PurchaseOrder[] | null = null,
+  requisitions: PurchaseRequisition[] | null = null,
 ): PurchasingKpiSnapshot {
   return {
     supplierCount: suppliers == null ? null : suppliers.length,
     openPoCount: orders == null ? null : orders.filter((o) => OPEN_PO_STATUSES.has(o.status)).length,
+    openRequisitionCount:
+      requisitions == null ? null : requisitions.filter((r) => OPEN_REQ_STATUSES.has(r.status)).length,
     inventoryFoundationLinked: true,
     stockLedgerAvailable: true,
     menuCatalogAvailable: true,
@@ -125,6 +130,7 @@ export function buildProcurementInsights(
   branchLabel: string,
   suppliers: Supplier[] | null = null,
   orders: PurchaseOrder[] | null = null,
+  receipts: GoodsReceiving[] | null = null,
 ): ProcurementInsightItem[] {
   const items: ProcurementInsightItem[] = [];
 
@@ -141,35 +147,37 @@ export function buildProcurementInsights(
     items.push({
       id: "live-pos",
       title: `${orders.length} purchase order${orders.length === 1 ? "" : "s"} on record.`,
-      detail: "Live from GET /admin/purchasing/orders. Line items and GRN Coming Soon.",
+      detail: "Live from GET /admin/purchasing/orders. Line items Coming Soon.",
+      source: "live",
+    });
+  }
+
+  if (receipts != null) {
+    items.push({
+      id: "live-grn",
+      title: `${receipts.length} goods receipt${receipts.length === 1 ? "" : "s"} recorded.`,
+      detail: "Live GRN headers — line-level inventory posting Coming Soon.",
       source: "live",
     });
   }
 
   items.push({
-    id: "no-grn",
-    title: "Goods receiving and GRN creation are Coming Soon.",
-    detail: "Receiving requires persistent receipt rows and inventory posting.",
-    source: "foundation",
-  });
-
-  items.push({
     id: "no-matching",
     title: "Purchase invoice matching is Coming Soon.",
-    detail: "Three-way match requires PO, GRN, and supplier invoice records.",
+    detail: "Three-way match requires supplier invoice records in addition to PO and GRN.",
     source: "foundation",
   });
 
   items.push({
     id: "no-approvals",
     title: "Server-side approval workflow is Coming Soon.",
-    detail: "Draft POs can be created; approval enforcement is not shipped.",
+    detail: "Requisitions and POs can be created; approval enforcement is not shipped.",
     source: "foundation",
   });
 
   items.push({
     id: "branch",
-    title: `Branch context: ${branchLabel} — supplier and PO APIs are branch-scoped.`,
+    title: `Branch context: ${branchLabel} — purchasing APIs are branch-scoped.`,
     detail: "purchasing.manage or admin.access required for write APIs.",
     source: "live",
   });
@@ -182,7 +190,7 @@ export function readinessGroups(): ProcurementReadinessGroup[] {
     {
       id: "supplier",
       title: "Supplier foundation",
-      unavailable: "— LIVE (contacts/terms catalogue partial)",
+      unavailable: "— LIVE",
       why: "Supplier master is live; commercial terms catalogue Coming Soon.",
       entities: ["suppliers"],
       apis: ["GET/POST /api/v1/admin/purchasing/suppliers"],
@@ -192,22 +200,25 @@ export function readinessGroups(): ProcurementReadinessGroup[] {
     {
       id: "workflow",
       title: "Procurement workflow",
-      unavailable: "Requisitions & approvals Coming Soon — POs LIVE",
-      why: "Purchase orders can be created; requisition→approval workflow not shipped.",
-      entities: ["purchase_orders"],
-      apis: ["GET/POST /api/v1/admin/purchasing/orders"],
+      unavailable: "Approvals Coming Soon — requisitions & POs LIVE",
+      why: "Requisitions and purchase orders can be created; approval enforcement not shipped.",
+      entities: ["purchase_requisitions", "purchase_orders"],
+      apis: [
+        "GET/POST /api/v1/admin/purchasing/requisitions",
+        "GET/POST /api/v1/admin/purchasing/orders",
+      ],
       permission: "purchasing.manage or admin.access",
-      related: "PO line items Coming Soon.",
+      related: "PO/requisition line items Coming Soon.",
     },
     {
       id: "receiving",
       title: "Receiving foundation",
-      unavailable: "GRN, partial receipts, quality rejection (Coming Soon)",
-      why: "Receiving must create immutable receipt events — not frontend quantity bumps.",
-      entities: ["goods_receipts", "goods_receipt_lines", "rejection_reasons"],
-      apis: ["POST /api/v1/admin/purchasing/receipts"],
-      permission: "purchasing.manage or inventory.manage",
-      related: "Posts to stock_movements when receiving ships.",
+      unavailable: "Line posting Coming Soon — GRN headers LIVE",
+      why: "Goods receiving headers are live; line-level inventory posting Coming Soon.",
+      entities: ["goods_receiving"],
+      apis: ["GET/POST /api/v1/admin/purchasing/receiving"],
+      permission: "purchasing.manage or admin.access",
+      related: "Use Inventory adjustments for quantity until GRN lines post to stock_movements.",
     },
     {
       id: "finance",
