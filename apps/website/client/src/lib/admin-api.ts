@@ -1732,6 +1732,109 @@ export function createHrEmployee(accessToken: string, input: CreateHrEmployeeInp
   });
 }
 
+export type InventoryItemStatus = "active" | "inactive" | "discontinued";
+
+export type InventoryItem = {
+  id: string;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  sku: string;
+  name: string;
+  category: string | null;
+  unit: string;
+  currentStock: number;
+  minimumStock: number;
+  reorderLevel: number;
+  costPrice: number | null;
+  status: InventoryItemStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StockMovement = {
+  id: string;
+  inventoryItemId: string;
+  branchId: string;
+  movementType: string;
+  quantity: number;
+  referenceType: string | null;
+  referenceId: string | null;
+  reason: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  itemName: string | null;
+  itemSku: string | null;
+};
+
+export type CreateInventoryItemInput = {
+  branchId: string;
+  sku: string;
+  name: string;
+  category?: string | null;
+  unit?: string;
+  currentStock?: number;
+  minimumStock?: number;
+  reorderLevel?: number;
+  costPrice?: number | null;
+  status?: InventoryItemStatus;
+};
+
+export type CreateStockAdjustmentInput = {
+  inventoryItemId: string;
+  quantityDelta: number;
+  reason?: string | null;
+  movementType?: "adjustment" | "receipt" | "waste";
+};
+
+export function listInventoryItems(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+): Promise<InventoryItem[]> {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<InventoryItem[]>(
+    `/admin/inventory/items${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createInventoryItem(accessToken: string, input: CreateInventoryItemInput) {
+  return fetchApiData<InventoryItem>(`/admin/inventory/items`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function createStockAdjustment(accessToken: string, input: CreateStockAdjustmentInput) {
+  return fetchApiData<{ item: InventoryItem; movement: StockMovement }>(`/admin/inventory/adjustments`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listStockMovements(
+  accessToken: string,
+  query?: { branchId?: string; inventoryItemId?: string; limit?: number },
+  opts?: AdminReadOptions,
+): Promise<StockMovement[]> {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  if (query?.inventoryItemId) params.set("inventoryItemId", query.inventoryItemId);
+  if (query?.limit != null) params.set("limit", String(query.limit));
+  const qs = params.toString();
+  return fetchApiData<StockMovement[]>(
+    `/admin/inventory/movements${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
 export type SupplierStatus = "active" | "inactive";
 
 export type Supplier = {

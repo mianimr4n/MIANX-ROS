@@ -26,17 +26,20 @@ describe("Inventory Management V1 (static)", () => {
     assert.match(page, /InventoryFoundationPanel/);
     assert.match(page, /InventoryInsights/);
     assert.match(page, /canAccessAdminInventory/);
+    assert.match(page, /listInventoryItems/);
+    assert.match(page, /createStockAdjustment/);
+    assert.match(page, /listStockMovements/);
     assert.match(page, /integrationChecks/);
   });
 
-  it("does not fabricate stock balances or movement history", () => {
+  it("wires live stock table and does not fabricate balances", () => {
     const table = read("apps/website/client/src/components/admin/inventory/InventoryTable.tsx");
-    assert.match(table, /No stock items in repository/);
+    assert.match(table, /No stock items added yet/);
     assert.doesNotMatch(table, /onHand:\s*\d|quantity_on_hand|fakeStock/i);
     const timeline = read("apps/website/client/src/components/admin/inventory/InventoryWorkflowPanels.tsx");
-    assert.match(timeline, /Stock movement ledger unavailable/);
+    assert.match(timeline, /No stock movements yet/);
     assert.match(timeline, /Order history is not a substitute/);
-    assert.doesNotMatch(timeline, /movementType.*Sale Consumption/i);
+    assert.doesNotMatch(timeline, /FOUNDATION — NO WRITE API/i);
   });
 
   it("does not use menu availability or selling price as inventory cost", () => {
@@ -55,20 +58,21 @@ describe("Inventory Management V1 (static)", () => {
     assert.doesNotMatch(helper, /displayPrice|formatPkr.*stock/i);
   });
 
-  it("requires real threshold for low stock and disables write workflows", () => {
-    const lowStock = read("apps/website/client/src/components/admin/inventory/InventoryWorkflowPanels.tsx");
-    assert.match(lowStock, /Reorder threshold not configured/);
+  it("keeps unfinished workflows as Coming Soon and enables adjustments", () => {
+    const panels = read("apps/website/client/src/components/admin/inventory/InventoryWorkflowPanels.tsx");
+    assert.match(panels, /Coming Soon/);
+    assert.match(panels, /Post adjustment/);
+    assert.match(panels, /onAdjust/);
     const header = read("apps/website/client/src/components/admin/inventory/InventoryHeader.tsx");
-    assert.match(header, /Receive · Foundation/);
-    assert.match(header, /Transfer · Foundation/);
-    assert.match(header, /Adjust · Foundation/);
-    assert.match(header, /Log waste · Foundation/);
+    assert.match(header, /Receive · Coming Soon/);
+    assert.match(header, /Transfer · Coming Soon/);
+    assert.match(header, /Log waste · Coming Soon/);
     assert.match(header, /disabled/);
   });
 
-  it("classifies recipe consumption as unavailable without server engine", () => {
+  it("classifies recipe consumption as Coming Soon without server engine", () => {
     const recipe = read("apps/website/client/src/components/admin/inventory/InventoryWorkflowPanels.tsx");
-    assert.match(recipe, /Recipe Mapping Foundation/);
+    assert.match(recipe, /Recipe Mapping — Coming Soon/);
     assert.match(recipe, /server-side recipe consumption engine required/i);
     assert.doesNotMatch(recipe, /deduct.*order|subtract.*quantity/i);
   });
@@ -81,9 +85,10 @@ describe("Inventory Management V1 (static)", () => {
     assert.doesNotMatch(insights, /demand forecast|autonomous replenishment|AI pricing/i);
   });
 
-  it("gates /admin/inventory with canAccessAdminInventory (branch.manage)", () => {
+  it("gates /admin/inventory with canAccessAdminInventory", () => {
     const access = read("apps/website/client/src/lib/admin-access.ts");
     assert.match(access, /canAccessAdminInventory/);
+    assert.match(access, /inventory\.manage/);
     assert.match(access, /branch\.manage/);
     assert.match(access, /requiresInventory/);
     assert.match(access, /href: "\/admin\/inventory"/);
@@ -95,11 +100,12 @@ describe("Inventory Management V1 (static)", () => {
     assert.match(page, /useAdminAccessGate/);
   });
 
-  it("integration checks document missing stock ledger without inventing permissions", () => {
+  it("integration checks document live ledger and remaining gaps honestly", () => {
     const helper = read("apps/website/client/src/lib/admin-inventory.ts");
     assert.match(helper, /inventory_items/);
     assert.match(helper, /stock_movements/);
-    assert.match(helper, /inventory\.manage \(proposed\)/);
-    assert.doesNotMatch(helper, /permissions\.includes\("inventory\.manage"\)/);
+    assert.match(helper, /inventory\.manage/);
+    assert.match(helper, /status: "present"/);
+    assert.match(helper, /Recipe \/ BOM mapping/);
   });
 });

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   InventoryFoundationPanel,
@@ -27,6 +27,15 @@ import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
 import { canAccessAdminInventory, primaryRoleLabel } from "@/lib/admin-access";
 import {
+  createInventoryItem,
+  createStockAdjustment,
+  listInventoryItems,
+  listStockMovements,
+  type InventoryItem,
+  type StockMovement,
+} from "@/lib/admin-api";
+import { ApiRequestError } from "@/lib/api";
+import {
   buildInventoryInsights,
   buildInventoryKpis,
   integrationChecks,
@@ -35,22 +44,158 @@ import {
 import { AdminShell } from "./AdminShell";
 
 export default function AdminInventory() {
-  const { permissions, isSuperAdmin, roles } = useAuth();
-  const { label: branchLabel } = useAdminBranch();
+  const { session, permissions, isSuperAdmin, roles } = useAuth();
+  const { label: branchLabel, branchIdFilter } = useAdminBranch();
   const { items, toppings, isLoading, reloadCatalog } = useMenuCatalog();
 
   const allowed = canAccessAdminInventory({ roles, permissions, isSuperAdmin });
-  useAdminAccessGate(allowed);
+  const { gateReady } = useAdminAccessGate(allowed);
   const roleLabel = primaryRoleLabel(roles, isSuperAdmin);
+  const canManageInventory =
+    isSuperAdmin ||
+    permissions.includes("inventory.manage") ||
+    permissions.includes("admin.access");
 
-  const snapshot = useMemo(() => buildInventoryKpis(items, toppings), [items, toppings]);
-  const insights = useMemo(() => buildInventoryInsights(snapshot, branchLabel), [snapshot, branchLabel]);
+  const [stockItems, setStockItems] = useState<InventoryItem[] | null>(null);
+  const [stockLoading, setStockLoading] = useState(false);
+  const [stockError, setStockError] = useState<string | null>(null);
+  const [movements, setMovements] = useState<StockMovement[] | null>(null);
+  const [movementsLoading, setMovementsLoading] = useState(false);
+  const [movementsError, setMovementsError] = useState<string | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [addBusy, setAddBusy] = useState(false);
+  const [adjustError, setAdjustError] = useState<string | null>(null);
+  const [adjustBusy, setAdjustBusy] = useState(false);
+
   const checks = useMemo(() => integrationChecks(), []);
   const groups = useMemo(() => readinessGroups(), []);
+  const snapshot = useMemo(
+    () => buildInventoryKpis(items, toppings, stockItems),
+    [items, toppings, stockItems],
+  );
+  const insights = useMemo(() => buildInventoryInsights(snapshot, branchLabel), [snapshot, branchLabel]);
+
+  const loadStock = useCallback(async () => {
+    const token = session?.access_token;
+    if (!token || !canManageInventory) {
+      setStockItems(null);
+      setStockError(
+        canManageInventory ? null : "Stock items require inventory.manage or admin.access.",
+      );
+      return;
+    }
+    setStockLoading(true);
+    try {
+      const rows = await listInventoryItems(
+        token,
+        branchIdFilter ? { branchId: branchIdFilter } : undefined,
+      );
+      setStockItems(rows);
+      setStockError(null);
+    } catch (err) {
+      setStockItems(null);
+      setStockError(err instanceof ApiRequestError ? err.message : "Failed to load stock items");
+    } finally {
+      setStockLoading(false);
+    }
+  }, [branchIdFilter, canManageInventory, session?.access_token]);
+
+  const loadMovements = useCallback(async () => {
+    const token = session?.access_token;
+    if (!token || !canManageInventory) {
+      setMovements(null);
+      setMovementsError(null);
+      return;
+    }
+    setMovementsLoading(true);
+    try {
+      const rows = await listStockMovements(token, {
+        ...(branchIdFilter ? { branchId: branchIdFilter } : {}),
+        limit: 50,
+      });
+      setMovements(rows);
+      setMovementsError(null);
+    } catch (err) {
+      setMovements(null);
+      setMovementsError(err instanceof ApiRequestError ? err.message : "Failed to load movements");
+    } finally {
+      setMovementsLoading(false);
+    }
+  }, [branchIdFilter, canManageInventory, session?.access_token]);
+
+  useEffect(() => {
+    if (!gateReady) return;
+    void loadStock();
+    void loadMovements();
+  }, [gateReady, loadMovements, loadStock]);
+
+  const onRefresh = () => {
+    void reloadCatalog();
+    void loadStock();
+    void loadMovements();
+  };
+
+  const onAddItem = async (input: {
+    branchId: string;
+    sku: string;
+    name: string;
+    unit: string;
+    currentStock: number;
+    minimumStock: number;
+    reorderLevel: number;
+    costPrice: number | null;
+  }) => {
+    const token = session?.access_token;
+    if (!token) {
+      setAddError("Sign in required.");
+      return false;
+    }
+    setAddBusy(true);
+    setAddError(null);
+    try {
+      await createInventoryItem(token, input);
+      await Promise.all([loadStock(), loadMovements()]);
+      return true;
+    } catch (err) {
+      setAddError(err instanceof ApiRequestError ? err.message : "Failed to create stock item");
+      return false;
+    } finally {
+      setAddBusy(false);
+    }
+  };
+
+  const onAdjust = async (input: {
+    inventoryItemId: string;
+    quantityDelta: number;
+    reason: string;
+  }) => {
+    const token = session?.access_token;
+    if (!token) {
+      setAdjustError("Sign in required.");
+      return false;
+    }
+    setAdjustBusy(true);
+    setAdjustError(null);
+    try {
+      await createStockAdjustment(token, {
+        inventoryItemId: input.inventoryItemId,
+        quantityDelta: input.quantityDelta,
+        reason: input.reason || null,
+        movementType: "adjustment",
+      });
+      await Promise.all([loadStock(), loadMovements()]);
+      return true;
+    } catch (err) {
+      setAdjustError(err instanceof ApiRequestError ? err.message : "Failed to post adjustment");
+      return false;
+    } finally {
+      setAdjustBusy(false);
+    }
+  };
 
   return (
     <AdminShell title="Inventory Management">
-      <InventoryHeader branchLabel={branchLabel} roleLabel={roleLabel} onRefresh={() => void reloadCatalog()} />
+      <InventoryHeader branchLabel={branchLabel} roleLabel={roleLabel} onRefresh={onRefresh} />
 
       <InventoryStatusBanner />
 
@@ -58,18 +203,33 @@ export default function AdminInventory() {
 
       <InventoryFilters />
 
-      <InventoryTable />
+      <InventoryTable
+        items={stockItems}
+        loading={stockLoading}
+        error={stockError}
+        canManage={canManageInventory}
+        defaultBranchId={branchIdFilter}
+        onAddItem={onAddItem}
+        addError={addError}
+        addBusy={addBusy}
+      />
 
-      <StockMovementTimeline />
+      <StockMovementTimeline movements={movements} loading={movementsLoading} error={movementsError} />
 
       <div className="mb-6 grid gap-4 lg:grid-cols-2">
-        <LowStockPanel />
+        <LowStockPanel items={stockItems} />
         <RecipeMappingPanel snapshot={snapshot} />
       </div>
 
       <div className="mb-6 grid gap-4 lg:grid-cols-2">
         <ReceivingPanel />
-        <StockAdjustmentPanel />
+        <StockAdjustmentPanel
+          items={stockItems}
+          canManage={canManageInventory}
+          onAdjust={onAdjust}
+          adjustError={adjustError}
+          adjustBusy={adjustBusy}
+        />
         <StockTransferPanel />
         <WastePanel />
       </div>
