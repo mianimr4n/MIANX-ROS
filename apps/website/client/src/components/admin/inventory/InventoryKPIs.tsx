@@ -28,7 +28,7 @@ function UnavailableInventoryKpis() {
             title === "Internal / topping SKUs" ||
             title === "Unmapped recipes"
               ? "Menu catalog payload unavailable — not shown as zero"
-              : "No stock ledger / inventory API"
+              : "Stock ledger not loaded"
           }
         />
       ))}
@@ -43,12 +43,13 @@ export function InventoryKPIs({
   snapshot: InventoryKpiSnapshot | null;
   loading: boolean;
 }) {
+  const stockLoaded = snapshot?.stockItemCount != null;
   return (
     <section aria-label="Inventory key performance indicators" className="mb-6">
       <AdminSectionTitle
         eyebrow="Inventory"
         title="Operational KPIs"
-        description="Only menu-catalog linkage metrics are derivable today — no stock balances or valuation in repository."
+        description="Live stock counts when loaded — menu metrics remain derived, valuation Coming Soon."
       />
       {loading && !snapshot ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-busy="true">
@@ -60,9 +61,20 @@ export function InventoryKPIs({
         <UnavailableInventoryKpis />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <AdminKpiCard title="Total stock items" value="—" source="UNAVAILABLE" unavailable detail="No stock item master" />
-          <AdminKpiCard title="In stock" value="—" source="UNAVAILABLE" unavailable detail="Requires branch balances" />
-          <AdminKpiCard title="Low stock" value="—" source="UNAVAILABLE" unavailable detail="Requires reorder thresholds" />
+          <AdminKpiCard
+            title="Total stock items"
+            value={stockLoaded ? String(snapshot.stockItemCount) : "—"}
+            source={stockLoaded ? "LIVE" : "UNAVAILABLE"}
+            unavailable={!stockLoaded}
+            detail={stockLoaded ? "GET /admin/inventory/items" : "Requires inventory.manage"}
+          />
+          <AdminKpiCard
+            title="Low stock"
+            value={stockLoaded ? String(snapshot.lowStockCount) : "—"}
+            source={stockLoaded ? "LIVE" : "UNAVAILABLE"}
+            unavailable={!stockLoaded}
+            detail={stockLoaded ? "current_stock ≤ reorder/minimum" : "Requires reorder thresholds"}
+          />
           <AdminKpiCard title="Out of stock" value="—" source="UNAVAILABLE" unavailable detail="Not derived from menu flags" />
           <AdminKpiCard
             title="Menu browse SKUs"
@@ -82,9 +94,15 @@ export function InventoryKPIs({
             source="DERIVED"
             detail="All catalog SKUs lack recipe BOM"
           />
-          <AdminKpiCard title="Stock value" value="—" source="UNAVAILABLE" unavailable detail="Purchase cost history required" />
-          <AdminKpiCard title="Waste today" value="—" source="UNAVAILABLE" unavailable detail="No waste_events table" />
-          <AdminKpiCard title="Received today" value="—" source="UNAVAILABLE" unavailable detail="No goods receipt API" />
+          <AdminKpiCard
+            title="Stock value"
+            value="—"
+            source="UNAVAILABLE"
+            unavailable
+            detail="Retail menu price is not inventory cost — purchase cost history required"
+          />
+          <AdminKpiCard title="Waste today" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — no waste_events API" />
+          <AdminKpiCard title="Received today" value="—" source="UNAVAILABLE" unavailable detail="Coming Soon — no goods receipt API" />
         </div>
       )}
     </section>

@@ -18,40 +18,37 @@ export function InventoryHeader({
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
         </p>
         <p className="mt-1 text-xs text-[var(--admin-muted)]">
-          Inventory foundation — persistent stock ledger not available in repository
+          Live stock ledger — items, adjustments, and movement history
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-2 rounded-full bg-[var(--admin-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-muted)]">
-          Foundation workspace
+        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
+          LIVE stock ledger
         </span>
         <button
           type="button"
           onClick={onRefresh}
           className="min-h-11 rounded-lg border border-[var(--admin-border)] bg-white px-4 text-sm font-semibold hover:bg-[var(--admin-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-red)]"
         >
-          Refresh readiness
+          Refresh
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Export · Foundation
+          Export · Coming Soon
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Import · Foundation
+          Import · Coming Soon
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Stock count · Foundation
+          Stock count · Coming Soon
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Receive · Foundation
+          Receive · Coming Soon
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Transfer · Foundation
+          Transfer · Coming Soon
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Adjust · Foundation
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Log waste · Foundation
+          Log waste · Coming Soon
         </button>
       </div>
     </header>
