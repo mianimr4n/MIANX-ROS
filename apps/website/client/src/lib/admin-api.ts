@@ -2291,3 +2291,168 @@ export function createMarketingCoupon(accessToken: string, input: CreateMarketin
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }
+
+export type FinanceAccountType = "ASSET" | "LIABILITY" | "EQUITY" | "REVENUE" | "EXPENSE";
+
+export type FinanceAccount = {
+  id: string;
+  branchId: string;
+  accountCode: string;
+  accountName: string;
+  accountType: FinanceAccountType;
+  isActive: boolean;
+  createdAt: string;
+};
+
+export type FinanceJournalLine = {
+  id: string;
+  accountId: string;
+  accountCode: string | null;
+  accountName: string | null;
+  accountType: FinanceAccountType | null;
+  debit: number;
+  credit: number;
+};
+
+export type FinanceJournalEntry = {
+  id: string;
+  branchId: string;
+  entryDate: string;
+  description: string;
+  referenceType: string | null;
+  referenceId: string | null;
+  status: "draft" | "posted" | "voided";
+  createdBy: string | null;
+  createdAt: string;
+  totalDebit: number;
+  totalCredit: number;
+  lines: FinanceJournalLine[];
+};
+
+export type CreateFinanceAccountInput = {
+  branchId: string;
+  accountCode: string;
+  accountName: string;
+  accountType: FinanceAccountType;
+  isActive?: boolean;
+};
+
+export type CreateFinanceJournalInput = {
+  branchId: string;
+  entryDate?: string | null;
+  description: string;
+  referenceType?: string | null;
+  referenceId?: string | null;
+  status?: "draft" | "posted" | "voided";
+  lines: Array<{ accountId: string; debit?: number; credit?: number }>;
+};
+
+export type TrialBalanceReport = {
+  branchId: string;
+  asOf: string;
+  rows: Array<{
+    accountId: string;
+    accountCode: string;
+    accountName: string;
+    accountType: FinanceAccountType;
+    debit: number;
+    credit: number;
+  }>;
+  totalDebit: number;
+  totalCredit: number;
+  balanced: boolean;
+};
+
+export type ProfitLossReport = {
+  branchId: string;
+  fromDate: string;
+  toDate: string;
+  revenue: number;
+  expenses: number;
+  netIncome: number;
+  revenueAccounts: Array<{
+    accountId: string;
+    accountCode: string;
+    accountName: string;
+    amount: number;
+  }>;
+  expenseAccounts: Array<{
+    accountId: string;
+    accountCode: string;
+    accountName: string;
+    amount: number;
+  }>;
+};
+
+export function listFinanceAccounts(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<FinanceAccount[]>(
+    `/admin/finance/accounts${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createFinanceAccount(accessToken: string, input: CreateFinanceAccountInput) {
+  return fetchApiData<FinanceAccount>("/admin/finance/accounts", {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listFinanceJournalEntries(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<FinanceJournalEntry[]>(
+    `/admin/finance/journal-entries${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createFinanceJournalEntry(accessToken: string, input: CreateFinanceJournalInput) {
+  return fetchApiData<FinanceJournalEntry>("/admin/finance/journal-entries", {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function fetchTrialBalance(
+  accessToken: string,
+  query: { branchId: string; asOf?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams({ branchId: query.branchId });
+  if (query.asOf) params.set("asOf", query.asOf);
+  return fetchApiData<TrialBalanceReport>(
+    `/admin/finance/reports/trial-balance?${params.toString()}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function fetchProfitLoss(
+  accessToken: string,
+  query: { branchId: string; from?: string; to?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams({ branchId: query.branchId });
+  if (query.from) params.set("from", query.from);
+  if (query.to) params.set("to", query.to);
+  return fetchApiData<ProfitLossReport>(
+    `/admin/finance/reports/profit-loss?${params.toString()}`,
+    readInit(accessToken, opts),
+  );
+}

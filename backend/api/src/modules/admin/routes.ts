@@ -59,6 +59,7 @@ import { createAdminBranchSettingsRouter } from "./settings.js";
 import { createAdminHrRouter } from "./hr.js";
 import { createAdminInventoryRouter } from "./inventory.js";
 import { createAdminPurchasingRouter } from "./purchasing.js";
+import { createAdminFinanceRouter } from "./finance.js";
 import { createAdminReportsRouter } from "./reports.js";
 import { createAdminLoyaltyRouter } from "./loyalty.js";
 import { createAdminMarketingRouter } from "./marketing.js";
@@ -72,6 +73,7 @@ import type { BranchSettingsService } from "../../services/settings/branch.js";
 import type { HrEmployeesService } from "../../services/hr/employees.js";
 import type { InventoryService } from "../../services/inventory/management.js";
 import type { PurchasingService } from "../../services/purchasing/management.js";
+import type { FinanceService } from "../../services/finance/management.js";
 import type { PosZReportService } from "../../services/pos/z-report.js";
 import type { ReportsService } from "../../services/reports/sales.js";
 import type { LoyaltyService } from "../../services/loyalty/management.js";
@@ -134,6 +136,7 @@ export interface AdminRouterDependencies {
   hrEmployees: HrEmployeesService;
   inventory: InventoryService;
   purchasing: PurchasingService;
+  finance: FinanceService;
   posZReport: PosZReportService;
   reports: ReportsService;
   loyalty: LoyaltyService;
@@ -593,6 +596,14 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       purchasing: dependencies.purchasing,
+    }),
+  );
+
+  router.use(
+    createAdminFinanceRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      finance: dependencies.finance,
     }),
   );
 

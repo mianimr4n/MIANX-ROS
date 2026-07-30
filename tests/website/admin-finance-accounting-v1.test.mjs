@@ -1,5 +1,5 @@
 /**
- * Finance & Accounting V1 — composition and honesty wiring (static).
+ * Finance & Accounting V1 — live GL honesty wiring (static).
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -30,30 +30,35 @@ describe("Finance & Accounting V1 (static)", () => {
     assert.match(page, /FinanceFoundationPanel/);
     assert.match(page, /FinanceInsights/);
     assert.match(page, /canAccessAdminFinance/);
+    assert.match(page, /listFinanceJournalEntries/);
+    assert.match(page, /fetchTrialBalance/);
+    assert.match(page, /fetchProfitLoss/);
   });
 
-  it("does not fabricate ledger entries or financial statements", () => {
+  it("wires live GL without inventing journal figures in the browser", () => {
     const ledger = read("apps/website/client/src/components/admin/finance/LedgerPanel.tsx");
-    assert.match(ledger, /No journal entries in repository/);
-    assert.doesNotMatch(ledger, /JE-\d+|journalEntry|debit:\s*\d|credit:\s*\d/i);
+    assert.match(ledger, /No journal entries recorded yet/);
+    assert.match(ledger, /createFinanceJournalEntry/);
+    assert.doesNotMatch(ledger, /JE-\d{4}|fakeBalance|sampleJournal/i);
     const statements = read("apps/website/client/src/components/admin/finance/LedgerPanel.tsx");
     assert.match(statements, /Trial balance/);
-    assert.match(statements, /will not fabricate statement figures/);
-    assert.doesNotMatch(statements, /totalAssets|netIncome|operatingCash/i);
+    assert.match(statements, /No financial data available/);
+    assert.match(statements, /Coming Soon/);
+    assert.doesNotMatch(statements, /totalAssets:\s*\d|netIncome:\s*5000|operatingCash:\s*\d/i);
   });
 
   it("does not treat order totals as accounting revenue in KPIs", () => {
     const kpis = read("apps/website/client/src/components/admin/finance/FinanceKPIs.tsx");
     assert.match(kpis, /Revenue \(accounting\)/);
-    assert.match(kpis, /FOUNDATION/);
+    assert.match(kpis, /posted journals only/);
     const sales = read("apps/website/client/src/components/admin/finance/SalesOverview.tsx");
     assert.match(sales, /not recognized accounting revenue/);
     assert.match(sales, /Operational order totals/);
   });
 
-  it("payables and receivables remain Foundation without backend", () => {
+  it("payables and receivables remain Coming Soon without inventing AP/AR", () => {
     const panels = read("apps/website/client/src/components/admin/finance/FinancePanels.tsx");
-    assert.match(panels, /Accounts payable foundation/);
+    assert.match(panels, /Accounts payable Coming Soon/);
     assert.match(panels, /Customer payment records are not[\s\S]*supplier payables/);
     assert.match(panels, /Accounts receivable unavailable/);
     assert.doesNotMatch(panels, /onPaySupplier|createInvoice|postJournal/i);
@@ -61,7 +66,7 @@ describe("Finance & Accounting V1 (static)", () => {
 
   it("tax panel does not fabricate VAT/GST figures", () => {
     const tax = read("apps/website/client/src/components/admin/finance/FinancePanels.tsx");
-    assert.match(tax, /Tax configuration foundation/);
+    assert.match(tax, /VAT\/GST returns Coming Soon/);
     assert.match(tax, /not a tax engine/);
     assert.doesNotMatch(tax, /vatRate|gstRate|taxLiability:\s*\d/i);
   });
@@ -70,14 +75,14 @@ describe("Finance & Accounting V1 (static)", () => {
     const insights = read("apps/website/client/src/components/admin/finance/FinanceInsights.tsx");
     assert.match(insights, /Mianx\.ai Finance Insights/);
     assert.match(insights, /Rule-based Summary/);
-    assert.match(insights, /Missing ledger/);
+    assert.match(insights, /Live GL/);
     assert.doesNotMatch(insights, /profit prediction|fraud detection|forecasting|automated bookkeeping/i);
   });
 
-  it("gates /admin/finance with canAccessAdminFinance (payment.read)", () => {
+  it("gates /admin/finance with finance.manage or payment/admin access", () => {
     const access = read("apps/website/client/src/lib/admin-access.ts");
     assert.match(access, /canAccessAdminFinance/);
-    assert.match(access, /canReadFinance/);
+    assert.match(access, /finance\.manage/);
     assert.match(access, /payment\.read/);
     assert.match(access, /requiresFinance/);
     assert.match(access, /href: "\/admin\/finance"/);
@@ -88,11 +93,12 @@ describe("Finance & Accounting V1 (static)", () => {
     assert.match(page, /useAdminAccessGate/);
   });
 
-  it("integration checks document missing accounting backend", () => {
+  it("integration checks document live CoA / GL and Coming Soon gaps", () => {
     const helper = read("apps/website/client/src/lib/admin-finance.ts");
     assert.match(helper, /chart_of_accounts/);
     assert.match(helper, /journal_entries/);
     assert.match(helper, /finance\.manage/);
-    assert.doesNotMatch(helper, /permissions\.includes\("finance\.manage"\)/);
+    assert.match(helper, /status: "present"/);
+    assert.match(helper, /Coming Soon/);
   });
 });

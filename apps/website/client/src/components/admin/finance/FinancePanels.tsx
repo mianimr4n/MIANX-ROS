@@ -9,13 +9,13 @@ export function CashPanel() {
           Cash position
         </h2>
         <div className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6 text-center">
-          <p className="font-semibold text-[var(--admin-ink)]">Cash &amp; bank foundation</p>
+          <p className="font-semibold text-[var(--admin-ink)]">Cash &amp; bank Coming Soon</p>
           <p className="mt-2 text-sm text-[var(--admin-muted)]">
             No cash drawer sessions, bank accounts, or reconciliation APIs exist. POS and customer payments do not post to
             accounting cash accounts.
           </p>
           <span className="mt-3 inline-block rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--admin-muted)]">
-            foundation
+            Coming Soon
           </span>
         </div>
       </AdminSurfaceBody>
@@ -38,7 +38,7 @@ export function ReceivablePanel() {
             repository.
           </p>
           <span className="mt-3 inline-block rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--admin-muted)]">
-            foundation
+            Coming Soon
           </span>
         </div>
       </AdminSurfaceBody>
@@ -55,13 +55,13 @@ export function PayablePanel() {
           Payables
         </h2>
         <div className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6 text-center">
-          <p className="font-semibold text-[var(--admin-ink)]">Accounts payable foundation</p>
+          <p className="font-semibold text-[var(--admin-ink)]">Accounts payable Coming Soon</p>
           <p className="mt-2 text-sm text-[var(--admin-muted)]">
-            Purchasing module is Foundation — no supplier invoices or three-way match. Customer payment records are not
+            Purchasing is operational — no supplier invoices or three-way match posting into AP. Customer payment records are not
             supplier payables.
           </p>
           <span className="mt-3 inline-block rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--admin-muted)]">
-            foundation
+            Coming Soon
           </span>
         </div>
       </AdminSurfaceBody>
@@ -78,12 +78,13 @@ export function ExpensePanel() {
           Expenses
         </h2>
         <div className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6 text-center">
-          <p className="font-semibold text-[var(--admin-ink)]">Expense ledger unavailable</p>
+          <p className="font-semibold text-[var(--admin-ink)]">Dedicated expense claims Coming Soon</p>
           <p className="mt-2 text-sm text-[var(--admin-muted)]">
-            No verified expense entries, petty cash, or OPEX posting APIs. Frontend cannot create accounting expenses.
+            Expense accounts can be posted via the general ledger. Petty cash workflows and expense-claim APIs are Coming
+            Soon.
           </p>
           <span className="mt-3 inline-block rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--admin-muted)]">
-            foundation
+            Coming Soon
           </span>
         </div>
       </AdminSurfaceBody>
@@ -100,13 +101,13 @@ export function TaxPanel() {
           Tax
         </h2>
         <div className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6 text-center">
-          <p className="font-semibold text-[var(--admin-ink)]">Tax configuration foundation</p>
+          <p className="font-semibold text-[var(--admin-ink)]">VAT/GST returns Coming Soon</p>
           <p className="mt-2 text-sm text-[var(--admin-muted)]">
-            orders.tax_amount is not a tax engine. No tax codes, filing exports, or GL tax accounts in repository — do not
+            orders.tax_amount is not a tax engine. No tax codes, filing exports, or automated VAT/GST returns — do not
             treat order tax lines as compliance-ready VAT/GST.
           </p>
           <span className="mt-3 inline-block rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--admin-muted)]">
-            foundation
+            Coming Soon
           </span>
         </div>
       </AdminSurfaceBody>

@@ -4,6 +4,7 @@ import type { FinanceInsightItem } from "@/lib/admin-finance";
 const SOURCE_CLASS: Record<FinanceInsightItem["source"], string> = {
   derived: "bg-sky-50 text-sky-800",
   foundation: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
+  live: "bg-emerald-50 text-emerald-900",
 };
 
 export function FinanceInsights({ items }: { items: FinanceInsightItem[] }) {
@@ -12,7 +13,7 @@ export function FinanceInsights({ items }: { items: FinanceInsightItem[] }) {
       <AdminSectionTitle
         eyebrow="Mianx.ai"
         title="Mianx.ai Finance Insights"
-        description="Rule-based Summary only — integration gaps and readiness signals."
+        description="Rule-based Summary only — live GL signals and honest Coming Soon gaps."
       />
       <h2 id="finance-insights-heading" className="sr-only">
         Finance insights
@@ -33,8 +34,8 @@ export function FinanceInsights({ items }: { items: FinanceInsightItem[] }) {
         ))}
       </ul>
       <p className="mt-4 text-xs text-[var(--admin-muted)]">
-        Missing ledger · Missing payable linkage · Missing accounting journal · Missing tax configuration — no prediction
-        models from this workspace.
+        Live GL · Coming Soon: AP auto-post, AR aging, cash flow, VAT/GST returns — no prediction models from this
+        workspace.
       </p>
     </section>
   );

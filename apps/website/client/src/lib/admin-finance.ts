@@ -1,6 +1,6 @@
-/** Finance & Accounting helpers — no invented ledger, journals, or statements. */
+/** Finance & Accounting helpers — live GL where implemented; no invented balances. */
 
-import type { AdminOperationsDashboard } from "@/lib/admin-api";
+import type { AdminOperationsDashboard, ProfitLossReport } from "@/lib/admin-api";
 
 export type FinanceIntegrationCheck = {
   id: string;
@@ -20,7 +20,7 @@ export type FinanceInsightItem = {
   id: string;
   title: string;
   detail: string;
-  source: "derived" | "foundation";
+  source: "derived" | "foundation" | "live";
 };
 
 export type FinanceReadinessGroup = {
@@ -57,74 +57,74 @@ export function integrationChecks(): FinanceIntegrationCheck[] {
     {
       id: "chart-of-accounts",
       label: "Chart of accounts",
-      status: "missing",
-      note: "No chart_of_accounts table or admin APIs in committed migrations.",
+      status: "present",
+      note: "LIVE — chart_of_accounts + GET/POST /admin/finance/accounts.",
     },
     {
       id: "general-ledger",
       label: "General ledger / journal entries",
-      status: "missing",
-      note: "No journal_entries, ledger_lines, or posting engine.",
+      status: "present",
+      note: "LIVE — balanced journal_entries (debits = credits) via atomic RPC.",
     },
     {
       id: "customer-payments",
       label: "Customer payment capture",
       status: "partial",
-      note: "orders.payment_status + payments table (service-role only) — not accounting postings.",
+      note: "orders.payment_status + payments table — not auto-posted to GL.",
     },
     {
       id: "accounts-receivable",
       label: "Accounts receivable",
       status: "missing",
-      note: "No AR aging, invoices, or credit terms for B2B customers.",
+      note: "Coming Soon — no AR aging or credit invoices.",
     },
     {
       id: "accounts-payable",
       label: "Accounts payable",
       status: "missing",
-      note: "No supplier invoices or AP — purchasing module is Foundation.",
+      note: "Coming Soon — supplier invoices / payment runs not in finance GL.",
     },
     {
       id: "expenses",
       label: "Operating expenses",
-      status: "missing",
-      note: "No expense claims, petty cash, or OPEX ledger.",
+      status: "partial",
+      note: "Expense accounts exist on CoA; dedicated expense claims Coming Soon.",
     },
     {
       id: "tax-config",
       label: "Tax configuration (VAT/GST)",
       status: "missing",
-      note: "orders.tax_amount exists but no tax codes, rates, or filing exports.",
+      note: "Coming Soon — VAT/GST returns and tax engine.",
     },
     {
       id: "cash-bank",
       label: "Cash & bank accounts",
       status: "missing",
-      note: "No cash drawers, bank accounts, or reconciliation workspace.",
+      note: "Coming Soon — cash drawers / bank reconciliation.",
     },
     {
       id: "inventory-valuation",
       label: "Inventory valuation",
-      status: "missing",
-      note: "Inventory module is Foundation — no stock ledger or COGS posting.",
+      status: "partial",
+      note: "Inventory stock LIVE separately — COGS auto-post to GL Coming Soon.",
     },
     {
       id: "payroll",
       label: "Payroll linkage",
       status: "missing",
-      note: "No payroll runs or salary accrual journals.",
+      note: "Coming Soon — no payroll runs or salary accrual journals.",
     },
     {
       id: "statements",
       label: "Financial statements",
-      status: "missing",
-      note: "No trial balance, P&L, balance sheet, or cash flow APIs.",
+      status: "partial",
+      note: "LIVE trial balance + P&L (dynamic). Balance sheet / cash flow Coming Soon.",
     },
     {
       id: "permission",
       label: "Finance permission",
-      status: "partial",
-      note: "Workspace gated on payment.read / payment.manage — no finance.manage in seed.",
+      status: "present",
+      note: "finance.manage seeded for super-admin and branch-manager (plus admin.access).",
     },
   ];
 }
@@ -133,63 +133,69 @@ export function readinessGroups(): FinanceReadinessGroup[] {
   return [
     {
       id: "gl",
-      title: "General ledger foundation",
-      unavailable: "Journal entries, posting rules, period close",
-      why: "Every financial transaction must post to an immutable ledger before statements are trustworthy.",
-      entities: ["chart_of_accounts", "journal_entries", "ledger_lines", "fiscal_periods"],
-      apis: ["GET /api/v1/admin/finance/ledger", "POST /api/v1/admin/finance/journals"],
-      permission: "payment.manage (proposed finance.post) — not yet scoped",
-      related: "Consumes sales, purchasing, inventory, and payroll events.",
+      title: "General ledger",
+      unavailable: "Period close / fiscal periods Coming Soon",
+      why: "CoA and balanced journal entries are LIVE. Period lock is not shipped.",
+      entities: ["chart_of_accounts", "journal_entries", "journal_entry_lines"],
+      apis: [
+        "GET/POST /api/v1/admin/finance/accounts",
+        "GET/POST /api/v1/admin/finance/journal-entries",
+      ],
+      permission: "finance.manage or admin.access",
+      related: "Manual journals only — sales/purchasing auto-post Coming Soon.",
     },
     {
       id: "sales",
       title: "Sales recognition",
-      unavailable: "Revenue recognition rules, deferred revenue, refunds journal",
-      why: "Order totals are operational — accounting revenue requires recognition policy and GL mapping.",
-      entities: ["sales_invoices", "revenue_recognition_rules", "refund_journals"],
-      apis: ["POST /api/v1/admin/finance/sales/post-from-order"],
-      permission: "payment.read + order.manage for operational context",
-      related: "Orders · POS · Delivery modules feed operational sales.",
+      unavailable: "Auto-post from orders Coming Soon",
+      why: "Operational sales are separate from GL until recognition mapping ships.",
+      entities: ["sales_invoices", "revenue_recognition_rules"],
+      apis: ["POST /api/v1/admin/finance/sales/post-from-order (Coming Soon)"],
+      permission: "finance.manage",
+      related: "Orders · POS feed operational sales only.",
     },
     {
       id: "ap",
       title: "Accounts payable",
       unavailable: "Supplier bills, three-way match, payment runs",
-      why: "Customer payment.* permissions do not cover supplier payables.",
-      entities: ["supplier_invoices", "accounts_payable", "payment_runs"],
-      apis: ["GET /api/v1/admin/finance/payables", "POST /api/v1/admin/finance/supplier-payments"],
-      permission: "payment.manage (supplier AP) — not yet scoped",
-      related: "Purchasing module (Foundation) must ship first.",
+      why: "Coming Soon — purchasing GRN does not yet create AP journals.",
+      entities: ["supplier_invoices", "accounts_payable"],
+      apis: ["Coming Soon"],
+      permission: "finance.manage",
+      related: "Purchasing module is LIVE operationally; AP GL mapping is not.",
     },
     {
       id: "ar",
       title: "Accounts receivable",
       unavailable: "Credit customers, aging, collections",
-      why: "Walk-in and delivery orders settle at checkout — no trade receivables ledger yet.",
-      entities: ["customer_invoices", "ar_aging_buckets", "collection_notes"],
-      apis: ["GET /api/v1/admin/finance/receivables"],
-      permission: "payment.read",
-      related: "CRM provides customer context only — not AR balances.",
+      why: "Coming Soon — walk-in/delivery settle at checkout.",
+      entities: ["customer_invoices", "ar_aging_buckets"],
+      apis: ["Coming Soon"],
+      permission: "finance.manage",
+      related: "CRM is not AR.",
     },
     {
       id: "tax",
       title: "Tax compliance",
-      unavailable: "Tax codes, returns, filing exports",
-      why: "tax_amount on orders is not a substitute for configured tax engine and GL tax accounts.",
-      entities: ["tax_codes", "tax_returns", "tax_journals"],
-      apis: ["GET /api/v1/admin/finance/tax/summary"],
-      permission: "payment.read",
-      related: "Finance consumes posted sales and purchase tax lines.",
+      unavailable: "VAT/GST returns Coming Soon",
+      why: "orders.tax_amount is not a filing engine.",
+      entities: ["tax_codes", "tax_returns"],
+      apis: ["Coming Soon"],
+      permission: "finance.manage",
+      related: "Manual tax journals possible via GL today.",
     },
     {
       id: "statements",
       title: "Financial statements",
-      unavailable: "Trial balance, P&L, balance sheet, cash flow",
-      why: "Statements require closed periods and posted ledger — cannot fabricate from order UI totals.",
-      entities: ["trial_balance_snapshots", "financial_statements"],
-      apis: ["GET /api/v1/admin/finance/statements/trial-balance", "GET /api/v1/admin/finance/statements/pl"],
-      permission: "payment.read",
-      related: "Reports module will consume statement APIs when available.",
+      unavailable: "Balance sheet and cash flow Coming Soon",
+      why: "Trial balance and P&L are calculated dynamically from posted journal lines.",
+      entities: ["(dynamic — no snapshot tables)"],
+      apis: [
+        "GET /api/v1/admin/finance/reports/trial-balance",
+        "GET /api/v1/admin/finance/reports/profit-loss",
+      ],
+      permission: "finance.manage or admin.access",
+      related: "No fabricated statement figures.",
     },
   ];
 }
@@ -222,43 +228,64 @@ export function buildOperationalSalesSnapshot(
   };
 }
 
-export function buildFinanceInsights(branchLabel: string): FinanceInsightItem[] {
-  return [
+export function formatPkr(amount: number | null | undefined): string {
+  if (amount == null || Number.isNaN(amount)) return "—";
+  return new Intl.NumberFormat("en-PK", {
+    style: "currency",
+    currency: "PKR",
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+export function buildFinanceInsights(
+  branchLabel: string,
+  pl: ProfitLossReport | null,
+): FinanceInsightItem[] {
+  const items: FinanceInsightItem[] = [
     {
-      id: "no-ledger",
-      title: "General ledger is not available",
-      detail: `No journal entry or chart-of-accounts backend exists for ${branchLabel}. Finance cannot post transactions.`,
-      source: "foundation",
+      id: "gl-live",
+      title: "General ledger is LIVE",
+      detail: `Chart of accounts and balanced journal entries are available for ${branchLabel}. Debits must equal credits.`,
+      source: "live",
     },
+  ];
+
+  if (pl && (pl.revenue !== 0 || pl.expenses !== 0)) {
+    items.push({
+      id: "pl-live",
+      title: `Net income ${formatPkr(pl.netIncome)}`,
+      detail: `Revenue ${formatPkr(pl.revenue)} − Expenses ${formatPkr(pl.expenses)} from posted journals (not order UI totals).`,
+      source: "live",
+    });
+  } else {
+    items.push({
+      id: "no-posted-pl",
+      title: "No posted P&L activity yet",
+      detail: "Create accounts and balanced journal entries to populate trial balance and profit & loss.",
+      source: "derived",
+    });
+  }
+
+  items.push(
     {
       id: "no-ap",
-      title: "Supplier payables linkage is missing",
-      detail: "Purchasing is Foundation — supplier invoices and three-way match are required before payables.",
+      title: "Supplier payables Coming Soon",
+      detail: "Purchasing is operational — AP journals and payment runs are not auto-posted.",
       source: "foundation",
     },
     {
       id: "no-ar",
-      title: "Trade receivables are not configured",
-      detail: "Customer orders settle at checkout — no AR aging or credit-invoice workflow in repository.",
+      title: "Trade receivables Coming Soon",
+      detail: "Customer orders settle at checkout — no AR aging workflow.",
       source: "foundation",
     },
     {
-      id: "no-tax",
-      title: "Tax configuration is absent",
-      detail: "orders.tax_amount is not a tax engine — VAT/GST codes, returns, and GL tax accounts are missing.",
+      id: "no-cashflow",
+      title: "Cash flow statement Coming Soon",
+      detail: "Trial balance and P&L are LIVE; cash flow and balance sheet remain Coming Soon.",
       source: "foundation",
     },
-    {
-      id: "no-cogs",
-      title: "Inventory cost linkage is unavailable",
-      detail: "No stock ledger or recipe COGS — gross margin cannot be calculated in Finance.",
-      source: "foundation",
-    },
-    {
-      id: "customer-payments",
-      title: "Customer payments are operational only",
-      detail: "payment.read covers order payment state — not supplier payments, bank reconciliation, or GL cash accounts.",
-      source: "derived",
-    },
-  ];
+  );
+
+  return items;
 }
