@@ -31,6 +31,9 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(page, /listPurchaseOrders/);
     assert.match(page, /listPurchaseRequisitions/);
     assert.match(page, /listGoodsReceiving/);
+    assert.match(page, /listSupplierInvoices/);
+    assert.match(page, /listSupplierPayments/);
+    assert.match(page, /awaitingDeliveryCount/);
   });
 
   it("does not fabricate suppliers or purchase orders", () => {
@@ -57,17 +60,24 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.doesNotMatch(helper, /displayPrice|formatPkr|menu\.price/i);
   });
 
-  it("wires live PO approval while keeping invoice matching Coming Soon", () => {
+  it("wires live PO approval, invoices, and payments while keeping three-way matching Coming Soon", () => {
     const panels = read("apps/website/client/src/components/admin/purchasing/ProcurementPanels.tsx");
     assert.match(panels, /Live PO approve\/reject/i);
-    assert.match(panels, /Invoice Matching — Coming Soon/);
-    assert.match(panels, /Customer payment records are not supplier payables/);
+    assert.match(panels, /No invoices recorded yet/);
+    assert.match(panels, /No payments recorded yet/);
+    assert.match(panels, /createSupplierInvoice/);
+    assert.match(panels, /createSupplierPayment/);
+    assert.match(panels, /Three-way matching \(PO ↔ GRN ↔ invoice\) remains Coming Soon/);
+    assert.doesNotMatch(panels, /Invoice Matching — Coming Soon/);
     assert.doesNotMatch(panels, /threeWayMatch\(/i);
     const orders = read("apps/website/client/src/components/admin/purchasing/PurchasingTables.tsx");
     assert.match(orders, /Approve/);
     assert.match(orders, /Reject/);
     const page = read("apps/website/client/src/pages/admin/AdminPurchasing.tsx");
     assert.match(page, /decidePurchaseOrderApproval/);
+    const kpis = read("apps/website/client/src/components/admin/purchasing/PurchasingKPIs.tsx");
+    assert.match(kpis, /Awaiting delivery/);
+    assert.match(kpis, /Approved\/ordered POs with no linked GRN/);
   });
 
   it("Mianx procurement insights remain rule-based only", () => {
@@ -102,5 +112,11 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(helper, /status: "present"/);
     assert.match(helper, /Three-way matching/);
     assert.match(helper, /id: "approvals"[\s\S]*status: "present"/);
+    assert.match(helper, /id: "invoices"[\s\S]*status: "present"/);
+    assert.match(helper, /id: "payments"[\s\S]*status: "present"/);
+    assert.match(helper, /id: "matching"[\s\S]*status: "missing"/);
+    assert.match(helper, /supplier_invoices/);
+    assert.match(helper, /supplier_payments/);
+    assert.match(helper, /awaitingDeliveryCount/);
   });
 });

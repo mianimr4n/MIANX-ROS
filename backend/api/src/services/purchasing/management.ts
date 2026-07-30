@@ -157,10 +157,74 @@ export interface CreateGoodsReceivingInput {
   lines?: CreateGoodsReceivingLineInput[];
 }
 
+export const SUPPLIER_INVOICE_STATUSES = ["pending", "paid", "partially_paid"] as const;
+export type SupplierInvoiceStatus = (typeof SUPPLIER_INVOICE_STATUSES)[number];
+
+export const SUPPLIER_PAYMENT_METHODS = ["cash", "bank_transfer", "cheque", "other"] as const;
+export type SupplierPaymentMethod = (typeof SUPPLIER_PAYMENT_METHODS)[number];
+
+export interface SupplierInvoiceRecord {
+  id: string;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  supplierId: string;
+  supplierName: string | null;
+  purchaseOrderId: string | null;
+  poNumber: string | null;
+  invoiceNumber: string;
+  invoiceDate: string;
+  totalAmount: number;
+  status: SupplierInvoiceStatus;
+  createdAt: string;
+}
+
+export interface SupplierPaymentRecord {
+  id: string;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  supplierId: string;
+  supplierName: string | null;
+  supplierInvoiceId: string;
+  invoiceNumber: string | null;
+  amount: number;
+  paymentDate: string;
+  paymentMethod: SupplierPaymentMethod;
+  reference: string | null;
+  createdAt: string;
+  invoiceStatus?: SupplierInvoiceStatus;
+}
+
+export interface CreateSupplierInvoiceInput {
+  branchId: string;
+  supplierId: string;
+  purchaseOrderId?: string | null;
+  invoiceNumber: string;
+  invoiceDate?: string | null;
+  totalAmount: number;
+  status?: SupplierInvoiceStatus;
+}
+
+export interface CreateSupplierPaymentInput {
+  branchId: string;
+  supplierId: string;
+  supplierInvoiceId: string;
+  amount: number;
+  paymentDate?: string | null;
+  paymentMethod?: SupplierPaymentMethod;
+  reference?: string | null;
+}
+
+export interface PurchaseOrderListResult {
+  orders: PurchaseOrderRecord[];
+  awaitingDeliveryCount: number;
+}
+
 export interface PurchasingService {
   listSuppliers(scope: BranchActorScope, branchId?: string): Promise<SupplierRecord[]>;
   createSupplier(scope: BranchActorScope, input: CreateSupplierInput): Promise<SupplierRecord>;
-  listOrders(scope: BranchActorScope, branchId?: string): Promise<PurchaseOrderRecord[]>;
+  listOrders(scope: BranchActorScope, branchId?: string): Promise<PurchaseOrderListResult>;
   createOrder(
     scope: BranchActorScope,
     actorUserId: string | null,
@@ -184,6 +248,10 @@ export interface PurchasingService {
     actorUserId: string | null,
     input: CreateGoodsReceivingInput,
   ): Promise<GoodsReceivingRecord>;
+  listInvoices(scope: BranchActorScope, branchId?: string): Promise<SupplierInvoiceRecord[]>;
+  createInvoice(scope: BranchActorScope, input: CreateSupplierInvoiceInput): Promise<SupplierInvoiceRecord>;
+  listPayments(scope: BranchActorScope, branchId?: string): Promise<SupplierPaymentRecord[]>;
+  createPayment(scope: BranchActorScope, input: CreateSupplierPaymentInput): Promise<SupplierPaymentRecord>;
 }
 
 type SupplierRow = {
@@ -253,6 +321,42 @@ const REQUISITION_SELECT =
 
 const RECEIVING_SELECT =
   "id, branch_id, purchase_order_id, grn_number, status, received_at, notes, created_by, created_at, updated_at, branch:branches(id, branch_code, name), purchase_order:purchase_orders(id, po_number)";
+
+const INVOICE_SELECT =
+  "id, branch_id, supplier_id, purchase_order_id, invoice_number, invoice_date, total_amount, status, created_at, branch:branches(id, branch_code, name), supplier:suppliers(id, name), purchase_order:purchase_orders(id, po_number)";
+
+const PAYMENT_SELECT =
+  "id, branch_id, supplier_id, supplier_invoice_id, amount, payment_date, payment_method, reference, created_at, branch:branches(id, branch_code, name), supplier:suppliers(id, name), invoice:supplier_invoices(id, invoice_number, status)";
+
+type InvoiceRow = {
+  id: string;
+  branch_id: string;
+  supplier_id: string;
+  purchase_order_id: string | null;
+  invoice_number: string;
+  invoice_date: string;
+  total_amount: number | string;
+  status: string;
+  created_at: string;
+  branch: { id: string; branch_code: string; name: string } | null;
+  supplier: { id: string; name: string } | null;
+  purchase_order: { id: string; po_number: string } | null;
+};
+
+type PaymentRow = {
+  id: string;
+  branch_id: string;
+  supplier_id: string;
+  supplier_invoice_id: string;
+  amount: number | string;
+  payment_date: string;
+  payment_method: string;
+  reference: string | null;
+  created_at: string;
+  branch: { id: string; branch_code: string; name: string } | null;
+  supplier: { id: string; name: string } | null;
+  invoice: { id: string; invoice_number: string; status: string } | null;
+};
 
 function createServiceClient(envStatus: EnvironmentStatus): SupabaseClient {
   if (!envStatus.config.supabaseUrl || !envStatus.config.supabaseServiceRoleKey) {
@@ -337,6 +441,43 @@ function mapReceiving(row: GoodsReceivingRow): GoodsReceivingRecord {
   };
 }
 
+function mapInvoice(row: InvoiceRow): SupplierInvoiceRecord {
+  return {
+    id: row.id,
+    branchId: row.branch_id,
+    branchCode: row.branch?.branch_code ?? null,
+    branchName: row.branch?.name ?? null,
+    supplierId: row.supplier_id,
+    supplierName: row.supplier?.name ?? null,
+    purchaseOrderId: row.purchase_order_id,
+    poNumber: row.purchase_order?.po_number ?? null,
+    invoiceNumber: row.invoice_number,
+    invoiceDate: row.invoice_date,
+    totalAmount: asNumber(row.total_amount),
+    status: row.status as SupplierInvoiceStatus,
+    createdAt: row.created_at,
+  };
+}
+
+function mapPayment(row: PaymentRow): SupplierPaymentRecord {
+  return {
+    id: row.id,
+    branchId: row.branch_id,
+    branchCode: row.branch?.branch_code ?? null,
+    branchName: row.branch?.name ?? null,
+    supplierId: row.supplier_id,
+    supplierName: row.supplier?.name ?? null,
+    supplierInvoiceId: row.supplier_invoice_id,
+    invoiceNumber: row.invoice?.invoice_number ?? null,
+    amount: asNumber(row.amount),
+    paymentDate: row.payment_date,
+    paymentMethod: row.payment_method as SupplierPaymentMethod,
+    reference: row.reference,
+    createdAt: row.created_at,
+    invoiceStatus: (row.invoice?.status as SupplierInvoiceStatus | undefined) ?? undefined,
+  };
+}
+
 function resolveListBranchIds(scope: BranchActorScope, branchId?: string): string[] | "all" | "none" {
   if (branchId) {
     assertBranchMembership(scope, branchId);
@@ -404,7 +545,7 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
 
     async listOrders(scope, branchId) {
       const branchScope = resolveListBranchIds(scope, branchId);
-      if (branchScope === "none") return [];
+      if (branchScope === "none") return { orders: [], awaitingDeliveryCount: 0 };
 
       const client = supabase();
       let query = client
@@ -415,7 +556,27 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
 
       const { data, error } = await query;
       if (error) throwMappedDbError("PURCHASE_ORDERS_READ_FAILED", error);
-      return ((data ?? []) as unknown as PurchaseOrderRow[]).map(mapOrder);
+      const orders = ((data ?? []) as unknown as PurchaseOrderRow[]).map(mapOrder);
+
+      // Awaiting delivery: approved/ordered POs with no linked GRN.
+      const candidates = orders.filter((o) => o.status === "approved" || o.status === "ordered");
+      let awaitingDeliveryCount = 0;
+      if (candidates.length > 0) {
+        const candidateIds = candidates.map((o) => o.id);
+        const { data: grns, error: grnError } = await client
+          .from("goods_receiving")
+          .select("purchase_order_id")
+          .in("purchase_order_id", candidateIds);
+        if (grnError) throwMappedDbError("GOODS_RECEIVING_READ_FAILED", grnError);
+        const linked = new Set(
+          ((grns ?? []) as Array<{ purchase_order_id: string | null }>)
+            .map((g) => g.purchase_order_id)
+            .filter((id): id is string => Boolean(id)),
+        );
+        awaitingDeliveryCount = candidates.filter((o) => !linked.has(o.id)).length;
+      }
+
+      return { orders, awaitingDeliveryCount };
     },
 
     async createOrder(scope, actorUserId, input) {
@@ -654,6 +815,143 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
         postedLines: payload.postedLines ?? [],
         skippedLines: payload.skippedLines ?? [],
       };
+    },
+
+    async listInvoices(scope, branchId) {
+      const branchScope = resolveListBranchIds(scope, branchId);
+      if (branchScope === "none") return [];
+      const client = supabase();
+      let query = client
+        .from("supplier_invoices")
+        .select(INVOICE_SELECT)
+        .order("invoice_date", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (branchScope !== "all") query = query.in("branch_id", branchScope);
+      const { data, error } = await query;
+      if (error) throwMappedDbError("SUPPLIER_INVOICES_READ_FAILED", error);
+      return ((data ?? []) as unknown as InvoiceRow[]).map(mapInvoice);
+    },
+
+    async createInvoice(scope, input) {
+      assertBranchMembership(scope, input.branchId);
+      const client = supabase();
+      await loadBranchRow(client, input.branchId);
+
+      const { data: supplier, error: supplierError } = await client
+        .from("suppliers")
+        .select("id, branch_id")
+        .eq("id", input.supplierId)
+        .maybeSingle();
+      if (supplierError) throwMappedDbError("SUPPLIER_READ_FAILED", supplierError);
+      if (!supplier) throw new ApiError(404, "SUPPLIER_NOT_FOUND", "Supplier not found.");
+      if (supplier.branch_id !== input.branchId) {
+        throw new ApiError(400, "VALIDATION_ERROR", "Supplier must belong to the same branch as the invoice.");
+      }
+
+      if (input.purchaseOrderId) {
+        const { data: po, error: poError } = await client
+          .from("purchase_orders")
+          .select("id, branch_id, supplier_id")
+          .eq("id", input.purchaseOrderId)
+          .maybeSingle();
+        if (poError) throwMappedDbError("PURCHASE_ORDER_READ_FAILED", poError);
+        if (!po) throw new ApiError(404, "PURCHASE_ORDER_NOT_FOUND", "Purchase order not found.");
+        if (po.branch_id !== input.branchId) {
+          throw new ApiError(400, "VALIDATION_ERROR", "Purchase order must belong to the same branch.");
+        }
+        if (po.supplier_id !== input.supplierId) {
+          throw new ApiError(400, "VALIDATION_ERROR", "Purchase order supplier must match the invoice supplier.");
+        }
+      }
+
+      const invoiceNumber = input.invoiceNumber.trim().toUpperCase();
+      if (!invoiceNumber) throw new ApiError(400, "VALIDATION_ERROR", "invoiceNumber is required.");
+      if (input.totalAmount < 0) throw new ApiError(400, "VALIDATION_ERROR", "totalAmount cannot be negative.");
+
+      const { data, error } = await client
+        .from("supplier_invoices")
+        .insert({
+          branch_id: input.branchId,
+          supplier_id: input.supplierId,
+          purchase_order_id: input.purchaseOrderId || null,
+          invoice_number: invoiceNumber,
+          invoice_date: input.invoiceDate || null,
+          total_amount: input.totalAmount,
+          status: input.status ?? "pending",
+        })
+        .select(INVOICE_SELECT)
+        .single();
+
+      if (error) {
+        if (error.code === "23505") {
+          throw new ApiError(409, "INVOICE_NUMBER_EXISTS", "Invoice number already exists for this branch.");
+        }
+        throwMappedDbError("SUPPLIER_INVOICE_CREATE_FAILED", error);
+      }
+      return mapInvoice(data as unknown as InvoiceRow);
+    },
+
+    async listPayments(scope, branchId) {
+      const branchScope = resolveListBranchIds(scope, branchId);
+      if (branchScope === "none") return [];
+      const client = supabase();
+      let query = client
+        .from("supplier_payments")
+        .select(PAYMENT_SELECT)
+        .order("payment_date", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (branchScope !== "all") query = query.in("branch_id", branchScope);
+      const { data, error } = await query;
+      if (error) throwMappedDbError("SUPPLIER_PAYMENTS_READ_FAILED", error);
+      return ((data ?? []) as unknown as PaymentRow[]).map(mapPayment);
+    },
+
+    async createPayment(scope, input) {
+      assertBranchMembership(scope, input.branchId);
+      const client = supabase();
+
+      const { data: rpcData, error } = await client.rpc("record_supplier_payment_atomic", {
+        p_branch_id: input.branchId,
+        p_supplier_id: input.supplierId,
+        p_supplier_invoice_id: input.supplierInvoiceId,
+        p_amount: input.amount,
+        p_payment_date: input.paymentDate || null,
+        p_payment_method: input.paymentMethod ?? "bank_transfer",
+        p_reference: input.reference ?? null,
+      });
+
+      if (error) {
+        const message = error.message ?? "Supplier payment failed.";
+        if (/INVOICE_NOT_FOUND/i.test(message)) {
+          throw new ApiError(404, "INVOICE_NOT_FOUND", "Supplier invoice not found.");
+        }
+        if (/INVOICE_ALREADY_PAID/i.test(message)) {
+          throw new ApiError(409, "INVOICE_ALREADY_PAID", "Invoice is already fully paid.");
+        }
+        if (/PAYMENT_EXCEEDS_BALANCE/i.test(message)) {
+          throw new ApiError(400, "PAYMENT_EXCEEDS_BALANCE", "Payment exceeds remaining invoice balance.");
+        }
+        if (/INVOICE_BRANCH_MISMATCH|INVOICE_SUPPLIER_MISMATCH/i.test(message)) {
+          throw new ApiError(400, "VALIDATION_ERROR", "Payment branch/supplier must match the invoice.");
+        }
+        throw new ApiError(500, "SUPPLIER_PAYMENT_FAILED", message);
+      }
+
+      const paymentId = (rpcData as { paymentId?: string } | null)?.paymentId;
+      if (!paymentId) {
+        throw new ApiError(500, "SUPPLIER_PAYMENT_FAILED", "Atomic payment returned no payment id.");
+      }
+
+      const { data: row, error: readError } = await client
+        .from("supplier_payments")
+        .select(PAYMENT_SELECT)
+        .eq("id", paymentId)
+        .maybeSingle();
+      if (readError) throwMappedDbError("SUPPLIER_PAYMENTS_READ_FAILED", readError);
+      if (!row) {
+        throw new ApiError(500, "SUPPLIER_PAYMENT_FAILED", "Payment was created but could not be reloaded.");
+      }
+      return mapPayment(row as unknown as PaymentRow);
     },
   };
 }

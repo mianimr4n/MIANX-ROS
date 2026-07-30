@@ -2082,14 +2082,20 @@ export function listPurchaseOrders(
   accessToken: string,
   query?: { branchId?: string },
   opts?: AdminReadOptions,
-): Promise<PurchaseOrder[]> {
+): Promise<{ orders: PurchaseOrder[]; awaitingDeliveryCount: number }> {
   const params = new URLSearchParams();
   if (query?.branchId) params.set("branchId", query.branchId);
   const qs = params.toString();
-  return fetchApiData<PurchaseOrder[]>(
+  return fetchApiEnvelope<PurchaseOrder[]>(
     `/admin/purchasing/orders${qs ? `?${qs}` : ""}`,
     readInit(accessToken, opts),
-  );
+  ).then((envelope) => ({
+    orders: envelope.data,
+    awaitingDeliveryCount:
+      typeof envelope.meta?.awaitingDeliveryCount === "number"
+        ? envelope.meta.awaitingDeliveryCount
+        : 0,
+  }));
 }
 
 export function createPurchaseOrder(accessToken: string, input: CreatePurchaseOrderInput) {
@@ -2209,6 +2215,109 @@ export function listGoodsReceiving(
 
 export function createGoodsReceiving(accessToken: string, input: CreateGoodsReceivingInput) {
   return fetchApiData<GoodsReceiving>(`/admin/purchasing/receiving`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export type SupplierInvoiceStatus = "pending" | "paid" | "partially_paid";
+
+export type SupplierInvoice = {
+  id: string;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  supplierId: string;
+  supplierName: string | null;
+  purchaseOrderId: string | null;
+  poNumber: string | null;
+  invoiceNumber: string;
+  invoiceDate: string;
+  totalAmount: number;
+  status: SupplierInvoiceStatus;
+  createdAt: string;
+};
+
+export type CreateSupplierInvoiceInput = {
+  branchId: string;
+  supplierId: string;
+  purchaseOrderId?: string | null;
+  invoiceNumber: string;
+  invoiceDate?: string | null;
+  totalAmount: number;
+  status?: SupplierInvoiceStatus;
+};
+
+export type SupplierPaymentMethod = "cash" | "bank_transfer" | "cheque" | "other";
+
+export type SupplierPayment = {
+  id: string;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  supplierId: string;
+  supplierName: string | null;
+  supplierInvoiceId: string;
+  invoiceNumber: string | null;
+  amount: number;
+  paymentDate: string;
+  paymentMethod: SupplierPaymentMethod;
+  reference: string | null;
+  createdAt: string;
+  invoiceStatus?: SupplierInvoiceStatus;
+};
+
+export type CreateSupplierPaymentInput = {
+  branchId: string;
+  supplierId: string;
+  supplierInvoiceId: string;
+  amount: number;
+  paymentDate?: string | null;
+  paymentMethod?: SupplierPaymentMethod;
+  reference?: string | null;
+};
+
+export function listSupplierInvoices(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<SupplierInvoice[]>(
+    `/admin/purchasing/invoices${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createSupplierInvoice(accessToken: string, input: CreateSupplierInvoiceInput) {
+  return fetchApiData<SupplierInvoice>("/admin/purchasing/invoices", {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listSupplierPayments(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<SupplierPayment[]>(
+    `/admin/purchasing/payments${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createSupplierPayment(accessToken: string, input: CreateSupplierPaymentInput) {
+  return fetchApiData<SupplierPayment>("/admin/purchasing/payments", {
     method: "POST",
     headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
     body: JSON.stringify(input),

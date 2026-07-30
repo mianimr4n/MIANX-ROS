@@ -32,11 +32,15 @@ import {
   listGoodsReceiving,
   listPurchaseOrders,
   listPurchaseRequisitions,
+  listSupplierInvoices,
+  listSupplierPayments,
   listSuppliers,
   type GoodsReceiving,
   type PurchaseOrder,
   type PurchaseRequisition,
   type Supplier,
+  type SupplierInvoice,
+  type SupplierPayment,
 } from "@/lib/admin-api";
 import { ApiRequestError } from "@/lib/api";
 import {
@@ -57,12 +61,14 @@ export default function AdminPurchasing() {
   const canManagePurchasing =
     isSuperAdmin ||
     permissions.includes("purchasing.manage") ||
+    permissions.includes("finance.manage") ||
     permissions.includes("admin.access");
 
   const [suppliers, setSuppliers] = useState<Supplier[] | null>(null);
   const [suppliersLoading, setSuppliersLoading] = useState(false);
   const [suppliersError, setSuppliersError] = useState<string | null>(null);
   const [orders, setOrders] = useState<PurchaseOrder[] | null>(null);
+  const [awaitingDeliveryCount, setAwaitingDeliveryCount] = useState<number | null>(null);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [requisitions, setRequisitions] = useState<PurchaseRequisition[] | null>(null);
@@ -71,6 +77,10 @@ export default function AdminPurchasing() {
   const [receipts, setReceipts] = useState<GoodsReceiving[] | null>(null);
   const [receiptsLoading, setReceiptsLoading] = useState(false);
   const [receiptsError, setReceiptsError] = useState<string | null>(null);
+  const [invoices, setInvoices] = useState<SupplierInvoice[] | null>(null);
+  const [payments, setPayments] = useState<SupplierPayment[] | null>(null);
+  const [apLoading, setApLoading] = useState(false);
+  const [apError, setApError] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
   const [addBusy, setAddBusy] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -86,12 +96,12 @@ export default function AdminPurchasing() {
   const checks = useMemo(() => integrationChecks(), []);
   const groups = useMemo(() => readinessGroups(), []);
   const snapshot = useMemo(
-    () => buildPurchasingKpis(suppliers, orders, requisitions),
-    [orders, requisitions, suppliers],
+    () => buildPurchasingKpis(suppliers, orders, requisitions, awaitingDeliveryCount, invoices),
+    [awaitingDeliveryCount, invoices, orders, requisitions, suppliers],
   );
   const insights = useMemo(
-    () => buildProcurementInsights(branchLabel, suppliers, orders, receipts),
-    [branchLabel, orders, receipts, suppliers],
+    () => buildProcurementInsights(branchLabel, suppliers, orders, receipts, invoices, payments),
+    [branchLabel, invoices, orders, payments, receipts, suppliers],
   );
   const filteredSuppliers = useMemo(() => {
     if (!suppliers) return null;
@@ -121,7 +131,7 @@ export default function AdminPurchasing() {
     if (!token || !canManagePurchasing) {
       setSuppliers(null);
       setSuppliersError(
-        canManagePurchasing ? null : "Suppliers require purchasing.manage or admin.access.",
+        canManagePurchasing ? null : "Suppliers require purchasing.manage, finance.manage, or admin.access.",
       );
       return;
     }
@@ -141,17 +151,21 @@ export default function AdminPurchasing() {
     const token = session?.access_token;
     if (!token || !canManagePurchasing) {
       setOrders(null);
+      setAwaitingDeliveryCount(null);
       setOrdersError(
-        canManagePurchasing ? null : "Purchase orders require purchasing.manage or admin.access.",
+        canManagePurchasing ? null : "Purchase orders require purchasing.manage, finance.manage, or admin.access.",
       );
       return;
     }
     setOrdersLoading(true);
     try {
-      setOrders(await listPurchaseOrders(token, branchIdFilter ? { branchId: branchIdFilter } : undefined));
+      const result = await listPurchaseOrders(token, branchIdFilter ? { branchId: branchIdFilter } : undefined);
+      setOrders(result.orders);
+      setAwaitingDeliveryCount(result.awaitingDeliveryCount);
       setOrdersError(null);
     } catch (err) {
       setOrders(null);
+      setAwaitingDeliveryCount(null);
       setOrdersError(err instanceof ApiRequestError ? err.message : "Failed to load purchase orders");
     } finally {
       setOrdersLoading(false);
@@ -196,19 +210,48 @@ export default function AdminPurchasing() {
     }
   }, [branchIdFilter, canManagePurchasing, session?.access_token]);
 
+  const loadAccountsPayable = useCallback(async () => {
+    const token = session?.access_token;
+    if (!token || !canManagePurchasing) {
+      setInvoices(null);
+      setPayments(null);
+      setApError(null);
+      return;
+    }
+    setApLoading(true);
+    try {
+      const query = branchIdFilter ? { branchId: branchIdFilter } : undefined;
+      const [nextInvoices, nextPayments] = await Promise.all([
+        listSupplierInvoices(token, query),
+        listSupplierPayments(token, query),
+      ]);
+      setInvoices(nextInvoices);
+      setPayments(nextPayments);
+      setApError(null);
+    } catch (err) {
+      setInvoices(null);
+      setPayments(null);
+      setApError(err instanceof ApiRequestError ? err.message : "Failed to load invoices and payments");
+    } finally {
+      setApLoading(false);
+    }
+  }, [branchIdFilter, canManagePurchasing, session?.access_token]);
+
   useEffect(() => {
     if (!gateReady) return;
     void loadSuppliers();
     void loadOrders();
     void loadRequisitions();
     void loadReceipts();
-  }, [gateReady, loadOrders, loadReceipts, loadRequisitions, loadSuppliers]);
+    void loadAccountsPayable();
+  }, [gateReady, loadAccountsPayable, loadOrders, loadReceipts, loadRequisitions, loadSuppliers]);
 
   const onRefresh = () => {
     void loadSuppliers();
     void loadOrders();
     void loadRequisitions();
     void loadReceipts();
+    void loadAccountsPayable();
   };
 
   const onAddSupplier = async (input: {
@@ -408,10 +451,20 @@ export default function AdminPurchasing() {
         <ApprovalTimelinePanel orders={orders} loading={ordersLoading} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <InvoiceMatchingPanel />
-        <SupplierPerformancePanel />
-      </div>
+      <InvoiceMatchingPanel
+        invoices={invoices}
+        payments={payments}
+        suppliers={suppliers}
+        orders={orders}
+        branchId={branchIdFilter}
+        accessToken={session?.access_token}
+        canManage={canManagePurchasing}
+        loading={apLoading}
+        error={apError}
+        onRefresh={() => void loadAccountsPayable()}
+      />
+
+      <SupplierPerformancePanel />
 
       <ProcurementFoundationPanel checks={checks} />
 
@@ -421,7 +474,8 @@ export default function AdminPurchasing() {
 
       <p className="sr-only" aria-live="polite">
         Inventory linked: {snapshot.inventoryFoundationLinked ? "yes" : "no"} · Stock ledger:{" "}
-        {snapshot.stockLedgerAvailable ? "yes" : "no"}
+        {snapshot.stockLedgerAvailable ? "yes" : "no"} · Awaiting delivery:{" "}
+        {snapshot.awaitingDeliveryCount ?? "—"}
       </p>
     </AdminShell>
   );

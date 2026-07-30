@@ -18,7 +18,8 @@ export function PurchasingHeader({
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
         </p>
         <p className="mt-1 text-xs text-[var(--admin-muted)]">
-          Live suppliers, POs, requisitions, GRN, and PO approve/reject — invoice matching Coming Soon
+          Live suppliers, POs, requisitions, GRN, invoices, payments, and awaiting-delivery KPI — three-way matching
+          Coming Soon
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">

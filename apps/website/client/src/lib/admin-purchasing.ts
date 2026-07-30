@@ -1,6 +1,13 @@
-/** Purchasing & Suppliers helpers — live suppliers/POs/requisitions/GRN; no invented payables. */
+/** Purchasing & Suppliers helpers — live suppliers/POs/requisitions/GRN/invoices/payments. */
 
-import type { GoodsReceiving, PurchaseOrder, PurchaseRequisition, Supplier } from "@/lib/admin-api";
+import type {
+  GoodsReceiving,
+  PurchaseOrder,
+  PurchaseRequisition,
+  Supplier,
+  SupplierInvoice,
+  SupplierPayment,
+} from "@/lib/admin-api";
 
 export type ProcurementIntegrationCheck = {
   id: string;
@@ -14,6 +21,10 @@ export type PurchasingKpiSnapshot = {
   openPoCount: number | null;
   openRequisitionCount: number | null;
   pendingApprovalCount: number | null;
+  awaitingDeliveryCount: number | null;
+  partiallyReceivedCount: number | null;
+  outstandingInvoiceCount: number | null;
+  purchaseSpend: number | null;
   inventoryFoundationLinked: boolean;
   stockLedgerAvailable: boolean;
   menuCatalogAvailable: boolean;
@@ -40,6 +51,7 @@ export type ProcurementReadinessGroup = {
 const OPEN_PO_STATUSES = new Set(["draft", "submitted", "approved", "ordered", "partially_received"]);
 const OPEN_REQ_STATUSES = new Set(["draft", "submitted", "approved"]);
 const PENDING_APPROVAL_STATUSES = new Set(["draft", "submitted"]);
+const OUTSTANDING_INVOICE_STATUSES = new Set(["pending", "partially_paid"]);
 
 export function integrationChecks(): ProcurementIntegrationCheck[] {
   return [
@@ -65,7 +77,7 @@ export function integrationChecks(): ProcurementIntegrationCheck[] {
       id: "purchase-orders",
       label: "Purchase orders",
       status: "present",
-      note: "purchase_orders + GET/POST /api/v1/admin/purchasing/orders.",
+      note: "purchase_orders + GET/POST /api/v1/admin/purchasing/orders (includes awaitingDeliveryCount).",
     },
     {
       id: "receiving",
@@ -82,20 +94,20 @@ export function integrationChecks(): ProcurementIntegrationCheck[] {
     {
       id: "invoices",
       label: "Supplier invoices",
-      status: "missing",
-      note: "No purchase invoice or AP tables — Coming Soon.",
+      status: "present",
+      note: "supplier_invoices + GET/POST /api/v1/admin/purchasing/invoices.",
     },
     {
       id: "matching",
       label: "Three-way matching",
       status: "missing",
-      note: "PO ↔ GRN ↔ invoice matching not implemented — Coming Soon.",
+      note: "PO ↔ GRN ↔ invoice automated matching not implemented — Coming Soon.",
     },
     {
       id: "payments",
       label: "Supplier payments / payables",
-      status: "missing",
-      note: "payment.* permissions cover customer payments — not supplier AP — Coming Soon.",
+      status: "present",
+      note: "supplier_payments + GET/POST /api/v1/admin/purchasing/payments (updates invoice status).",
     },
     {
       id: "inventory-module",
@@ -107,7 +119,7 @@ export function integrationChecks(): ProcurementIntegrationCheck[] {
       id: "permission",
       label: "Procurement permission",
       status: "present",
-      note: "purchasing.manage seeded; routes also accept admin.access.",
+      note: "purchasing.manage / finance.manage / admin.access.",
     },
   ];
 }
@@ -116,6 +128,8 @@ export function buildPurchasingKpis(
   suppliers: Supplier[] | null = null,
   orders: PurchaseOrder[] | null = null,
   requisitions: PurchaseRequisition[] | null = null,
+  awaitingDeliveryCount: number | null = null,
+  invoices: SupplierInvoice[] | null = null,
 ): PurchasingKpiSnapshot {
   return {
     supplierCount: suppliers == null ? null : suppliers.length,
@@ -124,6 +138,14 @@ export function buildPurchasingKpis(
       requisitions == null ? null : requisitions.filter((r) => OPEN_REQ_STATUSES.has(r.status)).length,
     pendingApprovalCount:
       orders == null ? null : orders.filter((o) => PENDING_APPROVAL_STATUSES.has(o.status)).length,
+    awaitingDeliveryCount,
+    partiallyReceivedCount:
+      orders == null ? null : orders.filter((o) => o.status === "partially_received").length,
+    outstandingInvoiceCount:
+      invoices == null
+        ? null
+        : invoices.filter((i) => OUTSTANDING_INVOICE_STATUSES.has(i.status)).length,
+    purchaseSpend: invoices == null ? null : invoices.reduce((sum, i) => sum + i.totalAmount, 0),
     inventoryFoundationLinked: true,
     stockLedgerAvailable: true,
     menuCatalogAvailable: true,
@@ -135,6 +157,8 @@ export function buildProcurementInsights(
   suppliers: Supplier[] | null = null,
   orders: PurchaseOrder[] | null = null,
   receipts: GoodsReceiving[] | null = null,
+  invoices: SupplierInvoice[] | null = null,
+  payments: SupplierPayment[] | null = null,
 ): ProcurementInsightItem[] {
   const items: ProcurementInsightItem[] = [];
 
@@ -165,24 +189,35 @@ export function buildProcurementInsights(
     });
   }
 
-  items.push({
-    id: "live-approvals",
-    title: "PO approve/reject is LIVE via PATCH /admin/purchasing/orders/:id/approve.",
-    detail: "Draft and submitted purchase orders can be approved or rejected. Multi-step approval chains Coming Soon.",
-    source: "live",
-  });
+  if (invoices != null) {
+    items.push({
+      id: "live-invoices",
+      title: `${invoices.length} supplier invoice${invoices.length === 1 ? "" : "s"} recorded.`,
+      detail: "Live AP invoices — automated three-way matching Coming Soon.",
+      source: "live",
+    });
+  }
+
+  if (payments != null) {
+    items.push({
+      id: "live-payments",
+      title: `${payments.length} supplier payment${payments.length === 1 ? "" : "s"} recorded.`,
+      detail: "Payments update invoice status to partially_paid / paid atomically.",
+      source: "live",
+    });
+  }
 
   items.push({
     id: "no-matching",
-    title: "Purchase invoice matching is Coming Soon.",
-    detail: "Three-way match requires supplier invoice records in addition to PO and GRN.",
+    title: "Automated three-way matching is Coming Soon.",
+    detail: "Invoices and GRNs can be recorded separately — PO ↔ GRN ↔ invoice auto-match is not shipped.",
     source: "foundation",
   });
 
   items.push({
     id: "branch",
     title: `Branch context: ${branchLabel} — purchasing APIs are branch-scoped.`,
-    detail: "purchasing.manage or admin.access required for write APIs.",
+    detail: "purchasing.manage, finance.manage, or admin.access required.",
     source: "live",
   });
 
@@ -223,17 +258,20 @@ export function readinessGroups(): ProcurementReadinessGroup[] {
       entities: ["goods_receiving"],
       apis: ["GET/POST /api/v1/admin/purchasing/receiving"],
       permission: "purchasing.manage or admin.access",
-      related: "Use Inventory adjustments for quantity until GRN lines post to stock_movements.",
+      related: "Awaiting delivery KPI uses approved/ordered POs without linked GRN.",
     },
     {
       id: "finance",
-      title: "Finance matching foundation",
-      unavailable: "Supplier invoices, three-way match, payables (Coming Soon)",
-      why: "Customer payment.* permissions do not imply supplier accounts payable.",
-      entities: ["supplier_invoices", "invoice_match_results", "accounts_payable"],
-      apis: ["POST /api/v1/admin/finance/supplier-invoices", "POST /api/v1/admin/finance/match"],
-      permission: "payment.manage (supplier AP) — not yet scoped",
-      related: "Finance module consumes matched invoices for payables.",
+      title: "Supplier payables",
+      unavailable: "Three-way matching Coming Soon — invoices & payments LIVE",
+      why: "Supplier invoices and payments are live; automated PO ↔ GRN ↔ invoice matching is Coming Soon.",
+      entities: ["supplier_invoices", "supplier_payments"],
+      apis: [
+        "GET/POST /api/v1/admin/purchasing/invoices",
+        "GET/POST /api/v1/admin/purchasing/payments",
+      ],
+      permission: "purchasing.manage, finance.manage, or admin.access",
+      related: "GL auto-post from supplier payments Coming Soon.",
     },
   ];
 }
