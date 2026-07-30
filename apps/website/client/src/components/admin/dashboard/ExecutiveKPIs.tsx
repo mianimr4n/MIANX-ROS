@@ -118,6 +118,30 @@ export function ExecutiveKPIs({
             detail={opsUnavailable ? sourceUnavailable : "Source: Orders API — derived active statuses"}
           />
           <AdminKpiCard
+            title="Low-stock items"
+            value={opsUnavailable ? null : formatCount(data?.kpis.lowStockCount)}
+            secondary={
+              opsUnavailable
+                ? sourceUnavailable
+                : (data?.kpis.lowStockCount ?? 0) > 0
+                  ? `Attention: ${data?.kpis.lowStockCount} inventory items are below minimum stock level.`
+                  : "Inventory levels are healthy."
+            }
+            source={opsUnavailable ? "UNAVAILABLE" : "LIVE"}
+            state={kpiState(opState, opsUnavailable)}
+            lastUpdated={updated}
+            detail={
+              opsUnavailable
+                ? sourceUnavailable
+                : "Source: inventory_items where current_stock ≤ minimum_stock"
+            }
+            action={
+              <Link href="/admin/inventory" className="text-xs font-semibold text-[var(--brand-red)]">
+                Open inventory
+              </Link>
+            }
+          />
+          <AdminKpiCard
             title="Kitchen Queue"
             value={
               kitchenTicketsUnavailable

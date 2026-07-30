@@ -108,6 +108,22 @@ export function buildDeterministicMianxInsights(
     });
   }
 
+  const lowStock = data.kpis.lowStockCount ?? 0;
+  items.push({
+    ruleId: "INVENTORY.LOW_STOCK",
+    title:
+      lowStock > 0
+        ? `Attention: ${lowStock} inventory items are below minimum stock level.`
+        : "Inventory levels are healthy.",
+    trigger: `kpis.lowStockCount = ${lowStock}`,
+    sourceModule: "Inventory / Operations Dashboard",
+    sourceTimestamp: data.generatedAt,
+    branch: branchLabel,
+    severity: lowStock > 0 ? "warning" : "info",
+    recommendedAction:
+      lowStock > 0 ? "Open Inventory and replenish items at or below minimum stock." : "No low-stock items in scope.",
+  });
+
   for (const alert of data.alerts.slice(0, 3)) {
     items.push({
       ruleId: `ALERT.${alert.code}`,

@@ -75,6 +75,7 @@ export type AdminOperationsDashboard = {
     averageOrderValue: number | null;
     kitchenWaiting: number;
     activeDeliveries: number;
+    lowStockCount: number;
   };
   statusCounts: Record<string, number>;
   sourceBreakdown: Array<{ source: string; count: number }>;
@@ -239,6 +240,37 @@ export function createAdminPosOrder(
       "Idempotency-Key": idempotencyKey,
     },
     body: JSON.stringify(payload),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export type PosZReport = {
+  timezone: "Asia/Karachi";
+  businessDate: string;
+  dayStart: string;
+  branchId: string;
+  totalOrders: number;
+  totalCashSales: number;
+  expectedCashInDrawer: number;
+  generatedAt: string;
+};
+
+export type PosZReportCloseResult = PosZReport & {
+  confirmed: true;
+  confirmedAt: string;
+  eventId: string;
+};
+
+export function fetchPosZReport(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  const params = new URLSearchParams({ branchId });
+  return fetchApiData<PosZReport>(`/admin/pos/z-report?${params}`, readInit(accessToken, opts));
+}
+
+export function confirmPosZReportClose(accessToken: string, branchId: string) {
+  return fetchApiData<PosZReportCloseResult>("/admin/pos/z-report/close", {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ branchId }),
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }

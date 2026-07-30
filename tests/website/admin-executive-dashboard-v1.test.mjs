@@ -29,17 +29,19 @@ describe("Executive Admin Dashboard v1 (static)", () => {
     assert.match(dashboard, /buildMianxInsightItems/);
   });
 
-  it("keeps the approved KPI contract without inventing inventory or CSAT", () => {
+  it("keeps the approved KPI contract with live low-stock from inventory_items", () => {
     const kpis = read("apps/website/client/src/components/admin/dashboard/ExecutiveKPIs.tsx");
     assert.match(kpis, /Today’s Orders/);
     assert.match(kpis, /Today’s Sales/);
     assert.match(kpis, /Active Orders/);
+    assert.match(kpis, /Low-stock items/);
+    assert.match(kpis, /Inventory levels are healthy/);
+    assert.match(kpis, /below minimum stock level/);
     assert.match(kpis, /Kitchen Queue/);
     assert.match(kpis, /Active Deliveries/);
     assert.match(kpis, /Average Order Value/);
     assert.match(kpis, /Source: Orders API/);
     assert.match(kpis, /Source unavailable/);
-    assert.doesNotMatch(kpis, /Inventory alerts/);
     assert.doesNotMatch(kpis, /Customer satisfaction/);
     assert.doesNotMatch(kpis, /percentageLabel|trendLabel/);
     assert.match(kpis, /formatCount|formatPkr/);
@@ -53,6 +55,8 @@ describe("Executive Admin Dashboard v1 (static)", () => {
     assert.match(panel, /buildMianxInsightItems|buildDeterministicMianxInsights/);
     assert.match(panel, /Loading insights/);
     assert.match(panel, /pending order/);
+    assert.match(panel, /INVENTORY\.LOW_STOCK/);
+    assert.match(panel, /Inventory levels are healthy/);
     assert.doesNotMatch(panel, /demand predicted|autonomous|generative model|openai|llm/i);
   });
 

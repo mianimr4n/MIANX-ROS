@@ -5,6 +5,7 @@ import { ApiError, validateBody } from "../../common/http.js";
 import type { AuthTokenVerifier } from "../../middleware/auth.js";
 import {
   createRequireAuthenticatedUser,
+  requireAnyPermission,
   requirePermission,
   type AuthorizedRequest,
 } from "../../middleware/authorization.js";
@@ -17,6 +18,7 @@ import { loadBranchByCode } from "../../services/branches/lookup.js";
 import type { OrdersDataSource } from "../../services/orders/types.js";
 import { createClient } from "@supabase/supabase-js";
 import type { EnvironmentStatus } from "../../config/env.js";
+import type { PosZReportService } from "../../services/pos/z-report.js";
 
 const orderItemSchema = z
   .object({
@@ -81,6 +83,7 @@ export interface AdminPosRouterDependencies {
   authProfileRepository: AuthPrincipalRepository;
   ordersDataSource: OrdersDataSource;
   envStatus: EnvironmentStatus;
+  posZReport: PosZReportService;
 }
 
 function readIdempotencyKey(headerValue: string | string[] | undefined): string {
@@ -99,6 +102,48 @@ export function createAdminPosRouter(deps: AdminPosRouterDependencies) {
   const requireAuthenticatedUser = createRequireAuthenticatedUser(
     deps.authTokenVerifier,
     deps.authProfileRepository,
+  );
+  const requirePosCashAccess = requireAnyPermission(["order.manage", "payment.manage", "admin.access"]);
+
+  const zReportQuerySchema = z.object({
+    branchId: z.string().uuid(),
+  });
+
+  const zReportCloseSchema = z
+    .object({
+      branchId: z.string().uuid(),
+    })
+    .strict();
+
+  router.get("/z-report", requireAuthenticatedUser, requirePosCashAccess, async (req, res, next) => {
+    try {
+      const parsed = zReportQuerySchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw new ApiError(400, "VALIDATION_ERROR", "branchId is required.", parsed.error.flatten());
+      }
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.posZReport.getReport(principal, parsed.data.branchId);
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.post(
+    "/z-report/close",
+    requireAuthenticatedUser,
+    requirePosCashAccess,
+    validateBody(zReportCloseSchema),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const body = req.body as z.infer<typeof zReportCloseSchema>;
+        const data = await deps.posZReport.confirmClose(principal, body.branchId);
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
   );
 
   router.post(

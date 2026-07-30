@@ -13,6 +13,7 @@ import { ProductConfigureModal } from "@/components/admin/pos/ProductConfigureMo
 import { ProductGrid } from "@/components/admin/pos/ProductGrid";
 import { ReceiptPreview } from "@/components/admin/pos/ReceiptPreview";
 import { ShoppingCart } from "@/components/admin/pos/ShoppingCart";
+import { ZReportModal } from "@/components/admin/pos/ZReportModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
@@ -33,7 +34,15 @@ import {
   type PosCartLine,
   type PosChannelMode,
 } from "@/lib/admin-pos";
-import { createAdminPosOrder, listAdminTables, transitionAdminOrder, type AdminRestaurantTable } from "@/lib/admin-api";
+import {
+  confirmPosZReportClose,
+  createAdminPosOrder,
+  fetchPosZReport,
+  listAdminTables,
+  transitionAdminOrder,
+  type AdminRestaurantTable,
+  type PosZReport,
+} from "@/lib/admin-api";
 import { ApiRequestError, isApiConfigured } from "@/lib/api";
 import { normalizePhoneE164 } from "@/lib/phone";
 import { quoteOrder } from "@/lib/telepizza-api";
@@ -92,6 +101,11 @@ export default function AdminPos() {
   const [diningSessions, setDiningSessions] = useState<DiningSessionRecord[]>([]);
   const [diningSessionId, setDiningSessionId] = useState("");
   const canLoadSessions = canAccessTableService(principal);
+  const [zReportOpen, setZReportOpen] = useState(false);
+  const [zReport, setZReport] = useState<PosZReport | null>(null);
+  const [zReportLoading, setZReportLoading] = useState(false);
+  const [zReportConfirming, setZReportConfirming] = useState(false);
+  const [zReportError, setZReportError] = useState<string | null>(null);
 
   const activeBranch = useMemo(() => {
     if (selection.mode === "branch") {
@@ -384,6 +398,48 @@ export default function AdminPos() {
     setTableId("");
   }
 
+  async function openZReport() {
+    const token = session?.access_token;
+    const branchId = activeBranch?.id ?? branchIdFilter;
+    if (!token || !branchId) {
+      toast.error("Select an operating branch to close shift.");
+      return;
+    }
+    setZReportOpen(true);
+    setZReport(null);
+    setZReportError(null);
+    setZReportLoading(true);
+    try {
+      const report = await fetchPosZReport(token, branchId);
+      setZReport(report);
+    } catch (err) {
+      setZReportError(err instanceof ApiRequestError ? err.message : "Failed to load Z-Report.");
+    } finally {
+      setZReportLoading(false);
+    }
+  }
+
+  async function confirmZReportClose() {
+    const token = session?.access_token;
+    const branchId = activeBranch?.id ?? branchIdFilter;
+    if (!token || !branchId) return;
+    setZReportConfirming(true);
+    setZReportError(null);
+    try {
+      const result = await confirmPosZReportClose(token, branchId);
+      toast.success(
+        `Shift closed · ${result.totalOrders} cash orders · expected ${Math.round(result.expectedCashInDrawer).toLocaleString("en-PK")} PKR`,
+      );
+      setZReportOpen(false);
+      setZReport(result);
+    } catch (err) {
+      setZReportError(err instanceof ApiRequestError ? err.message : "Failed to confirm shift close.");
+      toast.error(err instanceof ApiRequestError ? err.message : "Failed to confirm shift close.");
+    } finally {
+      setZReportConfirming(false);
+    }
+  }
+
   if (!allowed) {
     return (
       <AdminShell title="Point of Sale">
@@ -534,9 +590,12 @@ export default function AdminPos() {
             canKitchenSend={canKitchen}
             kitchenBusy={kitchenBusy}
             lastOrderId={lastOrderId}
+            canCloseShift={Boolean(session?.access_token && (activeBranch?.id || branchIdFilter) && isApiConfigured)}
+            closingShiftBusy={zReportLoading}
             onPlace={() => void placeOrder()}
             onCancelLocal={resetTicket}
             onKitchenSend={() => void kitchenSend()}
+            onCloseShift={() => void openZReport()}
           />
         </div>
       </div>
@@ -546,6 +605,16 @@ export default function AdminPos() {
         group={configureGroup}
         onClose={() => setConfigureGroup(null)}
         onAdd={addLine}
+      />
+
+      <ZReportModal
+        open={zReportOpen}
+        report={zReport}
+        loading={zReportLoading}
+        confirming={zReportConfirming}
+        error={zReportError}
+        onClose={() => setZReportOpen(false)}
+        onConfirm={() => void confirmZReportClose()}
       />
     </AdminShell>
   );

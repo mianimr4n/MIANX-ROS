@@ -57,6 +57,7 @@ export type AdminOperationsDashboard = {
     averageOrderValue: number | null;
     kitchenWaiting: number;
     activeDeliveries: number;
+    lowStockCount: number;
   };
   statusCounts: Record<string, number>;
   sourceBreakdown: Array<{ source: string; count: number }>;
@@ -237,7 +238,12 @@ function resolveScopedBranchIds(scope: BranchActorScope, branchId?: string): str
 
 function buildDashboardFromRows(
   rows: Array<Record<string, unknown>>,
-  options: { branchId: string | null; includeBranchPerformance: boolean; now: Date },
+  options: {
+    branchId: string | null;
+    includeBranchPerformance: boolean;
+    now: Date;
+    lowStockCount: number;
+  },
 ): AdminOperationsDashboard {
   const dayStart = startOfTodayKarachiIso(options.now);
   const dayStartMs = new Date(dayStart).getTime();
@@ -396,6 +402,14 @@ function buildDashboardFromRows(
     insights.push("No orders recorded since the start of the Pakistan business day.");
   }
 
+  if (options.lowStockCount > 0) {
+    insights.push(
+      `Attention: ${options.lowStockCount} inventory item${options.lowStockCount === 1 ? "" : "s"} are below minimum stock level.`,
+    );
+  } else {
+    insights.push("Inventory levels are healthy.");
+  }
+
   return {
     generatedAt: options.now.toISOString(),
     timezone: "Asia/Karachi",
@@ -408,6 +422,7 @@ function buildDashboardFromRows(
       averageOrderValue: todayNonCancelled > 0 ? todayGrossSales / todayNonCancelled : null,
       kitchenWaiting,
       activeDeliveries,
+      lowStockCount: options.lowStockCount,
     },
     statusCounts,
     sourceBreakdown: [...sourceMap.entries()]
@@ -561,6 +576,7 @@ export function createSupabaseBranchOrderManagementDataSource(
           branchId: filters.branchId ?? null,
           includeBranchPerformance,
           now,
+          lowStockCount: 0,
         });
       }
 
@@ -576,13 +592,40 @@ export function createSupabaseBranchOrderManagementDataSource(
       // S1 bound: recent window covers active ops + today's volume without N+1 queries.
       query = query.order("created_at", { ascending: false }).limit(500);
 
-      const { data, error } = await query;
-      if (error) {
-        throw new ApiError(500, "DASHBOARD_LOAD_FAILED", error.message);
+      let inventoryQuery = supabase
+        .from("inventory_items")
+        .select("id, current_stock, minimum_stock, status")
+        .eq("status", "active");
+      if (branchScope !== "all") {
+        inventoryQuery =
+          branchScope.length === 1
+            ? inventoryQuery.eq("branch_id", branchScope[0]!)
+            : inventoryQuery.in("branch_id", branchScope);
+      }
+
+      const [ordersResult, inventoryResult] = await Promise.all([query, inventoryQuery]);
+
+      if (ordersResult.error) {
+        throw new ApiError(500, "DASHBOARD_LOAD_FAILED", ordersResult.error.message);
+      }
+
+      // Inventory table may be empty or unavailable — treat as 0, never invent stock.
+      let lowStockCount = 0;
+      if (!inventoryResult.error) {
+        for (const item of (inventoryResult.data ?? []) as Array<{
+          current_stock: number | string;
+          minimum_stock: number | string;
+        }>) {
+          const current = Number(item.current_stock);
+          const minimum = Number(item.minimum_stock);
+          if (Number.isFinite(current) && Number.isFinite(minimum) && current <= minimum) {
+            lowStockCount += 1;
+          }
+        }
       }
 
       const dayStartMs = new Date(startOfTodayKarachiIso(now)).getTime();
-      const rows = ((data ?? []) as Array<Record<string, unknown>>).filter((row) => {
+      const rows = ((ordersResult.data ?? []) as Array<Record<string, unknown>>).filter((row) => {
         const status = String(row.status ?? "");
         if (ACTIVE_STATUSES.has(status)) return true;
         const createdMs = new Date(String(row.created_at ?? "")).getTime();
@@ -593,6 +636,7 @@ export function createSupabaseBranchOrderManagementDataSource(
         branchId: filters.branchId ?? null,
         includeBranchPerformance,
         now,
+        lowStockCount,
       });
     },
 

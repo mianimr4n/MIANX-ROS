@@ -67,6 +67,7 @@ import type { DeliverySettingsService } from "../../services/settings/delivery.j
 import type { HrEmployeesService } from "../../services/hr/employees.js";
 import type { InventoryService } from "../../services/inventory/management.js";
 import type { PurchasingService } from "../../services/purchasing/management.js";
+import type { PosZReportService } from "../../services/pos/z-report.js";
 
 const createInviteSchema = z.object({
   email: z.email(),
@@ -124,6 +125,7 @@ export interface AdminRouterDependencies {
   hrEmployees: HrEmployeesService;
   inventory: InventoryService;
   purchasing: PurchasingService;
+  posZReport: PosZReportService;
 }
 
 function toSafeInvite(invite: {
@@ -436,6 +438,7 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authProfileRepository: dependencies.authProfileRepository,
       ordersDataSource: dependencies.ordersDataSource,
       envStatus: dependencies.envStatus,
+      posZReport: dependencies.posZReport,
     }),
   );
 
