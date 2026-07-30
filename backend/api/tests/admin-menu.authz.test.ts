@@ -5,8 +5,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 /**
  * Admin Menu workspace RBAC and contract for the canonical single-price catalog.
  *
- * Reads need `menu.read`; every write needs `menu.write`. The router must never expose a
- * variant surface, and a price change must reach the audit trail.
+ * Reads need `menu.read`; every write needs `menu.write` or `admin.access`. Price changes
+ * must reach the audit trail. Legacy `/variants/:id` remaps to the sellable SKU — it does
+ * not revive a variant price matrix.
  */
 
 const CATEGORY_ID = "11111111-1111-4111-8111-111111111111";
@@ -145,15 +146,21 @@ const menuManagement = {
     if (input.price < 0) throw new ApiError(400, "VALIDATION_ERROR", "Price must be non-negative.");
     return sku({ price: input.price });
   }),
-  updateSku: vi.fn(async (_actor: unknown, _id: string, input: { price?: number }) => {
+  updateSku: vi.fn(async (_actor: unknown, _id: string, input: { price?: number; isAvailable?: boolean }) => {
     const before = sku();
-    const after = sku({ price: input.price ?? before.price });
+    const after = sku({
+      price: input.price ?? before.price,
+      isAvailable: input.isAvailable ?? before.isAvailable,
+    });
     auditWrites.push({
       action: input.price !== undefined ? "item.price_change" : "item.update",
-      before: { price: before.price },
-      after: { price: after.price },
+      before: { price: before.price, isAvailable: before.isAvailable },
+      after: { price: after.price, isAvailable: after.isAvailable },
     });
     return after;
+  }),
+  updateLegacyVariant: vi.fn(async (_actor: unknown, _id: string, input: { price?: number; isAvailable?: boolean }) => {
+    return menuManagement.updateSku(_actor, SKU_ID, input);
   }),
   uploadSkuImage: vi.fn(async () => sku({ imageUrl: "https://example.supabase.co/storage/v1/object/public/menu-product-images/x.jpg" })),
   listAuditEvents: vi.fn(async () =>
@@ -242,6 +249,35 @@ describe("admin menu workspace authz", () => {
       .send({ price: 1550, isAvailable: true });
     expect(res.status).toBe(200);
     expect(menuManagement.updateSku).toHaveBeenCalled();
+  });
+
+  it("accepts PATCH /admin/menu/items/:id and /availability for owner writes", async () => {
+    const item = await request(app)
+      .patch(`/admin/menu/items/${SKU_ID}`)
+      .set("Authorization", "Bearer owner")
+      .send({ name: "Tele Special — 10 inch Medium", price: 1600 });
+    expect(item.status).toBe(200);
+    expect(menuManagement.updateSku).toHaveBeenCalled();
+
+    const availability = await request(app)
+      .patch(`/admin/menu/items/${SKU_ID}/availability`)
+      .set("Authorization", "Bearer owner")
+      .send({ isAvailable: false });
+    expect(availability.status).toBe(200);
+    expect(menuManagement.updateSku).toHaveBeenCalledWith(
+      expect.anything(),
+      SKU_ID,
+      expect.objectContaining({ isAvailable: false }),
+    );
+  });
+
+  it("remaps legacy PATCH /admin/menu/variants/:id onto the mapped SKU", async () => {
+    const res = await request(app)
+      .patch(`/admin/menu/variants/${SKU_ID}`)
+      .set("Authorization", "Bearer owner")
+      .send({ price: 1700, isAvailable: true });
+    expect(res.status).toBe(200);
+    expect(menuManagement.updateLegacyVariant).toHaveBeenCalled();
   });
 
   it("records a price change in the audit trail", async () => {

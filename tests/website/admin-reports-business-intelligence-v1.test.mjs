@@ -34,13 +34,18 @@ describe("Reports & Business Intelligence V1 (static)", () => {
     assert.match(page, /BusinessInsights/);
     assert.match(page, /canAccessAdminReports/);
     assert.match(page, /fetchAdminOperationsDashboard/);
+    assert.match(page, /fetchSalesReport/);
+    assert.match(page, /downloadSalesReportCsv/);
+    assert.match(page, /downloadOrdersReportCsv/);
   });
 
-  it("does not fabricate historical trends or growth charts", () => {
+  it("wires live sales analytics without fabricating growth", () => {
     const trend = read("apps/website/client/src/components/admin/reports/TrendAnalysis.tsx");
-    assert.match(trend, /Trend analysis foundation/);
-    assert.match(trend, /will not fabricate line charts/);
-    assert.doesNotMatch(trend, /growthPercent|trendData|mockSeries|lastMonth/i);
+    assert.match(trend, /Sales analytics/);
+    assert.match(trend, /No sales data for selected period/);
+    assert.match(trend, /fetchSalesReport|SalesReport|grossSales/);
+    assert.doesNotMatch(trend, /growthPercent|mockSeries|lastMonth/i);
+    assert.doesNotMatch(trend, /MISSING|Coming Soon/);
     const kpis = read("apps/website/client/src/components/admin/reports/ExecutiveKPIs.tsx");
     assert.match(kpis, /Sales growth/);
     assert.match(kpis, /FOUNDATION/);
@@ -48,6 +53,7 @@ describe("Reports & Business Intelligence V1 (static)", () => {
     assert.doesNotMatch(kpis, /todayOrders \?\? 0|kitchenWaiting \?\? 0|activeDeliveries \?\? 0/);
     const page = read("apps/website/client/src/pages/admin/AdminReports.tsx");
     assert.match(page, /customerSnapshot=\{data != null \? customerSnapshot : null\}/);
+    assert.match(page, /dateRange/);
   });
 
   it("charts use real dashboard data only", () => {
@@ -59,12 +65,17 @@ describe("Reports & Business Intelligence V1 (static)", () => {
     assert.match(sales, /statusChartData/);
   });
 
-  it("exports remain Foundation without backend", () => {
+  it("exports wire live CSV with Excel/PDF Coming Soon", () => {
     const exports = read("apps/website/client/src/components/admin/reports/ExportPanel.tsx");
-    assert.match(exports, /Export \{format\}/);
-    assert.match(exports, /Foundation/);
-    assert.match(exports, /No export endpoints/);
-    assert.doesNotMatch(exports, /downloadCsv|exportPdf|blob\(/i);
+    assert.match(exports, /Export sales CSV/);
+    assert.match(exports, /Export orders CSV/);
+    assert.match(exports, /Export Excel \/ PDF · Coming Soon/);
+    assert.match(exports, /onExportSales/);
+    assert.match(exports, /onExportOrders/);
+    assert.doesNotMatch(exports, /MISSING/);
+    const api = read("apps/website/client/src/lib/admin-api.ts");
+    assert.match(api, /\/admin\/reports\/sales\/export/);
+    assert.match(api, /\/admin\/reports\/orders\/export/);
   });
 
   it("inventory and finance reports remain Foundation", () => {
@@ -82,9 +93,10 @@ describe("Reports & Business Intelligence V1 (static)", () => {
     assert.doesNotMatch(insights, /demand prediction|revenue forecast|future sales/i);
   });
 
-  it("gates /admin/reports with canAccessAdminReports (order.manage)", () => {
+  it("gates /admin/reports with canAccessAdminReports", () => {
     const access = read("apps/website/client/src/lib/admin-access.ts");
     assert.match(access, /canAccessAdminReports/);
+    assert.match(access, /reports\.read/);
     assert.match(access, /canAccessAdminOrdersApi/);
     assert.match(access, /requiresReports/);
     assert.match(access, /href: "\/admin\/reports"/);
@@ -95,10 +107,12 @@ describe("Reports & Business Intelligence V1 (static)", () => {
     assert.match(page, /useAdminAccessGate/);
   });
 
-  it("integration checks document missing analytics backend", () => {
+  it("integration checks mark sales analytics and CSV exports PRESENT", () => {
     const helper = read("apps/website/client/src/lib/admin-reports.ts");
-    assert.match(helper, /reports\.read \(proposed\)/);
     assert.match(helper, /Historical time-series analytics/);
-    assert.doesNotMatch(helper, /permissions\.includes\("reports\.read"\)/);
+    assert.match(helper, /id: "historical-analytics"[\s\S]*?status: "present"/);
+    assert.match(helper, /id: "exports"[\s\S]*?status: "present"/);
+    assert.match(helper, /GET \/admin\/reports\/sales/);
+    assert.match(helper, /reports\.read seeded/);
   });
 });

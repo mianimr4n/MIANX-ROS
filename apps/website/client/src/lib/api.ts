@@ -132,3 +132,62 @@ export async function fetchApiEnvelope<T>(
   const body = payload as { data: T; meta?: Record<string, unknown> };
   return { data: body.data, meta: body.meta };
 }
+
+/** Download a non-JSON API response (CSV exports). Triggers browser save via blob URL. */
+export async function downloadApiFile(
+  path: string,
+  filenameFallback: string,
+  init?: ApiRequestOptions,
+): Promise<void> {
+  const { timeoutMs, correlationId, ...requestInit } = init ?? {};
+  const headers: Record<string, string> = {
+    Accept: "text/csv,application/json",
+    ...(requestInit.headers as Record<string, string> | undefined),
+  };
+  if (correlationId) headers["X-Client-Request-Id"] = correlationId;
+
+  const controller = new AbortController();
+  const timeoutHandle =
+    typeof timeoutMs === "number" && timeoutMs > 0
+      ? setTimeout(() => controller.abort(), timeoutMs)
+      : undefined;
+
+  let response: Response;
+  try {
+    response = await fetch(resolveApiUrl(path), {
+      ...requestInit,
+      headers,
+      signal: controller.signal,
+    });
+  } catch {
+    throw new ApiRequestError("The API could not be reached.", 0, "NETWORK");
+  } finally {
+    if (timeoutHandle !== undefined) clearTimeout(timeoutHandle);
+  }
+
+  if (!response.ok) {
+    let message = "The API request failed.";
+    let code: string | undefined;
+    try {
+      const payload = (await response.json()) as { error?: { message?: string; code?: string } };
+      message = payload.error?.message ?? message;
+      code = payload.error?.code;
+    } catch {
+      /* non-JSON error body */
+    }
+    throw new ApiRequestError(message, response.status, code);
+  }
+
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const match = /filename="([^"]+)"/i.exec(disposition);
+  const filename = match?.[1] ?? filenameFallback;
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}

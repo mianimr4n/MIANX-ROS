@@ -101,6 +101,11 @@ export interface UpdateMenuSkuInput {
   expectedOldPrice?: number | null;
 }
 
+export interface UpdateLegacyVariantInput {
+  price?: number;
+  isAvailable?: boolean;
+}
+
 export interface MenuAuditEventRecord {
   id: string;
   actorUserId: string | null;
@@ -130,6 +135,15 @@ export interface MenuManagementService {
   listProductGroups(filters?: { categoryId?: string }): Promise<MenuProductGroupRecord[]>;
   createSku(actor: MenuActor, input: CreateMenuSkuInput): Promise<MenuSkuRecord>;
   updateSku(actor: MenuActor, skuId: string, input: UpdateMenuSkuInput): Promise<MenuSkuRecord>;
+  /**
+   * Resolves a legacy `menu_item_variants.id` via `menu_variant_sku_mappings` and updates
+   * the mapped sellable SKU. Does not write to the deprecated variants table.
+   */
+  updateLegacyVariant(
+    actor: MenuActor,
+    variantId: string,
+    input: UpdateLegacyVariantInput,
+  ): Promise<MenuSkuRecord>;
   uploadSkuImage(
     actor: MenuActor,
     skuId: string,
@@ -336,7 +350,7 @@ export function createMenuManagementService(envStatus: EnvironmentStatus): MenuM
     };
   }
 
-  return {
+  const service: MenuManagementService = {
     async listCategories() {
       const [categoriesResult, countsResult] = await Promise.all([
         getClient()
@@ -587,6 +601,34 @@ export function createMenuManagementService(envStatus: EnvironmentStatus): MenuM
       return toSkuRecord(row, categorySlugs.get(row.category_id) ?? "uncategorized");
     },
 
+    async updateLegacyVariant(actor, variantId, input) {
+      if (input.price === undefined && input.isAvailable === undefined) {
+        throw new ApiError(400, "VALIDATION_ERROR", "Provide price and/or isAvailable for the mapped SKU.");
+      }
+
+      const { data: mapping, error } = await getClient()
+        .from("menu_variant_sku_mappings")
+        .select("old_variant_id, new_menu_item_id")
+        .eq("old_variant_id", variantId)
+        .maybeSingle();
+
+      if (error) {
+        throw new ApiError(500, "VARIANT_MAPPING_READ_FAILED", error.message);
+      }
+      if (!mapping?.new_menu_item_id) {
+        throw new ApiError(
+          404,
+          "VARIANT_MAPPING_NOT_FOUND",
+          "Legacy variant is not mapped to a sellable SKU. Update the menu item via /admin/menu/items/:id instead.",
+        );
+      }
+
+      return service.updateSku(actor, mapping.new_menu_item_id as string, {
+        price: input.price,
+        isAvailable: input.isAvailable,
+      });
+    },
+
     async uploadSkuImage(actor, skuId, input) {
       const before = await loadSku(skuId);
       const decoded = Buffer.from(input.dataBase64, "base64");
@@ -674,4 +716,6 @@ export function createMenuManagementService(envStatus: EnvironmentStatus): MenuM
       }));
     },
   };
+
+  return service;
 }
