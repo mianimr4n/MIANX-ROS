@@ -1,172 +1,170 @@
-# Production Release Certification Audit — Telepizza ROS
+# Production Release Certification Report
 
-**Audit date:** 2026-07-30  
-**Remediation date:** 2026-07-30  
-**Auditor role:** QA & Release Engineering  
-**Certified scope:** `main` (migrations through `20260730250000` + prior audit evidence @ `975fcb9` / report commit chain)  
-**Final verdict:** **CERTIFIED**
-
----
-
-## Executive summary
-
-All five gates pass (Gate 4 remains PASS WITH LIMITATIONS). The prior Gate 3 blocker is cleared: linked production Local = Remote through **`20260730250000`**.
-
-Remediation applied:
-
-1. Confirmed `20260730220000` already synced on linked remote (applied between initial audit and remediation).
-2. Checked out launch migrations `20260730230000`–`20260730250000` onto `main` from `feature/final-launch-certification`.
-3. Ran `npx supabase db push --linked` — applied kitchen recipe stock, loyalty foundation, coupons foundation.
-4. Re-verified `npx supabase migration list --linked` — no LOCAL ONLY rows.
+**Product:** Telepizza ROS  
+**Environment under test:** Production (`main` + linked Supabase + Vercel website + Render API)  
+**Certification date:** 2026-07-30 (re-certified against tip after PR #137)  
+**Auditor role:** Elite QA & Release Engineer  
+**Certified commit attempted:** `d7a9300bdb05336541a1127d1cd811de58a839a1`  
+**Requested reference SHA:** `e5c39107bf59a6dfdadb6d09cea38ccb7bd76393` (PR #133 — ancestor of tip)
 
 ---
 
-## Gate results
+## Executive Verdict
 
-| Gate | Result | Notes |
-| --- | --- | --- |
-| 1 — Fresh main verification | **PASS** | Clean tree at audit; HEAD was latest `origin/main` (`975fcb9`) |
-| 2 — Full build & test | **PASS** | `pnpm check` 0 errors; **1194** tests / **0** fail; website build OK |
-| 3 — Migration history | **PASS** | Local = Remote through `20260730250000` (post-remediation) |
-| 4 — Security & RBAC | **PASS WITH LIMITATIONS** | No ungated privileged writes; broad `admin.access` / role gates noted |
-| 5 — Production smoke | **PASS** | Website + API health/ready + public branches/catalog OK |
-
----
-
-## Gate 1 — Fresh Main Clone Verification
-
-| Check | Result |
+| Field | Value |
 | --- | --- |
-| `git checkout main && git pull origin main` | OK (fast-forward `2b775bc` → `975fcb9`) |
-| HEAD (audit baseline) | `975fcb92a580ea059ec7927d0f36cd44eaf05695` |
-| Matches requested `e5c3910`? | No — **newer** main included atomic inventory/GRN merge |
-| `git status` | Clean at audit time |
+| **Final verdict** | **NOT CERTIFIED** |
+| Blocking gate | **Gate 3 — LOCAL ONLY migration** |
+| Blocker | `20260730270000` (`supplier_invoices_payments.sql`) present on Local, **missing on Remote** |
+| Remediation | `npx supabase db push --linked` then re-run Gate 3 |
+
+Gates 1, 2, 4 (with limitations), and 5 passed. Certification is withheld solely because Gate 3 treats any LOCAL ONLY migration as a **BLOCKER**.
+
+---
+
+## Gate 1: Fresh Main Clone Verification
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| `git checkout main && git pull origin main` | PASS | Fast-forward to `origin/main` |
+| HEAD includes `e5c3910` | PASS | Tip `d7a9300` (#137) is descendant of #133 `e5c3910` |
+| Working tree clean | PASS | `## main...origin/main` — clean |
+
+**Current HEAD:** `d7a9300` — `feat(purchasing): complete supplier invoices, payments, and awaiting delivery KPI (#137)`
 
 **Gate 1: PASS**
 
 ---
 
-## Gate 2 — Full Build & Test
+## Gate 2: Full Build & Test
 
 | Step | Result |
 | --- | --- |
-| `pnpm install --frozen-lockfile` | Completed with store-reinstall confirmation prompt; proceeded |
-| `pnpm check` | **0 errors** |
-| `pnpm test` | **0 failures** |
-| `pnpm build:website` | **Succeeded** |
+| `pnpm check` | PASS — **0 TypeScript errors** |
+| `pnpm test` | PASS — **0 failures** |
+| `pnpm build:website` | PASS — Vite production build OK (`built in 1m 5s`) |
 
-### Exact test counts (audit)
+### Exact test counts
 
 | Suite | Passed | Failed |
 | --- | --- | --- |
-| `pnpm test:db` | **690** | **0** |
-| `pnpm test:backend` | **504** | **0** |
-| **Combined `pnpm test`** | **1194** | **0** |
+| Node static / DB / website / menu / catalog | **694** | **0** |
+| Backend Vitest | **510** | **0** (65 files) |
+| **Total** | **1204** | **0** |
 
 **Gate 2: PASS**
 
 ---
 
-## Gate 3 — Migration History Verification
+## Gate 3: Migration History Verification
 
-Command: `npx supabase migration list --linked` (post-remediation)
+Command: `npx supabase migration list --linked`
 
-### Ledger (local vs remote) — remediated
+| Metric | Value |
+| --- | --- |
+| Total migration rows | 58 |
+| Local = Remote aligned | **57** |
+| **LOCAL ONLY (BLOCKER)** | **`20260730270000`** |
+| Remote only | **NONE** |
 
-| Version | Local | Remote | Status |
+### Blocker detail
+
+| Version | File | Local | Remote |
 | --- | --- | --- | --- |
-| `20260713190000` … `20260730210000` | Present | Present | Synced |
-| `20260730220000` | Present | Present | Synced (atomic inventory + GRN stock) |
-| `20260730230000` | Present | Present | Synced (kitchen recipe stock consume) |
-| `20260730240000` | Present | Present | Synced (loyalty foundation) |
-| `20260730250000` | Present | Present | Synced (coupons foundation) |
+| `20260730270000` | `supplier_invoices_payments.sql` (PR #137) | ✅ | ❌ **MISSING** |
 
-**LOCAL ONLY count:** **0**
+### Recent ERP / launch ledger (aligned through 20260730260000)
 
-Synced head: **`20260730250000`**.
+| Version | Local | Remote | Notes |
+| --- | --- | --- | --- |
+| 20260730120000 … 20260730260000 | ✅ | ✅ | AI → HR → Inventory → Purchasing → Z-Report → atomic stock → kitchen recipes → loyalty → coupons → finance |
+| **20260730270000** | ✅ | ❌ | Supplier invoices/payments — **BLOCKER** |
 
-### Push evidence
+**Gate 3: FAIL (BLOCKER)**
 
-```text
-Applying migration 20260730230000_kitchen_recipe_stock_consume.sql...
-Applying migration 20260730240000_loyalty_foundation.sql...
-Applying migration 20260730250000_coupons_foundation.sql...
-Finished supabase db push.
+Required remediation before CERTIFIED:
+
+```bash
+npx supabase db push --linked
+npx supabase migration list --linked   # expect 0 local-only
 ```
-
-(`20260730220000` was already present on remote before this push.)
-
-**Gate 3: PASS**
 
 ---
 
-## Gate 4 — Security & RBAC Verification
+## Gate 4: Security & RBAC Verification
 
-### Findings (summary)
+### Summary
 
-1. **No global `/admin` middleware** — each admin sub-router applies JWT + principal + permission/role checks.
-2. **Write routes:** domain permissions and/or `admin.access`; kitchen/bills/opening/staff often use service-layer role asserts after auth.
-3. **Anonymous access (intentional):** health, menu catalog, branches, guest order/booking/dine-in paths with rate limits/tokens as designed.
-4. **No privileged write found with zero auth.**
+| Finding | Result |
+| --- | --- |
+| Unauthenticated admin writes | **None** |
+| Admin writes with route permission/role gate | Present on ERP modules (inventory, purchasing, HR, menu, settings, reports, POS, org) |
+| Auth-only middleware writes (service-layer role assert) | Opening Ops / governance / dry-run / staff-assignments / booking-policy / bills close — **defense-in-depth limitation** |
+| `admin.access` usage | Widely used via `requireAnyPermission` helpers on ERP routes (~41 routes) |
+| Public anonymous surface | Health, meta, branches, menu catalog, auth invite flows, public booking, guest orders, dine-in QR — intentional |
 
-### Security concerns (non-blocking)
+### Security concerns (non-blocking for Gate 4)
 
-| ID | Concern | Severity |
-| --- | --- | --- |
-| S1 | `admin.access` seeded to branch-manager; OR-gates grant broad BM capability | Medium |
-| S2 | Dual RBAC: permission-coded vs role-coded domains | Medium |
-| S3 | Intentional anonymous guest order / public booking writes | Medium (accepted) |
-| S4 | Legacy `requireRole` on 501 stub `GET /admin/controls` | Low |
-| S5 | Org settings `PUT` gated by `admin.access` only | Low (intentional) |
+1. Opening/staff/booking write routers use **auth-only** middleware; authorization is in service `assertCanManage*` (role-based). Recommend route-level permission gates for defense-in-depth.
+2. Public surface is wider than menu/branches/auth alone (guest orders + dine-in) — by design.
+3. Legacy `GET /admin/controls` uses spoofable role header but returns **501** stub only.
 
 **Gate 4: PASS WITH LIMITATIONS**
 
 ---
 
-## Gate 5 — Production Smoke Test
+## Gate 5: Production Smoke Test
 
-| Check | Result | Detail |
-| --- | --- | --- |
-| `https://telepizza-website.vercel.app` | **200** | HTML shell served |
-| `https://telepizza-api.onrender.com/healthz` | **200** | `ok: true` |
-| `https://telepizza-api.onrender.com/readyz` | **200** | `ok: true`; `safetyBlockers: []` |
-| `GET /api/v1/branches` | **200** | **2 branches** |
-| `GET /api/v1/menu/catalog` | **200** | **26 categories / 125 items** |
+| Check | Expected | Actual | Result |
+| --- | --- | --- | --- |
+| Website `https://telepizza-website.vercel.app` | 200 | **200** | PASS |
+| API `/healthz` | 200 | **200** | PASS |
+| API `/readyz` | 200 | **200** | PASS |
+| API `/api/v1/branches` | 2 branches | **2** | PASS |
+| API `/api/v1/menu/catalog` | items | **149 SKUs** | PASS |
 
 **Gate 5: PASS**
 
 ---
 
-## Known limitations (honest)
+## Known Limitations (honest — do not overclaim)
 
-1. **Z-Report:** no starting float / counted cash variance.
-2. **HR:** directory LIVE; update/deactivate lifecycle thin.
-3. **AI:** foundation LIVE; no production agent runtime loop.
-4. **Northern Bypass:** remains `coming-soon`.
-5. **Coupon checkout enforcement / Rewards Catalog / advanced PO–GRN–invoice matching:** still Coming Soon at product layer.
-6. **App code for kitchen auto-deduct / loyalty earn API / marketing UI:** shipped on `feature/final-launch-certification`; **DB schema for those slices is now on production**. Merge/deploy of that app branch remains a separate release step if not already on the live API/website.
-7. **RBAC limitations:** broad `admin.access`, role-based opening/kitchen/bills gates (Gate 4).
-8. **Governance docs:** `REPOSITORY_STATUS.md` may still lag post-atomic-inventory evidence — reconcile separately.
-
----
-
-## Final verdict
-
-# CERTIFIED
-
-Gate 3 blocker cleared. Linked production migrations Local = Remote through **`20260730250000`**. Gates 1, 2, and 5 remain PASS. Gate 4 remains PASS WITH LIMITATIONS (accepted for this certification).
+1. **Gate 3 blocker** — supplier invoices migration `20260730270000` not on production DB yet.
+2. **Z-Report** — no opening float / counted cash / variance.
+3. **HR** — no update/deactivate lifecycle APIs.
+4. **AI platform** — foundation without runtime agent execution.
+5. **Payment / WhatsApp** — production integrations remain disabled per prior `readyz` evidence.
+6. **Northern Bypass** — `coming-soon`.
+7. **RBAC defense-in-depth** — Opening/staff/booking writes auth-only at router; service enforces.
+8. **Executive Dashboard D1** — historical PASS WITH LIMITATIONS.
 
 ---
 
-## Audit evidence stamps
+## Gate Scorecard
 
-| Item | Value |
+| Gate | Result |
 | --- | --- |
-| Branch | `main` |
-| Audit baseline commit | `975fcb92a580ea059ec7927d0f36cd44eaf05695` |
-| Tests (audit) | 1194 passed / 0 failed |
-| Typecheck | 0 errors |
-| Website build | success |
-| Remote migration head (remediated) | `20260730250000` |
-| Local migration head (remediated) | `20260730250000` |
-| LOCAL ONLY migrations | **0** |
+| 1 Fresh main clone | **PASS** |
+| 2 Full build & test | **PASS** (1204 / 0) |
+| 3 Migration history | **FAIL — BLOCKER** (`20260730270000` local-only) |
+| 4 Security & RBAC | **PASS WITH LIMITATIONS** |
+| 5 Production smoke | **PASS** |
+
+---
+
+## Final Verdict
+
+# NOT CERTIFIED
+
+**Reason:** Gate 3 BLOCKER — migration `20260730270000_supplier_invoices_payments.sql` is on repository `main` but not applied to the linked production database.
+
+After `npx supabase db push --linked` clears Local/Remote parity, re-run Gate 3 only (or full re-cert) to promote verdict to **CERTIFIED**.
+
+---
+
+## Evidence references
+
+- Tip: `d7a9300` (PR #137)
+- Prior governance: [`docs/00-governance/REPOSITORY_STATUS.md`](../00-governance/REPOSITORY_STATUS.md)
+- Website: https://telepizza-website.vercel.app
+- API: https://telepizza-api.onrender.com
