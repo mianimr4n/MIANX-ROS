@@ -46,15 +46,28 @@ These states must never be treated as equivalent.
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | Phase 0 – Foundation Stabilization → Phase 1 Dashboard finalization (Aug 14 opening) |
+| Current Delivery Slice | Phase 2 — Admin ERP settings backend (Organization/Branch/Menu/Delivery APIs), on top of Phase 0/1 stabilization |
 | Opening Operations M1–M4 | **Complete** — merged to `main` via [PR #113](https://github.com/mianimr4n/telepizza/pull/113) (`3ab4715`) |
-| Opening ops branch | `feature/opening-operations-completion` (merged) |
-| Executive Dashboard v1 (D1) | **Released** (PASS WITH LIMITATIONS) — `f685599` / PR #100 |
-| Production Migrations (M3/M4 opening tables) | **Not applied** — Founder authorization required |
+| Phase 0 — Foundation Stabilization & CI | **Complete** — [PR #114](https://github.com/mianimr4n/telepizza/pull/114) |
+| Phase 1 — Admin ERP zero-fake-data audit (15 modules) | **Complete** — [PR #115](https://github.com/mianimr4n/telepizza/pull/115) |
+| Staff-assignment FK fix + Settings save/delete fixes | **Complete** — [PR #116–#118](https://github.com/mianimr4n/telepizza/pull/118) |
+| Phase 2 — Organization/Branch settings APIs | **Complete** — [PR #119](https://github.com/mianimr4n/telepizza/pull/119) |
+| Phase 2 — Menu/Delivery settings APIs | **Complete** — [PR #120](https://github.com/mianimr4n/telepizza/pull/120) |
+| Production Migrations (Opening Ops M1–M4) | **Applied** — `npx supabase db push --linked` run 2026-07-29 |
 | Northern Bypass | `coming-soon` (unchanged) |
-| Next focus | Phase 1 Dashboard finalization for Royal Orchard opening **14 August 2026** |
+| Next focus | Owner Decision Queue: devices onsite verification, payment provider, SOPs, training, rehearsals, Founder go/no-go for Royal Orchard opening **14 August 2026** |
 
-Owner-facing summary remains in [`PROJECT_STATUS.md`](./PROJECT_STATUS.md) (last verified **2026-07-28**). This document was refreshed after Opening Operations M1–M4 merge (**2026-07-29**).
+Owner-facing summary remains in [`PROJECT_STATUS.md`](./PROJECT_STATUS.md) (last verified **2026-07-29**). This document was refreshed after PR #119/#120 merge (**2026-07-29**).
+
+### Post-Opening-Ops stabilization and settings backend (this pass)
+
+- **CI gate**: `.github/workflows/ci.yml` added (PR #114) — typecheck + full test suite on every PR/push to `main`.
+- **`user_roles`→`users` embed bug fixed**: Opening M1 added `assigned_by`/`verified_by`/`deactivated_by` FKs to `user_roles`, making the bare `users(...)` PostgREST embed ambiguous and breaking `/admin/hr` staff-assignment list/assign entirely. Fixed by hinting `users!user_roles_user_id_fkey(...)`.
+- **Settings save/delete bugs fixed**: notification-channel Save was overwriting `VERIFIED` status back to `CONFIGURED`; Devices Delete was routing through a "fail" path (`FAILED`) instead of a soft-remove. Both fixed — Save now preserves verified status, Delete soft-removes to `NOT_APPLICABLE`.
+- **Organization & Branch settings APIs** (PR #119): `GET/PUT /admin/settings/organization`, `GET/PUT /admin/branches/:id` — real Supabase-backed read/write, migration `20260729140000_phase2_organization_and_branch_settings.sql`. Organization/Branches panels no longer Foundation/read-only.
+- **Menu & Delivery settings APIs** (PR #120): equivalent real write APIs for menu SKU pricing/availability and delivery radius/fee settings.
+- Royal Orchard staff assignments: 7/7 canonical roles assigned via `/admin/hr` (Owner Decision Queue item #1 complete).
+- Notification channels: Customer orders, Rider dispatch, Escalation configured and ACTIVE; Kitchen alerts still pending.
 
 ### Opening Operations (M1–M4) — verified delivery
 
