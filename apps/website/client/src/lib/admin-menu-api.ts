@@ -148,8 +148,15 @@ export function createMenuSku(accessToken: string, body: CreateMenuSkuBody) {
 
 export function updateMenuSku(accessToken: string, skuId: string, body: UpdateMenuSkuBody) {
   return fetchApiData<AdminMenuSku>(
-    `/admin/menu/skus/${skuId}`,
-    writeInit(accessToken, "PUT", body),
+    `/admin/menu/items/${skuId}`,
+    writeInit(accessToken, "PATCH", body),
+  );
+}
+
+export function updateMenuItemAvailability(accessToken: string, itemId: string, isAvailable: boolean) {
+  return fetchApiData<AdminMenuSku>(
+    `/admin/menu/items/${itemId}/availability`,
+    writeInit(accessToken, "PATCH", { isAvailable }),
   );
 }
 

@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { useMenuCatalog } from "@/contexts/MenuCatalogContext";
-import { canAccessAdminMenu, primaryRoleLabel } from "@/lib/admin-access";
+import { canAccessAdminMenu, canManageMenu, primaryRoleLabel } from "@/lib/admin-access";
 import {
   buildMenuInsights,
   buildMenuKpis,
@@ -32,6 +32,7 @@ import {
   listMenuAuditEvents,
   listMenuCategories,
   updateMenuCategory,
+  updateMenuItemAvailability,
   updateMenuSku,
   uploadMenuSkuImage,
   type AdminMenuAuditEvent,
@@ -74,7 +75,7 @@ export default function AdminMenu() {
   const roleLabel = primaryRoleLabel(roles, isSuperAdmin);
   const accessToken = session?.access_token ?? null;
   const canWrite = Boolean(
-    accessToken && isApiConfigured && (isSuperAdmin || permissions.includes("menu.write")),
+    accessToken && isApiConfigured && canManageMenu({ roles, permissions, isSuperAdmin }),
   );
 
   const [searchDraft, setSearchDraft] = useState(urlState.search);
@@ -83,6 +84,7 @@ export default function AdminMenu() {
   const [auditEvents, setAuditEvents] = useState<AdminMenuAuditEvent[]>([]);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [availabilityBusyId, setAvailabilityBusyId] = useState<string | null>(null);
   const [categoryBusy, setCategoryBusy] = useState(false);
   const [categoryError, setCategoryError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -210,17 +212,27 @@ export default function AdminMenu() {
       await reloadCatalog();
       const rows = await listMenuAuditEvents(accessToken, { resourceId: drawerProduct.id, limit: 20 });
       setAuditEvents(rows);
-      if (patch.price !== undefined) {
-        toast.success("Price updated successfully");
-      } else {
-        toast.success("Changes saved successfully");
-      }
+      toast.success("Menu updated successfully");
     } catch (err) {
       const message = errorMessage(err);
       setSaveError(message);
       toast.error(message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function toggleAvailability(product: MenuCatalogItemView, isAvailable: boolean) {
+    if (!accessToken) return;
+    setAvailabilityBusyId(product.id);
+    try {
+      await updateMenuItemAvailability(accessToken, product.id, isAvailable);
+      await reloadCatalog();
+      toast.success("Menu updated successfully");
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setAvailabilityBusyId(null);
     }
   }
 
@@ -380,8 +392,11 @@ export default function AdminMenu() {
             products={filtered}
             loading={isLoading}
             error={error}
+            canWrite={canWrite}
+            availabilityBusyId={availabilityBusyId}
             onRetry={() => void reloadCatalog()}
             onOpen={openProduct}
+            onToggleAvailability={(product, isAvailable) => void toggleAvailability(product, isAvailable)}
           />
         </div>
       </div>

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ApiError, validateBody } from "../../common/http.js";
 import {
   createRequireAuthenticatedUser,
+  requireAnyPermission,
   requirePermission,
   type AuthorizedRequest,
 } from "../../middleware/authorization.js";
@@ -15,8 +16,13 @@ import type { MenuActor, MenuManagementService } from "../../services/menu/manag
 /**
  * Owner/Admin canonical menu workspace.
  *
- * Reads require `menu.read`; every mutation requires `menu.write` and is recorded in
- * `menu_audit_events`. The catalog is global — no branch scope is applied.
+ * Reads require `menu.read`; mutations require `menu.write` or `admin.access` and are
+ * recorded in `menu_audit_events`. The catalog is global — no branch scope is applied.
+ *
+ * Route aliases:
+ * - `/items/:id` → same as `/products/:id` (sellable SKU / menu_items row)
+ * - `/items/:id/availability` → 86 / un-86 toggle
+ * - `/variants/:id` → resolves legacy variant → mapped SKU (no writes to deprecated variants table)
  */
 
 export interface AdminMenuRouterDependencies {
@@ -105,6 +111,22 @@ const updateSkuSchema = z
   })
   .strict();
 
+const updateAvailabilitySchema = z
+  .object({
+    isAvailable: z.boolean(),
+  })
+  .strict();
+
+const updateLegacyVariantSchema = z
+  .object({
+    price: z.number().nonnegative().max(1_000_000).optional(),
+    isAvailable: z.boolean().optional(),
+  })
+  .strict()
+  .refine((body) => body.price !== undefined || body.isAvailable !== undefined, {
+    message: "Provide price and/or isAvailable.",
+  });
+
 const listGroupsQuerySchema = z.object({
   categoryId: z.string().uuid().optional(),
 });
@@ -124,6 +146,7 @@ export function createAdminMenuRouter(deps: AdminMenuRouterDependencies) {
     deps.authTokenVerifier,
     deps.authProfileRepository,
   );
+  const requireMenuWrite = requireAnyPermission(["menu.write", "admin.access"]);
 
   router.get(
     "/categories",
@@ -142,7 +165,7 @@ export function createAdminMenuRouter(deps: AdminMenuRouterDependencies) {
   router.post(
     "/categories",
     requireAuthenticatedUser,
-    requirePermission("menu.write"),
+    requireMenuWrite,
     validateBody(createCategorySchema),
     async (req, res, next) => {
       try {
@@ -158,7 +181,7 @@ export function createAdminMenuRouter(deps: AdminMenuRouterDependencies) {
   router.patch(
     "/categories/:id",
     requireAuthenticatedUser,
-    requirePermission("menu.write"),
+    requireMenuWrite,
     validateBody(updateCategorySchema),
     async (req, res, next) => {
       try {
@@ -201,7 +224,7 @@ export function createAdminMenuRouter(deps: AdminMenuRouterDependencies) {
   router.post(
     "/products",
     requireAuthenticatedUser,
-    requirePermission("menu.write"),
+    requireMenuWrite,
     validateBody(createSkuSchema),
     async (req, res, next) => {
       try {
@@ -214,15 +237,63 @@ export function createAdminMenuRouter(deps: AdminMenuRouterDependencies) {
     },
   );
 
+  async function handlePatchSku(req: AuthorizedRequest, res: import("express").Response, next: import("express").NextFunction) {
+    try {
+      const principal = req.principal!;
+      const data = await deps.menuManagement.updateSku(actorFrom(principal), req.params.id, req.body);
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   router.patch(
     "/products/:id",
     requireAuthenticatedUser,
-    requirePermission("menu.write"),
+    requireMenuWrite,
     validateBody(updateSkuSchema),
+    (req, res, next) => void handlePatchSku(req as AuthorizedRequest, res, next),
+  );
+
+  // Owner ERP contract alias — PATCH /items/:id
+  router.patch(
+    "/items/:id",
+    requireAuthenticatedUser,
+    requireMenuWrite,
+    validateBody(updateSkuSchema),
+    (req, res, next) => void handlePatchSku(req as AuthorizedRequest, res, next),
+  );
+
+  // 86 / un-86 — PATCH /items/:id/availability
+  router.patch(
+    "/items/:id/availability",
+    requireAuthenticatedUser,
+    requireMenuWrite,
+    validateBody(updateAvailabilitySchema),
     async (req, res, next) => {
       try {
         const principal = (req as AuthorizedRequest).principal!;
-        const data = await deps.menuManagement.updateSku(
+        const body = req.body as z.infer<typeof updateAvailabilitySchema>;
+        const data = await deps.menuManagement.updateSku(actorFrom(principal), req.params.id, {
+          isAvailable: body.isAvailable,
+        });
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  // Legacy variant id → mapped sellable SKU (does not write menu_item_variants).
+  router.patch(
+    "/variants/:id",
+    requireAuthenticatedUser,
+    requireMenuWrite,
+    validateBody(updateLegacyVariantSchema),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.menuManagement.updateLegacyVariant(
           actorFrom(principal),
           req.params.id,
           req.body,
@@ -238,21 +309,9 @@ export function createAdminMenuRouter(deps: AdminMenuRouterDependencies) {
   router.put(
     "/skus/:id",
     requireAuthenticatedUser,
-    requirePermission("menu.write"),
+    requireMenuWrite,
     validateBody(updateSkuSchema),
-    async (req, res, next) => {
-      try {
-        const principal = (req as AuthorizedRequest).principal!;
-        const data = await deps.menuManagement.updateSku(
-          actorFrom(principal),
-          req.params.id,
-          req.body,
-        );
-        return res.json({ ok: true, data });
-      } catch (error) {
-        return next(error);
-      }
-    },
+    (req, res, next) => void handlePatchSku(req as AuthorizedRequest, res, next),
   );
 
   const uploadSkuImageSchema = z
@@ -265,7 +324,7 @@ export function createAdminMenuRouter(deps: AdminMenuRouterDependencies) {
   router.post(
     "/skus/:id/image",
     requireAuthenticatedUser,
-    requirePermission("menu.write"),
+    requireMenuWrite,
     validateBody(uploadSkuImageSchema),
     async (req, res, next) => {
       try {

@@ -19,7 +19,7 @@ export function CategoryTree({
       <AdminSectionTitle
         eyebrow="Structure"
         title="Category tree"
-        description="Flat category list from catalog — nested hierarchy is Foundation until parent/child relations exist in API."
+        description="Flat category list from catalog — nested hierarchy Coming Soon until parent/child relations exist in API."
       />
       {loading ? (
         <div className="space-y-2" aria-busy="true">
@@ -73,7 +73,7 @@ export function CategoryTree({
         </ul>
       )}
       <p className="mt-4 rounded-lg border border-dashed border-[var(--admin-border)] px-3 py-2 text-xs text-[var(--admin-muted)]">
-        Multi-level trees (Pizza → Classic → Premium) require category parent relations in menu.write APIs — not in read catalog today.
+        Multi-level trees (Pizza → Classic → Premium) require category parent relations — Coming Soon.
       </p>
     </section>
   );

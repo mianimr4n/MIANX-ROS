@@ -65,7 +65,7 @@ export function MenuFilters({
         </label>
         <label className="flex min-h-11 items-center gap-2 rounded-lg border border-dashed border-[var(--admin-border)] px-3 text-sm text-[var(--admin-muted)]">
           <input type="checkbox" disabled className="rounded" />
-          Branch menu · Foundation
+          Branch menu · Coming Soon
         </label>
         <label className="flex min-h-11 items-center gap-2 rounded-lg border border-dashed border-[var(--admin-border)] px-3 text-sm text-[var(--admin-muted)]">
           <input type="checkbox" disabled className="rounded" />
@@ -173,7 +173,7 @@ export function MenuFiltersWithCategories({
         </label>
         <label className="flex min-h-11 items-center gap-2 rounded-lg border border-dashed border-[var(--admin-border)] px-3 text-sm text-[var(--admin-muted)]">
           <input type="checkbox" disabled className="rounded" />
-          Branch menu · Foundation
+          Branch menu · Coming Soon
         </label>
         <label className="flex min-h-11 items-center gap-2 rounded-lg border border-dashed border-[var(--admin-border)] px-3 text-sm text-[var(--admin-muted)]">
           <input type="checkbox" disabled className="rounded" />
