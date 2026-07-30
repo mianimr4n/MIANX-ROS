@@ -1,5 +1,7 @@
 /** HR & Workforce helpers — no invented employees, attendance, or payroll. */
 
+import type { HrAttendance, HrLeaveRequest } from "@/lib/admin-api";
+
 export type HrIntegrationCheck = {
   id: string;
   label: string;
@@ -58,6 +60,7 @@ export const SEEDED_PERMISSIONS: Array<{ code: string; module: string; descripti
   { code: "staff.manage", module: "staff", description: "Manage staff, roles, and assignments." },
   { code: "staff.create", module: "staff", description: "Create, send, resend, and revoke staff invitations." },
   { code: "staff.assign_role", module: "staff", description: "Assign roles on staff invitations and staffing." },
+  { code: "hr.manage", module: "hr", description: "Manage HR attendance, leave, and employee documents." },
   { code: "admin.access", module: "admin", description: "Access Telepizza admin controls." },
 ];
 
@@ -72,6 +75,23 @@ export type EmployeeSummary = {
   total: number;
   active: number;
 };
+
+export type AttendanceSummary = {
+  todayPresent: number;
+  todayAbsent: number;
+  todayLate: number;
+  total: number;
+};
+
+export type LeaveSummary = {
+  pending: number;
+  approvedActive: number;
+  total: number;
+};
+
+function todayIsoDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export function summarizeInvites(
   invites: Array<{ status: string }> | null,
@@ -95,13 +115,40 @@ export function summarizeEmployees(
   };
 }
 
+export function summarizeAttendance(rows: HrAttendance[] | null): AttendanceSummary | null {
+  if (!rows) return null;
+  const today = todayIsoDate();
+  const todays = rows.filter((r) => {
+    const day = (r.checkInTime ?? r.createdAt).slice(0, 10);
+    return day === today;
+  });
+  return {
+    total: rows.length,
+    todayPresent: todays.filter((r) => r.status === "PRESENT" || r.status === "LATE").length,
+    todayAbsent: todays.filter((r) => r.status === "ABSENT").length,
+    todayLate: todays.filter((r) => r.status === "LATE").length,
+  };
+}
+
+export function summarizeLeaves(rows: HrLeaveRequest[] | null): LeaveSummary | null {
+  if (!rows) return null;
+  const today = todayIsoDate();
+  return {
+    total: rows.length,
+    pending: rows.filter((r) => r.status === "PENDING").length,
+    approvedActive: rows.filter(
+      (r) => r.status === "APPROVED" && r.startDate <= today && r.endDate >= today,
+    ).length,
+  };
+}
+
 export function integrationChecks(): HrIntegrationCheck[] {
   return [
     {
       id: "hr-employees",
       label: "Employee directory API",
       status: "present",
-      note: "GET/POST /admin/hr/employees — hr_employees table, staff.manage or admin.access.",
+      note: "GET/POST /admin/hr/employees — hr_employees table.",
     },
     {
       id: "staff-table",
@@ -119,61 +166,61 @@ export function integrationChecks(): HrIntegrationCheck[] {
       id: "rbac",
       label: "Roles & permissions seed",
       status: "present",
-      note: "roles, permissions, role_permissions seeded — UI shows verified codes only.",
+      note: "roles, permissions, role_permissions seeded — includes hr.manage.",
+    },
+    {
+      id: "attendance",
+      label: "Attendance / timesheets",
+      status: "present",
+      note: "hr_attendance + GET/POST /admin/hr/attendance (check-in/out).",
+    },
+    {
+      id: "leave",
+      label: "Leave management",
+      status: "present",
+      note: "hr_leave_requests + GET/POST/PATCH /admin/hr/leaves.",
+    },
+    {
+      id: "documents",
+      label: "Employee documents",
+      status: "present",
+      note: "hr_employee_documents + POST /admin/hr/employees/:id/documents + GET /admin/hr/documents.",
     },
     {
       id: "departments",
       label: "Department hierarchy",
       status: "missing",
-      note: "staff.department is a text field — no departments table or org tree API.",
+      note: "Planned for Phase 2 — staff.department is text only.",
     },
     {
       id: "shifts",
       label: "Shift scheduling / roster",
       status: "missing",
-      note: "staff.shift_name exists — no shift planner or weekly roster API.",
-    },
-    {
-      id: "attendance",
-      label: "Attendance / timesheets",
-      status: "missing",
-      note: "No clock-in, biometric, or attendance tables.",
-    },
-    {
-      id: "leave",
-      label: "Leave management",
-      status: "missing",
-      note: "No leave types, balances, or approval workflow.",
+      note: "Planned for Phase 2 — no shift planner API.",
     },
     {
       id: "payroll",
       label: "Payroll engine",
       status: "missing",
-      note: "No salary structures, payslips, or payroll runs.",
+      note: "Planned for Phase 2 — no salary structures or payroll runs.",
     },
     {
       id: "performance",
       label: "Performance reviews",
       status: "missing",
-      note: "No goals, reviews, or warnings backend.",
+      note: "Planned for Phase 2 — no goals/reviews backend.",
     },
     {
       id: "training",
       label: "Training & compliance",
       status: "missing",
-      note: "No courses, certificates, or onboarding tracks.",
-    },
-    {
-      id: "documents",
-      label: "Employee documents",
-      status: "missing",
-      note: "No document storage or HR file API.",
+      note: "Planned for Phase 2 — no courses or certificates API.",
     },
     {
       id: "hr-analytics",
       label: "HR analytics",
       status: "missing",
-      note: "No headcount, turnover, or attendance trend APIs.",
+      note: "Planned for Phase 2 — trend APIs beyond raw attendance/leave lists.",
     },
   ];
 }
@@ -187,37 +234,54 @@ export function readinessGroups(): HrReadinessGroup[] {
       why: "List and create are live via hr_employees; update/deactivate not in this slice.",
       entities: ["hr_employees"],
       apis: ["GET /api/v1/admin/hr/employees", "POST /api/v1/admin/hr/employees"],
-      permission: "staff.manage or admin.access",
+      permission: "hr.manage, staff.manage, or admin.access",
       related: "Staff invite acceptance still provisions users + roles separately.",
     },
     {
       id: "attendance",
       title: "Time & attendance",
-      unavailable: "Clock in/out, timesheets, late/absent rules",
-      why: "Cannot record or simulate attendance without immutable time events.",
-      entities: ["attendance_events", "timesheets", "shift_assignments"],
-      apis: ["POST /api/v1/admin/hr/attendance/clock", "GET /api/v1/admin/hr/attendance"],
-      permission: "staff.manage (proposed hr.attendance)",
-      related: "POS login / mobile clock integrations.",
+      unavailable: "— LIVE",
+      why: "Check-in/out records are stored in hr_attendance with PRESENT|ABSENT|LATE|LEAVE.",
+      entities: ["hr_attendance"],
+      apis: ["GET /api/v1/admin/hr/attendance", "POST /api/v1/admin/hr/attendance"],
+      permission: "hr.manage, staff.manage, or admin.access",
+      related: "Biometric / POS clock integrations Planned for Phase 2.",
     },
     {
       id: "leave",
       title: "Leave management",
-      unavailable: "Balances, requests, approvals",
-      why: "Leave policies and accruals require payroll-grade backend.",
-      entities: ["leave_types", "leave_balances", "leave_requests"],
-      apis: ["GET /api/v1/admin/hr/leave", "POST /api/v1/admin/hr/leave/request"],
-      permission: "staff.manage (proposed hr.leave)",
-      related: "Manager approval workflows.",
+      unavailable: "— LIVE (balances Planned for Phase 2)",
+      why: "Leave requests support CASUAL|SICK|ANNUAL with PENDING|APPROVED|REJECTED workflow.",
+      entities: ["hr_leave_requests"],
+      apis: [
+        "GET /api/v1/admin/hr/leaves",
+        "POST /api/v1/admin/hr/leaves",
+        "PATCH /api/v1/admin/hr/leaves/:id",
+      ],
+      permission: "hr.manage, staff.manage, or admin.access",
+      related: "Accrual balances Planned for Phase 2.",
+    },
+    {
+      id: "documents",
+      title: "Employee documents",
+      unavailable: "— LIVE (URL links)",
+      why: "Document metadata stores CNIC|CONTRACT|CERTIFICATE file URLs per employee.",
+      entities: ["hr_employee_documents"],
+      apis: [
+        "GET /api/v1/admin/hr/documents",
+        "POST /api/v1/admin/hr/employees/:id/documents",
+      ],
+      permission: "hr.manage, staff.manage, or admin.access",
+      related: "Binary object storage buckets Planned for Phase 2.",
     },
     {
       id: "payroll",
       title: "Payroll integration",
-      unavailable: "Salary, allowances, deductions, payslips",
-      why: "Finance module is Foundation — payroll must not calculate salaries in frontend.",
+      unavailable: "Planned for Phase 2",
+      why: "Salary, allowances, deductions, and payslips must not be calculated in the frontend.",
       entities: ["payroll_runs", "payslips", "salary_structures"],
-      apis: ["GET /api/v1/admin/hr/payroll/runs"],
-      permission: "staff.manage + payment.read (proposed)",
+      apis: ["GET /api/v1/admin/hr/payroll/runs (Planned for Phase 2)"],
+      permission: "hr.manage + payment.read (proposed)",
       related: "Finance & Accounting GL postings.",
     },
   ];
@@ -227,6 +291,9 @@ export function buildWorkforceInsights(input: {
   branchLabel: string;
   inviteSummary: StaffInviteSummary | null;
   employeeSummary: EmployeeSummary | null;
+  attendanceSummary: AttendanceSummary | null;
+  leaveSummary: LeaveSummary | null;
+  documentCount: number | null;
   isSuperAdmin: boolean;
   hasStaffRead: boolean;
   canManageHr: boolean;
@@ -243,9 +310,36 @@ export function buildWorkforceInsights(input: {
   } else if (!input.canManageHr) {
     items.push({
       id: "employees-gate",
-      title: "Employee directory requires staff.manage or admin.access",
+      title: "Employee directory requires hr.manage, staff.manage, or admin.access",
       detail: "Permission gate for GET /admin/hr/employees.",
       source: "derived",
+    });
+  }
+
+  if (input.attendanceSummary) {
+    items.push({
+      id: "attendance-live",
+      title: `${input.attendanceSummary.todayPresent} present/late today · ${input.attendanceSummary.todayAbsent} absent`,
+      detail: "Live from GET /admin/hr/attendance.",
+      source: "live",
+    });
+  }
+
+  if (input.leaveSummary) {
+    items.push({
+      id: "leave-live",
+      title: `${input.leaveSummary.pending} pending leave · ${input.leaveSummary.approvedActive} on leave today`,
+      detail: "Live from GET /admin/hr/leaves.",
+      source: "live",
+    });
+  }
+
+  if (input.documentCount != null) {
+    items.push({
+      id: "documents-live",
+      title: `${input.documentCount} employee document link(s) on file`,
+      detail: "Live from GET /admin/hr/documents.",
+      source: "live",
     });
   }
 
@@ -266,29 +360,8 @@ export function buildWorkforceInsights(input: {
   }
 
   items.push({
-    id: "no-attendance",
-    title: "Attendance module unavailable",
-    detail: `No clock-in/out or timesheet backend for ${input.branchLabel}.`,
-    source: "foundation",
-  });
-
-  items.push({
-    id: "no-documents",
-    title: "Missing employee documents workflow",
-    detail: "CNIC, contracts, and certificates require document storage API.",
-    source: "foundation",
-  });
-
-  items.push({
-    id: "no-training",
-    title: "Training not configured",
-    detail: "Compliance and onboarding courses require training backend.",
-    source: "foundation",
-  });
-
-  items.push({
     id: "no-payroll",
-    title: "Payroll integration unavailable",
+    title: "Payroll integration Planned for Phase 2",
     detail: "Salary summaries and payslips require payroll engine — not frontend calculation.",
     source: "foundation",
   });
