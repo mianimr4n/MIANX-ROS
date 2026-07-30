@@ -1878,7 +1878,8 @@ export type PurchaseOrderStatus =
   | "ordered"
   | "partially_received"
   | "received"
-  | "cancelled";
+  | "cancelled"
+  | "rejected";
 
 export type PurchaseOrder = {
   id: string;
@@ -1913,6 +1914,11 @@ export type CreatePurchaseOrderInput = {
   status?: PurchaseOrderStatus;
   totalAmount?: number;
   expectedDeliveryDate?: string | null;
+};
+
+export type DecidePurchaseOrderApprovalInput = {
+  decision: "approved" | "rejected";
+  notes?: string | null;
 };
 
 export function listSuppliers(
@@ -1955,6 +1961,19 @@ export function listPurchaseOrders(
 export function createPurchaseOrder(accessToken: string, input: CreatePurchaseOrderInput) {
   return fetchApiData<PurchaseOrder>(`/admin/purchasing/orders`, {
     method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function decidePurchaseOrderApproval(
+  accessToken: string,
+  orderId: string,
+  input: DecidePurchaseOrderApprovalInput,
+) {
+  return fetchApiData<PurchaseOrder>(`/admin/purchasing/orders/${orderId}/approve`, {
+    method: "PATCH",
     headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
     body: JSON.stringify(input),
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,

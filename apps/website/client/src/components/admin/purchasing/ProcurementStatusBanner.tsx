@@ -10,7 +10,7 @@ export function ProcurementStatusBanner() {
             Procurement status
           </h2>
           <p className="mt-1 text-sm text-emerald-900">
-            Suppliers, purchase orders, requisitions, and GRN headers are LIVE. Approval workflow, invoice matching, and
+            Suppliers, purchase orders, requisitions, GRN headers, and PO approve/reject are LIVE. Invoice matching and
             supplier payables remain Coming Soon — no fabricated spend metrics.
           </p>
           <p className="mt-2 text-xs text-emerald-800">

@@ -45,7 +45,7 @@ describe("Purchasing & Suppliers V1 (static)", () => {
 
   it("wires live GRN without inventing stock balance updates in the browser", () => {
     const receiving = read("apps/website/client/src/components/admin/purchasing/ProcurementPanels.tsx");
-    assert.match(receiving, /No goods receipts recorded yet/);
+    assert.match(receiving, /No goods received yet/);
     assert.match(receiving, /line-level inventory posting Coming Soon/i);
     assert.doesNotMatch(receiving, /setOnHand|quantity_on_hand|stockBalance/i);
   });
@@ -57,12 +57,17 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.doesNotMatch(helper, /displayPrice|formatPkr|menu\.price/i);
   });
 
-  it("approval and invoice matching remain Coming Soon without backend", () => {
+  it("wires live PO approval while keeping invoice matching Coming Soon", () => {
     const panels = read("apps/website/client/src/components/admin/purchasing/ProcurementPanels.tsx");
-    assert.match(panels, /server-side approval workflow required/i);
+    assert.match(panels, /Live PO approve\/reject/i);
     assert.match(panels, /Invoice Matching — Coming Soon/);
     assert.match(panels, /Customer payment records are not supplier payables/);
-    assert.doesNotMatch(panels, /onApprove|approvePurchase|threeWayMatch\(/i);
+    assert.doesNotMatch(panels, /threeWayMatch\(/i);
+    const orders = read("apps/website/client/src/components/admin/purchasing/PurchasingTables.tsx");
+    assert.match(orders, /Approve/);
+    assert.match(orders, /Reject/);
+    const page = read("apps/website/client/src/pages/admin/AdminPurchasing.tsx");
+    assert.match(page, /decidePurchaseOrderApproval/);
   });
 
   it("Mianx procurement insights remain rule-based only", () => {
@@ -87,13 +92,15 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(page, /useAdminAccessGate/);
   });
 
-  it("integration checks document live supplier/PO/requisition/GRN APIs and remaining gaps", () => {
+  it("integration checks document live supplier/PO/requisition/GRN/approval APIs and remaining gaps", () => {
     const helper = read("apps/website/client/src/lib/admin-purchasing.ts");
     assert.match(helper, /purchase_orders/);
     assert.match(helper, /goods_receiving/);
     assert.match(helper, /purchase_requisitions/);
+    assert.match(helper, /orders\/:id\/approve/);
     assert.match(helper, /purchasing\.manage/);
     assert.match(helper, /status: "present"/);
     assert.match(helper, /Three-way matching/);
+    assert.match(helper, /id: "approvals"[\s\S]*status: "present"/);
   });
 });

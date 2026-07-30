@@ -13,6 +13,7 @@ import type { AuthPrincipal } from "../../services/auth/principal.js";
 import type { BranchActorScope } from "../../services/tables/management.js";
 import {
   GOODS_RECEIVING_STATUSES,
+  PURCHASE_ORDER_APPROVAL_DECISIONS,
   PURCHASE_ORDER_STATUSES,
   REQUISITION_STATUSES,
   SUPPLIER_STATUSES,
@@ -90,8 +91,15 @@ const createReceivingSchema = z
   })
   .strict();
 
+const decideOrderApprovalSchema = z
+  .object({
+    decision: z.enum(PURCHASE_ORDER_APPROVAL_DECISIONS),
+    notes: z.string().trim().max(2000).nullable().optional(),
+  })
+  .strict();
+
 /**
- * Purchasing — suppliers, POs, requisitions, goods receiving.
+ * Purchasing — suppliers, POs, requisitions, goods receiving, PO approval.
  * Gated by purchasing.manage or admin.access.
  */
 export function createAdminPurchasingRouter(deps: AdminPurchasingRouterDependencies): Router {
@@ -168,6 +176,32 @@ export function createAdminPurchasingRouter(deps: AdminPurchasingRouterDependenc
         const body = req.body as z.infer<typeof createOrderSchema>;
         const data = await deps.purchasing.createOrder(scopeFrom(principal), principal.userId, body);
         return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.patch(
+    "/purchasing/orders/:id/approve",
+    requireAuthenticatedUser,
+    requirePurchasingAccess,
+    validateBody(decideOrderApprovalSchema),
+    async (req, res, next) => {
+      try {
+        const id = z.string().uuid().safeParse(req.params.id);
+        if (!id.success) {
+          throw new ApiError(400, "VALIDATION_ERROR", "Invalid purchase order id.");
+        }
+        const principal = (req as AuthorizedRequest).principal!;
+        const body = req.body as z.infer<typeof decideOrderApprovalSchema>;
+        const data = await deps.purchasing.decideOrderApproval(
+          scopeFrom(principal),
+          principal.userId,
+          id.data,
+          body,
+        );
+        return res.json({ ok: true, data });
       } catch (error) {
         return next(error);
       }

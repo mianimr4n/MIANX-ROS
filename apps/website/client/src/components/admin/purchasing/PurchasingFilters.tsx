@@ -12,7 +12,7 @@ export function PurchasingFilters({
       <AdminSectionTitle
         eyebrow="Browse"
         title="Search and filters"
-        description="Search applies to live suppliers and purchase orders. Approval / receiving filters Coming Soon."
+        description="Search applies to live suppliers and purchase orders. Advanced approval filters Coming Soon."
       />
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {["Approval status", "Receiving status", "Invoice status", "Overdue", "Buyer"].map((label) => (
