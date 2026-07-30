@@ -25,9 +25,23 @@ export function canAccessAdminOrdersApi(input: AdminPrincipalInput): boolean {
   return input.isSuperAdmin || input.permissions.includes("order.manage");
 }
 
-/** Loyalty workspace uses order-derived customer intelligence (same gate as CRM). */
+/** Loyalty workspace — LIVE accounts ledger (loyalty.manage or order.manage). */
 export function canAccessAdminLoyalty(input: AdminPrincipalInput): boolean {
-  return canAccessAdminOrdersApi(input);
+  return (
+    input.isSuperAdmin ||
+    input.permissions.includes("loyalty.manage") ||
+    input.permissions.includes("order.manage") ||
+    input.permissions.includes("admin.access")
+  );
+}
+
+/** Marketing coupons — marketing.manage or admin.access. */
+export function canAccessAdminMarketing(input: AdminPrincipalInput): boolean {
+  return (
+    input.isSuperAdmin ||
+    input.permissions.includes("marketing.manage") ||
+    input.permissions.includes("admin.access")
+  );
 }
 
 /** WhatsApp Order Center uses order-derived WhatsApp-attributed orders (same gate as orders API). */
@@ -401,6 +415,8 @@ const NAV_BLUEPRINT: Array<
     requiresMenu?: boolean;
     requiresInventory?: boolean;
     requiresPurchasing?: boolean;
+    requiresMarketing?: boolean;
+    requiresLoyalty?: boolean;
     requiresFinance?: boolean;
     requiresReports?: boolean;
     requiresHr?: boolean;
@@ -426,9 +442,9 @@ const NAV_BLUEPRINT: Array<
   { key: "menu", label: "Menu", href: "/admin/menu", group: "Commerce", requiresMenu: true, ownerOnly: true },
   { key: "inventory", label: "Inventory", href: "/admin/inventory", group: "Commerce", requiresInventory: true },
   { key: "purchasing", label: "Purchasing & Suppliers", href: "/admin/purchasing", group: "Commerce", requiresPurchasing: true, ownerOnly: true },
-  { key: "promotions", label: "Promotions", href: "/admin/promotions", group: "Commerce", ownerOnly: true },
+  { key: "promotions", label: "Marketing & Coupons", href: "/admin/marketing", group: "Commerce", requiresMarketing: true, ownerOnly: true },
   { key: "customers", label: "CRM", href: "/admin/crm", group: "Customers", requiresOrdersApi: true },
-  { key: "loyalty", label: "Loyalty & Rewards", href: "/admin/loyalty", group: "Customers", requiresOrdersApi: true, ownerOnly: true },
+  { key: "loyalty", label: "Loyalty & Rewards", href: "/admin/loyalty", group: "Customers", requiresLoyalty: true, ownerOnly: true },
   { key: "support", label: "Support", href: "/admin/support", group: "Customers", ownerOnly: true },
   { key: "branches", label: "Branches", href: "/admin/branches", group: "Management", ownerOnly: true },
   { key: "staff", label: "Staff schedule", href: "/admin/hr", group: "Management", requiresHr: true },
@@ -450,6 +466,8 @@ export function getAdminNavItems(input: AdminPrincipalInput): AdminNavItem[] {
   const menuApi = canManageMenu(input);
   const inventoryApi = canAccessAdminInventory(input);
   const purchasingApi = canAccessAdminPurchasing(input);
+  const marketingApi = canAccessAdminMarketing(input);
+  const loyaltyApi = canAccessAdminLoyalty(input);
   const financeApi = canAccessAdminFinance(input);
   const reportsApi = canAccessAdminReports(input);
   const hrApi = canAccessAdminHr(input);
@@ -479,6 +497,8 @@ export function getAdminNavItems(input: AdminPrincipalInput): AdminNavItem[] {
           (item.requiresMenu && menuApi) ||
           (item.requiresInventory && inventoryApi) ||
           (item.requiresPurchasing && purchasingApi) ||
+          (item.requiresMarketing && marketingApi) ||
+          (item.requiresLoyalty && loyaltyApi) ||
           (item.requiresFinance && financeApi) ||
           (item.requiresReports && reportsApi) ||
           (item.requiresHr && hrApi) ||

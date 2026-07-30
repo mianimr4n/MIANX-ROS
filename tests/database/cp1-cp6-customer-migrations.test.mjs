@@ -113,7 +113,7 @@ test("ensure_customer_profile_for_auth_user precedes freeze head", () => {
   assert.match(authService, /ensure_customer_profile_for_auth_user/);
 });
 
-test("Phase 1 CP migrations sit after V1 freeze head and before inventing loyalty/notifications", () => {
+test("Phase 1 CP migrations sit after V1 freeze head (loyalty foundation is a later launch slice)", () => {
   const names = readdirSync(join(workspaceRoot, "supabase", "migrations"))
     .filter((name) => name.endsWith(".sql"))
     .sort();
@@ -121,6 +121,7 @@ test("Phase 1 CP migrations sit after V1 freeze head and before inventing loyalt
   const cp1 = "20260719090000_customer_addresses.sql";
   const cp5 = "20260719100000_customer_favorites.sql";
   const cp6 = "20260719110000_order_reviews.sql";
+  const loyalty = "20260730240000_loyalty_foundation.sql";
   assert.ok(names.includes(freeze));
   assert.ok(names.includes(cp1));
   assert.ok(names.includes(cp5));
@@ -128,9 +129,12 @@ test("Phase 1 CP migrations sit after V1 freeze head and before inventing loyalt
   assert.ok(names.indexOf(freeze) < names.indexOf(cp1));
   assert.ok(names.indexOf(cp1) < names.indexOf(cp5));
   assert.ok(names.indexOf(cp5) < names.indexOf(cp6));
+  // Loyalty was intentionally deferred past Phase 1 CP; launch slice adds it after ERP migrations.
+  assert.ok(names.includes(loyalty));
+  assert.ok(names.indexOf(cp6) < names.indexOf(loyalty));
   assert.equal(
-    names.filter((name) => /loyalty|reward|notification_pref/i.test(name)).length,
+    names.filter((name) => /notification_pref/i.test(name)).length,
     0,
-    "loyalty/notifications cloud tables are intentionally out of Phase 1 scope",
+    "notification_pref cloud tables remain out of Phase 1 / launch certification scope",
   );
 });

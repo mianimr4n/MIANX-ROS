@@ -147,6 +147,14 @@ import {
   type ReportsService,
 } from "./services/reports/sales.js";
 import {
+  createLoyaltyService,
+  type LoyaltyService,
+} from "./services/loyalty/management.js";
+import {
+  createMarketingService,
+  type MarketingService,
+} from "./services/marketing/coupons.js";
+import {
   createAiPlatformService,
   type AiPlatformService,
 } from "./services/ai/platform.js";
@@ -186,6 +194,8 @@ export interface AppDependencies {
   purchasing: PurchasingService;
   posZReport: PosZReportService;
   reports: ReportsService;
+  loyalty: LoyaltyService;
+  marketing: MarketingService;
   aiPlatform: AiPlatformService;
   tableService: TableServiceOperations;
   paymentSettlement: PaymentSettlementService;
@@ -233,6 +243,8 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     purchasing: createPurchasingService(envStatus),
     posZReport: createPosZReportService(envStatus),
     reports: createReportsService(envStatus),
+    loyalty: createLoyaltyService(envStatus),
+    marketing: createMarketingService(envStatus),
     aiPlatform: createAiPlatformService(envStatus),
     tableService: createTableServiceOperations(envStatus),
     paymentSettlement: createPaymentSettlementService(envStatus),

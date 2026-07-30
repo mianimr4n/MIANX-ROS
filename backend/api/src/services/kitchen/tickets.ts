@@ -389,6 +389,48 @@ export function createSupabaseKitchenTicketsService(
         };
       }
 
+      if (plan.toStatus === "preparing") {
+        // REQ-KIT-012: atomic ticket→preparing + mapped recipe stock consume.
+        const { data: prepData, error: prepError } = await supabase.rpc(
+          "kitchen_ticket_set_preparing_atomic",
+          {
+            p_ticket_id: row.id,
+            p_actor_user_id: scope.userId,
+            p_note: note?.trim() || null,
+          },
+        );
+
+        if (prepError) {
+          const message = prepError.message ?? "Kitchen preparing transition failed.";
+          if (/Insufficient stock for /i.test(message)) {
+            throw new ApiError(409, "INSUFFICIENT_STOCK", message);
+          }
+          if (/KITCHEN_TICKET_NOT_FOUND/i.test(message)) {
+            throw new ApiError(404, "KITCHEN_TICKET_NOT_FOUND", "Kitchen ticket not found.");
+          }
+          if (/TICKET_TRANSITION_DENIED|TICKET_STATE_CONFLICT/i.test(message)) {
+            throw new ApiError(409, "TICKET_STATE_CONFLICT", message);
+          }
+          throw new ApiError(500, "KITCHEN_TICKET_UPDATE_FAILED", message);
+        }
+
+        const payload = prepData as {
+          ticketId?: string;
+          status?: string;
+          orderId?: string;
+          orderStatus?: string | null;
+          idempotentReplay?: boolean;
+        } | null;
+
+        return {
+          ticketId: row.id,
+          status: "preparing",
+          orderId: row.order_id,
+          orderStatus: payload?.orderStatus ?? null,
+          idempotentReplay: Boolean(payload?.idempotentReplay),
+        };
+      }
+
       const now = new Date().toISOString();
       const patch: Record<string, unknown> = {
         status: plan.toStatus,
@@ -398,9 +440,6 @@ export function createSupabaseKitchenTicketsService(
       if (plan.toStatus === "accepted") {
         patch.accepted_at = now;
         patch.accepted_by_user_id = scope.userId;
-      }
-      if (plan.toStatus === "preparing") {
-        patch.started_at = now;
       }
       if (plan.toStatus === "ready") {
         patch.ready_at = now;

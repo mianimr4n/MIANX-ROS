@@ -51,6 +51,7 @@ import AdminDelivery from "./pages/admin/AdminDelivery";
 import AdminPos from "./pages/admin/AdminPos";
 import AdminCrm from "./pages/admin/AdminCrm";
 import AdminLoyalty from "./pages/admin/AdminLoyalty";
+import AdminMarketing from "./pages/admin/AdminMarketing";
 import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import AdminMenu from "./pages/admin/AdminMenu";
 import AdminInventory from "./pages/admin/AdminInventory";
@@ -95,9 +96,6 @@ function isOpsChrome(path: string) {
   return path === "/staff/login" || path.startsWith("/ops") || path.startsWith("/admin");
 }
 
-function PromotionsComingSoon() {
-  return <AdminComingSoon moduleName="Promotions" />;
-}
 function SupportComingSoon() {
   return <AdminComingSoon moduleName="Support" />;
 }
@@ -155,6 +153,8 @@ function Router() {
       <Route path="/admin/crm" component={AdminCrm} />
       <Route path="/admin/customers" component={AdminCrm} />
       <Route path="/admin/loyalty" component={AdminLoyalty} />
+      <Route path="/admin/marketing" component={AdminMarketing} />
+      <Route path="/admin/promotions" component={AdminMarketing} />
       <Route path="/admin/hr" component={AdminHr} />
       <Route path="/admin/staff" component={AdminHr} />
       <Route path="/admin/finance" component={AdminFinance} />
@@ -178,7 +178,6 @@ function Router() {
       <Route path="/admin/waitlist" component={AdminWaitlist} />
       <Route path="/admin/ai-team" component={AdminAiTeam} />
       {/* Not yet implemented Owner surfaces */}
-      <Route path="/admin/promotions" component={PromotionsComingSoon} />
       <Route path="/admin/support" component={SupportComingSoon} />
       <Route path="/admin/branches" component={BranchesComingSoon} />
       <Route path="/admin/ai-command-center" component={AiComingSoon} />

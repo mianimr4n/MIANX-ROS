@@ -823,6 +823,21 @@ export function createSupabaseBranchOrderManagementDataSource(
         await syncDeliveryLaneForOrderStatus(supabase, order.id, plan.toStatus, now);
       }
 
+      // REQ-ADM-160 — earn loyalty points on completed orders (1pt / 100 PKR). Best-effort; never blocks completion.
+      if (plan.toStatus === "completed") {
+        const { error: loyaltyError } = await supabase.rpc("loyalty_earn_for_order_atomic", {
+          p_order_id: order.id,
+          p_actor_user_id: scope.userId,
+        });
+        if (loyaltyError) {
+          // Order is already completed — log via no-throw path. Missing customer / below threshold is expected.
+          const msg = loyaltyError.message ?? "";
+          if (!/ORDER_HAS_NO_CUSTOMER|amount_below_threshold|ORDER_NOT_COMPLETED/i.test(msg)) {
+            // Soft-fail: completion remains successful.
+          }
+        }
+      }
+
       return {
         orderId: order.id,
         orderNumber: (updated as { order_number: string }).order_number,

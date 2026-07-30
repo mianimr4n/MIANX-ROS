@@ -2215,3 +2215,79 @@ export function createGoodsReceiving(accessToken: string, input: CreateGoodsRece
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }
+
+export type LoyaltyAccount = {
+  id: string;
+  customerId: string;
+  customerName: string | null;
+  customerPhone: string | null;
+  pointsBalance: number;
+  tier: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export function listLoyaltyAccounts(accessToken: string, opts?: AdminReadOptions) {
+  return fetchApiData<LoyaltyAccount[]>("/admin/loyalty/accounts", readInit(accessToken, opts));
+}
+
+export function earnLoyaltyPoints(accessToken: string, orderId: string) {
+  return fetchApiData<{
+    orderId: string;
+    points: number;
+    pointsBalance: number;
+    idempotentReplay: boolean;
+  }>("/admin/loyalty/earn", {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ orderId }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export type MarketingCoupon = {
+  id: string;
+  branchId: string | null;
+  branchCode: string | null;
+  code: string;
+  discountType: "percent" | "fixed";
+  discountValue: number;
+  minOrder: number;
+  expiryDate: string | null;
+  status: "active" | "inactive" | "expired";
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateMarketingCouponInput = {
+  branchId?: string | null;
+  code: string;
+  discountType: "percent" | "fixed";
+  discountValue: number;
+  minOrder?: number;
+  expiryDate?: string | null;
+  status?: "active" | "inactive" | "expired";
+};
+
+export function listMarketingCoupons(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<MarketingCoupon[]>(
+    `/admin/marketing/coupons${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createMarketingCoupon(accessToken: string, input: CreateMarketingCouponInput) {
+  return fetchApiData<MarketingCoupon>("/admin/marketing/coupons", {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
