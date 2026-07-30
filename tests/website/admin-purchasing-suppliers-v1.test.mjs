@@ -43,10 +43,10 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(orders, /No purchase requisitions created yet/);
   });
 
-  it("wires live GRN without inventing stock balance updates in the browser", () => {
+  it("wires live GRN with atomic server-side stock posting for mapped lines", () => {
     const receiving = read("apps/website/client/src/components/admin/purchasing/ProcurementPanels.tsx");
     assert.match(receiving, /No goods received yet/);
-    assert.match(receiving, /line-level inventory posting Coming Soon/i);
+    assert.match(receiving, /post stock atomically/i);
     assert.doesNotMatch(receiving, /setOnHand|quantity_on_hand|stockBalance/i);
   });
 

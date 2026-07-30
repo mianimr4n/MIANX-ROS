@@ -88,6 +88,17 @@ const createReceivingSchema = z
     status: z.enum(GOODS_RECEIVING_STATUSES).optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     receivedAt: z.string().trim().min(1).nullable().optional(),
+    lines: z
+      .array(
+        z
+          .object({
+            inventoryItemId: z.string().uuid().nullable().optional(),
+            quantity: z.number().finite().positive(),
+          })
+          .strict(),
+      )
+      .max(200)
+      .optional(),
   })
   .strict();
 
