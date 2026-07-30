@@ -1,0 +1,72 @@
+{
+  "createdAt": "2026-07-30T10:02:03.813Z",
+  "branch": {
+    "code": "royal-orchard",
+    "idPrefix": "295f4fa0"
+  },
+  "accounts": [
+    {
+      "email": "admin@telepizza.pk",
+      "role": "super-admin",
+      "path": "sql-escalate",
+      "passwordStored": "scripts/.tmp_pw/staff-handover.local.json"
+    },
+    {
+      "email": "branch.manager@telepizza.pk",
+      "role": "branch-manager",
+      "path": "invite-finalize",
+      "passwordStored": "scripts/.tmp_pw/staff-handover.local.json"
+    },
+    {
+      "email": "kitchen.manager@telepizza.pk",
+      "role": "kitchen",
+      "path": "invite-finalize",
+      "passwordStored": "scripts/.tmp_pw/staff-handover.local.json"
+    },
+    {
+      "email": "cashier@telepizza.pk",
+      "role": "cashier",
+      "path": "invite-finalize",
+      "passwordStored": "scripts/.tmp_pw/staff-handover.local.json"
+    },
+    {
+      "email": "rider@telepizza.pk",
+      "role": "rider",
+      "path": "invite-finalize",
+      "passwordStored": "scripts/.tmp_pw/staff-handover.local.json"
+    },
+    {
+      "email": "support@telepizza.pk",
+      "role": "customer-support",
+      "path": "invite-finalize",
+      "passwordStored": "scripts/.tmp_pw/staff-handover.local.json"
+    }
+  ],
+  "orders": [
+    {
+      "orderNumber": "LOCAL-PENDING-001",
+      "status": "pending",
+      "kitchenTicket": null
+    },
+    {
+      "orderNumber": "LOCAL-CONFIRMED-001",
+      "status": "confirmed",
+      "kitchenTicket": "queued"
+    },
+    {
+      "orderNumber": "LOCAL-PREPARING-001",
+      "status": "preparing",
+      "kitchenTicket": "preparing"
+    },
+    {
+      "orderNumber": "LOCAL-READY-001",
+      "status": "ready",
+      "kitchenTicket": "ready"
+    },
+    {
+      "orderNumber": "LOCAL-COMPLETED-001",
+      "status": "completed",
+      "kitchenTicket": "completed"
+    }
+  ]
+}

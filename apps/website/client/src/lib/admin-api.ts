@@ -1681,3 +1681,53 @@ export function updateDeliverySettings(accessToken: string, input: DeliverySetti
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }
+
+export type HrEmployeeStatus = "active" | "inactive" | "on_leave" | "terminated";
+
+export type HrEmployee = {
+  id: string;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  status: HrEmployeeStatus;
+  hiredAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateHrEmployeeInput = {
+  branchId: string;
+  fullName: string;
+  email: string;
+  phone?: string | null;
+  role: string;
+  status?: HrEmployeeStatus;
+  hiredAt?: string | null;
+};
+
+export function listHrEmployees(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+): Promise<HrEmployee[]> {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<HrEmployee[]>(
+    `/admin/hr/employees${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createHrEmployee(accessToken: string, input: CreateHrEmployeeInput) {
+  return fetchApiData<HrEmployee>(`/admin/hr/employees`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}

@@ -68,6 +68,11 @@ export type StaffInviteSummary = {
   revoked: number;
 };
 
+export type EmployeeSummary = {
+  total: number;
+  active: number;
+};
+
 export function summarizeInvites(
   invites: Array<{ status: string }> | null,
 ): StaffInviteSummary | null {
@@ -80,13 +85,29 @@ export function summarizeInvites(
   };
 }
 
+export function summarizeEmployees(
+  employees: Array<{ status: string }> | null,
+): EmployeeSummary | null {
+  if (!employees) return null;
+  return {
+    total: employees.length,
+    active: employees.filter((e) => e.status === "active").length,
+  };
+}
+
 export function integrationChecks(): HrIntegrationCheck[] {
   return [
     {
+      id: "hr-employees",
+      label: "Employee directory API",
+      status: "present",
+      note: "GET/POST /admin/hr/employees — hr_employees table, staff.manage or admin.access.",
+    },
+    {
       id: "staff-table",
-      label: "Staff master table",
+      label: "Auth staff table",
       status: "partial",
-      note: "public.staff exists — no admin employee directory list API.",
+      note: "public.staff remains for auth provisioning — directory uses hr_employees.",
     },
     {
       id: "staff-invites",
@@ -162,12 +183,12 @@ export function readinessGroups(): HrReadinessGroup[] {
     {
       id: "directory",
       title: "Employee directory",
-      unavailable: "List, search, profile CRUD",
-      why: "staff table exists but no GET /admin/staff or employee profile APIs for admin UI.",
-      entities: ["staff", "users", "user_roles"],
-      apis: ["GET /api/v1/admin/staff", "GET /api/v1/admin/staff/:id"],
-      permission: "staff.read",
-      related: "Staff invite acceptance provisions users + roles.",
+      unavailable: "Profile edit / deactivate APIs",
+      why: "List and create are live via hr_employees; update/deactivate not in this slice.",
+      entities: ["hr_employees"],
+      apis: ["GET /api/v1/admin/hr/employees", "POST /api/v1/admin/hr/employees"],
+      permission: "staff.manage or admin.access",
+      related: "Staff invite acceptance still provisions users + roles separately.",
     },
     {
       id: "attendance",
@@ -205,10 +226,28 @@ export function readinessGroups(): HrReadinessGroup[] {
 export function buildWorkforceInsights(input: {
   branchLabel: string;
   inviteSummary: StaffInviteSummary | null;
+  employeeSummary: EmployeeSummary | null;
   isSuperAdmin: boolean;
   hasStaffRead: boolean;
+  canManageHr: boolean;
 }): WorkforceInsightItem[] {
   const items: WorkforceInsightItem[] = [];
+
+  if (input.canManageHr && input.employeeSummary) {
+    items.push({
+      id: "employees-live",
+      title: `${input.employeeSummary.total} employee(s) in directory (${input.employeeSummary.active} active)`,
+      detail: `Live count from GET /admin/hr/employees for ${input.branchLabel}.`,
+      source: "live",
+    });
+  } else if (!input.canManageHr) {
+    items.push({
+      id: "employees-gate",
+      title: "Employee directory requires staff.manage or admin.access",
+      detail: "Permission gate for GET /admin/hr/employees.",
+      source: "derived",
+    });
+  }
 
   if (input.isSuperAdmin && input.inviteSummary) {
     items.push({
