@@ -18,8 +18,7 @@ export function PurchasingHeader({
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
         </p>
         <p className="mt-1 text-xs text-[var(--admin-muted)]">
-          Live suppliers, POs, requisitions, GRN, invoices, payments, and awaiting-delivery KPI — three-way matching
-          Coming Soon
+          Live suppliers, POs, requisitions, GRN, invoices, payments, awaiting-delivery KPI, and three-way matching.
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -32,9 +31,6 @@ export function PurchasingHeader({
           className="min-h-11 rounded-lg border border-[var(--admin-border)] bg-white px-4 text-sm font-semibold hover:bg-[var(--admin-soft)]"
         >
           Refresh
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Export · Coming Soon
         </button>
       </div>
     </header>

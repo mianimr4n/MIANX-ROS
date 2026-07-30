@@ -217,7 +217,7 @@ export function ReceivingGrnPanel({
         ) : error ? (
           <p className="text-sm text-red-700">{error}</p>
         ) : !receipts || receipts.length === 0 ? (
-          <p className="text-sm text-[var(--admin-muted)]">No goods received yet.</p>
+          <p className="text-sm text-[var(--admin-muted)]">No GRNs created yet</p>
         ) : (
           <ul className="space-y-2 text-sm">
             {receipts.map((r) => (
@@ -350,7 +350,7 @@ export function InvoiceMatchingPanel({
     <AdminSurface aria-labelledby="invoice-matching-heading" className="mb-6">
       <AdminSurfaceHeader
         title="Supplier invoices & payments"
-        description="Live AP invoices and payments. Automated three-way matching Coming Soon."
+        description="Live AP invoices and payments with three-way matching status on each invoice."
         action={
           canManage && branchId ? (
             <div className="flex flex-wrap gap-2">
@@ -540,9 +540,22 @@ export function InvoiceMatchingPanel({
                 <ul className="space-y-2 text-sm">
                   {invoices.map((i) => (
                     <li key={i.id} className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2">
-                      <p className="font-semibold">
-                        {i.invoiceNumber} · {formatMoney(i.totalAmount)}
-                      </p>
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <p className="font-semibold">
+                          {i.invoiceNumber} · {formatMoney(i.totalAmount)}
+                        </p>
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                            i.matchingStatus === "MATCHED"
+                              ? "bg-emerald-50 text-emerald-900"
+                              : i.matchingStatus === "DISCREPANCY"
+                                ? "bg-amber-50 text-amber-900"
+                                : "bg-[var(--admin-panel)] text-[var(--admin-muted)]"
+                          }`}
+                        >
+                          {i.matchingStatus}
+                        </span>
+                      </div>
                       <p className="mt-1 text-xs text-[var(--admin-muted)]">
                         {i.supplierName ?? "—"} · {i.invoiceDate} · {i.status}
                         {i.poNumber ? ` · PO ${i.poNumber}` : ""}
@@ -577,8 +590,8 @@ export function InvoiceMatchingPanel({
         )}
 
         <p className="mt-4 text-xs text-[var(--admin-muted)]">
-          Three-way matching (PO ↔ GRN ↔ invoice) remains Coming Soon — records can be linked manually via optional PO on
-          invoice.
+          Three-way matching compares linked PO total and posted GRN presence against invoice amount on create
+          (UNMATCHED when no PO is linked).
         </p>
       </AdminSurfaceBody>
     </AdminSurface>
@@ -630,7 +643,7 @@ export function ApprovalTimelinePanel({
               {pending.length} pending · {decided.length} decided. Use Approve / Reject on the purchase orders table.
             </p>
             {pending.length === 0 ? (
-              <p className="mt-2 text-sm text-[var(--admin-muted)]">No purchase orders awaiting approval.</p>
+              <p className="mt-2 text-sm text-[var(--admin-muted)]">No pending approvals</p>
             ) : (
               <ul className="mt-3 space-y-2 text-sm">
                 {pending.slice(0, 8).map((o) => (
@@ -641,9 +654,6 @@ export function ApprovalTimelinePanel({
                 ))}
               </ul>
             )}
-            <p className="mt-3 text-xs text-[var(--admin-muted)]">
-              Multi-step approval chains and requisition conversion remain Coming Soon.
-            </p>
           </>
         )}
       </AdminSurfaceBody>

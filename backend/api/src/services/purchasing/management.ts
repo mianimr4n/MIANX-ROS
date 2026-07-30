@@ -160,6 +160,9 @@ export interface CreateGoodsReceivingInput {
 export const SUPPLIER_INVOICE_STATUSES = ["pending", "paid", "partially_paid"] as const;
 export type SupplierInvoiceStatus = (typeof SUPPLIER_INVOICE_STATUSES)[number];
 
+export const SUPPLIER_INVOICE_MATCHING_STATUSES = ["UNMATCHED", "MATCHED", "DISCREPANCY"] as const;
+export type SupplierInvoiceMatchingStatus = (typeof SUPPLIER_INVOICE_MATCHING_STATUSES)[number];
+
 export const SUPPLIER_PAYMENT_METHODS = ["cash", "bank_transfer", "cheque", "other"] as const;
 export type SupplierPaymentMethod = (typeof SUPPLIER_PAYMENT_METHODS)[number];
 
@@ -176,6 +179,7 @@ export interface SupplierInvoiceRecord {
   invoiceDate: string;
   totalAmount: number;
   status: SupplierInvoiceStatus;
+  matchingStatus: SupplierInvoiceMatchingStatus;
   createdAt: string;
 }
 
@@ -323,7 +327,7 @@ const RECEIVING_SELECT =
   "id, branch_id, purchase_order_id, grn_number, status, received_at, notes, created_by, created_at, updated_at, branch:branches(id, branch_code, name), purchase_order:purchase_orders(id, po_number)";
 
 const INVOICE_SELECT =
-  "id, branch_id, supplier_id, purchase_order_id, invoice_number, invoice_date, total_amount, status, created_at, branch:branches(id, branch_code, name), supplier:suppliers(id, name), purchase_order:purchase_orders(id, po_number)";
+  "id, branch_id, supplier_id, purchase_order_id, invoice_number, invoice_date, total_amount, status, matching_status, created_at, branch:branches(id, branch_code, name), supplier:suppliers(id, name), purchase_order:purchase_orders(id, po_number)";
 
 const PAYMENT_SELECT =
   "id, branch_id, supplier_id, supplier_invoice_id, amount, payment_date, payment_method, reference, created_at, branch:branches(id, branch_code, name), supplier:suppliers(id, name), invoice:supplier_invoices(id, invoice_number, status)";
@@ -337,6 +341,7 @@ type InvoiceRow = {
   invoice_date: string;
   total_amount: number | string;
   status: string;
+  matching_status: string;
   created_at: string;
   branch: { id: string; branch_code: string; name: string } | null;
   supplier: { id: string; name: string } | null;
@@ -455,6 +460,7 @@ function mapInvoice(row: InvoiceRow): SupplierInvoiceRecord {
     invoiceDate: row.invoice_date,
     totalAmount: asNumber(row.total_amount),
     status: row.status as SupplierInvoiceStatus,
+    matchingStatus: (row.matching_status as SupplierInvoiceMatchingStatus) || "UNMATCHED",
     createdAt: row.created_at,
   };
 }
@@ -848,10 +854,13 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
         throw new ApiError(400, "VALIDATION_ERROR", "Supplier must belong to the same branch as the invoice.");
       }
 
+      let matchingStatus: SupplierInvoiceMatchingStatus = "UNMATCHED";
+      let poTotal: number | null = null;
+
       if (input.purchaseOrderId) {
         const { data: po, error: poError } = await client
           .from("purchase_orders")
-          .select("id, branch_id, supplier_id")
+          .select("id, branch_id, supplier_id, total_amount")
           .eq("id", input.purchaseOrderId)
           .maybeSingle();
         if (poError) throwMappedDbError("PURCHASE_ORDER_READ_FAILED", poError);
@@ -862,6 +871,34 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
         if (po.supplier_id !== input.supplierId) {
           throw new ApiError(400, "VALIDATION_ERROR", "Purchase order supplier must match the invoice supplier.");
         }
+        poTotal = asNumber(po.total_amount);
+
+        const { data: grns, error: grnError } = await client
+          .from("goods_receiving")
+          .select("id, status")
+          .eq("purchase_order_id", input.purchaseOrderId)
+          .neq("status", "cancelled");
+        if (grnError) throwMappedDbError("GOODS_RECEIVING_READ_FAILED", grnError);
+
+        const postedGrns = (grns ?? []).filter((g) => String(g.status) === "posted");
+        let grnReceivedQty = 0;
+        if (postedGrns.length > 0) {
+          const grnIds = postedGrns.map((g) => g.id as string);
+          const { data: lines, error: lineError } = await client
+            .from("goods_receiving_lines")
+            .select("quantity_received")
+            .in("goods_receiving_id", grnIds);
+          if (lineError) throwMappedDbError("GOODS_RECEIVING_LINES_READ_FAILED", lineError);
+          for (const line of lines ?? []) {
+            grnReceivedQty += asNumber(line.quantity_received);
+          }
+          // Header-only posted GRNs (no lines yet) still count as a receiving signal.
+          if ((lines ?? []).length === 0) grnReceivedQty = postedGrns.length;
+        }
+
+        const amountMatches = Math.abs(input.totalAmount - (poTotal ?? 0)) < 0.01;
+        const grnPresent = postedGrns.length > 0 && grnReceivedQty > 0;
+        matchingStatus = amountMatches && grnPresent ? "MATCHED" : "DISCREPANCY";
       }
 
       const invoiceNumber = input.invoiceNumber.trim().toUpperCase();
@@ -878,6 +915,7 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
           invoice_date: input.invoiceDate || null,
           total_amount: input.totalAmount,
           status: input.status ?? "pending",
+          matching_status: matchingStatus,
         })
         .select(INVOICE_SELECT)
         .single();

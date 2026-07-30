@@ -23,8 +23,11 @@ export type PurchasingKpiSnapshot = {
   pendingApprovalCount: number | null;
   awaitingDeliveryCount: number | null;
   partiallyReceivedCount: number | null;
+  overduePoCount: number | null;
+  onTimeDeliveryPct: number | null;
   outstandingInvoiceCount: number | null;
   purchaseSpend: number | null;
+  matchedInvoiceCount: number | null;
   inventoryFoundationLinked: boolean;
   stockLedgerAvailable: boolean;
   menuCatalogAvailable: boolean;
@@ -52,6 +55,11 @@ const OPEN_PO_STATUSES = new Set(["draft", "submitted", "approved", "ordered", "
 const OPEN_REQ_STATUSES = new Set(["draft", "submitted", "approved"]);
 const PENDING_APPROVAL_STATUSES = new Set(["draft", "submitted"]);
 const OUTSTANDING_INVOICE_STATUSES = new Set(["pending", "partially_paid"]);
+const OVERDUE_PO_STATUSES = new Set(["approved", "ordered", "partially_received"]);
+
+function todayIsoDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export function integrationChecks(): ProcurementIntegrationCheck[] {
   return [
@@ -100,8 +108,8 @@ export function integrationChecks(): ProcurementIntegrationCheck[] {
     {
       id: "matching",
       label: "Three-way matching",
-      status: "missing",
-      note: "PO ↔ GRN ↔ invoice automated matching not implemented — Coming Soon.",
+      status: "present",
+      note: "On invoice create: compare linked PO total + posted GRN presence vs invoice total → matching_status UNMATCHED|MATCHED|DISCREPANCY.",
     },
     {
       id: "payments",
@@ -113,7 +121,7 @@ export function integrationChecks(): ProcurementIntegrationCheck[] {
       id: "inventory-module",
       label: "Inventory demand context",
       status: "present",
-      note: "Inventory stock ledger is LIVE — reorder suggestions Coming Soon.",
+      note: "Inventory stock ledger is LIVE and linked from GRN posting.",
     },
     {
       id: "permission",
@@ -130,7 +138,38 @@ export function buildPurchasingKpis(
   requisitions: PurchaseRequisition[] | null = null,
   awaitingDeliveryCount: number | null = null,
   invoices: SupplierInvoice[] | null = null,
+  receipts: GoodsReceiving[] | null = null,
 ): PurchasingKpiSnapshot {
+  const today = todayIsoDate();
+  let overduePoCount: number | null = null;
+  let onTimeDeliveryPct: number | null = null;
+
+  if (orders != null) {
+    overduePoCount = orders.filter(
+      (o) =>
+        OVERDUE_PO_STATUSES.has(o.status) &&
+        o.expectedDeliveryDate != null &&
+        o.expectedDeliveryDate < today,
+    ).length;
+
+    const receivedWithDate = orders.filter((o) => o.status === "received" && o.expectedDeliveryDate);
+    if (receipts == null) {
+      onTimeDeliveryPct = null;
+    } else if (receivedWithDate.length === 0) {
+      onTimeDeliveryPct = 0;
+    } else {
+      let onTime = 0;
+      for (const o of receivedWithDate) {
+        const grnDates = receipts
+          .filter((r) => r.purchaseOrderId === o.id && r.status === "posted")
+          .map((r) => r.receivedAt.slice(0, 10))
+          .sort();
+        if (grnDates.length > 0 && grnDates[0]! <= o.expectedDeliveryDate!) onTime += 1;
+      }
+      onTimeDeliveryPct = Math.round((onTime / receivedWithDate.length) * 100);
+    }
+  }
+
   return {
     supplierCount: suppliers == null ? null : suppliers.length,
     openPoCount: orders == null ? null : orders.filter((o) => OPEN_PO_STATUSES.has(o.status)).length,
@@ -141,11 +180,15 @@ export function buildPurchasingKpis(
     awaitingDeliveryCount,
     partiallyReceivedCount:
       orders == null ? null : orders.filter((o) => o.status === "partially_received").length,
+    overduePoCount,
+    onTimeDeliveryPct,
     outstandingInvoiceCount:
       invoices == null
         ? null
         : invoices.filter((i) => OUTSTANDING_INVOICE_STATUSES.has(i.status)).length,
     purchaseSpend: invoices == null ? null : invoices.reduce((sum, i) => sum + i.totalAmount, 0),
+    matchedInvoiceCount:
+      invoices == null ? null : invoices.filter((i) => i.matchingStatus === "MATCHED").length,
     inventoryFoundationLinked: true,
     stockLedgerAvailable: true,
     menuCatalogAvailable: true,
@@ -175,7 +218,7 @@ export function buildProcurementInsights(
     items.push({
       id: "live-pos",
       title: `${orders.length} purchase order${orders.length === 1 ? "" : "s"} on record.`,
-      detail: "Live from GET /admin/purchasing/orders. Line items Coming Soon.",
+      detail: "Live from GET /admin/purchasing/orders.",
       source: "live",
     });
   }
@@ -190,10 +233,12 @@ export function buildProcurementInsights(
   }
 
   if (invoices != null) {
+    const matched = invoices.filter((i) => i.matchingStatus === "MATCHED").length;
+    const discrepancy = invoices.filter((i) => i.matchingStatus === "DISCREPANCY").length;
     items.push({
       id: "live-invoices",
-      title: `${invoices.length} supplier invoice${invoices.length === 1 ? "" : "s"} recorded.`,
-      detail: "Live AP invoices — automated three-way matching Coming Soon.",
+      title: `${invoices.length} supplier invoice${invoices.length === 1 ? "" : "s"} · ${matched} matched · ${discrepancy} discrepancy.`,
+      detail: "Three-way matching runs on invoice create (PO total ↔ posted GRN ↔ invoice amount).",
       source: "live",
     });
   }
@@ -206,13 +251,6 @@ export function buildProcurementInsights(
       source: "live",
     });
   }
-
-  items.push({
-    id: "no-matching",
-    title: "Automated three-way matching is Coming Soon.",
-    detail: "Invoices and GRNs can be recorded separately — PO ↔ GRN ↔ invoice auto-match is not shipped.",
-    source: "foundation",
-  });
 
   items.push({
     id: "branch",
@@ -230,7 +268,7 @@ export function readinessGroups(): ProcurementReadinessGroup[] {
       id: "supplier",
       title: "Supplier foundation",
       unavailable: "— LIVE",
-      why: "Supplier master is live; commercial terms catalogue Coming Soon.",
+      why: "Supplier master is live for branch-scoped vendor records.",
       entities: ["suppliers"],
       apis: ["GET/POST /api/v1/admin/purchasing/suppliers"],
       permission: "purchasing.manage or admin.access",
@@ -239,7 +277,7 @@ export function readinessGroups(): ProcurementReadinessGroup[] {
     {
       id: "workflow",
       title: "Procurement workflow",
-      unavailable: "Multi-step chains Coming Soon — requisitions, POs & approve/reject LIVE",
+      unavailable: "— LIVE",
       why: "Requisitions and purchase orders can be created; draft/submitted POs can be approved or rejected.",
       entities: ["purchase_requisitions", "purchase_orders"],
       apis: [
@@ -248,7 +286,7 @@ export function readinessGroups(): ProcurementReadinessGroup[] {
         "PATCH /api/v1/admin/purchasing/orders/:id/approve",
       ],
       permission: "purchasing.manage or admin.access",
-      related: "PO/requisition line items Coming Soon.",
+      related: "Approve/reject actions are available on the purchase orders table.",
     },
     {
       id: "receiving",
@@ -263,15 +301,15 @@ export function readinessGroups(): ProcurementReadinessGroup[] {
     {
       id: "finance",
       title: "Supplier payables",
-      unavailable: "Three-way matching Coming Soon — invoices & payments LIVE",
-      why: "Supplier invoices and payments are live; automated PO ↔ GRN ↔ invoice matching is Coming Soon.",
+      unavailable: "— LIVE",
+      why: "Supplier invoices, payments, and three-way matching_status are live on invoice create.",
       entities: ["supplier_invoices", "supplier_payments"],
       apis: [
         "GET/POST /api/v1/admin/purchasing/invoices",
         "GET/POST /api/v1/admin/purchasing/payments",
       ],
       permission: "purchasing.manage, finance.manage, or admin.access",
-      related: "GL auto-post from supplier payments Coming Soon.",
+      related: "matching_status: UNMATCHED | MATCHED | DISCREPANCY.",
     },
   ];
 }

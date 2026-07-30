@@ -11,7 +11,10 @@ import {
 } from "@/components/admin/purchasing/ProcurementPanels";
 import { ProcurementInsights } from "@/components/admin/purchasing/ProcurementInsights";
 import { ProcurementStatusBanner } from "@/components/admin/purchasing/ProcurementStatusBanner";
-import { PurchasingFilters } from "@/components/admin/purchasing/PurchasingFilters";
+import {
+  PurchasingFilters,
+  type PurchasingFilterState,
+} from "@/components/admin/purchasing/PurchasingFilters";
 import { PurchasingHeader } from "@/components/admin/purchasing/PurchasingHeader";
 import { PurchasingKPIs } from "@/components/admin/purchasing/PurchasingKPIs";
 import {
@@ -92,12 +95,17 @@ export default function AdminPurchasing() {
   const [grnCreateError, setGrnCreateError] = useState<string | null>(null);
   const [grnCreateBusy, setGrnCreateBusy] = useState(false);
   const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<PurchasingFilterState>({
+    approvalStatus: "all",
+    receivingStatus: "all",
+    invoiceStatus: "all",
+  });
 
   const checks = useMemo(() => integrationChecks(), []);
   const groups = useMemo(() => readinessGroups(), []);
   const snapshot = useMemo(
-    () => buildPurchasingKpis(suppliers, orders, requisitions, awaitingDeliveryCount, invoices),
-    [awaitingDeliveryCount, invoices, orders, requisitions, suppliers],
+    () => buildPurchasingKpis(suppliers, orders, requisitions, awaitingDeliveryCount, invoices, receipts),
+    [awaitingDeliveryCount, invoices, orders, receipts, requisitions, suppliers],
   );
   const insights = useMemo(
     () => buildProcurementInsights(branchLabel, suppliers, orders, receipts, invoices, payments),
@@ -117,14 +125,46 @@ export default function AdminPurchasing() {
   const filteredOrders = useMemo(() => {
     if (!orders) return null;
     const q = search.trim().toLowerCase();
-    if (!q) return orders;
-    return orders.filter(
-      (o) =>
+    const receiptPoIds = new Set((receipts ?? []).map((r) => r.purchaseOrderId).filter(Boolean));
+    return orders.filter((o) => {
+      if (filters.approvalStatus === "pending" && o.status !== "draft" && o.status !== "submitted") return false;
+      if (filters.approvalStatus === "approved" && o.status !== "approved") return false;
+      if (filters.approvalStatus === "rejected" && o.status !== "rejected") return false;
+
+      if (filters.receivingStatus === "awaiting") {
+        const awaiting =
+          (o.status === "approved" || o.status === "ordered") && !receiptPoIds.has(o.id);
+        if (!awaiting) return false;
+      }
+      if (filters.receivingStatus === "partial" && o.status !== "partially_received") return false;
+      if (filters.receivingStatus === "received" && o.status !== "received") return false;
+
+      if (!q) return true;
+      return (
         o.poNumber.toLowerCase().includes(q) ||
         (o.supplierName ?? "").toLowerCase().includes(q) ||
-        o.status.toLowerCase().includes(q),
-    );
-  }, [orders, search]);
+        o.status.toLowerCase().includes(q)
+      );
+    });
+  }, [filters.approvalStatus, filters.receivingStatus, orders, receipts, search]);
+  const filteredInvoices = useMemo(() => {
+    if (!invoices) return null;
+    const q = search.trim().toLowerCase();
+    return invoices.filter((i) => {
+      if (filters.invoiceStatus === "pending" && i.status !== "pending") return false;
+      if (filters.invoiceStatus === "partially_paid" && i.status !== "partially_paid") return false;
+      if (filters.invoiceStatus === "paid" && i.status !== "paid") return false;
+      if (filters.invoiceStatus === "MATCHED" && i.matchingStatus !== "MATCHED") return false;
+      if (filters.invoiceStatus === "DISCREPANCY" && i.matchingStatus !== "DISCREPANCY") return false;
+      if (filters.invoiceStatus === "UNMATCHED" && i.matchingStatus !== "UNMATCHED") return false;
+      if (!q) return true;
+      return (
+        i.invoiceNumber.toLowerCase().includes(q) ||
+        (i.supplierName ?? "").toLowerCase().includes(q) ||
+        (i.poNumber ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [filters.invoiceStatus, invoices, search]);
 
   const loadSuppliers = useCallback(async () => {
     const token = session?.access_token;
@@ -395,7 +435,12 @@ export default function AdminPurchasing() {
 
       <PurchasingKPIs snapshot={snapshot} />
 
-      <PurchasingFilters search={search} onSearchChange={setSearch} />
+      <PurchasingFilters
+        search={search}
+        onSearchChange={setSearch}
+        filters={filters}
+        onFiltersChange={setFilters}
+      />
 
       <PurchaseDemandPanel />
 
@@ -452,7 +497,7 @@ export default function AdminPurchasing() {
       </div>
 
       <InvoiceMatchingPanel
-        invoices={invoices}
+        invoices={filteredInvoices}
         payments={payments}
         suppliers={suppliers}
         orders={orders}

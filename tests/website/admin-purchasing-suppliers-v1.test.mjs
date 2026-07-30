@@ -34,6 +34,8 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(page, /listSupplierInvoices/);
     assert.match(page, /listSupplierPayments/);
     assert.match(page, /awaitingDeliveryCount/);
+    assert.match(page, /PurchasingFilterState/);
+    assert.match(page, /filteredInvoices/);
   });
 
   it("does not fabricate suppliers or purchase orders", () => {
@@ -48,7 +50,7 @@ describe("Purchasing & Suppliers V1 (static)", () => {
 
   it("wires live GRN with atomic server-side stock posting for mapped lines", () => {
     const receiving = read("apps/website/client/src/components/admin/purchasing/ProcurementPanels.tsx");
-    assert.match(receiving, /No goods received yet/);
+    assert.match(receiving, /No GRNs created yet/);
     assert.match(receiving, /post stock atomically/i);
     assert.doesNotMatch(receiving, /setOnHand|quantity_on_hand|stockBalance/i);
   });
@@ -60,16 +62,18 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.doesNotMatch(helper, /displayPrice|formatPkr|menu\.price/i);
   });
 
-  it("wires live PO approval, invoices, and payments while keeping three-way matching Coming Soon", () => {
+  it("wires live PO approval, invoices, payments, and three-way matching", () => {
     const panels = read("apps/website/client/src/components/admin/purchasing/ProcurementPanels.tsx");
     assert.match(panels, /Live PO approve\/reject/i);
     assert.match(panels, /No invoices recorded yet/);
     assert.match(panels, /No payments recorded yet/);
+    assert.match(panels, /No pending approvals/);
     assert.match(panels, /createSupplierInvoice/);
     assert.match(panels, /createSupplierPayment/);
-    assert.match(panels, /Three-way matching \(PO ↔ GRN ↔ invoice\) remains Coming Soon/);
+    assert.match(panels, /matchingStatus/);
+    assert.match(panels, /Three-way matching compares linked PO total/);
+    assert.doesNotMatch(panels, /Coming Soon/);
     assert.doesNotMatch(panels, /Invoice Matching — Coming Soon/);
-    assert.doesNotMatch(panels, /threeWayMatch\(/i);
     const orders = read("apps/website/client/src/components/admin/purchasing/PurchasingTables.tsx");
     assert.match(orders, /Approve/);
     assert.match(orders, /Reject/);
@@ -78,6 +82,11 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     const kpis = read("apps/website/client/src/components/admin/purchasing/PurchasingKPIs.tsx");
     assert.match(kpis, /Awaiting delivery/);
     assert.match(kpis, /Approved\/ordered POs with no linked GRN/);
+    assert.doesNotMatch(kpis, /Coming Soon/);
+    const filters = read("apps/website/client/src/components/admin/purchasing/PurchasingFilters.tsx");
+    assert.match(filters, /approvalStatus/);
+    assert.match(filters, /receivingStatus/);
+    assert.doesNotMatch(filters, /Coming Soon/);
   });
 
   it("Mianx procurement insights remain rule-based only", () => {
@@ -102,7 +111,7 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(page, /useAdminAccessGate/);
   });
 
-  it("integration checks document live supplier/PO/requisition/GRN/approval APIs and remaining gaps", () => {
+  it("integration checks document live supplier/PO/requisition/GRN/approval/matching APIs", () => {
     const helper = read("apps/website/client/src/lib/admin-purchasing.ts");
     assert.match(helper, /purchase_orders/);
     assert.match(helper, /goods_receiving/);
@@ -114,9 +123,12 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(helper, /id: "approvals"[\s\S]*status: "present"/);
     assert.match(helper, /id: "invoices"[\s\S]*status: "present"/);
     assert.match(helper, /id: "payments"[\s\S]*status: "present"/);
-    assert.match(helper, /id: "matching"[\s\S]*status: "missing"/);
+    assert.match(helper, /id: "matching"[\s\S]*status: "present"/);
+    assert.doesNotMatch(helper, /status: "missing"/);
+    assert.doesNotMatch(helper, /Coming Soon/);
     assert.match(helper, /supplier_invoices/);
     assert.match(helper, /supplier_payments/);
     assert.match(helper, /awaitingDeliveryCount/);
+    assert.match(helper, /matching_status/);
   });
 });
