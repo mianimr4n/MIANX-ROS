@@ -122,6 +122,10 @@ import {
   createDeliverySettingsService,
   type DeliverySettingsService,
 } from "./services/settings/delivery.js";
+import {
+  createHrEmployeesService,
+  type HrEmployeesService,
+} from "./services/hr/employees.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -152,6 +156,7 @@ export interface AppDependencies {
   organizationSettings: OrganizationSettingsService;
   branchProfile: BranchProfileService;
   deliverySettings: DeliverySettingsService;
+  hrEmployees: HrEmployeesService;
   tableService: TableServiceOperations;
   paymentSettlement: PaymentSettlementService;
   deposits: DepositService;
@@ -192,6 +197,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     organizationSettings: createOrganizationSettingsService(envStatus),
     branchProfile: createBranchProfileService(envStatus),
     deliverySettings: createDeliverySettingsService(envStatus),
+    hrEmployees: createHrEmployeesService(envStatus),
     tableService: createTableServiceOperations(envStatus),
     paymentSettlement: createPaymentSettlementService(envStatus),
     deposits: createDepositService(envStatus),

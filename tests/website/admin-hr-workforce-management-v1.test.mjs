@@ -39,7 +39,8 @@ describe("HR & Workforce Management V1 (static)", () => {
 
   it("does not fabricate employees or attendance records", () => {
     const directory = read("apps/website/client/src/components/admin/hr/EmployeeDirectory.tsx");
-    assert.match(directory, /No employees in repository API/);
+    assert.match(directory, /No employees added yet/);
+    assert.match(directory, /listHrEmployees|HrEmployee|GET \/admin\/hr\/employees/);
     assert.doesNotMatch(directory, /EMP-\d+|employeeCode:\s*"|fakeStaff/i);
     const attendance = read("apps/website/client/src/components/admin/hr/WorkforcePanels.tsx");
     assert.match(attendance, /will not simulate clock-in/);
@@ -95,6 +96,7 @@ describe("HR & Workforce Management V1 (static)", () => {
     assert.match(helper, /attendance_events/);
     assert.match(helper, /leave_balances/);
     assert.match(helper, /payroll_runs/);
-    assert.match(helper, /employee directory list API/);
+    assert.match(helper, /GET\/POST \/admin\/hr\/employees/);
+    assert.match(helper, /hr_employees/);
   });
 });

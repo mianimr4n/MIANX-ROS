@@ -55,12 +55,14 @@ import { createAdminOpeningDryRunRouter } from "./opening-dry-run.js";
 import { createAdminOrganizationSettingsRouter } from "./organization-settings.js";
 import { createAdminBranchProfileRouter } from "./branch-profile.js";
 import { createAdminDeliverySettingsRouter } from "./delivery-settings.js";
+import { createAdminHrRouter } from "./hr.js";
 import type { OpeningOperationsService } from "../../services/opening/operations.js";
 import type { OpeningGovernanceService } from "../../services/opening/governance.js";
 import type { OpeningDryRunService } from "../../services/opening/dry-run.js";
 import type { OrganizationSettingsService } from "../../services/settings/organization.js";
 import type { BranchProfileService } from "../../services/branches/profile.js";
 import type { DeliverySettingsService } from "../../services/settings/delivery.js";
+import type { HrEmployeesService } from "../../services/hr/employees.js";
 
 const createInviteSchema = z.object({
   email: z.email(),
@@ -115,6 +117,7 @@ export interface AdminRouterDependencies {
   organizationSettings: OrganizationSettingsService;
   branchProfile: BranchProfileService;
   deliverySettings: DeliverySettingsService;
+  hrEmployees: HrEmployeesService;
 }
 
 function toSafeInvite(invite: {
@@ -537,6 +540,14 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       deliverySettings: dependencies.deliverySettings,
+    }),
+  );
+
+  router.use(
+    createAdminHrRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      hrEmployees: dependencies.hrEmployees,
     }),
   );
 

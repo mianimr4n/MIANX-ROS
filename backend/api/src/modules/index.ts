@@ -138,6 +138,7 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
       organizationSettings: dependencies.organizationSettings,
       branchProfile: dependencies.branchProfile,
       deliverySettings: dependencies.deliverySettings,
+      hrEmployees: dependencies.hrEmployees,
       branchOrderManagement: dependencies.branchOrderManagement,
       restaurantTables: dependencies.restaurantTables,
       restaurantBills: dependencies.restaurantBills,
