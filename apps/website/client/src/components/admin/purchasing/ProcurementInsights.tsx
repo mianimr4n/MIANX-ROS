@@ -4,6 +4,7 @@ import type { ProcurementInsightItem } from "@/lib/admin-purchasing";
 const SOURCE_CLASS: Record<ProcurementInsightItem["source"], string> = {
   derived: "bg-sky-50 text-sky-800",
   foundation: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
+  live: "bg-emerald-50 text-emerald-800",
 };
 
 export function ProcurementInsights({ items }: { items: ProcurementInsightItem[] }) {

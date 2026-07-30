@@ -1731,3 +1731,110 @@ export function createHrEmployee(accessToken: string, input: CreateHrEmployeeInp
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }
+
+export type SupplierStatus = "active" | "inactive";
+
+export type Supplier = {
+  id: string;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  name: string;
+  contactPerson: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  status: SupplierStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PurchaseOrderStatus =
+  | "draft"
+  | "submitted"
+  | "approved"
+  | "ordered"
+  | "partially_received"
+  | "received"
+  | "cancelled";
+
+export type PurchaseOrder = {
+  id: string;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  supplierId: string;
+  supplierName: string | null;
+  poNumber: string;
+  status: PurchaseOrderStatus;
+  totalAmount: number;
+  expectedDeliveryDate: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateSupplierInput = {
+  branchId: string;
+  name: string;
+  contactPerson?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  status?: SupplierStatus;
+};
+
+export type CreatePurchaseOrderInput = {
+  branchId: string;
+  supplierId: string;
+  poNumber?: string | null;
+  status?: PurchaseOrderStatus;
+  totalAmount?: number;
+  expectedDeliveryDate?: string | null;
+};
+
+export function listSuppliers(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+): Promise<Supplier[]> {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<Supplier[]>(
+    `/admin/purchasing/suppliers${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createSupplier(accessToken: string, input: CreateSupplierInput) {
+  return fetchApiData<Supplier>(`/admin/purchasing/suppliers`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listPurchaseOrders(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+): Promise<PurchaseOrder[]> {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<PurchaseOrder[]>(
+    `/admin/purchasing/orders${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createPurchaseOrder(accessToken: string, input: CreatePurchaseOrderInput) {
+  return fetchApiData<PurchaseOrder>(`/admin/purchasing/orders`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}

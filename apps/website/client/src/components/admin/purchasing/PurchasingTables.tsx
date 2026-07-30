@@ -1,15 +1,160 @@
-import { AdminSectionTitle } from "@/components/admin/AdminKpiCard";
+import { useState, type FormEvent } from "react";
 import { Link } from "wouter";
 
-export function SupplierTable() {
+import { AdminSectionTitle } from "@/components/admin/AdminKpiCard";
+import type { PurchaseOrder, Supplier } from "@/lib/admin-api";
+import { formatMoney } from "@/lib/admin-purchasing";
+
+export function SupplierTable({
+  suppliers,
+  loading,
+  error,
+  canManage,
+  defaultBranchId,
+  onAddSupplier,
+  addError,
+  addBusy,
+}: {
+  suppliers: Supplier[] | null;
+  loading: boolean;
+  error: string | null;
+  canManage: boolean;
+  defaultBranchId: string | null;
+  onAddSupplier: (input: {
+    branchId: string;
+    name: string;
+    contactPerson: string;
+    phone: string;
+    email: string;
+  }) => Promise<boolean>;
+  addError: string | null;
+  addBusy: boolean;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [name, setName] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [branchId, setBranchId] = useState(defaultBranchId ?? "");
+
+  const resetForm = () => {
+    setName("");
+    setContactPerson("");
+    setPhone("");
+    setEmail("");
+    setBranchId(defaultBranchId ?? "");
+    setShowForm(false);
+  };
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!branchId) return;
+    const ok = await onAddSupplier({
+      branchId,
+      name,
+      contactPerson,
+      phone,
+      email,
+    });
+    if (ok) resetForm();
+  };
+
   return (
     <section aria-label="Supplier table" className="mb-6 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
-      <AdminSectionTitle eyebrow="Suppliers" title="Supplier overview" description="No supplier master in repository." />
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <AdminSectionTitle
+          eyebrow="Suppliers"
+          title="Supplier overview"
+          description="Live from GET /admin/purchasing/suppliers — branch-scoped vendor master."
+        />
+        {canManage ? (
+          <button
+            type="button"
+            className="rounded-lg bg-[var(--brand-red)] px-3 py-1.5 text-sm font-semibold text-white"
+            onClick={() => {
+              setBranchId(defaultBranchId ?? "");
+              setShowForm(true);
+            }}
+          >
+            Add supplier
+          </button>
+        ) : null}
+      </div>
+
+      {showForm && canManage ? (
+        <form
+          onSubmit={(e) => void submit(e)}
+          className="mb-4 grid gap-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] p-4 sm:grid-cols-2"
+        >
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">Branch ID</span>
+            <input
+              required
+              value={branchId}
+              onChange={(e) => setBranchId(e.target.value)}
+              className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+              placeholder="UUID"
+            />
+          </label>
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">Supplier name</span>
+            <input
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+            />
+          </label>
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">Contact person</span>
+            <input
+              value={contactPerson}
+              onChange={(e) => setContactPerson(e.target.value)}
+              className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+            />
+          </label>
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">Phone</span>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+            />
+          </label>
+          <label className="text-sm sm:col-span-2">
+            <span className="mb-1 block font-medium">Email</span>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+            />
+          </label>
+          {addError ? <p className="sm:col-span-2 text-sm text-red-700">{addError}</p> : null}
+          <div className="sm:col-span-2 flex gap-2">
+            <button
+              type="submit"
+              disabled={addBusy}
+              className="rounded-lg bg-[var(--brand-red)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {addBusy ? "Saving…" : "Create supplier"}
+            </button>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="rounded-lg border border-[var(--admin-border)] px-4 py-2 text-sm font-semibold"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : null}
+
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--admin-border)] text-xs uppercase tracking-wide text-[var(--admin-muted)]">
-              {["Supplier", "Code", "Status", "Contact", "Payment terms", "Actions"].map((col) => (
+              {["Supplier", "Contact", "Phone", "Email", "Status"].map((col) => (
                 <th key={col} scope="col" className="px-3 py-3 font-semibold">
                   {col}
                 </th>
@@ -17,14 +162,38 @@ export function SupplierTable() {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td colSpan={6} className="px-3 py-10 text-center">
-                <p className="font-semibold">No suppliers in repository</p>
-                <p className="mt-2 text-sm text-[var(--admin-muted)]">
-                  Supplier records require a persistent master — not free-text notes or hardcoded dropdowns.
-                </p>
-              </td>
-            </tr>
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="px-3 py-10 text-center text-sm text-[var(--admin-muted)]">
+                  Loading suppliers…
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan={5} className="px-3 py-10 text-center text-sm text-red-700">
+                  {error}
+                </td>
+              </tr>
+            ) : !suppliers || suppliers.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-3 py-10 text-center">
+                  <p className="font-semibold">No suppliers added yet</p>
+                  <p className="mt-2 text-sm text-[var(--admin-muted)]">
+                    Add verified vendor records for this branch before creating purchase orders.
+                  </p>
+                </td>
+              </tr>
+            ) : (
+              suppliers.map((s) => (
+                <tr key={s.id} className="border-b border-[var(--admin-border)] last:border-0">
+                  <td className="px-3 py-3 font-medium">{s.name}</td>
+                  <td className="px-3 py-3 text-[var(--admin-muted)]">{s.contactPerson ?? "—"}</td>
+                  <td className="px-3 py-3 text-[var(--admin-muted)]">{s.phone ?? "—"}</td>
+                  <td className="px-3 py-3 text-[var(--admin-muted)]">{s.email ?? "—"}</td>
+                  <td className="px-3 py-3 capitalize text-[var(--admin-muted)]">{s.status}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -32,19 +201,158 @@ export function SupplierTable() {
   );
 }
 
-export function PurchaseOrderTable() {
+export function PurchaseOrderTable({
+  orders,
+  suppliers,
+  loading,
+  error,
+  canManage,
+  defaultBranchId,
+  onCreateOrder,
+  createError,
+  createBusy,
+}: {
+  orders: PurchaseOrder[] | null;
+  suppliers: Supplier[] | null;
+  loading: boolean;
+  error: string | null;
+  canManage: boolean;
+  defaultBranchId: string | null;
+  onCreateOrder: (input: {
+    branchId: string;
+    supplierId: string;
+    totalAmount: number;
+    expectedDeliveryDate: string;
+  }) => Promise<boolean>;
+  createError: string | null;
+  createBusy: boolean;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [branchId, setBranchId] = useState(defaultBranchId ?? "");
+  const [supplierId, setSupplierId] = useState("");
+  const [totalAmount, setTotalAmount] = useState("0");
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState("");
+
+  const resetForm = () => {
+    setBranchId(defaultBranchId ?? "");
+    setSupplierId("");
+    setTotalAmount("0");
+    setExpectedDeliveryDate("");
+    setShowForm(false);
+  };
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!branchId || !supplierId) return;
+    const ok = await onCreateOrder({
+      branchId,
+      supplierId,
+      totalAmount: Number(totalAmount) || 0,
+      expectedDeliveryDate,
+    });
+    if (ok) resetForm();
+  };
+
   return (
     <section aria-label="Purchase order table" className="mb-6 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
-      <AdminSectionTitle
-        eyebrow="Orders"
-        title="Purchase orders"
-        description="No purchase-order backend — customer sales orders are a different domain."
-      />
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <AdminSectionTitle
+          eyebrow="Orders"
+          title="Purchase orders"
+          description="Live from GET /admin/purchasing/orders — distinct from customer sales orders."
+        />
+        {canManage ? (
+          <button
+            type="button"
+            className="rounded-lg bg-[var(--brand-red)] px-3 py-1.5 text-sm font-semibold text-white"
+            onClick={() => {
+              setBranchId(defaultBranchId ?? "");
+              setShowForm(true);
+            }}
+          >
+            Create PO
+          </button>
+        ) : null}
+      </div>
+
+      {showForm && canManage ? (
+        <form
+          onSubmit={(e) => void submit(e)}
+          className="mb-4 grid gap-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] p-4 sm:grid-cols-2"
+        >
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">Branch ID</span>
+            <input
+              required
+              value={branchId}
+              onChange={(e) => setBranchId(e.target.value)}
+              className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+            />
+          </label>
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">Supplier</span>
+            <select
+              required
+              value={supplierId}
+              onChange={(e) => setSupplierId(e.target.value)}
+              className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+            >
+              <option value="">Select supplier…</option>
+              {(suppliers ?? []).map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">Total amount</span>
+            <input
+              type="number"
+              min={0}
+              step="any"
+              value={totalAmount}
+              onChange={(e) => setTotalAmount(e.target.value)}
+              className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+            />
+          </label>
+          <label className="text-sm">
+            <span className="mb-1 block font-medium">Expected delivery</span>
+            <input
+              type="date"
+              value={expectedDeliveryDate}
+              onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+              className="w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2"
+            />
+          </label>
+          {(!suppliers || suppliers.length === 0) && (
+            <p className="sm:col-span-2 text-sm text-[var(--admin-muted)]">Add a supplier before creating a PO.</p>
+          )}
+          {createError ? <p className="sm:col-span-2 text-sm text-red-700">{createError}</p> : null}
+          <div className="sm:col-span-2 flex gap-2">
+            <button
+              type="submit"
+              disabled={createBusy || !suppliers?.length}
+              className="rounded-lg bg-[var(--brand-red)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {createBusy ? "Creating…" : "Create purchase order"}
+            </button>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="rounded-lg border border-[var(--admin-border)] px-4 py-2 text-sm font-semibold"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : null}
+
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--admin-border)] text-xs uppercase tracking-wide text-[var(--admin-muted)]">
-              {["PO number", "Supplier", "Branch", "Status", "Total", "Expected", "Actions"].map((col) => (
+              {["PO number", "Supplier", "Branch", "Status", "Total", "Expected"].map((col) => (
                 <th key={col} scope="col" className="px-3 py-3 font-semibold">
                   {col}
                 </th>
@@ -52,18 +360,43 @@ export function PurchaseOrderTable() {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td colSpan={7} className="px-3 py-10 text-center">
-                <p className="font-semibold">No purchase orders in repository</p>
-                <p className="mt-2 text-sm text-[var(--admin-muted)]">
-                  See{" "}
-                  <Link href="/admin/orders" className="font-semibold text-[var(--brand-red)] underline-offset-2 hover:underline">
-                    Orders Management
-                  </Link>{" "}
-                  for customer sales — not supplier procurement.
-                </p>
-              </td>
-            </tr>
+            {loading ? (
+              <tr>
+                <td colSpan={6} className="px-3 py-10 text-center text-sm text-[var(--admin-muted)]">
+                  Loading purchase orders…
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan={6} className="px-3 py-10 text-center text-sm text-red-700">
+                  {error}
+                </td>
+              </tr>
+            ) : !orders || orders.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-3 py-10 text-center">
+                  <p className="font-semibold">No purchase orders created yet</p>
+                  <p className="mt-2 text-sm text-[var(--admin-muted)]">
+                    See{" "}
+                    <Link href="/admin/orders" className="font-semibold text-[var(--brand-red)] underline-offset-2 hover:underline">
+                      Orders Management
+                    </Link>{" "}
+                    for customer sales — not supplier procurement.
+                  </p>
+                </td>
+              </tr>
+            ) : (
+              orders.map((o) => (
+                <tr key={o.id} className="border-b border-[var(--admin-border)] last:border-0">
+                  <td className="px-3 py-3 font-medium">{o.poNumber}</td>
+                  <td className="px-3 py-3 text-[var(--admin-muted)]">{o.supplierName ?? "—"}</td>
+                  <td className="px-3 py-3 text-[var(--admin-muted)]">{o.branchName ?? o.branchCode ?? "—"}</td>
+                  <td className="px-3 py-3 capitalize text-[var(--admin-muted)]">{o.status.replaceAll("_", " ")}</td>
+                  <td className="px-3 py-3 font-semibold">{formatMoney(o.totalAmount)}</td>
+                  <td className="px-3 py-3 text-[var(--admin-muted)]">{o.expectedDeliveryDate ?? "—"}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -76,7 +409,7 @@ export function RequisitionPanel() {
     <section className="mb-6 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
       <h3 className="text-sm font-semibold">Purchase requisitions</h3>
       <p className="mt-2 text-sm text-[var(--admin-muted)]">
-        FOUNDATION — server-side requisition workflow required (draft → submitted → approved → converted to PO).
+        Coming Soon — server-side requisition workflow required (draft → submitted → approved → converted to PO).
       </p>
     </section>
   );

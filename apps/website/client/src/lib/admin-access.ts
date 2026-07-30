@@ -45,9 +45,14 @@ export function canAccessAdminInventory(input: AdminPrincipalInput): boolean {
   return input.isSuperAdmin || input.permissions.includes("branch.manage");
 }
 
-/** Purchasing workspace — branch.manage until purchasing.manage permission is seeded. */
+/** Purchasing workspace — purchasing.manage or branch.manage (legacy) or admin.access. */
 export function canAccessAdminPurchasing(input: AdminPrincipalInput): boolean {
-  return input.isSuperAdmin || input.permissions.includes("branch.manage");
+  return (
+    input.isSuperAdmin ||
+    input.permissions.includes("purchasing.manage") ||
+    input.permissions.includes("admin.access") ||
+    input.permissions.includes("branch.manage")
+  );
 }
 
 /** Finance workspace — payment.read / payment.manage (customer payment ops; not GL). */

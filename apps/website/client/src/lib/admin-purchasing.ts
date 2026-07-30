@@ -1,4 +1,6 @@
-/** Purchasing & Suppliers helpers — no invented suppliers, POs, or receipts. */
+/** Purchasing & Suppliers helpers — live suppliers/POs; no invented receipts or payables. */
+
+import type { PurchaseOrder, Supplier } from "@/lib/admin-api";
 
 export type ProcurementIntegrationCheck = {
   id: string;
@@ -8,6 +10,8 @@ export type ProcurementIntegrationCheck = {
 };
 
 export type PurchasingKpiSnapshot = {
+  supplierCount: number | null;
+  openPoCount: number | null;
   inventoryFoundationLinked: boolean;
   stockLedgerAvailable: boolean;
   menuCatalogAvailable: boolean;
@@ -17,7 +21,7 @@ export type ProcurementInsightItem = {
   id: string;
   title: string;
   detail: string;
-  source: "derived" | "foundation";
+  source: "derived" | "foundation" | "live";
 };
 
 export type ProcurementReadinessGroup = {
@@ -31,43 +35,45 @@ export type ProcurementReadinessGroup = {
   related: string;
 };
 
+const OPEN_PO_STATUSES = new Set(["draft", "submitted", "approved", "ordered", "partially_received"]);
+
 export function integrationChecks(): ProcurementIntegrationCheck[] {
   return [
     {
       id: "suppliers",
       label: "Supplier master",
-      status: "missing",
-      note: "No suppliers / vendors tables in committed migrations.",
+      status: "present",
+      note: "suppliers + GET/POST /api/v1/admin/purchasing/suppliers.",
     },
     {
       id: "requisitions",
       label: "Purchase requisitions",
       status: "missing",
-      note: "No requisition entities or admin APIs.",
+      note: "No requisition entities or admin APIs — Coming Soon.",
     },
     {
       id: "approvals",
       label: "Approval workflow",
       status: "missing",
-      note: "No procurement approval infrastructure in backend.",
+      note: "No procurement approval infrastructure in backend — Coming Soon.",
     },
     {
       id: "purchase-orders",
       label: "Purchase orders",
-      status: "missing",
-      note: "No purchase_orders table or PO admin routes.",
+      status: "present",
+      note: "purchase_orders + GET/POST /api/v1/admin/purchasing/orders.",
     },
     {
       id: "receiving",
       label: "Goods receiving / GRN",
       status: "missing",
-      note: "No goods_receipts table or receiving API.",
+      note: "No goods_receipts table or receiving API — Coming Soon.",
     },
     {
       id: "inventory-posting",
       label: "Inventory posting from GRN",
       status: "missing",
-      note: "No stock movement ledger — inventory module is Foundation.",
+      note: "GRN → stock_movements posting Coming Soon.",
     },
     {
       id: "invoices",
@@ -91,64 +97,84 @@ export function integrationChecks(): ProcurementIntegrationCheck[] {
       id: "inventory-module",
       label: "Inventory demand context",
       status: "partial",
-      note: "Inventory workspace is Foundation — no reorder thresholds or balances.",
+      note: "Reorder-driven demand suggestions Coming Soon.",
     },
     {
       id: "permission",
       label: "Procurement permission",
-      status: "partial",
-      note: "No purchasing.manage — workspace gated on branch.manage until seeded.",
+      status: "present",
+      note: "purchasing.manage seeded; routes also accept admin.access.",
     },
   ];
 }
 
-export function buildPurchasingKpis(): PurchasingKpiSnapshot {
+export function buildPurchasingKpis(
+  suppliers: Supplier[] | null = null,
+  orders: PurchaseOrder[] | null = null,
+): PurchasingKpiSnapshot {
   return {
+    supplierCount: suppliers == null ? null : suppliers.length,
+    openPoCount: orders == null ? null : orders.filter((o) => OPEN_PO_STATUSES.has(o.status)).length,
     inventoryFoundationLinked: true,
     stockLedgerAvailable: false,
     menuCatalogAvailable: true,
   };
 }
 
-export function buildProcurementInsights(branchLabel: string): ProcurementInsightItem[] {
-  return [
-    {
-      id: "no-suppliers",
-      title: "No supplier master records exist in the repository.",
-      detail: "Rule-based: migrations contain no suppliers or vendor tables.",
-      source: "derived",
-    },
-    {
-      id: "no-po",
-      title: "Purchase orders cannot be created — no PO backend or numbering service.",
-      detail: "Foundation until purchase_orders and admin write APIs ship.",
-      source: "foundation",
-    },
-    {
-      id: "no-grn",
-      title: "Goods receiving and GRN creation are unavailable.",
-      detail: "Receiving requires persistent receipt rows and inventory posting.",
-      source: "foundation",
-    },
-    {
-      id: "no-matching",
-      title: "Purchase invoice matching is unavailable.",
-      detail: "Three-way match requires PO, GRN, and supplier invoice records.",
-      source: "foundation",
-    },
-    {
-      id: "no-ledger",
-      title: "Inventory posting is unavailable because no persistent stock movement ledger exists.",
-      detail: "GRN cannot safely update stock without server-side movements.",
-      source: "foundation",
-    },
-    {
-      id: "branch",
-      title: `Branch context: ${branchLabel} — procurement APIs must enforce branch scope when added.`,
-      detail: "Display context only; no branch-scoped purchasing data today.",
-      source: "foundation",
-    },
-  ];
+export function buildProcurementInsights(
+  branchLabel: string,
+  suppliers: Supplier[] | null = null,
+  orders: PurchaseOrder[] | null = null,
+): ProcurementInsightItem[] {
+  const items: ProcurementInsightItem[] = [];
+
+  if (suppliers != null) {
+    items.push({
+      id: "live-suppliers",
+      title: `${suppliers.length} supplier${suppliers.length === 1 ? "" : "s"} in branch scope.`,
+      detail: "Live from GET /admin/purchasing/suppliers — empty until staff add vendors.",
+      source: "live",
+    });
+  }
+
+  if (orders != null) {
+    items.push({
+      id: "live-pos",
+      title: `${orders.length} purchase order${orders.length === 1 ? "" : "s"} on record.`,
+      detail: "Live from GET /admin/purchasing/orders. Line items and GRN Coming Soon.",
+      source: "live",
+    });
+  }
+
+  items.push({
+    id: "no-grn",
+    title: "Goods receiving and GRN creation are Coming Soon.",
+    detail: "Receiving requires persistent receipt rows and inventory posting.",
+    source: "foundation",
+  });
+
+  items.push({
+    id: "no-matching",
+    title: "Purchase invoice matching is Coming Soon.",
+    detail: "Three-way match requires PO, GRN, and supplier invoice records.",
+    source: "foundation",
+  });
+
+  items.push({
+    id: "no-approvals",
+    title: "Server-side approval workflow is Coming Soon.",
+    detail: "Draft POs can be created; approval enforcement is not shipped.",
+    source: "foundation",
+  });
+
+  items.push({
+    id: "branch",
+    title: `Branch context: ${branchLabel} — supplier and PO APIs are branch-scoped.`,
+    detail: "purchasing.manage or admin.access required for write APIs.",
+    source: "live",
+  });
+
+  return items.slice(0, 6);
 }
 
 export function readinessGroups(): ProcurementReadinessGroup[] {
@@ -156,37 +182,37 @@ export function readinessGroups(): ProcurementReadinessGroup[] {
     {
       id: "supplier",
       title: "Supplier foundation",
-      unavailable: "Supplier master, contacts, terms, item catalogue",
-      why: "Procurement cannot start without verified supplier records and commercial terms.",
-      entities: ["suppliers", "supplier_contacts", "supplier_addresses", "supplier_items"],
-      apis: ["GET/POST /api/v1/admin/suppliers"],
-      permission: "purchasing.manage (proposed)",
-      related: "Inventory items link via supplier_items — not menu SKUs alone.",
+      unavailable: "— LIVE (contacts/terms catalogue partial)",
+      why: "Supplier master is live; commercial terms catalogue Coming Soon.",
+      entities: ["suppliers"],
+      apis: ["GET/POST /api/v1/admin/purchasing/suppliers"],
+      permission: "purchasing.manage or admin.access",
+      related: "Inventory items may link via supplier_items later — not menu SKUs alone.",
     },
     {
       id: "workflow",
       title: "Procurement workflow",
-      unavailable: "Requisitions, approvals, purchase orders",
-      why: "Draft POs in React state are not auditable procurement records.",
-      entities: ["purchase_requisitions", "purchase_orders", "purchase_order_lines", "approval_events"],
-      apis: ["POST /api/v1/admin/purchasing/requisitions", "POST /api/v1/admin/purchasing/orders"],
-      permission: "purchasing.manage + approval rules",
-      related: "Branch managers may approve up to configured thresholds.",
+      unavailable: "Requisitions & approvals Coming Soon — POs LIVE",
+      why: "Purchase orders can be created; requisition→approval workflow not shipped.",
+      entities: ["purchase_orders"],
+      apis: ["GET/POST /api/v1/admin/purchasing/orders"],
+      permission: "purchasing.manage or admin.access",
+      related: "PO line items Coming Soon.",
     },
     {
       id: "receiving",
       title: "Receiving foundation",
-      unavailable: "GRN, partial receipts, quality rejection",
+      unavailable: "GRN, partial receipts, quality rejection (Coming Soon)",
       why: "Receiving must create immutable receipt events — not frontend quantity bumps.",
       entities: ["goods_receipts", "goods_receipt_lines", "rejection_reasons"],
       apis: ["POST /api/v1/admin/purchasing/receipts"],
       permission: "purchasing.manage or inventory.manage",
-      related: "Posts to stock_movements when inventory ledger exists.",
+      related: "Posts to stock_movements when receiving ships.",
     },
     {
       id: "finance",
       title: "Finance matching foundation",
-      unavailable: "Supplier invoices, three-way match, payables",
+      unavailable: "Supplier invoices, three-way match, payables (Coming Soon)",
       why: "Customer payment.* permissions do not imply supplier accounts payable.",
       entities: ["supplier_invoices", "invoice_match_results", "accounts_payable"],
       apis: ["POST /api/v1/admin/finance/supplier-invoices", "POST /api/v1/admin/finance/match"],
@@ -194,4 +220,8 @@ export function readinessGroups(): ProcurementReadinessGroup[] {
       related: "Finance module consumes matched invoices for payables.",
     },
   ];
+}
+
+export function formatMoney(amount: number): string {
+  return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
