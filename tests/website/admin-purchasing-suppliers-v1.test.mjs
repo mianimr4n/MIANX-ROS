@@ -27,20 +27,22 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(page, /ProcurementFoundationPanel/);
     assert.match(page, /ProcurementInsights/);
     assert.match(page, /canAccessAdminPurchasing/);
+    assert.match(page, /listSuppliers/);
+    assert.match(page, /listPurchaseOrders/);
   });
 
   it("does not fabricate suppliers or purchase orders", () => {
     const suppliers = read("apps/website/client/src/components/admin/purchasing/PurchasingTables.tsx");
-    assert.match(suppliers, /No suppliers in repository/);
-    assert.doesNotMatch(suppliers, /PO-\d+|GRN-\d+|supplierCode:\s*"/i);
+    assert.match(suppliers, /No suppliers added yet/);
+    assert.doesNotMatch(suppliers, /supplierCode:\s*"|fakeSupplier/i);
     const orders = read("apps/website/client/src/components/admin/purchasing/PurchasingTables.tsx");
-    assert.match(orders, /No purchase orders in repository/);
+    assert.match(orders, /No purchase orders created yet/);
     assert.match(orders, /customer sales — not supplier procurement/i);
   });
 
-  it("disables receiving and does not update inventory from frontend", () => {
+  it("keeps receiving Coming Soon and does not update inventory from frontend", () => {
     const header = read("apps/website/client/src/components/admin/purchasing/PurchasingHeader.tsx");
-    assert.match(header, /Receive goods · Foundation/);
+    assert.match(header, /Receive goods · Coming Soon/);
     assert.match(header, /disabled/);
     const receiving = read("apps/website/client/src/components/admin/purchasing/ProcurementPanels.tsx");
     assert.match(receiving, /increment stock balances/);
@@ -54,10 +56,10 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.doesNotMatch(helper, /displayPrice|formatPkr|menu\.price/i);
   });
 
-  it("approval and invoice matching remain Foundation without backend", () => {
+  it("approval and invoice matching remain Coming Soon without backend", () => {
     const panels = read("apps/website/client/src/components/admin/purchasing/ProcurementPanels.tsx");
     assert.match(panels, /server-side approval workflow required/i);
-    assert.match(panels, /Invoice Matching Foundation/);
+    assert.match(panels, /Invoice Matching — Coming Soon/);
     assert.match(panels, /Customer payment records are not supplier payables/);
     assert.doesNotMatch(panels, /onApprove|approvePurchase|threeWayMatch\(/i);
   });
@@ -70,9 +72,10 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.doesNotMatch(insights, /supplier risk|autonomous purchase|demand forecast/i);
   });
 
-  it("gates /admin/purchasing with canAccessAdminPurchasing (branch.manage)", () => {
+  it("gates /admin/purchasing with canAccessAdminPurchasing", () => {
     const access = read("apps/website/client/src/lib/admin-access.ts");
     assert.match(access, /canAccessAdminPurchasing/);
+    assert.match(access, /purchasing\.manage/);
     assert.match(access, /branch\.manage/);
     assert.match(access, /requiresPurchasing/);
     assert.match(access, /href: "\/admin\/purchasing"/);
@@ -83,11 +86,11 @@ describe("Purchasing & Suppliers V1 (static)", () => {
     assert.match(page, /useAdminAccessGate/);
   });
 
-  it("integration checks document missing supplier and PO backend", () => {
+  it("integration checks document live supplier/PO APIs and remaining gaps", () => {
     const helper = read("apps/website/client/src/lib/admin-purchasing.ts");
     assert.match(helper, /purchase_orders/);
     assert.match(helper, /goods_receipts/);
-    assert.match(helper, /purchasing\.manage \(proposed\)/);
-    assert.doesNotMatch(helper, /permissions\.includes\("purchasing\.manage"\)/);
+    assert.match(helper, /purchasing\.manage/);
+    assert.match(helper, /status: "present"/);
   });
 });

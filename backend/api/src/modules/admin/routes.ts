@@ -57,6 +57,7 @@ import { createAdminBranchProfileRouter } from "./branch-profile.js";
 import { createAdminDeliverySettingsRouter } from "./delivery-settings.js";
 import { createAdminHrRouter } from "./hr.js";
 import { createAdminInventoryRouter } from "./inventory.js";
+import { createAdminPurchasingRouter } from "./purchasing.js";
 import type { OpeningOperationsService } from "../../services/opening/operations.js";
 import type { OpeningGovernanceService } from "../../services/opening/governance.js";
 import type { OpeningDryRunService } from "../../services/opening/dry-run.js";
@@ -65,6 +66,7 @@ import type { BranchProfileService } from "../../services/branches/profile.js";
 import type { DeliverySettingsService } from "../../services/settings/delivery.js";
 import type { HrEmployeesService } from "../../services/hr/employees.js";
 import type { InventoryService } from "../../services/inventory/management.js";
+import type { PurchasingService } from "../../services/purchasing/management.js";
 
 const createInviteSchema = z.object({
   email: z.email(),
@@ -121,6 +123,7 @@ export interface AdminRouterDependencies {
   deliverySettings: DeliverySettingsService;
   hrEmployees: HrEmployeesService;
   inventory: InventoryService;
+  purchasing: PurchasingService;
 }
 
 function toSafeInvite(invite: {
@@ -559,6 +562,14 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       inventory: dependencies.inventory,
+    }),
+  );
+
+  router.use(
+    createAdminPurchasingRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      purchasing: dependencies.purchasing,
     }),
   );
 

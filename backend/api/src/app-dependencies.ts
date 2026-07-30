@@ -131,6 +131,10 @@ import {
   type InventoryService,
 } from "./services/inventory/management.js";
 import {
+  createPurchasingService,
+  type PurchasingService,
+} from "./services/purchasing/management.js";
+import {
   createAiPlatformService,
   type AiPlatformService,
 } from "./services/ai/platform.js";
@@ -166,6 +170,7 @@ export interface AppDependencies {
   deliverySettings: DeliverySettingsService;
   hrEmployees: HrEmployeesService;
   inventory: InventoryService;
+  purchasing: PurchasingService;
   aiPlatform: AiPlatformService;
   tableService: TableServiceOperations;
   paymentSettlement: PaymentSettlementService;
@@ -209,6 +214,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     deliverySettings: createDeliverySettingsService(envStatus),
     hrEmployees: createHrEmployeesService(envStatus),
     inventory: createInventoryService(envStatus),
+    purchasing: createPurchasingService(envStatus),
     aiPlatform: createAiPlatformService(envStatus),
     tableService: createTableServiceOperations(envStatus),
     paymentSettlement: createPaymentSettlementService(envStatus),

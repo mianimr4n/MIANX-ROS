@@ -82,17 +82,18 @@ export function ReceivingGrnPanel() {
         <h3 id="receiving-grn-heading" className="sr-only">
           Receiving and GRN
         </h3>
-        <p className="text-sm font-semibold">Goods receiving unavailable</p>
+        <p className="text-sm font-semibold">Goods receiving — Coming Soon</p>
         <p className="mt-2 text-sm text-[var(--admin-muted)]">
-          GRN creation requires purchase orders, receipt lines, and inventory posting via stock movements. Frontend cannot
+          GRN creation requires receipt lines and inventory posting via stock movements. Frontend cannot
           increment stock balances.
         </p>
         <p className="mt-3 text-xs">
           <Link href="/admin/inventory" className="font-semibold text-[var(--brand-red)] hover:underline">
             Inventory Management
           </Link>{" "}
-          — stock ledger also Foundation.
+          — use stock adjustments until GRN ships.
         </p>
+        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">Coming Soon</p>
       </AdminSurfaceBody>
     </AdminSurface>
   );
@@ -106,13 +107,13 @@ export function InvoiceMatchingPanel() {
         <h3 id="invoice-matching-heading" className="sr-only">
           Invoice matching
         </h3>
-        <p className="text-sm font-semibold">Invoice Matching Foundation</p>
+        <p className="text-sm font-semibold">Invoice Matching — Coming Soon</p>
         <p className="mt-2 text-sm text-[var(--admin-muted)]">
           Purchase-order, receipt, and supplier-invoice records are required before three-way matching can be performed.
           Customer payment records are not supplier payables.
         </p>
         <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-          Future link: Finance &amp; Accounting (Foundation)
+          Coming Soon · Finance &amp; Accounting
         </p>
       </AdminSurfaceBody>
     </AdminSurface>
@@ -145,8 +146,9 @@ export function ApprovalTimelinePanel() {
           Approval timeline
         </h3>
         <p className="text-sm text-[var(--admin-muted)]">
-          FOUNDATION — server-side approval workflow required. No frontend-only approve/reject buttons.
+          Coming Soon — server-side approval workflow required. No frontend-only approve/reject buttons.
         </p>
+        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">Coming Soon</p>
       </AdminSurfaceBody>
     </AdminSurface>
   );

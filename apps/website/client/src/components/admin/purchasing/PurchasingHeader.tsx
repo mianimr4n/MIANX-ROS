@@ -18,34 +18,28 @@ export function PurchasingHeader({
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
         </p>
         <p className="mt-1 text-xs text-[var(--admin-muted)]">
-          Procurement foundation — persistent supplier and purchase-order backend required
+          Live supplier master and purchase orders — receiving &amp; approvals Coming Soon
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-2 rounded-full bg-[var(--admin-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-muted)]">
-          Foundation workspace
+        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
+          LIVE suppliers &amp; POs
         </span>
         <button
           type="button"
           onClick={onRefresh}
           className="min-h-11 rounded-lg border border-[var(--admin-border)] bg-white px-4 text-sm font-semibold hover:bg-[var(--admin-soft)]"
         >
-          Refresh readiness
+          Refresh
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Create requisition · Foundation
+          Create requisition · Coming Soon
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Create PO · Foundation
+          Receive goods · Coming Soon
         </button>
         <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Add supplier · Foundation
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Receive goods · Foundation
-        </button>
-        <button type="button" disabled className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]">
-          Export · Foundation
+          Export · Coming Soon
         </button>
       </div>
     </header>
