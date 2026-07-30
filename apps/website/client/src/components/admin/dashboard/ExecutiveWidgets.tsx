@@ -2,127 +2,22 @@ import { Link } from "wouter";
 
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
 import type { AdminOperationsDashboard, AdminOrderListItem } from "@/lib/admin-api";
+import {
+  AiInsightsPanel,
+  MianxInsightsPanel,
+  buildMianxInsightItems,
+  buildDeterministicMianxInsights,
+  type MianxInsightItem,
+  type MianxInsightSeverity,
+} from "@/components/admin/dashboard/MianxInsightsPanel";
 
-export type MianxInsightSeverity = "info" | "warning" | "critical";
-
-export type MianxInsightItem = {
-  ruleId: string;
-  title: string;
-  trigger: string;
-  sourceModule: string;
-  sourceTimestamp: string;
-  branch: string;
-  severity: MianxInsightSeverity;
-  recommendedAction: string;
+export type { MianxInsightItem, MianxInsightSeverity };
+export {
+  AiInsightsPanel,
+  MianxInsightsPanel,
+  buildMianxInsightItems,
+  buildDeterministicMianxInsights,
 };
-
-const STATUS_EVENT_LABEL: Record<string, string> = {
-  pending: "Order Created",
-  confirmed: "Order Confirmed",
-  preparing: "Kitchen Started",
-  ready: "Ready",
-  dispatched: "Rider Assigned",
-  completed: "Delivered",
-  cancelled: "Order Cancelled",
-};
-
-function formatInsightTime(iso: string) {
-  try {
-    return new Date(iso).toLocaleString("en-PK", {
-      hour: "2-digit",
-      minute: "2-digit",
-      day: "2-digit",
-      month: "short",
-    });
-  } catch {
-    return iso;
-  }
-}
-
-/**
- * Deterministic Mianx.ai panel — maps verified dashboard alerts/insights only.
- * Not generative AI. No predictions.
- */
-export function buildMianxInsightItems(
-  data: AdminOperationsDashboard | null,
-  branchLabel: string,
-): MianxInsightItem[] {
-  if (!data) return [];
-
-  const fromAlerts: MianxInsightItem[] = data.alerts.slice(0, 5).map((alert) => ({
-    ruleId: `ALERT.${alert.code}`,
-    title: alert.message,
-    trigger: alert.code.replaceAll("_", " ").toLowerCase(),
-    sourceModule: "Orders / Operations",
-    sourceTimestamp: data.generatedAt,
-    branch: branchLabel,
-    severity: alert.severity,
-    recommendedAction: alert.orderId
-      ? `Review order ${alert.orderNumber ?? alert.orderId} in Orders.`
-      : "Open Orders and clear operational backlog.",
-  }));
-
-  const fromInsights: MianxInsightItem[] = data.insights.slice(0, 5).map((insight, index) => {
-    const lower = insight.toLowerCase();
-    let ruleId = `OPS.SUMMARY.${index + 1}`;
-    let sourceModule = "Operations dashboard";
-    let recommendedAction = "Review the live operations board.";
-    let severity: MianxInsightSeverity = "info";
-
-    if (lower.includes("pending")) {
-      ruleId = "OPS.PENDING_ATTENTION";
-      sourceModule = "Orders";
-      recommendedAction = "Open Orders and clear pending confirmations.";
-      severity = "warning";
-    } else if (lower.includes("alert")) {
-      ruleId = "OPS.ALERT_COUNT";
-      sourceModule = "Operations alerts";
-      recommendedAction = "Review critical alerts in the activity timeline.";
-      severity = "warning";
-    } else if (lower.includes("kitchen") || lower.includes("preparing")) {
-      ruleId = "KITCHEN.QUEUE_SIGNAL";
-      sourceModule = "Kitchen";
-      recommendedAction = "Open Kitchen board for queue review.";
-      severity = "info";
-    } else if (lower.includes("no order") || lower.includes("no active")) {
-      ruleId = "OPS.QUIET_SCOPE";
-      recommendedAction = "No action required — scope is quiet.";
-      severity = "info";
-    } else if (lower.includes("highest active")) {
-      ruleId = "BRANCH.VOLUME_LEADER";
-      sourceModule = "Branch performance";
-      recommendedAction = "Confirm staffing on the leading branch.";
-      severity = "info";
-    }
-
-    return {
-      ruleId,
-      title: insight,
-      trigger: "Deterministic dashboard rule evaluation",
-      sourceModule,
-      sourceTimestamp: data.generatedAt,
-      branch: branchLabel,
-      severity,
-      recommendedAction,
-    };
-  });
-
-  const merged = [...fromAlerts, ...fromInsights];
-  if (merged.length > 0) return merged.slice(0, 6);
-
-  return [
-    {
-      ruleId: "OPS.NO_SIGNAL",
-      title: "No live operational signals in the current scope.",
-      trigger: "Empty alerts and insights arrays",
-      sourceModule: "Operations dashboard",
-      sourceTimestamp: data.generatedAt,
-      branch: branchLabel,
-      severity: "info",
-      recommendedAction: "Mianx.ai will surface rule-based summaries when orders or alerts exist.",
-    },
-  ];
-}
 
 /** @deprecated Use buildMianxInsightItems — retained name shim for static tests during D1. */
 export function buildAiInsightItems(data: AdminOperationsDashboard | null) {
@@ -134,77 +29,15 @@ export function buildAiInsightItems(data: AdminOperationsDashboard | null) {
   }));
 }
 
-export function AiInsightsPanel({
-  items,
-  loading = false,
-}: {
-  items: MianxInsightItem[];
-  loading?: boolean;
-}) {
-  return (
-    <AdminSurface
-      className="bg-gradient-to-br from-white to-[var(--admin-soft)]"
-      aria-labelledby="ai-insights-heading"
-    >
-      <AdminSurfaceHeader
-        title="Mianx.ai Operations Insights"
-        description="Deterministic rule summaries only — not generative AI and not predictive."
-      />
-      <AdminSurfaceBody>
-        <h3 id="ai-insights-heading" className="sr-only">
-          Mianx.ai Operations Insights
-        </h3>
-        {loading && items.length === 0 ? (
-          <p className="text-sm text-[var(--admin-muted)]">Loading insights…</p>
-        ) : items.length === 0 ? (
-          <p className="text-sm text-[var(--admin-muted)]">Not available yet</p>
-        ) : (
-          <ul className="space-y-3">
-            {items.map((item) => (
-              <li
-                key={`${item.ruleId}-${item.title}`}
-                className="rounded-xl border border-[var(--admin-border)] bg-white/90 px-4 py-3"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-[var(--admin-ink)]">{item.title}</p>
-                  <span className="shrink-0 rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-                    {item.severity}
-                  </span>
-                </div>
-                <dl className="mt-3 grid gap-1.5 text-xs text-[var(--admin-muted)] sm:grid-cols-2">
-                  <div>
-                    <dt className="font-semibold text-[var(--admin-ink)]">Rule ID</dt>
-                    <dd className="font-mono">{item.ruleId}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold text-[var(--admin-ink)]">Trigger</dt>
-                    <dd>{item.trigger}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold text-[var(--admin-ink)]">Source module</dt>
-                    <dd>{item.sourceModule}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold text-[var(--admin-ink)]">Branch</dt>
-                    <dd>{item.branch}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold text-[var(--admin-ink)]">Source timestamp</dt>
-                    <dd>{formatInsightTime(item.sourceTimestamp)}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold text-[var(--admin-ink)]">Recommended action</dt>
-                    <dd>{item.recommendedAction}</dd>
-                  </div>
-                </dl>
-              </li>
-            ))}
-          </ul>
-        )}
-      </AdminSurfaceBody>
-    </AdminSurface>
-  );
-}
+const STATUS_EVENT_LABEL: Record<string, string> = {
+  pending: "Order Created",
+  confirmed: "Order Confirmed",
+  preparing: "Kitchen Started",
+  ready: "Ready",
+  dispatched: "Rider Assigned",
+  completed: "Delivered",
+  cancelled: "Order Cancelled",
+};
 
 export function BranchPerformancePanel({
   rows,

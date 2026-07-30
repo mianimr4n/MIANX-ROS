@@ -198,13 +198,15 @@ describe("Error / empty honesty wiring (static)", () => {
 
 describe("Dashboard alignment (static)", () => {
   it("Executive Kitchen Queue stays confirmed + preparing with honest copy", () => {
+    const kpis = read("apps/website/client/src/components/admin/dashboard/ExecutiveKPIs.tsx");
+    assert.match(kpis, /Kitchen Queue/);
+    assert.match(kpis, /Confirmed \+ preparing/);
+    assert.match(kpis, /Kitchen Tickets API|order-derived kitchen waiting/);
+    assert.match(kpis, /Active Deliveries/);
+    assert.match(kpis, /Riders Assignments API|order-derived dispatched/);
     const dash = read("apps/website/client/src/pages/admin/AdminDashboard.tsx");
-    assert.match(dash, /Kitchen Queue/);
-    assert.match(dash, /Confirmed \+ preparing/);
-    assert.match(dash, /excludes pending/);
-    assert.match(dash, /kitchen_tickets/);
-    assert.match(dash, /Active Deliveries/);
-    assert.match(dash, /not provisional delivery rows/);
+    assert.match(dash, /listKitchenTickets/);
+    assert.match(dash, /listDeliveryAssignments/);
   });
 
   it("Branch dashboard separates pending orders from kitchen tickets", () => {

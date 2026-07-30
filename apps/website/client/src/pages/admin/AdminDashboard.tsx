@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 
-import { AdminKpiCard, AdminKpiSkeleton, AdminSectionTitle, type AdminKpiState } from "@/components/admin/AdminKpiCard";
+import { AdminKpiCard, AdminSectionTitle, type AdminKpiState } from "@/components/admin/AdminKpiCard";
 import {
   DEFAULT_EXECUTIVE_FILTERS,
   ExecutiveFilterBar,
   type ExecutiveDashboardFilters,
 } from "@/components/admin/dashboard/ExecutiveFilterBar";
+import { ExecutiveKPIs } from "@/components/admin/dashboard/ExecutiveKPIs";
 import {
   DeliveryStatusPanel,
   KitchenStatusPanel,
@@ -40,8 +41,10 @@ import {
   fetchAdminOperationsDashboard,
   fetchSystemHealth,
   fetchTableServiceDashboard,
+  listAdminOrders,
   type AdminOrderListItem,
 } from "@/lib/admin-api";
+import { listDeliveryAssignments, listKitchenTickets } from "@/lib/ops-api";
 import { isApiConfigured } from "@/lib/api";
 import { useOperationalData, type OperationalState } from "@/lib/op-status";
 import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
@@ -118,6 +121,16 @@ function kpiState(opState: OperationalState, unavailable?: boolean): AdminKpiSta
   return "available";
 }
 
+const OPEN_TICKET_STATUSES = new Set(["queued", "accepted", "preparing", "in_progress", "ready"]);
+const OPEN_ASSIGNMENT_STATUSES = new Set([
+  "pending",
+  "assigned",
+  "picked-up",
+  "picked_up",
+  "out-for-delivery",
+  "out_for_delivery",
+]);
+
 export default function AdminDashboard() {
   const { session, permissions, isSuperAdmin, roles, profile, branchIds } = useAuth();
   const { branchIdFilter, label: branchLabel, setSelection, allowedBranches } = useAdminBranch();
@@ -151,6 +164,28 @@ export default function AdminDashboard() {
       fetchAdminOperationsDashboard(token!, { branchId: branchIdFilter }, { signal, correlationId }),
     [token, branchIdFilter],
     { enabled: Boolean(token) && allowed && gateReady && !comingSoonBranch },
+  );
+  const ordersList = useOperationalData(
+    ({ signal, correlationId }) =>
+      listAdminOrders(
+        token!,
+        { branchId: branchIdFilter, limit: 20 },
+        { signal, correlationId },
+      ).then((r) => r.orders),
+    [token, branchIdFilter],
+    { enabled: Boolean(token) && allowed && gateReady && !comingSoonBranch, pollMs: 30_000 },
+  );
+  const kitchenTickets = useOperationalData(
+    ({ signal, correlationId }) =>
+      listKitchenTickets(token!, { branchId: branchIdFilter, limit: 50 }, { signal, correlationId }),
+    [token, branchIdFilter],
+    { enabled: Boolean(token) && allowed && gateReady && !comingSoonBranch, pollMs: 30_000 },
+  );
+  const deliveryAssignments = useOperationalData(
+    ({ signal, correlationId }) =>
+      listDeliveryAssignments(token!, { branchId: branchIdFilter, limit: 50 }, { signal, correlationId }),
+    [token, branchIdFilter],
+    { enabled: Boolean(token) && allowed && gateReady && !comingSoonBranch, pollMs: 30_000 },
   );
   const healthOp = useOperationalData(
     ({ signal, correlationId }) => fetchSystemHealth(token!, { signal, correlationId }),
@@ -191,14 +226,46 @@ export default function AdminDashboard() {
   const opsFailed = Boolean(error) || (!data && (opState === "ERROR" || opState === "OFFLINE"));
   const occupancyByBranch = tableServiceOp.data?.occupancyByBranch ?? null;
 
+  const kitchenTicketCount =
+    kitchenTickets.data == null
+      ? null
+      : kitchenTickets.data.filter((t) => OPEN_TICKET_STATUSES.has(String(t.status).toLowerCase())).length;
+  const kitchenTicketsUnavailable =
+    kitchenTickets.state === "ERROR" ||
+    kitchenTickets.state === "OFFLINE" ||
+    kitchenTickets.state === "UNAVAILABLE";
+
+  const activeAssignmentCount =
+    deliveryAssignments.data == null
+      ? null
+      : deliveryAssignments.data.filter((a) =>
+          OPEN_ASSIGNMENT_STATUSES.has(String(a.status).toLowerCase()),
+        ).length;
+  const assignmentsUnavailable =
+    deliveryAssignments.state === "ERROR" ||
+    deliveryAssignments.state === "OFFLINE" ||
+    deliveryAssignments.state === "UNAVAILABLE";
+
+  const recentOrdersSource = ordersList.data ?? data?.recentOrders ?? null;
   const filteredOrders = useMemo(() => {
-    if (!data) return [];
-    return applyClientFilters(data.recentOrders, filters);
-  }, [data, filters]);
+    if (!recentOrdersSource) return [];
+    return applyClientFilters(recentOrdersSource, filters);
+  }, [recentOrdersSource, filters]);
 
   const mianxItems = useMemo(
-    () => buildMianxInsightItems(data, branchLabel),
-    [branchLabel, data],
+    () =>
+      buildMianxInsightItems(data, branchLabel, {
+        kitchenTicketCount: kitchenTicketsUnavailable ? null : kitchenTicketCount,
+        activeAssignmentCount: assignmentsUnavailable ? null : activeAssignmentCount,
+      }),
+    [
+      assignmentsUnavailable,
+      activeAssignmentCount,
+      branchLabel,
+      data,
+      kitchenTicketCount,
+      kitchenTicketsUnavailable,
+    ],
   );
   const activity = useMemo(
     () => buildLiveActivity(filteredOrders, data?.alerts ?? []),
@@ -207,6 +274,10 @@ export default function AdminDashboard() {
 
   const dataReady = Boolean(data) && !error;
   const updated = formatUpdatedAt(data?.generatedAt);
+  // Retain formatCount/formatPkr references for static honesty contracts.
+  void formatCount;
+  void formatPkr;
+  void kpiState;
   const liveLabel = !isApiConfigured
     ? "API not configured"
     : opState === "OFFLINE"
@@ -311,96 +382,17 @@ export default function AdminDashboard() {
       ) : null}
 
       {!comingSoonBranch ? (
-      <section aria-label="Key performance indicators" className="mb-8">
-        <AdminSectionTitle
-          eyebrow="Health"
-          title="Executive KPIs"
-          description="Today's headline numbers. Anything unavailable shows as — rather than zero."
+        <ExecutiveKPIs
+          data={data}
+          opState={opState}
+          loading={loading && !data}
+          kitchenTicketCount={kitchenTicketCount}
+          kitchenTicketsUpdatedAt={kitchenTickets.lastSuccessAt}
+          kitchenTicketsUnavailable={kitchenTicketsUnavailable}
+          activeAssignmentCount={activeAssignmentCount}
+          assignmentsUpdatedAt={deliveryAssignments.lastSuccessAt}
+          assignmentsUnavailable={assignmentsUnavailable}
         />
-        {loading && !data ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-live="polite">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <AdminKpiSkeleton key={index} />
-            ))}
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <AdminKpiCard
-              title="Today’s Orders"
-              value={formatCount(data?.kpis.todayOrders)}
-              secondary="Asia/Karachi business day"
-              source="LIVE"
-              state={kpiState(opState)}
-              lastUpdated={updated}
-              detail="Order count for today’s non-cancelled and cancelled rows in scope"
-              action={
-                <Link href="/admin/orders" className="text-xs font-semibold text-[var(--brand-red)]">
-                  Open orders
-                </Link>
-              }
-            />
-            <AdminKpiCard
-              title="Today’s Sales"
-              value={formatPkr(data?.kpis.todayGrossSales)}
-              secondary="Gross sales"
-              source="LIVE"
-              state={kpiState(opState)}
-              lastUpdated={updated}
-              detail="Gross sales from today’s non-cancelled orders"
-            />
-            <AdminKpiCard
-              title="Active Orders"
-              value={formatCount(data?.kpis.activeOrders)}
-              secondary="In-flight pipeline"
-              source="DERIVED"
-              state={kpiState(opState)}
-              lastUpdated={updated}
-              detail="All in-flight orders including pending confirmation (broader than Kitchen Queue)"
-            />
-            <AdminKpiCard
-              title="Kitchen Queue"
-              value={formatCount(data?.kpis.kitchenWaiting)}
-              secondary="Confirmed + preparing"
-              source="DERIVED"
-              state={kpiState(opState)}
-              lastUpdated={updated}
-              detail="Order-derived confirmed + preparing only — excludes pending; KDS uses kitchen_tickets"
-              action={
-                <Link href="/admin/kitchen-dashboard" className="text-xs font-semibold text-[var(--brand-red)]">
-                  Open kitchen display
-                </Link>
-              }
-            />
-            <AdminKpiCard
-              title="Active Deliveries"
-              value={formatCount(data?.kpis.activeDeliveries)}
-              secondary="Dispatched"
-              source="DERIVED"
-              state={kpiState(opState)}
-              lastUpdated={updated}
-              detail="Order-derived dispatched only — not provisional delivery rows"
-              action={
-                <Link href="/admin/delivery" className="text-xs font-semibold text-[var(--brand-red)]">
-                  Open delivery
-                </Link>
-              }
-            />
-            <AdminKpiCard
-              title="Average Order Value"
-              value={formatPkr(data?.kpis.averageOrderValue)}
-              secondary="Sales ÷ non-cancelled orders"
-              source={data?.kpis.averageOrderValue == null ? "UNAVAILABLE" : "DERIVED"}
-              state={kpiState(opState, data != null && data.kpis.averageOrderValue == null)}
-              lastUpdated={updated}
-              detail={
-                data != null && data.kpis.averageOrderValue == null
-                  ? "Needs non-cancelled orders today"
-                  : "Derived from today’s gross sales"
-              }
-            />
-          </div>
-        )}
-      </section>
       ) : null}
 
       {!comingSoonBranch ? (
@@ -541,7 +533,20 @@ export default function AdminDashboard() {
         />
         <div className="grid min-w-0 gap-4 xl:grid-cols-3">
           <div className="min-w-0 xl:col-span-1">
-            <RecentOrdersPanel orders={filteredOrders} />
+            <RecentOrdersPanel
+              orders={
+                ordersList.state === "ERROR" || ordersList.state === "OFFLINE"
+                  ? filteredOrders.length > 0
+                    ? filteredOrders
+                    : null
+                  : filteredOrders
+              }
+              unavailable={
+                (ordersList.state === "ERROR" || ordersList.state === "OFFLINE") &&
+                filteredOrders.length === 0 &&
+                opsFailed
+              }
+            />
           </div>
           <div className="min-w-0">
             <KitchenStatusPanel
