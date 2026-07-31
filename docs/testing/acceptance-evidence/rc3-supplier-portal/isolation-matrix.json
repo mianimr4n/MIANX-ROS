@@ -1,0 +1,66 @@
+{
+  "ok": true,
+  "checks": [
+    {
+      "id": "A.me",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "id": "B.me",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "id": "A.listsOwnPo",
+      "pass": true,
+      "detail": "count=1"
+    },
+    {
+      "id": "A.cannotSeeBPoInList",
+      "pass": true,
+      "detail": "ids=1"
+    },
+    {
+      "id": "B.listsOwnPo",
+      "pass": true,
+      "detail": "count=1"
+    },
+    {
+      "id": "B.cannotSeeAPoInList",
+      "pass": true,
+      "detail": "ids=1"
+    },
+    {
+      "id": "A.cannotReadBPoById",
+      "pass": true,
+      "detail": "status=404 code=PURCHASE_ORDER_NOT_FOUND"
+    },
+    {
+      "id": "A.cannotRespondBPo",
+      "pass": true,
+      "detail": "status=404"
+    },
+    {
+      "id": "A.acknowledge",
+      "pass": true,
+      "detail": "status=201"
+    },
+    {
+      "id": "A.idempotentReplay",
+      "pass": true,
+      "detail": "status=201"
+    },
+    {
+      "id": "A.cannotAccessAdminPurchasing",
+      "pass": true,
+      "detail": "status=403"
+    },
+    {
+      "id": "A.cannotAttachDocToBPo",
+      "pass": true,
+      "detail": "status=404"
+    }
+  ],
+  "failures": []
+}

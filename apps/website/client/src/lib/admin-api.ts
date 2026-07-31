@@ -3480,6 +3480,51 @@ export function provisionSupplierPortalUser(
   );
 }
 
+export type SupplierResponseQueueItem = {
+  responseId: string;
+  purchaseOrderId: string;
+  poNumber: string;
+  supplierId: string;
+  supplierName: string | null;
+  responseType: string;
+  reason: string | null;
+  confirmedDeliveryDate: string | null;
+  createdAt: string;
+};
+
+export function listSupplierResponseQueue(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<SupplierResponseQueueItem[]>(
+    `/admin/purchasing/supplier-response-queue${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function decideSupplierResponse(
+  accessToken: string,
+  responseId: string,
+  input: {
+    decision: "accept_amendment" | "reject_amendment" | "note";
+    internalNote?: string | null;
+  },
+) {
+  return fetchApiData<{ id: string }>(
+    `/admin/purchasing/supplier-responses/${responseId}/decide`,
+    {
+      method: "POST",
+      headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+      timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+    },
+  );
+}
+
 export function replacePurchaseOrderLines(
   accessToken: string,
   orderId: string,

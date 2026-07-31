@@ -20,7 +20,13 @@ import AuthCallback from "./pages/AuthCallback";
 import Welcome from "./pages/Welcome";
 import StaffAccept from "./pages/StaffAccept";
 import StaffLogin from "./pages/StaffLogin";
-import SupplierPortal from "./pages/supplier/SupplierPortal";
+import SupplierLogin from "./pages/supplier/SupplierLogin";
+import SupplierDashboard from "./pages/supplier/SupplierDashboard";
+import SupplierPurchaseOrders from "./pages/supplier/SupplierPurchaseOrders";
+import SupplierPurchaseOrderDetail from "./pages/supplier/SupplierPurchaseOrderDetail";
+import SupplierDocuments from "./pages/supplier/SupplierDocuments";
+import SupplierProfilePage from "./pages/supplier/SupplierProfilePage";
+import AdminSupplierOperations from "./pages/admin/AdminSupplierOperations";
 import Account from "./pages/Account";
 import MyTelepizza from "./pages/MyTelepizza";
 import Orders from "./pages/Orders";
@@ -138,7 +144,12 @@ function Router() {
       <Route path="/welcome" component={Welcome} />
       <Route path="/staff/accept" component={StaffAccept} />
       <Route path="/staff/login" component={StaffLogin} />
-      <Route path="/supplier" component={SupplierPortal} />
+      <Route path="/supplier/login" component={SupplierLogin} />
+      <Route path="/supplier/purchase-orders/:id" component={SupplierPurchaseOrderDetail} />
+      <Route path="/supplier/purchase-orders" component={SupplierPurchaseOrders} />
+      <Route path="/supplier/documents" component={SupplierDocuments} />
+      <Route path="/supplier/profile" component={SupplierProfilePage} />
+      <Route path="/supplier" component={SupplierDashboard} />
       <Route path="/ops/orders" component={OpsOrders} />
       <Route path="/ops/kitchen" component={OpsKitchen} />
       <Route path="/ops/dispatch" component={OpsDispatch} />
@@ -157,6 +168,7 @@ function Router() {
       <Route path="/admin/menu" component={AdminMenu} />
       <Route path="/admin/inventory" component={AdminInventory} />
       <Route path="/admin/purchasing" component={AdminPurchasing} />
+      <Route path="/admin/supplier-operations" component={AdminSupplierOperations} />
       <Route path="/admin/crm" component={AdminCrm} />
       <Route path="/admin/customers" component={AdminCrm} />
       <Route path="/admin/loyalty" component={AdminLoyalty} />

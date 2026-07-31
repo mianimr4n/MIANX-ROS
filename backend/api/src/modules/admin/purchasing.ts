@@ -606,5 +606,81 @@ export function createAdminPurchasingRouter(deps: AdminPurchasingRouterDependenc
     },
   );
 
+  router.get(
+    "/purchasing/supplier-response-queue",
+    requireAuthenticatedUser,
+    requirePurchasingAccess,
+    async (req, res, next) => {
+      try {
+        const parsed = listQuerySchema.safeParse(req.query);
+        if (!parsed.success) {
+          throw new ApiError(400, "VALIDATION_ERROR", "Invalid queue query.", parsed.error.flatten());
+        }
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.supplierPortal.listResponseQueue(
+          scopeFrom(principal),
+          parsed.data.branchId,
+        );
+        return res.json({ ok: true, data, meta: { count: data.length } });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/purchasing/supplier-responses/:responseId/decide",
+    requireAuthenticatedUser,
+    requirePurchasingAccess,
+    validateBody(
+      z
+        .object({
+          decision: z.enum(["accept_amendment", "reject_amendment", "note"]),
+          internalNote: z.string().trim().max(2000).nullable().optional(),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.supplierPortal.decideAmendment(
+          scopeFrom(principal),
+          principal.userId,
+          { responseId: req.params.responseId, ...req.body },
+        );
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.patch(
+    "/purchasing/portal-users/:id/status",
+    requireAuthenticatedUser,
+    requirePurchasingAccess,
+    validateBody(
+      z
+        .object({
+          status: z.enum(["active", "suspended", "deactivated"]),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.supplierPortal.setPortalUserStatus(
+          scopeFrom(principal),
+          principal.userId,
+          req.params.id,
+          req.body.status,
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
   return router;
 }

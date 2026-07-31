@@ -1,0 +1,100 @@
+{
+  "base": "http://localhost:3000",
+  "authenticatedStaff": true,
+  "authenticatedSupplier": true,
+  "consoleErrors": [],
+  "pageErrors": [],
+  "networkErrors": [],
+  "screenshots": [
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-login-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-login-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-login-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-dashboard-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-dashboard-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-dashboard-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-orders-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-orders-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-orders-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-order-detail-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-order-detail-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-order-detail-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-documents-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-documents-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-documents-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-profile-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-profile-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-profile-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-unauthorized-po-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-unauthorized-po-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-unauthorized-po-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\owner-supplier-attention-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\owner-supplier-attention-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\owner-supplier-attention-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\purchasing-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\purchasing-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\purchasing-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-operations-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-operations-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-supplier-portal\\supplier-operations-1440.png"
+  ],
+  "axe": {
+    "supplier-login": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-dashboard": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-orders": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-order-detail": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-documents": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-profile": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-unauthorized-po": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "owner-supplier-attention": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "purchasing": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-operations": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    }
+  },
+  "ok": true,
+  "criticalOrSeriousTotal": 0,
+  "expectedShutdowns": [],
+  "genuineFailures": [],
+  "limitations": [
+    "Binary document upload deferred — URL reference only.",
+    "Accepted/rejected GRN line quantities remain staff SoT; supplier sees receiving status summary only."
+  ]
+}
