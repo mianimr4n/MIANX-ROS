@@ -1,5 +1,8 @@
 import { createApp } from "./app.js";
+import { defaultLogger, installProcessErrorHandlers } from "./observability/index.js";
 import { startNotificationWorker } from "./services/notifications/outbox-worker.js";
+
+installProcessErrorHandlers(defaultLogger);
 
 const { app, envStatus } = createApp();
 const isProduction = process.env.NODE_ENV === "production";

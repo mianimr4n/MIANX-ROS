@@ -6,6 +6,14 @@ import { createAppDependencies, type AppDependencies } from "./app-dependencies.
 import { errorHandler, notFoundHandler } from "./common/http.js";
 import { getEnvironmentStatus } from "./config/env.js";
 import { apiModules, registerApiModules } from "./modules/index.js";
+import {
+  buildHealthDiagnostics,
+  buildVersionPayload,
+  createApmFromEnv,
+  createRequestLoggingMiddleware,
+  probeSupabaseConnectivity,
+  setApm,
+} from "./observability/index.js";
 
 export function createApp(
   sourceEnv: NodeJS.ProcessEnv = process.env,
@@ -18,25 +26,38 @@ export function createApp(
   };
   const app = express();
 
+  setApm(createApmFromEnv(sourceEnv));
+
+  // Render (and similar) sit behind a single reverse proxy — needed for accurate req.ip.
+  app.set("trust proxy", 1);
+
   app.use(helmet());
   app.use(
     cors({
       origin: envStatus.config.corsOrigin,
+      exposedHeaders: ["X-Request-ID"],
     }),
   );
+  // Request ID + structured access logs (before body parsers so all requests are covered).
+  app.use(createRequestLoggingMiddleware());
   // 2mb covers admin menu JPG/PNG uploads (base64) without opening unbounded payloads.
   app.use(express.json({ limit: "2mb" }));
 
-  app.get("/healthz", (_req, res) => {
+  app.get("/healthz", async (_req, res) => {
+    const dbConnectivity = await probeSupabaseConnectivity(envStatus.config.supabaseUrl);
+    const diagnostics = buildHealthDiagnostics(envStatus, { dbConnectivity, env: sourceEnv });
     res.json({
-      ok: true,
-      service: "telepizza-api",
+      ...diagnostics,
       modules: apiModules,
     });
   });
 
-  app.get("/readyz", (_req, res) => {
+  app.get("/readyz", async (_req, res) => {
     const statusCode = envStatus.isReady ? 200 : 503;
+    const runtime = buildVersionPayload(envStatus, sourceEnv);
+    const dbConnectivity = envStatus.isReady
+      ? await probeSupabaseConnectivity(envStatus.config.supabaseUrl)
+      : ("skipped" as const);
 
     res.status(statusCode).json({
       ok: envStatus.isReady,
@@ -52,6 +73,20 @@ export function createApp(
           webhook: envStatus.config.webhookMode,
         },
       },
+      runtime: {
+        version: runtime.version,
+        gitSha: runtime.gitSha,
+        nodeVersion: runtime.nodeVersion,
+        uptimeSeconds: runtime.uptimeSeconds,
+        startedAt: runtime.startedAt,
+      },
+      database: {
+        connectivity: dbConnectivity,
+      },
+      migrations: {
+        status: "unavailable",
+        note: "Use Supabase CLI migration list for tip verification.",
+      },
       safetyBlockers: envStatus.safetyBlockers,
       issues: envStatus.issues,
     });
@@ -62,6 +97,10 @@ export function createApp(
       ok: true,
       data: apiModules,
     });
+  });
+
+  app.get("/api/v1/meta/version", (_req, res) => {
+    res.json(buildVersionPayload(envStatus, sourceEnv));
   });
 
   registerApiModules(app, dependencies);
