@@ -48,6 +48,8 @@ export function collectClientMoneyWarnings(input: {
   clientDiscount?: number;
   clientDeliveryFee?: number;
   couponCode?: string;
+  /** When true, coupon was server-validated and applied — do not warn as ignored. */
+  couponApplied?: boolean;
 }): QuoteWarning[] {
   const out: QuoteWarning[] = [];
   const seen = new Set<QuoteWarningCode>();
@@ -92,7 +94,7 @@ export function collectClientMoneyWarnings(input: {
     push("CLIENT_TOTAL_IGNORED");
   }
 
-  if (input.couponCode?.trim()) {
+  if (input.couponCode?.trim() && input.couponApplied !== true) {
     push("UNSUPPORTED_FIELD_IGNORED");
   }
 

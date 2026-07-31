@@ -64,9 +64,113 @@ function verifier(authUserId: string, email: string): AuthTokenVerifier {
   };
 }
 
+function unused(): never {
+  throw new Error("unused");
+}
+
+const loyaltyStub = (overrides: Partial<LoyaltyService> = {}): LoyaltyService => ({
+  async listAccounts() {
+    return [];
+  },
+  async listTransactions() {
+    return [];
+  },
+  async earnForOrder() {
+    unused();
+  },
+  async burn() {
+    unused();
+  },
+  async adjust() {
+    unused();
+  },
+  async expire() {
+    unused();
+  },
+  async reverse() {
+    unused();
+  },
+  async getAttention() {
+    return {
+      state: "available",
+      unavailableReason: null,
+      accountsWithBalance: 0,
+      earnTransactionsToday: 0,
+      burnTransactionsToday: 0,
+      pendingManualReviewAdjustments: 0,
+      rewardsCatalogueConfigured: false,
+      rewardsCatalogueMessage: "Rewards catalogue is not configured.",
+    };
+  },
+  ...overrides,
+});
+
+const marketingStub = (overrides: Partial<MarketingService> = {}): MarketingService => ({
+  async listCoupons() {
+    return [];
+  },
+  async createCoupon() {
+    unused();
+  },
+  async patchCoupon() {
+    unused();
+  },
+  async validateCoupon() {
+    return { valid: false, reason: "COUPON_NOT_FOUND" };
+  },
+  async recordRedemption() {
+    unused();
+  },
+  async listRedemptions() {
+    return [];
+  },
+  async listCampaigns() {
+    return [];
+  },
+  async createCampaign() {
+    unused();
+  },
+  async transitionCampaign() {
+    unused();
+  },
+  async listSubmissions() {
+    return [];
+  },
+  async queueCampaignSubmissions() {
+    return { queued: 0, suppressed: 0 };
+  },
+  async listSuppressions() {
+    return [];
+  },
+  async upsertSuppression() {
+    unused();
+  },
+  async listConsent() {
+    return [];
+  },
+  async setConsent() {
+    unused();
+  },
+  async getAttention() {
+    return {
+      state: "available",
+      unavailableReason: null,
+      activeCoupons: 0,
+      couponsExpiringSoon: 0,
+      draftCampaigns: 0,
+      campaignsAwaitingSend: 0,
+      suppressedCustomers: 0,
+      consentOptOuts: 0,
+      providerConfigured: false,
+      providerMessage: "Messaging provider is not configured.",
+    };
+  },
+  ...overrides,
+});
+
 describe("Launch gap APIs — loyalty, marketing, kitchen stock", () => {
   it("GET /admin/loyalty/accounts lists balances", async () => {
-    const loyalty: LoyaltyService = {
+    const loyalty = loyaltyStub({
       async listAccounts() {
         return [
           {
@@ -81,10 +185,7 @@ describe("Launch gap APIs — loyalty, marketing, kitchen stock", () => {
           },
         ];
       },
-      async earnForOrder() {
-        throw new Error("unused");
-      },
-    };
+    });
 
     const { app } = createApp(readyEnv, {
       loyalty,
@@ -107,12 +208,7 @@ describe("Launch gap APIs — loyalty, marketing, kitchen stock", () => {
       idempotentReplay: false,
       transactionId: "txn-1",
     }));
-    const loyalty: LoyaltyService = {
-      async listAccounts() {
-        return [];
-      },
-      earnForOrder: earn,
-    };
+    const loyalty = loyaltyStub({ earnForOrder: earn });
 
     const { app } = createApp(readyEnv, {
       loyalty,
@@ -129,8 +225,32 @@ describe("Launch gap APIs — loyalty, marketing, kitchen stock", () => {
     expect(earn).toHaveBeenCalled();
   });
 
+  it("POST /admin/loyalty/burn is transaction-safe via service", async () => {
+    const burn = vi.fn(async () => ({
+      transactionId: "txn-burn",
+      accountId: "acc-1",
+      customerId: "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+      points: 5,
+      pointsBalance: 7,
+      type: "burn" as const,
+      idempotentReplay: false,
+    }));
+    const loyalty = loyaltyStub({ burn });
+    const { app } = createApp(readyEnv, {
+      loyalty,
+      authTokenVerifier: verifier("auth-admin", "admin@example.com"),
+      authProfileRepository: authRepo(principal()),
+    });
+    const res = await request(app)
+      .post("/api/v1/admin/loyalty/burn")
+      .set("Authorization", "Bearer token")
+      .send({ customerId: "6ba7b810-9dad-11d1-80b4-00c04fd430c8", points: 5 });
+    expect(res.status).toBe(201);
+    expect(res.body.data.type).toBe("burn");
+  });
+
   it("GET/POST /admin/marketing/coupons list and create", async () => {
-    const marketing: MarketingService = {
+    const marketing = marketingStub({
       async listCoupons() {
         return [
           {
@@ -143,6 +263,8 @@ describe("Launch gap APIs — loyalty, marketing, kitchen stock", () => {
             minOrder: 0,
             expiryDate: null,
             status: "active",
+            maxRedemptions: null,
+            perCustomerLimit: null,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           },
@@ -159,11 +281,13 @@ describe("Launch gap APIs — loyalty, marketing, kitchen stock", () => {
           minOrder: input.minOrder ?? 0,
           expiryDate: input.expiryDate ?? null,
           status: input.status ?? "active",
+          maxRedemptions: input.maxRedemptions ?? null,
+          perCustomerLimit: input.perCustomerLimit ?? null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
       },
-    };
+    });
 
     const { app } = createApp(readyEnv, {
       marketing,
@@ -183,6 +307,20 @@ describe("Launch gap APIs — loyalty, marketing, kitchen stock", () => {
       .send({ code: "SAVE50", discountType: "fixed", discountValue: 50 });
     expect(created.status).toBe(201);
     expect(created.body.data.code).toBe("SAVE50");
+  });
+
+  it("GET /admin/marketing/attention never claims provider delivery", async () => {
+    const marketing = marketingStub();
+    const { app } = createApp(readyEnv, {
+      marketing,
+      authTokenVerifier: verifier("auth-admin", "admin@example.com"),
+      authProfileRepository: authRepo(principal()),
+    });
+    const res = await request(app)
+      .get("/api/v1/admin/marketing/attention")
+      .set("Authorization", "Bearer token");
+    expect(res.status).toBe(200);
+    expect(res.body.data.providerConfigured).toBe(false);
   });
 
   it("kitchen preparing surfaces Insufficient stock for [Item]", async () => {
