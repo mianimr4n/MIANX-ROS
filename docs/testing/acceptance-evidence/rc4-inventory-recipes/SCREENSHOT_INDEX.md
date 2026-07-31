@@ -2,4 +2,4 @@
 
 | File | Status |
 | --- | --- |
-| `screenshots/recipes-panel.png` | Pending Playwright (`e2e/rc4/inventory-recipes.spec.ts`) |
+| `screenshots/recipes-panel.png` | Captured via Playwright (`e2e/rc4/inventory-recipes.spec.ts`) — Admin Inventory → Recipe & menu linkage |

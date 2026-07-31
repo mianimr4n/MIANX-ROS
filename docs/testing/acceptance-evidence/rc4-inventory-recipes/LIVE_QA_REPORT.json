@@ -1,0 +1,147 @@
+{
+  "createdAt": "2026-07-31T13:33:25.503Z",
+  "ok": true,
+  "checks": [
+    {
+      "id": "stack.healthz",
+      "pass": true,
+      "detail": "http=200"
+    },
+    {
+      "id": "stack.readyz",
+      "pass": true,
+      "detail": "http=200"
+    },
+    {
+      "id": "rbac.unauth",
+      "pass": true,
+      "detail": "status=401"
+    },
+    {
+      "id": "rbac.cashierDenied",
+      "pass": true,
+      "detail": "status=403"
+    },
+    {
+      "id": "setup.branch",
+      "pass": true,
+      "detail": "royal-orchard"
+    },
+    {
+      "id": "setup.menuItem",
+      "pass": true,
+      "detail": "Quarter Broast"
+    },
+    {
+      "id": "setup.inventoryItem",
+      "pass": true,
+      "detail": "status=201"
+    },
+    {
+      "id": "recipe.create",
+      "pass": true,
+      "detail": "status=201 code= msg={\"ok\":true,\"data\":{\"id\":\"f0ab96ae-1ba9-4b4c-a9d6-47ceab944879\",\"branchId\":\"a99882bf-1de3-4944-a876-78aa73bf5eba\",\"branchCode\":\"royal-orchard\",\"branchName\":\"Royal Orchard Branch\",\"menuItemId\":\"72202094"
+    },
+    {
+      "id": "recipe.list",
+      "pass": true,
+      "detail": "status=200 count=3"
+    },
+    {
+      "id": "recipe.get",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "id": "recipe.patch",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "id": "recipe.activate",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "id": "recipe.bomSynced",
+      "pass": true,
+      "detail": "rows=1"
+    },
+    {
+      "id": "recipe.incompatibleUnitsBlocked",
+      "pass": true,
+      "detail": "createStatus=400"
+    },
+    {
+      "id": "recipe.missingEndpoint",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "id": "consume.setupOrder",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "consume.setupOrderItem",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "consume.setupTicket",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "consume.preparing",
+      "pass": true,
+      "detail": "status=200 err="
+    },
+    {
+      "id": "consume.event",
+      "pass": true,
+      "detail": "count=1"
+    },
+    {
+      "id": "consume.stockDown",
+      "pass": true,
+      "detail": "before=5000 after=4874"
+    },
+    {
+      "id": "cogs.deferredReady",
+      "pass": true,
+      "detail": "count=1 status=deferred"
+    },
+    {
+      "id": "consume.idempotent",
+      "pass": true,
+      "detail": "status=200 count=1"
+    },
+    {
+      "id": "reverse.cancel",
+      "pass": true,
+      "detail": "status=200 code= msg="
+    },
+    {
+      "id": "reverse.event",
+      "pass": true,
+      "detail": "count=1"
+    },
+    {
+      "id": "reverse.stockRestored",
+      "pass": true,
+      "detail": "afterConsume=4874 afterReverse=5000"
+    },
+    {
+      "id": "cogs.deferredReverse",
+      "pass": true,
+      "detail": "count=1"
+    }
+  ],
+  "failures": [],
+  "totals": {
+    "checks": 27,
+    "passed": 27,
+    "failed": 0
+  }
+}
