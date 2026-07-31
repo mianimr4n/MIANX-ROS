@@ -10,7 +10,7 @@
 | Finance / Workforce / Loyalty+Marketing | #143 / #144 / #146 MERGED |
 | Release branch | `feature/rc3-release-certification` |
 | Pre-rebase tip | `92af0e4` (equivalent schema commit; tree identical to main) |
-| Tip | `21d4a3c` (`release(rc3): rebaseline certification on current main`) |
+| Tip | `775c6ef` (`release(rc3): rebaseline certification on current main`) |
 | Environment | Node v24.18.0 · pnpm 10.15.1 · Supabase CLI 2.110.0 · Playwright 1.52.0 · Windows 10 |
 
 ### Rebaseline notes
