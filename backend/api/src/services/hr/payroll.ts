@@ -5,19 +5,28 @@ import type { EnvironmentStatus } from "../../config/env.js";
 import { assertBranchMembership } from "../branches/operational-status.js";
 import { loadBranchRow } from "../branches/lookup.js";
 import type { BranchActorScope } from "../tables/management.js";
+import { CALC_VERSION } from "./payroll-calc.js";
+import { executePayrollCalculation, PAYMENT_MSG } from "./payroll-engine.js";
 
 export const HR_PAYROLL_STATUSES = [
   "draft",
   "calculated",
   "under_review",
+  "review_required",
   "approved",
-  "locked",
+  "payment_ready",
+  "paid",
   "cancelled",
+  "reversed",
+  "locked",
 ] as const;
 export type HrPayrollStatus = (typeof HR_PAYROLL_STATUSES)[number];
 
 export const HR_SALARY_TYPES = ["monthly", "hourly", "daily"] as const;
 export type HrSalaryType = (typeof HR_SALARY_TYPES)[number];
+
+const IMMUTABLE_STATUSES = new Set<string>(["approved", "payment_ready", "paid", "locked", "reversed"]);
+const CALCULABLE_STATUSES = new Set<string>(["draft", "calculated", "under_review", "review_required"]);
 
 export interface CompensationProfileRecord {
   id: string;
@@ -41,9 +50,11 @@ export interface PayPeriodRecord {
   branchId: string;
   periodStart: string;
   periodEnd: string;
+  payDate: string | null;
   status: HrPayrollStatus;
   createdBy: string | null;
   approvedBy: string | null;
+  lockedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,6 +66,9 @@ export interface PayrollRunRecord {
   status: HrPayrollStatus;
   calculationStatus: "unavailable" | "partial" | "complete";
   calculationNote: string | null;
+  calculationVersion: string | null;
+  calculatedAt: string | null;
+  paymentReadyAt: string | null;
   createdBy: string | null;
   approvedBy: string | null;
   lockedAt: string | null;
@@ -62,6 +76,52 @@ export interface PayrollRunRecord {
   updatedAt: string;
   paymentTriggered: false;
   paymentMessage: string;
+  accountingStatus: "DEFERRED" | "LIVE";
+}
+
+export interface PayrollLineRecord {
+  id: string;
+  payrollRunId: string;
+  employeeId: string;
+  earnings: number;
+  deductions: number;
+  adjustments: number;
+  grossPay: number;
+  netPay: number;
+  currency: string;
+  lineStatus: string;
+  notes: string | null;
+  compensationProfileId: string | null;
+  formulaSnapshot: Record<string, unknown>;
+  inputSnapshot: Record<string, unknown>;
+}
+
+export interface PayrollExceptionRecord {
+  id: string;
+  payrollRunId: string;
+  branchId: string;
+  employeeId: string | null;
+  exceptionCode: string;
+  severity: string;
+  message: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface PayslipRecord {
+  id: string;
+  payrollRunId: string;
+  payrollLineId: string;
+  employeeId: string;
+  branchId: string;
+  periodStart: string;
+  periodEnd: string;
+  grossPay: number;
+  netPay: number;
+  currency: string;
+  paymentStatus: string;
+  payload: Record<string, unknown>;
+  issuedAt: string;
 }
 
 export interface HrPayrollService {
@@ -83,7 +143,7 @@ export interface HrPayrollService {
   createPayPeriod(
     scope: BranchActorScope,
     actorUserId: string,
-    input: { branchId: string; periodStart: string; periodEnd: string },
+    input: { branchId: string; periodStart: string; periodEnd: string; payDate?: string | null },
   ): Promise<PayPeriodRecord>;
   listPayrollRuns(scope: BranchActorScope, branchId?: string): Promise<PayrollRunRecord[]>;
   createPayrollRun(
@@ -93,12 +153,31 @@ export interface HrPayrollService {
   ): Promise<PayrollRunRecord>;
   calculatePayrollRun(scope: BranchActorScope, actorUserId: string, runId: string): Promise<PayrollRunRecord>;
   approvePayrollRun(scope: BranchActorScope, actorUserId: string, runId: string): Promise<PayrollRunRecord>;
+  rejectPayrollRun(
+    scope: BranchActorScope,
+    actorUserId: string,
+    runId: string,
+    reason?: string,
+  ): Promise<PayrollRunRecord>;
+  markPaymentReady(scope: BranchActorScope, actorUserId: string, runId: string): Promise<PayrollRunRecord>;
   lockPayrollRun(scope: BranchActorScope, actorUserId: string, runId: string): Promise<PayrollRunRecord>;
+  cancelPayrollRun(
+    scope: BranchActorScope,
+    actorUserId: string,
+    runId: string,
+    reason?: string,
+  ): Promise<PayrollRunRecord>;
+  reversePayrollRun(
+    scope: BranchActorScope,
+    actorUserId: string,
+    runId: string,
+    reason?: string,
+  ): Promise<PayrollRunRecord>;
+  listPayrollLines(scope: BranchActorScope, runId: string): Promise<PayrollLineRecord[]>;
+  listPayrollExceptions(scope: BranchActorScope, runId: string): Promise<PayrollExceptionRecord[]>;
+  listPayslips(scope: BranchActorScope, runId: string): Promise<PayslipRecord[]>;
+  getPayslip(scope: BranchActorScope, payslipId: string): Promise<PayslipRecord>;
 }
-
-const PAYMENT_MSG = "Payroll foundation does not trigger payments.";
-const CALC_UNAVAILABLE_MSG =
-  "Payroll calculation is not available until compensation rules are configured and Pakistan payroll rules are approved.";
 
 type CompRow = {
   id: string;
@@ -122,9 +201,11 @@ type PeriodRow = {
   branch_id: string;
   period_start: string;
   period_end: string;
+  pay_date?: string | null;
   status: string;
   created_by: string | null;
   approved_by: string | null;
+  locked_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -136,6 +217,9 @@ type RunRow = {
   status: string;
   calculation_status: string;
   calculation_note: string | null;
+  calculation_version?: string | null;
+  calculated_at?: string | null;
+  payment_ready_at?: string | null;
   created_by: string | null;
   approved_by: string | null;
   locked_at: string | null;
@@ -187,9 +271,11 @@ function mapPeriod(row: PeriodRow): PayPeriodRecord {
     branchId: row.branch_id,
     periodStart: row.period_start,
     periodEnd: row.period_end,
+    payDate: row.pay_date ?? null,
     status: row.status as HrPayrollStatus,
     createdBy: row.created_by,
     approvedBy: row.approved_by,
+    lockedAt: row.locked_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -203,6 +289,9 @@ function mapRun(row: RunRow): PayrollRunRecord {
     status: row.status as HrPayrollStatus,
     calculationStatus: row.calculation_status as PayrollRunRecord["calculationStatus"],
     calculationNote: row.calculation_note,
+    calculationVersion: row.calculation_version ?? null,
+    calculatedAt: row.calculated_at ?? null,
+    paymentReadyAt: row.payment_ready_at ?? null,
     createdBy: row.created_by,
     approvedBy: row.approved_by,
     lockedAt: row.locked_at,
@@ -210,6 +299,7 @@ function mapRun(row: RunRow): PayrollRunRecord {
     updatedAt: row.updated_at,
     paymentTriggered: false,
     paymentMessage: PAYMENT_MSG,
+    accountingStatus: "DEFERRED",
   };
 }
 
@@ -238,6 +328,13 @@ async function writePayrollEvent(
     if (error.code === "42P01" || /does not exist/i.test(error.message)) return;
     throw new ApiError(500, "HR_PAYROLL_EVENT_FAILED", error.message);
   }
+}
+
+async function loadRun(client: SupabaseClient, runId: string): Promise<PayrollRunRecord> {
+  const { data, error } = await client.from("hr_payroll_runs").select("*").eq("id", runId).maybeSingle();
+  if (error) throw new ApiError(500, "HR_PAYROLL_RUN_READ_FAILED", error.message);
+  if (!data) throw new ApiError(404, "HR_PAYROLL_RUN_NOT_FOUND", "Payroll run not found.");
+  return mapRun(data as unknown as RunRow);
 }
 
 export function createHrPayrollService(envStatus: EnvironmentStatus): HrPayrollService {
@@ -279,7 +376,6 @@ export function createHrPayrollService(envStatus: EnvironmentStatus): HrPayrollS
         throw new ApiError(400, "VALIDATION_ERROR", "Employee must belong to the branch.");
       }
 
-      // Close prior open active profile to avoid overlap
       if (!input.effectiveTo) {
         await client
           .from("hr_compensation_profiles")
@@ -343,12 +439,31 @@ export function createHrPayrollService(envStatus: EnvironmentStatus): HrPayrollS
       }
       const client = supabase();
       await loadBranchRow(client, input.branchId);
+
+      const { data: existingPeriods, error: overlapErr } = await client
+        .from("hr_pay_periods")
+        .select("id, period_start, period_end, status")
+        .eq("branch_id", input.branchId)
+        .neq("status", "cancelled");
+      if (overlapErr) throw new ApiError(500, "HR_PAY_PERIOD_READ_FAILED", overlapErr.message);
+      const overlap = (existingPeriods ?? []).find(
+        (p) => !(input.periodEnd < p.period_start || input.periodStart > p.period_end),
+      );
+      if (overlap) {
+        throw new ApiError(
+          409,
+          "HR_PAY_PERIOD_OVERLAP",
+          `Overlapping pay period exists (${overlap.period_start}–${overlap.period_end}).`,
+        );
+      }
+
       const { data, error } = await client
         .from("hr_pay_periods")
         .insert({
           branch_id: input.branchId,
           period_start: input.periodStart,
           period_end: input.periodEnd,
+          pay_date: input.payDate ?? null,
           status: "draft",
           created_by: actorUserId,
         })
@@ -392,12 +507,21 @@ export function createHrPayrollService(envStatus: EnvironmentStatus): HrPayrollS
           branch_id: period.branch_id,
           status: "draft",
           calculation_status: "unavailable",
-          calculation_note: CALC_UNAVAILABLE_MSG,
+          calculation_note: "Draft — not yet calculated.",
           created_by: actorUserId,
         })
         .select("*")
         .single();
-      if (error) throw new ApiError(500, "HR_PAYROLL_RUN_CREATE_FAILED", error.message);
+      if (error) {
+        if (error.code === "23505") {
+          throw new ApiError(
+            409,
+            "HR_PAYROLL_RUN_EXISTS",
+            "An active payroll run already exists for this period. Cancel or reverse before creating another root run.",
+          );
+        }
+        throw new ApiError(500, "HR_PAYROLL_RUN_CREATE_FAILED", error.message);
+      }
 
       const run = mapRun(data as unknown as RunRow);
       await writePayrollEvent(client, {
@@ -412,28 +536,44 @@ export function createHrPayrollService(envStatus: EnvironmentStatus): HrPayrollS
 
     async calculatePayrollRun(scope, actorUserId, runId) {
       const client = supabase();
-      const { data: existing, error: readError } = await client
-        .from("hr_payroll_runs")
-        .select("*")
-        .eq("id", runId)
-        .maybeSingle();
-      if (readError) throw new ApiError(500, "HR_PAYROLL_RUN_READ_FAILED", readError.message);
-      if (!existing) throw new ApiError(404, "HR_PAYROLL_RUN_NOT_FOUND", "Payroll run not found.");
-      const before = mapRun(existing as unknown as RunRow);
+      const before = await loadRun(client, runId);
       assertBranchMembership(scope, before.branchId);
 
-      if (before.status === "locked") {
-        throw new ApiError(409, "HR_PAYROLL_LOCKED", "Locked payroll runs are immutable.");
+      if (IMMUTABLE_STATUSES.has(before.status)) {
+        throw new ApiError(
+          409,
+          "HR_PAYROLL_IMMUTABLE",
+          "Approved/locked/paid/reversed runs cannot be recalculated in place. Create a controlled revision after reverse/cancel policy.",
+        );
+      }
+      if (!CALCULABLE_STATUSES.has(before.status)) {
+        throw new ApiError(409, "HR_PAYROLL_NOT_CALCULABLE", `Cannot calculate run in status ${before.status}.`);
       }
 
-      // Honest unavailable calculation — do not invent Pakistan payroll rules
+      const { data: period, error: periodError } = await client
+        .from("hr_pay_periods")
+        .select("period_start, period_end")
+        .eq("id", before.payPeriodId)
+        .single();
+      if (periodError) throw new ApiError(500, "HR_PAY_PERIOD_READ_FAILED", periodError.message);
+
+      const result = await executePayrollCalculation(client, {
+        runId,
+        branchId: before.branchId,
+        periodStart: period.period_start,
+        periodEnd: period.period_end,
+        actorUserId,
+      });
+
       const now = new Date().toISOString();
       const { data, error } = await client
         .from("hr_payroll_runs")
         .update({
-          status: "under_review",
-          calculation_status: "unavailable",
-          calculation_note: CALC_UNAVAILABLE_MSG,
+          status: result.status,
+          calculation_status: result.calculationStatus,
+          calculation_note: result.calculationNote,
+          calculation_version: CALC_VERSION,
+          calculated_at: now,
           updated_at: now,
         })
         .eq("id", runId)
@@ -446,30 +586,30 @@ export function createHrPayrollService(envStatus: EnvironmentStatus): HrPayrollS
         runId,
         branchId: after.branchId,
         actorUserId,
-        action: "payroll.calculate_unavailable",
+        action: "payroll.calculate",
         before,
-        after,
+        after: { ...after, lineCount: result.lineCount, exceptionCount: result.exceptionCount },
       });
       return after;
     },
 
     async approvePayrollRun(scope, actorUserId, runId) {
       const client = supabase();
-      const { data: existing, error: readError } = await client
-        .from("hr_payroll_runs")
-        .select("*")
-        .eq("id", runId)
-        .maybeSingle();
-      if (readError) throw new ApiError(500, "HR_PAYROLL_RUN_READ_FAILED", readError.message);
-      if (!existing) throw new ApiError(404, "HR_PAYROLL_RUN_NOT_FOUND", "Payroll run not found.");
-      const before = mapRun(existing as unknown as RunRow);
+      const before = await loadRun(client, runId);
       assertBranchMembership(scope, before.branchId);
 
-      if (before.status === "locked") {
-        throw new ApiError(409, "HR_PAYROLL_LOCKED", "Locked payroll runs are immutable.");
+      if (IMMUTABLE_STATUSES.has(before.status) && before.status !== "approved") {
+        throw new ApiError(409, "HR_PAYROLL_IMMUTABLE", "Run cannot be approved in its current status.");
       }
-      if (before.status !== "under_review" && before.status !== "calculated") {
-        throw new ApiError(409, "HR_PAYROLL_NOT_REVIEWABLE", "Payroll run must be under review before approval.");
+      if (
+        before.status !== "under_review" &&
+        before.status !== "calculated" &&
+        before.status !== "review_required"
+      ) {
+        throw new ApiError(409, "HR_PAYROLL_NOT_REVIEWABLE", "Payroll run must be calculated/reviewed before approval.");
+      }
+      if (before.calculationStatus === "unavailable") {
+        throw new ApiError(409, "HR_PAYROLL_NOT_CALCULATED", "Cannot approve a run that was never calculated.");
       }
 
       const now = new Date().toISOString();
@@ -493,19 +633,94 @@ export function createHrPayrollService(envStatus: EnvironmentStatus): HrPayrollS
       return after;
     },
 
+    async rejectPayrollRun(scope, actorUserId, runId, reason) {
+      const client = supabase();
+      const before = await loadRun(client, runId);
+      assertBranchMembership(scope, before.branchId);
+      if (!["calculated", "under_review", "review_required"].includes(before.status)) {
+        throw new ApiError(409, "HR_PAYROLL_NOT_REJECTABLE", "Only calculated/review runs can be rejected to draft.");
+      }
+      const now = new Date().toISOString();
+      const { data, error } = await client
+        .from("hr_payroll_runs")
+        .update({
+          status: "draft",
+          calculation_status: "unavailable",
+          calculation_note: reason ? `Rejected: ${reason}` : "Rejected — returned to draft for recalculation.",
+          updated_at: now,
+        })
+        .eq("id", runId)
+        .select("*")
+        .single();
+      if (error) throw new ApiError(500, "HR_PAYROLL_REJECT_FAILED", error.message);
+      const after = mapRun(data as unknown as RunRow);
+      await writePayrollEvent(client, {
+        runId,
+        branchId: after.branchId,
+        actorUserId,
+        action: "payroll.reject",
+        reason: reason ?? null,
+        before,
+        after,
+      });
+      return after;
+    },
+
+    async markPaymentReady(scope, actorUserId, runId) {
+      const client = supabase();
+      const before = await loadRun(client, runId);
+      assertBranchMembership(scope, before.branchId);
+      if (before.status !== "approved" && before.status !== "locked") {
+        throw new ApiError(409, "HR_PAYROLL_NOT_APPROVED", "Run must be approved (or locked) before payment_ready.");
+      }
+      const now = new Date().toISOString();
+      const { data, error } = await client
+        .from("hr_payroll_runs")
+        .update({ status: "payment_ready", payment_ready_at: now, updated_at: now })
+        .eq("id", runId)
+        .select("*")
+        .single();
+      if (error) throw new ApiError(500, "HR_PAYROLL_PAYMENT_READY_FAILED", error.message);
+
+      await client
+        .from("hr_payslips")
+        .update({ payment_status: "payment_ready" })
+        .eq("payroll_run_id", runId)
+        .eq("payment_status", "unpaid");
+
+      await client.from("hr_payroll_posting_events").upsert(
+        {
+          payroll_run_id: runId,
+          branch_id: before.branchId,
+          event_type: "payroll_payment_ready",
+          status: "deferred",
+          idempotency_key: `payroll_payment_ready:${runId}`,
+          payload: { note: "Payment instruction export only — no settlement applied." },
+          deferred_reason:
+            "Payment execution DEFERRED. No bank provider authorized. paymentTriggered remains false without hr_payroll_settlements.",
+        },
+        { onConflict: "idempotency_key" },
+      );
+
+      const after = mapRun(data as unknown as RunRow);
+      await writePayrollEvent(client, {
+        runId,
+        branchId: after.branchId,
+        actorUserId,
+        action: "payroll.payment_ready",
+        before,
+        after,
+      });
+      // Explicit: never paid
+      return { ...after, paymentTriggered: false as const, paymentMessage: PAYMENT_MSG };
+    },
+
     async lockPayrollRun(scope, actorUserId, runId) {
       const client = supabase();
-      const { data: existing, error: readError } = await client
-        .from("hr_payroll_runs")
-        .select("*")
-        .eq("id", runId)
-        .maybeSingle();
-      if (readError) throw new ApiError(500, "HR_PAYROLL_RUN_READ_FAILED", readError.message);
-      if (!existing) throw new ApiError(404, "HR_PAYROLL_RUN_NOT_FOUND", "Payroll run not found.");
-      const before = mapRun(existing as unknown as RunRow);
+      const before = await loadRun(client, runId);
       assertBranchMembership(scope, before.branchId);
 
-      if (before.status !== "approved") {
+      if (before.status !== "approved" && before.status !== "payment_ready") {
         throw new ApiError(409, "HR_PAYROLL_NOT_APPROVED", "Payroll run must be approved before lock.");
       }
 
@@ -518,6 +733,11 @@ export function createHrPayrollService(envStatus: EnvironmentStatus): HrPayrollS
         .single();
       if (error) throw new ApiError(500, "HR_PAYROLL_LOCK_FAILED", error.message);
 
+      await client
+        .from("hr_pay_periods")
+        .update({ status: "locked", locked_at: now, updated_at: now })
+        .eq("id", before.payPeriodId);
+
       const after = mapRun(data as unknown as RunRow);
       await writePayrollEvent(client, {
         runId,
@@ -527,8 +747,174 @@ export function createHrPayrollService(envStatus: EnvironmentStatus): HrPayrollS
         before,
         after,
       });
-      // Explicitly never trigger payment
       return { ...after, paymentTriggered: false as const, paymentMessage: PAYMENT_MSG };
+    },
+
+    async cancelPayrollRun(scope, actorUserId, runId, reason) {
+      const client = supabase();
+      const before = await loadRun(client, runId);
+      assertBranchMembership(scope, before.branchId);
+      if (before.status === "paid") {
+        throw new ApiError(409, "HR_PAYROLL_PAID", "Paid runs cannot be cancelled; use reversal policy.");
+      }
+      if (before.status === "cancelled" || before.status === "reversed") {
+        throw new ApiError(409, "HR_PAYROLL_ALREADY_CLOSED", "Run is already cancelled or reversed.");
+      }
+      const now = new Date().toISOString();
+      const { data, error } = await client
+        .from("hr_payroll_runs")
+        .update({ status: "cancelled", updated_at: now })
+        .eq("id", runId)
+        .select("*")
+        .single();
+      if (error) throw new ApiError(500, "HR_PAYROLL_CANCEL_FAILED", error.message);
+      const after = mapRun(data as unknown as RunRow);
+      await writePayrollEvent(client, {
+        runId,
+        branchId: after.branchId,
+        actorUserId,
+        action: "payroll.cancel",
+        reason: reason ?? null,
+        before,
+        after,
+      });
+      return after;
+    },
+
+    async reversePayrollRun(scope, actorUserId, runId, reason) {
+      const client = supabase();
+      const before = await loadRun(client, runId);
+      assertBranchMembership(scope, before.branchId);
+      if (!["approved", "payment_ready", "locked"].includes(before.status)) {
+        throw new ApiError(
+          409,
+          "HR_PAYROLL_NOT_REVERSIBLE",
+          "Only approved/payment_ready/locked runs can be reversed (paid requires settlement void — deferred).",
+        );
+      }
+      if (!reason || reason.trim().length < 3) {
+        throw new ApiError(400, "VALIDATION_ERROR", "Reversal requires an explicit reason.");
+      }
+      const now = new Date().toISOString();
+      const { data, error } = await client
+        .from("hr_payroll_runs")
+        .update({ status: "reversed", updated_at: now })
+        .eq("id", runId)
+        .select("*")
+        .single();
+      if (error) throw new ApiError(500, "HR_PAYROLL_REVERSE_FAILED", error.message);
+      const after = mapRun(data as unknown as RunRow);
+      await writePayrollEvent(client, {
+        runId,
+        branchId: after.branchId,
+        actorUserId,
+        action: "payroll.reverse",
+        reason,
+        before,
+        after,
+      });
+      return after;
+    },
+
+    async listPayrollLines(scope, runId) {
+      const client = supabase();
+      const run = await loadRun(client, runId);
+      assertBranchMembership(scope, run.branchId);
+      const { data, error } = await client
+        .from("hr_payroll_lines")
+        .select("*")
+        .eq("payroll_run_id", runId)
+        .order("created_at", { ascending: true });
+      if (error) throw new ApiError(500, "HR_PAYROLL_LINES_READ_FAILED", error.message);
+      return (data ?? []).map((row) => ({
+        id: row.id as string,
+        payrollRunId: row.payroll_run_id as string,
+        employeeId: row.employee_id as string,
+        earnings: Number(row.earnings),
+        deductions: Number(row.deductions),
+        adjustments: Number(row.adjustments),
+        grossPay: Number(row.gross_pay ?? 0),
+        netPay: Number(row.net_pay ?? 0),
+        currency: (row.currency as string) ?? "PKR",
+        lineStatus: (row.line_status as string) ?? "ok",
+        notes: (row.notes as string | null) ?? null,
+        compensationProfileId: (row.compensation_profile_id as string | null) ?? null,
+        formulaSnapshot: (row.formula_snapshot as Record<string, unknown>) ?? {},
+        inputSnapshot: (row.input_snapshot as Record<string, unknown>) ?? {},
+      }));
+    },
+
+    async listPayrollExceptions(scope, runId) {
+      const client = supabase();
+      const run = await loadRun(client, runId);
+      assertBranchMembership(scope, run.branchId);
+      const { data, error } = await client
+        .from("hr_payroll_exceptions")
+        .select("*")
+        .eq("payroll_run_id", runId)
+        .order("created_at", { ascending: true });
+      if (error) throw new ApiError(500, "HR_PAYROLL_EXCEPTIONS_READ_FAILED", error.message);
+      return (data ?? []).map((row) => ({
+        id: row.id as string,
+        payrollRunId: row.payroll_run_id as string,
+        branchId: row.branch_id as string,
+        employeeId: (row.employee_id as string | null) ?? null,
+        exceptionCode: row.exception_code as string,
+        severity: row.severity as string,
+        message: row.message as string,
+        status: row.status as string,
+        createdAt: row.created_at as string,
+      }));
+    },
+
+    async listPayslips(scope, runId) {
+      const client = supabase();
+      const run = await loadRun(client, runId);
+      assertBranchMembership(scope, run.branchId);
+      const { data, error } = await client
+        .from("hr_payslips")
+        .select("*")
+        .eq("payroll_run_id", runId)
+        .order("issued_at", { ascending: true });
+      if (error) throw new ApiError(500, "HR_PAYSLIPS_READ_FAILED", error.message);
+      return (data ?? []).map((row) => ({
+        id: row.id as string,
+        payrollRunId: row.payroll_run_id as string,
+        payrollLineId: row.payroll_line_id as string,
+        employeeId: row.employee_id as string,
+        branchId: row.branch_id as string,
+        periodStart: row.period_start as string,
+        periodEnd: row.period_end as string,
+        grossPay: Number(row.gross_pay),
+        netPay: Number(row.net_pay),
+        currency: row.currency as string,
+        paymentStatus: row.payment_status as string,
+        payload: (row.payload as Record<string, unknown>) ?? {},
+        issuedAt: row.issued_at as string,
+      }));
+    },
+
+    async getPayslip(scope, payslipId) {
+      const client = supabase();
+      const { data, error } = await client.from("hr_payslips").select("*").eq("id", payslipId).maybeSingle();
+      if (error) throw new ApiError(500, "HR_PAYSLIP_READ_FAILED", error.message);
+      if (!data) throw new ApiError(404, "HR_PAYSLIP_NOT_FOUND", "Payslip not found.");
+      assertBranchMembership(scope, data.branch_id as string);
+      return {
+        id: data.id as string,
+        payrollRunId: data.payroll_run_id as string,
+        payrollLineId: data.payroll_line_id as string,
+        employeeId: data.employee_id as string,
+        branchId: data.branch_id as string,
+        periodStart: data.period_start as string,
+        periodEnd: data.period_end as string,
+        grossPay: Number(data.gross_pay),
+        netPay: Number(data.net_pay),
+        currency: data.currency as string,
+        paymentStatus: data.payment_status as string,
+        payload: (data.payload as Record<string, unknown>) ?? {},
+        issuedAt: data.issued_at as string,
+      };
     },
   };
 }

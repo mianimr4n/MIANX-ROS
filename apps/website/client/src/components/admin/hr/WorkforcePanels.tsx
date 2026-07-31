@@ -18,10 +18,14 @@ import {
   fetchHrDocumentDownloadUrl,
   listHrCompensation,
   listHrPayPeriods,
+  listHrPayrollExceptions,
+  listHrPayrollLines,
   listHrPayrollRuns,
+  listHrPayslips,
   listHrShiftTemplates,
   listHrShifts,
   lockHrPayrollRun,
+  markHrPayrollPaymentReady,
   publishHrShift,
   uploadHrDocument,
   type HrAttendance,
@@ -33,7 +37,10 @@ import {
   type HrLeaveRequest,
   type HrLeaveType,
   type HrPayPeriod,
+  type HrPayrollException,
+  type HrPayrollLine,
   type HrPayrollRun,
+  type HrPayslip,
   type HrScheduledShift,
   type HrShiftTemplate,
 } from "@/lib/admin-api";
@@ -1071,6 +1078,10 @@ export function PayrollOverview({
   const [compensation, setCompensation] = useState<Awaited<ReturnType<typeof listHrCompensation>> | null>(null);
   const [payPeriods, setPayPeriods] = useState<HrPayPeriod[] | null>(null);
   const [payrollRuns, setPayrollRuns] = useState<HrPayrollRun[] | null>(null);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [lines, setLines] = useState<HrPayrollLine[] | null>(null);
+  const [exceptions, setExceptions] = useState<HrPayrollException[] | null>(null);
+  const [payslips, setPayslips] = useState<HrPayslip[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyRunId, setBusyRunId] = useState<string | null>(null);
@@ -1099,11 +1110,33 @@ export function PayrollOverview({
       setCompensation(null);
       setPayPeriods(null);
       setPayrollRuns(null);
-      setError(err instanceof ApiRequestError ? err.message : "Failed to load payroll foundation.");
+      setError(err instanceof ApiRequestError ? err.message : "Failed to load payroll.");
     } finally {
       setLoading(false);
     }
   }, [accessToken, branchId]);
+
+  const loadRunDetail = useCallback(
+    async (runId: string) => {
+      if (!accessToken) return;
+      setSelectedRunId(runId);
+      try {
+        const [lineRows, exRows, slipRows] = await Promise.all([
+          listHrPayrollLines(accessToken, runId),
+          listHrPayrollExceptions(accessToken, runId),
+          listHrPayslips(accessToken, runId),
+        ]);
+        setLines(lineRows);
+        setExceptions(exRows);
+        setPayslips(slipRows);
+      } catch {
+        setLines([]);
+        setExceptions([]);
+        setPayslips([]);
+      }
+    },
+    [accessToken],
+  );
 
   useEffect(() => {
     void load();
@@ -1124,7 +1157,10 @@ export function PayrollOverview({
     }
   }
 
-  async function onRunAction(runId: string, action: "calculate" | "approve" | "lock") {
+  async function onRunAction(
+    runId: string,
+    action: "calculate" | "approve" | "lock" | "payment_ready",
+  ) {
     if (!accessToken) return;
     setBusyRunId(runId);
     setActionError(null);
@@ -1132,7 +1168,9 @@ export function PayrollOverview({
       if (action === "calculate") await calculateHrPayrollRun(accessToken, runId);
       if (action === "approve") await approveHrPayrollRun(accessToken, runId);
       if (action === "lock") await lockHrPayrollRun(accessToken, runId);
+      if (action === "payment_ready") await markHrPayrollPaymentReady(accessToken, runId);
       await load();
+      await loadRunDetail(runId);
     } catch (err) {
       setActionError(err instanceof ApiRequestError ? err.message : "Payroll action failed.");
     } finally {
@@ -1140,11 +1178,18 @@ export function PayrollOverview({
     }
   }
 
+  function honestyLabel(run: HrPayrollRun): string {
+    if (run.status === "review_required") return "REVIEW_REQUIRED";
+    if (run.calculationStatus === "complete") return "LIVE";
+    if (run.calculationStatus === "partial") return "REVIEW_REQUIRED";
+    return "UNAVAILABLE";
+  }
+
   return (
     <AdminSurface aria-labelledby="payroll-overview-heading" className="mb-6">
       <AdminSurfaceHeader
         title="Payroll overview"
-        description="Foundation records only — calculation often unavailable and payments are never triggered."
+        description="RC4-3 calculation & approval — payments never silent; GL posting DEFERRED without Finance mappings."
         action={
           canManage && branchId ? (
             <button
@@ -1163,7 +1208,8 @@ export function PayrollOverview({
         </h2>
 
         <p className="mb-4 rounded-lg border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2 text-sm text-[var(--admin-muted)]">
-          Payroll foundation does not calculate net pay or trigger payments. Review runs for workflow status only.
+          paymentTriggered=false until verified settlement. Statutory withholding UNAVAILABLE without approved configs.
+          Accounting status DEFERRED (RC4-8 not on main).
         </p>
 
         {actionError ? (
@@ -1173,9 +1219,9 @@ export function PayrollOverview({
         ) : null}
 
         {!branchId ? (
-          <p className="text-sm text-[var(--admin-muted)]">Select a branch to view payroll foundation.</p>
+          <p className="text-sm text-[var(--admin-muted)]">Select a branch to view payroll.</p>
         ) : loading ? (
-          <p className="text-sm text-[var(--admin-muted)]">Loading payroll foundation…</p>
+          <p className="text-sm text-[var(--admin-muted)]">Loading payroll…</p>
         ) : error ? (
           <p className="text-sm text-red-700" role="alert">
             {error}
@@ -1186,7 +1232,7 @@ export function PayrollOverview({
               <p className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">Compensation profiles</p>
               {!compensation || compensation.length === 0 ? (
                 <p className="mt-2 rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-4 text-sm text-[var(--admin-muted)]">
-                  No compensation profiles yet
+                  No compensation profiles yet — missing compensation blocks calculation
                 </p>
               ) : (
                 <ul className="mt-2 space-y-2 text-sm">
@@ -1216,40 +1262,60 @@ export function PayrollOverview({
                   {payrollRuns.map((run) => (
                     <li key={run.id} className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2">
                       <p className="font-semibold">
-                        Run · {run.status} · calculation {run.calculationStatus}
+                        Run · {run.status} · calc {run.calculationStatus} · {honestyLabel(run)}
                       </p>
                       <p className="mt-1 text-xs text-[var(--admin-muted)]">
-                        {run.calculationNote ?? "Calculation unavailable until payroll rules are approved."}
+                        {run.calculationNote ?? "Not calculated yet."}
                       </p>
                       <p className="mt-1 text-xs text-[var(--admin-muted)]">{run.paymentMessage}</p>
-                      {canManage ? (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            disabled={busyRunId === run.id}
-                            onClick={() => void onRunAction(run.id, "calculate")}
-                            className="rounded-lg border border-[var(--admin-border)] bg-white px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
-                          >
-                            Calculate
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busyRunId === run.id}
-                            onClick={() => void onRunAction(run.id, "approve")}
-                            className="rounded-lg border border-[var(--admin-border)] bg-white px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busyRunId === run.id}
-                            onClick={() => void onRunAction(run.id, "lock")}
-                            className="rounded-lg border border-[var(--admin-border)] bg-white px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
-                          >
-                            Lock
-                          </button>
-                        </div>
-                      ) : null}
+                      <p className="mt-1 text-xs text-[var(--admin-muted)]">
+                        Accounting: {run.accountingStatus ?? "DEFERRED"} · paymentTriggered=false
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void loadRunDetail(run.id)}
+                          className="rounded-lg border border-[var(--admin-border)] bg-white px-3 py-1.5 text-xs font-semibold"
+                        >
+                          View lines / payslips
+                        </button>
+                        {canManage ? (
+                          <>
+                            <button
+                              type="button"
+                              disabled={busyRunId === run.id}
+                              onClick={() => void onRunAction(run.id, "calculate")}
+                              className="rounded-lg border border-[var(--admin-border)] bg-white px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
+                            >
+                              Calculate
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busyRunId === run.id}
+                              onClick={() => void onRunAction(run.id, "approve")}
+                              className="rounded-lg border border-[var(--admin-border)] bg-white px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busyRunId === run.id}
+                              onClick={() => void onRunAction(run.id, "payment_ready")}
+                              className="rounded-lg border border-[var(--admin-border)] bg-white px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
+                            >
+                              Mark payment ready
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busyRunId === run.id}
+                              onClick={() => void onRunAction(run.id, "lock")}
+                              className="rounded-lg border border-[var(--admin-border)] bg-white px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
+                            >
+                              Lock
+                            </button>
+                          </>
+                        ) : null}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -1258,6 +1324,68 @@ export function PayrollOverview({
                 <p className="mt-2 text-xs text-[var(--admin-muted)]">{payPeriods.length} pay period(s) on file.</p>
               ) : null}
             </div>
+
+            {selectedRunId ? (
+              <div className="mt-6 space-y-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">Exception queue</p>
+                  {!exceptions || exceptions.length === 0 ? (
+                    <p className="mt-2 text-sm text-[var(--admin-muted)]">No exceptions for this run.</p>
+                  ) : (
+                    <ul className="mt-2 space-y-1 text-sm">
+                      {exceptions.map((ex) => (
+                        <li key={ex.id} className="rounded-lg border border-[var(--admin-border)] px-3 py-2">
+                          <span className="font-semibold">{ex.severity}</span> · {ex.exceptionCode}: {ex.message}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+                    Employee calculation lines
+                  </p>
+                  {!lines || lines.length === 0 ? (
+                    <p className="mt-2 text-sm text-[var(--admin-muted)]">No lines — calculate the run first.</p>
+                  ) : (
+                    <ul className="mt-2 space-y-1 text-sm">
+                      {lines.map((line) => (
+                        <li key={line.id} className="rounded-lg border border-[var(--admin-border)] px-3 py-2">
+                          {line.lineStatus === "blocked" || line.lineStatus === "unavailable" ? (
+                            <span>
+                              Employee {line.employeeId.slice(0, 8)}… · {line.lineStatus.toUpperCase()} · see exceptions
+                              (amounts not invented as zero)
+                            </span>
+                          ) : (
+                            <span>
+                              Employee {line.employeeId.slice(0, 8)}… · {line.lineStatus} · gross {line.currency}{" "}
+                              {line.grossPay} · net {line.currency} {line.netPay}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+                    Payslips (printable HTML — PDF deferred)
+                  </p>
+                  {!payslips || payslips.length === 0 ? (
+                    <p className="mt-2 text-sm text-[var(--admin-muted)]">No payslips issued yet.</p>
+                  ) : (
+                    <ul className="mt-2 space-y-1 text-sm">
+                      {payslips.map((slip) => (
+                        <li key={slip.id} className="rounded-lg border border-[var(--admin-border)] px-3 py-2">
+                          Payslip · {slip.paymentStatus} · gross {slip.currency} {slip.grossPay} · net {slip.currency}{" "}
+                          {slip.netPay}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            ) : null}
           </>
         )}
       </AdminSurfaceBody>

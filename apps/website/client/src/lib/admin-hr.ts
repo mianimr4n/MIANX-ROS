@@ -201,8 +201,8 @@ export function integrationChecks(): HrIntegrationCheck[] {
     {
       id: "payroll",
       label: "Payroll engine",
-      status: "missing",
-      note: "Planned for Phase 2 — no salary structures or payroll runs.",
+      status: "present",
+      note: "RC4-3 — periods, compensation, calculate/approve, payslips; paymentTriggered=false; GL DEFERRED.",
     },
     {
       id: "performance",
@@ -277,12 +277,16 @@ export function readinessGroups(): HrReadinessGroup[] {
     {
       id: "payroll",
       title: "Payroll integration",
-      unavailable: "Planned for Phase 2",
-      why: "Salary, allowances, deductions, and payslips must not be calculated in the frontend.",
-      entities: ["payroll_runs", "payslips", "salary_structures"],
-      apis: ["GET /api/v1/admin/hr/payroll/runs (Planned for Phase 2)"],
-      permission: "hr.manage + payment.read (proposed)",
-      related: "Finance & Accounting GL postings.",
+      unavailable: "Bank payment execution; Pakistan statutory rates; GL journals (DEFERRED)",
+      why: "RC4-3 calculates server-side with integer minor units; paymentTriggered=false without settlement.",
+      entities: ["hr_payroll_runs", "hr_payslips", "hr_compensation_profiles", "hr_payroll_exceptions"],
+      apis: [
+        "GET/POST /api/v1/admin/hr/payroll-runs",
+        "POST /api/v1/admin/hr/payroll-runs/:id/calculate|approve|payment-ready",
+        "GET /api/v1/admin/hr/payroll-runs/:id/lines|exceptions|payslips",
+      ],
+      permission: "hr.manage, staff.manage, or admin.access",
+      related: "RC4-8 Finance posting DEFERRED on this baseline (Option B).",
     },
   ];
 }
@@ -360,9 +364,9 @@ export function buildWorkforceInsights(input: {
   }
 
   items.push({
-    id: "no-payroll",
-    title: "Payroll integration Planned for Phase 2",
-    detail: "Salary summaries and payslips require payroll engine — not frontend calculation.",
+    id: "no-silent-payment",
+    title: "Payroll payment remains unpaid without settlement",
+    detail: "paymentTriggered=false; APPROVED/PAYMENT_READY ≠ PAID. Statutory withholding UNAVAILABLE until configs activate.",
     source: "foundation",
   });
 

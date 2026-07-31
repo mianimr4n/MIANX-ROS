@@ -57,12 +57,14 @@ describe("HR & Workforce Management V1 (static)", () => {
     assert.doesNotMatch(assignments, /const empty = !loading && \(rows\?\.length \?\? 0\) === 0/);
   });
 
-  it("wires leave and documents without inventing payroll", () => {
+  it("wires leave and documents with honest payroll calculation UI", () => {
     const panels = read("apps/website/client/src/components/admin/hr/WorkforcePanels.tsx");
-    assert.match(panels, /Payroll foundation does not calculate net pay/);
+    assert.match(panels, /paymentTriggered=false/);
     assert.match(panels, /calculationStatus/);
     assert.match(panels, /paymentMessage/);
     assert.match(panels, /No payroll runs yet/);
+    assert.match(panels, /Exception queue/);
+    assert.match(panels, /Mark payment ready/);
     assert.match(panels, /No leave requests/);
     assert.match(panels, /createHrLeave/);
     assert.match(panels, /decideHrLeave/);
@@ -75,7 +77,7 @@ describe("HR & Workforce Management V1 (static)", () => {
     assert.match(panels, /fetchHrDocumentDownloadUrl/);
     assert.match(panels, /DocumentUploadDropzone/);
     assert.match(panels, /Performance reviews — Planned for Phase 2/);
-    assert.doesNotMatch(panels, /salaryAmount|netPay|leaveBalance:\s*\d/i);
+    assert.doesNotMatch(panels, /leaveBalance:\s*\d/);
     assert.doesNotMatch(panels, /placeholders only|Document storage unavailable|Attendance ledger unavailable/);
   });
 
@@ -111,7 +113,7 @@ describe("HR & Workforce Management V1 (static)", () => {
     assert.match(page, /useAdminAccessGate/);
   });
 
-  it("integration checks document live attendance/leave/documents and Phase 2 payroll", () => {
+  it("integration checks document live attendance/leave/documents and RC4-3 payroll", () => {
     const helper = read("apps/website/client/src/lib/admin-hr.ts");
     assert.match(helper, /hr_attendance/);
     assert.match(helper, /hr_leave_requests/);
@@ -121,7 +123,7 @@ describe("HR & Workforce Management V1 (static)", () => {
     assert.match(helper, /id: "attendance"[\s\S]*status: "present"/);
     assert.match(helper, /id: "leave"[\s\S]*status: "present"/);
     assert.match(helper, /id: "documents"[\s\S]*status: "present"/);
-    assert.match(helper, /id: "payroll"[\s\S]*status: "missing"/);
-    assert.match(helper, /Planned for Phase 2/);
+    assert.match(helper, /id: "payroll"[\s\S]*status: "present"/);
+    assert.match(helper, /paymentTriggered=false/);
   });
 });
