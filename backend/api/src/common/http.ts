@@ -1,5 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
-import { ZodError, type ZodSchema } from "zod";
+import { type ZodSchema } from "zod";
+
+import {
+  createObservabilityErrorHandler,
+  createObservabilityNotFoundHandler,
+} from "../observability/error-format.js";
 
 export class ApiError extends Error {
   statusCode: number;
@@ -78,46 +83,8 @@ export function sendNotImplemented(
   });
 }
 
-export function notFoundHandler(_req: Request, res: Response) {
-  return res.status(404).json({
-    ok: false,
-    error: {
-      code: "NOT_FOUND",
-      message: "Route not found.",
-    },
-  });
-}
+/** 404 handler — includes requestId when request-logging middleware ran. */
+export const notFoundHandler = createObservabilityNotFoundHandler();
 
-export function errorHandler(error: unknown, _req: Request, res: Response, _next: NextFunction) {
-  if (error instanceof ZodError) {
-    return res.status(400).json({
-      ok: false,
-      error: {
-        code: "VALIDATION_ERROR",
-        message: "Request validation failed.",
-        details: error.flatten(),
-      },
-    });
-  }
-
-  if (error instanceof ApiError) {
-    return res.status(error.statusCode).json({
-      ok: false,
-      error: {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-      },
-    });
-  }
-
-  const message = error instanceof Error ? error.message : "Unexpected server error.";
-
-  return res.status(500).json({
-    ok: false,
-    error: {
-      code: "INTERNAL_SERVER_ERROR",
-      message,
-    },
-  });
-}
+/** Global error handler — structured safe errors + request correlation. */
+export const errorHandler = createObservabilityErrorHandler();
