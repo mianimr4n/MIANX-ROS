@@ -10,8 +10,10 @@ import { assertBranchMembership } from "../branches/operational-status.js";
 export const SUPPLIER_RESPONSE_TYPES = [
   "acknowledge",
   "accept",
-  "request_amendment",
   "reject",
+  "request_amendment",
+  "propose_delivery_date",
+  "confirm_delivery_date",
 ] as const;
 export type SupplierResponseType = (typeof SUPPLIER_RESPONSE_TYPES)[number];
 
@@ -21,6 +23,10 @@ export const SUPPLIER_DOCUMENT_TYPES = [
   "tax_document",
   "contract",
   "quality_certificate",
+  "quotation",
+  "purchase_order_acknowledgement",
+  "product_specification",
+  "dispatch_note",
   "other",
 ] as const;
 export type SupplierDocumentType = (typeof SUPPLIER_DOCUMENT_TYPES)[number];
@@ -34,7 +40,19 @@ export const DELIVERY_REF_STATUSES = [
 ] as const;
 export type DeliveryRefStatus = (typeof DELIVERY_REF_STATUSES)[number];
 
-/** PO statuses visible to suppliers (never draft / cancelled / rejected staff decisions alone). */
+export const SUPPLIER_PORTAL_PERMISSIONS = [
+  "supplier.portal",
+  "supplier.portal.access",
+  "supplier.purchase_orders.read",
+  "supplier.purchase_orders.respond",
+  "supplier.documents.read",
+  "supplier.documents.create",
+  "supplier.profile.read",
+] as const;
+
+const CLOSED_PO_STATUSES = new Set(["cancelled", "received", "rejected"]);
+
+/** PO statuses visible to suppliers (never draft). */
 const PORTAL_VISIBLE_PO_STATUSES = [
   "submitted",
   "approved",
@@ -45,12 +63,19 @@ const PORTAL_VISIBLE_PO_STATUSES = [
 
 const RESPONSE_STATUS_MAP: Record<
   SupplierResponseType,
-  "acknowledged" | "accepted" | "amendment_requested" | "rejected"
+  | "acknowledged"
+  | "accepted"
+  | "amendment_requested"
+  | "rejected"
+  | "delivery_date_proposed"
+  | "delivery_date_confirmed"
 > = {
   acknowledge: "acknowledged",
   accept: "accepted",
   request_amendment: "amendment_requested",
   reject: "rejected",
+  propose_delivery_date: "delivery_date_proposed",
+  confirm_delivery_date: "delivery_date_confirmed",
 };
 
 export interface SupplierPortalContext {
@@ -151,8 +176,46 @@ export interface SupplierPortalService {
       responseType: SupplierResponseType;
       reason?: string | null;
       confirmedDeliveryDate?: string | null;
+      idempotencyKey?: string | null;
     },
   ): Promise<PortalPurchaseOrder>;
+  getDashboard(ctx: SupplierPortalContext): Promise<{
+    awaitingResponse: number;
+    acceptedOpen: number;
+    amendmentRequested: number;
+    delayedExpected: number;
+  }>;
+  listResponseQueue(
+    scope: BranchActorScope,
+    branchId?: string,
+  ): Promise<
+    Array<{
+      responseId: string;
+      purchaseOrderId: string;
+      poNumber: string;
+      supplierId: string;
+      supplierName: string | null;
+      responseType: string;
+      reason: string | null;
+      confirmedDeliveryDate: string | null;
+      createdAt: string;
+    }>
+  >;
+  decideAmendment(
+    scope: BranchActorScope,
+    actorUserId: string,
+    input: {
+      responseId: string;
+      decision: "accept_amendment" | "reject_amendment" | "note";
+      internalNote?: string | null;
+    },
+  ): Promise<{ id: string }>;
+  setPortalUserStatus(
+    scope: BranchActorScope,
+    actorUserId: string,
+    portalUserId: string,
+    status: "active" | "suspended" | "deactivated",
+  ): Promise<{ id: string; status: string }>;
   listDocuments(ctx: SupplierPortalContext): Promise<PortalDocument[]>;
   createDocument(
     ctx: SupplierPortalContext,
@@ -362,7 +425,11 @@ export function createSupplierPortalService(envStatus: EnvironmentStatus): Suppl
 
   const service: SupplierPortalService = {
     async resolveContext(principal) {
-      if (principal.userType !== "supplier" && !principal.permissions.includes("supplier.portal")) {
+      const hasPortalAccess =
+        principal.userType === "supplier" ||
+        principal.permissions.includes("supplier.portal") ||
+        principal.permissions.includes("supplier.portal.access");
+      if (!hasPortalAccess) {
         throw new ApiError(403, "SUPPLIER_PORTAL_FORBIDDEN", "Supplier portal access required.");
       }
       const client = supabase();
@@ -372,15 +439,26 @@ export function createSupplierPortalService(envStatus: EnvironmentStatus): Suppl
           "supplier_id, status, supplier:suppliers(id, name, branch_id, approval_status, status)",
         )
         .eq("user_id", principal.userId)
-        .eq("status", "active")
         .maybeSingle();
       if (error) throwMappedDbError("SUPPLIER_PORTAL_CONTEXT_FAILED", error);
       if (!data) {
         throw new ApiError(
           403,
           "SUPPLIER_PORTAL_NOT_LINKED",
-          "No active supplier portal linkage for this account.",
+          "No supplier portal linkage for this account.",
         );
+      }
+      if (data.status === "invited") {
+        throw new ApiError(403, "SUPPLIER_PORTAL_INVITED", "Supplier portal invitation is not activated.");
+      }
+      if (data.status === "suspended") {
+        throw new ApiError(403, "SUPPLIER_PORTAL_SUSPENDED", "Supplier portal access is suspended.");
+      }
+      if (data.status === "deactivated" || data.status === "inactive") {
+        throw new ApiError(403, "SUPPLIER_PORTAL_DEACTIVATED", "Supplier portal access is deactivated.");
+      }
+      if (data.status !== "active") {
+        throw new ApiError(403, "SUPPLIER_PORTAL_FORBIDDEN", "Supplier portal access denied.");
       }
       const supplierRaw = data.supplier as unknown;
       const supplier = (Array.isArray(supplierRaw) ? supplierRaw[0] : supplierRaw) as {
@@ -457,14 +535,56 @@ export function createSupplierPortalService(envStatus: EnvironmentStatus): Suppl
 
     async respondToOrder(ctx, orderId, input) {
       const client = supabase();
-      const order = await loadOrderBundle(client, ctx.supplierId, orderId);
+      const idempotencyKey = input.idempotencyKey?.trim() || null;
 
-      if (input.responseType === "reject" || input.responseType === "request_amendment") {
+      if (idempotencyKey) {
+        const { data: existing, error: existingError } = await client
+          .from("purchase_order_responses")
+          .select(
+            "id, purchase_order_id, response_type, reason, confirmed_delivery_date, created_at, supplier_id",
+          )
+          .eq("idempotency_key", idempotencyKey)
+          .maybeSingle();
+        if (existingError) throwMappedDbError("PURCHASE_ORDER_RESPONSES_READ_FAILED", existingError);
+        if (existing) {
+          if (String(existing.supplier_id) !== ctx.supplierId) {
+            throw new ApiError(409, "IDEMPOTENCY_CONFLICT", "Idempotency key already used.");
+          }
+          return loadOrderBundle(client, ctx.supplierId, String(existing.purchase_order_id));
+        }
+      }
+
+      const order = await loadOrderBundle(client, ctx.supplierId, orderId);
+      if (CLOSED_PO_STATUSES.has(order.status)) {
+        throw new ApiError(
+          409,
+          "PO_NOT_OPEN_FOR_RESPONSE",
+          "This purchase order is no longer open for supplier response.",
+        );
+      }
+
+      if (
+        input.responseType === "reject" ||
+        input.responseType === "request_amendment"
+      ) {
         if (!input.reason?.trim()) {
           throw new ApiError(
             400,
             "VALIDATION_ERROR",
-            "reason is required for reject and request_amendment.",
+            "A reason is required to reject or request an amendment.",
+          );
+        }
+      }
+
+      if (
+        input.responseType === "propose_delivery_date" ||
+        input.responseType === "confirm_delivery_date"
+      ) {
+        if (!input.confirmedDeliveryDate) {
+          throw new ApiError(
+            400,
+            "VALIDATION_ERROR",
+            "confirmedDeliveryDate is required for delivery-date actions.",
           );
         }
       }
@@ -479,12 +599,18 @@ export function createSupplierPortalService(envStatus: EnvironmentStatus): Suppl
           reason: input.reason?.trim() || null,
           confirmed_delivery_date: input.confirmedDeliveryDate || null,
           created_by: ctx.userId,
+          idempotency_key: idempotencyKey,
         })
         .select(
           "id, purchase_order_id, response_type, reason, confirmed_delivery_date, created_at",
         )
         .single();
-      if (insertError) throwMappedDbError("PURCHASE_ORDER_RESPONSE_CREATE_FAILED", insertError);
+      if (insertError) {
+        if (insertError.code === "23505" && idempotencyKey) {
+          return loadOrderBundle(client, ctx.supplierId, orderId);
+        }
+        throwMappedDbError("PURCHASE_ORDER_RESPONSE_CREATE_FAILED", insertError);
+      }
 
       const nextStatus = RESPONSE_STATUS_MAP[input.responseType];
       const { error: updateError } = await client
@@ -506,12 +632,172 @@ export function createSupplierPortalService(envStatus: EnvironmentStatus): Suppl
         payload: {
           responseType: input.responseType,
           responseId: inserted.id,
-          // Explicit: response is not internal approval
+          idempotencyKey,
           grantsInternalApproval: false,
         },
       });
 
       return loadOrderBundle(client, ctx.supplierId, orderId);
+    },
+
+    async getDashboard(ctx) {
+      const orders = await service.listOrders(ctx);
+      const today = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Karachi",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date());
+      return {
+        awaitingResponse: orders.filter((o) => !o.supplierResponseStatus).length,
+        acceptedOpen: orders.filter(
+          (o) => o.supplierResponseStatus === "accepted" && o.status !== "received",
+        ).length,
+        amendmentRequested: orders.filter(
+          (o) => o.supplierResponseStatus === "amendment_requested",
+        ).length,
+        delayedExpected: orders.filter(
+          (o) =>
+            o.expectedDeliveryDate &&
+            o.expectedDeliveryDate < today &&
+            o.status !== "received",
+        ).length,
+      };
+    },
+
+    async listResponseQueue(scope, branchId) {
+      const client = supabase();
+      let supplierQuery = client.from("suppliers").select("id, name, branch_id");
+      if (branchId) {
+        assertBranchMembership(scope, branchId);
+        supplierQuery = supplierQuery.eq("branch_id", branchId);
+      } else if (!scope.isSuperAdmin) {
+        if (scope.branchIds.length === 0) return [];
+        supplierQuery = supplierQuery.in("branch_id", scope.branchIds);
+      }
+      const { data: suppliers, error: suppliersError } = await supplierQuery;
+      if (suppliersError) throwMappedDbError("SUPPLIER_READ_FAILED", suppliersError);
+      const supplierIds = (suppliers ?? []).map((s) => String(s.id));
+      if (supplierIds.length === 0) return [];
+      const nameById = new Map((suppliers ?? []).map((s) => [String(s.id), String(s.name)]));
+
+      const { data, error } = await client
+        .from("purchase_order_responses")
+        .select(
+          "id, purchase_order_id, supplier_id, response_type, reason, confirmed_delivery_date, created_at, purchase_order:purchase_orders(po_number)",
+        )
+        .in("supplier_id", supplierIds)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throwMappedDbError("PURCHASE_ORDER_RESPONSES_READ_FAILED", error);
+
+      return (data ?? []).map((row) => {
+        const po = row.purchase_order as { po_number?: string } | { po_number?: string }[] | null;
+        const poRow = Array.isArray(po) ? po[0] : po;
+        return {
+          responseId: String(row.id),
+          purchaseOrderId: String(row.purchase_order_id),
+          poNumber: poRow?.po_number ?? "",
+          supplierId: String(row.supplier_id),
+          supplierName: nameById.get(String(row.supplier_id)) ?? null,
+          responseType: String(row.response_type),
+          reason: row.reason == null ? null : String(row.reason),
+          confirmedDeliveryDate:
+            row.confirmed_delivery_date == null ? null : String(row.confirmed_delivery_date),
+          createdAt: String(row.created_at),
+        };
+      });
+    },
+
+    async decideAmendment(scope, actorUserId, input) {
+      const client = supabase();
+      const { data: response, error: responseError } = await client
+        .from("purchase_order_responses")
+        .select("id, purchase_order_id, supplier_id, response_type")
+        .eq("id", input.responseId)
+        .maybeSingle();
+      if (responseError) throwMappedDbError("PURCHASE_ORDER_RESPONSES_READ_FAILED", responseError);
+      if (!response) throw new ApiError(404, "RESPONSE_NOT_FOUND", "Supplier response not found.");
+
+      const { data: order, error: orderError } = await client
+        .from("purchase_orders")
+        .select("id, branch_id")
+        .eq("id", response.purchase_order_id)
+        .maybeSingle();
+      if (orderError) throwMappedDbError("PURCHASE_ORDER_READ_FAILED", orderError);
+      if (!order) throw new ApiError(404, "PURCHASE_ORDER_NOT_FOUND", "Purchase order not found.");
+      assertBranchMembership(scope, order.branch_id);
+
+      const { data, error } = await client
+        .from("supplier_response_staff_decisions")
+        .insert({
+          purchase_order_id: response.purchase_order_id,
+          supplier_id: response.supplier_id,
+          response_id: response.id,
+          decision: input.decision,
+          internal_note: input.internalNote?.trim() || null,
+          decided_by: actorUserId,
+        })
+        .select("id")
+        .single();
+      if (error) throwMappedDbError("SUPPLIER_STAFF_DECISION_CREATE_FAILED", error);
+
+      await writeAudit(client, {
+        supplierId: String(response.supplier_id),
+        purchaseOrderId: String(response.purchase_order_id),
+        actorUserId,
+        eventType: "staff_response_decision",
+        payload: {
+          responseId: response.id,
+          decision: input.decision,
+        },
+      });
+
+      return { id: String(data.id) };
+    },
+
+    async setPortalUserStatus(scope, actorUserId, portalUserId, status) {
+      const client = supabase();
+      const { data: row, error: readError } = await client
+        .from("supplier_portal_users")
+        .select("id, supplier_id, status, supplier:suppliers(branch_id)")
+        .eq("id", portalUserId)
+        .maybeSingle();
+      if (readError) throwMappedDbError("SUPPLIER_PORTAL_USERS_READ_FAILED", readError);
+      if (!row) throw new ApiError(404, "PORTAL_USER_NOT_FOUND", "Portal user not found.");
+      const supplierRaw = row.supplier as unknown;
+      const supplier = (Array.isArray(supplierRaw) ? supplierRaw[0] : supplierRaw) as {
+        branch_id: string;
+      } | null;
+      if (!supplier) throw new ApiError(404, "SUPPLIER_NOT_FOUND", "Supplier not found.");
+      assertBranchMembership(scope, supplier.branch_id);
+
+      const patch: Record<string, unknown> = { status };
+      if (status === "active") {
+        patch.activated_at = new Date().toISOString();
+        patch.activated_by = actorUserId;
+        patch.deactivated_at = null;
+      }
+      if (status === "deactivated") {
+        patch.deactivated_at = new Date().toISOString();
+      }
+
+      const { data, error } = await client
+        .from("supplier_portal_users")
+        .update(patch)
+        .eq("id", portalUserId)
+        .select("id, status")
+        .single();
+      if (error) throwMappedDbError("SUPPLIER_PORTAL_USER_UPDATE_FAILED", error);
+
+      await writeAudit(client, {
+        supplierId: String(row.supplier_id),
+        actorUserId,
+        eventType: "portal_user_status_changed",
+        payload: { portalUserId, from: row.status, to: status },
+      });
+
+      return { id: String(data.id), status: String(data.status) };
     },
 
     async listDocuments(ctx) {

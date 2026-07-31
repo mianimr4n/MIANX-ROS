@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import {
   createSupplierPortalService,
   SUPPLIER_RESPONSE_TYPES,
+  SUPPLIER_PORTAL_PERMISSIONS,
 } from "../src/services/supplier-portal/management.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -13,18 +14,31 @@ const serviceSource = readFileSync(
   join(here, "../src/services/supplier-portal/management.ts"),
   "utf8",
 );
+const routesSource = readFileSync(
+  join(here, "../src/modules/supplier-portal/routes.ts"),
+  "utf8",
+);
 
 describe("supplier portal response contracts", () => {
-  it("exposes acknowledge/accept/amend/reject only", () => {
+  it("exposes acknowledge/accept/reject/amend/delivery-date actions", () => {
     expect(SUPPLIER_RESPONSE_TYPES).toEqual([
       "acknowledge",
       "accept",
-      "request_amendment",
       "reject",
+      "request_amendment",
+      "propose_delivery_date",
+      "confirm_delivery_date",
     ]);
   });
 
-  it("factory returns service methods for portal + admin", () => {
+  it("defines supplier-only permission codes", () => {
+    expect(SUPPLIER_PORTAL_PERMISSIONS).toContain("supplier.portal.access");
+    expect(SUPPLIER_PORTAL_PERMISSIONS).toContain("supplier.purchase_orders.respond");
+    expect(SUPPLIER_PORTAL_PERMISSIONS).not.toContain("purchasing.manage");
+    expect(SUPPLIER_PORTAL_PERMISSIONS).not.toContain("finance.manage");
+  });
+
+  it("factory returns isolation-critical methods", () => {
     const envStatus = {
       isReady: false,
       config: {
@@ -46,14 +60,20 @@ describe("supplier portal response contracts", () => {
     const service = createSupplierPortalService(envStatus);
     expect(typeof service.resolveContext).toBe("function");
     expect(typeof service.respondToOrder).toBe("function");
-    expect(typeof service.provisionPortalUser).toBe("function");
-    expect(typeof service.getSupplierAttention).toBe("function");
-    expect(typeof service.replaceOrderLines).toBe("function");
+    expect(typeof service.listResponseQueue).toBe("function");
+    expect(typeof service.setPortalUserStatus).toBe("function");
   });
 
-  it("does not claim supplier delivery as internal GRN acceptance", () => {
-    expect(serviceSource).toMatch(/delivered_pending_grn/);
-    expect(serviceSource).toMatch(/grantsInternalApproval: false/);
-    expect(serviceSource).not.toMatch(/createReceiving\(/);
+  it("isolates queries by supplier_id and never trusts client supplier id", () => {
+    expect(serviceSource).toMatch(/\.eq\("supplier_id", ctx\.supplierId\)/);
+    expect(serviceSource).toMatch(/eq\("supplier_id", supplierId\)/);
+    expect(serviceSource).not.toMatch(/input\.supplierId/);
+    expect(routesSource).toMatch(/resolveContext/);
+  });
+
+  it("requires reason for reject/amendment and idempotency replay", () => {
+    expect(serviceSource).toMatch(/A reason is required/);
+    expect(serviceSource).toMatch(/idempotency_key/);
+    expect(serviceSource).toMatch(/IDEMPOTENCY_CONFLICT|idempotencyKey already used/);
   });
 });

@@ -49,6 +49,15 @@ export function fetchSupplierPortalMe(accessToken: string) {
   }>("/supplier-portal/me", authInit(accessToken, { method: "GET" }));
 }
 
+export function fetchSupplierPortalDashboard(accessToken: string) {
+  return fetchApiData<{
+    awaitingResponse: number;
+    acceptedOpen: number;
+    amendmentRequested: number;
+    delayedExpected: number;
+  }>("/supplier-portal/dashboard", authInit(accessToken, { method: "GET" }));
+}
+
 export function listSupplierPortalOrders(accessToken: string) {
   return fetchApiData<SupplierPortalOrder[]>(
     "/supplier-portal/orders",
@@ -56,6 +65,27 @@ export function listSupplierPortalOrders(accessToken: string) {
   );
 }
 
+export function respondSupplierPortalAction(
+  accessToken: string,
+  orderId: string,
+  action: "acknowledge" | "accept" | "reject" | "request-amendment" | "propose-delivery-date" | "confirm-delivery-date",
+  body: {
+    reason?: string | null;
+    confirmedDeliveryDate?: string | null;
+    idempotencyKey?: string | null;
+  },
+) {
+  return fetchApiData<SupplierPortalOrder>(
+    `/supplier-portal/orders/${orderId}/${action}`,
+    authInit(accessToken, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  );
+}
+
+/** @deprecated prefer respondSupplierPortalAction */
 export function respondSupplierPortalOrder(
   accessToken: string,
   orderId: string,

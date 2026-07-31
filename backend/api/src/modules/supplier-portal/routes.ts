@@ -13,6 +13,7 @@ import {
   SUPPLIER_DOCUMENT_TYPES,
   SUPPLIER_RESPONSE_TYPES,
   type SupplierPortalService,
+  type SupplierResponseType,
 } from "../../services/supplier-portal/management.js";
 
 export interface SupplierPortalRouterDependencies {
@@ -21,16 +22,34 @@ export interface SupplierPortalRouterDependencies {
   supplierPortal: SupplierPortalService;
 }
 
-const respondSchema = z
+const reasonSchema = z
   .object({
-    responseType: z.enum(SUPPLIER_RESPONSE_TYPES),
+    reason: z.string().trim().min(1).max(1000),
+    idempotencyKey: z.string().trim().min(8).max(100).optional().nullable(),
+  })
+  .strict();
+
+const optionalReasonSchema = z
+  .object({
     reason: z.string().trim().max(1000).optional().nullable(),
     confirmedDeliveryDate: z
       .string()
       .trim()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "confirmedDeliveryDate must be YYYY-MM-DD")
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
       .optional()
       .nullable(),
+    idempotencyKey: z.string().trim().min(8).max(100).optional().nullable(),
+  })
+  .strict();
+
+const deliveryDateSchema = z
+  .object({
+    confirmedDeliveryDate: z
+      .string()
+      .trim()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "confirmedDeliveryDate must be YYYY-MM-DD"),
+    reason: z.string().trim().max(1000).optional().nullable(),
+    idempotencyKey: z.string().trim().min(8).max(100).optional().nullable(),
   })
   .strict();
 
@@ -50,7 +69,7 @@ const deliveryRefSchema = z
     expectedDelivery: z
       .string()
       .trim()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "expectedDelivery must be YYYY-MM-DD")
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
       .optional()
       .nullable(),
     receivingStatus: z.enum(DELIVERY_REF_STATUSES).optional(),
@@ -66,21 +85,43 @@ export function createSupplierPortalRouter(deps: SupplierPortalRouterDependencie
   );
 
   async function withContext(req: AuthorizedRequest) {
-    const principal = req.principal!;
-    return deps.supplierPortal.resolveContext(principal);
+    return deps.supplierPortal.resolveContext(req.principal!);
+  }
+
+  async function respond(
+    req: AuthorizedRequest,
+    orderId: string,
+    responseType: SupplierResponseType,
+    body: {
+      reason?: string | null;
+      confirmedDeliveryDate?: string | null;
+      idempotencyKey?: string | null;
+    },
+  ) {
+    const ctx = await withContext(req);
+    return deps.supplierPortal.respondToOrder(ctx, orderId, {
+      responseType,
+      reason: body.reason,
+      confirmedDeliveryDate: body.confirmedDeliveryDate,
+      idempotencyKey: body.idempotencyKey,
+    });
   }
 
   router.get("/me", requireAuthenticatedUser, async (req, res, next) => {
     try {
       const ctx = await withContext(req as AuthorizedRequest);
       const profile = await deps.supplierPortal.getProfile(ctx);
-      return res.json({
-        ok: true,
-        data: {
-          context: ctx,
-          profile,
-        },
-      });
+      return res.json({ ok: true, data: { context: ctx, profile } });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.get("/dashboard", requireAuthenticatedUser, async (req, res, next) => {
+    try {
+      const ctx = await withContext(req as AuthorizedRequest);
+      const data = await deps.supplierPortal.getDashboard(ctx);
+      return res.json({ ok: true, data });
     } catch (error) {
       return next(error);
     }
@@ -90,7 +131,7 @@ export function createSupplierPortalRouter(deps: SupplierPortalRouterDependencie
     try {
       const ctx = await withContext(req as AuthorizedRequest);
       const data = await deps.supplierPortal.listOrders(ctx);
-      return res.json({ ok: true, data });
+      return res.json({ ok: true, data, meta: { count: data.length } });
     } catch (error) {
       return next(error);
     }
@@ -107,13 +148,131 @@ export function createSupplierPortalRouter(deps: SupplierPortalRouterDependencie
   });
 
   router.post(
-    "/orders/:id/respond",
+    "/orders/:id/acknowledge",
     requireAuthenticatedUser,
-    validateBody(respondSchema),
+    validateBody(optionalReasonSchema),
     async (req, res, next) => {
       try {
-        const ctx = await withContext(req as AuthorizedRequest);
-        const data = await deps.supplierPortal.respondToOrder(ctx, req.params.id, req.body);
+        const data = await respond(req as AuthorizedRequest, req.params.id, "acknowledge", req.body);
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/orders/:id/accept",
+    requireAuthenticatedUser,
+    validateBody(optionalReasonSchema),
+    async (req, res, next) => {
+      try {
+        const data = await respond(req as AuthorizedRequest, req.params.id, "accept", req.body);
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/orders/:id/reject",
+    requireAuthenticatedUser,
+    validateBody(reasonSchema),
+    async (req, res, next) => {
+      try {
+        const data = await respond(req as AuthorizedRequest, req.params.id, "reject", req.body);
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/orders/:id/request-amendment",
+    requireAuthenticatedUser,
+    validateBody(reasonSchema),
+    async (req, res, next) => {
+      try {
+        const data = await respond(
+          req as AuthorizedRequest,
+          req.params.id,
+          "request_amendment",
+          req.body,
+        );
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/orders/:id/propose-delivery-date",
+    requireAuthenticatedUser,
+    validateBody(deliveryDateSchema),
+    async (req, res, next) => {
+      try {
+        const data = await respond(
+          req as AuthorizedRequest,
+          req.params.id,
+          "propose_delivery_date",
+          req.body,
+        );
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/orders/:id/confirm-delivery-date",
+    requireAuthenticatedUser,
+    validateBody(deliveryDateSchema),
+    async (req, res, next) => {
+      try {
+        const data = await respond(
+          req as AuthorizedRequest,
+          req.params.id,
+          "confirm_delivery_date",
+          req.body,
+        );
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  // Backward-compatible combined respond endpoint
+  router.post(
+    "/orders/:id/respond",
+    requireAuthenticatedUser,
+    validateBody(
+      z
+        .object({
+          responseType: z.enum(SUPPLIER_RESPONSE_TYPES),
+          reason: z.string().trim().max(1000).optional().nullable(),
+          confirmedDeliveryDate: z
+            .string()
+            .trim()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional()
+            .nullable(),
+          idempotencyKey: z.string().trim().min(8).max(100).optional().nullable(),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const data = await respond(
+          req as AuthorizedRequest,
+          req.params.id,
+          req.body.responseType,
+          req.body,
+        );
         return res.status(201).json({ ok: true, data });
       } catch (error) {
         return next(error);
@@ -171,13 +330,22 @@ export function createSupplierPortalRouter(deps: SupplierPortalRouterDependencie
     }
   });
 
-  // Explicit deny for accidental admin-style approve endpoints under portal prefix
+  router.get("/profile", requireAuthenticatedUser, async (req, res, next) => {
+    try {
+      const ctx = await withContext(req as AuthorizedRequest);
+      const data = await deps.supplierPortal.getProfile(ctx);
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
   router.post("/orders/:id/approve", requireAuthenticatedUser, (_req, _res, next) => {
     next(
       new ApiError(
         403,
         "SUPPLIER_CANNOT_APPROVE_PO",
-        "Suppliers cannot approve purchase orders. Use respond with accept/reject/amendment.",
+        "Suppliers cannot approve purchase orders. Use accept/reject/amendment responses.",
       ),
     );
   });

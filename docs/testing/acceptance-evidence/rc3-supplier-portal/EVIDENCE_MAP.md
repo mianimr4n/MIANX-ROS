@@ -1,29 +1,38 @@
-# RC3 Supplier Portal — Evidence Map
+# RC3 Supplier Portal — Evidence Map (updated vs PR4 brief)
 
-**Branch:** `feature/rc3-supplier-portal`  
-**Base:** `origin/main` @ `79e0674` (Loyalty+Marketing PR #146 merged; CI Typecheck and test PASS)  
-**Finance / Workforce / Loyalty+Marketing:** not modified on this branch beyond merged main  
+**Branch:** `feature/rc3-supplier-portal`
+**Base:** `origin/main` @ `79e0674` (Loyalty+Marketing PR #146 MERGED)
+**Confirmed:** not branched from loyalty/workforce/finance/kitchen feature branches
 
 ## REUSE
 | Asset | Notes |
 | --- | --- |
-| `suppliers`, `purchase_orders`, GRN, invoices/payments | Admin procurement LIVE via `purchasing.manage` |
-| `backend/api/src/services/purchasing/management.ts` | Keep admin path; portal is separate module |
-| Auth JWT + `AuthPrincipal` | Same stack as staff/rider; never trust metadata for role |
-| Staff invite createUser pattern | Portal provisioning mirrors service-role user create |
+| `suppliers`, `purchase_orders`, GRN, invoices/payments | Admin procurement LIVE |
+| Auth JWT + `AuthPrincipal` | Same stack; never trust metadata |
+| Staff createUser pattern | Portal provisioning (new accounts only) |
+| Branch scope | No `organizations` table — supplier scope = `suppliers.branch_id` |
 
-## NEW (verified gaps)
-| Asset | Why |
+## IMPLEMENTED
+| Asset | Notes |
 | --- | --- |
-| `users.user_type = supplier` + `supplier` role / `supplier.portal` | No supplier identity today |
-| `supplier_portal_users` | Link auth user ↔ supplier with isolation |
-| `purchase_order_lines` | PO items/qty/price missing (header-only) |
-| `purchase_order_responses` | No acknowledge/accept/amend/reject |
-| `supplier_documents` | No portal document metadata |
-| `purchase_order_delivery_refs` | No supplier dispatch/invoice reference |
-| `supplier_portal_events` | Audit for responses/docs/provisioning |
-| `/api/v1/supplier-portal/*` | Supplier-scoped APIs (not admin purchasing) |
-| `/supplier` UI | No supplier-facing portal |
+| `supplier_portal_users` + lifecycle | invited/active/suspended/deactivated (hardening) |
+| Granular `supplier.*` permissions | portal.access, po read/respond, documents, profile |
+| `purchase_order_lines` / responses / delivery refs / documents | Foundation + hardening |
+| Idempotency on responses | `uq_po_responses_idempotency` |
+| `/api/v1/supplier-portal/*` | Separate action endpoints |
+| `/supplier/*` shell + `/supplier/login` | Distinct from admin |
+| `/admin/supplier-operations` | Staff response queue |
+| Owner supplier attention | Unacked / delayed / mismatch |
+
+## STILL MISSING / BLOCKERS FOR COMPLETE
+| Gap | Impact |
+| --- | --- |
+| Local Supabase migration apply | `supabase` CLI not available on this Windows host |
+| Authenticated supplier Playwright journeys | No supplier fixture identity in RC1 handover |
+| Screenshot matrix (390/768/1440) for all supplier states | Blocked on supplier auth fixture + running stack |
+| Live RLS isolation matrix (Supplier A vs B) | Requires applied migrations + live DB |
+| Binary document upload | Honestly unavailable (URL reference only) |
+| Full receiving quantity summary on portal PO detail | GRN line variance not fully projected to supplier UI |
 
 ## DO NOT CREATE
-Parallel supplier masters, fake performance scores, supplier self-approval of POs, Production migration apply.
+Parallel PO/supplier masters, org table invention, fake scores, Production migrate/deploy.
