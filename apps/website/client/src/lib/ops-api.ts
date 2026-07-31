@@ -61,6 +61,7 @@ export type KitchenTicket = {
   status: string;
   priority: number;
   sequenceNumber: number;
+  acceptedByUserId: string | null;
   acceptedAt: string | null;
   startedAt: string | null;
   readyAt: string | null;

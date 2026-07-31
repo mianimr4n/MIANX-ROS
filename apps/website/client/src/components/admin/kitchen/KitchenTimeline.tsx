@@ -11,7 +11,7 @@ type TimelineEvent = {
 
 function buildTicketEvents(ticket: KitchenTicket): TimelineEvent[] {
   const events: TimelineEvent[] = [
-    { id: "created", label: "Order received", at: ticket.createdAt, detail: "Ticket created" },
+    { id: "created", label: "Pending", at: ticket.createdAt, detail: "Ticket created" },
   ];
   if (ticket.acceptedAt) {
     events.push({ id: "accepted", label: "Accepted", at: ticket.acceptedAt });

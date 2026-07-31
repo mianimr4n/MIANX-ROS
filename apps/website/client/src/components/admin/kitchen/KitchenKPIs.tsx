@@ -65,7 +65,7 @@ export function KitchenKPIs({
             title="Orders waiting"
             value={String(snapshot.waiting)}
             source="LIVE"
-            detail="Queued + accepted tickets"
+            detail="Pending + accepted tickets"
           />
           <AdminKpiCard
             title="Preparing"

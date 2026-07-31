@@ -3,6 +3,15 @@
 export const KITCHEN_ACTIVE_STATUSES = ["queued", "accepted", "preparing", "ready"] as const;
 export const KITCHEN_ORDER_TYPES = ["delivery", "pickup", "dine-in"] as const;
 
+/** Product stations — display catalog only until kitchen_stations API exists. */
+export const KITCHEN_STATION_CATALOG = [
+  { id: "pizza", label: "Pizza" },
+  { id: "oven", label: "Oven" },
+  { id: "packing", label: "Packing" },
+  { id: "drinks", label: "Drinks" },
+  { id: "desserts", label: "Desserts" },
+] as const;
+
 export type KitchenTicketStatus = (typeof KITCHEN_ACTIVE_STATUSES)[number] | "completed" | "cancelled";
 
 /** Target prep minutes for timer colors — operational guidance only, not SLA from API. */
@@ -107,9 +116,13 @@ export function priorityBadgeClass(badge: KitchenPriorityBadge): string {
   }
 }
 
+/**
+ * Product lifecycle labels.
+ * Ticket statuses: Pending (queued) → Accepted → Preparing → Ready → Completed.
+ */
 export function kitchenTicketStatusLabel(status: string): string {
   const map: Record<string, string> = {
-    queued: "Received",
+    queued: "Pending",
     accepted: "Accepted",
     preparing: "Preparing",
     ready: "Ready",
@@ -129,9 +142,9 @@ export function nextKitchenActions(status: string): Array<{ toStatus: string; la
     case "accepted":
       return [{ toStatus: "preparing", label: "Start preparing" }];
     case "preparing":
-      return [{ toStatus: "ready", label: "Ready" }];
+      return [{ toStatus: "ready", label: "Mark ready" }];
     case "ready":
-      return [{ toStatus: "completed", label: "Complete handoff" }];
+      return [{ toStatus: "completed", label: "Complete" }];
     default:
       return [];
   }
@@ -179,4 +192,17 @@ export function currentShiftLabel(now = new Date()) {
   );
   if (hour < 16) return "Day shift (display only)";
   return "Evening shift (display only)";
+}
+
+export function formatKitchenClock(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  try {
+    return new Date(iso).toLocaleTimeString("en-PK", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Asia/Karachi",
+    });
+  } catch {
+    return null;
+  }
 }

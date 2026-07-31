@@ -1,5 +1,6 @@
 import type { KitchenTicket } from "@/lib/ops-api";
 import {
+  formatKitchenClock,
   formatModifierLines,
   kitchenTicketStatusLabel,
   nextKitchenActions,
@@ -18,7 +19,9 @@ export type KitchenCardEnrichment = {
   contactName?: string | null;
   orderType?: string | null;
   orderSource?: string | null;
-  /** Customer private notes must not be passed; prep-only fields are not on list enrichment. */
+  branchLabel?: string | null;
+  /** Order-level notes / special instructions when enrichment includes them. */
+  specialInstructions?: string | null;
   paymentStatus?: string | null;
 };
 
@@ -49,6 +52,10 @@ export function KitchenCard({
   const orderLabel =
     enrichment?.orderNumber ??
     (ticket.sequenceNumber != null ? `#${ticket.sequenceNumber}` : ticket.orderId.slice(0, 8));
+  const createdClock = formatKitchenClock(ticket.createdAt);
+  const acceptedClock = formatKitchenClock(ticket.acceptedAt);
+  const startedClock = formatKitchenClock(ticket.startedAt);
+  const readyClock = formatKitchenClock(ticket.readyAt);
 
   return (
     <article
@@ -62,13 +69,9 @@ export function KitchenCard({
         <div className="min-w-0">
           <p className="font-mono text-xl font-semibold tracking-tight">{orderLabel}</p>
           <p className="mt-1 text-sm text-[var(--admin-muted)]">
-            {enrichment?.contactName ? enrichment.contactName : "Customer · not on ticket"}
+            {enrichment?.contactName ? enrichment.contactName : "Customer unavailable"}
             {enrichment?.orderType ? ` · ${enrichment.orderType}` : ""}
-            {enrichment?.orderSource
-              ? ` · ${enrichment.orderSource}`
-              : enrichment
-                ? " · Unknown Source"
-                : ""}
+            {enrichment?.branchLabel ? ` · ${enrichment.branchLabel}` : ""}
           </p>
         </div>
         <div
@@ -103,6 +106,33 @@ export function KitchenCard({
         </span>
       </div>
 
+      <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-[var(--admin-muted)]">
+        <div>
+          <dt className="inline">Created </dt>
+          <dd className="inline tabular-nums text-[var(--admin-ink)]">{createdClock ?? "—"}</dd>
+        </div>
+        <div>
+          <dt className="inline">Accepted </dt>
+          <dd className="inline tabular-nums text-[var(--admin-ink)]">{acceptedClock ?? "—"}</dd>
+        </div>
+        <div>
+          <dt className="inline">Started </dt>
+          <dd className="inline tabular-nums text-[var(--admin-ink)]">{startedClock ?? "—"}</dd>
+        </div>
+        <div>
+          <dt className="inline">Ready </dt>
+          <dd className="inline tabular-nums text-[var(--admin-ink)]">{readyClock ?? "—"}</dd>
+        </div>
+      </dl>
+
+      {ticket.acceptedByUserId ? (
+        <p className="mt-2 text-xs text-[var(--admin-muted)]">
+          Assigned staff: accepted by kitchen user
+        </p>
+      ) : (
+        <p className="mt-2 text-xs text-[var(--admin-muted)]">Assigned staff: not accepted yet</p>
+      )}
+
       <ul className="mt-4 space-y-2">
         {ticket.items.map((item) => {
           const modifiers = formatModifierLines(item.modifiersSnapshot);
@@ -118,6 +148,13 @@ export function KitchenCard({
           );
         })}
       </ul>
+
+      {enrichment?.specialInstructions ? (
+        <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          <span className="font-semibold">Special instructions: </span>
+          {enrichment.specialInstructions}
+        </p>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
         <button

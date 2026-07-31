@@ -3,7 +3,7 @@ import { KitchenCard, type KitchenCardEnrichment } from "@/components/admin/kitc
 import { kitchenTicketStatusLabel } from "@/lib/admin-kitchen";
 
 const COLUMNS: Array<{ status: string; title: string }> = [
-  { status: "queued", title: "Received" },
+  { status: "queued", title: "Pending" },
   { status: "accepted", title: "Accepted" },
   { status: "preparing", title: "Preparing" },
   { status: "ready", title: "Ready" },
@@ -60,8 +60,14 @@ export function KitchenBoard({
       ) : null}
 
       {!loading && tickets.length === 0 && !error ? (
-        <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-8 text-center text-sm text-[var(--admin-muted)]">
-          No active kitchen tickets for this branch scope and filters.
+        <div
+          className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-8 text-center"
+          role="status"
+        >
+          <p className="font-semibold text-[var(--admin-ink)]">No active kitchen tickets.</p>
+          <p className="mt-2 text-sm text-[var(--admin-muted)]">
+            New tickets appear here after an order is confirmed for this branch.
+          </p>
         </div>
       ) : null}
 
@@ -99,7 +105,7 @@ export function KitchenBoard({
       ) : null}
 
       <p className="mt-3 text-xs text-[var(--admin-muted)]">
-        Station lanes (Pizza / Oven / Drinks / Desserts / Packing) are Foundation — tickets are not station-assigned yet.
+        Lifecycle: Pending → Accepted → Preparing → Ready → Completed. Station lanes Planned for Phase 2.
       </p>
     </section>
   );
