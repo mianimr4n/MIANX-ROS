@@ -72,6 +72,12 @@ export type OwnerCommandLiveExtras = {
     consentOptOuts: number | null;
     providerConfigured: false;
   } | null;
+  supplierAttention?: {
+    unavailable: boolean;
+    unacknowledgedPurchaseOrders: number | null;
+    delayedExpectedDeliveries: number | null;
+    invoiceGrnMismatches: number | null;
+  } | null;
 };
 
 export function karachiDateString(date = new Date()): string {
@@ -554,6 +560,60 @@ export function buildAttentionMetrics(
       state: extras.marketingAttention?.unavailable ? "unavailable" : "available",
     },
     {
+      id: "supplier-unacked",
+      title: "Unacknowledged Supplier POs",
+      value: extras.supplierAttention?.unavailable
+        ? null
+        : formatCount(extras.supplierAttention?.unacknowledgedPurchaseOrders ?? null),
+      detail: extras.supplierAttention?.unavailable
+        ? "Data unavailable"
+        : "Open POs awaiting supplier response",
+      attentionWhy:
+        extras.supplierAttention?.unavailable
+          ? undefined
+          : (extras.supplierAttention?.unacknowledgedPurchaseOrders ?? 0) > 0
+            ? "Follow up with suppliers on open purchase orders."
+            : "No unacknowledged supplier purchase orders.",
+      href: "/admin/purchasing",
+      state: extras.supplierAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
+      id: "supplier-delayed",
+      title: "Delayed Supplier Deliveries",
+      value: extras.supplierAttention?.unavailable
+        ? null
+        : formatCount(extras.supplierAttention?.delayedExpectedDeliveries ?? null),
+      detail: extras.supplierAttention?.unavailable
+        ? "Data unavailable"
+        : "Past expected delivery without received status",
+      attentionWhy:
+        extras.supplierAttention?.unavailable
+          ? undefined
+          : (extras.supplierAttention?.delayedExpectedDeliveries ?? 0) > 0
+            ? "Expected deliveries are overdue — check receiving."
+            : "No delayed expected deliveries.",
+      href: "/admin/purchasing",
+      state: extras.supplierAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
+      id: "supplier-mismatch",
+      title: "Invoice / GRN Mismatches",
+      value: extras.supplierAttention?.unavailable
+        ? null
+        : formatCount(extras.supplierAttention?.invoiceGrnMismatches ?? null),
+      detail: extras.supplierAttention?.unavailable
+        ? "Data unavailable"
+        : "Supplier invoices marked DISCREPANCY",
+      attentionWhy:
+        extras.supplierAttention?.unavailable
+          ? undefined
+          : (extras.supplierAttention?.invoiceGrnMismatches ?? 0) > 0
+            ? "Resolve three-way match discrepancies."
+            : "No invoice/GRN mismatches.",
+      href: "/admin/purchasing",
+      state: extras.supplierAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
       id: "waste",
       title: "Waste Logged Today",
       value: extras.wasteUnavailable ? null : formatCount(extras.wasteTodayQty),
@@ -862,6 +922,26 @@ export function buildOwnerBriefLines(
     (extras.loyaltyAttention?.pendingManualReviewAdjustments ?? 0) === 0
   ) {
     lines.push("No elevated loyalty signals.");
+  }
+  const unacked = extras.supplierAttention?.unacknowledgedPurchaseOrders;
+  if (!extras.supplierAttention?.unavailable && unacked != null && unacked > 0) {
+    lines.push(
+      `${unacked} purchase order${unacked === 1 ? "" : "s"} await supplier acknowledgement.`,
+    );
+  }
+  const delayed = extras.supplierAttention?.delayedExpectedDeliveries;
+  if (!extras.supplierAttention?.unavailable && delayed != null && delayed > 0) {
+    lines.push(
+      delayed === 1
+        ? "One supplier delivery is past its expected date."
+        : `${delayed} supplier deliveries are past their expected date.`,
+    );
+  }
+  const mismatches = extras.supplierAttention?.invoiceGrnMismatches;
+  if (!extras.supplierAttention?.unavailable && mismatches != null && mismatches > 0) {
+    lines.push(
+      `${mismatches} supplier invoice${mismatches === 1 ? "" : "s"} show a GRN mismatch.`,
+    );
   }
   lines.push(`Scope: ${branchLabel}.`);
   return lines.slice(0, 10);

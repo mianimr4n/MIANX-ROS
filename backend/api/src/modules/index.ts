@@ -12,6 +12,7 @@ import { createMenuRouter } from "./menu/routes.js";
 import { createOrdersRouter } from "./orders/routes.js";
 import { createPublicBookingRouter } from "./public-booking/routes.js";
 import { createRidersRouter } from "./riders/routes.js";
+import { createSupplierPortalRouter } from "./supplier-portal/routes.js";
 
 export interface ApiModuleDescriptor {
   name: string;
@@ -64,6 +65,11 @@ export const apiModules: ApiModuleDescriptor[] = [
     name: "riders",
     basePath: "/api/v1/riders",
     summary: "Sprint 4.6 rider roster, assignment, and delivery status with order mirror.",
+  },
+  {
+    name: "supplier-portal",
+    basePath: "/api/v1/supplier-portal",
+    summary: "Supplier-facing PO visibility, responses, documents, and delivery references.",
   },
   {
     name: "admin",
@@ -131,6 +137,14 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
     }),
   );
   app.use(
+    "/api/v1/supplier-portal",
+    createSupplierPortalRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      supplierPortal: dependencies.supplierPortal,
+    }),
+  );
+  app.use(
     "/api/v1/admin",
     createAdminRouter({
       authTokenVerifier: dependencies.authTokenVerifier,
@@ -151,6 +165,7 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
       hrPayroll: dependencies.hrPayroll,
       inventory: dependencies.inventory,
       purchasing: dependencies.purchasing,
+      supplierPortal: dependencies.supplierPortal,
       finance: dependencies.finance,
       financeOperations: dependencies.financeOperations,
       posZReport: dependencies.posZReport,

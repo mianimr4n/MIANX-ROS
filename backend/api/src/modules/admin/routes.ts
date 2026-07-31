@@ -76,6 +76,7 @@ import type { HrSchedulingService } from "../../services/hr/scheduling.js";
 import type { HrPayrollService } from "../../services/hr/payroll.js";
 import type { InventoryService } from "../../services/inventory/management.js";
 import type { PurchasingService } from "../../services/purchasing/management.js";
+import type { SupplierPortalService } from "../../services/supplier-portal/management.js";
 import type { FinanceService } from "../../services/finance/management.js";
 import type { FinanceOperationsService } from "../../services/finance/operations.js";
 import type { PosZReportService } from "../../services/pos/z-report.js";
@@ -143,6 +144,7 @@ export interface AdminRouterDependencies {
   hrPayroll: HrPayrollService;
   inventory: InventoryService;
   purchasing: PurchasingService;
+  supplierPortal: SupplierPortalService;
   finance: FinanceService;
   financeOperations: FinanceOperationsService;
   posZReport: PosZReportService;
@@ -607,6 +609,7 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       purchasing: dependencies.purchasing,
+      supplierPortal: dependencies.supplierPortal,
     }),
   );
 

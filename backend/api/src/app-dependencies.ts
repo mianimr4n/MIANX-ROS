@@ -151,6 +151,10 @@ import {
   type PurchasingService,
 } from "./services/purchasing/management.js";
 import {
+  createSupplierPortalService,
+  type SupplierPortalService,
+} from "./services/supplier-portal/management.js";
+import {
   createPosZReportService,
   type PosZReportService,
 } from "./services/pos/z-report.js";
@@ -215,6 +219,7 @@ export interface AppDependencies {
   hrPayroll: HrPayrollService;
   inventory: InventoryService;
   purchasing: PurchasingService;
+  supplierPortal: SupplierPortalService;
   finance: FinanceService;
   financeOperations: FinanceOperationsService;
   posZReport: PosZReportService;
@@ -270,6 +275,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     hrPayroll: createHrPayrollService(envStatus),
     inventory: createInventoryService(envStatus),
     purchasing: createPurchasingService(envStatus),
+    supplierPortal: createSupplierPortalService(envStatus),
     finance,
     financeOperations: createFinanceOperationsService(envStatus, finance),
     posZReport: createPosZReportService(envStatus),

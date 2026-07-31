@@ -21,11 +21,13 @@ import {
   SUPPLIER_STATUSES,
   type PurchasingService,
 } from "../../services/purchasing/management.js";
+import type { SupplierPortalService } from "../../services/supplier-portal/management.js";
 
 export interface AdminPurchasingRouterDependencies {
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
   purchasing: PurchasingService;
+  supplierPortal: SupplierPortalService;
 }
 
 function scopeFrom(principal: AuthPrincipal): BranchActorScope {
@@ -154,6 +156,51 @@ const createPaymentSchema = z
 const approveExceptionSchema = z
   .object({
     reason: z.string().trim().min(1).max(2000),
+  })
+  .strict();
+
+const updateSupplierProfileSchema = z
+  .object({
+    taxId: z.string().trim().max(80).nullable().optional(),
+    businessRegistration: z.string().trim().max(120).nullable().optional(),
+    paymentTerms: z.string().trim().max(120).nullable().optional(),
+    suppliedCategories: z.array(z.string().trim().min(1).max(80)).max(40).optional(),
+    approvalStatus: z.enum(["pending", "approved", "suspended"]).optional(),
+    notes: z.string().trim().max(2000).nullable().optional(),
+    contactPerson: z.string().trim().max(150).nullable().optional(),
+    phone: z.string().trim().max(40).nullable().optional(),
+    email: z.union([z.email(), z.literal(""), z.null()]).optional(),
+    address: z.string().trim().max(2000).nullable().optional(),
+    status: z.enum(SUPPLIER_STATUSES).optional(),
+  })
+  .strict()
+  .transform((body) => ({
+    ...body,
+    email: body.email === "" ? null : body.email,
+  }));
+
+const provisionPortalUserSchema = z
+  .object({
+    email: z.email(),
+    fullName: z.string().trim().min(1).max(150),
+    temporaryPassword: z.string().min(10).max(128),
+  })
+  .strict();
+
+const replaceOrderLinesSchema = z
+  .object({
+    lines: z
+      .array(
+        z
+          .object({
+            description: z.string().trim().min(1).max(300),
+            quantity: z.number().finite().positive(),
+            unitPrice: z.number().finite().min(0),
+            skuRef: z.string().trim().max(80).nullable().optional(),
+          })
+          .strict(),
+      )
+      .max(200),
   })
   .strict();
 
@@ -447,6 +494,112 @@ export function createAdminPurchasingRouter(deps: AdminPurchasingRouterDependenc
           idempotencyKey: readIdempotencyKey(req),
         });
         return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.patch(
+    "/purchasing/suppliers/:id",
+    requireAuthenticatedUser,
+    requirePurchasingAccess,
+    validateBody(updateSupplierProfileSchema),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.supplierPortal.updateSupplierProfile(
+          scopeFrom(principal),
+          req.params.id,
+          req.body,
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/purchasing/suppliers/:id/portal-users",
+    requireAuthenticatedUser,
+    requirePurchasingAccess,
+    validateBody(provisionPortalUserSchema),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.supplierPortal.provisionPortalUser(
+          scopeFrom(principal),
+          principal.userId,
+          req.params.id,
+          req.body,
+        );
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.get(
+    "/purchasing/suppliers/:id/portal-users",
+    requireAuthenticatedUser,
+    requirePurchasingAccess,
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.supplierPortal.listPortalUsers(
+          scopeFrom(principal),
+          req.params.id,
+        );
+        return res.json({ ok: true, data, meta: { count: data.length } });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.put(
+    "/purchasing/orders/:id/lines",
+    requireAuthenticatedUser,
+    requirePurchasingAccess,
+    validateBody(replaceOrderLinesSchema),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.supplierPortal.replaceOrderLines(
+          scopeFrom(principal),
+          req.params.id,
+          req.body.lines,
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.get(
+    "/purchasing/supplier-attention",
+    requireAuthenticatedUser,
+    requirePurchasingAccess,
+    async (req, res, next) => {
+      try {
+        const parsed = listQuerySchema.safeParse(req.query);
+        if (!parsed.success) {
+          throw new ApiError(
+            400,
+            "VALIDATION_ERROR",
+            "Invalid supplier attention query.",
+            parsed.error.flatten(),
+          );
+        }
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.supplierPortal.getSupplierAttention(
+          scopeFrom(principal),
+          parsed.data.branchId,
+        );
+        return res.json({ ok: true, data });
       } catch (error) {
         return next(error);
       }
