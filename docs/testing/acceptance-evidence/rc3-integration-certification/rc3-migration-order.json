@@ -72,7 +72,8 @@
     "20260731100000_coupon_redemptions.sql",
     "20260731110000_marketing_campaigns_consent.sql",
     "20260731120000_supplier_portal_foundation.sql",
-    "20260731130000_supplier_portal_hardening.sql"
+    "20260731130000_supplier_portal_hardening.sql",
+    "20260731140000_loyalty_schema_compatibility.sql"
   ],
   "rc3": [
     "20260730130000_hr_workforce_backend.sql",
@@ -102,6 +103,7 @@
     "20260731100000_coupon_redemptions.sql",
     "20260731110000_marketing_campaigns_consent.sql",
     "20260731120000_supplier_portal_foundation.sql",
-    "20260731130000_supplier_portal_hardening.sql"
+    "20260731130000_supplier_portal_hardening.sql",
+    "20260731140000_loyalty_schema_compatibility.sql"
   ]
 }
