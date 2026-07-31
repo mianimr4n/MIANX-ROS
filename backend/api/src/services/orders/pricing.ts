@@ -344,6 +344,8 @@ export function priceOrderLines(input: {
   catalog: CatalogLookup;
   /** Optional relational modifiers keyed by groupCode::optionCode */
   modifiersByKey?: Map<string, ModifierOptionRow>;
+  /** Server-validated coupon discount; never trust client money. */
+  discountAmount?: number;
 }): OrderPricingResult {
   if (input.lines.length === 0) {
     throw new ApiError(400, "VALIDATION_ERROR", "At least one order item is required.");
@@ -495,7 +497,10 @@ export function priceOrderLines(input: {
     });
   }
 
-  const discountAmount = 0;
+  const rawDiscount = typeof input.discountAmount === "number" && Number.isFinite(input.discountAmount)
+    ? Math.max(0, input.discountAmount)
+    : 0;
+  const discountAmount = Math.min(rawDiscount, subtotal);
   const taxAmount = 0;
   const deliveryFee = 0;
   const totalAmount = subtotal - discountAmount + taxAmount + deliveryFee;

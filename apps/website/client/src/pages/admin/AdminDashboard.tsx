@@ -36,6 +36,8 @@ import {
   listSupplierInvoices,
   fetchFinanceAttention,
   fetchHrAttention,
+  fetchLoyaltyAttention,
+  fetchMarketingAttention,
   type AdminOrderListItem,
 } from "@/lib/admin-api";
 import { listDeliveryAssignments, listKitchenTickets } from "@/lib/ops-api";
@@ -48,6 +50,8 @@ import {
   canAccessAdminFinance,
   canAccessAdminHr,
   canAccessAdminInventory,
+  canAccessAdminLoyalty,
+  canAccessAdminMarketing,
   canAccessAdminOrdersApi,
   canAccessAdminPurchasing,
   canAccessAdminReports,
@@ -199,6 +203,8 @@ export default function AdminDashboard() {
   const canLoadReports = canAccessAdminReports({ roles, permissions, isSuperAdmin });
   const canLoadHr = canAccessAdminHr({ roles, permissions, isSuperAdmin });
   const canLoadFinance = canAccessAdminFinance({ roles, permissions, isSuperAdmin });
+  const canLoadLoyalty = canAccessAdminLoyalty({ roles, permissions, isSuperAdmin });
+  const canLoadMarketing = canAccessAdminMarketing({ roles, permissions, isSuperAdmin });
   const purchaseOrders = useOperationalData(
     ({ signal, correlationId }) =>
       listPurchaseOrders(token!, branchIdFilter ? { branchId: branchIdFilter } : undefined, {
@@ -244,6 +250,27 @@ export default function AdminDashboard() {
     [token, branchIdFilter],
     {
       enabled: Boolean(token) && canLoadHr && gateReady && !comingSoonBranch,
+      pollMs: 60_000,
+    },
+  );
+  const loyaltyAttention = useOperationalData(
+    ({ signal, correlationId }) =>
+      fetchLoyaltyAttention(token!, { signal, correlationId }),
+    [token],
+    {
+      enabled: Boolean(token) && canLoadLoyalty && gateReady && !comingSoonBranch,
+      pollMs: 60_000,
+    },
+  );
+  const marketingAttention = useOperationalData(
+    ({ signal, correlationId }) =>
+      fetchMarketingAttention(token!, branchIdFilter ? { branchId: branchIdFilter } : undefined, {
+        signal,
+        correlationId,
+      }),
+    [token, branchIdFilter],
+    {
+      enabled: Boolean(token) && canLoadMarketing && gateReady && !comingSoonBranch,
       pollMs: 60_000,
     },
   );
@@ -440,6 +467,22 @@ export default function AdminDashboard() {
     hrAttention.data == null ||
     hrAttention.data.state === "unavailable";
 
+  const loyaltyAttentionUnavailable =
+    !canLoadLoyalty ||
+    loyaltyAttention.state === "ERROR" ||
+    loyaltyAttention.state === "OFFLINE" ||
+    loyaltyAttention.state === "UNAVAILABLE" ||
+    loyaltyAttention.data == null ||
+    loyaltyAttention.data.state === "unavailable";
+
+  const marketingAttentionUnavailable =
+    !canLoadMarketing ||
+    marketingAttention.state === "ERROR" ||
+    marketingAttention.state === "OFFLINE" ||
+    marketingAttention.state === "UNAVAILABLE" ||
+    marketingAttention.data == null ||
+    marketingAttention.data.state === "unavailable";
+
   const ownerExtras = useMemo(
     () => ({
       kitchenTicketCount: kitchenTicketsUnavailable ? null : kitchenTicketCount,
@@ -487,6 +530,44 @@ export default function AdminDashboard() {
           ? null
           : (hrAttention.data?.payrollRunsAwaitingApproval ?? null),
       },
+      loyaltyAttention: {
+        unavailable: loyaltyAttentionUnavailable,
+        accountsWithBalance: loyaltyAttentionUnavailable
+          ? null
+          : (loyaltyAttention.data?.accountsWithBalance ?? null),
+        earnTransactionsToday: loyaltyAttentionUnavailable
+          ? null
+          : (loyaltyAttention.data?.earnTransactionsToday ?? null),
+        burnTransactionsToday: loyaltyAttentionUnavailable
+          ? null
+          : (loyaltyAttention.data?.burnTransactionsToday ?? null),
+        pendingManualReviewAdjustments: loyaltyAttentionUnavailable
+          ? null
+          : (loyaltyAttention.data?.pendingManualReviewAdjustments ?? null),
+        rewardsCatalogueConfigured: false as const,
+      },
+      marketingAttention: {
+        unavailable: marketingAttentionUnavailable,
+        activeCoupons: marketingAttentionUnavailable
+          ? null
+          : (marketingAttention.data?.activeCoupons ?? null),
+        couponsExpiringSoon: marketingAttentionUnavailable
+          ? null
+          : (marketingAttention.data?.couponsExpiringSoon ?? null),
+        draftCampaigns: marketingAttentionUnavailable
+          ? null
+          : (marketingAttention.data?.draftCampaigns ?? null),
+        campaignsAwaitingSend: marketingAttentionUnavailable
+          ? null
+          : (marketingAttention.data?.campaignsAwaitingSend ?? null),
+        suppressedCustomers: marketingAttentionUnavailable
+          ? null
+          : (marketingAttention.data?.suppressedCustomers ?? null),
+        consentOptOuts: marketingAttentionUnavailable
+          ? null
+          : (marketingAttention.data?.consentOptOuts ?? null),
+        providerConfigured: false as const,
+      },
     }),
     [
       activeAssignmentCount,
@@ -495,6 +576,10 @@ export default function AdminDashboard() {
       financeAttentionUnavailable,
       hrAttention.data,
       workforceAttentionUnavailable,
+      loyaltyAttention.data,
+      loyaltyAttentionUnavailable,
+      marketingAttention.data,
+      marketingAttentionUnavailable,
       kitchenTicketCount,
       kitchenTicketsUnavailable,
       procurementSnapshot,

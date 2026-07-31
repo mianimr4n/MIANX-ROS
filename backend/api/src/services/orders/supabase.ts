@@ -306,6 +306,83 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
     return client;
   };
 
+  async function resolveCouponDiscount(input: {
+    couponCode?: string | null;
+    branchId: string;
+    subtotal: number;
+    customerId?: string | null;
+  }): Promise<{
+    applied: boolean;
+    discountAmount: number;
+    validation: {
+      couponId: string;
+      code: string;
+      discountType: "percent" | "fixed";
+      discountValue: number;
+      discountApplied: number;
+    } | null;
+  }> {
+    const code = input.couponCode?.trim();
+    if (!code) {
+      return { applied: false, discountAmount: 0, validation: null };
+    }
+
+    const { data, error } = await getClient().rpc("coupon_validate_discount", {
+      p_code: code,
+      p_branch_id: input.branchId,
+      p_subtotal: input.subtotal,
+      p_customer_id: input.customerId ?? null,
+    });
+
+    if (error) {
+      if (/does not exist|coupon_validate_discount/i.test(error.message ?? "")) {
+        throw new ApiError(
+          503,
+          "COUPON_VALIDATION_UNAVAILABLE",
+          "Coupon validation is temporarily unavailable.",
+        );
+      }
+      throw new ApiError(500, "COUPON_VALIDATE_FAILED", error.message);
+    }
+
+    const payload = data as {
+      valid?: boolean;
+      reason?: string;
+      discountApplied?: number;
+      couponId?: string;
+      code?: string;
+      discountType?: "percent" | "fixed";
+      discountValue?: number;
+    } | null;
+
+    if (!payload?.valid) {
+      const reason = payload?.reason ?? "COUPON_INVALID";
+      const messages: Record<string, string> = {
+        COUPON_NOT_FOUND: "Coupon code was not found.",
+        COUPON_INACTIVE: "This coupon is inactive.",
+        COUPON_EXPIRED: "This coupon has expired.",
+        COUPON_BRANCH_MISMATCH: "This coupon is not valid for the selected branch.",
+        MIN_ORDER_NOT_MET: "Order does not meet the coupon minimum.",
+        COUPON_MAX_REDEMPTIONS: "This coupon has reached its redemption limit.",
+        COUPON_CUSTOMER_LIMIT: "This coupon has already been used by this customer.",
+        CODE_REQUIRED: "Coupon code is required.",
+      };
+      throw new ApiError(400, reason, messages[reason] ?? "Coupon could not be applied.");
+    }
+
+    return {
+      applied: true,
+      discountAmount: Number(payload.discountApplied) || 0,
+      validation: {
+        couponId: String(payload.couponId),
+        code: String(payload.code),
+        discountType: payload.discountType ?? "fixed",
+        discountValue: Number(payload.discountValue) || 0,
+        discountApplied: Number(payload.discountApplied) || 0,
+      },
+    };
+  }
+
   async function fetchGuestOrder(
     orderNumber: string,
     contactPhone: string,
@@ -401,7 +478,18 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
       const branch = await loadOperatingBranch(supabase, input.branchCode);
       const catalog = await loadCatalogMap(supabase, input.items);
       const modifiersByKey = await loadModifiersMap(supabase, input.items);
-      const priced = priceOrderLines({ lines: input.items, catalog, modifiersByKey });
+      const basePriced = priceOrderLines({ lines: input.items, catalog, modifiersByKey });
+      const coupon = await resolveCouponDiscount({
+        couponCode: input.couponCode,
+        branchId: branch.id,
+        subtotal: basePriced.subtotal,
+      });
+      const priced = priceOrderLines({
+        lines: input.items,
+        catalog,
+        modifiersByKey,
+        discountAmount: coupon.discountAmount,
+      });
 
       const cartCanon = buildQuoteCartCanon(input.items);
       const cartHash = hashQuoteCart(cartCanon);
@@ -440,6 +528,7 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
       const warnings = collectClientMoneyWarnings({
         items: input.items,
         couponCode: input.couponCode,
+        couponApplied: coupon.applied,
       });
 
       return {
@@ -577,7 +666,19 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
       const branch = await loadOperatingBranch(supabase, input.branchCode);
       const catalog = await loadCatalogMap(supabase, input.items);
       const modifiersByKey = await loadModifiersMap(supabase, input.items);
-      const priced = priceOrderLines({ lines: input.items, catalog, modifiersByKey });
+      const basePriced = priceOrderLines({ lines: input.items, catalog, modifiersByKey });
+      const coupon = await resolveCouponDiscount({
+        couponCode: input.couponCode,
+        branchId: branch.id,
+        subtotal: basePriced.subtotal,
+        customerId: input.customerId ?? null,
+      });
+      const priced = priceOrderLines({
+        lines: input.items,
+        catalog,
+        modifiersByKey,
+        discountAmount: coupon.discountAmount,
+      });
 
       const notes = [input.notes?.trim(), input.couponCode?.trim() ? `Promo code: ${input.couponCode.trim()}` : null]
         .filter(Boolean)
@@ -702,6 +803,24 @@ export function createSupabaseOrdersDataSource(envStatus: EnvironmentStatus): Or
       // Dine-in POS creates confirmed orders atomically; attach to session bill (idempotent).
       if (isPos && input.diningSessionId && input.orderType === "dine-in" && !row.idempotentReplay) {
         await attachConfirmedDineInOrderToBill(getClient(), row.id);
+      }
+
+      if (coupon.applied && coupon.validation && !row.idempotentReplay) {
+        const { error: redemptionError } = await supabase.from("coupon_redemptions").insert({
+          coupon_id: coupon.validation.couponId,
+          order_id: row.id,
+          branch_id: branch.id,
+          customer_id: input.customerId ?? null,
+          code: coupon.validation.code,
+          discount_type: coupon.validation.discountType,
+          discount_value: coupon.validation.discountValue,
+          discount_applied: coupon.validation.discountApplied,
+          order_subtotal: priced.subtotal,
+          status: "applied",
+        });
+        if (redemptionError && redemptionError.code !== "23505") {
+          throw new ApiError(500, "COUPON_REDEMPTION_FAILED", redemptionError.message);
+        }
       }
 
       return {

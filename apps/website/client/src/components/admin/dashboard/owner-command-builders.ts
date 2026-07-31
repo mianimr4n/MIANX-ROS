@@ -54,6 +54,24 @@ export type OwnerCommandLiveExtras = {
     leaveRequestsAwaitingApproval: number | null;
     payrollRunsAwaitingApproval: number | null;
   } | null;
+  loyaltyAttention?: {
+    unavailable: boolean;
+    accountsWithBalance: number | null;
+    earnTransactionsToday: number | null;
+    burnTransactionsToday: number | null;
+    pendingManualReviewAdjustments: number | null;
+    rewardsCatalogueConfigured: false;
+  } | null;
+  marketingAttention?: {
+    unavailable: boolean;
+    activeCoupons: number | null;
+    couponsExpiringSoon: number | null;
+    draftCampaigns: number | null;
+    campaignsAwaitingSend: number | null;
+    suppressedCustomers: number | null;
+    consentOptOuts: number | null;
+    providerConfigured: false;
+  } | null;
 };
 
 export function karachiDateString(date = new Date()): string {
@@ -456,6 +474,86 @@ export function buildAttentionMetrics(
       state: extras.workforceAttention?.unavailable ? "unavailable" : "available",
     },
     {
+      id: "loyalty-accounts",
+      title: "Loyalty Accounts With Balance",
+      value: extras.loyaltyAttention?.unavailable
+        ? null
+        : formatCount(extras.loyaltyAttention?.accountsWithBalance ?? null),
+      detail: extras.loyaltyAttention?.unavailable ? "Data unavailable" : "Customers holding points",
+      attentionWhy:
+        extras.loyaltyAttention?.unavailable
+          ? undefined
+          : (extras.loyaltyAttention?.accountsWithBalance ?? 0) > 0
+            ? "Review loyalty balances and ledger activity."
+            : "No customers currently hold loyalty points.",
+      href: "/admin/loyalty",
+      state: extras.loyaltyAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
+      id: "loyalty-burn-today",
+      title: "Loyalty Burns Today",
+      value: extras.loyaltyAttention?.unavailable
+        ? null
+        : formatCount(extras.loyaltyAttention?.burnTransactionsToday ?? null),
+      detail: extras.loyaltyAttention?.unavailable ? "Data unavailable" : "Burn transactions today (Karachi)",
+      attentionWhy:
+        extras.loyaltyAttention?.unavailable
+          ? undefined
+          : (extras.loyaltyAttention?.burnTransactionsToday ?? 0) > 0
+            ? "Points were burned today — verify redemptions."
+            : "No loyalty burns recorded today.",
+      href: "/admin/loyalty",
+      state: extras.loyaltyAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
+      id: "marketing-coupons-expiring",
+      title: "Coupons Expiring Soon",
+      value: extras.marketingAttention?.unavailable
+        ? null
+        : formatCount(extras.marketingAttention?.couponsExpiringSoon ?? null),
+      detail: extras.marketingAttention?.unavailable ? "Data unavailable" : "Active coupons expiring within 7 days",
+      attentionWhy:
+        extras.marketingAttention?.unavailable
+          ? undefined
+          : (extras.marketingAttention?.couponsExpiringSoon ?? 0) > 0
+            ? "Review or extend coupons before they expire."
+            : "No coupons expiring within seven days.",
+      href: "/admin/marketing",
+      state: extras.marketingAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
+      id: "marketing-campaigns",
+      title: "Campaigns Awaiting Send",
+      value: extras.marketingAttention?.unavailable
+        ? null
+        : formatCount(extras.marketingAttention?.campaignsAwaitingSend ?? null),
+      detail: extras.marketingAttention?.unavailable ? "Data unavailable" : "Scheduled or running campaigns",
+      attentionWhy:
+        extras.marketingAttention?.unavailable
+          ? undefined
+          : (extras.marketingAttention?.campaignsAwaitingSend ?? 0) > 0
+            ? "Campaigns are queued — provider delivery is not configured."
+            : "No campaigns awaiting send.",
+      href: "/admin/marketing",
+      state: extras.marketingAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
+      id: "marketing-consent",
+      title: "Marketing Consent Opt-Outs",
+      value: extras.marketingAttention?.unavailable
+        ? null
+        : formatCount(extras.marketingAttention?.consentOptOuts ?? null),
+      detail: extras.marketingAttention?.unavailable ? "Data unavailable" : "Customers with marketing consent off",
+      attentionWhy:
+        extras.marketingAttention?.unavailable
+          ? undefined
+          : (extras.marketingAttention?.consentOptOuts ?? 0) > 0
+            ? "Respect opt-outs before queueing campaigns."
+            : "No marketing consent opt-outs on record.",
+      href: "/admin/marketing",
+      state: extras.marketingAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
       id: "waste",
       title: "Waste Logged Today",
       value: extras.wasteUnavailable ? null : formatCount(extras.wasteTodayQty),
@@ -725,6 +823,45 @@ export function buildOwnerBriefLines(
     (extras.workforceAttention?.payrollRunsAwaitingApproval ?? 0) === 0
   ) {
     lines.push("No elevated workforce signals.");
+  }
+  const couponsExpiring = extras.marketingAttention?.couponsExpiringSoon;
+  if (!extras.marketingAttention?.unavailable && couponsExpiring != null) {
+    if (couponsExpiring === 0) {
+      lines.push("No coupons expiring within seven days.");
+    } else if (couponsExpiring === 1) {
+      lines.push("One coupon expires within seven days.");
+    } else if (couponsExpiring === 2) {
+      lines.push("Two coupons expire within seven days.");
+    } else {
+      lines.push(`${couponsExpiring} coupons expire within seven days.`);
+    }
+  }
+  const draftCampaigns = extras.marketingAttention?.draftCampaigns;
+  if (!extras.marketingAttention?.unavailable && draftCampaigns != null && draftCampaigns > 0) {
+    lines.push(
+      `${draftCampaigns} campaign${draftCampaigns === 1 ? "" : "s"} still in draft.`,
+    );
+  }
+  if (
+    !extras.marketingAttention?.unavailable &&
+    extras.marketingAttention?.providerConfigured === false
+  ) {
+    lines.push("Messaging provider is not configured.");
+  }
+  const loyaltyBurns = extras.loyaltyAttention?.burnTransactionsToday;
+  if (!extras.loyaltyAttention?.unavailable && loyaltyBurns != null && loyaltyBurns > 0) {
+    lines.push(
+      `${loyaltyBurns} loyalty burn${loyaltyBurns === 1 ? "" : "s"} recorded today.`,
+    );
+  }
+  if (
+    !extras.loyaltyAttention?.unavailable &&
+    (extras.loyaltyAttention?.accountsWithBalance ?? 0) === 0 &&
+    (extras.loyaltyAttention?.earnTransactionsToday ?? 0) === 0 &&
+    (extras.loyaltyAttention?.burnTransactionsToday ?? 0) === 0 &&
+    (extras.loyaltyAttention?.pendingManualReviewAdjustments ?? 0) === 0
+  ) {
+    lines.push("No elevated loyalty signals.");
   }
   lines.push(`Scope: ${branchLabel}.`);
   return lines.slice(0, 10);

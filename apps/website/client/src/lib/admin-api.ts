@@ -3037,6 +3037,413 @@ export function createMarketingCoupon(accessToken: string, input: CreateMarketin
   });
 }
 
+export type LoyaltyTxnType = "earn" | "burn" | "adjust" | "expire" | "reverse";
+
+export type LoyaltyTransaction = {
+  id: string;
+  loyaltyAccountId: string;
+  customerId: string | null;
+  orderId: string | null;
+  points: number;
+  type: LoyaltyTxnType;
+  note: string | null;
+  actorUserId: string | null;
+  reversesTransactionId: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+};
+
+export type LoyaltyMutationResult = {
+  transactionId: string | null;
+  accountId: string;
+  customerId?: string;
+  points: number;
+  pointsBalance: number;
+  type: LoyaltyTxnType;
+  idempotentReplay?: boolean;
+  skipped?: boolean;
+  reversedTransactionId?: string;
+};
+
+export type LoyaltyAttentionSnapshot = {
+  state: "available" | "unavailable";
+  unavailableReason: string | null;
+  accountsWithBalance: number;
+  earnTransactionsToday: number;
+  burnTransactionsToday: number;
+  pendingManualReviewAdjustments: number;
+  rewardsCatalogueConfigured: false;
+  rewardsCatalogueMessage: string;
+};
+
+export function listLoyaltyTransactions(
+  accessToken: string,
+  query?: { customerId?: string; accountId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.customerId) params.set("customerId", query.customerId);
+  if (query?.accountId) params.set("accountId", query.accountId);
+  const qs = params.toString();
+  return fetchApiData<LoyaltyTransaction[]>(
+    `/admin/loyalty/transactions${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function burnLoyaltyPoints(
+  accessToken: string,
+  input: {
+    customerId: string;
+    points: number;
+    orderId?: string | null;
+    note?: string | null;
+    idempotencyKey?: string;
+  },
+) {
+  const headers: Record<string, string> = {
+    ...bearerHeaders(accessToken),
+    "Content-Type": "application/json",
+  };
+  if (input.idempotencyKey) headers["Idempotency-Key"] = input.idempotencyKey;
+  const { idempotencyKey: _ik, ...body } = input;
+  return fetchApiData<LoyaltyMutationResult>("/admin/loyalty/burn", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function adjustLoyaltyPoints(
+  accessToken: string,
+  input: {
+    customerId: string;
+    points: number;
+    note: string;
+    idempotencyKey?: string;
+  },
+) {
+  const headers: Record<string, string> = {
+    ...bearerHeaders(accessToken),
+    "Content-Type": "application/json",
+  };
+  if (input.idempotencyKey) headers["Idempotency-Key"] = input.idempotencyKey;
+  const { idempotencyKey: _ik, ...body } = input;
+  return fetchApiData<LoyaltyMutationResult>("/admin/loyalty/adjust", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function expireLoyaltyPoints(
+  accessToken: string,
+  input: { customerId: string; points: number; note?: string | null },
+) {
+  return fetchApiData<LoyaltyMutationResult>("/admin/loyalty/expire", {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function reverseLoyaltyTransaction(
+  accessToken: string,
+  input: { transactionId: string; note: string },
+) {
+  return fetchApiData<LoyaltyMutationResult>("/admin/loyalty/reverse", {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function fetchLoyaltyAttention(accessToken: string, opts?: AdminReadOptions) {
+  return fetchApiData<LoyaltyAttentionSnapshot>("/admin/loyalty/attention", readInit(accessToken, opts));
+}
+
+export type PatchMarketingCouponInput = {
+  status?: "active" | "inactive" | "expired";
+  expiryDate?: string | null;
+  minOrder?: number;
+  maxRedemptions?: number | null;
+  perCustomerLimit?: number | null;
+};
+
+export function patchMarketingCoupon(
+  accessToken: string,
+  couponId: string,
+  input: PatchMarketingCouponInput,
+) {
+  return fetchApiData<MarketingCoupon>(`/admin/marketing/coupons/${couponId}`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export type CouponValidationResult = {
+  valid: boolean;
+  reason?: string;
+  couponId?: string;
+  code?: string;
+  discountType?: "percent" | "fixed";
+  discountValue?: number;
+  discountApplied?: number;
+  minOrder?: number;
+  branchId?: string | null;
+};
+
+export function validateMarketingCoupon(
+  accessToken: string,
+  input: { code: string; branchId?: string | null; subtotal: number; customerId?: string | null },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  params.set("code", input.code);
+  if (input.branchId) params.set("branchId", input.branchId);
+  params.set("subtotal", String(input.subtotal));
+  if (input.customerId) params.set("customerId", input.customerId);
+  return fetchApiData<CouponValidationResult>(
+    `/admin/marketing/coupons/validate?${params.toString()}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function validateMarketingCouponPost(
+  accessToken: string,
+  input: { code: string; branchId?: string | null; subtotal: number; customerId?: string | null },
+) {
+  return fetchApiData<CouponValidationResult>("/admin/marketing/coupons/validate", {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export type CouponRedemption = {
+  id: string;
+  couponId: string;
+  orderId: string;
+  branchId: string | null;
+  customerId: string | null;
+  code: string;
+  discountApplied: number;
+  status: "applied" | "reversed";
+  createdAt: string;
+};
+
+export function listCouponRedemptions(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<CouponRedemption[]>(
+    `/admin/marketing/redemptions${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export type CampaignChannel = "whatsapp" | "sms" | "email" | "push";
+export type CampaignStatus = "draft" | "scheduled" | "running" | "paused" | "completed" | "cancelled";
+export type SubmissionStatus =
+  | "queued"
+  | "suppressed"
+  | "submitted"
+  | "provider_accepted"
+  | "provider_rejected"
+  | "failed";
+
+export type MarketingCampaign = {
+  id: string;
+  branchId: string | null;
+  name: string;
+  channel: CampaignChannel;
+  status: CampaignStatus;
+  messageTemplate: string;
+  scheduledAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  cancelReason: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+  providerDeliveryClaimed: false;
+  providerDeliveryMessage: string;
+};
+
+export type CampaignSubmission = {
+  id: string;
+  campaignId: string;
+  customerId: string | null;
+  channel: CampaignChannel;
+  status: SubmissionStatus;
+  providerName: string | null;
+  providerMessageId: string | null;
+  failureReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export function listMarketingCampaigns(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<MarketingCampaign[]>(
+    `/admin/marketing/campaigns${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createMarketingCampaign(
+  accessToken: string,
+  input: {
+    branchId?: string | null;
+    name: string;
+    channel: CampaignChannel;
+    messageTemplate: string;
+    scheduledAt?: string | null;
+  },
+) {
+  return fetchApiData<MarketingCampaign>("/admin/marketing/campaigns", {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function transitionMarketingCampaign(
+  accessToken: string,
+  campaignId: string,
+  input: { status: CampaignStatus; cancelReason?: string | null },
+) {
+  return fetchApiData<MarketingCampaign>(`/admin/marketing/campaigns/${campaignId}`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listCampaignSubmissions(
+  accessToken: string,
+  campaignId: string,
+  opts?: AdminReadOptions,
+) {
+  return fetchApiData<CampaignSubmission[]>(
+    `/admin/marketing/campaigns/${campaignId}/submissions`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function queueCampaignSubmissions(
+  accessToken: string,
+  campaignId: string,
+  customerIds: string[],
+) {
+  return fetchApiData<{ queued: number; suppressed: number }>(
+    `/admin/marketing/campaigns/${campaignId}/queue`,
+    {
+      method: "POST",
+      headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+      body: JSON.stringify({ customerIds }),
+      timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+    },
+  );
+}
+
+export type MarketingSuppression = {
+  id: string;
+  customerId: string;
+  channel: string;
+  reason: string;
+  createdBy: string | null;
+  createdAt: string;
+};
+
+export function listMarketingSuppressions(accessToken: string, opts?: AdminReadOptions) {
+  return fetchApiData<MarketingSuppression[]>("/admin/marketing/suppressions", readInit(accessToken, opts));
+}
+
+export function createMarketingSuppression(
+  accessToken: string,
+  input: { customerId: string; channel: string; reason: string },
+) {
+  return fetchApiData<MarketingSuppression>("/admin/marketing/suppressions", {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export type MarketingConsent = {
+  customerId: string;
+  fullName: string | null;
+  phone: string | null;
+  email: string | null;
+  marketingConsent: boolean;
+  suppressedChannels: string[];
+};
+
+export function listMarketingConsent(accessToken: string, opts?: AdminReadOptions) {
+  return fetchApiData<MarketingConsent[]>("/admin/marketing/consent", readInit(accessToken, opts));
+}
+
+export function patchMarketingConsent(
+  accessToken: string,
+  customerId: string,
+  marketingConsent: boolean,
+) {
+  return fetchApiData<MarketingConsent>(`/admin/marketing/consent/${customerId}`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ marketingConsent }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export type MarketingAttentionSnapshot = {
+  state: "available" | "unavailable";
+  unavailableReason: string | null;
+  activeCoupons: number;
+  couponsExpiringSoon: number;
+  draftCampaigns: number;
+  campaignsAwaitingSend: number;
+  suppressedCustomers: number;
+  consentOptOuts: number;
+  providerConfigured: false;
+  providerMessage: string;
+};
+
+export function fetchMarketingAttention(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<MarketingAttentionSnapshot>(
+    `/admin/marketing/attention${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
 export type FinanceAccountType = "ASSET" | "LIABILITY" | "EQUITY" | "REVENUE" | "EXPENSE";
 
 export type FinanceAccount = {
