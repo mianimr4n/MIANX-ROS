@@ -71,7 +71,9 @@ describe("HR & Workforce Management V1 (static)", () => {
     assert.match(panels, /Approve/);
     assert.match(panels, /Reject/);
     assert.match(panels, /No employee documents yet/);
-    assert.match(panels, /createHrDocument/);
+    assert.match(panels, /uploadHrDocument/);
+    assert.match(panels, /fetchHrDocumentDownloadUrl/);
+    assert.match(panels, /DocumentUploadDropzone/);
     assert.match(panels, /Performance reviews — Planned for Phase 2/);
     assert.doesNotMatch(panels, /salaryAmount|netPay|leaveBalance:\s*\d/i);
     assert.doesNotMatch(panels, /placeholders only|Document storage unavailable|Attendance ledger unavailable/);

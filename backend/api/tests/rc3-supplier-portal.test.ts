@@ -62,6 +62,9 @@ describe("supplier portal response contracts", () => {
     expect(typeof service.respondToOrder).toBe("function");
     expect(typeof service.listResponseQueue).toBe("function");
     expect(typeof service.setPortalUserStatus).toBe("function");
+    expect(typeof service.uploadDocumentBinary).toBe("function");
+    expect(typeof service.createDocumentDownloadUrl).toBe("function");
+    expect(typeof service.archiveDocument).toBe("function");
   });
 
   it("isolates queries by supplier_id and never trusts client supplier id", () => {
@@ -69,6 +72,16 @@ describe("supplier portal response contracts", () => {
     expect(serviceSource).toMatch(/eq\("supplier_id", supplierId\)/);
     expect(serviceSource).not.toMatch(/input\.supplierId/);
     expect(routesSource).toMatch(/resolveContext/);
+  });
+
+  it("exposes binary document upload/download/archive with supplier isolation", () => {
+    expect(routesSource).toMatch(/\/documents\/upload/);
+    expect(routesSource).toMatch(/\/documents\/:id\/download-url/);
+    expect(routesSource).toMatch(/\/documents\/:id\/archive/);
+    expect(serviceSource).toMatch(/uploadDocumentBinary/);
+    expect(serviceSource).toMatch(/writeDocumentAccessEvent/);
+    expect(serviceSource).toMatch(/SUPPLIER_DOC_BUCKET/);
+    expect(serviceSource).toMatch(/\.eq\("supplier_id", ctx\.supplierId\)/);
   });
 
   it("requires reason for reject/amendment and idempotency replay", () => {

@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
+import { DocumentUploadDropzone } from "@/components/documents/DocumentUploadDropzone";
 import {
   approveHrPayrollRun,
   calculateHrPayrollRun,
   cancelHrLeave,
   cancelHrShift,
   createHrAttendance,
-  createHrDocument,
   createHrLeave,
   createHrPayPeriod,
   createHrPayrollRun,
@@ -15,6 +15,7 @@ import {
   createHrShiftTemplate,
   decideHrAttendanceCorrection,
   decideHrLeave,
+  fetchHrDocumentDownloadUrl,
   listHrCompensation,
   listHrPayPeriods,
   listHrPayrollRuns,
@@ -22,6 +23,7 @@ import {
   listHrShifts,
   lockHrPayrollRun,
   publishHrShift,
+  uploadHrDocument,
   type HrAttendance,
   type HrAttendanceCorrection,
   type HrAttendanceStatus,
@@ -1321,27 +1323,50 @@ export function EmployeeDocuments({
   const [showForm, setShowForm] = useState(false);
   const [employeeId, setEmployeeId] = useState("");
   const [documentType, setDocumentType] = useState<HrDocumentType>("CNIC");
-  const [fileUrl, setFileUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function onFileReady(payload: {
+    dataBase64: string;
+    contentType: string;
+    originalFilename: string;
+  }) {
     if (!accessToken) {
       setFormError("Sign in required to add documents.");
       return;
     }
+    if (!employeeId) {
+      setFormError("Select an employee before uploading.");
+      return;
+    }
     setBusy(true);
+    setProgress("Uploading to secure storage…");
     setFormError(null);
     try {
-      await createHrDocument(accessToken, employeeId, { documentType, fileUrl });
+      await uploadHrDocument(accessToken, employeeId, {
+        documentType,
+        dataBase64: payload.dataBase64,
+        contentType: payload.contentType,
+        originalFilename: payload.originalFilename,
+      });
       setShowForm(false);
-      setFileUrl("");
       onRefresh();
     } catch (err) {
-      setFormError(err instanceof ApiRequestError ? err.message : "Failed to add document.");
+      setFormError(err instanceof ApiRequestError ? err.message : "Failed to upload document.");
     } finally {
       setBusy(false);
+      setProgress(null);
+    }
+  }
+
+  async function onDownload(doc: HrEmployeeDocument) {
+    if (!accessToken) return;
+    try {
+      const { url } = await fetchHrDocumentDownloadUrl(accessToken, doc.id);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      setFormError(err instanceof ApiRequestError ? err.message : "Download failed.");
     }
   }
 
@@ -1349,7 +1374,7 @@ export function EmployeeDocuments({
     <AdminSurface aria-labelledby="employee-documents-heading" className="mb-6">
       <AdminSurfaceHeader
         title="Employee documents"
-        description="Store document links for employee records."
+        description="Secure binary uploads (CNIC, contracts, certificates, policies). Branch-scoped RBAC."
         action={
           canManage ? (
             <button
@@ -1360,7 +1385,7 @@ export function EmployeeDocuments({
               }}
               className="min-h-9 rounded-lg border border-[var(--admin-border)] bg-white px-3 text-sm font-semibold"
             >
-              {showForm ? "Cancel" : "Add document"}
+              {showForm ? "Cancel" : "Upload document"}
             </button>
           ) : null
         }
@@ -1371,7 +1396,7 @@ export function EmployeeDocuments({
         </h2>
 
         {showForm ? (
-          <form onSubmit={(e) => void onSubmit(e)} className="mb-4 grid gap-3 sm:grid-cols-2">
+          <div className="mb-4 grid gap-3 sm:grid-cols-2">
             <label className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
               Employee
               <select
@@ -1395,30 +1420,22 @@ export function EmployeeDocuments({
                 onChange={(e) => setDocumentType(e.target.value as HrDocumentType)}
                 className="mt-1 min-h-11 w-full rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
               >
-                <option value="CNIC">CNIC</option>
-                <option value="CONTRACT">CONTRACT</option>
-                <option value="CERTIFICATE">CERTIFICATE</option>
+                <option value="CNIC">CNIC / ID</option>
+                <option value="CONTRACT">Employment contract</option>
+                <option value="CERTIFICATE">Certificate</option>
+                <option value="POLICY">Policy acknowledgement</option>
+                <option value="OTHER">Other HR record</option>
               </select>
             </label>
-            <label className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)] sm:col-span-2">
-              File URL
-              <input
-                required
-                type="url"
-                value={fileUrl}
-                onChange={(e) => setFileUrl(e.target.value)}
-                placeholder="https://…"
-                className="mt-1 min-h-11 w-full rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
+            <div className="sm:col-span-2">
+              <DocumentUploadDropzone
+                busy={busy}
+                progressLabel={progress}
+                onFileReady={onFileReady}
+                onError={(message) => setFormError(message)}
               />
-            </label>
-            <button
-              type="submit"
-              disabled={busy}
-              className="min-h-11 self-end rounded-lg bg-[var(--brand-red)] px-4 text-sm font-semibold text-white disabled:opacity-40"
-            >
-              {busy ? "Saving…" : "Save document"}
-            </button>
-          </form>
+            </div>
+          </div>
         ) : null}
 
         {formError ? (
@@ -1444,14 +1461,16 @@ export function EmployeeDocuments({
                 <p className="font-semibold">
                   {doc.employeeName ?? "—"} · {doc.documentType}
                 </p>
-                <a
-                  href={doc.fileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-1 block truncate text-xs font-medium text-[var(--brand-red)] hover:underline"
+                <p className="mt-1 text-xs text-[var(--admin-muted)]">
+                  {doc.originalFilename ?? doc.mimeType ?? (doc.hasBinary ? "Binary" : "URL reference")}
+                </p>
+                <button
+                  type="button"
+                  className="mt-1 text-xs font-semibold text-[var(--brand-red)] hover:underline"
+                  onClick={() => void onDownload(doc)}
                 >
-                  {doc.fileUrl}
-                </a>
+                  Download
+                </button>
                 <p className="mt-1 text-xs text-[var(--admin-muted)]">
                   Uploaded {new Date(doc.uploadedAt).toLocaleString()}
                 </p>

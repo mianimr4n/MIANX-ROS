@@ -247,10 +247,37 @@ const hrWorkforce: HrWorkforceService = {
       employeeName: "Ali Khan",
       documentType: input.documentType,
       fileUrl: input.fileUrl,
+      mimeType: null,
+      fileSizeBytes: null,
+      checksumSha256: null,
+      originalFilename: null,
+      hasBinary: false,
+      status: "active",
       uploadedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       expiryTrackingAvailable: false as const,
     };
+  },
+  async uploadDocumentBinary(_scope, _actor, employeeId, input) {
+    return {
+      id: "doc-bin-1",
+      employeeId,
+      employeeName: "Ali Khan",
+      documentType: input.documentType,
+      fileUrl: null,
+      mimeType: input.contentType,
+      fileSizeBytes: 12,
+      checksumSha256: "a".repeat(64),
+      originalFilename: input.originalFilename ?? null,
+      hasBinary: true,
+      status: "active",
+      uploadedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      expiryTrackingAvailable: false as const,
+    };
+  },
+  async createDocumentDownloadUrl() {
+    return { url: "https://example.local/signed", expiresInSeconds: 120 };
   },
   async listCorrections() {
     return [];

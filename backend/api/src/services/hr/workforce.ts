@@ -4,6 +4,12 @@ import { ApiError } from "../../common/http.js";
 import type { EnvironmentStatus } from "../../config/env.js";
 import { assertBranchMembership } from "../branches/operational-status.js";
 import { loadBranchRow } from "../branches/lookup.js";
+import {
+  createSignedDownloadUrl,
+  uploadDocumentBytes,
+  writeDocumentAccessEvent,
+} from "../documents/storage.js";
+import { HR_DOC_BUCKET, resolveDocMaxBytes } from "../documents/validation.js";
 import type { BranchActorScope } from "../tables/management.js";
 
 export const HR_ATTENDANCE_STATUSES = ["PRESENT", "ABSENT", "LATE", "LEAVE"] as const;
@@ -15,7 +21,7 @@ export type HrLeaveType = (typeof HR_LEAVE_TYPES)[number];
 export const HR_LEAVE_STATUSES = ["PENDING", "APPROVED", "REJECTED", "CANCELLED"] as const;
 export type HrLeaveStatus = (typeof HR_LEAVE_STATUSES)[number];
 
-export const HR_DOCUMENT_TYPES = ["CNIC", "CONTRACT", "CERTIFICATE"] as const;
+export const HR_DOCUMENT_TYPES = ["CNIC", "CONTRACT", "CERTIFICATE", "POLICY", "OTHER"] as const;
 export type HrDocumentType = (typeof HR_DOCUMENT_TYPES)[number];
 
 export const HR_CORRECTION_STATUSES = ["pending", "approved", "rejected"] as const;
@@ -88,7 +94,13 @@ export interface HrEmployeeDocumentRecord {
   employeeId: string;
   employeeName: string | null;
   documentType: HrDocumentType;
-  fileUrl: string;
+  fileUrl: string | null;
+  mimeType: string | null;
+  fileSizeBytes: number | null;
+  checksumSha256: string | null;
+  originalFilename: string | null;
+  hasBinary: boolean;
+  status: string;
   uploadedAt: string;
   createdAt: string;
   expiryTrackingAvailable: false;
@@ -97,6 +109,15 @@ export interface HrEmployeeDocumentRecord {
 export interface CreateHrDocumentInput {
   documentType: HrDocumentType;
   fileUrl: string;
+}
+
+export interface UploadHrDocumentBinaryInput {
+  documentType: HrDocumentType;
+  dataBase64: string;
+  contentType: string;
+  originalFilename?: string | null;
+  title?: string | null;
+  requestId?: string | null;
 }
 
 export interface HrAttendanceCorrectionRecord {
@@ -199,6 +220,18 @@ export interface HrWorkforceService {
     employeeId: string,
     input: CreateHrDocumentInput,
   ): Promise<HrEmployeeDocumentRecord>;
+  uploadDocumentBinary(
+    scope: BranchActorScope,
+    actorUserId: string,
+    employeeId: string,
+    input: UploadHrDocumentBinaryInput,
+  ): Promise<HrEmployeeDocumentRecord>;
+  createDocumentDownloadUrl(
+    scope: BranchActorScope,
+    actorUserId: string,
+    documentId: string,
+    requestId?: string | null,
+  ): Promise<{ url: string; expiresInSeconds: number }>;
   listCorrections(
     scope: BranchActorScope,
     query?: { branchId?: string; status?: HrCorrectionStatus },
@@ -255,7 +288,14 @@ type DocumentRow = {
   id: string;
   employee_id: string;
   document_type: string;
-  file_url: string;
+  file_url: string | null;
+  mime_type?: string | null;
+  file_size_bytes?: number | null;
+  checksum_sha256?: string | null;
+  original_filename?: string | null;
+  storage_path?: string | null;
+  storage_bucket?: string | null;
+  status?: string | null;
   uploaded_at: string;
   created_at: string;
   employee: { id: string; full_name: string; branch_id: string } | null;
@@ -289,7 +329,7 @@ const LEAVE_SELECT =
   "id, employee_id, branch_id, start_date, end_date, leave_type, status, reason, rejection_reason, decided_by, decided_at, created_at, updated_at, branch:branches(id, branch_code, name), employee:hr_employees(id, full_name)";
 
 const DOCUMENT_SELECT =
-  "id, employee_id, document_type, file_url, uploaded_at, created_at, employee:hr_employees(id, full_name, branch_id)";
+  "id, employee_id, document_type, file_url, mime_type, file_size_bytes, checksum_sha256, original_filename, storage_path, storage_bucket, status, uploaded_at, created_at, employee:hr_employees(id, full_name, branch_id)";
 
 const CORRECTION_SELECT =
   "id, attendance_id, branch_id, employee_id, requested_by, reviewed_by, status, reason, rejection_reason, original_check_in, original_check_out, original_status, proposed_check_in, proposed_check_out, proposed_status, created_at, reviewed_at, employee:hr_employees(id, full_name)";
@@ -377,6 +417,12 @@ function mapDocument(row: DocumentRow): HrEmployeeDocumentRecord {
     employeeName: row.employee?.full_name ?? null,
     documentType: row.document_type as HrDocumentType,
     fileUrl: row.file_url,
+    mimeType: row.mime_type ?? null,
+    fileSizeBytes: row.file_size_bytes ?? null,
+    checksumSha256: row.checksum_sha256 ?? null,
+    originalFilename: row.original_filename ?? null,
+    hasBinary: Boolean(row.storage_path),
+    status: row.status ?? "active",
     uploadedAt: row.uploaded_at,
     createdAt: row.created_at,
     expiryTrackingAvailable: false,
@@ -809,11 +855,122 @@ export function createHrWorkforceService(envStatus: EnvironmentStatus): HrWorkfo
           employee_id: employeeId,
           document_type: input.documentType,
           file_url: fileUrl,
+          status: "active",
         })
         .select(DOCUMENT_SELECT)
         .single();
       if (error) throw new ApiError(500, "HR_DOCUMENT_CREATE_FAILED", error.message);
       return mapDocument(data as unknown as DocumentRow);
+    },
+
+    async uploadDocumentBinary(scope, actorUserId, employeeId, input) {
+      const client = supabase();
+      const { data: emp, error: empError } = await client
+        .from("hr_employees")
+        .select("id, branch_id")
+        .eq("id", employeeId)
+        .maybeSingle();
+      if (empError) throw new ApiError(500, "HR_EMPLOYEE_READ_FAILED", empError.message);
+      if (!emp) throw new ApiError(404, "HR_EMPLOYEE_NOT_FOUND", "Employee not found.");
+      assertBranchMembership(scope, emp.branch_id);
+
+      const stored = await uploadDocumentBytes({
+        supabase: client,
+        bucket: HR_DOC_BUCKET,
+        tenantKey: emp.branch_id,
+        dataBase64: input.dataBase64,
+        contentType: input.contentType,
+        originalFilename: input.originalFilename,
+        maxBytes: resolveDocMaxBytes(),
+        requestId: input.requestId ?? undefined,
+      });
+
+      const { data, error } = await client
+        .from("hr_employee_documents")
+        .insert({
+          employee_id: employeeId,
+          document_type: input.documentType,
+          file_url: null,
+          mime_type: stored.mime,
+          file_size_bytes: stored.sizeBytes,
+          checksum_sha256: stored.checksumSha256,
+          original_filename: stored.safeOriginalFilename,
+          storage_bucket: stored.bucket,
+          storage_path: stored.storagePath,
+          title: input.title?.trim() || null,
+          uploaded_by: actorUserId,
+          status: "active",
+        })
+        .select(DOCUMENT_SELECT)
+        .single();
+      if (error) throw new ApiError(500, "HR_DOCUMENT_CREATE_FAILED", error.message);
+
+      await writeDocumentAccessEvent({
+        supabase: client,
+        documentDomain: "hr",
+        documentId: String((data as { id: string }).id),
+        action: "upload",
+        actorUserId,
+        branchId: emp.branch_id,
+        employeeId,
+        requestId: input.requestId,
+        metadata: { mime: stored.mime, sizeBytes: stored.sizeBytes },
+      });
+
+      return mapDocument(data as unknown as DocumentRow);
+    },
+
+    async createDocumentDownloadUrl(scope, actorUserId, documentId, requestId) {
+      const client = supabase();
+      const { data, error } = await client
+        .from("hr_employee_documents")
+        .select(DOCUMENT_SELECT)
+        .eq("id", documentId)
+        .maybeSingle();
+      if (error) throw new ApiError(500, "HR_DOCUMENTS_READ_FAILED", error.message);
+      if (!data) throw new ApiError(404, "HR_DOCUMENT_NOT_FOUND", "Document not found.");
+      const row = data as unknown as DocumentRow;
+      const branchId = row.employee?.branch_id;
+      if (!branchId) throw new ApiError(404, "HR_DOCUMENT_NOT_FOUND", "Document not found.");
+      assertBranchMembership(scope, branchId);
+      if (row.status === "archived") {
+        throw new ApiError(409, "DOCUMENT_ARCHIVED", "Document is archived.");
+      }
+
+      if (!row.storage_path) {
+        if (!row.file_url) throw new ApiError(404, "DOCUMENT_UNAVAILABLE", "No downloadable file.");
+        await writeDocumentAccessEvent({
+          supabase: client,
+          documentDomain: "hr",
+          documentId,
+          action: "download",
+          actorUserId,
+          branchId,
+          employeeId: row.employee_id,
+          requestId,
+          metadata: { mode: "url_reference" },
+        });
+        return { url: row.file_url, expiresInSeconds: 0 };
+      }
+
+      const url = await createSignedDownloadUrl({
+        supabase: client,
+        bucket: row.storage_bucket ?? HR_DOC_BUCKET,
+        storagePath: row.storage_path,
+        expiresInSeconds: 120,
+      });
+      await writeDocumentAccessEvent({
+        supabase: client,
+        documentDomain: "hr",
+        documentId,
+        action: "download",
+        actorUserId,
+        branchId,
+        employeeId: row.employee_id,
+        requestId,
+        metadata: { mode: "signed" },
+      });
+      return { url, expiresInSeconds: 120 };
     },
 
     async listCorrections(scope, query) {

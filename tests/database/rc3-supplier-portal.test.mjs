@@ -60,8 +60,10 @@ describe("RC3 supplier portal migrations and contracts", () => {
     assert.doesNotMatch(service, /createReceiving\(/);
   });
 
-  it("documents binary upload as unavailable (URL references only)", () => {
+  it("retains legacy URL create while RC4-5 adds binary upload", () => {
     assert.match(hardening, /Binary upload infrastructure Coming Soon/);
     assert.match(service, /fileUrl must be an http\(s\) URL/);
+    assert.match(service, /uploadDocumentBinary/);
+    assert.match(routes, /\/documents\/upload/);
   });
 });

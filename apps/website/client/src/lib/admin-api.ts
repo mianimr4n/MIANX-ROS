@@ -2097,14 +2097,18 @@ export type CreateHrLeaveInput = {
   reason?: string | null;
 };
 
-export type HrDocumentType = "CNIC" | "CONTRACT" | "CERTIFICATE";
+export type HrDocumentType = "CNIC" | "CONTRACT" | "CERTIFICATE" | "POLICY" | "OTHER";
 
 export type HrEmployeeDocument = {
   id: string;
   employeeId: string;
   employeeName: string | null;
   documentType: HrDocumentType;
-  fileUrl: string;
+  fileUrl: string | null;
+  mimeType?: string | null;
+  fileSizeBytes?: number | null;
+  hasBinary?: boolean;
+  originalFilename?: string | null;
   uploadedAt: string;
   createdAt: string;
 };
@@ -2112,6 +2116,14 @@ export type HrEmployeeDocument = {
 export type CreateHrDocumentInput = {
   documentType: HrDocumentType;
   fileUrl: string;
+};
+
+export type UploadHrDocumentInput = {
+  documentType: HrDocumentType;
+  dataBase64: string;
+  contentType: string;
+  originalFilename?: string | null;
+  title?: string | null;
 };
 
 export function listHrAttendance(
@@ -2468,6 +2480,27 @@ export function createHrDocument(accessToken: string, employeeId: string, input:
     body: JSON.stringify(input),
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
+}
+
+export function uploadHrDocument(accessToken: string, employeeId: string, input: UploadHrDocumentInput) {
+  return fetchApiData<HrEmployeeDocument>(`/admin/hr/employees/${employeeId}/documents/upload`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: 60_000,
+  });
+}
+
+export function fetchHrDocumentDownloadUrl(accessToken: string, documentId: string) {
+  return fetchApiData<{ url: string; expiresInSeconds: number }>(
+    `/admin/hr/documents/${documentId}/download-url`,
+    {
+      method: "POST",
+      headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+      body: "{}",
+      timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+    },
+  );
 }
 
 export type InventoryItemStatus = "active" | "inactive" | "discontinued";

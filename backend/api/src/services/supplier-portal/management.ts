@@ -4,8 +4,14 @@ import { ApiError } from "../../common/http.js";
 import { throwMappedDbError } from "../../common/supabase-errors.js";
 import type { EnvironmentStatus } from "../../config/env.js";
 import type { AuthPrincipal } from "../auth/principal.js";
-import type { BranchActorScope } from "../tables/management.js";
 import { assertBranchMembership } from "../branches/operational-status.js";
+import {
+  createSignedDownloadUrl,
+  uploadDocumentBytes,
+  writeDocumentAccessEvent,
+} from "../documents/storage.js";
+import { resolveDocMaxBytes, SUPPLIER_DOC_BUCKET } from "../documents/validation.js";
+import type { BranchActorScope } from "../tables/management.js";
 
 export const SUPPLIER_RESPONSE_TYPES = [
   "acknowledge",
@@ -136,7 +142,13 @@ export interface PortalDocument {
   purchaseOrderId: string | null;
   documentType: SupplierDocumentType;
   title: string;
-  fileUrl: string;
+  fileUrl: string | null;
+  mimeType: string | null;
+  fileSizeBytes: number | null;
+  checksumSha256: string | null;
+  originalFilename: string | null;
+  hasBinary: boolean;
+  status: string;
   uploadedAt: string;
 }
 
@@ -232,6 +244,24 @@ export interface SupplierPortalService {
       purchaseOrderId?: string | null;
     },
   ): Promise<PortalDocument>;
+  uploadDocumentBinary(
+    ctx: SupplierPortalContext,
+    input: {
+      documentType: SupplierDocumentType;
+      title: string;
+      dataBase64: string;
+      contentType: string;
+      originalFilename?: string | null;
+      purchaseOrderId?: string | null;
+      requestId?: string | null;
+    },
+  ): Promise<PortalDocument>;
+  createDocumentDownloadUrl(
+    ctx: SupplierPortalContext,
+    documentId: string,
+    requestId?: string | null,
+  ): Promise<{ url: string; expiresInSeconds: number }>;
+  archiveDocument(ctx: SupplierPortalContext, documentId: string, requestId?: string | null): Promise<PortalDocument>;
   upsertDeliveryRef(
     ctx: SupplierPortalContext,
     orderId: string,
@@ -335,6 +365,7 @@ function mapResponse(row: Record<string, unknown> | null): PortalPurchaseOrderRe
 }
 
 function mapDocument(row: Record<string, unknown>): PortalDocument {
+  const storagePath = row.storage_path == null ? null : String(row.storage_path);
   return {
     id: String(row.id),
     supplierId: String(row.supplier_id),
@@ -342,7 +373,13 @@ function mapDocument(row: Record<string, unknown>): PortalDocument {
     purchaseOrderId: row.purchase_order_id == null ? null : String(row.purchase_order_id),
     documentType: row.document_type as SupplierDocumentType,
     title: String(row.title),
-    fileUrl: String(row.file_url),
+    fileUrl: row.file_url == null ? null : String(row.file_url),
+    mimeType: row.mime_type == null ? null : String(row.mime_type),
+    fileSizeBytes: row.file_size_bytes == null ? null : Number(row.file_size_bytes),
+    checksumSha256: row.checksum_sha256 == null ? null : String(row.checksum_sha256),
+    originalFilename: row.original_filename == null ? null : String(row.original_filename),
+    hasBinary: Boolean(storagePath),
+    status: row.status == null ? "active" : String(row.status),
     uploadedAt: String(row.uploaded_at),
   };
 }
@@ -837,9 +874,10 @@ export function createSupplierPortalService(envStatus: EnvironmentStatus): Suppl
       const { data, error } = await client
         .from("supplier_documents")
         .select(
-          "id, supplier_id, branch_id, purchase_order_id, document_type, title, file_url, uploaded_at",
+          "id, supplier_id, branch_id, purchase_order_id, document_type, title, file_url, mime_type, file_size_bytes, checksum_sha256, original_filename, storage_path, storage_bucket, status, uploaded_at",
         )
         .eq("supplier_id", ctx.supplierId)
+        .is("archived_at", null)
         .order("uploaded_at", { ascending: false });
       if (error) throwMappedDbError("SUPPLIER_DOCUMENTS_READ_FAILED", error);
       return ((data ?? []) as Record<string, unknown>[]).map(mapDocument);
@@ -871,7 +909,7 @@ export function createSupplierPortalService(envStatus: EnvironmentStatus): Suppl
           uploaded_by: ctx.userId,
         })
         .select(
-          "id, supplier_id, branch_id, purchase_order_id, document_type, title, file_url, uploaded_at",
+          "id, supplier_id, branch_id, purchase_order_id, document_type, title, file_url, mime_type, file_size_bytes, checksum_sha256, original_filename, storage_path, storage_bucket, status, uploaded_at",
         )
         .single();
       if (error) throwMappedDbError("SUPPLIER_DOCUMENT_CREATE_FAILED", error);
@@ -881,9 +919,162 @@ export function createSupplierPortalService(envStatus: EnvironmentStatus): Suppl
         purchaseOrderId: input.purchaseOrderId || null,
         actorUserId: ctx.userId,
         eventType: "document_uploaded",
-        payload: { documentId: data.id, documentType: input.documentType },
+        payload: { documentId: data.id, documentType: input.documentType, mode: "url_reference" },
       });
 
+      return mapDocument(data as Record<string, unknown>);
+    },
+
+    async uploadDocumentBinary(ctx, input) {
+      const client = supabase();
+      if (input.purchaseOrderId) {
+        await loadOrderBundle(client, ctx.supplierId, input.purchaseOrderId);
+      }
+      const title = input.title.trim();
+      if (!title) {
+        throw new ApiError(400, "VALIDATION_ERROR", "title is required.");
+      }
+
+      const stored = await uploadDocumentBytes({
+        supabase: client,
+        bucket: SUPPLIER_DOC_BUCKET,
+        tenantKey: ctx.supplierId,
+        dataBase64: input.dataBase64,
+        contentType: input.contentType,
+        originalFilename: input.originalFilename,
+        maxBytes: resolveDocMaxBytes(),
+        requestId: input.requestId ?? undefined,
+      });
+
+      const { data, error } = await client
+        .from("supplier_documents")
+        .insert({
+          supplier_id: ctx.supplierId,
+          branch_id: ctx.branchId,
+          purchase_order_id: input.purchaseOrderId || null,
+          document_type: input.documentType,
+          title,
+          file_url: null,
+          mime_type: stored.mime,
+          file_size_bytes: stored.sizeBytes,
+          checksum_sha256: stored.checksumSha256,
+          original_filename: stored.safeOriginalFilename,
+          storage_bucket: stored.bucket,
+          storage_path: stored.storagePath,
+          uploaded_by: ctx.userId,
+          status: "active",
+        })
+        .select(
+          "id, supplier_id, branch_id, purchase_order_id, document_type, title, file_url, mime_type, file_size_bytes, checksum_sha256, original_filename, storage_path, storage_bucket, status, uploaded_at",
+        )
+        .single();
+      if (error) throwMappedDbError("SUPPLIER_DOCUMENT_CREATE_FAILED", error);
+
+      await writeAudit(client, {
+        supplierId: ctx.supplierId,
+        purchaseOrderId: input.purchaseOrderId || null,
+        actorUserId: ctx.userId,
+        eventType: "document_uploaded",
+        payload: {
+          documentId: data.id,
+          documentType: input.documentType,
+          mode: "binary",
+          checksumSha256: stored.checksumSha256,
+          sizeBytes: stored.sizeBytes,
+        },
+      });
+      await writeDocumentAccessEvent({
+        supabase: client,
+        documentDomain: "supplier",
+        documentId: String(data.id),
+        action: "upload",
+        actorUserId: ctx.userId,
+        branchId: ctx.branchId,
+        supplierId: ctx.supplierId,
+        requestId: input.requestId,
+        metadata: { mime: stored.mime, sizeBytes: stored.sizeBytes },
+      });
+
+      return mapDocument(data as Record<string, unknown>);
+    },
+
+    async createDocumentDownloadUrl(ctx, documentId, requestId) {
+      const client = supabase();
+      const { data, error } = await client
+        .from("supplier_documents")
+        .select("id, supplier_id, branch_id, storage_bucket, storage_path, file_url, status, archived_at")
+        .eq("id", documentId)
+        .eq("supplier_id", ctx.supplierId)
+        .maybeSingle();
+      if (error) throwMappedDbError("SUPPLIER_DOCUMENTS_READ_FAILED", error);
+      if (!data) throw new ApiError(404, "SUPPLIER_DOCUMENT_NOT_FOUND", "Document not found.");
+      if (data.archived_at || data.status === "archived") {
+        throw new ApiError(409, "DOCUMENT_ARCHIVED", "Document is archived.");
+      }
+
+      const storagePath = data.storage_path as string | null;
+      const bucket = (data.storage_bucket as string | null) ?? SUPPLIER_DOC_BUCKET;
+      if (!storagePath) {
+        const fileUrl = data.file_url as string | null;
+        if (!fileUrl) throw new ApiError(404, "DOCUMENT_UNAVAILABLE", "No downloadable file.");
+        await writeDocumentAccessEvent({
+          supabase: client,
+          documentDomain: "supplier",
+          documentId,
+          action: "download",
+          actorUserId: ctx.userId,
+          branchId: ctx.branchId,
+          supplierId: ctx.supplierId,
+          requestId,
+          metadata: { mode: "url_reference" },
+        });
+        return { url: fileUrl, expiresInSeconds: 0 };
+      }
+
+      const url = await createSignedDownloadUrl({
+        supabase: client,
+        bucket,
+        storagePath,
+        expiresInSeconds: 120,
+      });
+      await writeDocumentAccessEvent({
+        supabase: client,
+        documentDomain: "supplier",
+        documentId,
+        action: "download",
+        actorUserId: ctx.userId,
+        branchId: ctx.branchId,
+        supplierId: ctx.supplierId,
+        requestId,
+        metadata: { mode: "signed" },
+      });
+      return { url, expiresInSeconds: 120 };
+    },
+
+    async archiveDocument(ctx, documentId, requestId) {
+      const client = supabase();
+      const now = new Date().toISOString();
+      const { data, error } = await client
+        .from("supplier_documents")
+        .update({ status: "archived", archived_at: now })
+        .eq("id", documentId)
+        .eq("supplier_id", ctx.supplierId)
+        .select(
+          "id, supplier_id, branch_id, purchase_order_id, document_type, title, file_url, mime_type, file_size_bytes, checksum_sha256, original_filename, storage_path, storage_bucket, status, uploaded_at",
+        )
+        .maybeSingle();
+      if (error) throwMappedDbError("SUPPLIER_DOCUMENT_UPDATE_FAILED", error);
+      if (!data) throw new ApiError(404, "SUPPLIER_DOCUMENT_NOT_FOUND", "Document not found.");
+      await writeDocumentAccessEvent({
+        supabase: client,
+        documentDomain: "supplier",
+        documentId,
+        action: "archive",
+        actorUserId: ctx.userId,
+        branchId: ctx.branchId,
+        supplierId: ctx.supplierId,
+        requestId,
+      });
       return mapDocument(data as Record<string, unknown>);
     },
 
