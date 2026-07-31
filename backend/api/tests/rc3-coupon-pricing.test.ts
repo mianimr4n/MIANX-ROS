@@ -39,7 +39,7 @@ describe("RC3 checkout coupon reconcile helpers", () => {
 
   it("does not warn when coupon was server-applied", () => {
     const warnings = collectClientMoneyWarnings({
-      items: [{ menuItemId: "sku-1", quantity: 1 }],
+      items: [{ quantity: 1 } as { unitPrice?: number }],
       couponCode: "SAVE50",
       couponApplied: true,
     });
@@ -48,7 +48,7 @@ describe("RC3 checkout coupon reconcile helpers", () => {
 
   it("warns when coupon present but not applied", () => {
     const warnings = collectClientMoneyWarnings({
-      items: [{ menuItemId: "sku-1", quantity: 1 }],
+      items: [{}],
       couponCode: "SAVE50",
       couponApplied: false,
     });
