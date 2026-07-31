@@ -1,0 +1,89 @@
+{
+  "ok": true,
+  "checks": [
+    {
+      "id": "table:cash_reconciliations",
+      "exists": "true",
+      "rls": "true",
+      "pass": true
+    },
+    {
+      "id": "table:expense_claims",
+      "exists": "true",
+      "rls": "true",
+      "pass": true
+    },
+    {
+      "id": "table:finance_postings",
+      "exists": "true",
+      "rls": "true",
+      "pass": true
+    },
+    {
+      "id": "table:finance_account_mappings",
+      "exists": "true",
+      "rls": "true",
+      "pass": true
+    },
+    {
+      "id": "table:supplier_invoices",
+      "exists": "true",
+      "rls": "true",
+      "pass": true
+    },
+    {
+      "id": "table:supplier_payments",
+      "exists": "true",
+      "rls": "true",
+      "pass": true
+    },
+    {
+      "id": "table:journal_entries",
+      "exists": "true",
+      "rls": "true",
+      "pass": true
+    },
+    {
+      "id": "table:goods_receiving",
+      "exists": "true",
+      "rls": "true",
+      "pass": true
+    },
+    {
+      "id": "table:supplier_portal_users",
+      "exists": "true",
+      "rls": "true",
+      "pass": true
+    },
+    {
+      "id": "table:purchase_order_responses",
+      "exists": "true",
+      "rls": "true",
+      "pass": true
+    },
+    {
+      "id": "table:supplier_portal_events",
+      "exists": "true",
+      "rls": "true",
+      "pass": true
+    },
+    {
+      "id": "table:coupon_redemptions",
+      "exists": "true",
+      "rls": "true",
+      "pass": true
+    },
+    {
+      "id": "policy_count",
+      "count": 146,
+      "pass": true
+    },
+    {
+      "id": "uniq_spot",
+      "count": 2,
+      "pass": true
+    }
+  ],
+  "failures": [],
+  "policyCount": 146
+}
