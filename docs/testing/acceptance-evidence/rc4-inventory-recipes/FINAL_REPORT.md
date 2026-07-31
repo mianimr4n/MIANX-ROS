@@ -10,7 +10,7 @@
 | --- | --- |
 | Start (incomplete implementation tip) | `a156b79a9419c6e9fd139681f4a6075ede48c88b` |
 | Rebase onto main (incl. RC4-5) | tip before live-validation commit |
-| End | *(set after commit)* |
+| End | `7c7d8bdf760b9a1dcd69d3594fe932b60a208d70` |
 
 ## Why complete
 
