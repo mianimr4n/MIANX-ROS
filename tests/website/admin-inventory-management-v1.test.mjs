@@ -54,7 +54,7 @@ describe("Inventory Management V1 (static)", () => {
     assert.match(valuation, /Retail menu price is not inventory cost/);
     assert.match(valuation, /Menu selling prices must not be used/);
     const helper = read("apps/website/client/src/lib/admin-inventory.ts");
-    assert.match(helper, /no ingredient recipes|Recipe \/ BOM|Recipe consumption tracking/);
+    assert.match(helper, /Recipe \/ BOM|inventory_recipes|kitchen ticket/);
     assert.doesNotMatch(helper, /displayPrice|formatPkr.*stock/i);
   });
 
@@ -72,11 +72,12 @@ describe("Inventory Management V1 (static)", () => {
     assert.doesNotMatch(header, /Coming Soon/);
   });
 
-  it("classifies recipe consumption as Phase 2 without server engine", () => {
+  it("exposes LIVE recipe management wired to kitchen preparing consume", () => {
     const recipe = read("apps/website/client/src/components/admin/inventory/InventoryWorkflowPanels.tsx");
-    assert.match(recipe, /Recipe Mapping — Planned for Phase 2/);
-    assert.match(recipe, /server-side recipe consumption engine required/i);
-    assert.doesNotMatch(recipe, /deduct.*order|subtract.*quantity/i);
+    assert.match(recipe, /Create draft recipe|Activate/);
+    assert.match(recipe, /createInventoryRecipe|activateInventoryRecipe/);
+    assert.match(recipe, /kitchen → preparing|kitchen BOM/i);
+    assert.doesNotMatch(recipe, /Recipe Mapping — Planned for Phase 2/);
   });
 
   it("Mianx inventory insights remain rule-based only", () => {

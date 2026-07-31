@@ -2625,6 +2625,126 @@ export function listStockMovements(
   );
 }
 
+export type InventoryRecipeStatus = "draft" | "active" | "inactive";
+export type RecipeCostState = "LIVE" | "DERIVED" | "UNAVAILABLE" | "DEFERRED";
+
+export type InventoryRecipeLine = {
+  id: string;
+  inventoryItemId: string;
+  quantity: number;
+  unit: string;
+  wasteFactor: number;
+  sortOrder: number;
+  itemSku: string | null;
+  itemName: string | null;
+  itemUnit: string | null;
+  itemCostPrice: number | null;
+  itemStatus: string | null;
+  convertedQuantity: number | null;
+  lineCost: number | null;
+  lineCostState: RecipeCostState;
+};
+
+export type InventoryRecipe = {
+  id: string;
+  branchId: string;
+  branchCode: string | null;
+  branchName: string | null;
+  menuItemId: string;
+  menuItemName: string | null;
+  name: string;
+  version: number;
+  status: InventoryRecipeStatus;
+  yieldFactor: number;
+  notes: string | null;
+  lines: InventoryRecipeLine[];
+  estimatedCost: number | null;
+  estimatedCostState: RecipeCostState;
+  estimatedCostSource: string;
+  estimatedCostAsOf: string | null;
+  estimatedCostFormula: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateInventoryRecipeInput = {
+  branchId: string;
+  menuItemId: string;
+  name: string;
+  yieldFactor?: number;
+  notes?: string | null;
+  lines: Array<{
+    inventoryItemId: string;
+    quantity: number;
+    unit: string;
+    wasteFactor?: number;
+    sortOrder?: number;
+  }>;
+};
+
+export function listInventoryRecipes(
+  accessToken: string,
+  query?: { branchId?: string; menuItemId?: string; status?: InventoryRecipeStatus },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  if (query?.menuItemId) params.set("menuItemId", query.menuItemId);
+  if (query?.status) params.set("status", query.status);
+  const qs = params.toString();
+  return fetchApiData<InventoryRecipe[]>(
+    `/admin/inventory/recipes${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function listMissingRecipeMenuItems(
+  accessToken: string,
+  branchId: string,
+  menuItemIds: string[],
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams({ branchId });
+  if (menuItemIds.length) params.set("menuItemIds", menuItemIds.join(","));
+  return fetchApiData<string[]>(
+    `/admin/inventory/recipes/missing?${params}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createInventoryRecipe(accessToken: string, input: CreateInventoryRecipeInput) {
+  return fetchApiData<InventoryRecipe>(`/admin/inventory/recipes`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function activateInventoryRecipe(accessToken: string, id: string) {
+  return fetchApiData<InventoryRecipe>(`/admin/inventory/recipes/${id}/activate`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function deactivateInventoryRecipe(accessToken: string, id: string) {
+  return fetchApiData<InventoryRecipe>(`/admin/inventory/recipes/${id}/deactivate`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function duplicateInventoryRecipe(accessToken: string, id: string) {
+  return fetchApiData<InventoryRecipe>(`/admin/inventory/recipes/${id}/duplicate`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
 export type SupplierStatus = "active" | "inactive";
 
 export type Supplier = {

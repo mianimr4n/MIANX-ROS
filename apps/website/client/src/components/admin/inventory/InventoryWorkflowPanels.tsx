@@ -1,14 +1,26 @@
-import { useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link } from "wouter";
 
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
-import type { InventoryItem, StockMovement } from "@/lib/admin-api";
+import {
+  activateInventoryRecipe,
+  createInventoryRecipe,
+  deactivateInventoryRecipe,
+  duplicateInventoryRecipe,
+  listInventoryRecipes,
+  listMissingRecipeMenuItems,
+  type InventoryItem,
+  type InventoryRecipe,
+  type StockMovement,
+} from "@/lib/admin-api";
+import { ApiRequestError } from "@/lib/api";
 import {
   formatMovementLabel,
   formatStockQty,
   isLowStock,
   type InventoryKpiSnapshot,
 } from "@/lib/admin-inventory";
+import type { MenuItem } from "@/lib/telepizza-types";
 
 export function StockMovementTimeline({
   movements,
@@ -95,12 +107,110 @@ export function LowStockPanel({ items }: { items: InventoryItem[] | null }) {
   );
 }
 
-export function RecipeMappingPanel({ snapshot }: { snapshot: InventoryKpiSnapshot | null }) {
+export function RecipeMappingPanel({
+  snapshot,
+  accessToken,
+  branchId,
+  canManage,
+  menuItems,
+  stockItems,
+}: {
+  snapshot: InventoryKpiSnapshot | null;
+  accessToken: string | undefined;
+  branchId: string | null;
+  canManage: boolean;
+  menuItems: MenuItem[];
+  stockItems: InventoryItem[] | null;
+}) {
+  const [recipes, setRecipes] = useState<InventoryRecipe[]>([]);
+  const [missingIds, setMissingIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [menuItemId, setMenuItemId] = useState("");
+  const [inventoryItemId, setInventoryItemId] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [unit, setUnit] = useState("g");
+  const [creating, setCreating] = useState(false);
+
+  const refresh = useCallback(async () => {
+    if (!accessToken || !branchId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const [list, missing] = await Promise.all([
+        listInventoryRecipes(accessToken, { branchId }),
+        listMissingRecipeMenuItems(
+          accessToken,
+          branchId,
+          menuItems.map((m) => m.id),
+        ),
+      ]);
+      setRecipes(list);
+      setMissingIds(missing);
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Unable to load recipes.");
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, branchId, menuItems]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  async function onCreate(e: FormEvent) {
+    e.preventDefault();
+    if (!accessToken || !branchId || !menuItemId || !inventoryItemId) return;
+    setCreating(true);
+    setError(null);
+    try {
+      await createInventoryRecipe(accessToken, {
+        branchId,
+        menuItemId,
+        name: name.trim() || "Recipe",
+        lines: [
+          {
+            inventoryItemId,
+            quantity: Number(quantity),
+            unit,
+            wasteFactor: 1,
+          },
+        ],
+      });
+      setName("");
+      await refresh();
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Recipe create failed.");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function runAction(id: string, action: "activate" | "deactivate" | "duplicate") {
+    if (!accessToken) return;
+    setBusyId(id);
+    setError(null);
+    try {
+      if (action === "activate") await activateInventoryRecipe(accessToken, id);
+      if (action === "deactivate") await deactivateInventoryRecipe(accessToken, id);
+      if (action === "duplicate") await duplicateInventoryRecipe(accessToken, id);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Recipe action failed.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const missingCount = missingIds.length;
+
   return (
     <AdminSurface aria-labelledby="recipe-mapping-heading" className="mb-6">
       <AdminSurfaceHeader
         title="Recipe & menu linkage"
-        description="Catalog overview for readiness — not ingredient consumption."
+        description="LIVE versioned recipes sync to kitchen BOM. Consume runs once at kitchen → preparing."
         action={
           <Link href="/admin/menu" className="text-sm font-semibold text-[var(--brand-red)] hover:underline">
             Open Menu Management
@@ -111,22 +221,119 @@ export function RecipeMappingPanel({ snapshot }: { snapshot: InventoryKpiSnapsho
         <h3 id="recipe-mapping-heading" className="sr-only">
           Recipe mapping
         </h3>
-        <div className="rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-5 text-sm">
-          <p className="font-semibold text-[var(--admin-ink)]">Recipe Mapping — Planned for Phase 2</p>
-          <p className="mt-2 text-[var(--admin-muted)]">
-            Inventory cannot be deducted from sales until menu products and variants are linked to versioned recipes with
-            units, yields, and ingredient quantities.
+        <p className="mb-3 text-sm text-[var(--admin-muted)]" role="status">
+          Cost state uses inventory <code className="text-xs">cost_price</code> (DERIVED). COGS GL posting is DEFERRED.
+          Modifier ingredient effects are stored but not consumed yet.
+        </p>
+        {error ? (
+          <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+            {error}
           </p>
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-[var(--admin-muted)]">
-            <li>{snapshot?.menuBrowseSkus ?? 0} browse menu SKUs in catalog (sellable)</li>
-            <li>{snapshot?.menuInternalSkus ?? 0} internal topping SKUs (customizer)</li>
-            <li>{snapshot?.unmappedRecipeProducts ?? 0} SKUs without recipe BOM in repository</li>
-            <li>{snapshot?.modifierGroupsInCatalog ?? 0} modifier groups — pricing options, not ingredient stock</li>
+        ) : null}
+        <ul className="mb-4 list-disc space-y-1 pl-5 text-sm text-[var(--admin-muted)]">
+          <li>{snapshot?.menuBrowseSkus ?? menuItems.length} browse menu SKUs</li>
+          <li>
+            {missingCount} sellable SKUs without an <strong>active</strong> recipe for this branch
+            {missingCount > 0 ? " — warn: sales will not deduct those items" : ""}
+          </li>
+          <li>{recipes.length} recipe version{recipes.length === 1 ? "" : "s"} in scope</li>
+        </ul>
+
+        {canManage && branchId ? (
+          <form className="mb-4 grid gap-2 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] p-3 sm:grid-cols-2 lg:grid-cols-3" onSubmit={onCreate}>
+            <label className="text-xs font-medium">
+              Recipe name
+              <input className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm" value={name} onChange={(e) => setName(e.target.value)} required />
+            </label>
+            <label className="text-xs font-medium">
+              Menu item
+              <select className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm" value={menuItemId} onChange={(e) => setMenuItemId(e.target.value)} required>
+                <option value="">Select…</option>
+                {menuItems.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-medium">
+              Ingredient
+              <select className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm" value={inventoryItemId} onChange={(e) => setInventoryItemId(e.target.value)} required>
+                <option value="">Select…</option>
+                {(stockItems ?? []).map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.unit})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-medium">
+              Qty
+              <input className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm" type="number" min="0.001" step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+            </label>
+            <label className="text-xs font-medium">
+              Unit
+              <select className="mt-1 w-full rounded-lg border px-2 py-1.5 text-sm" value={unit} onChange={(e) => setUnit(e.target.value)}>
+                {["g", "kg", "ml", "l", "piece"].map((u) => (
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="flex items-end">
+              <button type="submit" disabled={creating || !stockItems?.length} className="w-full rounded-lg bg-[var(--brand-red)] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                {creating ? "Creating…" : "Create draft recipe"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <p className="mb-3 text-sm text-[var(--admin-muted)]">inventory.manage or admin.access required to edit recipes.</p>
+        )}
+
+        {loading ? (
+          <p className="text-sm text-[var(--admin-muted)]">Loading recipes…</p>
+        ) : recipes.length === 0 ? (
+          <p className="rounded-xl border border-dashed px-4 py-6 text-center text-sm text-[var(--admin-muted)]">
+            No recipes yet. Create a draft, then activate to sync kitchen BOM.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {recipes.map((r) => (
+              <li key={r.id} className="rounded-xl border bg-white px-3 py-2 text-sm">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="font-semibold">
+                      {r.name} · v{r.version} · {r.status}
+                    </p>
+                    <p className="text-xs text-[var(--admin-muted)]">
+                      {r.menuItemName ?? r.menuItemId} · {r.lines.length} ingredient{r.lines.length === 1 ? "" : "s"} · cost{" "}
+                      {r.estimatedCostState === "DERIVED" && r.estimatedCost != null
+                        ? `${r.estimatedCost.toFixed(2)} (DERIVED)`
+                        : "UNAVAILABLE"}
+                    </p>
+                  </div>
+                  {canManage ? (
+                    <div className="flex flex-wrap gap-2">
+                      {r.status !== "active" ? (
+                        <button type="button" className="rounded-lg border px-2 py-1 text-xs font-semibold" disabled={busyId === r.id} onClick={() => void runAction(r.id, "activate")}>
+                          Activate
+                        </button>
+                      ) : (
+                        <button type="button" className="rounded-lg border px-2 py-1 text-xs font-semibold" disabled={busyId === r.id} onClick={() => void runAction(r.id, "deactivate")}>
+                          Deactivate
+                        </button>
+                      )}
+                      <button type="button" className="rounded-lg border px-2 py-1 text-xs font-semibold" disabled={busyId === r.id} onClick={() => void runAction(r.id, "duplicate")}>
+                        Duplicate
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </li>
+            ))}
           </ul>
-          <p className="mt-3 text-xs uppercase tracking-wide text-[var(--admin-muted)]">
-            Planned for Phase 2 — server-side recipe consumption engine required
-          </p>
-        </div>
+        )}
       </AdminSurfaceBody>
     </AdminSurface>
   );

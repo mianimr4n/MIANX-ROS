@@ -9,8 +9,9 @@ export function InventoryStatusBanner() {
           Inventory is ready
         </h2>
         <p className="mt-1 text-sm text-emerald-900">
-          Track stock items, adjustments, movement history, waste, and receiving from purchase orders. Recipe BOM
-          consumption, branch transfers, and advanced valuation are Planned for Phase 2.
+          Track stock items, adjustments, movements, waste, receiving, and versioned recipes. Kitchen → preparing
+          consumes mapped ingredients once. Branch transfers and FIFO/WAC valuation remain Planned for Phase 2. COGS GL
+          posting is DEFERRED (event seam only).
         </p>
       </div>
     </section>

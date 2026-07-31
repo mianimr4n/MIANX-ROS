@@ -63,14 +63,14 @@ export function integrationChecks(): InventoryIntegrationCheck[] {
     {
       id: "recipes",
       label: "Recipe / BOM mapping",
-      status: "missing",
-      note: "Planned for Phase 2 — menu catalog has sellable SKUs; no ingredient recipes yet.",
+      status: "present",
+      note: "RC4-9 inventory_recipes + activate sync to menu_item_inventory_components.",
     },
     {
       id: "consumption",
       label: "Order consumption engine",
-      status: "missing",
-      note: "Planned for Phase 2 — orders create line snapshots; no server-side inventory deduction.",
+      status: "present",
+      note: "LIVE — kitchen ticket → preparing consumes mapped stock once (REQ-KIT-012 / RC4-9).",
     },
     {
       id: "suppliers",
@@ -205,9 +205,9 @@ export function buildInventoryInsights(
   if (snapshot.unmappedRecipeProducts > 0) {
     items.push({
       id: "unmapped-recipes",
-      title: "Recipe consumption tracking is not configured yet.",
-      detail: "Sales will not reduce ingredients until recipes are mapped.",
-      source: "foundation",
+      title: `${snapshot.unmappedRecipeProducts} catalog SKUs may lack active recipes.`,
+      detail: "Items without an active recipe do not deduct stock at kitchen preparing.",
+      source: "derived",
     });
   }
 
