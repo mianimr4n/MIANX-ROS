@@ -12,7 +12,7 @@ Certification package is substantial and locally gated, but the release standard
 | Post-merge `origin/main` (PR5 base) | `21635fb` |
 | PR5 branch | `feature/rc3-integration-certification` |
 | PR5 start SHA | `21635fb` |
-| PR5 tip | *(set after push)* |
+| PR5 tip | `657930d` (`cert(rc3): integration certification package — RC3_NOT_CERTIFIED`) |
 | Environment | Node v24.18.0 · pnpm 10.15.1 · Supabase CLI 2.110.0 · Playwright 1.52.0 · Windows 10 |
 
 ---
