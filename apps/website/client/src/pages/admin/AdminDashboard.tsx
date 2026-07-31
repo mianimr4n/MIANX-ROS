@@ -34,6 +34,7 @@ import {
   listPurchaseOrders,
   listStockMovements,
   listSupplierInvoices,
+  fetchFinanceAttention,
   type AdminOrderListItem,
 } from "@/lib/admin-api";
 import { listDeliveryAssignments, listKitchenTickets } from "@/lib/ops-api";
@@ -43,6 +44,7 @@ import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBan
 import { AdminShell } from "@/pages/admin/AdminShell";
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
 import {
+  canAccessAdminFinance,
   canAccessAdminHr,
   canAccessAdminInventory,
   canAccessAdminOrdersApi,
@@ -195,6 +197,7 @@ export default function AdminDashboard() {
   const canLoadInventory = canAccessAdminInventory({ roles, permissions, isSuperAdmin });
   const canLoadReports = canAccessAdminReports({ roles, permissions, isSuperAdmin });
   const canLoadHr = canAccessAdminHr({ roles, permissions, isSuperAdmin });
+  const canLoadFinance = canAccessAdminFinance({ roles, permissions, isSuperAdmin });
   const purchaseOrders = useOperationalData(
     ({ signal, correlationId }) =>
       listPurchaseOrders(token!, branchIdFilter ? { branchId: branchIdFilter } : undefined, {
@@ -216,6 +219,18 @@ export default function AdminDashboard() {
     [token, branchIdFilter],
     {
       enabled: Boolean(token) && canLoadPurchasing && gateReady && !comingSoonBranch,
+      pollMs: 60_000,
+    },
+  );
+  const financeAttention = useOperationalData(
+    ({ signal, correlationId }) =>
+      fetchFinanceAttention(token!, branchIdFilter ? { branchId: branchIdFilter } : undefined, {
+        signal,
+        correlationId,
+      }),
+    [token, branchIdFilter],
+    {
+      enabled: Boolean(token) && canLoadFinance && gateReady && !comingSoonBranch,
       pollMs: 60_000,
     },
   );
@@ -396,6 +411,14 @@ export default function AdminDashboard() {
     stockMovements.data == null;
   const wasteTodayQty = wasteUnavailable ? null : wasteTodayFromMovements(stockMovements.data);
 
+  const financeAttentionUnavailable =
+    !canLoadFinance ||
+    financeAttention.state === "ERROR" ||
+    financeAttention.state === "OFFLINE" ||
+    financeAttention.state === "UNAVAILABLE" ||
+    financeAttention.data == null ||
+    financeAttention.data.state === "unavailable";
+
   const ownerExtras = useMemo(
     () => ({
       kitchenTicketCount: kitchenTicketsUnavailable ? null : kitchenTicketCount,
@@ -405,10 +428,30 @@ export default function AdminDashboard() {
       wasteTodayQty,
       wasteUnavailable,
       procurement: procurementSnapshot,
+      financeAttention: {
+        unavailable: financeAttentionUnavailable,
+        cashClosesAwaitingApproval: financeAttentionUnavailable
+          ? null
+          : (financeAttention.data?.cashClosesAwaitingApproval ?? null),
+        unresolvedCashVariance: financeAttentionUnavailable
+          ? null
+          : (financeAttention.data?.unresolvedCashVariance ?? null),
+        pendingExpenseApprovals: financeAttentionUnavailable
+          ? null
+          : (financeAttention.data?.pendingExpenseApprovals ?? null),
+        overdueSupplierInvoices: financeAttentionUnavailable
+          ? null
+          : (financeAttention.data?.overdueSupplierInvoices ?? null),
+        invoicesBlockedByMismatch: financeAttentionUnavailable
+          ? null
+          : (financeAttention.data?.invoicesBlockedByMismatch ?? null),
+      },
     }),
     [
       activeAssignmentCount,
       assignmentsUnavailable,
+      financeAttention.data,
+      financeAttentionUnavailable,
       kitchenTicketCount,
       kitchenTicketsUnavailable,
       procurementSnapshot,

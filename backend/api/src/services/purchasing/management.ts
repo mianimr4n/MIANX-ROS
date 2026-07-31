@@ -177,9 +177,16 @@ export interface SupplierInvoiceRecord {
   poNumber: string | null;
   invoiceNumber: string;
   invoiceDate: string;
+  dueDate: string | null;
   totalAmount: number;
   status: SupplierInvoiceStatus;
   matchingStatus: SupplierInvoiceMatchingStatus;
+  exceptionApprovedAt: string | null;
+  exceptionApprovedBy: string | null;
+  exceptionReason: string | null;
+  /** Server-computed from dueDate or invoiceDate vs Asia/Karachi today — not a stored stale flag. */
+  isOverdue: boolean;
+  settlementBlocked: boolean;
   createdAt: string;
 }
 
@@ -206,6 +213,7 @@ export interface CreateSupplierInvoiceInput {
   purchaseOrderId?: string | null;
   invoiceNumber: string;
   invoiceDate?: string | null;
+  dueDate?: string | null;
   totalAmount: number;
   status?: SupplierInvoiceStatus;
 }
@@ -218,6 +226,11 @@ export interface CreateSupplierPaymentInput {
   paymentDate?: string | null;
   paymentMethod?: SupplierPaymentMethod;
   reference?: string | null;
+  idempotencyKey?: string | null;
+}
+
+export interface ApproveInvoiceExceptionInput {
+  reason: string;
 }
 
 export interface PurchaseOrderListResult {
@@ -254,6 +267,12 @@ export interface PurchasingService {
   ): Promise<GoodsReceivingRecord>;
   listInvoices(scope: BranchActorScope, branchId?: string): Promise<SupplierInvoiceRecord[]>;
   createInvoice(scope: BranchActorScope, input: CreateSupplierInvoiceInput): Promise<SupplierInvoiceRecord>;
+  approveInvoiceException(
+    scope: BranchActorScope,
+    actorUserId: string,
+    invoiceId: string,
+    input: ApproveInvoiceExceptionInput,
+  ): Promise<SupplierInvoiceRecord>;
   listPayments(scope: BranchActorScope, branchId?: string): Promise<SupplierPaymentRecord[]>;
   createPayment(scope: BranchActorScope, input: CreateSupplierPaymentInput): Promise<SupplierPaymentRecord>;
 }
@@ -327,7 +346,7 @@ const RECEIVING_SELECT =
   "id, branch_id, purchase_order_id, grn_number, status, received_at, notes, created_by, created_at, updated_at, branch:branches(id, branch_code, name), purchase_order:purchase_orders(id, po_number)";
 
 const INVOICE_SELECT =
-  "id, branch_id, supplier_id, purchase_order_id, invoice_number, invoice_date, total_amount, status, matching_status, created_at, branch:branches(id, branch_code, name), supplier:suppliers(id, name), purchase_order:purchase_orders(id, po_number)";
+  "id, branch_id, supplier_id, purchase_order_id, invoice_number, invoice_date, due_date, total_amount, status, matching_status, exception_approved_at, exception_approved_by, exception_reason, created_at, branch:branches(id, branch_code, name), supplier:suppliers(id, name), purchase_order:purchase_orders(id, po_number)";
 
 const PAYMENT_SELECT =
   "id, branch_id, supplier_id, supplier_invoice_id, amount, payment_date, payment_method, reference, created_at, branch:branches(id, branch_code, name), supplier:suppliers(id, name), invoice:supplier_invoices(id, invoice_number, status)";
@@ -339,14 +358,27 @@ type InvoiceRow = {
   purchase_order_id: string | null;
   invoice_number: string;
   invoice_date: string;
+  due_date: string | null;
   total_amount: number | string;
   status: string;
   matching_status: string;
+  exception_approved_at: string | null;
+  exception_approved_by: string | null;
+  exception_reason: string | null;
   created_at: string;
   branch: { id: string; branch_code: string; name: string } | null;
   supplier: { id: string; name: string } | null;
   purchase_order: { id: string; po_number: string } | null;
 };
+
+function karachiToday(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Karachi",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
 
 type PaymentRow = {
   id: string;
@@ -447,6 +479,14 @@ function mapReceiving(row: GoodsReceivingRow): GoodsReceivingRecord {
 }
 
 function mapInvoice(row: InvoiceRow): SupplierInvoiceRecord {
+  const matchingStatus = (row.matching_status as SupplierInvoiceMatchingStatus) || "UNMATCHED";
+  const dueDate = row.due_date ?? null;
+  const status = row.status as SupplierInvoiceStatus;
+  const today = karachiToday();
+  const dueOrInvoice = dueDate || row.invoice_date;
+  const isOverdue = status !== "paid" && Boolean(dueOrInvoice) && String(dueOrInvoice) < today;
+  const settlementBlocked =
+    matchingStatus === "DISCREPANCY" && row.exception_approved_at == null && status !== "paid";
   return {
     id: row.id,
     branchId: row.branch_id,
@@ -458,9 +498,15 @@ function mapInvoice(row: InvoiceRow): SupplierInvoiceRecord {
     poNumber: row.purchase_order?.po_number ?? null,
     invoiceNumber: row.invoice_number,
     invoiceDate: row.invoice_date,
+    dueDate,
     totalAmount: asNumber(row.total_amount),
-    status: row.status as SupplierInvoiceStatus,
-    matchingStatus: (row.matching_status as SupplierInvoiceMatchingStatus) || "UNMATCHED",
+    status,
+    matchingStatus,
+    exceptionApprovedAt: row.exception_approved_at,
+    exceptionApprovedBy: row.exception_approved_by,
+    exceptionReason: row.exception_reason,
+    isOverdue,
+    settlementBlocked,
     createdAt: row.created_at,
   };
 }
@@ -913,6 +959,7 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
           purchase_order_id: input.purchaseOrderId || null,
           invoice_number: invoiceNumber,
           invoice_date: input.invoiceDate || null,
+          due_date: input.dueDate || null,
           total_amount: input.totalAmount,
           status: input.status ?? "pending",
           matching_status: matchingStatus,
@@ -927,6 +974,42 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
         throwMappedDbError("SUPPLIER_INVOICE_CREATE_FAILED", error);
       }
       return mapInvoice(data as unknown as InvoiceRow);
+    },
+
+    async approveInvoiceException(scope, actorUserId, invoiceId, input) {
+      const reason = input.reason?.trim();
+      if (!reason) {
+        throw new ApiError(400, "VALIDATION_ERROR", "An exception reason is required.");
+      }
+      const client = supabase();
+      const { data: row, error } = await client
+        .from("supplier_invoices")
+        .select(INVOICE_SELECT)
+        .eq("id", invoiceId)
+        .maybeSingle();
+      if (error) throwMappedDbError("SUPPLIER_INVOICES_READ_FAILED", error);
+      if (!row) throw new ApiError(404, "INVOICE_NOT_FOUND", "Supplier invoice not found.");
+      const invoice = mapInvoice(row as unknown as InvoiceRow);
+      assertBranchMembership(scope, invoice.branchId);
+      if (invoice.matchingStatus !== "DISCREPANCY") {
+        throw new ApiError(409, "INVALID_TRANSITION", "Only discrepancy invoices can receive an exception approval.");
+      }
+      if (invoice.exceptionApprovedAt) {
+        return invoice;
+      }
+
+      const { data: updated, error: updErr } = await client
+        .from("supplier_invoices")
+        .update({
+          exception_approved_at: new Date().toISOString(),
+          exception_approved_by: actorUserId,
+          exception_reason: reason,
+        })
+        .eq("id", invoiceId)
+        .select(INVOICE_SELECT)
+        .single();
+      if (updErr) throwMappedDbError("SUPPLIER_INVOICE_UPDATE_FAILED", updErr);
+      return mapInvoice(updated as unknown as InvoiceRow);
     },
 
     async listPayments(scope, branchId) {
@@ -956,6 +1039,7 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
         p_payment_date: input.paymentDate || null,
         p_payment_method: input.paymentMethod ?? "bank_transfer",
         p_reference: input.reference ?? null,
+        p_idempotency_key: input.idempotencyKey ?? null,
       });
 
       if (error) {
@@ -968,6 +1052,13 @@ export function createPurchasingService(envStatus: EnvironmentStatus): Purchasin
         }
         if (/PAYMENT_EXCEEDS_BALANCE/i.test(message)) {
           throw new ApiError(400, "PAYMENT_EXCEEDS_BALANCE", "Payment exceeds remaining invoice balance.");
+        }
+        if (/INVOICE_MATCH_DISCREPANCY/i.test(message)) {
+          throw new ApiError(
+            409,
+            "INVOICE_MATCH_DISCREPANCY",
+            "This invoice cannot be paid until the receiving mismatch is resolved or an exception is approved.",
+          );
         }
         if (/INVOICE_BRANCH_MISMATCH|INVOICE_SUPPLIER_MISMATCH/i.test(message)) {
           throw new ApiError(400, "VALIDATION_ERROR", "Payment branch/supplier must match the invoice.");

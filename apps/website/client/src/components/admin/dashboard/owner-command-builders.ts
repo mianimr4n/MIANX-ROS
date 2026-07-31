@@ -36,6 +36,14 @@ export type OwnerCommandLiveExtras = {
   wasteTodayQty: number | null;
   wasteUnavailable: boolean;
   procurement: ProcurementDashboardSnapshot | null;
+  financeAttention?: {
+    unavailable: boolean;
+    cashClosesAwaitingApproval: number | null;
+    unresolvedCashVariance: number | null;
+    pendingExpenseApprovals: number | null;
+    overdueSupplierInvoices: number | null;
+    invoicesBlockedByMismatch: number | null;
+  } | null;
 };
 
 export function karachiDateString(date = new Date()): string {
@@ -278,6 +286,86 @@ export function buildAttentionMetrics(
       state: procurementUnavailable ? "unavailable" : "available",
     },
     {
+      id: "cash-approval",
+      title: "Cash Closes Awaiting Approval",
+      value: extras.financeAttention?.unavailable
+        ? null
+        : formatCount(extras.financeAttention?.cashClosesAwaitingApproval ?? null),
+      detail: extras.financeAttention?.unavailable ? "Data unavailable" : "Submitted cash reconciliations",
+      attentionWhy:
+        extras.financeAttention?.unavailable
+          ? undefined
+          : (extras.financeAttention?.cashClosesAwaitingApproval ?? 0) > 0
+            ? "Review counted cash and variance before posting."
+            : "No cash closes are awaiting review.",
+      href: "/admin/finance",
+      state: extras.financeAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
+      id: "cash-variance",
+      title: "Unresolved Cash Variance",
+      value: extras.financeAttention?.unavailable
+        ? null
+        : formatCount(extras.financeAttention?.unresolvedCashVariance ?? null),
+      detail: extras.financeAttention?.unavailable ? "Data unavailable" : "Submitted or approved closes with variance",
+      attentionWhy:
+        extras.financeAttention?.unavailable
+          ? undefined
+          : (extras.financeAttention?.unresolvedCashVariance ?? 0) > 0
+            ? "One or more cash closes have an unresolved variance."
+            : "No unresolved cash variance.",
+      href: "/admin/finance",
+      state: extras.financeAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
+      id: "expense-approvals",
+      title: "Pending Expense Approvals",
+      value: extras.financeAttention?.unavailable
+        ? null
+        : formatCount(extras.financeAttention?.pendingExpenseApprovals ?? null),
+      detail: extras.financeAttention?.unavailable ? "Data unavailable" : "Submitted expense claims",
+      attentionWhy:
+        extras.financeAttention?.unavailable
+          ? undefined
+          : (extras.financeAttention?.pendingExpenseApprovals ?? 0) > 0
+            ? "Approve or reject expense claims awaiting review."
+            : "No expense claims require approval.",
+      href: "/admin/finance",
+      state: extras.financeAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
+      id: "overdue-ap",
+      title: "Overdue Supplier Invoices",
+      value: extras.financeAttention?.unavailable
+        ? null
+        : formatCount(extras.financeAttention?.overdueSupplierInvoices ?? null),
+      detail: extras.financeAttention?.unavailable ? "Data unavailable" : "Due date before today (Karachi)",
+      attentionWhy:
+        extras.financeAttention?.unavailable
+          ? undefined
+          : (extras.financeAttention?.overdueSupplierInvoices ?? 0) > 0
+            ? "Supplier invoices are overdue and require review."
+            : "No supplier invoices are overdue.",
+      href: "/admin/purchasing",
+      state: extras.financeAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
+      id: "match-blocked",
+      title: "Invoices Blocked by Mismatch",
+      value: extras.financeAttention?.unavailable
+        ? null
+        : formatCount(extras.financeAttention?.invoicesBlockedByMismatch ?? null),
+      detail: extras.financeAttention?.unavailable ? "Data unavailable" : "Three-way match discrepancy",
+      attentionWhy:
+        extras.financeAttention?.unavailable
+          ? undefined
+          : (extras.financeAttention?.invoicesBlockedByMismatch ?? 0) > 0
+            ? "This invoice cannot be paid until the receiving mismatch is resolved."
+            : "No invoices blocked by mismatch.",
+      href: "/admin/purchasing",
+      state: extras.financeAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
       id: "waste",
       title: "Waste Logged Today",
       value: extras.wasteUnavailable ? null : formatCount(extras.wasteTodayQty),
@@ -479,11 +567,44 @@ export function buildOwnerBriefLines(
     lines.push(
       outstanding > 0
         ? `${outstanding} supplier invoice${outstanding === 1 ? "" : "s"} still outstanding.`
+        : "No outstanding supplier invoices.",
+    );
+  }
+  const overdue = extras.financeAttention?.overdueSupplierInvoices;
+  if (!extras.financeAttention?.unavailable && overdue != null) {
+    lines.push(
+      overdue > 0
+        ? `${overdue} supplier invoice${overdue === 1 ? "" : "s"} ${overdue === 1 ? "is" : "are"} overdue.`
         : "No supplier invoices are overdue.",
     );
   }
+  const expensePending = extras.financeAttention?.pendingExpenseApprovals;
+  if (!extras.financeAttention?.unavailable && expensePending != null) {
+    lines.push(
+      expensePending > 0
+        ? `${expensePending} expense${expensePending === 1 ? "" : "s"} ${expensePending === 1 ? "is" : "are"} awaiting approval.`
+        : "No expense claims require approval.",
+    );
+  }
+  const variance = extras.financeAttention?.unresolvedCashVariance;
+  if (!extras.financeAttention?.unavailable && variance != null && variance > 0) {
+    lines.push(
+      variance === 1
+        ? "One cash close has an unresolved variance."
+        : `${variance} cash closes have unresolved variance.`,
+    );
+  }
+  if (
+    !extras.financeAttention?.unavailable &&
+    (extras.financeAttention?.cashClosesAwaitingApproval ?? 0) === 0 &&
+    (extras.financeAttention?.unresolvedCashVariance ?? 0) === 0 &&
+    (extras.financeAttention?.pendingExpenseApprovals ?? 0) === 0 &&
+    (extras.financeAttention?.overdueSupplierInvoices ?? 0) === 0
+  ) {
+    lines.push("No elevated finance signals.");
+  }
   lines.push(`Scope: ${branchLabel}.`);
-  return lines.slice(0, 6);
+  return lines.slice(0, 8);
 }
 
 export function wasteTodayFromMovements(movements: StockMovement[] | null): number | null {
