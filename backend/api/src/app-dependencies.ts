@@ -166,6 +166,10 @@ import {
   createFinanceService,
   type FinanceService,
 } from "./services/finance/management.js";
+import {
+  createFinanceOperationsService,
+  type FinanceOperationsService,
+} from "./services/finance/operations.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -202,6 +206,7 @@ export interface AppDependencies {
   inventory: InventoryService;
   purchasing: PurchasingService;
   finance: FinanceService;
+  financeOperations: FinanceOperationsService;
   posZReport: PosZReportService;
   reports: ReportsService;
   loyalty: LoyaltyService;
@@ -218,6 +223,7 @@ export interface AppDependencies {
 
 export function createAppDependencies(envStatus: EnvironmentStatus): AppDependencies {
   const qrTokenValidator = createQrTokenValidator(envStatus);
+  const finance = createFinanceService(envStatus);
   return {
     catalogDataSource: createSupabaseCatalogDataSource(envStatus),
     ordersDataSource: createOrdersDataSource(envStatus),
@@ -252,7 +258,8 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     hrWorkforce: createHrWorkforceService(envStatus),
     inventory: createInventoryService(envStatus),
     purchasing: createPurchasingService(envStatus),
-    finance: createFinanceService(envStatus),
+    finance,
+    financeOperations: createFinanceOperationsService(envStatus, finance),
     posZReport: createPosZReportService(envStatus),
     reports: createReportsService(envStatus),
     loyalty: createLoyaltyService(envStatus),

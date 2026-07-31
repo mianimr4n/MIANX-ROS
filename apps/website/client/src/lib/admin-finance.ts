@@ -87,8 +87,8 @@ export function integrationChecks(): FinanceIntegrationCheck[] {
     {
       id: "expenses",
       label: "Operating expenses",
-      status: "partial",
-      note: "Expense accounts exist on CoA; dedicated expense claims Planned for Phase 2.",
+      status: "present",
+      note: "Expense claims LIVE — submit/approve/post; journal blocked until account mapping exists.",
     },
     {
       id: "tax-config",
@@ -99,8 +99,8 @@ export function integrationChecks(): FinanceIntegrationCheck[] {
     {
       id: "cash-bank",
       label: "Cash & bank accounts",
-      status: "missing",
-      note: "Planned for Phase 2 — cash drawers / bank reconciliation.",
+      status: "partial",
+      note: "Cash reconciliations LIVE (float, counted, variance). Bank account register Planned for Phase 2.",
     },
     {
       id: "inventory-valuation",

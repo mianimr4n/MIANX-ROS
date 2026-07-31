@@ -2386,9 +2386,15 @@ export type SupplierInvoice = {
   poNumber: string | null;
   invoiceNumber: string;
   invoiceDate: string;
+  dueDate?: string | null;
   totalAmount: number;
   status: SupplierInvoiceStatus;
   matchingStatus: SupplierInvoiceMatchingStatus;
+  exceptionApprovedAt?: string | null;
+  exceptionApprovedBy?: string | null;
+  exceptionReason?: string | null;
+  isOverdue?: boolean;
+  settlementBlocked?: boolean;
   createdAt: string;
 };
 
@@ -2398,6 +2404,7 @@ export type CreateSupplierInvoiceInput = {
   purchaseOrderId?: string | null;
   invoiceNumber: string;
   invoiceDate?: string | null;
+  dueDate?: string | null;
   totalAmount: number;
   status?: SupplierInvoiceStatus;
 };
@@ -2468,11 +2475,33 @@ export function listSupplierPayments(
   );
 }
 
-export function createSupplierPayment(accessToken: string, input: CreateSupplierPaymentInput) {
+export function createSupplierPayment(
+  accessToken: string,
+  input: CreateSupplierPaymentInput,
+  opts?: { idempotencyKey?: string },
+) {
+  const headers: Record<string, string> = {
+    ...bearerHeaders(accessToken),
+    "Content-Type": "application/json",
+  };
+  if (opts?.idempotencyKey) headers["Idempotency-Key"] = opts.idempotencyKey;
   return fetchApiData<SupplierPayment>("/admin/purchasing/payments", {
     method: "POST",
-    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function approveSupplierInvoiceException(
+  accessToken: string,
+  invoiceId: string,
+  reason: string,
+) {
+  return fetchApiData<SupplierInvoice>(`/admin/purchasing/invoices/${invoiceId}/approve-exception`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }
@@ -2716,4 +2745,230 @@ export function fetchProfitLoss(
     `/admin/finance/reports/profit-loss?${params.toString()}`,
     readInit(accessToken, opts),
   );
+}
+
+export type FinanceAttentionSnapshot = {
+  branchId: string | null;
+  state: "available" | "unavailable";
+  unavailableReason: string | null;
+  cashClosesAwaitingReconciliation: number;
+  cashClosesAwaitingApproval: number;
+  unresolvedCashVariance: number;
+  pendingExpenseApprovals: number;
+  approvedExpensesAwaitingPosting: number;
+  overdueSupplierInvoices: number;
+  invoicesBlockedByMismatch: number;
+  paymentsAwaitingJournalPosting: number;
+  totalApprovedExpensesInPeriod: number | null;
+};
+
+export type CashReconciliation = {
+  id: string;
+  branchId: string;
+  businessDate: string;
+  registerId: string | null;
+  openingFloat: number;
+  cashSales: number;
+  cashRefunds: number;
+  cashDrops: number;
+  paidOutExpenses: number;
+  otherInflows: number;
+  otherOutflows: number;
+  expectedCash: number;
+  countedCash: number | null;
+  variance: number | null;
+  closingNote: string | null;
+  status: string;
+  preparedBy: string | null;
+  reviewedBy: string | null;
+  rejectionReason: string | null;
+  journalEntryId: string | null;
+  postingStatus: string;
+  postingBlockedReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ExpenseClaim = {
+  id: string;
+  expenseNumber: string;
+  branchId: string;
+  category: string;
+  expenseDate: string;
+  amount: number;
+  currency: string;
+  paymentMethod: string;
+  payee: string | null;
+  description: string;
+  receiptRef: string | null;
+  status: string;
+  submittedBy: string | null;
+  approvedBy: string | null;
+  rejectionReason: string | null;
+  journalEntryId: string | null;
+  postingStatus: string;
+  postingBlockedReason: string | null;
+  sourceContext: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export function fetchFinanceAttention(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<FinanceAttentionSnapshot>(
+    `/admin/finance/attention${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function listCashReconciliations(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<CashReconciliation[]>(
+    `/admin/finance/cash-reconciliations${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createCashReconciliation(
+  accessToken: string,
+  input: {
+    branchId: string;
+    businessDate?: string;
+    openingFloat: number;
+    cashRefunds?: number;
+    cashDrops?: number;
+    otherInflows?: number;
+    otherOutflows?: number;
+    countedCash?: number | null;
+    closingNote?: string | null;
+  },
+  opts?: { idempotencyKey?: string },
+) {
+  const headers: Record<string, string> = {
+    ...bearerHeaders(accessToken),
+    "Content-Type": "application/json",
+  };
+  if (opts?.idempotencyKey) headers["Idempotency-Key"] = opts.idempotencyKey;
+  return fetchApiData<CashReconciliation>("/admin/finance/cash-reconciliations", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function transitionCashReconciliation(
+  accessToken: string,
+  id: string,
+  action: "submit" | "approve" | "reject" | "void" | "post",
+  reason?: string | null,
+) {
+  return fetchApiData<CashReconciliation>(`/admin/finance/cash-reconciliations/${id}/transition`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ action, reason: reason ?? null }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listExpenseClaims(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<ExpenseClaim[]>(
+    `/admin/finance/expenses${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createExpenseClaim(
+  accessToken: string,
+  input: {
+    branchId: string;
+    category: string;
+    expenseDate?: string;
+    amount: number;
+    paymentMethod?: string;
+    payee?: string | null;
+    description: string;
+    receiptRef?: string | null;
+  },
+  opts?: { idempotencyKey?: string },
+) {
+  const headers: Record<string, string> = {
+    ...bearerHeaders(accessToken),
+    "Content-Type": "application/json",
+  };
+  if (opts?.idempotencyKey) headers["Idempotency-Key"] = opts.idempotencyKey;
+  return fetchApiData<ExpenseClaim>("/admin/finance/expenses", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function transitionExpenseClaim(
+  accessToken: string,
+  id: string,
+  action: "submit" | "approve" | "reject" | "pay" | "void" | "post",
+  reason?: string | null,
+) {
+  return fetchApiData<ExpenseClaim>(`/admin/finance/expenses/${id}/transition`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ action, reason: reason ?? null }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function reverseFinanceJournal(accessToken: string, journalId: string, reason: string) {
+  return fetchApiData<{ originalJournalId: string; reversalJournalId: string }>(
+    `/admin/finance/journal-entries/${journalId}/reverse`,
+    {
+      method: "POST",
+      headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+      timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+    },
+  );
+}
+
+export function postSupplierPaymentJournal(
+  accessToken: string,
+  paymentId: string,
+  opts?: { idempotencyKey?: string },
+) {
+  const headers: Record<string, string> = {
+    ...bearerHeaders(accessToken),
+    "Content-Type": "application/json",
+  };
+  if (opts?.idempotencyKey) headers["Idempotency-Key"] = opts.idempotencyKey;
+  return fetchApiData<{
+    paymentId: string;
+    journalEntryId: string | null;
+    postingStatus: "posted" | "blocked" | "already_posted";
+    postingBlockedReason: string | null;
+  }>(`/admin/finance/supplier-payments/${paymentId}/post`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({}),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
 }

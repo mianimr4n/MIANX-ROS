@@ -2,8 +2,10 @@ import { useState, type FormEvent } from "react";
 
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
 import {
+  approveSupplierInvoiceException,
   createSupplierInvoice,
   createSupplierPayment,
+  postSupplierPaymentJournal,
   type GoodsReceiving,
   type PurchaseOrder,
   type Supplier,
@@ -272,7 +274,45 @@ export function InvoiceMatchingPanel({
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const openInvoices = (invoices ?? []).filter((i) => i.status === "pending" || i.status === "partially_paid");
+  const openInvoices = (invoices ?? []).filter(
+    (i) => (i.status === "pending" || i.status === "partially_paid") && !i.settlementBlocked,
+  );
+
+  async function onApproveException(invoiceId: string) {
+    if (!accessToken) return;
+    const reason = window.prompt("Reason for approving this match exception?")?.trim();
+    if (!reason) return;
+    setBusy(true);
+    setFormError(null);
+    try {
+      await approveSupplierInvoiceException(accessToken, invoiceId, reason);
+      onRefresh();
+    } catch (err) {
+      setFormError(err instanceof ApiRequestError ? err.message : "Failed to approve exception.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onPostPaymentJournal(paymentId: string) {
+    if (!accessToken) return;
+    setBusy(true);
+    setFormError(null);
+    try {
+      const result = await postSupplierPaymentJournal(accessToken, paymentId, {
+        idempotencyKey: `ui-pay-post-${paymentId}`,
+      });
+      if (result.postingStatus === "blocked") {
+        setFormError(result.postingBlockedReason ?? "Journal posting requires account mapping");
+      } else {
+        onRefresh();
+      }
+    } catch (err) {
+      setFormError(err instanceof ApiRequestError ? err.message : "Failed to post payment journal.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function onCreateInvoice(e: FormEvent) {
     e.preventDefault();
@@ -320,6 +360,10 @@ export function InvoiceMatchingPanel({
       setFormError("Select an invoice to pay.");
       return;
     }
+    if (invoice.settlementBlocked) {
+      setFormError("This invoice cannot be paid until the receiving mismatch is resolved.");
+      return;
+    }
     const amount = Number(payAmount);
     if (!Number.isFinite(amount) || amount <= 0) {
       setFormError("Payment amount must be positive.");
@@ -328,13 +372,17 @@ export function InvoiceMatchingPanel({
     setBusy(true);
     setFormError(null);
     try {
-      await createSupplierPayment(accessToken, {
-        branchId,
-        supplierId: invoice.supplierId,
-        supplierInvoiceId: invoice.id,
-        amount,
-        paymentMethod: payMethod,
-      });
+      await createSupplierPayment(
+        accessToken,
+        {
+          branchId,
+          supplierId: invoice.supplierId,
+          supplierInvoiceId: invoice.id,
+          amount,
+          paymentMethod: payMethod,
+        },
+        { idempotencyKey: `pay-${invoice.id}-${amount}-${Date.now()}` },
+      );
       setPayAmount("");
       setPayInvoiceId("");
       setShowPaymentForm(false);
@@ -559,7 +607,21 @@ export function InvoiceMatchingPanel({
                       <p className="mt-1 text-xs text-[var(--admin-muted)]">
                         {i.supplierName ?? "—"} · {i.invoiceDate} · {i.status}
                         {i.poNumber ? ` · PO ${i.poNumber}` : ""}
+                        {i.isOverdue ? " · Overdue" : ""}
+                        {i.settlementBlocked
+                          ? " · Payment blocked until mismatch resolved"
+                          : ""}
                       </p>
+                      {canManage && i.settlementBlocked ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className="mt-2 min-h-9 rounded-lg border border-[var(--admin-border)] px-2 text-xs font-semibold"
+                          onClick={() => void onApproveException(i.id)}
+                        >
+                          Approve exception
+                        </button>
+                      ) : null}
                     </li>
                   ))}
                 </ul>
@@ -581,6 +643,16 @@ export function InvoiceMatchingPanel({
                       <p className="mt-1 text-xs text-[var(--admin-muted)]">
                         {p.invoiceNumber ?? "—"} · {p.paymentDate} · {p.supplierName ?? "—"}
                       </p>
+                      {canManage ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className="mt-2 min-h-9 rounded-lg border border-[var(--admin-border)] px-2 text-xs font-semibold"
+                          onClick={() => void onPostPaymentJournal(p.id)}
+                        >
+                          Post journal
+                        </button>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

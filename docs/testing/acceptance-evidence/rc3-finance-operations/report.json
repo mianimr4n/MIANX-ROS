@@ -1,0 +1,46 @@
+{
+  "base": "http://localhost:3000",
+  "authenticated": true,
+  "loginUrl": "http://localhost:3000/admin/dashboard",
+  "consoleErrors": [],
+  "pageErrors": [],
+  "networkErrors": [],
+  "screenshots": [
+    "owner-finance-attention-390.png",
+    "owner-finance-attention-768.png",
+    "owner-finance-attention-1440.png",
+    "finance-390.png",
+    "finance-768.png",
+    "finance-1440.png",
+    "purchasing-390.png",
+    "purchasing-768.png",
+    "purchasing-1440.png",
+    "pos-390.png",
+    "pos-768.png",
+    "pos-1440.png"
+  ],
+  "axe": {
+    "owner-finance-attention": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "finance": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "purchasing": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "pos": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    }
+  },
+  "ok": true,
+  "criticalOrSeriousTotal": 0
+}

@@ -25,10 +25,14 @@ import {
   fetchAdminOperationsDashboard,
   fetchProfitLoss,
   fetchTrialBalance,
+  listCashReconciliations,
+  listExpenseClaims,
   listFinanceAccounts,
   listFinanceJournalEntries,
   listSupplierInvoices,
   type AdminOperationsDashboard,
+  type CashReconciliation,
+  type ExpenseClaim,
   type FinanceAccount,
   type FinanceJournalEntry,
   type ProfitLossReport,
@@ -68,6 +72,12 @@ export default function AdminFinance() {
   const [invoices, setInvoices] = useState<SupplierInvoice[] | null>(null);
   const [apLoading, setApLoading] = useState(false);
   const [apError, setApError] = useState<string | null>(null);
+  const [cashRecons, setCashRecons] = useState<CashReconciliation[] | null>(null);
+  const [cashLoading, setCashLoading] = useState(false);
+  const [cashError, setCashError] = useState<string | null>(null);
+  const [expenses, setExpenses] = useState<ExpenseClaim[] | null>(null);
+  const [expenseLoading, setExpenseLoading] = useState(false);
+  const [expenseError, setExpenseError] = useState<string | null>(null);
 
   const snapshot = useMemo(() => buildFinanceKpiSnapshot(), []);
   const outstandingPayables = useMemo(() => {
@@ -111,6 +121,8 @@ export default function AdminFinance() {
       setTrialBalance(null);
       setProfitLoss(null);
       setInvoices(null);
+      setCashRecons(null);
+      setExpenses(null);
       setGlError("Sign in required.");
       return;
     }
@@ -120,9 +132,13 @@ export default function AdminFinance() {
       setTrialBalance(null);
       setProfitLoss(null);
       setInvoices([]);
+      setCashRecons([]);
+      setExpenses([]);
       setGlError(null);
       setStmtError(null);
       setApError(null);
+      setCashError(null);
+      setExpenseError(null);
       return;
     }
 
@@ -167,6 +183,28 @@ export default function AdminFinance() {
     } finally {
       setApLoading(false);
     }
+
+    setCashLoading(true);
+    setCashError(null);
+    try {
+      setCashRecons(await listCashReconciliations(token, { branchId: branchIdFilter }));
+    } catch (err) {
+      setCashRecons(null);
+      setCashError(err instanceof ApiRequestError ? err.message : "Failed to load cash closes.");
+    } finally {
+      setCashLoading(false);
+    }
+
+    setExpenseLoading(true);
+    setExpenseError(null);
+    try {
+      setExpenses(await listExpenseClaims(token, { branchId: branchIdFilter }));
+    } catch (err) {
+      setExpenses(null);
+      setExpenseError(err instanceof ApiRequestError ? err.message : "Failed to load expenses.");
+    } finally {
+      setExpenseLoading(false);
+    }
   }, [branchIdFilter, session?.access_token]);
 
   useEffect(() => {
@@ -199,13 +237,29 @@ export default function AdminFinance() {
       <SalesOverview snapshot={salesSnapshot} ordersApiAvailable={ordersApiAvailable} loading={salesLoading} />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <CashPanel />
+        <CashPanel
+          items={cashRecons}
+          loading={cashLoading}
+          error={cashError}
+          accessToken={session?.access_token}
+          branchId={branchIdFilter}
+          canManage={canManage}
+          onRefresh={onRefresh}
+        />
         <ReceivablePanel />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <PayablePanel invoices={invoices} loading={apLoading} error={apError} />
-        <ExpensePanel />
+        <ExpensePanel
+          items={expenses}
+          loading={expenseLoading}
+          error={expenseError}
+          accessToken={session?.access_token}
+          branchId={branchIdFilter}
+          canManage={canManage}
+          onRefresh={onRefresh}
+        />
       </div>
 
       <TaxPanel />

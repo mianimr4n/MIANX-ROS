@@ -32,7 +32,8 @@ export function ZReportModal({
           Close Shift / Z-Report
         </h2>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
-          Paid cash payments for the Asia/Karachi business day — expected drawer cash has no invented float.
+          Paid cash payments for the Asia/Karachi business day. Expected cash here equals cash sales only (no float).
+          For opening float, counted cash, variance, and approval, use Finance → Cash closes.
         </p>
 
         {loading ? (

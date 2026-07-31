@@ -123,6 +123,12 @@ const createInvoiceSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/, "invoiceDate must be YYYY-MM-DD")
       .nullable()
       .optional(),
+    dueDate: z
+      .string()
+      .trim()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "dueDate must be YYYY-MM-DD")
+      .nullable()
+      .optional(),
     totalAmount: z.number().finite().min(0),
     status: z.enum(SUPPLIER_INVOICE_STATUSES).optional(),
   })
@@ -144,6 +150,19 @@ const createPaymentSchema = z
     reference: z.string().trim().max(200).nullable().optional(),
   })
   .strict();
+
+const approveExceptionSchema = z
+  .object({
+    reason: z.string().trim().min(1).max(2000),
+  })
+  .strict();
+
+function readIdempotencyKey(req: { header(name: string): string | undefined }): string | null {
+  const raw = req.header("idempotency-key") ?? req.header("Idempotency-Key");
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 && trimmed.length <= 100 ? trimmed : null;
+}
 
 /**
  * Purchasing — suppliers, POs, requisitions, GRN, invoices, payments.
@@ -374,6 +393,27 @@ export function createAdminPurchasingRouter(deps: AdminPurchasingRouterDependenc
     },
   );
 
+  router.post(
+    "/purchasing/invoices/:id/approve-exception",
+    requireAuthenticatedUser,
+    requirePurchasingAccess,
+    validateBody(approveExceptionSchema),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.purchasing.approveInvoiceException(
+          scopeFrom(principal),
+          principal.userId,
+          req.params.id,
+          req.body,
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
   router.get(
     "/purchasing/payments",
     requireAuthenticatedUser,
@@ -402,7 +442,10 @@ export function createAdminPurchasingRouter(deps: AdminPurchasingRouterDependenc
       try {
         const principal = (req as AuthorizedRequest).principal!;
         const body = req.body as z.infer<typeof createPaymentSchema>;
-        const data = await deps.purchasing.createPayment(scopeFrom(principal), body);
+        const data = await deps.purchasing.createPayment(scopeFrom(principal), {
+          ...body,
+          idempotencyKey: readIdempotencyKey(req),
+        });
         return res.status(201).json({ ok: true, data });
       } catch (error) {
         return next(error);
