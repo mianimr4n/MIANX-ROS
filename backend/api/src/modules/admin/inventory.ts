@@ -15,11 +15,14 @@ import {
   INVENTORY_ITEM_STATUSES,
   type InventoryService,
 } from "../../services/inventory/management.js";
+import type { InventoryRecipeService } from "../../services/inventory/recipes.js";
+import { registerInventoryRecipeRoutes } from "./inventory-recipes.js";
 
 export interface AdminInventoryRouterDependencies {
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
   inventory: InventoryService;
+  inventoryRecipes: InventoryRecipeService;
 }
 
 function scopeFrom(principal: AuthPrincipal): BranchActorScope {
@@ -181,6 +184,12 @@ export function createAdminInventoryRouter(deps: AdminInventoryRouterDependencie
       }
     },
   );
+
+  registerInventoryRecipeRoutes(router, {
+    recipes: deps.inventoryRecipes,
+    requireAuthenticatedUser,
+    requireInventoryAccess,
+  });
 
   return router;
 }

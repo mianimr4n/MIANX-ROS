@@ -147,6 +147,10 @@ import {
   type InventoryService,
 } from "./services/inventory/management.js";
 import {
+  createInventoryRecipeService,
+  type InventoryRecipeService,
+} from "./services/inventory/recipes.js";
+import {
   createPurchasingService,
   type PurchasingService,
 } from "./services/purchasing/management.js";
@@ -218,6 +222,7 @@ export interface AppDependencies {
   hrScheduling: HrSchedulingService;
   hrPayroll: HrPayrollService;
   inventory: InventoryService;
+  inventoryRecipes: InventoryRecipeService;
   purchasing: PurchasingService;
   supplierPortal: SupplierPortalService;
   finance: FinanceService;
@@ -274,6 +279,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     hrScheduling: createHrSchedulingService(envStatus),
     hrPayroll: createHrPayrollService(envStatus),
     inventory: createInventoryService(envStatus),
+    inventoryRecipes: createInventoryRecipeService(envStatus),
     purchasing: createPurchasingService(envStatus),
     supplierPortal: createSupplierPortalService(envStatus),
     finance,

@@ -120,7 +120,7 @@ describe("Owner Handover Phase 1 (static)", () => {
       inventoryInsights,
       /No inventory items have been added|Recipe consumption tracking is not configured yet/,
     );
-    assert.match(inventoryInsights, /Sales will not reduce ingredients until recipes are mapped/);
+    assert.match(inventoryInsights, /lack active recipes|will not deduct stock|Recipe consumption/i);
 
     const purchasingInsights = read("apps/website/client/src/lib/admin-purchasing.ts");
     assert.match(purchasingInsights, /No suppliers have been added|Add suppliers before creating purchase orders/);

@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { ApiError } from "../../common/http.js";
+import { defaultLogger } from "../../observability/index.js";
 import type { EnvironmentStatus } from "../../config/env.js";
 import { assertBranchIdOperational } from "../branches/lookup.js";
 import {
@@ -275,12 +276,37 @@ export async function createKitchenTicketForConfirmedOrder(
   return { created: true, ticketId };
 }
 
-/** Best-effort cancel of an open ticket when the order is cancelled. */
+/** Best-effort cancel of an open ticket when the order is cancelled; reverse stock if consumed. */
 export async function cancelKitchenTicketForOrder(
   supabase: SupabaseClient,
   orderId: string,
+  actorUserId?: string | null,
 ): Promise<void> {
   const now = new Date().toISOString();
+  const { data: tickets } = await supabase
+    .from("kitchen_tickets")
+    .select("id, status")
+    .eq("order_id", orderId)
+    .in("status", ["queued", "accepted", "preparing", "ready"]);
+
+  for (const ticket of tickets ?? []) {
+    const status = String(ticket.status);
+    if (status === "preparing" || status === "ready") {
+      const { error } = await supabase.rpc("inventory_reverse_kitchen_consumption_atomic", {
+        p_ticket_id: ticket.id,
+        p_actor_user_id: actorUserId ?? null,
+        p_reason: "Order cancelled — linked stock reverse",
+      });
+      if (error) {
+        defaultLogger.warn("kitchen_stock_reverse_failed", {
+          ticketId: String(ticket.id),
+          errorClass: "STOCK_REVERSE_FAILED",
+          message: error.message,
+        });
+      }
+    }
+  }
+
   await supabase
     .from("kitchen_tickets")
     .update({ status: "cancelled", completed_at: now, updated_at: now })

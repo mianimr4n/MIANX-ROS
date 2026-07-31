@@ -228,7 +228,14 @@ export default function AdminInventory() {
 
       <div className="mb-6 grid gap-4 lg:grid-cols-2">
         <LowStockPanel items={stockItems} />
-        <RecipeMappingPanel snapshot={snapshot} />
+        <RecipeMappingPanel
+          snapshot={isLoading ? null : snapshot}
+          accessToken={session?.access_token}
+          branchId={branchIdFilter}
+          canManage={canManageInventory}
+          menuItems={items}
+          stockItems={stockItems}
+        />
       </div>
 
       <div className="mb-6 grid gap-4 lg:grid-cols-2">
