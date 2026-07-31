@@ -20,6 +20,7 @@ import AuthCallback from "./pages/AuthCallback";
 import Welcome from "./pages/Welcome";
 import StaffAccept from "./pages/StaffAccept";
 import StaffLogin from "./pages/StaffLogin";
+import SupplierPortal from "./pages/supplier/SupplierPortal";
 import Account from "./pages/Account";
 import MyTelepizza from "./pages/MyTelepizza";
 import Orders from "./pages/Orders";
@@ -93,7 +94,12 @@ function ScrollToTop() {
 }
 
 function isOpsChrome(path: string) {
-  return path === "/staff/login" || path.startsWith("/ops") || path.startsWith("/admin");
+  return (
+    path === "/staff/login" ||
+    path.startsWith("/ops") ||
+    path.startsWith("/admin") ||
+    path.startsWith("/supplier")
+  );
 }
 
 function SupportComingSoon() {
@@ -132,6 +138,7 @@ function Router() {
       <Route path="/welcome" component={Welcome} />
       <Route path="/staff/accept" component={StaffAccept} />
       <Route path="/staff/login" component={StaffLogin} />
+      <Route path="/supplier" component={SupplierPortal} />
       <Route path="/ops/orders" component={OpsOrders} />
       <Route path="/ops/kitchen" component={OpsKitchen} />
       <Route path="/ops/dispatch" component={OpsDispatch} />

@@ -3444,6 +3444,63 @@ export function fetchMarketingAttention(
   );
 }
 
+export type SupplierAttentionSnapshot = {
+  unacknowledgedPurchaseOrders: number;
+  delayedExpectedDeliveries: number;
+  invoiceGrnMismatches: number;
+};
+
+export function fetchSupplierAttention(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<SupplierAttentionSnapshot>(
+    `/admin/purchasing/supplier-attention${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function provisionSupplierPortalUser(
+  accessToken: string,
+  supplierId: string,
+  input: { email: string; fullName: string; temporaryPassword: string },
+) {
+  return fetchApiData<{ userId: string; email: string; supplierId: string }>(
+    `/admin/purchasing/suppliers/${supplierId}/portal-users`,
+    {
+      method: "POST",
+      headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+      timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+    },
+  );
+}
+
+export function replacePurchaseOrderLines(
+  accessToken: string,
+  orderId: string,
+  lines: Array<{
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    skuRef?: string | null;
+  }>,
+) {
+  return fetchApiData(
+    `/admin/purchasing/orders/${orderId}/lines`,
+    {
+      method: "PUT",
+      headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+      body: JSON.stringify({ lines }),
+      timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+    },
+  );
+}
+
 export type FinanceAccountType = "ASSET" | "LIABILITY" | "EQUITY" | "REVENUE" | "EXPENSE";
 
 export type FinanceAccount = {

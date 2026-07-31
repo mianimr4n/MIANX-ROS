@@ -38,6 +38,7 @@ import {
   fetchHrAttention,
   fetchLoyaltyAttention,
   fetchMarketingAttention,
+  fetchSupplierAttention,
   type AdminOrderListItem,
 } from "@/lib/admin-api";
 import { listDeliveryAssignments, listKitchenTickets } from "@/lib/ops-api";
@@ -274,6 +275,18 @@ export default function AdminDashboard() {
       pollMs: 60_000,
     },
   );
+  const supplierAttention = useOperationalData(
+    ({ signal, correlationId }) =>
+      fetchSupplierAttention(token!, branchIdFilter ? { branchId: branchIdFilter } : undefined, {
+        signal,
+        correlationId,
+      }),
+    [token, branchIdFilter],
+    {
+      enabled: Boolean(token) && canLoadPurchasing && gateReady && !comingSoonBranch,
+      pollMs: 60_000,
+    },
+  );
   const goodsReceiving = useOperationalData(
     ({ signal, correlationId }) =>
       listGoodsReceiving(token!, branchIdFilter ? { branchId: branchIdFilter } : undefined, {
@@ -482,6 +495,12 @@ export default function AdminDashboard() {
     marketingAttention.state === "UNAVAILABLE" ||
     marketingAttention.data == null ||
     marketingAttention.data.state === "unavailable";
+  const supplierAttentionUnavailable =
+    !canLoadPurchasing ||
+    supplierAttention.state === "ERROR" ||
+    supplierAttention.state === "OFFLINE" ||
+    supplierAttention.state === "UNAVAILABLE" ||
+    supplierAttention.data == null;
 
   const ownerExtras = useMemo(
     () => ({
@@ -568,6 +587,18 @@ export default function AdminDashboard() {
           : (marketingAttention.data?.consentOptOuts ?? null),
         providerConfigured: false as const,
       },
+      supplierAttention: {
+        unavailable: supplierAttentionUnavailable,
+        unacknowledgedPurchaseOrders: supplierAttentionUnavailable
+          ? null
+          : (supplierAttention.data?.unacknowledgedPurchaseOrders ?? null),
+        delayedExpectedDeliveries: supplierAttentionUnavailable
+          ? null
+          : (supplierAttention.data?.delayedExpectedDeliveries ?? null),
+        invoiceGrnMismatches: supplierAttentionUnavailable
+          ? null
+          : (supplierAttention.data?.invoiceGrnMismatches ?? null),
+      },
     }),
     [
       activeAssignmentCount,
@@ -580,6 +611,8 @@ export default function AdminDashboard() {
       loyaltyAttentionUnavailable,
       marketingAttention.data,
       marketingAttentionUnavailable,
+      supplierAttention.data,
+      supplierAttentionUnavailable,
       kitchenTicketCount,
       kitchenTicketsUnavailable,
       procurementSnapshot,
