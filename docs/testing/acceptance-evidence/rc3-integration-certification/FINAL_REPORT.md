@@ -1,20 +1,30 @@
 # RC3 Integration & Production Certification — Final Report
 
-## Decision: RC3_CERTIFIED
+## Decision: RC3_CERTIFIED / RC3_SCHEMA_CERTIFIED
 
 | Item | Value |
 | --- | --- |
-| Certification base | `origin/main` @ `ea5e7f8` (PR [#150](https://github.com/mianimr4n/telepizza/pull/150) loyalty schema compatibility) |
-| Prior integration package | PR [#149](https://github.com/mianimr4n/telepizza/pull/149) |
+| Certification base | `origin/main` @ `db6974d` (PR [#152](https://github.com/mianimr4n/telepizza/pull/152) schema audit + PR [#151](https://github.com/mianimr4n/telepizza/pull/151) integration certification) |
+| Prior loyalty schema fix | PR [#150](https://github.com/mianimr4n/telepizza/pull/150) @ `ea5e7f8` lineage |
 | Supplier Portal | #147 + #148 MERGED |
 | Finance / Workforce / Loyalty+Marketing | #143 / #144 / #146 MERGED |
 | Release branch | `feature/rc3-release-certification` |
-| Tip | `739409f` (`cert(rc3): release certification — RC3_CERTIFIED`) |
+| Pre-rebase tip | `92af0e4` (equivalent schema commit; tree identical to main) |
+| Tip | `775c6ef` (`release(rc3): rebaseline certification on current main`) |
 | Environment | Node v24.18.0 · pnpm 10.15.1 · Supabase CLI 2.110.0 · Playwright 1.52.0 · Windows 10 |
+
+### Rebaseline notes
+
+- PR #152 merged schema audit (`a834951`) into main — **no duplicate cherry-pick** required.
+- Release branch tip `92af0e4` already contained equivalent schema work; trees matched `db6974d`.
+- Rebased onto `origin/main` (skipped empty cherry-pick of `92af0e4`).
+- P0/P1 defects: **0**.
+- Migrations certified through `20260731150000`.
+- Production deployment **not** performed; Production migrations **not** applied; Production must use the normal migration path through `20260731150000`.
 
 ### Release rule applied
 
-No P0/P1 defects found in executed certification suites. Standard gates PASS. Loyalty deployment schema compatibility migration verified and present on main. Remaining gaps are explicit P2/P3 / product deferrals — not release blockers.
+No P0/P1 defects found in executed certification suites. Standard gates PASS. Loyalty + RC3 deployment schema compatibility migrations verified and present on main. Remaining gaps are explicit P2/P3 / product deferrals — not release blockers.
 
 ---
 
@@ -44,12 +54,13 @@ Historical CI TypeScript coupon fixture failure: fixed in `41ec048` (already on 
 
 | Path | Result |
 | --- | --- |
-| Clean install (`db reset --local`) | PASS |
-| Repeatability (2nd reset) | PASS |
-| Static destructive scan | PASS |
-| Schema + RLS spot checks | PASS |
-| Loyalty compat `20260731140000` | Verified forward-only, idempotent, transactional, non-destructive (`ADD COLUMN IF NOT EXISTS`, no DROP/TRUNCATE/DISABLE RLS) |
-| Upgrade path | Additive RC3 + compat repair; live dump-restore still optional P2 depth |
+| Clean install (`db reset --local`) through `20260731150000` | PASS |
+| Repeat `migration up --local` (2× no-op) | PASS (`applied: []`) |
+| Object + RLS spot checks | PASS (`cash_reconciliations`, `hr_shift_templates`, `expense_claims`, `supplier_portal_users` + `loyalty_transactions.actor_user_id`; RLS on; 146 policies) |
+| Static destructive scan (prior package) | PASS |
+| Loyalty compat `20260731140000` | Verified forward-only, idempotent, transactional, non-destructive |
+| Deployment compat `20260731150000` | Present once; no duplicate timestamp |
+| Upgrade path | Additive RC3 + compat repair; Production must use normal migration path (not applied here) |
 
 Artifacts: `migration-certification.json`, `schema-validation.json`
 

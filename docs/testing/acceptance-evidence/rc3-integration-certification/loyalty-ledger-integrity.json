@@ -9,27 +9,27 @@
     {
       "id": "rpc.adjust",
       "pass": true,
-      "detail": "{\"type\":\"adjust\",\"points\":100,\"accountId\":\"537e228f-ea37-40bf-b596-2d9528353ff0\",\"customerId\":\"ce1e97c6-aebc-4b43-bb81-f724baa23a14\",\"pointsBalance\":100,\"transactionId\":\"6388515b-9f28-41b2-9ab5-71a57bbc7399\",\"idempotentReplay\":false}"
+      "detail": "{\"type\":\"adjust\",\"points\":100,\"accountId\":\"108d4808-567d-4c09-89ec-54c0db0080f4\",\"customerId\":\"30c68066-22fe-4c4b-83f9-83aaa8b107eb\",\"pointsBalance\":100,\"transactionId\":\"9b2453be-708a-4571-b122-d5bc3b3135c6\",\"idempotentReplay\":false}"
     },
     {
       "id": "rpc.burn",
       "pass": true,
-      "detail": "{\"type\":\"burn\",\"points\":40,\"accountId\":\"537e228f-ea37-40bf-b596-2d9528353ff0\",\"customerId\":\"ce1e97c6-aebc-4b43-bb81-f724baa23a14\",\"pointsBalance\":60,\"transactionId\":\"2a3204fb-93e6-4030-a978-359934f67425\",\"idempotentReplay\":false}"
+      "detail": "{\"type\":\"burn\",\"points\":40,\"accountId\":\"108d4808-567d-4c09-89ec-54c0db0080f4\",\"customerId\":\"30c68066-22fe-4c4b-83f9-83aaa8b107eb\",\"pointsBalance\":60,\"transactionId\":\"93f2431b-191f-43ea-aea4-181d9aa35fe8\",\"idempotentReplay\":false}"
     },
     {
       "id": "rpc.burn_idempotent",
       "pass": true,
-      "detail": "{\"type\":\"burn\",\"points\":40,\"accountId\":\"537e228f-ea37-40bf-b596-2d9528353ff0\",\"pointsBalance\":60,\"transactionId\":\"2a3204fb-93e6-4030-a978-359934f67425\",\"idempotentReplay\":true}"
+      "detail": "{\"type\":\"burn\",\"points\":40,\"accountId\":\"108d4808-567d-4c09-89ec-54c0db0080f4\",\"pointsBalance\":60,\"transactionId\":\"93f2431b-191f-43ea-aea4-181d9aa35fe8\",\"idempotentReplay\":true}"
     },
     {
       "id": "rpc.adjust_txn_recorded",
       "pass": true,
-      "detail": "txn=6388515b-9f28-41b2-9ab5-71a57bbc7399"
+      "detail": "txn=9b2453be-708a-4571-b122-d5bc3b3135c6"
     },
     {
       "id": "rpc.reverse_burn",
       "pass": true,
-      "detail": "{\"type\":\"reverse\",\"points\":40,\"accountId\":\"537e228f-ea37-40bf-b596-2d9528353ff0\",\"pointsBalance\":100,\"transactionId\":\"fdc8d6f5-e0bd-4eec-9e56-d6bf2f177c10\",\"reversedTransactionId\":\"2a3204fb-93e6-4030-a978-359934f67425\"}"
+      "detail": "{\"type\":\"reverse\",\"points\":40,\"accountId\":\"108d4808-567d-4c09-89ec-54c0db0080f4\",\"pointsBalance\":100,\"transactionId\":\"6f20ce6b-42bf-4101-b00a-a3d7a8a5c3a4\",\"reversedTransactionId\":\"93f2431b-191f-43ea-aea4-181d9aa35fe8\"}"
     },
     {
       "id": "ledger.balance_equals_sum",
@@ -44,6 +44,6 @@
   ],
   "failures": [],
   "cleanup": [
-    "customer:ce1e97c6-aebc-4b43-bb81-f724baa23a14"
+    "customer:30c68066-22fe-4c4b-83f9-83aaa8b107eb"
   ]
 }

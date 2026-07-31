@@ -1,7 +1,9 @@
 # RC3 Deployment Schema Audit
 
-**Base:** `origin/main` @ `ea5e7f8` (+ this audit branch)  
+**Base:** `origin/main` @ `db6974d` (PR #152 merged `a834951`)
 **Verdict:** `RC3_SCHEMA_CERTIFIED`
+
+Repository schema is certified. Runtime “missing table/column” errors were **deployment drift** (API ahead of applied migrations), not missing repo design.
 
 Local validation: migration `20260731150000` applied; object spot-checks PASS; `migration up` repeatability no-op PASS; `pnpm check` / `pnpm test` / `pnpm rc1:gate` PASS.
 
@@ -9,7 +11,7 @@ Local validation: migration `20260731150000` applied; object spot-checks PASS; `
 
 None for repository schema certification.
 
-**Production ops still required:** apply pending migrations through `20260731150000` on the live database via the normal release path (no manual SQL). Until that apply completes, runtime “relation/column does not exist” errors can persist on the lagging environment.
+**Production ops still required:** apply pending migrations through `20260731150000` on the live database via the **normal release/migration path**. Do **not** use manual ad hoc SQL. Until that apply completes, runtime “relation/column does not exist” errors can persist on the lagging environment.
 
 ## Root cause of UI runtime errors
 
