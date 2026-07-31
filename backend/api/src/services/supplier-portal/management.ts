@@ -103,6 +103,12 @@ export interface PortalPurchaseOrder {
   updatedAt: string;
   lines: PortalPurchaseOrderLine[];
   latestResponse: PortalPurchaseOrderResponse | null;
+  receivingSummary: {
+    status: "not_recorded" | "draft" | "posted" | "cancelled";
+    grnNumber: string | null;
+    receivedAt: string | null;
+    message: string;
+  };
 }
 
 export interface PortalPurchaseOrderLine {
@@ -378,7 +384,7 @@ export function createSupplierPortalService(envStatus: EnvironmentStatus): Suppl
       throw new ApiError(404, "PURCHASE_ORDER_NOT_FOUND", "Purchase order not found.");
     }
 
-    const [{ data: lines, error: linesError }, { data: responses, error: respError }] =
+    const [{ data: lines, error: linesError }, { data: responses, error: respError }, { data: grns, error: grnError }] =
       await Promise.all([
         client
           .from("purchase_order_lines")
@@ -393,9 +399,34 @@ export function createSupplierPortalService(envStatus: EnvironmentStatus): Suppl
           .eq("purchase_order_id", orderId)
           .order("created_at", { ascending: false })
           .limit(1),
+        client
+          .from("goods_receiving")
+          .select("id, grn_number, status, received_at")
+          .eq("purchase_order_id", orderId)
+          .order("received_at", { ascending: false })
+          .limit(1),
       ]);
     if (linesError) throwMappedDbError("PURCHASE_ORDER_LINES_READ_FAILED", linesError);
     if (respError) throwMappedDbError("PURCHASE_ORDER_RESPONSES_READ_FAILED", respError);
+    if (grnError) throwMappedDbError("GOODS_RECEIVING_READ_FAILED", grnError);
+
+    const grn = (grns?.[0] as Record<string, unknown> | undefined) ?? null;
+    const receivingSummary = !grn
+      ? {
+          status: "not_recorded" as const,
+          grnNumber: null,
+          receivedAt: null,
+          message: "Receiving has not been recorded yet.",
+        }
+      : {
+          status: String(grn.status) as "draft" | "posted" | "cancelled",
+          grnNumber: grn.grn_number == null ? null : String(grn.grn_number),
+          receivedAt: grn.received_at == null ? null : String(grn.received_at),
+          message:
+            String(grn.status) === "posted"
+              ? "Goods receiving has been posted by Telepizza staff."
+              : `Receiving status: ${String(grn.status)}.`,
+        };
 
     const branch = po.branch as { branch_code?: string; name?: string } | null;
     return {
@@ -420,6 +451,7 @@ export function createSupplierPortalService(envStatus: EnvironmentStatus): Suppl
       updatedAt: String(po.updated_at),
       lines: ((lines ?? []) as Record<string, unknown>[]).map(mapLine),
       latestResponse: mapResponse((responses?.[0] as Record<string, unknown>) ?? null),
+      receivingSummary,
     };
   }
 

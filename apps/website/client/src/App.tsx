@@ -23,6 +23,7 @@ import StaffLogin from "./pages/StaffLogin";
 import SupplierLogin from "./pages/supplier/SupplierLogin";
 import SupplierDashboard from "./pages/supplier/SupplierDashboard";
 import SupplierPurchaseOrders from "./pages/supplier/SupplierPurchaseOrders";
+import SupplierPurchaseOrderDetail from "./pages/supplier/SupplierPurchaseOrderDetail";
 import SupplierDocuments from "./pages/supplier/SupplierDocuments";
 import SupplierProfilePage from "./pages/supplier/SupplierProfilePage";
 import AdminSupplierOperations from "./pages/admin/AdminSupplierOperations";
@@ -144,6 +145,7 @@ function Router() {
       <Route path="/staff/accept" component={StaffAccept} />
       <Route path="/staff/login" component={StaffLogin} />
       <Route path="/supplier/login" component={SupplierLogin} />
+      <Route path="/supplier/purchase-orders/:id" component={SupplierPurchaseOrderDetail} />
       <Route path="/supplier/purchase-orders" component={SupplierPurchaseOrders} />
       <Route path="/supplier/documents" component={SupplierDocuments} />
       <Route path="/supplier/profile" component={SupplierProfilePage} />

@@ -3,6 +3,7 @@
 **Branch:** `feature/rc3-supplier-portal`
 **Base:** `origin/main` @ `79e0674` (Loyalty+Marketing PR #146 MERGED)
 **Confirmed:** not branched from loyalty/workforce/finance/kitchen feature branches
+**Slice decision:** `SUPPLIER_PORTAL_SLICE_COMPLETE` (see `FINAL_REPORT.md`)
 
 ## REUSE
 | Asset | Notes |
@@ -16,23 +17,23 @@
 | Asset | Notes |
 | --- | --- |
 | `supplier_portal_users` + lifecycle | invited/active/suspended/deactivated (hardening) |
-| Granular `supplier.*` permissions | portal.access, po read/respond, documents, profile |
+| Granular `supplier.*` permissions | portal.access, PO read/respond, documents, profile |
 | `purchase_order_lines` / responses / delivery refs / documents | Foundation + hardening |
 | Idempotency on responses | `uq_po_responses_idempotency` |
 | `/api/v1/supplier-portal/*` | Separate action endpoints |
 | `/supplier/*` shell + `/supplier/login` | Distinct from admin |
 | `/admin/supplier-operations` | Staff response queue |
 | Owner supplier attention | Unacked / delayed / mismatch |
+| Receiving status summary on PO detail | Staff GRN status; line qty remains staff SoT |
+| Local migrations applied | `npx supabase` + `migration up --local` |
+| Supplier A/B seed + isolation matrix | `scripts/seed-rc3-supplier-portal.mjs`, `rc3-supplier-isolation-matrix.mjs` |
+| Authenticated Playwright + axe | `scripts/rc3-supplier-portal-qa.mjs` → screenshots + `qa-report.json` |
 
-## STILL MISSING / BLOCKERS FOR COMPLETE
-| Gap | Impact |
+## EXPLICITLY DEFERRED (not COMPLETE blockers)
+| Gap | Status |
 | --- | --- |
-| Local Supabase migration apply | `supabase` CLI not available on this Windows host |
-| Authenticated supplier Playwright journeys | No supplier fixture identity in RC1 handover |
-| Screenshot matrix (390/768/1440) for all supplier states | Blocked on supplier auth fixture + running stack |
-| Live RLS isolation matrix (Supplier A vs B) | Requires applied migrations + live DB |
-| Binary document upload | Honestly unavailable (URL reference only) |
-| Full receiving quantity summary on portal PO detail | GRN line variance not fully projected to supplier UI |
+| Binary document upload | Honestly unavailable — URL reference only |
+| Supplier-facing GRN line qty variance | Deferred; staff SoT; status summary shipped |
 
 ## DO NOT CREATE
 Parallel PO/supplier masters, org table invention, fake scores, Production migrate/deploy.

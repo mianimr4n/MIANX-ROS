@@ -1,6 +1,6 @@
 # RC3 Supplier Portal — Final Report
 
-## Decision: SUPPLIER_PORTAL_SLICE_INCOMPLETE
+## Decision: SUPPLIER_PORTAL_SLICE_COMPLETE
 
 | Item | Value |
 | --- | --- |
@@ -15,25 +15,36 @@
 3. Server-side supplier scope (no client-trusted supplier ID)
 4. PO visibility + acknowledge/accept/reject/amendment/delivery-date actions
 5. Response idempotency keys
-6. Document URL references (binary upload honestly unavailable)
+6. Document URL references (binary upload honestly deferred)
 7. Delivery refs (supplier-declared; GRN remains staff)
 8. Staff Supplier Operations queue + amendment decisions
 9. Supplier portal shell (`/supplier/login`, dashboard, POs, documents, profile)
 10. Owner Supplier Attention widgets
 11. Audit via `supplier_portal_events`
-12. Static/unit isolation + contract tests
+12. Supplier-facing receiving **status** summary (GRN number/timestamp when present; line qty remains staff SoT)
+13. Static/unit isolation + contract tests
+14. Live local acceptance: migrations applied, A/B isolation matrix, authenticated Playwright + axe
 
-### Migrations (authored; not applied on this host)
+### Migrations (authored + applied locally)
 - `20260731120000_supplier_portal_foundation.sql`
 - `20260731130000_supplier_portal_hardening.sql`
+- Applied with local Supabase CLI (`migration up --local`) — **not** Production / `--linked`
 
-### Precise COMPLETE blockers
-1. **Local migration apply/validate** — Supabase CLI not installed on this Windows agent host; Docker client present but stack not started/applied here.
-2. **Authenticated supplier Playwright** — no supplier portal fixture in RC1 staff handover; cannot prove login → acknowledge → accept journeys.
-3. **Screenshot + axe matrix** — blocked without supplier auth fixture and stable local website+API against migrated DB.
-4. **Live Supplier A/B RLS/API isolation matrix** — static contracts exist; live DB assertions not executed.
-5. **Binary document upload** — infrastructure not ready; URL reference only (honest unavailable).
-6. **Supplier PO detail receiving summary UI** — backend GRN remains staff SoT; supplier-facing accepted/rejected qty projection incomplete.
+### Acceptance evidence (this host)
+| Gate | Result |
+| --- | --- |
+| Local migrate + table verify | PASS |
+| `scripts/seed-rc3-supplier-portal.mjs` Supplier A/B fixtures | PASS (gitignored passwords) |
+| `scripts/rc3-supplier-isolation-matrix.mjs` | PASS (`isolation-matrix.json`, 12/12) |
+| `scripts/rc3-supplier-portal-qa.mjs` Playwright + axe | PASS (`qa-report.json`, 30 screenshots, 0 critical/serious) |
+| `pnpm check` | PASS |
+| `pnpm test` | PASS (762 db/static + 534 backend) |
+| `pnpm rc1:gate` | PASS |
+| `git diff --check` | PASS |
+
+### Explicit deferred (certified incomplete by design — not blockers for COMPLETE)
+1. **Binary document upload** — infrastructure not ready; URL reference only (honest unavailable).
+2. **Supplier GRN line accepted/rejected quantities** — remain staff source of truth; portal shows receiving status summary only.
 
 ### Confirmations
 - Loyalty+Marketing / Finance / Workforce branches not modified on this branch beyond merged main
