@@ -11,6 +11,10 @@ import type {
   HrEmployeesService,
 } from "../src/services/hr/employees.js";
 import type { HrWorkforceService } from "../src/services/hr/workforce.js";
+import type { HrSchedulingService } from "../src/services/hr/scheduling.js";
+import type { HrPayrollService } from "../src/services/hr/payroll.js";
+import { shiftDurationMinutes } from "../src/services/hr/scheduling.js";
+import { hoursBetween } from "../src/services/hr/workforce.js";
 
 const readyEnv = {
   API_PORT: "4000",
@@ -71,21 +75,40 @@ const employee: HrEmployeeRecord = {
   branchId: "branch-1",
   branchCode: "royal-orchard",
   branchName: "Royal Orchard",
+  employeeNumber: "E-001",
   fullName: "Ali Khan",
   email: "ali@example.com",
   phone: "03001234567",
   role: "cashier",
   status: "active",
+  employmentType: "full_time",
+  emergencyContactName: null,
+  emergencyContactPhone: null,
   hiredAt: "2026-01-15",
+  deactivationReason: null,
+  deactivatedBy: null,
+  deactivatedAt: null,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
+};
+
+const leaveExtras = {
+  rejectionReason: null as string | null,
+  decidedBy: null as string | null,
+  decidedAt: null as string | null,
+  leaveBalanceConfigured: false as const,
+  leaveBalanceMessage: "Leave balance is not configured.",
+  overlappingPublishedShifts: 0,
 };
 
 const hrEmployees: HrEmployeesService = {
   async listEmployees() {
     return [employee];
   },
-  async createEmployee(_scope, input) {
+  async getEmployee() {
+    return employee;
+  },
+  async createEmployee(_scope, _actor, input) {
     return {
       ...employee,
       id: "emp-new",
@@ -96,6 +119,39 @@ const hrEmployees: HrEmployeesService = {
       role: input.role,
       status: input.status ?? "active",
       hiredAt: input.hiredAt ?? null,
+      employeeNumber: input.employeeNumber ?? null,
+      employmentType: input.employmentType ?? null,
+      emergencyContactName: input.emergencyContactName ?? null,
+      emergencyContactPhone: input.emergencyContactPhone ?? null,
+    };
+  },
+  async patchEmployee(_scope, _actor, employeeId, input) {
+    return {
+      ...employee,
+      id: employeeId,
+      fullName: input.fullName ?? employee.fullName,
+      role: input.role ?? employee.role,
+      phone: input.phone !== undefined ? input.phone : employee.phone,
+    };
+  },
+  async deactivateEmployee(_scope, _actor, employeeId, input) {
+    return {
+      ...employee,
+      id: employeeId,
+      status: input.status ?? "inactive",
+      deactivationReason: input.reason,
+      deactivatedAt: new Date().toISOString(),
+      deactivatedBy: "user-admin",
+    };
+  },
+  async reactivateEmployee(_scope, _actor, employeeId) {
+    return {
+      ...employee,
+      id: employeeId,
+      status: "active",
+      deactivationReason: null,
+      deactivatedAt: null,
+      deactivatedBy: null,
     };
   },
 };
@@ -115,6 +171,8 @@ const hrWorkforce: HrWorkforceService = {
       checkInTime: new Date().toISOString(),
       checkOutTime: null,
       status: input.status ?? "PRESENT",
+      scheduledShiftId: null,
+      isUnscheduled: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -122,7 +180,7 @@ const hrWorkforce: HrWorkforceService = {
   async listLeaves() {
     return [];
   },
-  async createLeave(_scope, input) {
+  async createLeave(_scope, _actor, input) {
     return {
       id: "leave-1",
       employeeId: input.employeeId,
@@ -137,9 +195,10 @@ const hrWorkforce: HrWorkforceService = {
       reason: input.reason ?? null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      ...leaveExtras,
     };
   },
-  async decideLeave(_scope, leaveId, input) {
+  async decideLeave(_scope, _actor, leaveId, input) {
     return {
       id: leaveId,
       employeeId: "emp-1",
@@ -154,6 +213,28 @@ const hrWorkforce: HrWorkforceService = {
       reason: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      ...leaveExtras,
+      rejectionReason: input.rejectionReason ?? null,
+      decidedBy: "user-admin",
+      decidedAt: new Date().toISOString(),
+    };
+  },
+  async cancelLeave(_scope, _actor, leaveId) {
+    return {
+      id: leaveId,
+      employeeId: "emp-1",
+      employeeName: "Ali Khan",
+      branchId: "550e8400-e29b-41d4-a716-446655440000",
+      branchCode: "royal-orchard",
+      branchName: "Royal Orchard",
+      startDate: "2026-07-30",
+      endDate: "2026-07-31",
+      leaveType: "CASUAL",
+      status: "CANCELLED",
+      reason: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ...leaveExtras,
     };
   },
   async listDocuments() {
@@ -168,13 +249,250 @@ const hrWorkforce: HrWorkforceService = {
       fileUrl: input.fileUrl,
       uploadedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
+      expiryTrackingAvailable: false as const,
+    };
+  },
+  async listCorrections() {
+    return [];
+  },
+  async createCorrection() {
+    throw new Error("unused");
+  },
+  async decideCorrection() {
+    throw new Error("unused");
+  },
+  async getMetrics() {
+    return {
+      branchId: null,
+      state: "available",
+      unavailableReason: null,
+      asOfDate: "2026-07-31",
+      activeEmployees: 1,
+      employeesScheduledToday: 0,
+      employeesClockedIn: 0,
+      lateArrivalsToday: 0,
+      absencesToday: 0,
+      openAttendanceSessions: 0,
+      shiftsRequiringCoverage: 0,
+      scheduledLabourHours: 0,
+      actualLabourHours: 0,
+      approvedLeaveToday: 0,
+      incompleteMandatoryTraining: null,
+      incompleteMandatoryTrainingMessage: "n/a",
+      expiringDocuments: null,
+      expiringDocumentsMessage: "n/a",
+      labourCost: null,
+      labourCostMessage: "n/a",
+    };
+  },
+  async getAttention() {
+    return {
+      branchId: null,
+      state: "available",
+      unavailableReason: null,
+      absentEmployees: 0,
+      lateArrivals: 0,
+      uncoveredShifts: 0,
+      openAttendanceSessions: 0,
+      attendanceCorrectionsAwaitingApproval: 0,
+      leaveRequestsAwaitingApproval: 0,
+      incompleteMandatoryTraining: null,
+      incompleteMandatoryTrainingMessage: "n/a",
+      expiringOrMissingDocuments: null,
+      expiringOrMissingDocumentsMessage: "n/a",
+      payrollRunsAwaitingApproval: 0,
     };
   },
 };
 
+const hrScheduling: HrSchedulingService = {
+  async listTemplates() {
+    return [];
+  },
+  async createTemplate(_scope, _actor, input) {
+    return {
+      id: "tmpl-1",
+      branchId: input.branchId,
+      name: input.name,
+      operationalRole: input.operationalRole ?? null,
+      startTime: input.startTime,
+      endTime: input.endTime,
+      breakMinutes: input.breakMinutes ?? 0,
+      daysOfWeek: input.daysOfWeek ?? [],
+      isActive: true,
+      notes: input.notes ?? null,
+      createdBy: "user-admin",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  },
+  async patchTemplate() {
+    throw new Error("unused");
+  },
+  async listShifts() {
+    return [];
+  },
+  async createShift(_scope, _actor, input) {
+    return {
+      id: "shift-1",
+      branchId: input.branchId,
+      employeeId: input.employeeId,
+      employeeName: "Ali Khan",
+      templateId: input.templateId ?? null,
+      shiftDate: input.shiftDate,
+      startsAt: input.startsAt,
+      endsAt: input.endsAt,
+      breakMinutes: input.breakMinutes ?? 0,
+      operationalRole: input.operationalRole ?? null,
+      status: input.status ?? "draft",
+      notes: input.notes ?? null,
+      createdBy: "user-admin",
+      publishedBy: null,
+      publishedAt: null,
+      cancelReason: null,
+      changeReason: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  },
+  async patchShift() {
+    throw new Error("unused");
+  },
+  async publishShift(_scope, _actor, shiftId) {
+    return {
+      id: shiftId,
+      branchId: "550e8400-e29b-41d4-a716-446655440000",
+      employeeId: "emp-1",
+      employeeName: "Ali Khan",
+      templateId: null,
+      shiftDate: "2026-07-31",
+      startsAt: "2026-07-31T09:00:00+05:00",
+      endsAt: "2026-07-31T17:00:00+05:00",
+      breakMinutes: 30,
+      operationalRole: null,
+      status: "published",
+      notes: null,
+      createdBy: "user-admin",
+      publishedBy: "user-admin",
+      publishedAt: new Date().toISOString(),
+      cancelReason: null,
+      changeReason: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  },
+  async cancelShift(_scope, _actor, shiftId, reason) {
+    return {
+      id: shiftId,
+      branchId: "550e8400-e29b-41d4-a716-446655440000",
+      employeeId: "emp-1",
+      employeeName: "Ali Khan",
+      templateId: null,
+      shiftDate: "2026-07-31",
+      startsAt: "2026-07-31T09:00:00+05:00",
+      endsAt: "2026-07-31T17:00:00+05:00",
+      breakMinutes: 30,
+      operationalRole: null,
+      status: "cancelled",
+      notes: null,
+      createdBy: "user-admin",
+      publishedBy: null,
+      publishedAt: null,
+      cancelReason: reason,
+      changeReason: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  },
+};
+
+const hrPayroll: HrPayrollService = {
+  async listCompensation() {
+    return [];
+  },
+  async createCompensation() {
+    throw new Error("unused");
+  },
+  async listPayPeriods() {
+    return [];
+  },
+  async createPayPeriod() {
+    throw new Error("unused");
+  },
+  async listPayrollRuns() {
+    return [];
+  },
+  async createPayrollRun(_scope, _actor, input) {
+    return {
+      id: "run-1",
+      payPeriodId: input.payPeriodId,
+      branchId: "550e8400-e29b-41d4-a716-446655440000",
+      status: "draft",
+      calculationStatus: "unavailable",
+      calculationNote: "Payroll calculation is not available until compensation rules are configured.",
+      createdBy: "user-admin",
+      approvedBy: null,
+      lockedAt: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      paymentTriggered: false,
+      paymentMessage: "Payroll foundation does not trigger payments.",
+    };
+  },
+  async calculatePayrollRun(_scope, _actor, runId) {
+    return {
+      id: runId,
+      payPeriodId: "period-1",
+      branchId: "550e8400-e29b-41d4-a716-446655440000",
+      status: "under_review",
+      calculationStatus: "unavailable",
+      calculationNote: "unavailable",
+      createdBy: "user-admin",
+      approvedBy: null,
+      lockedAt: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      paymentTriggered: false,
+      paymentMessage: "Payroll foundation does not trigger payments.",
+    };
+  },
+  async approvePayrollRun() {
+    throw new Error("unused");
+  },
+  async lockPayrollRun(_scope, _actor, runId) {
+    return {
+      id: runId,
+      payPeriodId: "period-1",
+      branchId: "550e8400-e29b-41d4-a716-446655440000",
+      status: "locked",
+      calculationStatus: "unavailable",
+      calculationNote: "unavailable",
+      createdBy: "user-admin",
+      approvedBy: "user-admin",
+      lockedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      paymentTriggered: false,
+      paymentMessage: "Payroll foundation does not trigger payments.",
+    };
+  },
+};
+
+describe("HR workforce unit helpers", () => {
+  it("computes overnight shift duration", () => {
+    expect(shiftDurationMinutes("22:00", "06:00")).toBe(8 * 60);
+    expect(shiftDurationMinutes("09:00", "17:00")).toBe(8 * 60);
+  });
+
+  it("computes actual hours between timestamps", () => {
+    expect(hoursBetween("2026-07-31T09:00:00Z", "2026-07-31T17:00:00Z", 30)).toBe(7.5);
+    expect(hoursBetween(null, "2026-07-31T17:00:00Z")).toBeNull();
+  });
+});
+
 describe("HR employee directory APIs", () => {
   it("GET /api/v1/admin/hr/employees requires auth", async () => {
-    const { app } = createApp(readyEnv, { hrEmployees });
+    const { app } = createApp(readyEnv, { hrEmployees, hrWorkforce, hrScheduling, hrPayroll });
     const res = await request(app).get("/api/v1/admin/hr/employees");
     expect(res.status).toBe(401);
   });
@@ -182,6 +500,9 @@ describe("HR employee directory APIs", () => {
   it("GET /api/v1/admin/hr/employees requires staff.manage or admin.access", async () => {
     const { app } = createApp(readyEnv, {
       hrEmployees,
+      hrWorkforce,
+      hrScheduling,
+      hrPayroll,
       authTokenVerifier: verifier("auth-cashier", "cashier@example.com"),
       authProfileRepository: authRepo(
         principal({
@@ -199,6 +520,9 @@ describe("HR employee directory APIs", () => {
   it("GET /api/v1/admin/hr/employees returns employees for staff.manage", async () => {
     const { app } = createApp(readyEnv, {
       hrEmployees,
+      hrWorkforce,
+      hrScheduling,
+      hrPayroll,
       authTokenVerifier: verifier("auth-admin", "admin@example.com"),
       authProfileRepository: authRepo(principal()),
     });
@@ -215,6 +539,9 @@ describe("HR employee directory APIs", () => {
   it("GET /api/v1/admin/hr/employees allows admin.access", async () => {
     const { app } = createApp(readyEnv, {
       hrEmployees,
+      hrWorkforce,
+      hrScheduling,
+      hrPayroll,
       authTokenVerifier: verifier("auth-founder", "founder@example.com"),
       authProfileRepository: authRepo(
         principal({
@@ -235,6 +562,8 @@ describe("HR employee directory APIs", () => {
     const { app } = createApp(readyEnv, {
       hrEmployees,
       hrWorkforce,
+      hrScheduling,
+      hrPayroll,
       authTokenVerifier: verifier("auth-admin", "admin@example.com"),
       authProfileRepository: authRepo(principal()),
     });
@@ -254,10 +583,53 @@ describe("HR employee directory APIs", () => {
     expect(res.body.data.email).toBe("sara@example.com");
   });
 
+  it("PATCH /api/v1/admin/hr/employees/:id updates employee", async () => {
+    const { app } = createApp(readyEnv, {
+      hrEmployees,
+      hrWorkforce,
+      hrScheduling,
+      hrPayroll,
+      authTokenVerifier: verifier("auth-admin", "admin@example.com"),
+      authProfileRepository: authRepo(principal()),
+    });
+    const res = await request(app)
+      .patch("/api/v1/admin/hr/employees/550e8400-e29b-41d4-a716-446655440001")
+      .set("Authorization", "Bearer test-token")
+      .send({ fullName: "Ali Updated", role: "shift-lead" });
+    expect(res.status).toBe(200);
+    expect(res.body.data.fullName).toBe("Ali Updated");
+  });
+
+  it("POST deactivate requires reason", async () => {
+    const { app } = createApp(readyEnv, {
+      hrEmployees,
+      hrWorkforce,
+      hrScheduling,
+      hrPayroll,
+      authTokenVerifier: verifier("auth-admin", "admin@example.com"),
+      authProfileRepository: authRepo(principal()),
+    });
+    const bad = await request(app)
+      .post("/api/v1/admin/hr/employees/550e8400-e29b-41d4-a716-446655440001/deactivate")
+      .set("Authorization", "Bearer test-token")
+      .send({});
+    expect(bad.status).toBe(400);
+
+    const ok = await request(app)
+      .post("/api/v1/admin/hr/employees/550e8400-e29b-41d4-a716-446655440001/deactivate")
+      .set("Authorization", "Bearer test-token")
+      .send({ reason: "Left the company" });
+    expect(ok.status).toBe(200);
+    expect(ok.body.data.status).toBe("inactive");
+    expect(ok.body.data.deactivationReason).toBe("Left the company");
+  });
+
   it("POST /api/v1/admin/hr/attendance records check-in", async () => {
     const { app } = createApp(readyEnv, {
       hrEmployees,
       hrWorkforce,
+      hrScheduling,
+      hrPayroll,
       authTokenVerifier: verifier("auth-admin", "admin@example.com"),
       authProfileRepository: authRepo(principal({ permissions: ["hr.manage"] })),
     });
@@ -278,6 +650,8 @@ describe("HR employee directory APIs", () => {
     const { app } = createApp(readyEnv, {
       hrEmployees,
       hrWorkforce,
+      hrScheduling,
+      hrPayroll,
       authTokenVerifier: verifier("auth-admin", "admin@example.com"),
       authProfileRepository: authRepo(principal()),
     });
@@ -289,10 +663,68 @@ describe("HR employee directory APIs", () => {
     expect(res.body.data.status).toBe("APPROVED");
   });
 
+  it("POST /api/v1/admin/hr/shift-templates creates a template", async () => {
+    const { app } = createApp(readyEnv, {
+      hrEmployees,
+      hrWorkforce,
+      hrScheduling,
+      hrPayroll,
+      authTokenVerifier: verifier("auth-admin", "admin@example.com"),
+      authProfileRepository: authRepo(principal()),
+    });
+    const res = await request(app)
+      .post("/api/v1/admin/hr/shift-templates")
+      .set("Authorization", "Bearer test-token")
+      .send({
+        branchId: "550e8400-e29b-41d4-a716-446655440000",
+        name: "Opening Shift",
+        startTime: "09:00",
+        endTime: "17:00",
+        breakMinutes: 30,
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.data.name).toBe("Opening Shift");
+  });
+
+  it("GET /api/v1/admin/hr/attention returns workforce attention", async () => {
+    const { app } = createApp(readyEnv, {
+      hrEmployees,
+      hrWorkforce,
+      hrScheduling,
+      hrPayroll,
+      authTokenVerifier: verifier("auth-admin", "admin@example.com"),
+      authProfileRepository: authRepo(principal()),
+    });
+    const res = await request(app)
+      .get("/api/v1/admin/hr/attention")
+      .set("Authorization", "Bearer test-token");
+    expect(res.status).toBe(200);
+    expect(res.body.data.state).toBe("available");
+  });
+
+  it("POST payroll run calculate stays payment-free", async () => {
+    const { app } = createApp(readyEnv, {
+      hrEmployees,
+      hrWorkforce,
+      hrScheduling,
+      hrPayroll,
+      authTokenVerifier: verifier("auth-admin", "admin@example.com"),
+      authProfileRepository: authRepo(principal()),
+    });
+    const res = await request(app)
+      .post("/api/v1/admin/hr/payroll-runs/550e8400-e29b-41d4-a716-446655440088/calculate")
+      .set("Authorization", "Bearer test-token");
+    expect(res.status).toBe(200);
+    expect(res.body.data.paymentTriggered).toBe(false);
+    expect(res.body.data.calculationStatus).toBe("unavailable");
+  });
+
   it("POST /api/v1/admin/hr/employees/:id/documents stores a document URL", async () => {
     const { app } = createApp(readyEnv, {
       hrEmployees,
       hrWorkforce,
+      hrScheduling,
+      hrPayroll,
       authTokenVerifier: verifier("auth-admin", "admin@example.com"),
       authProfileRepository: authRepo(principal()),
     });

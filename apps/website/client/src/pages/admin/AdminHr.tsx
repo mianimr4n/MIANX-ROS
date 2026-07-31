@@ -8,6 +8,7 @@ import { HRStatusBanner } from "@/components/admin/hr/HRStatusBanner";
 import { DepartmentManager, OrganizationTree } from "@/components/admin/hr/OrganizationTree";
 import { RolesPermissionPanel } from "@/components/admin/hr/RolesPermissionPanel";
 import {
+  AttendanceCorrectionsPanel,
   AttendancePanel,
   EmployeeDocuments,
   HRAnalytics,
@@ -27,11 +28,13 @@ import {
   createHrEmployee,
   listAdminStaffInvites,
   listHrAttendance,
+  listHrAttendanceCorrections,
   listHrDocuments,
   listHrEmployees,
   listHrLeaves,
   type AdminStaffInvite,
   type HrAttendance,
+  type HrAttendanceCorrection,
   type HrEmployee,
   type HrEmployeeDocument,
   type HrLeaveRequest,
@@ -74,6 +77,9 @@ export default function AdminHr() {
   const [documents, setDocuments] = useState<HrEmployeeDocument[] | null>(null);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
+  const [corrections, setCorrections] = useState<HrAttendanceCorrection[] | null>(null);
+  const [correctionsLoading, setCorrectionsLoading] = useState(false);
+  const [correctionsError, setCorrectionsError] = useState<string | null>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<HrEmployee | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
   const [addBusy, setAddBusy] = useState(false);
@@ -192,6 +198,30 @@ export default function AdminHr() {
     }
   }, [branchIdFilter, canManageHr, session?.access_token]);
 
+  const loadCorrections = useCallback(async () => {
+    const token = session?.access_token;
+    if (!token || !canManageHr) {
+      setCorrections(null);
+      setCorrectionsError(null);
+      return;
+    }
+    setCorrectionsLoading(true);
+    try {
+      setCorrections(
+        await listHrAttendanceCorrections(
+          token,
+          branchIdFilter ? { branchId: branchIdFilter, status: "pending" } : { status: "pending" },
+        ),
+      );
+      setCorrectionsError(null);
+    } catch (err) {
+      setCorrections(null);
+      setCorrectionsError(err instanceof ApiRequestError ? err.message : "Failed to load corrections");
+    } finally {
+      setCorrectionsLoading(false);
+    }
+  }, [branchIdFilter, canManageHr, session?.access_token]);
+
   const loadInvites = useCallback(async () => {
     const token = session?.access_token;
     if (!token || !isSuperAdmin) {
@@ -212,14 +242,16 @@ export default function AdminHr() {
     void loadAttendance();
     void loadLeaves();
     void loadDocuments();
+    void loadCorrections();
     void loadInvites();
-  }, [gateReady, loadAttendance, loadDocuments, loadEmployees, loadInvites, loadLeaves]);
+  }, [gateReady, loadAttendance, loadCorrections, loadDocuments, loadEmployees, loadInvites, loadLeaves]);
 
   const onRefresh = () => {
     void loadEmployees();
     void loadAttendance();
     void loadLeaves();
     void loadDocuments();
+    void loadCorrections();
     void loadInvites();
   };
 
@@ -288,11 +320,27 @@ export default function AdminHr() {
         defaultBranchId={branchIdFilter}
       />
 
-      <EmployeeDrawer employee={selectedEmployee} onClose={() => setSelectedEmployee(null)} />
+      <EmployeeDrawer
+        employee={selectedEmployee}
+        accessToken={session?.access_token}
+        canManage={canManageHr}
+        onClose={() => setSelectedEmployee(null)}
+        onUpdated={(updated) => {
+          setSelectedEmployee(updated);
+          setEmployees((prev) =>
+            prev ? prev.map((row) => (row.id === updated.id ? updated : row)) : prev,
+          );
+        }}
+      />
 
       <RolesPermissionPanel currentRoles={roles} currentPermissions={permissions} />
 
-      <ShiftPlanner />
+      <ShiftPlanner
+        branchId={branchIdFilter}
+        accessToken={session?.access_token}
+        canManage={canManageHr}
+        employees={employees}
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <AttendancePanel
@@ -305,7 +353,18 @@ export default function AdminHr() {
           error={attendanceError}
           onRefresh={() => void loadAttendance()}
         />
-        <LeaveManagement
+        <AttendanceCorrectionsPanel
+          corrections={corrections}
+          branchId={branchIdFilter}
+          accessToken={session?.access_token}
+          canManage={canManageHr}
+          loading={correctionsLoading}
+          error={correctionsError}
+          onRefresh={() => void loadCorrections()}
+        />
+      </div>
+
+      <LeaveManagement
           leaves={leaves}
           employees={employees}
           branchId={branchIdFilter}
@@ -315,10 +374,13 @@ export default function AdminHr() {
           error={leavesError}
           onRefresh={() => void loadLeaves()}
         />
-      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <PayrollOverview />
+        <PayrollOverview
+          branchId={branchIdFilter}
+          accessToken={session?.access_token}
+          canManage={canManageHr}
+        />
         <PerformancePanel />
       </div>
 

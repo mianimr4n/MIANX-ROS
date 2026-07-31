@@ -1817,18 +1817,26 @@ export function updateDeliverySettings(accessToken: string, input: DeliverySetti
 }
 
 export type HrEmployeeStatus = "active" | "inactive" | "on_leave" | "terminated";
+export type HrEmploymentType = "full_time" | "part_time" | "contract" | "casual";
 
 export type HrEmployee = {
   id: string;
   branchId: string;
   branchCode: string | null;
   branchName: string | null;
+  employeeNumber: string | null;
   fullName: string;
   email: string;
   phone: string | null;
   role: string;
   status: HrEmployeeStatus;
+  employmentType: HrEmploymentType | null;
+  emergencyContactName: string | null;
+  emergencyContactPhone: string | null;
   hiredAt: string | null;
+  deactivationReason: string | null;
+  deactivatedBy: string | null;
+  deactivatedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -1841,6 +1849,24 @@ export type CreateHrEmployeeInput = {
   role: string;
   status?: HrEmployeeStatus;
   hiredAt?: string | null;
+  employeeNumber?: string | null;
+  employmentType?: HrEmploymentType | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+};
+
+export type PatchHrEmployeeInput = {
+  fullName?: string;
+  email?: string;
+  phone?: string | null;
+  role?: string;
+  hiredAt?: string | null;
+  employeeNumber?: string | null;
+  employmentType?: HrEmploymentType | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  branchId?: string;
+  transferReason?: string | null;
 };
 
 export function listHrEmployees(
@@ -1866,6 +1892,41 @@ export function createHrEmployee(accessToken: string, input: CreateHrEmployeeInp
   });
 }
 
+export function getHrEmployee(accessToken: string, employeeId: string, opts?: AdminReadOptions) {
+  return fetchApiData<HrEmployee>(`/admin/hr/employees/${employeeId}`, readInit(accessToken, opts));
+}
+
+export function patchHrEmployee(accessToken: string, employeeId: string, input: PatchHrEmployeeInput) {
+  return fetchApiData<HrEmployee>(`/admin/hr/employees/${employeeId}`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function deactivateHrEmployee(
+  accessToken: string,
+  employeeId: string,
+  input: { reason: string; status?: "inactive" | "terminated" },
+) {
+  return fetchApiData<HrEmployee>(`/admin/hr/employees/${employeeId}/deactivate`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function reactivateHrEmployee(accessToken: string, employeeId: string, reason?: string | null) {
+  return fetchApiData<HrEmployee>(`/admin/hr/employees/${employeeId}/reactivate`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason: reason ?? null }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
 export type HrAttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "LEAVE";
 
 export type HrAttendance = {
@@ -1878,6 +1939,8 @@ export type HrAttendance = {
   checkInTime: string | null;
   checkOutTime: string | null;
   status: HrAttendanceStatus;
+  scheduledShiftId: string | null;
+  isUnscheduled: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -1892,7 +1955,7 @@ export type CreateHrAttendanceInput = {
 };
 
 export type HrLeaveType = "CASUAL" | "SICK" | "ANNUAL";
-export type HrLeaveStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type HrLeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 
 export type HrLeaveRequest = {
   id: string;
@@ -1906,6 +1969,121 @@ export type HrLeaveRequest = {
   leaveType: HrLeaveType;
   status: HrLeaveStatus;
   reason: string | null;
+  rejectionReason: string | null;
+  leaveBalanceMessage?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type HrCorrectionStatus = "pending" | "approved" | "rejected";
+
+export type HrAttendanceCorrection = {
+  id: string;
+  attendanceId: string;
+  branchId: string;
+  employeeId: string;
+  employeeName: string | null;
+  requestedBy: string | null;
+  reviewedBy: string | null;
+  status: HrCorrectionStatus;
+  reason: string;
+  rejectionReason: string | null;
+  originalCheckIn: string | null;
+  originalCheckOut: string | null;
+  originalStatus: string | null;
+  proposedCheckIn: string | null;
+  proposedCheckOut: string | null;
+  proposedStatus: string | null;
+  createdAt: string;
+  reviewedAt: string | null;
+};
+
+export type HrShiftStatus = "draft" | "published" | "confirmed" | "completed" | "cancelled";
+
+export type HrShiftTemplate = {
+  id: string;
+  branchId: string;
+  name: string;
+  operationalRole: string | null;
+  startTime: string;
+  endTime: string;
+  breakMinutes: number;
+  daysOfWeek: number[];
+  isActive: boolean;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type HrScheduledShift = {
+  id: string;
+  branchId: string;
+  employeeId: string;
+  employeeName: string | null;
+  templateId: string | null;
+  shiftDate: string;
+  startsAt: string;
+  endsAt: string;
+  breakMinutes: number;
+  operationalRole: string | null;
+  status: HrShiftStatus;
+  notes: string | null;
+  publishedAt: string | null;
+  cancelReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type HrWorkforceAttentionSnapshot = {
+  branchId: string | null;
+  state: "available" | "unavailable";
+  unavailableReason: string | null;
+  absentEmployees: number;
+  lateArrivals: number;
+  uncoveredShifts: number;
+  openAttendanceSessions: number;
+  attendanceCorrectionsAwaitingApproval: number;
+  leaveRequestsAwaitingApproval: number;
+  payrollRunsAwaitingApproval: number;
+};
+
+export type HrSalaryType = "monthly" | "hourly" | "daily";
+export type HrPayrollStatus = "draft" | "calculated" | "under_review" | "approved" | "locked" | "cancelled";
+
+export type HrCompensationProfile = {
+  id: string;
+  employeeId: string;
+  employeeName: string | null;
+  branchId: string;
+  salaryType: HrSalaryType;
+  baseRate: number;
+  currency: string;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type HrPayPeriod = {
+  id: string;
+  branchId: string;
+  periodStart: string;
+  periodEnd: string;
+  status: HrPayrollStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type HrPayrollRun = {
+  id: string;
+  payPeriodId: string;
+  branchId: string;
+  status: HrPayrollStatus;
+  calculationStatus: "unavailable" | "partial" | "complete";
+  calculationNote: string | null;
+  paymentTriggered: false;
+  paymentMessage: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -1982,11 +2160,288 @@ export function createHrLeave(accessToken: string, input: CreateHrLeaveInput) {
   });
 }
 
-export function decideHrLeave(accessToken: string, leaveId: string, status: "APPROVED" | "REJECTED") {
+export function decideHrLeave(
+  accessToken: string,
+  leaveId: string,
+  input: { status: "APPROVED" | "REJECTED"; rejectionReason?: string | null },
+) {
   return fetchApiData<HrLeaveRequest>(`/admin/hr/leaves/${leaveId}`, {
     method: "PATCH",
     headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function cancelHrLeave(accessToken: string, leaveId: string, reason?: string | null) {
+  return fetchApiData<HrLeaveRequest>(`/admin/hr/leaves/${leaveId}/cancel`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason: reason ?? null }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listHrAttendanceCorrections(
+  accessToken: string,
+  query?: { branchId?: string; status?: HrCorrectionStatus },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  if (query?.status) params.set("status", query.status);
+  const qs = params.toString();
+  return fetchApiData<HrAttendanceCorrection[]>(
+    `/admin/hr/attendance/corrections${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function decideHrAttendanceCorrection(
+  accessToken: string,
+  correctionId: string,
+  input: { status: "approved" | "rejected"; rejectionReason?: string | null },
+) {
+  return fetchApiData<HrAttendanceCorrection>(`/admin/hr/attendance/corrections/${correctionId}`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listHrShiftTemplates(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<HrShiftTemplate[]>(
+    `/admin/hr/shift-templates${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createHrShiftTemplate(
+  accessToken: string,
+  input: {
+    branchId: string;
+    name: string;
+    operationalRole?: string | null;
+    startTime: string;
+    endTime: string;
+    breakMinutes?: number;
+    daysOfWeek?: number[];
+    notes?: string | null;
+  },
+) {
+  return fetchApiData<HrShiftTemplate>(`/admin/hr/shift-templates`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function patchHrShiftTemplate(
+  accessToken: string,
+  templateId: string,
+  input: Partial<{
+    name: string;
+    operationalRole: string | null;
+    startTime: string;
+    endTime: string;
+    breakMinutes: number;
+    daysOfWeek: number[];
+    isActive: boolean;
+    notes: string | null;
+  }>,
+) {
+  return fetchApiData<HrShiftTemplate>(`/admin/hr/shift-templates/${templateId}`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listHrShifts(
+  accessToken: string,
+  query?: { branchId?: string; from?: string; to?: string; status?: HrShiftStatus; employeeId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  if (query?.from) params.set("from", query.from);
+  if (query?.to) params.set("to", query.to);
+  if (query?.status) params.set("status", query.status);
+  if (query?.employeeId) params.set("employeeId", query.employeeId);
+  const qs = params.toString();
+  return fetchApiData<HrScheduledShift[]>(
+    `/admin/hr/shifts${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createHrShift(
+  accessToken: string,
+  input: {
+    branchId: string;
+    employeeId: string;
+    templateId?: string | null;
+    shiftDate: string;
+    startsAt: string;
+    endsAt: string;
+    breakMinutes?: number;
+    operationalRole?: string | null;
+    notes?: string | null;
+    status?: "draft" | "published";
+  },
+) {
+  return fetchApiData<HrScheduledShift>(`/admin/hr/shifts`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function patchHrShift(
+  accessToken: string,
+  shiftId: string,
+  input: {
+    startsAt?: string;
+    endsAt?: string;
+    breakMinutes?: number;
+    operationalRole?: string | null;
+    notes?: string | null;
+    changeReason?: string | null;
+  },
+) {
+  return fetchApiData<HrScheduledShift>(`/admin/hr/shifts/${shiftId}`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function publishHrShift(accessToken: string, shiftId: string) {
+  return fetchApiData<HrScheduledShift>(`/admin/hr/shifts/${shiftId}/publish`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function cancelHrShift(accessToken: string, shiftId: string, reason: string) {
+  return fetchApiData<HrScheduledShift>(`/admin/hr/shifts/${shiftId}/cancel`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function fetchHrAttention(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<HrWorkforceAttentionSnapshot>(
+    `/admin/hr/attention${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function listHrCompensation(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<HrCompensationProfile[]>(
+    `/admin/hr/compensation${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function listHrPayPeriods(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<HrPayPeriod[]>(
+    `/admin/hr/pay-periods${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function listHrPayrollRuns(
+  accessToken: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<HrPayrollRun[]>(
+    `/admin/hr/payroll-runs${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createHrPayPeriod(
+  accessToken: string,
+  input: { branchId: string; periodStart: string; periodEnd: string },
+) {
+  return fetchApiData<HrPayPeriod>(`/admin/hr/pay-periods`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function createHrPayrollRun(accessToken: string, input: { payPeriodId: string }) {
+  return fetchApiData<HrPayrollRun>(`/admin/hr/payroll-runs`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function calculateHrPayrollRun(accessToken: string, runId: string) {
+  return fetchApiData<HrPayrollRun>(`/admin/hr/payroll-runs/${runId}/calculate`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function approveHrPayrollRun(accessToken: string, runId: string) {
+  return fetchApiData<HrPayrollRun>(`/admin/hr/payroll-runs/${runId}/approve`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function lockHrPayrollRun(accessToken: string, runId: string) {
+  return fetchApiData<HrPayrollRun>(`/admin/hr/payroll-runs/${runId}/lock`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }
