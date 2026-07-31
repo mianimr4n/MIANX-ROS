@@ -9,7 +9,7 @@
 | | SHA |
 | --- | --- |
 | Start (implementation baseline) | `03de61f15ae87bf9d09f9f825ca65595b31d1afb` |
-| End | *(set after commit on this branch)* |
+| End | `2e2ce0275f5036057aff899ff366e5860310c099` |
 
 ## Why complete
 
