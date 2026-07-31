@@ -1,0 +1,263 @@
+{
+  "createdAt": "2026-07-31T12:35:23.362Z",
+  "ok": true,
+  "signedUrlExpiresInSeconds": 120,
+  "checks": [
+    {
+      "id": "stack.healthz",
+      "pass": true,
+      "detail": "http=200"
+    },
+    {
+      "id": "stack.readyz",
+      "pass": true,
+      "detail": "http=200"
+    },
+    {
+      "id": "supplierA.upload.pdf",
+      "pass": true,
+      "detail": "status=201"
+    },
+    {
+      "id": "supplierA.upload.hasBinary",
+      "pass": true,
+      "detail": "metadata present"
+    },
+    {
+      "id": "supplierA.upload.safeName",
+      "pass": true,
+      "detail": "originalFilename=Invoice A.pdf"
+    },
+    {
+      "id": "supplierA.list",
+      "pass": true,
+      "detail": "count=5"
+    },
+    {
+      "id": "supplierA.list.containsUpload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "supplierB.upload.png",
+      "pass": true,
+      "detail": "status=201"
+    },
+    {
+      "id": "supplierA.cannotSeeB",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "supplierB.cannotSeeA",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "supplierA.listExcludesB",
+      "pass": true,
+      "detail": "aCount=5"
+    },
+    {
+      "id": "supplierA.downloadUrl",
+      "pass": true,
+      "detail": "expires=120"
+    },
+    {
+      "id": "supplierA.downloadUrl.expiry120",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "supplierA.signedDownloadHttp",
+      "pass": true,
+      "detail": "http=200"
+    },
+    {
+      "id": "supplierA.signedDownloadBytes",
+      "pass": true,
+      "detail": "bytes=45"
+    },
+    {
+      "id": "supplierA.cannotDownloadB",
+      "pass": true,
+      "detail": "status=404"
+    },
+    {
+      "id": "supplierA.cannotArchiveB",
+      "pass": true,
+      "detail": "status=404"
+    },
+    {
+      "id": "bucket.notPublic",
+      "pass": true,
+      "detail": "http=400 path=http://127.0.0.1:54321/storage/v1/object/public/supplier-documents/09b7037c-2ee0-47bc-90df-556701588462/2026/07/8e28cf90-2528-4636-a1da-fa336b616d7c.pdf?[redacted]"
+    },
+    {
+      "id": "reject.exe",
+      "pass": true,
+      "detail": "status=415"
+    },
+    {
+      "id": "reject.html",
+      "pass": true,
+      "detail": "status=415"
+    },
+    {
+      "id": "reject.mimeExtMismatch",
+      "pass": true,
+      "detail": "status=400"
+    },
+    {
+      "id": "reject.empty",
+      "pass": true,
+      "detail": "status=400"
+    },
+    {
+      "id": "reject.oversize",
+      "pass": true,
+      "detail": "status=413"
+    },
+    {
+      "id": "allow.jpeg",
+      "pass": true,
+      "detail": "status=201"
+    },
+    {
+      "id": "allow.csv",
+      "pass": true,
+      "detail": "status=201"
+    },
+    {
+      "id": "allow.docx",
+      "pass": true,
+      "detail": "status=201"
+    },
+    {
+      "id": "supplierA.archive",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "id": "supplierA.downloadAfterArchiveDenied",
+      "pass": true,
+      "detail": "status=409"
+    },
+    {
+      "id": "audit.supplier.query",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "audit.supplier.upload",
+      "pass": true,
+      "detail": "actions=upload,download,archive"
+    },
+    {
+      "id": "audit.supplier.download",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "audit.supplier.archive",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "audit.supplier.hasActor",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "audit.noCrossDownloadSuccess",
+      "pass": true,
+      "detail": "count=0"
+    },
+    {
+      "id": "hr.employeeReady",
+      "pass": true,
+      "detail": "id=7724a9a5-49dc-4d32-b45c-1303d870d121"
+    },
+    {
+      "id": "hr.unauthDenied",
+      "pass": true,
+      "detail": "status=401"
+    },
+    {
+      "id": "hr.supplierDenied",
+      "pass": true,
+      "detail": "status=403"
+    },
+    {
+      "id": "hr.cashierDenied",
+      "pass": true,
+      "detail": "status=403"
+    },
+    {
+      "id": "hr.upload",
+      "pass": true,
+      "detail": "status=201 err="
+    },
+    {
+      "id": "hr.list",
+      "pass": true,
+      "detail": "count=1"
+    },
+    {
+      "id": "hr.downloadUrl",
+      "pass": true,
+      "detail": "expires=120"
+    },
+    {
+      "id": "hr.signedDownloadHttp",
+      "pass": true,
+      "detail": "http=200"
+    },
+    {
+      "id": "hr.manipulatedEmployeeId",
+      "pass": true,
+      "detail": "status=404"
+    },
+    {
+      "id": "hr.archive",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "id": "audit.hr.upload",
+      "pass": true,
+      "detail": "actions=archive,download,upload"
+    },
+    {
+      "id": "audit.hr.download",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "audit.hr.archive",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "signedUrl.currentlyValid",
+      "pass": true,
+      "detail": "http=200"
+    },
+    {
+      "id": "signedUrl.expiryContract",
+      "pass": true,
+      "detail": "expiresInSeconds=120 (API contract); full expiry wait not required for gate"
+    },
+    {
+      "id": "signedUrl.noServiceRoleLeak",
+      "pass": true,
+      "detail": "report sanitized"
+    }
+  ],
+  "failures": [],
+  "totals": {
+    "checks": 50,
+    "passed": 50,
+    "failed": 0
+  }
+}

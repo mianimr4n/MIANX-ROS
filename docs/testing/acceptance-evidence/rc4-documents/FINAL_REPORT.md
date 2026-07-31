@@ -2,43 +2,59 @@
 
 ## Decision
 
-**RC4_5_DOCUMENTS_INCOMPLETE**
+**RC4_5_DOCUMENTS_COMPLETE**
 
-## Why incomplete
+## Starting / ending SHA
 
-1. `pnpm rc1:gate` failed on live scripts (`ECONNREFUSED` API `:4000`).
-2. Playwright upload flows + axe (0 critical / 0 serious) were scaffolded but **not executed**.
-3. Live cross-tenant download denial and storage round-trip were not exercised against Supabase.
+| | SHA |
+| --- | --- |
+| Start (implementation baseline) | `03de61f15ae87bf9d09f9f825ca65595b31d1afb` |
+| End | *(set after commit on this branch)* |
+
+## Why complete
+
+1. Local stack started (Supabase + Storage + website `:3000` + API `:4000` with env-loaded `/readyz` **200**).
+2. Migrations applied cleanly locally; buckets private; schema/RLS present; archive status follow-up migration applied.
+3. Live API QA **50/50 PASS** (`LIVE_QA_REPORT.json`) — supplier A/B isolation, HR RBAC denials, file validation, signed URLs (120s), audit events.
+4. Playwright **3/3 PASS**; axe **0 critical / 0 serious** on supplier + HR surfaces; screenshots captured.
+5. Gates: `pnpm check` PASS, `pnpm test` PASS, `pnpm test:db` PASS, `pnpm rc1:gate` **PASS** (API live), `git diff --check` PASS.
+6. No Production migration or deploy.
+
+## Defects fixed in this completion pass
+
+| Defect | Fix |
+| --- | --- |
+| Supplier archive set `status=archived` but CHECK only allowed `active\|superseded\|deleted` → HTTP 500 | `supabase/migrations/20260731171000_rc4_documents_archive_status.sql` |
+| HR binary documents had no archive API | `archiveDocument` in `workforce.ts` + `POST /admin/hr/documents/:id/archive` |
 
 ## What is implemented (repository evidence)
 
 - Private buckets + metadata migration `20260731170000_rc4_documents_binary_uploads.sql`
+- Archive status follow-up `20260731171000_rc4_documents_archive_status.sql`
 - Shared validation + storage helpers
 - Supplier upload / signed download / archive with supplier isolation
-- HR upload / signed download with `hr.manage|staff.manage|admin.access` + branch scope
+- HR upload / signed download / archive with `hr.manage|staff.manage|admin.access` + branch scope
 - `document_access_events` audit (upload/download/archive)
 - Dropzone UX (drag/drop, progress, errors, empty/loading)
-- Unit + static API/website/HR RBAC tests
-- Acceptance pack under `docs/testing/acceptance-evidence/rc4-documents/`
+- Unit + static + live API + Playwright/axe evidence
 
 ## Validation snapshot
 
 | Gate | Result |
 | --- | --- |
 | `pnpm check` | PASS |
-| `pnpm test` | PASS (555) |
-| `pnpm rc1:gate` | FAIL (live API absent) |
+| `pnpm test` | PASS |
+| `pnpm test:db` | PASS |
+| `pnpm rc1:gate` | **PASS** (0 blocking failures) |
 | `git diff --check` | PASS |
+| Live documents QA | **50/50 PASS** |
+| Playwright documents | **3/3 PASS** |
+| axe critical/serious | **0 / 0** |
 
-## Audit events
+## Remaining honest limitations
 
-| Action | Domain | Status |
-| --- | --- | --- |
-| upload | supplier, hr | Implemented |
-| download | supplier, hr | Implemented |
-| archive | supplier | Implemented |
-| replace / delete | schema-ready | Not fully productized |
+See `KNOWN_LIMITATIONS.md` — base64 JSON transport (~1.4 MiB app default), no AV/magic-byte, partial replace UX, no Production apply.
 
 ## STOP compliance
 
-No finance / payroll / inventory / delivery / analytics redesign. No Production deployment.
+No finance / payroll / inventory / delivery / analytics redesign. No Production deployment. No push/PR unless instructed.

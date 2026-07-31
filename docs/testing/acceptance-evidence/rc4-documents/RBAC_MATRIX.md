@@ -23,8 +23,19 @@ Suppliers **cannot** approve POs, create GRNs, or access HR documents.
 
 Payroll and finance permissions are **not** implied by document access.
 
+## Live isolation totals (2026-07-31)
+
+Source: `LIVE_QA_REPORT.json` + Playwright cashier denial.
+
+| Matrix | Pass | Fail |
+| --- | --- | --- |
+| Supplier A/B list/download/archive isolation | All listed isolation checks | 0 |
+| HR unauth / supplier / cashier denials | 401 / 403 / 403 | 0 |
+| HR manipulated employee_id | 404 | 0 |
+| Denied access creating successful download audit | 0 misleading success events | — |
+
 ## Storage
 
 - Buckets are **private** (`public = false`).
 - API uses **service role** for storage I/O after authorization.
-- Clients receive **time-limited signed URLs** only after ownership checks.
+- Clients receive **time-limited signed URLs** (configured **120 seconds**) only after ownership checks.

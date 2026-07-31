@@ -640,6 +640,27 @@ export function createAdminHrRouter(deps: AdminHrRouterDependencies): Router {
     },
   );
 
+  router.post(
+    "/hr/documents/:id/archive",
+    requireAuthenticatedUser,
+    requireHrAccess,
+    async (req, res, next) => {
+      try {
+        const documentId = z.string().uuid().parse(req.params.id);
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.hrWorkforce.archiveDocument(
+          scopeFrom(principal),
+          principal.userId,
+          documentId,
+          getRequestId(req) ?? null,
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
   // --- Shift templates ---
   router.get("/hr/shift-templates", requireAuthenticatedUser, requireHrAccess, async (req, res, next) => {
     try {

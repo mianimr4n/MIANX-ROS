@@ -1,8 +1,11 @@
 # RC4-5 Screenshot Index
 
-| File | Surface | Captured? |
-| --- | --- | --- |
-| `screenshots/hr-documents.png` | Admin HR → Employee documents (dropzone) | Pending local Playwright run (`e2e/rc4/documents.spec.ts`) |
-| `screenshots/supplier-documents.png` | Supplier Portal documents | Not captured in this slice (scaffold targets HR first) |
+Screenshots under `docs/testing/acceptance-evidence/rc4-documents/screenshots/` from Playwright `e2e/rc4/documents.spec.ts` (2026-07-31).
 
-Place PNGs under `docs/testing/acceptance-evidence/rc4-documents/screenshots/` when the local stack is available.
+| File | Surface | Viewport | Captured |
+| --- | --- | --- | --- |
+| `screenshots/hr-documents-desktop.png` | Admin HR → Employee documents (dropzone) | Desktop full page | Yes |
+| `screenshots/hr-documents-mobile.png` | Admin HR → Employee documents | 390×844 | Yes |
+| `screenshots/supplier-documents-desktop.png` | Supplier Portal → Documents | Desktop full page | Yes |
+| `screenshots/supplier-documents-mobile.png` | Supplier Portal → Documents | 390×844 | Yes |
+| `screenshots/hr-cashier-denial.png` | Cashier denied / no HR manage dropzone | Desktop | Yes |

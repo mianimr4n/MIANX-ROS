@@ -279,6 +279,24 @@ const hrWorkforce: HrWorkforceService = {
   async createDocumentDownloadUrl() {
     return { url: "https://example.local/signed", expiresInSeconds: 120 };
   },
+  async archiveDocument(_scope, _actor, documentId) {
+    return {
+      id: documentId,
+      employeeId: "emp-1",
+      employeeName: "Ali Khan",
+      documentType: "CNIC",
+      fileUrl: null,
+      mimeType: "application/pdf",
+      fileSizeBytes: 12,
+      checksumSha256: "a".repeat(64),
+      originalFilename: "cnic.pdf",
+      hasBinary: true,
+      status: "archived",
+      uploadedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      expiryTrackingAvailable: false as const,
+    };
+  },
   async listCorrections() {
     return [];
   },

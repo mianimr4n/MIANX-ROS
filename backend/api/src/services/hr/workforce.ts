@@ -232,6 +232,12 @@ export interface HrWorkforceService {
     documentId: string,
     requestId?: string | null,
   ): Promise<{ url: string; expiresInSeconds: number }>;
+  archiveDocument(
+    scope: BranchActorScope,
+    actorUserId: string,
+    documentId: string,
+    requestId?: string | null,
+  ): Promise<HrEmployeeDocumentRecord>;
   listCorrections(
     scope: BranchActorScope,
     query?: { branchId?: string; status?: HrCorrectionStatus },
@@ -971,6 +977,46 @@ export function createHrWorkforceService(envStatus: EnvironmentStatus): HrWorkfo
         metadata: { mode: "signed" },
       });
       return { url, expiresInSeconds: 120 };
+    },
+
+    async archiveDocument(scope, actorUserId, documentId, requestId) {
+      const client = supabase();
+      const { data, error } = await client
+        .from("hr_employee_documents")
+        .select(DOCUMENT_SELECT)
+        .eq("id", documentId)
+        .maybeSingle();
+      if (error) throw new ApiError(500, "HR_DOCUMENTS_READ_FAILED", error.message);
+      if (!data) throw new ApiError(404, "HR_DOCUMENT_NOT_FOUND", "Document not found.");
+      const row = data as unknown as DocumentRow;
+      const branchId = row.employee?.branch_id;
+      if (!branchId) throw new ApiError(404, "HR_DOCUMENT_NOT_FOUND", "Document not found.");
+      assertBranchMembership(scope, branchId);
+      if (row.status === "archived") {
+        return mapDocument(row);
+      }
+
+      const now = new Date().toISOString();
+      const { data: updated, error: updError } = await client
+        .from("hr_employee_documents")
+        .update({ status: "archived", archived_at: now })
+        .eq("id", documentId)
+        .select(DOCUMENT_SELECT)
+        .single();
+      if (updError) throw new ApiError(500, "HR_DOCUMENT_ARCHIVE_FAILED", updError.message);
+
+      await writeDocumentAccessEvent({
+        supabase: client,
+        documentDomain: "hr",
+        documentId,
+        action: "archive",
+        actorUserId,
+        branchId,
+        employeeId: row.employee_id,
+        requestId,
+      });
+
+      return mapDocument(updated as unknown as DocumentRow);
     },
 
     async listCorrections(scope, query) {
