@@ -72,6 +72,8 @@ import type { DeliverySettingsService } from "../../services/settings/delivery.j
 import type { BranchSettingsService } from "../../services/settings/branch.js";
 import type { HrEmployeesService } from "../../services/hr/employees.js";
 import type { HrWorkforceService } from "../../services/hr/workforce.js";
+import type { HrSchedulingService } from "../../services/hr/scheduling.js";
+import type { HrPayrollService } from "../../services/hr/payroll.js";
 import type { InventoryService } from "../../services/inventory/management.js";
 import type { PurchasingService } from "../../services/purchasing/management.js";
 import type { FinanceService } from "../../services/finance/management.js";
@@ -137,6 +139,8 @@ export interface AdminRouterDependencies {
   branchSettings: BranchSettingsService;
   hrEmployees: HrEmployeesService;
   hrWorkforce: HrWorkforceService;
+  hrScheduling: HrSchedulingService;
+  hrPayroll: HrPayrollService;
   inventory: InventoryService;
   purchasing: PurchasingService;
   finance: FinanceService;
@@ -585,6 +589,8 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authProfileRepository: dependencies.authProfileRepository,
       hrEmployees: dependencies.hrEmployees,
       hrWorkforce: dependencies.hrWorkforce,
+      hrScheduling: dependencies.hrScheduling,
+      hrPayroll: dependencies.hrPayroll,
     }),
   );
 

@@ -26,6 +26,7 @@ describe("HR & Workforce Management V1 (static)", () => {
     assert.match(page, /RolesPermissionPanel/);
     assert.match(page, /ShiftPlanner/);
     assert.match(page, /AttendancePanel/);
+    assert.match(page, /AttendanceCorrectionsPanel/);
     assert.match(page, /LeaveManagement/);
     assert.match(page, /PayrollOverview/);
     assert.match(page, /PerformancePanel/);
@@ -58,11 +59,15 @@ describe("HR & Workforce Management V1 (static)", () => {
 
   it("wires leave and documents without inventing payroll", () => {
     const panels = read("apps/website/client/src/components/admin/hr/WorkforcePanels.tsx");
-    assert.match(panels, /Payroll overview — Planned for Phase 2/);
-    assert.match(panels, /cannot process or calculate payroll/);
+    assert.match(panels, /Payroll foundation does not calculate net pay/);
+    assert.match(panels, /calculationStatus/);
+    assert.match(panels, /paymentMessage/);
+    assert.match(panels, /No payroll runs yet/);
     assert.match(panels, /No leave requests/);
     assert.match(panels, /createHrLeave/);
     assert.match(panels, /decideHrLeave/);
+    assert.match(panels, /rejectionReason/);
+    assert.match(panels, /leaveBalanceMessage/);
     assert.match(panels, /Approve/);
     assert.match(panels, /Reject/);
     assert.match(panels, /No employee documents yet/);

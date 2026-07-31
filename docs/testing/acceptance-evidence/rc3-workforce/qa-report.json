@@ -1,0 +1,32 @@
+{
+  "base": "http://localhost:3000",
+  "authenticated": true,
+  "loginUrl": "http://localhost:3000/admin/dashboard",
+  "consoleErrors": [],
+  "pageErrors": [],
+  "networkErrors": [],
+  "screenshots": [
+    "owner-workforce-attention-390.png",
+    "owner-workforce-attention-768.png",
+    "owner-workforce-attention-1440.png",
+    "hr-workforce-390.png",
+    "hr-workforce-768.png",
+    "hr-workforce-1440.png"
+  ],
+  "axe": {
+    "owner-workforce-attention": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "hr-workforce": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    }
+  },
+  "ok": true,
+  "criticalOrSeriousTotal": 0,
+  "expectedShutdowns": [],
+  "genuineFailures": []
+}

@@ -35,6 +35,7 @@ import {
   listStockMovements,
   listSupplierInvoices,
   fetchFinanceAttention,
+  fetchHrAttention,
   type AdminOrderListItem,
 } from "@/lib/admin-api";
 import { listDeliveryAssignments, listKitchenTickets } from "@/lib/ops-api";
@@ -234,6 +235,18 @@ export default function AdminDashboard() {
       pollMs: 60_000,
     },
   );
+  const hrAttention = useOperationalData(
+    ({ signal, correlationId }) =>
+      fetchHrAttention(token!, branchIdFilter ? { branchId: branchIdFilter } : undefined, {
+        signal,
+        correlationId,
+      }),
+    [token, branchIdFilter],
+    {
+      enabled: Boolean(token) && canLoadHr && gateReady && !comingSoonBranch,
+      pollMs: 60_000,
+    },
+  );
   const goodsReceiving = useOperationalData(
     ({ signal, correlationId }) =>
       listGoodsReceiving(token!, branchIdFilter ? { branchId: branchIdFilter } : undefined, {
@@ -419,6 +432,14 @@ export default function AdminDashboard() {
     financeAttention.data == null ||
     financeAttention.data.state === "unavailable";
 
+  const workforceAttentionUnavailable =
+    !canLoadHr ||
+    hrAttention.state === "ERROR" ||
+    hrAttention.state === "OFFLINE" ||
+    hrAttention.state === "UNAVAILABLE" ||
+    hrAttention.data == null ||
+    hrAttention.data.state === "unavailable";
+
   const ownerExtras = useMemo(
     () => ({
       kitchenTicketCount: kitchenTicketsUnavailable ? null : kitchenTicketCount,
@@ -446,12 +467,34 @@ export default function AdminDashboard() {
           ? null
           : (financeAttention.data?.invoicesBlockedByMismatch ?? null),
       },
+      workforceAttention: {
+        unavailable: workforceAttentionUnavailable,
+        absentEmployees: workforceAttentionUnavailable
+          ? null
+          : (hrAttention.data?.absentEmployees ?? null),
+        lateArrivals: workforceAttentionUnavailable ? null : (hrAttention.data?.lateArrivals ?? null),
+        uncoveredShifts: workforceAttentionUnavailable ? null : (hrAttention.data?.uncoveredShifts ?? null),
+        openAttendanceSessions: workforceAttentionUnavailable
+          ? null
+          : (hrAttention.data?.openAttendanceSessions ?? null),
+        attendanceCorrectionsAwaitingApproval: workforceAttentionUnavailable
+          ? null
+          : (hrAttention.data?.attendanceCorrectionsAwaitingApproval ?? null),
+        leaveRequestsAwaitingApproval: workforceAttentionUnavailable
+          ? null
+          : (hrAttention.data?.leaveRequestsAwaitingApproval ?? null),
+        payrollRunsAwaitingApproval: workforceAttentionUnavailable
+          ? null
+          : (hrAttention.data?.payrollRunsAwaitingApproval ?? null),
+      },
     }),
     [
       activeAssignmentCount,
       assignmentsUnavailable,
       financeAttention.data,
       financeAttentionUnavailable,
+      hrAttention.data,
+      workforceAttentionUnavailable,
       kitchenTicketCount,
       kitchenTicketsUnavailable,
       procurementSnapshot,

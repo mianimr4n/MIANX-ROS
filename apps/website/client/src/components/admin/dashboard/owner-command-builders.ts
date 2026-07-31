@@ -44,6 +44,16 @@ export type OwnerCommandLiveExtras = {
     overdueSupplierInvoices: number | null;
     invoicesBlockedByMismatch: number | null;
   } | null;
+  workforceAttention?: {
+    unavailable: boolean;
+    absentEmployees: number | null;
+    lateArrivals: number | null;
+    uncoveredShifts: number | null;
+    openAttendanceSessions: number | null;
+    attendanceCorrectionsAwaitingApproval: number | null;
+    leaveRequestsAwaitingApproval: number | null;
+    payrollRunsAwaitingApproval: number | null;
+  } | null;
 };
 
 export function karachiDateString(date = new Date()): string {
@@ -366,6 +376,86 @@ export function buildAttentionMetrics(
       state: extras.financeAttention?.unavailable ? "unavailable" : "available",
     },
     {
+      id: "workforce-absent",
+      title: "Absent Employees Today",
+      value: extras.workforceAttention?.unavailable
+        ? null
+        : formatCount(extras.workforceAttention?.absentEmployees ?? null),
+      detail: extras.workforceAttention?.unavailable ? "Data unavailable" : "Marked absent for today",
+      attentionWhy:
+        extras.workforceAttention?.unavailable
+          ? undefined
+          : (extras.workforceAttention?.absentEmployees ?? 0) > 0
+            ? "Review coverage for today's service."
+            : "No employees marked absent today.",
+      href: "/admin/hr",
+      state: extras.workforceAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
+      id: "workforce-late",
+      title: "Late Arrivals Today",
+      value: extras.workforceAttention?.unavailable
+        ? null
+        : formatCount(extras.workforceAttention?.lateArrivals ?? null),
+      detail: extras.workforceAttention?.unavailable ? "Data unavailable" : "Late attendance today",
+      attentionWhy:
+        extras.workforceAttention?.unavailable
+          ? undefined
+          : (extras.workforceAttention?.lateArrivals ?? 0) > 0
+            ? "Follow up with staff who arrived late."
+            : "No late arrivals recorded today.",
+      href: "/admin/hr",
+      state: extras.workforceAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
+      id: "workforce-uncovered",
+      title: "Uncovered Shifts",
+      value: extras.workforceAttention?.unavailable
+        ? null
+        : formatCount(extras.workforceAttention?.uncoveredShifts ?? null),
+      detail: extras.workforceAttention?.unavailable ? "Data unavailable" : "Published shifts needing coverage",
+      attentionWhy:
+        extras.workforceAttention?.unavailable
+          ? undefined
+          : (extras.workforceAttention?.uncoveredShifts ?? 0) > 0
+            ? "Assign or cancel shifts that lack staff."
+            : "No uncovered shifts right now.",
+      href: "/admin/hr",
+      state: extras.workforceAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
+      id: "workforce-corrections",
+      title: "Attendance Corrections Pending",
+      value: extras.workforceAttention?.unavailable
+        ? null
+        : formatCount(extras.workforceAttention?.attendanceCorrectionsAwaitingApproval ?? null),
+      detail: extras.workforceAttention?.unavailable ? "Data unavailable" : "Awaiting manager review",
+      attentionWhy:
+        extras.workforceAttention?.unavailable
+          ? undefined
+          : (extras.workforceAttention?.attendanceCorrectionsAwaitingApproval ?? 0) > 0
+            ? "Approve or reject attendance correction requests."
+            : "No attendance corrections awaiting review.",
+      href: "/admin/hr",
+      state: extras.workforceAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
+      id: "workforce-leave",
+      title: "Leave Requests Pending",
+      value: extras.workforceAttention?.unavailable
+        ? null
+        : formatCount(extras.workforceAttention?.leaveRequestsAwaitingApproval ?? null),
+      detail: extras.workforceAttention?.unavailable ? "Data unavailable" : "Pending leave approvals",
+      attentionWhy:
+        extras.workforceAttention?.unavailable
+          ? undefined
+          : (extras.workforceAttention?.leaveRequestsAwaitingApproval ?? 0) > 0
+            ? "Decide pending leave before roster changes."
+            : "No leave requests awaiting approval.",
+      href: "/admin/hr",
+      state: extras.workforceAttention?.unavailable ? "unavailable" : "available",
+    },
+    {
       id: "waste",
       title: "Waste Logged Today",
       value: extras.wasteUnavailable ? null : formatCount(extras.wasteTodayQty),
@@ -603,8 +693,41 @@ export function buildOwnerBriefLines(
   ) {
     lines.push("No elevated finance signals.");
   }
+  const absent = extras.workforceAttention?.absentEmployees;
+  if (!extras.workforceAttention?.unavailable && absent != null) {
+    lines.push(
+      absent === 0
+        ? "No employees are absent today."
+        : absent === 1
+          ? "One employee is absent today."
+          : `${absent} employees are absent today.`,
+    );
+  }
+  const leavePending = extras.workforceAttention?.leaveRequestsAwaitingApproval;
+  if (!extras.workforceAttention?.unavailable && leavePending != null && leavePending > 0) {
+    lines.push(
+      `${leavePending} leave request${leavePending === 1 ? "" : "s"} ${leavePending === 1 ? "is" : "are"} awaiting approval.`,
+    );
+  }
+  const correctionsPending = extras.workforceAttention?.attendanceCorrectionsAwaitingApproval;
+  if (!extras.workforceAttention?.unavailable && correctionsPending != null && correctionsPending > 0) {
+    lines.push(
+      `${correctionsPending} attendance correction${correctionsPending === 1 ? "" : "s"} need review.`,
+    );
+  }
+  if (
+    !extras.workforceAttention?.unavailable &&
+    (extras.workforceAttention?.absentEmployees ?? 0) === 0 &&
+    (extras.workforceAttention?.lateArrivals ?? 0) === 0 &&
+    (extras.workforceAttention?.uncoveredShifts ?? 0) === 0 &&
+    (extras.workforceAttention?.attendanceCorrectionsAwaitingApproval ?? 0) === 0 &&
+    (extras.workforceAttention?.leaveRequestsAwaitingApproval ?? 0) === 0 &&
+    (extras.workforceAttention?.payrollRunsAwaitingApproval ?? 0) === 0
+  ) {
+    lines.push("No elevated workforce signals.");
+  }
   lines.push(`Scope: ${branchLabel}.`);
-  return lines.slice(0, 8);
+  return lines.slice(0, 10);
 }
 
 export function wasteTodayFromMovements(movements: StockMovement[] | null): number | null {
