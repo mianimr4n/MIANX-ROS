@@ -99,7 +99,23 @@
       "detail": "captured at 390"
     }
   ],
-  "consoleErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES",
+    "Failed to load resource: net::ERR_INSUFFICIENT_RESOURCES"
+  ],
   "pageErrors": [],
   "networkErrors": [],
   "screenshots": [

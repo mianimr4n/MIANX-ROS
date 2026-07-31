@@ -10,13 +10,14 @@
 6. Labour cost unavailable unless compensation data complete.
 7. Marketing message “delivered” must not be inferred without provider confirmation.
 
-## Certification-host limitations
+## Certification-host limitations (P2/P3 — non-blocking under RC3_CERTIFIED)
 
-1. Live upgrade-from-pre-RC3 database dump was not restored; upgrade path is static additive review + clean-install/repeatability.
-2. Full 20 Playwright closed-loop journeys are not all single-script E2E; coverage combines integration QA, slice QA, API security matrix, isolation matrix, and repository tests.
+1. Live upgrade-from-pre-RC3 database dump restore remains optional depth; additive migrations + clean-install/repeatability + loyalty compat repair verified.
+2. Some workflows are PASS_COMPOSITE (repository suites + UI smoke) rather than one mega-E2E driver.
 3. Firefox/WebKit not required in this pass — Chromium only.
 4. Post-`db reset`, role GRANTs must be re-applied (known repository gap).
-5. No Production deployment, mutation, or linked migration.
+5. No Production deployment, mutation, or linked migration in certification.
+6. Production must still apply pending migrations (incl. `20260731140000`) before relying on loyalty list/RPC paths.
 
 ## Known non-blocking debt
 

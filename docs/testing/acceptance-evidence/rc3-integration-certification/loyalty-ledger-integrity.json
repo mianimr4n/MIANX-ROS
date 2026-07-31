@@ -1,0 +1,49 @@
+{
+  "ok": true,
+  "checks": [
+    {
+      "id": "schema.actor_user_id_selectable",
+      "pass": true,
+      "detail": "selectable"
+    },
+    {
+      "id": "rpc.adjust",
+      "pass": true,
+      "detail": "{\"type\":\"adjust\",\"points\":100,\"accountId\":\"537e228f-ea37-40bf-b596-2d9528353ff0\",\"customerId\":\"ce1e97c6-aebc-4b43-bb81-f724baa23a14\",\"pointsBalance\":100,\"transactionId\":\"6388515b-9f28-41b2-9ab5-71a57bbc7399\",\"idempotentReplay\":false}"
+    },
+    {
+      "id": "rpc.burn",
+      "pass": true,
+      "detail": "{\"type\":\"burn\",\"points\":40,\"accountId\":\"537e228f-ea37-40bf-b596-2d9528353ff0\",\"customerId\":\"ce1e97c6-aebc-4b43-bb81-f724baa23a14\",\"pointsBalance\":60,\"transactionId\":\"2a3204fb-93e6-4030-a978-359934f67425\",\"idempotentReplay\":false}"
+    },
+    {
+      "id": "rpc.burn_idempotent",
+      "pass": true,
+      "detail": "{\"type\":\"burn\",\"points\":40,\"accountId\":\"537e228f-ea37-40bf-b596-2d9528353ff0\",\"pointsBalance\":60,\"transactionId\":\"2a3204fb-93e6-4030-a978-359934f67425\",\"idempotentReplay\":true}"
+    },
+    {
+      "id": "rpc.adjust_txn_recorded",
+      "pass": true,
+      "detail": "txn=6388515b-9f28-41b2-9ab5-71a57bbc7399"
+    },
+    {
+      "id": "rpc.reverse_burn",
+      "pass": true,
+      "detail": "{\"type\":\"reverse\",\"points\":40,\"accountId\":\"537e228f-ea37-40bf-b596-2d9528353ff0\",\"pointsBalance\":100,\"transactionId\":\"fdc8d6f5-e0bd-4eec-9e56-d6bf2f177c10\",\"reversedTransactionId\":\"2a3204fb-93e6-4030-a978-359934f67425\"}"
+    },
+    {
+      "id": "ledger.balance_equals_sum",
+      "pass": true,
+      "detail": "balance=100 sum=100 txns=3"
+    },
+    {
+      "id": "ledger.actor_column_present",
+      "pass": true,
+      "detail": "actor_user_id projected"
+    }
+  ],
+  "failures": [],
+  "cleanup": [
+    "customer:ce1e97c6-aebc-4b43-bb81-f724baa23a14"
+  ]
+}
