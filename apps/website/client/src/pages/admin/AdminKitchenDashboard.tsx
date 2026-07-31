@@ -208,10 +208,11 @@ export default function AdminKitchenDashboard() {
     for (const order of orders) {
       map[order.id] = {
         orderNumber: order.orderNumber,
-        // Kitchen UI: avoid guest PII — use order number / type / source only.
-        contactName: null,
+        // Kitchen Display: show guest name for pickup/handoff; phone stays off the board.
+        contactName: order.contactName || null,
         orderType: order.orderType,
         orderSource: order.orderSource || null,
+        branchLabel: order.branchCode,
         paymentStatus: order.paymentStatus,
       };
     }
@@ -591,8 +592,10 @@ export default function AdminKitchenDashboard() {
         detail={detail}
         detailLoading={detailLoading}
         detailError={detailError}
+        branchLabel={branchLabel}
         busy={busyTicketId === selectedTicket?.id}
         canAct={allowed}
+        nowMs={nowMs}
         onClose={closeDrawer}
         onRetryDetail={() => selectedTicket && void loadDetail(selectedTicket.orderId)}
         onTransition={(toStatus) => selectedTicket && void onTransition(selectedTicket, toStatus)}

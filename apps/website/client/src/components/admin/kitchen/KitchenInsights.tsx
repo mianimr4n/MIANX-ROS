@@ -13,66 +13,75 @@ export type KitchenInsightItem = {
   source: "live" | "foundation";
 };
 
+/** Deterministic Mianx.ai Kitchen Assistant — verified ticket counts only. */
 export function buildKitchenInsights(tickets: KitchenTicket[], nowMs = Date.now()): KitchenInsightItem[] {
   const waiting = tickets.filter((t) => t.status === "queued" || t.status === "accepted").length;
   const preparing = tickets.filter((t) => t.status === "preparing").length;
+  const ready = tickets.filter((t) => t.status === "ready").length;
   const delayed = tickets.filter(
-    (t) => elapsedMinutes(ticketTimerStartIso(t), nowMs) >= PREP_TARGET_MINUTES,
+    (t) =>
+      ["queued", "accepted", "preparing", "ready"].includes(t.status) &&
+      elapsedMinutes(ticketTimerStartIso(t), nowMs) >= PREP_TARGET_MINUTES,
   ).length;
-  const highPriority = tickets.filter((t) => t.priority > 0).length;
+  const highPriority = tickets.filter(
+    (t) => ["queued", "accepted", "preparing", "ready"].includes(t.status) && t.priority > 0,
+  ).length;
   const items: KitchenInsightItem[] = [];
 
-  if (waiting + preparing >= 6) {
+  if (waiting === 0 && preparing === 0 && ready === 0) {
     items.push({
-      id: "workload",
-      title: "Kitchen workload increasing.",
-      detail: `Rule-based summary: ${waiting + preparing} active prep tickets.`,
+      id: "clear",
+      title: "No elevated kitchen signals.",
+      detail: "No active tickets in the current branch scope.",
       source: "live",
     });
-  }
-  if (waiting >= 4) {
+  } else {
     items.push({
-      id: "queue",
-      title: "Large queue detected.",
-      detail: `${waiting} tickets waiting (queued/accepted).`,
+      id: "waiting",
+      title: `${waiting} order${waiting === 1 ? "" : "s"} waiting.`,
+      detail: "Pending and accepted tickets waiting to start prep.",
       source: "live",
     });
-  }
-  if (delayed >= 2) {
     items.push({
-      id: "prep-times",
-      title: "Preparation times increasing.",
-      detail: `${delayed} tickets past the 20-minute display threshold.`,
+      id: "preparing",
+      title:
+        preparing === 0
+          ? "No tickets currently preparing."
+          : `${preparing} ticket${preparing === 1 ? "" : "s"} preparing.`,
+      detail: "Status = preparing.",
       source: "live",
     });
-  }
-  if (highPriority >= 2) {
-    items.push({
-      id: "urgent",
-      title: "Several priority tickets waiting.",
-      detail: `${highPriority} active tickets with priority > 0.`,
-      source: "live",
-    });
+    if (delayed > 0) {
+      items.push({
+        id: "delayed",
+        title: `${delayed} delayed ticket${delayed === 1 ? "" : "s"}.`,
+        detail: `Elapsed ≥ ${PREP_TARGET_MINUTES} minutes on active tickets.`,
+        source: "live",
+      });
+    } else {
+      items.push({
+        id: "on-time",
+        title: "No delayed tickets.",
+        detail: `All active tickets are under the ${PREP_TARGET_MINUTES}-minute display threshold.`,
+        source: "live",
+      });
+    }
+    if (highPriority > 0) {
+      items.push({
+        id: "priority",
+        title: `${highPriority} priority ticket${highPriority === 1 ? "" : "s"} in queue.`,
+        detail: "Active tickets with priority > 0.",
+        source: "live",
+      });
+    }
   }
 
   items.push({
-    id: "packing-idle",
-    title: "Packing station idle status unavailable.",
-    detail: "Station telemetry is Foundation — not measured yet.",
+    id: "stations",
+    title: "Station utilization is Planned for Phase 2.",
+    detail: "Ticket-to-station assignment is not available from a verified API yet.",
     source: "foundation",
   });
-
-  if (items.filter((i) => i.source === "live").length === 0) {
-    return [
-      {
-        id: "calm",
-        title: "No elevated kitchen signals in the current ticket window.",
-        detail: "Mianx.ai surfaces rule-based summaries when queues grow.",
-        source: "foundation",
-      },
-      items.find((i) => i.id === "packing-idle")!,
-    ];
-  }
 
   return items.slice(0, 5);
 }
@@ -82,7 +91,7 @@ export function KitchenInsights({ items }: { items: KitchenInsightItem[] }) {
     <AdminSurface aria-labelledby="kitchen-ai-insights-heading">
       <AdminSurfaceHeader
         title="Mianx.ai Kitchen Assistant"
-        description="Rule-based Summary only. No prediction models."
+        description="Deterministic business language from live ticket counts — no AI prediction. No prediction models."
       />
       <AdminSurfaceBody>
         <h3 id="kitchen-ai-insights-heading" className="sr-only">

@@ -4,9 +4,14 @@ import { X } from "lucide-react";
 import { KitchenTimeline } from "@/components/admin/kitchen/KitchenTimeline";
 import type { AdminOrderDetail } from "@/lib/admin-api";
 import {
+  formatKitchenClock,
   formatModifierLines,
   kitchenTicketStatusLabel,
   nextKitchenActions,
+  priorityBadgeLabel,
+  priorityBadges,
+  ticketTimerStartIso,
+  elapsedMinutes,
 } from "@/lib/admin-kitchen";
 import type { KitchenTicket } from "@/lib/ops-api";
 import { cn } from "@/lib/utils";
@@ -17,8 +22,10 @@ export function KitchenDetailsPanel({
   detail,
   detailLoading,
   detailError,
+  branchLabel,
   busy,
   canAct,
+  nowMs = Date.now(),
   onClose,
   onRetryDetail,
   onTransition,
@@ -28,8 +35,10 @@ export function KitchenDetailsPanel({
   detail: AdminOrderDetail | null;
   detailLoading: boolean;
   detailError: string | null;
+  branchLabel?: string | null;
   busy: boolean;
   canAct: boolean;
+  nowMs?: number;
   onClose: () => void;
   onRetryDetail: () => void;
   onTransition: (toStatus: string) => void;
@@ -50,6 +59,14 @@ export function KitchenDetailsPanel({
   if (!open || !ticket) return null;
 
   const actions = canAct ? nextKitchenActions(ticket.status) : [];
+  const minutes = elapsedMinutes(ticketTimerStartIso(ticket), nowMs);
+  const badges = priorityBadges(ticket.priority, minutes);
+  const itemInstructions =
+    detail?.items
+      .map((item) => item.instructions?.trim())
+      .filter((line): line is string => Boolean(line)) ?? [];
+  const specialInstructions =
+    [detail?.notes?.trim(), ...itemInstructions].filter(Boolean).join(" · ") || null;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" role="presentation">
@@ -86,13 +103,68 @@ export function KitchenDetailsPanel({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex-1 overflow-y-auto px-5 py-4" tabIndex={0} role="region" aria-label="Ticket details">
           <div className="space-y-6">
             <section>
-              <p className="text-sm capitalize text-[var(--admin-muted)]">
-                {kitchenTicketStatusLabel(ticket.status)}
-                {detail?.orderType ? ` · ${detail.orderType}` : ""}
-              </p>
+              <h3 className="text-sm font-semibold">Ticket summary</h3>
+              <dl className="mt-2 space-y-2 text-sm">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-[var(--admin-muted)]">Status</dt>
+                  <dd className="font-medium">{kitchenTicketStatusLabel(ticket.status)}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-[var(--admin-muted)]">Customer</dt>
+                  <dd className="font-medium">{detail?.contactName ?? "Data unavailable"}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-[var(--admin-muted)]">Order type</dt>
+                  <dd className="font-medium capitalize">{detail?.orderType ?? "Data unavailable"}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-[var(--admin-muted)]">Branch</dt>
+                  <dd className="font-medium">
+                    {detail?.branchCode ?? branchLabel ?? "Data unavailable"}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-[var(--admin-muted)]">Priority</dt>
+                  <dd className="font-medium">{badges.map(priorityBadgeLabel).join(" · ")}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-[var(--admin-muted)]">Timer</dt>
+                  <dd className="font-medium tabular-nums">{minutes}m elapsed</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-[var(--admin-muted)]">Assigned station</dt>
+                  <dd className="font-medium text-[var(--admin-muted)]">Planned for Phase 2</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-[var(--admin-muted)]">Assigned staff</dt>
+                  <dd className="font-medium">
+                    {ticket.acceptedByUserId ? "Accepted by kitchen user" : "Not accepted yet"}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+
+            <section>
+              <h3 className="text-sm font-semibold">Timestamps</h3>
+              <dl className="mt-2 space-y-1 text-sm">
+                {(
+                  [
+                    ["Created", ticket.createdAt],
+                    ["Accepted", ticket.acceptedAt],
+                    ["Started", ticket.startedAt],
+                    ["Ready", ticket.readyAt],
+                    ["Completed", ticket.completedAt],
+                  ] as const
+                ).map(([label, iso]) => (
+                  <div key={label} className="flex justify-between gap-3">
+                    <dt className="text-[var(--admin-muted)]">{label}</dt>
+                    <dd className="tabular-nums">{formatKitchenClock(iso) ?? "—"}</dd>
+                  </div>
+                ))}
+              </dl>
             </section>
 
             <section>
@@ -114,9 +186,20 @@ export function KitchenDetailsPanel({
               </ul>
             </section>
 
-            {detailLoading ? (
-              <div className="h-24 animate-pulse rounded-xl bg-[var(--admin-soft)]" aria-busy="true" />
-            ) : null}
+            <section>
+              <h3 className="text-sm font-semibold">Special instructions</h3>
+              {detailLoading ? (
+                <div className="mt-2 h-12 animate-pulse rounded-xl bg-[var(--admin-soft)]" aria-busy="true" />
+              ) : specialInstructions ? (
+                <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+                  {specialInstructions}
+                </p>
+              ) : detailError ? (
+                <p className="mt-2 text-sm text-[var(--admin-muted)]">Data unavailable</p>
+              ) : (
+                <p className="mt-2 text-sm text-[var(--admin-muted)]">No special instructions.</p>
+              )}
+            </section>
 
             {detailError ? (
               <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
@@ -143,7 +226,7 @@ export function KitchenDetailsPanel({
               </section>
             ) : !detailLoading && !detailError ? (
               <p className="text-sm text-[var(--admin-muted)]">
-                Order enrichment unavailable for this principal — showing ticket data only.
+                Order enrichment unavailable — showing ticket data only.
               </p>
             ) : null}
 

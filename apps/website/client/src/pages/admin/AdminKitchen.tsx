@@ -7,6 +7,7 @@ import { KitchenDetailsPanel } from "@/components/admin/kitchen/KitchenDetailsPa
 import { KitchenFilters, type KitchenFilterState } from "@/components/admin/kitchen/KitchenFilters";
 import { KitchenInsights, buildKitchenInsights } from "@/components/admin/kitchen/KitchenInsights";
 import { KitchenKPIs, type KitchenKpiSnapshot } from "@/components/admin/kitchen/KitchenKPIs";
+import { KitchenStationsPanel } from "@/components/admin/kitchen/KitchenStationsPanel";
 import { KitchenPerformance } from "@/components/admin/kitchen/KitchenPerformance";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
@@ -178,8 +179,11 @@ export default function AdminKitchen() {
     for (const order of orders) {
       map[order.id] = {
         orderNumber: order.orderNumber,
-        contactName: null,
+        contactName: order.contactName || null,
         orderType: order.orderType,
+        orderSource: order.orderSource || null,
+        branchLabel: order.branchCode,
+        paymentStatus: order.paymentStatus,
       };
     }
     return map;
@@ -396,8 +400,10 @@ export default function AdminKitchen() {
         onTransition={(ticket, toStatus) => void onTransition(ticket, toStatus)}
       />
 
+      <KitchenStationsPanel />
+
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <KitchenPerformance snapshot={kpiSnapshot} />
+        <KitchenPerformance snapshot={kpiSnapshot} available={ticketsOp.data != null} />
         <KitchenInsights items={insights} />
       </div>
 
@@ -413,8 +419,10 @@ export default function AdminKitchen() {
         detail={detail}
         detailLoading={detailLoading}
         detailError={detailError}
+        branchLabel={branchLabel}
         busy={busyTicketId === selectedTicket?.id}
         canAct={allowed}
+        nowMs={nowMs}
         onClose={closeDrawer}
         onRetryDetail={() => {
           if (selectedTicket) void loadDetail(selectedTicket.orderId);

@@ -68,7 +68,13 @@ export function KitchenFilters({
           <option value="">Active statuses</option>
           {KITCHEN_ACTIVE_STATUSES.map((status) => (
             <option key={status} value={status}>
-              {status}
+              {status === "queued"
+                ? "Pending"
+                : status === "accepted"
+                  ? "Accepted"
+                  : status === "preparing"
+                    ? "Preparing"
+                    : "Ready"}
             </option>
           ))}
         </select>
@@ -143,7 +149,7 @@ export function KitchenFilters({
           aria-label="Station filter unavailable"
           value=""
         >
-          <option value="">Stations not assigned yet</option>
+          <option value="">Stations — Planned for Phase 2</option>
         </select>
         <span className="mt-1 block text-[10px] tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
       </label>
