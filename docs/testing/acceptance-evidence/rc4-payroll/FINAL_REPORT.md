@@ -10,6 +10,7 @@
 | --- | --- |
 | Branch | `feature/rc4-payroll` |
 | Start SHA | `6460d142f070b85569927d290c9a5e29894ad91d` |
+| Final commit SHA | `26991dc4a55a47bcf20af4f5549f3e6f262fd996` |
 | Prerequisites | RC4-5 + RC4-9 on origin/main; RC4-8 Option B (Finance not required for calc; GL DEFERRED) |
 
 ## Why complete
