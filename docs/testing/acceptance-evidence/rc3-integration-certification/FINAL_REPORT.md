@@ -9,7 +9,7 @@
 | Supplier Portal | #147 + #148 MERGED |
 | Finance / Workforce / Loyalty+Marketing | #143 / #144 / #146 MERGED |
 | Release branch | `feature/rc3-release-certification` |
-| Tip | *(recorded after commit)* |
+| Tip | `739409f` (`cert(rc3): release certification — RC3_CERTIFIED`) |
 | Environment | Node v24.18.0 · pnpm 10.15.1 · Supabase CLI 2.110.0 · Playwright 1.52.0 · Windows 10 |
 
 ### Release rule applied
