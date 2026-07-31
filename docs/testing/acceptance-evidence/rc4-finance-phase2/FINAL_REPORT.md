@@ -8,6 +8,7 @@
 
 - Branch: `feature/rc4-finance-phase2`
 - Base: `6460d14` (main after RC4-5 #155 + RC4-9 #156)
+- Tip: `c14a768dc7b1a43c99a3ed3b79729ca5fb310cf2`
 
 ## Delivered
 
