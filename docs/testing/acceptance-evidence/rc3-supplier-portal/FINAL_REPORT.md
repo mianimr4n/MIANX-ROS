@@ -7,6 +7,7 @@
 | Loyalty+Marketing PR | [#146](https://github.com/mianimr4n/telepizza/pull/146) merged after CI PASS |
 | origin/main after merge | `79e0674` |
 | Branch | `feature/rc3-supplier-portal` |
+| Tip | `bd3bdfe` |
 | Base | `origin/main` @ `79e0674` |
 
 ### Implemented
