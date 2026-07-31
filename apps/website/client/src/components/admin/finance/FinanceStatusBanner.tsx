@@ -8,7 +8,8 @@ export function FinanceStatusBanner() {
       <p className="font-semibold">Finance tools are ready</p>
       <p className="mt-1 text-emerald-900/90">
         Chart of accounts, journal entries, trial balance, profit &amp; loss, and supplier payables are available.
-        Cash flow, balance sheet, receivables aging, and tax returns are Planned for Phase 2.
+        Cash flow and balance sheet reports are LIVE (derived from posted journals). Receivables and tax configuration
+        foundations are LIVE; jurisdiction filing remains DEFERRED.
       </p>
     </div>
   );

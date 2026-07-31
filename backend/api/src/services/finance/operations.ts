@@ -38,6 +38,16 @@ export const MAPPING_PURPOSES = [
   "ap_control",
   "bank_clearing",
   "expense_default",
+  "ar_control",
+  "sales_revenue",
+  "sales_discounts",
+  "output_tax",
+  "refunds",
+  "inventory_asset",
+  "cogs",
+  "cash_flow_operating",
+  "cash_flow_investing",
+  "cash_flow_financing",
 ] as const;
 
 export type MappingPurpose = (typeof MAPPING_PURPOSES)[number] | `expense_category:${string}`;

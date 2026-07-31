@@ -20,12 +20,15 @@ import {
   MAPPING_PURPOSES,
   type FinanceOperationsService,
 } from "../../services/finance/operations.js";
+import type { FinancePhase2Service } from "../../services/finance/phase2.js";
+import { getRequestId } from "../../observability/index.js";
 
 export interface AdminFinanceRouterDependencies {
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
   finance: FinanceService;
   financeOperations: FinanceOperationsService;
+  financePhase2: FinancePhase2Service;
 }
 
 function scopeFrom(principal: AuthPrincipal): BranchActorScope {
@@ -569,6 +572,342 @@ export function createAdminFinanceRouter(deps: AdminFinanceRouterDependencies): 
       }
     },
   );
+
+  // --- RC4-8 Phase 2 foundation ---
+  router.get("/finance/mapping-health", requireAuthenticatedUser, requireFinanceAccess, async (req, res, next) => {
+    try {
+      const branchId = z.string().uuid().parse(req.query.branchId);
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.financePhase2.mappingHealth(scopeFrom(principal), branchId);
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.get("/finance/tax-definitions", requireAuthenticatedUser, requireFinanceAccess, async (req, res, next) => {
+    try {
+      const branchId = req.query.branchId ? z.string().uuid().parse(req.query.branchId) : undefined;
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.financePhase2.listTaxDefinitions(scopeFrom(principal), branchId);
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.put(
+    "/finance/tax-definitions",
+    requireAuthenticatedUser,
+    requireFinanceAccess,
+    validateBody(
+      z
+        .object({
+          branchId: z.string().uuid().nullable().optional(),
+          taxCode: z.string().trim().min(1).max(40),
+          description: z.string().trim().max(500).optional(),
+          rate: z.number().finite().min(0).max(1),
+          taxBasis: z.enum(["exclusive", "inclusive"]).optional(),
+          classification: z.enum(["input", "output"]).optional(),
+          effectiveFrom: z.string().trim().optional(),
+          effectiveTo: z.string().trim().nullable().optional(),
+          isActive: z.boolean().optional(),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.financePhase2.upsertTaxDefinition(scopeFrom(principal), req.body);
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/finance/ar/invoices",
+    requireAuthenticatedUser,
+    requireFinanceAccess,
+    validateBody(
+      z
+        .object({
+          branchId: z.string().uuid(),
+          customerId: z.string().uuid().nullable().optional(),
+          sourceOrderId: z.string().uuid().nullable().optional(),
+          invoiceNumber: z.string().trim().min(1).max(64),
+          dueDate: z.string().trim().nullable().optional(),
+          discountAmount: z.number().finite().min(0).optional(),
+          taxDefinitionId: z.string().uuid().nullable().optional(),
+          lines: z
+            .array(
+              z
+                .object({
+                  description: z.string().trim().min(1).max(500),
+                  quantity: z.number().finite().positive(),
+                  unitPrice: z.number().finite().min(0),
+                })
+                .strict(),
+            )
+            .min(1)
+            .max(200),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.financePhase2.createDraftInvoice(
+          scopeFrom(principal),
+          principal.userId,
+          req.body,
+        );
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post("/finance/ar/invoices/:id/issue", requireAuthenticatedUser, requireFinanceAccess, async (req, res, next) => {
+    try {
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.financePhase2.issueInvoice(
+        scopeFrom(principal),
+        principal.userId,
+        z.string().uuid().parse(req.params.id),
+        getRequestId(req),
+      );
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.post(
+    "/finance/ar/receipts",
+    requireAuthenticatedUser,
+    requireFinanceAccess,
+    validateBody(
+      z
+        .object({
+          branchId: z.string().uuid(),
+          customerId: z.string().uuid().nullable().optional(),
+          paymentMethod: z.enum(["cash", "bank", "card", "other"]),
+          amount: z.number().finite().positive(),
+          receivedDate: z.string().trim().optional(),
+          reference: z.string().trim().max(200).nullable().optional(),
+          allocations: z
+            .array(
+              z
+                .object({
+                  invoiceId: z.string().uuid(),
+                  amount: z.number().finite().positive(),
+                })
+                .strict(),
+            )
+            .min(1),
+          idempotencyKey: z.string().trim().max(100).nullable().optional(),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.financePhase2.createReceipt(
+          scopeFrom(principal),
+          principal.userId,
+          { ...req.body, idempotencyKey: req.body.idempotencyKey ?? readIdempotencyKey(req) },
+          getRequestId(req),
+        );
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/finance/ar/credit-notes",
+    requireAuthenticatedUser,
+    requireFinanceAccess,
+    validateBody(
+      z
+        .object({
+          branchId: z.string().uuid(),
+          invoiceId: z.string().uuid(),
+          creditNumber: z.string().trim().min(1).max(64),
+          reason: z.string().trim().min(1).max(2000),
+          subtotal: z.number().finite().min(0),
+          taxAmount: z.number().finite().min(0).optional(),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.financePhase2.createCreditNote(
+          scopeFrom(principal),
+          principal.userId,
+          req.body,
+          getRequestId(req),
+        );
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.get("/finance/reports/balance-sheet", requireAuthenticatedUser, requireFinanceAccess, async (req, res, next) => {
+    try {
+      const branchId = z.string().uuid().parse(req.query.branchId);
+      const asOf = req.query.asOf ? String(req.query.asOf) : undefined;
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.financePhase2.getBalanceSheet(scopeFrom(principal), branchId, asOf);
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.get("/finance/reports/cash-flow", requireAuthenticatedUser, requireFinanceAccess, async (req, res, next) => {
+    try {
+      const branchId = z.string().uuid().parse(req.query.branchId);
+      const from = req.query.from ? String(req.query.from) : undefined;
+      const to = req.query.to ? String(req.query.to) : undefined;
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.financePhase2.getCashFlow(scopeFrom(principal), branchId, from, to);
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.get("/finance/periods", requireAuthenticatedUser, requireFinanceAccess, async (req, res, next) => {
+    try {
+      const branchId = z.string().uuid().parse(req.query.branchId);
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.financePhase2.listPeriods(scopeFrom(principal), branchId);
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.post(
+    "/finance/periods",
+    requireAuthenticatedUser,
+    requireFinanceAccess,
+    validateBody(
+      z
+        .object({
+          branchId: z.string().uuid(),
+          periodStart: z.string().trim().min(1),
+          periodEnd: z.string().trim().min(1),
+          label: z.string().trim().max(120).nullable().optional(),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.financePhase2.createPeriod(scopeFrom(principal), req.body);
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/finance/periods/:id/status",
+    requireAuthenticatedUser,
+    requireFinanceAccess,
+    validateBody(
+      z
+        .object({
+          status: z.enum(["open", "soft_closed", "closed"]),
+          reason: z.string().trim().max(2000).nullable().optional(),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.financePhase2.setPeriodStatus(
+          scopeFrom(principal),
+          principal.userId,
+          z.string().uuid().parse(req.params.id),
+          req.body.status,
+          req.body.reason,
+          getRequestId(req),
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.get("/finance/exceptions", requireAuthenticatedUser, requireFinanceAccess, async (req, res, next) => {
+    try {
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.financePhase2.listExceptions(scopeFrom(principal), {
+        branchId: req.query.branchId ? z.string().uuid().parse(req.query.branchId) : undefined,
+        status: req.query.status ? String(req.query.status) : undefined,
+      });
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.post("/finance/sales/post-from-order/:orderId", requireAuthenticatedUser, requireFinanceAccess, async (req, res, next) => {
+    try {
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.financePhase2.postSalesFromOrder(
+        scopeFrom(principal),
+        principal.userId,
+        z.string().uuid().parse(req.params.orderId),
+        getRequestId(req),
+      );
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.post("/finance/ap/invoices/:id/post", requireAuthenticatedUser, requireFinanceAccess, async (req, res, next) => {
+    try {
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.financePhase2.postSupplierInvoice(
+        scopeFrom(principal),
+        principal.userId,
+        z.string().uuid().parse(req.params.id),
+        getRequestId(req),
+      );
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.post("/finance/cogs/events/:id/post", requireAuthenticatedUser, requireFinanceAccess, async (req, res, next) => {
+    try {
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.financePhase2.postCogsEvent(
+        scopeFrom(principal),
+        principal.userId,
+        z.string().uuid().parse(req.params.id),
+        getRequestId(req),
+      );
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
 
   return router;
 }
