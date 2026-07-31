@@ -2949,3 +2949,26 @@ export function reverseFinanceJournal(accessToken: string, journalId: string, re
     },
   );
 }
+
+export function postSupplierPaymentJournal(
+  accessToken: string,
+  paymentId: string,
+  opts?: { idempotencyKey?: string },
+) {
+  const headers: Record<string, string> = {
+    ...bearerHeaders(accessToken),
+    "Content-Type": "application/json",
+  };
+  if (opts?.idempotencyKey) headers["Idempotency-Key"] = opts.idempotencyKey;
+  return fetchApiData<{
+    paymentId: string;
+    journalEntryId: string | null;
+    postingStatus: "posted" | "blocked" | "already_posted";
+    postingBlockedReason: string | null;
+  }>(`/admin/finance/supplier-payments/${paymentId}/post`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({}),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}

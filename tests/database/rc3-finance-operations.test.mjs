@@ -59,11 +59,13 @@ describe("RC3 finance operations migrations", () => {
     assert.match(ops, /createCashReconciliation/);
     assert.match(ops, /createExpenseClaim/);
     assert.match(ops, /getAttention/);
+    assert.match(ops, /postSupplierPayment/);
     assert.match(ops, /Journal posting requires account mapping/);
     assert.match(router, /\/finance\/cash-reconciliations/);
     assert.match(router, /\/finance\/expenses/);
     assert.match(router, /\/finance\/attention/);
     assert.match(router, /\/finance\/account-mappings/);
+    assert.match(router, /supplier-payments\/:id\/post/);
     assert.match(router, /journal-entries\/:id\/reverse/);
   });
 });

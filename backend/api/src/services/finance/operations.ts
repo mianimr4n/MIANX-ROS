@@ -419,6 +419,22 @@ export interface FinanceOperationsService {
     reason: string,
   ): Promise<{ originalJournalId: string; reversalJournalId: string; reversal: JournalEntryRecord }>;
 
+  /**
+   * Controlled GL post for a supplier payment.
+   * Debit AP control, credit bank/cash per payment method — mappings required.
+   */
+  postSupplierPayment(
+    scope: BranchActorScope,
+    actorUserId: string,
+    paymentId: string,
+    opts?: { idempotencyKey?: string | null },
+  ): Promise<{
+    paymentId: string;
+    journalEntryId: string | null;
+    postingStatus: "posted" | "blocked" | "already_posted";
+    postingBlockedReason: string | null;
+  }>;
+
   getAttention(scope: BranchActorScope, branchId?: string): Promise<FinanceAttentionSnapshot>;
 }
 
@@ -1267,6 +1283,122 @@ export function createFinanceOperationsService(
         reversal: JournalEntryRecord;
       };
       return payload;
+    },
+
+    async postSupplierPayment(scope, actorUserId, paymentId, opts) {
+      const client = supabase();
+      const { data: payment, error } = await client
+        .from("supplier_payments")
+        .select(
+          "id, branch_id, supplier_id, supplier_invoice_id, amount, payment_date, payment_method, reference",
+        )
+        .eq("id", paymentId)
+        .maybeSingle();
+      if (error) throwMappedDbError("SUPPLIER_PAYMENTS_READ_FAILED", error);
+      if (!payment) {
+        throw new ApiError(404, "PAYMENT_NOT_FOUND", "Supplier payment not found.");
+      }
+      assertBranchMembership(scope, String(payment.branch_id));
+
+      const branchId = String(payment.branch_id);
+      const amount = money(Number(payment.amount));
+      if (amount <= 0) {
+        throw new ApiError(400, "VALIDATION_ERROR", "Payment amount must be greater than zero.");
+      }
+
+      const idemKey =
+        opts?.idempotencyKey?.trim() ||
+        `supplier_payment_post:${paymentId}`;
+
+      const { data: existingByIdem } = await client
+        .from("finance_postings")
+        .select("id, journal_entry_id, status")
+        .eq("idempotency_key", idemKey)
+        .maybeSingle();
+      if (existingByIdem?.journal_entry_id && existingByIdem.status === "posted") {
+        return {
+          paymentId,
+          journalEntryId: String(existingByIdem.journal_entry_id),
+          postingStatus: "already_posted" as const,
+          postingBlockedReason: null,
+        };
+      }
+
+      const { data: existing } = await client
+        .from("finance_postings")
+        .select("id, journal_entry_id, status")
+        .eq("source_module", "supplier_payment")
+        .eq("source_id", paymentId)
+        .maybeSingle();
+      if (existing?.journal_entry_id && existing.status === "posted") {
+        return {
+          paymentId,
+          journalEntryId: String(existing.journal_entry_id),
+          postingStatus: "already_posted" as const,
+          postingBlockedReason: null,
+        };
+      }
+
+      const apMap = await resolveMappingAccountId(client, branchId, ["ap_control"]);
+      const method = String(payment.payment_method ?? "").toLowerCase();
+      const creditPurpose = method === "cash" ? "cash_on_hand" : "bank_clearing";
+      const creditMap = await resolveMappingAccountId(client, branchId, [creditPurpose]);
+
+      if (!apMap.accountId || !creditMap.accountId) {
+        return {
+          paymentId,
+          journalEntryId: null,
+          postingStatus: "blocked" as const,
+          postingBlockedReason: "Journal posting requires account mapping",
+        };
+      }
+
+      const journal = await finance.createJournalEntry(scope, actorUserId, {
+        branchId,
+        entryDate: String(payment.payment_date),
+        description: `Supplier payment ${paymentId.slice(0, 8)}`,
+        referenceType: "supplier_payment",
+        referenceId: paymentId,
+        status: "posted",
+        lines: [
+          { accountId: apMap.accountId, debit: amount, credit: 0 },
+          { accountId: creditMap.accountId, debit: 0, credit: amount },
+        ],
+      });
+
+      const { error: postErr } = await client.from("finance_postings").insert({
+        branch_id: branchId,
+        source_module: "supplier_payment",
+        source_id: paymentId,
+        journal_entry_id: journal.id,
+        idempotency_key: idemKey,
+        status: "posted",
+        posted_by: actorUserId,
+      });
+      if (postErr) {
+        if (postErr.code === "23505") {
+          const { data: raced } = await client
+            .from("finance_postings")
+            .select("journal_entry_id")
+            .eq("source_module", "supplier_payment")
+            .eq("source_id", paymentId)
+            .maybeSingle();
+          return {
+            paymentId,
+            journalEntryId: raced?.journal_entry_id ? String(raced.journal_entry_id) : journal.id,
+            postingStatus: "already_posted" as const,
+            postingBlockedReason: null,
+          };
+        }
+        throwMappedDbError("FINANCE_POSTING_CREATE_FAILED", postErr);
+      }
+
+      return {
+        paymentId,
+        journalEntryId: journal.id,
+        postingStatus: "posted" as const,
+        postingBlockedReason: null,
+      };
     },
 
     async getAttention(scope, branchId) {

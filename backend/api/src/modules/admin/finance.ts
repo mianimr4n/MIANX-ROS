@@ -550,5 +550,25 @@ export function createAdminFinanceRouter(deps: AdminFinanceRouterDependencies): 
     },
   );
 
+  router.post(
+    "/finance/supplier-payments/:id/post",
+    requireAuthenticatedUser,
+    requireFinanceAccess,
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.financeOperations.postSupplierPayment(
+          scopeFrom(principal),
+          principal.userId,
+          req.params.id,
+          { idempotencyKey: readIdempotencyKey(req) },
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
   return router;
 }

@@ -5,6 +5,7 @@ import {
   approveSupplierInvoiceException,
   createSupplierInvoice,
   createSupplierPayment,
+  postSupplierPaymentJournal,
   type GoodsReceiving,
   type PurchaseOrder,
   type Supplier,
@@ -288,6 +289,26 @@ export function InvoiceMatchingPanel({
       onRefresh();
     } catch (err) {
       setFormError(err instanceof ApiRequestError ? err.message : "Failed to approve exception.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onPostPaymentJournal(paymentId: string) {
+    if (!accessToken) return;
+    setBusy(true);
+    setFormError(null);
+    try {
+      const result = await postSupplierPaymentJournal(accessToken, paymentId, {
+        idempotencyKey: `ui-pay-post-${paymentId}`,
+      });
+      if (result.postingStatus === "blocked") {
+        setFormError(result.postingBlockedReason ?? "Journal posting requires account mapping");
+      } else {
+        onRefresh();
+      }
+    } catch (err) {
+      setFormError(err instanceof ApiRequestError ? err.message : "Failed to post payment journal.");
     } finally {
       setBusy(false);
     }
@@ -622,6 +643,16 @@ export function InvoiceMatchingPanel({
                       <p className="mt-1 text-xs text-[var(--admin-muted)]">
                         {p.invoiceNumber ?? "—"} · {p.paymentDate} · {p.supplierName ?? "—"}
                       </p>
+                      {canManage ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className="mt-2 min-h-9 rounded-lg border border-[var(--admin-border)] px-2 text-xs font-semibold"
+                          onClick={() => void onPostPaymentJournal(p.id)}
+                        >
+                          Post journal
+                        </button>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

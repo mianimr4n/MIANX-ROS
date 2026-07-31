@@ -48,5 +48,7 @@ describe("RC3 finance operations UI", () => {
     assert.match(panels, /This invoice cannot be paid until the receiving mismatch is resolved/);
     assert.match(panels, /approveSupplierInvoiceException/);
     assert.match(panels, /Approve exception/);
+    assert.match(panels, /postSupplierPaymentJournal/);
+    assert.match(panels, /Post journal/);
   });
 });
