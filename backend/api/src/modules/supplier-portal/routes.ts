@@ -7,6 +7,7 @@ import {
   type AuthorizedRequest,
 } from "../../middleware/authorization.js";
 import type { AuthTokenVerifier } from "../../middleware/auth.js";
+import { getRequestId } from "../../observability/index.js";
 import type { AuthPrincipalRepository } from "../../services/auth/supabase.js";
 import {
   DELIVERY_REF_STATUSES,
@@ -58,6 +59,17 @@ const documentSchema = z
     documentType: z.enum(SUPPLIER_DOCUMENT_TYPES),
     title: z.string().trim().min(1).max(200),
     fileUrl: z.string().trim().url().max(2000),
+    purchaseOrderId: z.string().uuid().optional().nullable(),
+  })
+  .strict();
+
+const documentUploadSchema = z
+  .object({
+    documentType: z.enum(SUPPLIER_DOCUMENT_TYPES),
+    title: z.string().trim().min(1).max(200),
+    dataBase64: z.string().min(1).max(2_500_000),
+    contentType: z.string().trim().min(3).max(120),
+    originalFilename: z.string().trim().max(200).optional().nullable(),
     purchaseOrderId: z.string().uuid().optional().nullable(),
   })
   .strict();
@@ -314,6 +326,61 @@ export function createSupplierPortalRouter(deps: SupplierPortalRouterDependencie
         const ctx = await withContext(req as AuthorizedRequest);
         const data = await deps.supplierPortal.createDocument(ctx, req.body);
         return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/documents/upload",
+    requireAuthenticatedUser,
+    validateBody(documentUploadSchema),
+    async (req, res, next) => {
+      try {
+        const ctx = await withContext(req as AuthorizedRequest);
+        const body = req.body as z.infer<typeof documentUploadSchema>;
+        const data = await deps.supplierPortal.uploadDocumentBinary(ctx, {
+          ...body,
+          requestId: getRequestId(req) ?? null,
+        });
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/documents/:id/download-url",
+    requireAuthenticatedUser,
+    async (req, res, next) => {
+      try {
+        const ctx = await withContext(req as AuthorizedRequest);
+        const data = await deps.supplierPortal.createDocumentDownloadUrl(
+          ctx,
+          req.params.id,
+          getRequestId(req) ?? null,
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/documents/:id/archive",
+    requireAuthenticatedUser,
+    async (req, res, next) => {
+      try {
+        const ctx = await withContext(req as AuthorizedRequest);
+        const data = await deps.supplierPortal.archiveDocument(
+          ctx,
+          req.params.id,
+          getRequestId(req) ?? null,
+        );
+        return res.json({ ok: true, data });
       } catch (error) {
         return next(error);
       }

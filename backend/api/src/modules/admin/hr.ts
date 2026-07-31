@@ -8,6 +8,7 @@ import {
   type AuthorizedRequest,
 } from "../../middleware/authorization.js";
 import type { AuthTokenVerifier } from "../../middleware/auth.js";
+import { getRequestId } from "../../observability/index.js";
 import type { AuthPrincipalRepository } from "../../services/auth/supabase.js";
 import type { AuthPrincipal } from "../../services/auth/principal.js";
 import type { BranchActorScope } from "../../services/tables/management.js";
@@ -160,6 +161,16 @@ const createDocumentSchema = z
   .object({
     documentType: z.enum(HR_DOCUMENT_TYPES),
     fileUrl: z.string().trim().url().max(2000),
+  })
+  .strict();
+
+const uploadDocumentSchema = z
+  .object({
+    documentType: z.enum(HR_DOCUMENT_TYPES),
+    dataBase64: z.string().min(1).max(2_500_000),
+    contentType: z.string().trim().min(3).max(120),
+    originalFilename: z.string().trim().max(200).optional().nullable(),
+    title: z.string().trim().max(200).optional().nullable(),
   })
   .strict();
 
@@ -579,6 +590,71 @@ export function createAdminHrRouter(deps: AdminHrRouterDependencies): Router {
         const body = req.body as z.infer<typeof createDocumentSchema>;
         const data = await deps.hrWorkforce.createDocument(scopeFrom(principal), employeeId, body);
         return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/hr/employees/:id/documents/upload",
+    requireAuthenticatedUser,
+    requireHrAccess,
+    validateBody(uploadDocumentSchema),
+    async (req, res, next) => {
+      try {
+        const employeeId = z.string().uuid().parse(req.params.id);
+        const principal = (req as AuthorizedRequest).principal!;
+        const body = req.body as z.infer<typeof uploadDocumentSchema>;
+        const data = await deps.hrWorkforce.uploadDocumentBinary(
+          scopeFrom(principal),
+          principal.userId,
+          employeeId,
+          { ...body, requestId: getRequestId(req) ?? null },
+        );
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/hr/documents/:id/download-url",
+    requireAuthenticatedUser,
+    requireHrAccess,
+    async (req, res, next) => {
+      try {
+        const documentId = z.string().uuid().parse(req.params.id);
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.hrWorkforce.createDocumentDownloadUrl(
+          scopeFrom(principal),
+          principal.userId,
+          documentId,
+          getRequestId(req) ?? null,
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/hr/documents/:id/archive",
+    requireAuthenticatedUser,
+    requireHrAccess,
+    async (req, res, next) => {
+      try {
+        const documentId = z.string().uuid().parse(req.params.id);
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.hrWorkforce.archiveDocument(
+          scopeFrom(principal),
+          principal.userId,
+          documentId,
+          getRequestId(req) ?? null,
+        );
+        return res.json({ ok: true, data });
       } catch (error) {
         return next(error);
       }

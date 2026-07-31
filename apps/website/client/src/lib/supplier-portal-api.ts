@@ -1,4 +1,4 @@
-import { bearerHeaders, fetchApiData } from "@/lib/api";
+import { bearerHeaders, fetchApiData, type ApiRequestOptions } from "@/lib/api";
 
 export interface SupplierPortalContext {
   userId: string;
@@ -32,7 +32,7 @@ export interface SupplierPortalOrder {
   } | null;
 }
 
-function authInit(accessToken: string, init?: RequestInit): RequestInit {
+function authInit(accessToken: string, init?: ApiRequestOptions): ApiRequestOptions {
   return {
     ...init,
     headers: {
@@ -111,7 +111,11 @@ export function listSupplierPortalDocuments(accessToken: string) {
       id: string;
       documentType: string;
       title: string;
-      fileUrl: string;
+      fileUrl: string | null;
+      mimeType?: string | null;
+      fileSizeBytes?: number | null;
+      hasBinary?: boolean;
+      originalFilename?: string | null;
       uploadedAt: string;
     }>
   >("/supplier-portal/documents", authInit(accessToken, { method: "GET" }));
@@ -132,6 +136,41 @@ export function createSupplierPortalDocument(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      timeoutMs: 30_000,
+    }),
+  );
+}
+
+export function uploadSupplierPortalDocument(
+  accessToken: string,
+  body: {
+    documentType: string;
+    title: string;
+    dataBase64: string;
+    contentType: string;
+    originalFilename?: string | null;
+    purchaseOrderId?: string | null;
+  },
+) {
+  return fetchApiData(
+    "/supplier-portal/documents/upload",
+    authInit(accessToken, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      timeoutMs: 60_000,
+    }),
+  );
+}
+
+export function fetchSupplierDocumentDownloadUrl(accessToken: string, documentId: string) {
+  return fetchApiData<{ url: string; expiresInSeconds: number }>(
+    `/supplier-portal/documents/${documentId}/download-url`,
+    authInit(accessToken, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+      timeoutMs: 30_000,
     }),
   );
 }
