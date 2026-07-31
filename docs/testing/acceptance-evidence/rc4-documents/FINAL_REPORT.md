@@ -9,7 +9,8 @@
 | | SHA |
 | --- | --- |
 | Start (implementation baseline) | `03de61f15ae87bf9d09f9f825ca65595b31d1afb` |
-| End | `2e2ce0275f5036057aff899ff366e5860310c099` |
+| End tip | `7b4befe000fdb0965685587e1aac7757267f204d` |
+| Primary validation commit | `2e2ce0275f5036057aff899ff366e5860310c099` |
 
 ## Why complete
 
