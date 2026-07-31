@@ -7,7 +7,7 @@
 | Loyalty+Marketing | PR [#146](https://github.com/mianimr4n/telepizza/pull/146) **MERGED** @ `79e0674` |
 | origin/main | `79e0674` |
 | Branch | `feature/rc3-supplier-portal` (from `origin/main`, not loyalty/workforce/finance/kitchen) |
-| Tip | see `git log -1` after push |
+| Tip | `25abbbd` (`feat(suppliers): complete RC3 supplier portal acceptance`) |
 
 ### What landed (repository evidence)
 1. Supplier identity linkage (`supplier_portal_users`) with lifecycle statuses
