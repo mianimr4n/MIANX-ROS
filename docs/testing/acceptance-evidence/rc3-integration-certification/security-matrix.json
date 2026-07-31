@@ -1,0 +1,78 @@
+{
+  "ok": true,
+  "checks": [
+    {
+      "id": "unauth.finance",
+      "pass": true,
+      "detail": "status=401 allowed=401|403"
+    },
+    {
+      "id": "unauth.hr",
+      "pass": true,
+      "detail": "status=401 allowed=401|403"
+    },
+    {
+      "id": "unauth.supplierPortal",
+      "pass": true,
+      "detail": "status=401 allowed=401|403"
+    },
+    {
+      "id": "owner.financeAttention",
+      "pass": true,
+      "detail": "status=200 allowed=200|503|404"
+    },
+    {
+      "id": "owner.purchasing",
+      "pass": true,
+      "detail": "status=404 allowed=200|503|404 NOT_FOUND"
+    },
+    {
+      "id": "supplierA.list",
+      "pass": true,
+      "detail": "status=200 allowed=200"
+    },
+    {
+      "id": "supplierA.cannotSeeBInList",
+      "pass": true,
+      "detail": "sawB=false"
+    },
+    {
+      "id": "supplierA.cannotReadB",
+      "pass": true,
+      "detail": "status=404 allowed=404|403"
+    },
+    {
+      "id": "supplierA.cannotAdminPurchasing",
+      "pass": true,
+      "detail": "status=403 allowed=401|403"
+    },
+    {
+      "id": "supplierA.cannotFinance",
+      "pass": true,
+      "detail": "status=403 allowed=401|403"
+    },
+    {
+      "id": "supplierA.cannotHr",
+      "pass": true,
+      "detail": "status=403 allowed=401|403"
+    },
+    {
+      "id": "supplierB.list",
+      "pass": true,
+      "detail": "status=200 allowed=200"
+    },
+    {
+      "id": "bm.hrEmployees",
+      "pass": true,
+      "detail": "status=200 allowed=200|403|503"
+    }
+  ],
+  "failures": [],
+  "actors": {
+    "owner": "admin@telepizza.pk",
+    "supplierA": "supplier.a.portal@telepizza.test",
+    "supplierB": "supplier.b.portal@telepizza.test",
+    "branchManager": "branch.manager@telepizza.pk"
+  },
+  "limitations": []
+}

@@ -1,0 +1,53 @@
+{
+  "ok": false,
+  "note": "Critical path coverage is composite: repository tests + isolation/security matrices + authenticated UI QA. Full multi-step business E2E for every workflow is not claimed as single-driver PASS.",
+  "workflows": [
+    {
+      "id": "W1_procurement_to_finance",
+      "status": "PARTIAL",
+      "evidence": [
+        "pnpm test purchasing/finance/GRN suites",
+        "supplier isolation acknowledge/idempotency",
+        "UI purchasing + finance + supplier-operations screenshots"
+      ],
+      "missing": [
+        "Live single-run requisition→PO→GRN→invoice→payment→journal driver",
+        "Partial receipt / mismatch / duplicate payment negative matrix as one harness"
+      ]
+    },
+    {
+      "id": "W2_order_to_loyalty",
+      "status": "PARTIAL",
+      "evidence": ["rc3-coupon-pricing + loyalty tests", "loyalty/marketing UI screenshots"],
+      "missing": ["Live quote→create→earn→burn→refund Playwright closed loop"]
+    },
+    {
+      "id": "W3_campaign_to_submission",
+      "status": "PARTIAL",
+      "evidence": ["marketing campaign unit/API tests", "marketing UI screenshots"],
+      "missing": ["Live consent→suppress→queue→submit provider-state Playwright"]
+    },
+    {
+      "id": "W4_workforce_operations",
+      "status": "PARTIAL",
+      "evidence": ["hr-workforce-rc3 tests", "HR UI screenshots"],
+      "missing": ["Live employee→shift→attendance→correction→leave Playwright closed loop"]
+    },
+    {
+      "id": "W5_supplier_operations",
+      "status": "PASS",
+      "evidence": [
+        "seed-rc3-supplier-portal",
+        "rc3-supplier-isolation-matrix 12/12",
+        "security-matrix supplier denials",
+        "integration QA supplier journeys"
+      ]
+    },
+    {
+      "id": "W6_owner_command_center",
+      "status": "PASS_WITH_LIMITATIONS",
+      "evidence": ["Owner dashboard screenshots + axe", "finance attention API probe"],
+      "limitations": ["Unavailable-state injection not fully forced for every widget in this run"]
+    }
+  ]
+}

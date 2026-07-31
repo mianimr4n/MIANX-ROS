@@ -1,0 +1,187 @@
+{
+  "ok": true,
+  "cleanInstall": {
+    "ok": true,
+    "logPath": "migration-clean-install.log",
+    "error": null
+  },
+  "repeatability": {
+    "ok": true,
+    "error": null
+  },
+  "grantsApplied": true,
+  "staticScan": {
+    "ok": true,
+    "findings": []
+  },
+  "schema": {
+    "ok": true,
+    "checks": [
+      {
+        "id": "table:cash_reconciliations",
+        "exists": "true",
+        "rls": "true",
+        "pass": true
+      },
+      {
+        "id": "table:expense_claims",
+        "exists": "true",
+        "rls": "true",
+        "pass": true
+      },
+      {
+        "id": "table:finance_postings",
+        "exists": "true",
+        "rls": "true",
+        "pass": true
+      },
+      {
+        "id": "table:finance_account_mappings",
+        "exists": "true",
+        "rls": "true",
+        "pass": true
+      },
+      {
+        "id": "table:supplier_invoices",
+        "exists": "true",
+        "rls": "true",
+        "pass": true
+      },
+      {
+        "id": "table:supplier_payments",
+        "exists": "true",
+        "rls": "true",
+        "pass": true
+      },
+      {
+        "id": "table:journal_entries",
+        "exists": "true",
+        "rls": "true",
+        "pass": true
+      },
+      {
+        "id": "table:goods_receiving",
+        "exists": "true",
+        "rls": "true",
+        "pass": true
+      },
+      {
+        "id": "table:supplier_portal_users",
+        "exists": "true",
+        "rls": "true",
+        "pass": true
+      },
+      {
+        "id": "table:purchase_order_responses",
+        "exists": "true",
+        "rls": "true",
+        "pass": true
+      },
+      {
+        "id": "table:supplier_portal_events",
+        "exists": "true",
+        "rls": "true",
+        "pass": true
+      },
+      {
+        "id": "table:coupon_redemptions",
+        "exists": "true",
+        "rls": "true",
+        "pass": true
+      },
+      {
+        "id": "policy_count",
+        "count": 146,
+        "pass": true
+      },
+      {
+        "id": "uniq_spot",
+        "count": 2,
+        "pass": true
+      }
+    ],
+    "failures": [],
+    "policyCount": 146
+  },
+  "migrationOrder": [
+    "20260713190000_foundation_schema.sql",
+    "20260713191000_seed_foundation_data.sql",
+    "20260714100000_sync_verified_menu_catalog.sql",
+    "20260714120000_grant_public_access.sql",
+    "20260715120000_pizza_toppings_catalog.sql",
+    "20260715153000_option_b_toppings_catalog_repair.sql",
+    "20260716010000_sprint3_customer_auth_foundation.sql",
+    "20260716020000_sprint3_authorization_foundation.sql",
+    "20260716100000_sprint3_slice2b_staff_permissions.sql",
+    "20260716101000_sprint3_slice2b_staff_invites.sql",
+    "20260716102000_sprint3_slice2b_accept_helper.sql",
+    "20260716103000_sprint3_slice2b_locked_decisions.sql",
+    "20260716120000_sprint4_1_orders_quote_snapshots.sql",
+    "20260716140000_sprint3_slice2d_order_branch_rls.sql",
+    "20260716150000_customer_identity_phone_e164.sql",
+    "20260716160000_sync_owner_menu_catalog.sql",
+    "20260718120000_product_modifier_system.sql",
+    "20260718130000_p0_harden_grants_and_definer_execute.sql",
+    "20260718130100_p1_retire_unmanaged_profiles.sql",
+    "20260718130200_db_r2_modifier_owner_alignment.sql",
+    "20260718140000_db_r3_restaurant_tables.sql",
+    "20260718150000_db_r4_dine_in_sessions.sql",
+    "20260718160000_db_r5_kitchen_tickets.sql",
+    "20260718170000_db_r6_pos_bill_foundation.sql",
+    "20260718171000_db_hash_column_privilege_harden.sql",
+    "20260718180000_sync_canonical_menu_catalog.sql",
+    "20260719090000_customer_addresses.sql",
+    "20260719100000_customer_favorites.sql",
+    "20260719110000_order_reviews.sql",
+    "20260725050000_d2_atomic_order_create.sql",
+    "20260725100000_d3_floor_dinein_reservations.sql",
+    "20260725101000_d3_pos_dinein_order_link.sql",
+    "20260725110000_d3_corrective_timezone_payments_deposits.sql",
+    "20260725120000_expand_and_activate_real_menu_catalog.sql",
+    "20260725130000_canonical_single_price_menu_domain.sql",
+    "20260725140000_canonical_menu_price_audit_atomic.sql",
+    "20260726120000_d4_platform_health_permission.sql",
+    "20260728180000_opening_m1_people_floor_booking.sql",
+    "20260729010000_opening_m2_payments_notifications_devices.sql",
+    "20260729020000_opening_m3_sops_training_governance.sql",
+    "20260729030000_opening_m4_staff_seed_dry_run.sql",
+    "20260729140000_phase2_organization_and_branch_settings.sql",
+    "20260729150000_phase2_branch_delivery_fee_settings.sql",
+    "20260729220000_menu_product_images_storage.sql",
+    "20260730120000_ai_platform_foundation.sql",
+    "20260730130000_hr_workforce_backend.sql",
+    "20260730160000_inventory_backend.sql",
+    "20260730170000_purchasing_backend.sql",
+    "20260730180000_fix_purchasing_missing_tables.sql",
+    "20260730190000_complete_procurement_loop.sql",
+    "20260730193000_reports_read_permission.sql",
+    "20260730210000_pos_z_report_events.sql",
+    "20260730220000_atomic_inventory_and_grn_stock.sql",
+    "20260730230000_kitchen_recipe_stock_consume.sql",
+    "20260730240000_loyalty_foundation.sql",
+    "20260730250000_coupons_foundation.sql",
+    "20260730260000_finance_core.sql",
+    "20260730270000_supplier_invoices_payments.sql",
+    "20260730280000_three_way_matching.sql",
+    "20260730290000_hr_core_complete.sql",
+    "20260731010000_finance_account_mappings.sql",
+    "20260731020000_cash_reconciliations.sql",
+    "20260731030000_expense_claims.sql",
+    "20260731040000_finance_posting_and_ap_idempotency.sql",
+    "20260731050000_hr_employee_lifecycle.sql",
+    "20260731060000_hr_shift_scheduling.sql",
+    "20260731070000_hr_attendance_leave_hardening.sql",
+    "20260731080000_hr_payroll_foundation.sql",
+    "20260731090000_loyalty_ledger_complete.sql",
+    "20260731100000_coupon_redemptions.sql",
+    "20260731110000_marketing_campaigns_consent.sql",
+    "20260731120000_supplier_portal_foundation.sql",
+    "20260731130000_supplier_portal_hardening.sql"
+  ],
+  "upgradePath": {
+    "status": "STATIC_ADDITIVE_REVIEW",
+    "note": "RC3 migrations reviewed as additive; live upgrade-from-pre-RC3 snapshot not restored on this host. Clean-install + repeatability used as primary proof."
+  },
+  "productionRisk": "medium-high (many interdependent RPCs; require backup + maintenance window)",
+  "containment": "Stop API writes; restore DB backup; do not re-run partial migrations; escalate Founder + Chief Architect."
+}

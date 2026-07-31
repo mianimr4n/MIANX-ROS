@@ -1,0 +1,54 @@
+{
+  "ok": true,
+  "generatedAt": "2026-07-31T05:46:06.642Z",
+  "checks": [
+    {
+      "id": "finance.journalBalance",
+      "pass": true,
+      "detail": "debit=0 credit=0"
+    },
+    {
+      "id": "supplier.responseMatchesPo",
+      "pass": true,
+      "detail": "mismatches=0"
+    },
+    {
+      "id": "supplier.uniqueActiveUsers",
+      "pass": true,
+      "detail": "dups=0"
+    },
+    {
+      "id": "loyalty.idempotencyIndexesPresent",
+      "pass": true,
+      "detail": "indexes=11"
+    },
+    {
+      "id": "coupons.redemptionsReadable",
+      "pass": true,
+      "detail": "count=0"
+    },
+    {
+      "id": "finance.postingsConstrained",
+      "pass": true,
+      "detail": "constraints=2"
+    },
+    {
+      "id": "supplier.noCrossDocs",
+      "pass": true,
+      "detail": "cross=0"
+    }
+  ],
+  "failures": [],
+  "metrics": {
+    "finance.journalBalance": {
+      "debit": 0,
+      "credit": 0
+    },
+    "supplier.responseMatchesPo": 0,
+    "supplier.uniqueActiveUsers": 0,
+    "loyalty.idempotencyIndexesPresent": 11,
+    "coupons.redemptionsReadable": 0,
+    "finance.postingsConstrained": 2,
+    "supplier.noCrossDocs": 0
+  }
+}

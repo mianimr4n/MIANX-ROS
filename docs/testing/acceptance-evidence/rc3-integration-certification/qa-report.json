@@ -1,0 +1,230 @@
+{
+  "base": "http://localhost:3000",
+  "authenticatedStaff": true,
+  "authenticatedSupplier": true,
+  "journeys": [
+    {
+      "id": "1.ownerLogin",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "ui.owner-command",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "ui.finance",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "ui.purchasing",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "ui.supplier-operations",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "ui.hr",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "ui.loyalty",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "ui.marketing",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "18.mobileOwnerView",
+      "pass": true,
+      "detail": "captured at 390"
+    },
+    {
+      "id": "5.supplierLogin",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "ui.supplier-dashboard",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "ui.supplier-orders",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "ui.supplier-order-detail",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "ui.supplier-documents",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "ui.supplier-profile",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "ui.supplier-denied-b",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "id": "13.supplierADeniedB",
+      "pass": true,
+      "detail": "navigated to B PO path under A session"
+    },
+    {
+      "id": "15.supplierDeniedAdmin",
+      "pass": true,
+      "detail": "covered by security-matrix API"
+    },
+    {
+      "id": "19.mobileSupplierView",
+      "pass": true,
+      "detail": "captured at 390"
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "networkErrors": [],
+  "screenshots": [
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\owner-command-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\owner-command-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\owner-command-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\finance-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\finance-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\finance-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\purchasing-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\purchasing-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\purchasing-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-operations-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-operations-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-operations-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\hr-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\hr-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\hr-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\loyalty-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\loyalty-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\loyalty-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\marketing-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\marketing-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\marketing-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-login-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-login-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-login-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-dashboard-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-dashboard-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-dashboard-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-orders-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-orders-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-orders-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-order-detail-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-order-detail-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-order-detail-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-documents-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-documents-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-documents-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-profile-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-profile-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-profile-1440.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-denied-b-390.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-denied-b-768.png",
+    "D:\\projects\\telepizza\\docs\\testing\\acceptance-evidence\\rc3-integration-certification\\screenshots\\supplier-denied-b-1440.png"
+  ],
+  "axe": {
+    "owner-command": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "finance": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "purchasing": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-operations": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "hr": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "loyalty": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "marketing": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-login": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-dashboard": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-orders": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-order-detail": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-documents": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-profile": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    },
+    "supplier-denied-b": {
+      "violations": 0,
+      "criticalOrSerious": 0,
+      "ids": []
+    }
+  },
+  "ok": true,
+  "criticalOrSeriousTotal": 0,
+  "genuineFailures": [],
+  "limitations": [
+    "Binary supplier upload deferred (URL only).",
+    "Supplier GRN line quantities remain staff SoT.",
+    "Payroll foundation does not trigger payment.",
+    "Marketing delivery not claimed without provider confirmation."
+  ]
+}
