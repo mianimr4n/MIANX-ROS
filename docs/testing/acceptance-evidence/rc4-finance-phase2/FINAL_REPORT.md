@@ -9,7 +9,7 @@
 - Branch: `feature/rc4-finance-phase2`
 - Base: `6460d14` (main after RC4-5 #155 + RC4-9 #156)
 - Primary implementation: `c14a768dc7b1a43c99a3ed3b79729ca5fb310cf2`
-- Tip: `79e75cb0003ac2052b2b5a4881740d5ff9405e26` (`git rev-parse HEAD` before release push)
+- Tip: `eff3a96ef646315a451ded30853886bb79854e90` (evidence SHA correction; use `git rev-parse HEAD` at push for absolute tip)
 
 ## Delivered
 
