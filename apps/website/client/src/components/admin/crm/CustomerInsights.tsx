@@ -52,9 +52,9 @@ export function buildCrmInsights(customers: CrmCustomer[]): CrmInsightItem[] {
 
   items.push({
     id: "loyalty-gap",
-    title: "Loyalty and marketing scores unavailable.",
-    detail: "No admin loyalty or preference APIs — Foundation until CRM ledger ships.",
-    source: "foundation",
+    title: "Loyalty detail is managed outside this CRM drawer.",
+    detail: "Use Admin → Loyalty for points, tiers, and rewards. Marketing consent lives under Admin → Marketing.",
+    source: "live",
   });
 
   if (items.filter((i) => i.source === "live").length === 0) {

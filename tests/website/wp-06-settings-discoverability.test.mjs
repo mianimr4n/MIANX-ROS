@@ -17,7 +17,7 @@ const notifications = read("apps/website/client/src/pages/Notifications.tsx");
 
 test("WP-06 /settings route is registered and Settings page exists", () => {
   assert.match(app, /path=["']\/settings["']/);
-  assert.match(app, /import Settings from ["']\.\/pages\/Settings["']/);
+  assert.match(app, /(?:import Settings from ["']\.\/pages\/Settings["']|lazy\(\(\) => import\(["']\.\/pages\/Settings["']\)\))/);
   assert.match(settings, /export default function Settings/);
 });
 

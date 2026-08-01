@@ -67,7 +67,7 @@ export function HRKPIs({
           unavailable={leaveSummary == null}
           detail={leaveSummary != null ? "Approved leave covering today" : "Leave data unavailable"}
         />
-        <AdminKpiCard title="Departments" value="—" source="UNAVAILABLE" unavailable detail="Planned for Phase 2 — no department master" />
+        <AdminKpiCard title="Departments" value="—" source="UNAVAILABLE" unavailable detail="No department master yet" />
         <AdminKpiCard
           title="Pending invites"
           value={inviteSummary != null ? String(inviteSummary.pending) : "—"}
@@ -75,9 +75,14 @@ export function HRKPIs({
           unavailable={inviteSummary == null}
           detail={inviteSummary != null ? "Staff invitations waiting" : "Invite list unavailable"}
         />
-        <AdminKpiCard title="Upcoming shifts" value="—" source="UNAVAILABLE" unavailable detail="Planned for Phase 2 — no shift roster API" />
-        <AdminKpiCard title="Training completion" value="—" source="UNAVAILABLE" unavailable detail="Planned for Phase 2 — no training backend" />
-        <AdminKpiCard title="Payroll status" value="—" source="UNAVAILABLE" unavailable detail="Planned for Phase 2 — no payroll runs" />
+        <AdminKpiCard title="Upcoming shifts" value="—" source="UNAVAILABLE" unavailable detail="No shift roster API yet" />
+        <AdminKpiCard title="Training completion" value="—" source="UNAVAILABLE" unavailable detail="No training backend yet" />
+        <AdminKpiCard
+          title="Payroll"
+          value="See payroll panel"
+          source="LIVE"
+          detail="Payroll runs are managed below — open Payroll overview for status"
+        />
         <AdminKpiCard
           title="Pending leave"
           value={leaveSummary != null ? String(leaveSummary.pending) : "—"}

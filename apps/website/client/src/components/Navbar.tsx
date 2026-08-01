@@ -107,6 +107,8 @@ export default function Navbar() {
           {/* Branch Selector */}
           <div ref={dropdownRef} className="relative hidden md:block">
             <button
+              type="button"
+              aria-label="Select branch"
               onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
               className={`flex items-center gap-2 text-sm font-[var(--font-accent)] font-medium transition-colors px-3 py-2 rounded-lg ${
                 scrolled
@@ -284,13 +286,15 @@ export default function Navbar() {
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <button
+                type="button"
+                aria-label={mobileOpen ? "Close menu" : "Open menu"}
                 className={`md:hidden p-2.5 rounded-xl transition-all ${
                   scrolled
                     ? "bg-brand-cream-dark text-brand-charcoal"
                     : "bg-white/10 text-white"
                 }`}
               >
-                {mobileOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
+                {mobileOpen ? <X className="w-5 h-5" aria-hidden /> : <MenuIcon className="w-5 h-5" aria-hidden />}
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[min(100vw-1rem,20rem)] bg-brand-charcoal border-none p-0">

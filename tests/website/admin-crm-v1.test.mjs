@@ -35,7 +35,7 @@ describe("CRM & Customer Management V1 (static)", () => {
     assert.doesNotMatch(helper, /fakeCustomers|mockVip|Math\.random/);
   });
 
-  it("labels loyalty, marketing, VIP, export, and WhatsApp as Planned for Phase 2", () => {
+  it("points CRM loyalty to Admin Loyalty; keeps VIP/export/WhatsApp Planned", () => {
     const kpis = read("apps/website/client/src/components/admin/crm/CustomerKPIs.tsx");
     assert.match(kpis, /VIP customers/);
     assert.match(kpis, /FOUNDATION/);
@@ -45,7 +45,7 @@ describe("CRM & Customer Management V1 (static)", () => {
     const page = read("apps/website/client/src/pages/admin/AdminCrm.tsx");
     assert.match(page, /snapshot=\{live \? kpis : null\}/);
     const loyalty = read("apps/website/client/src/components/admin/crm/CustomerLoyalty.tsx");
-    assert.match(loyalty, /Planned for Phase 2/);
+    assert.match(loyalty, /Admin → Loyalty/);
     assert.match(loyalty, /SMS opt-in/);
     assert.match(loyalty, /WhatsApp opt-in/);
     const header = read("apps/website/client/src/components/admin/crm/CRMHeader.tsx");

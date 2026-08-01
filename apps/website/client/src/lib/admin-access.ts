@@ -450,14 +450,12 @@ const NAV_BLUEPRINT: Array<
   { key: "promotions", label: "Marketing & Coupons", href: "/admin/marketing", group: "Commerce", requiresMarketing: true, ownerOnly: true },
   { key: "customers", label: "CRM", href: "/admin/crm", group: "Customers", requiresOrdersApi: true },
   { key: "loyalty", label: "Loyalty & Rewards", href: "/admin/loyalty", group: "Customers", requiresLoyalty: true, ownerOnly: true },
-  { key: "support", label: "Support", href: "/admin/support", group: "Customers", ownerOnly: true },
-  { key: "branches", label: "Branches", href: "/admin/branches", group: "Management", ownerOnly: true },
+  // Support / Branches admin / AI Command Center / Integrations remain deep-linkable Coming Soon
+  // routes but are omitted from primary nav (RC4-7 placeholder cleanup).
   { key: "staff", label: "Staff schedule", href: "/admin/hr", group: "Management", requiresHr: true },
   { key: "finance", label: "Finance", href: "/admin/finance", group: "Management", requiresFinance: true, ownerOnly: true },
   { key: "reports", label: "Reports", href: "/admin/reports", group: "Management", requiresReports: true },
   { key: "ai-team", label: "Mianx.ai Team", href: "/admin/ai-team", group: "Intelligence", requiresAiTeam: true, ownerOnly: true },
-  { key: "ai-command-center", label: "AI Command Center", href: "/admin/ai-command-center", group: "Intelligence", ownerOnly: true },
-  { key: "integrations", label: "Integrations", href: "/admin/integrations", group: "System", ownerOnly: true },
   { key: "settings", label: "Settings", href: "/admin/settings", group: "System", requiresSettings: true, ownerOnly: true },
 ];
 

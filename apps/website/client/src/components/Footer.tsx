@@ -95,17 +95,32 @@ export default function Footer() {
               </div>
             </div>
             <div className="flex gap-3 mt-4">
-              <a href="https://www.facebook.com/telepizza.pk/" target="_blank" rel="noopener noreferrer"
-                className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-brand-red transition-colors">
-                <Facebook className="w-4 h-4" />
+              <a
+                href="https://www.facebook.com/telepizza.pk/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Telepizza Pakistan on Facebook"
+                className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-brand-red transition-colors"
+              >
+                <Facebook className="w-4 h-4" aria-hidden />
               </a>
-              <a href="https://www.instagram.com/telepizzapakistan/" target="_blank" rel="noopener noreferrer"
-                className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-brand-red transition-colors">
-                <Instagram className="w-4 h-4" />
+              <a
+                href="https://www.instagram.com/telepizzapakistan/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Telepizza Pakistan on Instagram"
+                className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-brand-red transition-colors"
+              >
+                <Instagram className="w-4 h-4" aria-hidden />
               </a>
-              <a href="https://www.tiktok.com/@telepizzapakistan" target="_blank" rel="noopener noreferrer"
-                className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-brand-red transition-colors">
-                <MessageCircle className="w-4 h-4" />
+              <a
+                href="https://www.tiktok.com/@telepizzapakistan"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Telepizza Pakistan on TikTok"
+                className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-brand-red transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" aria-hidden />
               </a>
             </div>
           </div>
