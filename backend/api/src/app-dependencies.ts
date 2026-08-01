@@ -167,6 +167,10 @@ import {
   type ReportsService,
 } from "./services/reports/sales.js";
 import {
+  createAnalyticsService,
+  type AnalyticsService,
+} from "./services/analytics/engine.js";
+import {
   createLoyaltyService,
   type LoyaltyService,
 } from "./services/loyalty/management.js";
@@ -234,6 +238,7 @@ export interface AppDependencies {
   financePhase2: FinancePhase2Service;
   posZReport: PosZReportService;
   reports: ReportsService;
+  analytics: AnalyticsService;
   loyalty: LoyaltyService;
   marketing: MarketingService;
   aiPlatform: AiPlatformService;
@@ -250,6 +255,11 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
   const qrTokenValidator = createQrTokenValidator(envStatus);
   const finance = createFinanceService(envStatus);
   const financePhase2 = createFinancePhase2Service(envStatus, finance);
+  const financeOperations = createFinanceOperationsService(envStatus, finance);
+  const hrWorkforce = createHrWorkforceService(envStatus);
+  const hrPayroll = createHrPayrollService(envStatus, financePhase2);
+  const loyalty = createLoyaltyService(envStatus);
+  const marketing = createMarketingService(envStatus);
   return {
     catalogDataSource: createSupabaseCatalogDataSource(envStatus),
     ordersDataSource: createOrdersDataSource(envStatus),
@@ -281,20 +291,30 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     deliverySettings: createDeliverySettingsService(envStatus),
     branchSettings: createBranchSettingsService(envStatus),
     hrEmployees: createHrEmployeesService(envStatus),
-    hrWorkforce: createHrWorkforceService(envStatus),
+    hrWorkforce,
     hrScheduling: createHrSchedulingService(envStatus),
     inventory: createInventoryService(envStatus),
     inventoryRecipes: createInventoryRecipeService(envStatus),
     purchasing: createPurchasingService(envStatus),
     supplierPortal: createSupplierPortalService(envStatus),
     finance,
-    financeOperations: createFinanceOperationsService(envStatus, finance),
+    financeOperations,
     financePhase2,
-    hrPayroll: createHrPayrollService(envStatus, financePhase2),
+    hrPayroll,
     posZReport: createPosZReportService(envStatus),
     reports: createReportsService(envStatus),
-    loyalty: createLoyaltyService(envStatus),
-    marketing: createMarketingService(envStatus),
+    analytics: createAnalyticsService({
+      envStatus,
+      finance,
+      financePhase2,
+      financeOperations,
+      hrWorkforce,
+      hrPayroll,
+      loyalty,
+      marketing,
+    }),
+    loyalty,
+    marketing,
     aiPlatform: createAiPlatformService(envStatus),
     tableService: createTableServiceOperations(envStatus),
     paymentSettlement: createPaymentSettlementService(envStatus),

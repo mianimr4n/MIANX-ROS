@@ -14,7 +14,7 @@ describe("Finance GL wiring", () => {
     expect(deps).toMatch(/createFinanceService/);
     expect(deps).toMatch(/const finance = createFinanceService/);
     expect(deps).toMatch(/createFinanceOperationsService/);
-    expect(deps).toMatch(/financeOperations: createFinanceOperationsService/);
+    expect(deps).toMatch(/financeOperations(?:: createFinanceOperationsService|,)/);
     expect(index).toMatch(/finance: dependencies\.finance/);
     expect(index).toMatch(/financeOperations: dependencies\.financeOperations/);
     expect(routes).toMatch(/createAdminFinanceRouter/);

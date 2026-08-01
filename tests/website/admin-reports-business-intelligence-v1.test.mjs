@@ -1,5 +1,5 @@
 /**
- * Reports & Business Intelligence V1 — composition and honesty wiring (static).
+ * Reports & Business Intelligence V1 — Owner BI workspace composition (static).
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -14,75 +14,81 @@ function read(rel) {
 }
 
 describe("Reports & Business Intelligence V1 (static)", () => {
-  it("composes /admin/reports from reusable BI components", () => {
+  it("composes /admin/reports as Owner BI workspace from server envelopes", () => {
     const page = read("apps/website/client/src/pages/admin/AdminReports.tsx");
     assert.match(page, /ReportsHeader/);
     assert.match(page, /ReportsStatusBanner/);
     assert.match(page, /ReportsFilters/);
-    assert.match(page, /ExecutiveKPIs/);
-    assert.match(page, /SalesReport/);
-    assert.match(page, /OrdersReport/);
-    assert.match(page, /CustomerReport/);
-    assert.match(page, /KitchenReport/);
-    assert.match(page, /DeliveryReport/);
-    assert.match(page, /InventoryReport/);
-    assert.match(page, /FinanceReport/);
-    assert.match(page, /BranchComparison/);
-    assert.match(page, /TrendAnalysis/);
+    assert.match(page, /OwnerBiWorkspacePanel/);
     assert.match(page, /ExportPanel/);
-    assert.doesNotMatch(page, /ReportsFoundationPanel|ReportsReadinessSections|Integration readiness/);
     assert.match(page, /BusinessInsights/);
     assert.match(page, /canAccessAdminReports/);
-    assert.match(page, /fetchAdminOperationsDashboard/);
-    assert.match(page, /fetchSalesReport/);
+    assert.match(page, /fetchAnalyticsWorkspace/);
+    assert.match(page, /downloadAnalyticsExport/);
     assert.match(page, /downloadSalesReportCsv/);
     assert.match(page, /downloadOrdersReportCsv/);
+    assert.match(page, /buildWorkspaceInsights/);
+    assert.doesNotMatch(page, /fetchAdminOperationsDashboard/);
+    assert.doesNotMatch(page, /buildCustomerReportSnapshot|buildPaymentMixSnapshot|filteredOrdersForReports/);
+    assert.doesNotMatch(
+      page,
+      /from "@\/components\/admin\/reports\/(ExecutiveKPIs|ReportSections|TrendAnalysis|BranchComparison)"/,
+    );
+    assert.doesNotMatch(page, /ReportsFoundationPanel|ReportsReadinessSections|Integration readiness/);
   });
 
-  it("wires live sales analytics without fabricating growth", () => {
-    const trend = read("apps/website/client/src/components/admin/reports/TrendAnalysis.tsx");
-    assert.match(trend, /Sales analytics/);
-    assert.match(trend, /No sales data for selected period/);
-    assert.match(trend, /fetchSalesReport|SalesReport|grossSales/);
-    assert.doesNotMatch(trend, /growthPercent|mockSeries|lastMonth/i);
-    assert.doesNotMatch(trend, /MISSING|Coming Soon/);
-    const kpis = read("apps/website/client/src/components/admin/reports/ExecutiveKPIs.tsx");
-    assert.match(kpis, /Sales growth/);
-    assert.match(kpis, /FOUNDATION/);
-    assert.match(kpis, /Operations dashboard payload unavailable/);
-    assert.doesNotMatch(kpis, /todayOrders \?\? 0|kitchenWaiting \?\? 0|activeDeliveries \?\? 0/);
+  it("does not compute KPI formulas from orders in the reports page", () => {
     const page = read("apps/website/client/src/pages/admin/AdminReports.tsx");
-    assert.match(page, /customerSnapshot=\{data != null \? customerSnapshot : null\}/);
-    assert.match(page, /dateRange/);
+    assert.doesNotMatch(page, /useMemo/);
+    assert.doesNotMatch(page, /filteredOrders|customerSnapshot|paymentMix/);
+    assert.doesNotMatch(page, /grossSales\s*\+|totalOrders\s*\*|reduce\(/);
+    const panel = read("apps/website/client/src/components/admin/reports/OwnerBiWorkspacePanel.tsx");
+    assert.match(panel, /Owner BI Workspace/);
+    assert.match(panel, /server-computed envelopes|GET \/admin\/analytics\/workspace/);
+    assert.doesNotMatch(panel, /filteredOrders|buildCustomerReportSnapshot|aggregateCustomersFromOrders/);
+    assert.match(panel, /formatMetricValue|metric\.value/);
   });
 
-  it("charts use real dashboard data only", () => {
-    const charts = read("apps/website/client/src/components/admin/reports/ReportCharts.tsx");
-    assert.match(charts, /role="img"/);
-    assert.doesNotMatch(charts, /mockData|fakeSeries|\[4,\s*6,\s*5/i);
-    const sales = read("apps/website/client/src/components/admin/reports/ReportSections.tsx");
-    assert.match(sales, /sourceChartData/);
-    assert.match(sales, /statusChartData/);
+  it("workspace panel renders module metric envelopes only", () => {
+    const panel = read("apps/website/client/src/components/admin/reports/OwnerBiWorkspacePanel.tsx");
+    assert.match(panel, /AdminKpiCard/);
+    assert.match(panel, /module\.metrics/);
+    assert.match(panel, /metricId/);
+    assert.doesNotMatch(panel, /mockSeries|fakeMetric|invented/i);
   });
 
-  it("exports wire live CSV with Excel/PDF Planned for Phase 2", () => {
+  it("exports wire live CSV, Excel, and PDF via analytics export", () => {
     const exports = read("apps/website/client/src/components/admin/reports/ExportPanel.tsx");
+    assert.match(exports, /Export analytics CSV/);
+    assert.match(exports, /Export Excel/);
+    assert.match(exports, /Export PDF/);
     assert.match(exports, /Export sales CSV/);
     assert.match(exports, /Export orders CSV/);
-    assert.match(exports, /Export Excel \/ PDF · Planned for Phase 2/);
-    assert.match(exports, /onExportSales/);
-    assert.match(exports, /onExportOrders/);
+    assert.match(exports, /onExportAnalyticsCsv/);
+    assert.match(exports, /onExportAnalyticsExcel/);
+    assert.match(exports, /onExportAnalyticsPdf/);
+    assert.doesNotMatch(exports, /Planned for Phase 2/);
     assert.doesNotMatch(exports, /MISSING/);
     const api = read("apps/website/client/src/lib/admin-api.ts");
+    assert.match(api, /\/admin\/analytics\/export/);
+    assert.match(api, /downloadAnalyticsExport/);
+    assert.match(api, /format === "excel"|format: AnalyticsExportFormat/);
     assert.match(api, /\/admin\/reports\/sales\/export/);
     assert.match(api, /\/admin\/reports\/orders\/export/);
   });
 
-  it("inventory and finance reports remain Foundation", () => {
-    const sections = read("apps/website/client/src/components/admin/reports/ReportSections.tsx");
-    assert.match(sections, /Inventory reporting foundation/);
-    assert.match(sections, /Finance reporting foundation/);
-    assert.doesNotMatch(sections, /inventoryValue|netProfit|grossMargin:\s*\d/i);
+  it("admin-api exposes analytics helpers for workspace and related endpoints", () => {
+    const api = read("apps/website/client/src/lib/admin-api.ts");
+    assert.match(api, /fetchAnalyticsWorkspace/);
+    assert.match(api, /fetchAnalyticsModules/);
+    assert.match(api, /fetchAnalyticsRegistry/);
+    assert.match(api, /fetchAnalyticsModule/);
+    assert.match(api, /fetchAnalyticsDrilldown/);
+    assert.match(api, /fetchAnalyticsScheduledReports/);
+    assert.match(api, /createAnalyticsScheduledReport/);
+    assert.match(api, /fetchAnalyticsExceptions/);
+    assert.match(api, /runAnalyticsDataQuality/);
+    assert.match(api, /OwnerBiWorkspace/);
   });
 
   it("Mianx business insights remain rule-based only", () => {
@@ -90,6 +96,7 @@ describe("Reports & Business Intelligence V1 (static)", () => {
     assert.match(insights, /Mianx\.ai Business Insights/);
     assert.match(insights, /Rule-based Summary/);
     assert.match(insights, /Missing finance linkage/);
+    assert.match(insights, /server module/);
     assert.doesNotMatch(insights, /demand prediction|revenue forecast|future sales/i);
   });
 
@@ -107,12 +114,14 @@ describe("Reports & Business Intelligence V1 (static)", () => {
     assert.match(page, /useAdminAccessGate/);
   });
 
-  it("integration checks mark sales analytics and CSV exports PRESENT", () => {
+  it("integration checks mark analytics workspace and exports LIVE", () => {
     const helper = read("apps/website/client/src/lib/admin-reports.ts");
-    assert.match(helper, /Historical time-series analytics/);
-    assert.match(helper, /id: "historical-analytics"[\s\S]*?status: "present"/);
+    assert.match(helper, /Owner BI workspace API/);
+    assert.match(helper, /id: "owner-bi-workspace"[\s\S]*?status: "present"/);
     assert.match(helper, /id: "exports"[\s\S]*?status: "present"/);
-    assert.match(helper, /GET \/admin\/reports\/sales/);
+    assert.match(helper, /GET \/admin\/analytics\/workspace/);
+    assert.match(helper, /GET \/admin\/analytics\/export/);
+    assert.match(helper, /buildWorkspaceInsights/);
     assert.match(helper, /reports\.read seeded/);
   });
 });

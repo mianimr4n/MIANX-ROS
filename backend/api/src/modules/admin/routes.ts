@@ -152,6 +152,7 @@ export interface AdminRouterDependencies {
   financePhase2: import("../../services/finance/phase2.js").FinancePhase2Service;
   posZReport: PosZReportService;
   reports: ReportsService;
+  analytics: import("../../services/analytics/engine.js").AnalyticsService;
   loyalty: LoyaltyService;
   marketing: MarketingService;
 }
@@ -632,6 +633,7 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       reports: dependencies.reports,
+      analytics: dependencies.analytics,
     }),
   );
 

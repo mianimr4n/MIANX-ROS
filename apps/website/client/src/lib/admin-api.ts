@@ -187,6 +187,250 @@ export async function downloadOrdersReportCsv(accessToken: string, query?: Sales
   });
 }
 
+/** RC4-2 Analytics & BI — server-computed envelopes only (no client KPI formulas). */
+export type AnalyticsMetricStatus = "LIVE" | "UNAVAILABLE" | "DEFERRED" | "BLOCKED" | "EMPTY";
+
+export type AnalyticsMetricValue = {
+  metricId: string;
+  name: string;
+  value: number | string | null;
+  unit: string | null;
+  status: AnalyticsMetricStatus;
+  reason: string | null;
+  asOf: string;
+  periodStart: string;
+  periodEnd: string;
+  branchId: string | null;
+  contractRef: string;
+};
+
+export type AnalyticsModuleSnapshot = {
+  moduleId: string;
+  title: string;
+  status: AnalyticsMetricStatus;
+  reason: string | null;
+  metrics: AnalyticsMetricValue[];
+  series?: Array<{ key: string; label: string; points: Array<{ t: string; v: number }> }>;
+  mixes?: Array<{
+    key: string;
+    label: string;
+    items: Array<{ label: string; value: number; share: number | null }>;
+  }>;
+};
+
+export type OwnerBiWorkspace = {
+  timezone: "Asia/Karachi";
+  generatedAt: string;
+  branchId: string | null;
+  periodStart: string;
+  periodEnd: string;
+  modules: AnalyticsModuleSnapshot[];
+  registryVersion: string;
+  dataQualitySummary: {
+    pass: number;
+    warn: number;
+    fail: number;
+    unavailable: number;
+  };
+  openExceptions: number;
+  scheduledReportsActive: number;
+  scheduledExecution: "DEFERRED";
+};
+
+export type AnalyticsPeriodQuery = {
+  startDate?: string;
+  endDate?: string;
+  branchId?: string | null;
+  moduleId?: string;
+};
+
+export type AnalyticsModuleListItem = {
+  moduleId: string;
+  metricCount: number;
+  title: string;
+};
+
+export type AnalyticsRegistryPayload = {
+  version: string;
+  contracts: Array<Record<string, unknown>>;
+};
+
+export type AnalyticsDrillDownResult = {
+  metricId: string;
+  rows: Array<Record<string, string | number | null>>;
+  truncated: boolean;
+  status: AnalyticsMetricStatus;
+  reason: string | null;
+};
+
+export type AnalyticsExportFormat = "csv" | "excel" | "pdf";
+
+export type AnalyticsScheduledReportList = {
+  execution: "DEFERRED";
+  reports: unknown[];
+};
+
+export type AnalyticsDataQualityResult = {
+  pass: number;
+  warn: number;
+  fail: number;
+  unavailable: number;
+  checks?: Array<{
+    check_code: string;
+    module_id: string;
+    status: "pass" | "warn" | "fail" | "unavailable";
+    summary: string;
+    detail: Record<string, unknown>;
+  }>;
+};
+
+function analyticsPeriodParams(query?: AnalyticsPeriodQuery) {
+  const params = new URLSearchParams();
+  if (query?.startDate) params.set("startDate", query.startDate);
+  if (query?.endDate) params.set("endDate", query.endDate);
+  if (query?.branchId) params.set("branchId", query.branchId);
+  if (query?.moduleId) params.set("moduleId", query.moduleId);
+  return params;
+}
+
+export function fetchAnalyticsModules(
+  accessToken: string,
+  opts?: AdminReadOptions,
+): Promise<AnalyticsModuleListItem[]> {
+  return fetchApiData<AnalyticsModuleListItem[]>(`/admin/analytics/modules`, readInit(accessToken, opts));
+}
+
+export function fetchAnalyticsRegistry(
+  accessToken: string,
+  opts?: AdminReadOptions,
+): Promise<AnalyticsRegistryPayload> {
+  return fetchApiData<AnalyticsRegistryPayload>(`/admin/analytics/registry`, readInit(accessToken, opts));
+}
+
+export function fetchAnalyticsWorkspace(
+  accessToken: string,
+  query?: AnalyticsPeriodQuery,
+  opts?: AdminReadOptions,
+): Promise<OwnerBiWorkspace> {
+  const qs = analyticsPeriodParams(query).toString();
+  return fetchApiData<OwnerBiWorkspace>(
+    `/admin/analytics/workspace${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function fetchAnalyticsModule(
+  accessToken: string,
+  moduleId: string,
+  query?: AnalyticsPeriodQuery,
+  opts?: AdminReadOptions,
+): Promise<AnalyticsModuleSnapshot> {
+  const qs = analyticsPeriodParams(query).toString();
+  return fetchApiData<AnalyticsModuleSnapshot>(
+    `/admin/analytics/modules/${encodeURIComponent(moduleId)}${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function fetchAnalyticsDrilldown(
+  accessToken: string,
+  metricId: string,
+  query?: AnalyticsPeriodQuery,
+  opts?: AdminReadOptions,
+): Promise<AnalyticsDrillDownResult> {
+  const qs = analyticsPeriodParams(query).toString();
+  return fetchApiData<AnalyticsDrillDownResult>(
+    `/admin/analytics/drilldown/${encodeURIComponent(metricId)}${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export async function downloadAnalyticsExport(
+  accessToken: string,
+  format: AnalyticsExportFormat,
+  query?: AnalyticsPeriodQuery,
+) {
+  const params = analyticsPeriodParams(query);
+  params.set("format", format);
+  const qs = params.toString();
+  const fallback =
+    format === "csv"
+      ? "telepizza-analytics.csv"
+      : format === "excel"
+        ? "telepizza-analytics.xls"
+        : "telepizza-analytics.pdf";
+  await downloadApiFile(`/admin/analytics/export?${qs}`, fallback, {
+    headers: {
+      ...bearerHeaders(accessToken),
+      Accept: "*/*",
+    },
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function fetchAnalyticsScheduledReports(
+  accessToken: string,
+  query?: { branchId?: string | null },
+  opts?: AdminReadOptions,
+): Promise<AnalyticsScheduledReportList> {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<AnalyticsScheduledReportList>(
+    `/admin/analytics/scheduled-reports${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createAnalyticsScheduledReport(
+  accessToken: string,
+  body: {
+    name: string;
+    moduleId: string;
+    cadence: "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
+    format: AnalyticsExportFormat;
+    branchId?: string;
+    metricIds?: string[];
+  },
+): Promise<unknown> {
+  return fetchApiData(`/admin/analytics/scheduled-reports`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    body: JSON.stringify(body),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function fetchAnalyticsExceptions(
+  accessToken: string,
+  query?: { branchId?: string | null },
+  opts?: AdminReadOptions,
+): Promise<unknown[]> {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<unknown[]>(
+    `/admin/analytics/exceptions${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function runAnalyticsDataQuality(
+  accessToken: string,
+  query?: AnalyticsPeriodQuery,
+): Promise<AnalyticsDataQualityResult> {
+  return fetchApiData<AnalyticsDataQualityResult>(`/admin/analytics/data-quality/run`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    body: JSON.stringify({
+      startDate: query?.startDate,
+      endDate: query?.endDate,
+      branchId: query?.branchId ?? undefined,
+    }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
 export async function listAdminOrders(
   accessToken: string,
   query?: {
