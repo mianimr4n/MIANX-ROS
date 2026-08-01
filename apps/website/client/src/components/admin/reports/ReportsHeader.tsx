@@ -17,7 +17,7 @@ export function ReportsHeader({
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">
           Business Intelligence
         </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Reports &amp; Business Intelligence</h1>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Owner BI Workspace</h1>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
           {generatedAt ? (
@@ -27,33 +27,26 @@ export function ReportsHeader({
           ) : null}
         </p>
         <p className="mt-1 text-xs text-[var(--admin-muted)]">
-          Partial BI — live sales analytics and CSV exports from orders; product/finance reports Planned for Phase 2
+          Server-computed analytics envelopes only — CSV, Excel, and PDF exports LIVE; scheduled execution DEFERRED
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800">
-          Partial BI workspace
+        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
+          Owner BI workspace
         </span>
         <button
           type="button"
           onClick={onRefresh}
           className="min-h-11 rounded-lg border border-[var(--admin-border)] bg-white px-4 text-sm font-semibold hover:bg-[var(--admin-soft)]"
         >
-          Refresh reports
+          Refresh workspace
         </button>
         <button
           type="button"
           disabled
           className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
         >
-          Schedule report · Planned for Phase 2
-        </button>
-        <button
-          type="button"
-          disabled
-          className="min-h-11 cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-sm text-[var(--admin-muted)]"
-        >
-          Export PDF · Planned for Phase 2
+          Schedule report · Execution deferred
         </button>
       </div>
     </header>

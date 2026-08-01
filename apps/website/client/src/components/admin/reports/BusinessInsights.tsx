@@ -16,7 +16,7 @@ export function BusinessInsights({ items }: { items: ReportsInsightItem[] }) {
       <AdminSectionTitle
         eyebrow="Mianx.ai"
         title="Mianx.ai Business Insights"
-        description="Rule-based Summary only — operational signals from verified dashboard data."
+        description="Rule-based Summary only — server module status and reason strings from the Owner BI workspace."
       />
       <h2 id="business-insights-heading" className="sr-only">
         Business insights
@@ -38,6 +38,7 @@ export function BusinessInsights({ items }: { items: ReportsInsightItem[] }) {
       </ul>
       <p className="mt-4 text-xs text-[var(--admin-muted)]">
         Missing finance linkage · Inventory reporting unavailable · No prediction models from this workspace.
+        Insights reflect server module reasons only — no client KPI formulas from orders.
       </p>
     </section>
   );

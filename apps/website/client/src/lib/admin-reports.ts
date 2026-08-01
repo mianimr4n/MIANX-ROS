@@ -1,6 +1,11 @@
-/** Reports & Business Intelligence helpers — live sales/CSV from orders; no invented finance. */
+/** Reports & Business Intelligence helpers — Owner BI workspace honesty + display helpers. */
 
-import type { AdminOperationsDashboard, AdminOrderListItem, SalesReport } from "@/lib/admin-api";
+import type {
+  AdminOperationsDashboard,
+  AdminOrderListItem,
+  OwnerBiWorkspace,
+  SalesReport,
+} from "@/lib/admin-api";
 import { aggregateCustomersFromOrders, normalizePhoneKey } from "@/lib/admin-crm";
 
 export type ReportsIntegrationCheck = {
@@ -67,58 +72,70 @@ export function defaultReportsDateRange(): { startDate: string; endDate: string 
 export function integrationChecks(): ReportsIntegrationCheck[] {
   return [
     {
-      id: "operations-dashboard",
-      label: "Operations dashboard API",
+      id: "owner-bi-workspace",
+      label: "Owner BI workspace API",
       status: "present",
-      note: "GET /admin/dashboard/operations — today scope.",
+      note: "GET /admin/analytics/workspace — server-computed module envelopes.",
     },
     {
       id: "historical-analytics",
       label: "Historical time-series analytics",
       status: "present",
-      note: "GET /admin/reports/sales — daily gross sales from orders (Asia/Karachi).",
+      note: "Analytics modules + legacy GET /admin/reports/sales — LIVE.",
     },
     {
       id: "exports",
-      label: "Report exports (CSV)",
+      label: "Report exports (CSV / Excel / PDF)",
       status: "present",
-      note: "GET /admin/reports/sales/export and /orders/export — Excel/PDF Coming Soon.",
+      note: "GET /admin/analytics/export?format=csv|excel|pdf — LIVE; legacy sales/orders CSV retained.",
+    },
+    {
+      id: "scheduled-reports",
+      label: "Scheduled reports",
+      status: "partial",
+      note: "Definitions via GET/POST /admin/analytics/scheduled-reports — execution DEFERRED.",
+    },
+    {
+      id: "data-quality",
+      label: "Data quality + exceptions",
+      status: "present",
+      note: "POST /admin/analytics/data-quality/run and GET /admin/analytics/exceptions — LIVE.",
     },
     {
       id: "product-analytics",
       label: "Product / category sales",
-      status: "missing",
-      note: "No item-level sales aggregation API — Coming Soon.",
+      status: "partial",
+      note: "Product module envelope from analytics engine — may be UNAVAILABLE without item facts.",
     },
     {
       id: "kitchen-metrics",
       label: "Kitchen prep time analytics",
-      status: "missing",
-      note: "KDS tickets exist — no aggregate timing reports — Coming Soon.",
+      status: "partial",
+      note: "Kitchen module envelope from analytics — prep-time depth depends on server status.",
     },
     {
       id: "delivery-metrics",
       label: "Delivery SLA analytics",
-      status: "missing",
-      note: "Assignments exist — no delivery-time reporting API — Coming Soon.",
+      status: "partial",
+      note: "Delivery module envelope from analytics — SLA depth depends on server status.",
     },
     {
       id: "inventory-reports",
       label: "Inventory reporting",
-      status: "missing",
-      note: "Stock ledger is LIVE — valuation / shrinkage reports Coming Soon.",
+      status: "partial",
+      note: "Inventory module envelope from analytics workspace.",
     },
     {
       id: "purchasing-reports",
       label: "Purchasing reports",
-      status: "missing",
-      note: "Suppliers/POs are LIVE — spend analytics Coming Soon.",
+      status: "partial",
+      note: "Procurement / supplier module envelopes from analytics workspace.",
     },
     {
       id: "finance-reports",
       label: "Finance / GL reports",
-      status: "missing",
-      note: "No ledger or statements — Coming Soon.",
+      status: "partial",
+      note: "Finance module envelope from analytics — may require branchId.",
     },
     {
       id: "permission",
@@ -133,21 +150,22 @@ export function readinessGroups(): ReportsReadinessGroup[] {
   return [
     {
       id: "warehouse",
-      title: "Sales analytics",
-      unavailable: "Product/category rollups Coming Soon — daily sales LIVE",
-      why: "Daily sales are aggregated from orders; item-level facts are not shipped.",
-      entities: ["orders"],
-      apis: ["GET /api/v1/admin/reports/sales"],
+      title: "Owner BI workspace",
+      unavailable: "Client-side KPI formulas removed — server envelopes only",
+      why: "All module metrics are produced by AnalyticsService; React displays envelopes only.",
+      entities: ["orders", "analytics_modules"],
+      apis: ["GET /api/v1/admin/analytics/workspace"],
       permission: "reports.read | order.manage | admin.access",
-      related: "Cancelled orders excluded from gross sales and AOV.",
+      related: "Registry version stamped on each workspace payload.",
     },
     {
       id: "exports",
       title: "Export pipeline",
-      unavailable: "Excel / PDF Coming Soon — CSV LIVE",
-      why: "CSV is generated server-side from the same order query as sales analytics.",
-      entities: ["orders"],
+      unavailable: "Scheduled execution DEFERRED — CSV / Excel / PDF LIVE",
+      why: "Analytics export is generated server-side from the same module snapshots.",
+      entities: ["analytics_modules"],
       apis: [
+        "GET /api/v1/admin/analytics/export",
         "GET /api/v1/admin/reports/sales/export",
         "GET /api/v1/admin/reports/orders/export",
       ],
@@ -157,24 +175,87 @@ export function readinessGroups(): ReportsReadinessGroup[] {
     {
       id: "finance-link",
       title: "Finance reporting linkage",
-      unavailable: "P&L, expenses, margin reports",
-      why: "Finance module has no GL postings to aggregate.",
+      unavailable: "Module may return UNAVAILABLE / EMPTY envelopes",
+      why: "Finance analytics require branch-scoped GL data when available.",
       entities: ["financial_statements", "margin_snapshots"],
-      apis: ["GET /api/v1/admin/reports/finance/pl"],
+      apis: ["GET /api/v1/admin/analytics/modules/finance"],
       permission: "payment.read + reports.read",
-      related: "Finance & Accounting module — Coming Soon.",
+      related: "Server reason strings surface honesty — no invented P&L.",
     },
     {
       id: "inventory-link",
       title: "Inventory reporting linkage",
-      unavailable: "Stock valuation, shrinkage, COGS",
-      why: "Ledger exists; valuation reports are not shipped.",
+      unavailable: "Module may return UNAVAILABLE / EMPTY envelopes",
+      why: "Inventory analytics are server envelopes; valuation depth depends on ledger coverage.",
       entities: ["inventory_snapshots", "cogs_facts"],
-      apis: ["GET /api/v1/admin/reports/inventory/valuation"],
+      apis: ["GET /api/v1/admin/analytics/modules/inventory"],
       permission: "inventory.manage + reports.read",
-      related: "Inventory Management module — Coming Soon.",
+      related: "No client-side stock valuation math.",
     },
   ];
+}
+
+/** Insights from server module status/reason only — no order KPI math. */
+export function buildWorkspaceInsights(
+  workspace: OwnerBiWorkspace | null,
+  branchLabel: string,
+): ReportsInsightItem[] {
+  if (!workspace) {
+    return [
+      {
+        id: "no-workspace",
+        title: "Owner BI workspace unavailable",
+        detail: `Load GET /admin/analytics/workspace for ${branchLabel} to surface module status reasons.`,
+        source: "foundation",
+      },
+    ];
+  }
+
+  const items: ReportsInsightItem[] = [];
+  items.push({
+    id: "workspace-period",
+    title: `Workspace ${workspace.periodStart} → ${workspace.periodEnd}`,
+    detail: `Registry ${workspace.registryVersion} · ${workspace.modules.length} modules · ${workspace.timezone}.`,
+    source: "live",
+  });
+
+  if (workspace.dataQualitySummary.fail > 0) {
+    items.push({
+      id: "dq-fail",
+      title: `${workspace.dataQualitySummary.fail} data-quality failures`,
+      detail: `pass ${workspace.dataQualitySummary.pass} · warn ${workspace.dataQualitySummary.warn} · unavailable ${workspace.dataQualitySummary.unavailable}.`,
+      source: "live",
+    });
+  }
+
+  if (workspace.openExceptions > 0) {
+    items.push({
+      id: "open-exceptions",
+      title: `${workspace.openExceptions} open analytics exceptions`,
+      detail: "From workspace summary — open GET /admin/analytics/exceptions for rows.",
+      source: "live",
+    });
+  }
+
+  items.push({
+    id: "scheduled-deferred",
+    title: "Scheduled report execution DEFERRED",
+    detail: `${workspace.scheduledReportsActive} active definition(s) stored — no worker runs exports yet.`,
+    source: "foundation",
+  });
+
+  for (const mod of workspace.modules) {
+    if (mod.status === "LIVE" && !mod.reason) continue;
+    items.push({
+      id: `module-${mod.moduleId}`,
+      title: `${mod.title}: ${mod.status}`,
+      detail: mod.reason ?? `Server module status ${mod.status} with ${mod.metrics.length} metric envelopes.`,
+      source: mod.status === "LIVE" ? "live" : mod.status === "DEFERRED" ? "foundation" : "derived",
+    });
+    if (items.length >= 6) break;
+  }
+
+  return items.slice(0, 6);
 }
 
 export function statusChartData(statusCounts: Record<string, number> | undefined): ReportChartDatum[] {

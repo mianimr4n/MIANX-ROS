@@ -28,8 +28,8 @@ export function ReportsFilters({
     <div className="mb-6">
       <ExecutiveFilterBar filters={filters} onChange={onChange} onReset={onReset} />
       <p className="mt-2 text-xs text-[var(--admin-muted)]">
-        Branch scope comes from the admin branch switcher. Date range drives Sales analytics and CSV exports
-        (Asia/Karachi). Status / channel / order type still refine the today dashboard window only.
+        Branch scope comes from the admin branch switcher. Date range drives the Owner BI workspace and analytics
+        exports (Asia/Karachi). Status filter still applies to legacy orders CSV only.
       </p>
       <div className="mt-3 flex flex-wrap gap-3">
         <label className="text-xs font-medium text-[var(--admin-muted)]">

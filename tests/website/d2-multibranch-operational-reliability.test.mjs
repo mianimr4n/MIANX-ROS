@@ -135,7 +135,9 @@ describe("D2 — dashboards never render failure as zero", () => {
   it("Reports queue counts render only from a successful payload", () => {
     const src = read("apps/website/client/src/pages/admin/AdminReports.tsx");
     assert.doesNotMatch(src, /kitchenWaiting=\{data\?\.kpis\.kitchenWaiting \?\? 0\}/);
-    assert.match(src, /\{data \? \(/);
+    assert.doesNotMatch(src, /\?\? 0/);
+    assert.match(src, /fetchAnalyticsWorkspace/);
+    assert.match(src, /OwnerBiWorkspacePanel workspace=\{workspace\}/);
   });
 
   it("Kitchen Manager KPIs hide zeros when the ticket payload failed to load", () => {
