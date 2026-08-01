@@ -10,7 +10,7 @@
 | --- | --- |
 | Branch | `feature/rc4-analytics-bi` |
 | Start (origin/main with Payroll) | `89280176f857a709eb7b5b25f9d12d745984f2ce` |
-| Primary implementation | pending commit SHA |
+| Primary implementation | 45cffa16e284563c38ffd7272fd9b245fddb913a |
 | Tip (this report) | pending tip commit |
 
 ## Why complete
