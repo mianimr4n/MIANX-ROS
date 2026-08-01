@@ -18,11 +18,12 @@ Operations checklist when customers report missing signup confirmation, password
 - [ ] DMARC policy published
 - [ ] Site URL = production website origin
 - [ ] Redirect URLs include production + local `/auth/callback`
+- [ ] Redirect URLs include production + local `/reset-password` (password recovery)
 - [ ] Confirm email enabled for signup
 - [ ] Secure password change enabled (requires current Telepizza password for changes)
 - [ ] Secure email change enabled (dual confirmation preferred for production)
 - [ ] Test signup to a fresh mailbox; Auth Logs show send success
-- [ ] Test forgot-password to a fresh mailbox; link lands on `/auth/callback` → `/reset-password`
+- [ ] Test forgot-password to a fresh mailbox; link lands on `/reset-password` (PASSWORD_RECOVERY)
 - [ ] No SMTP credentials stored in git
 
 ---
@@ -36,7 +37,7 @@ Operations checklist when customers report missing signup confirmation, password
 | Resend | Rate-limited “Resend Email” via `supabase.auth.resend({ type: "signup" })` (client cooldown ~60s) |
 | Login before confirm | Sign-in fails with a safe “confirm your email” message — never reported as logged in |
 | Forgot password | `resetPasswordForEmail` → always shows generic “if an account exists…” (no enumeration) |
-| Reset password | Recovery link → `/auth/callback` → `/reset-password` → `updateUser({ password })` on same auth user |
+| Reset password | Recovery link → `/reset-password` (`PASSWORD_RECOVERY`) → `updateUser({ password })` → sign out → `/login` |
 | Email change | Account → Security → `updateUser({ email })` with confirmation; Telepizza password required when email identity exists |
 | Google OAuth | Separate path — no confirmation email; never asks for a Google password |
 | Expired / invalid links | Callback maps `otp_expired` / invalid tokens to safe “request a new email” copy |
