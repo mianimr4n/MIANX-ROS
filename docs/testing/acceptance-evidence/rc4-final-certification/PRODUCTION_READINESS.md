@@ -1,11 +1,28 @@
-# Production Readiness
+# RC4 Production readiness
+
+**Readiness verdict:** **NOT READY FOR RC4 CERTIFY**
+**Reason:** `SECURITY_ROTATION_PENDING`
+
+## Operational readiness (Production)
 
 | Gate | Status |
 | --- | --- |
-| Code/tests/rc1 | PASS locally |
-| Health probe 401 noise | Repository fix landed (deploy separately) |
-| Production schema tip | **FAIL** — remote `20260730290000` vs local `20260801180000` |
-| Observed 42703 | Explained by pending migrations |
-| Authorized Production migrate | **No** |
+| Schema tip `20260801180000` | Aligned |
+| App SHA `2f0e432` | Live on Render |
+| Health / readiness | PASS |
+| Owner authenticated smoke | PASS |
+| Analytics product module | PASS post-hotfix |
+| Core modules (Finance/Payroll/HR/Inventory/Loyalty/Documents) | PASS in smoke |
+| Open 42703 / 42P01 blockers | None observed |
 
-**RC4 is not Production-ready for certification until pending migrations are applied through the approved ops process.**
+## Certification readiness
+
+| Gate | Status |
+| --- | --- |
+| Security rotation closeout | **FAIL / PENDING** |
+| Secrets absent from Git evidence | PASS |
+| Backup dumps absent from Git | PASS (`.local-backups/` gitignored) |
+
+## Conclusion
+
+Production is operationally stable at the recorded tip/SHA for RC4 feature delivery, but **RC4 final certification is withheld** until security closeout is completed and documented without secrets.

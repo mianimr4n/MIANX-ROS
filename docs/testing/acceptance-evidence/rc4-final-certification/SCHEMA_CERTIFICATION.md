@@ -1,21 +1,23 @@
-# Schema Certification
+# RC4 Schema certification notes
 
-## Local
+**Schema tip:** `20260801180000`
+**App SHA:** `2f0e4326310e1036cc23a94d5573dd4d774eaf0f`
 
-| Check | Result |
-| --- | --- |
-| `hr_employees.employee_number` | Present |
-| `supplier_invoices.due_date` | Present |
-| Local migration tip | `20260801180000` |
+## Canonical contracts validated in Production smoke
 
-## Linked Production (remote)
+| Area | Contract | Result |
+| --- | --- | --- |
+| HR employees | `employee_number` present / readable | PASS (no 42703) |
+| Supplier invoices | `due_date` present / readable | PASS (no 42703) |
+| Analytics product top items | `order_items.product_name` + `menu_item_id` | PASS (no `order_items.name`) |
+| Relations | no `42P01` in accepted smokes | PASS |
 
-| Check | Result |
-| --- | --- |
-| Remote tip | `20260730290000` |
-| Pending includes `20260731040000` / `20260731050000` | **Yes** |
-| Matches observed 42703 | **Yes** |
+## Analytics naming source (repository truth)
 
-## Certification
+- Foundation schema: `order_items.product_name` (NOT NULL snapshot)
+- Invalid historical Analytics select: `order_items.name` (never existed)
+- Fix: PR #163 — select `product_name`, aggregate by `menu_item_id`
 
-Schema **not** aligned Production ↔ local tip. Clean local reset cycle not required to prove drift; linked list is authoritative. Production migrate not run.
+## Certification caveat
+
+This schema alignment evidence supports operational cutover completeness. Full **RC4 certify** remains blocked by `SECURITY_ROTATION_PENDING`.

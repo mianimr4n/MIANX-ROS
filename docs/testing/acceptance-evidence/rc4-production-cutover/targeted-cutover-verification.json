@@ -1,0 +1,26 @@
+{
+  "at": "2026-08-01T20:58:15.987Z",
+  "authOk": true,
+  "meOk": true,
+  "refreshOk": true,
+  "logoutClears": true,
+  "authenticatedCount": 26,
+  "drift42703": [],
+  "missingRelation": [],
+  "hrEmployees": {
+    "status": 200,
+    "ok": true,
+    "drift42703": false,
+    "errSnippet": ""
+  },
+  "supplierInvoices": {
+    "status": 200,
+    "ok": true,
+    "drift42703": false,
+    "errSnippet": ""
+  },
+  "cutoverColumn42703Hits": [],
+  "employeeNumberDoesNotExist": false,
+  "dueDateDoesNotExist": false,
+  "targetedVerificationPass": true
+}

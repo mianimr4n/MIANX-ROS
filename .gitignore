@@ -59,6 +59,9 @@ scripts/.tmp_pw/
 # Local infra scratch (supabase status dumps, cloud env backups)
 .tmp/
 
+# Production cutover logical backups (never commit dumps)
+.local-backups/
+
 # Accidental npm lockfile at monorepo root (pnpm is packageManager)
 /package-lock.json
 

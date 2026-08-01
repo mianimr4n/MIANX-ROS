@@ -1,28 +1,20 @@
-# Migration Alignment
+# RC4 Migration alignment
 
-Source: `npx supabase migration list --linked` (2026-08-01).
+**Remote migration tip:** `20260801180000`
+**Local foundation:** Supabase migrations under `supabase/migrations/`
+**Cutover:** 23/23 Production migrations applied (see `rc4-production-cutover/MIGRATION_*`)
 
-| Tip | Version |
+## Alignment facts
+
+| Item | Value |
 | --- | --- |
-| Local tip | `20260801180000` (`rc4_loyalty_marketing_depth`) |
-| Remote (linked Production) tip | `20260730290000` |
-| Gap | All local versions from `20260731010000` … `20260801180000` show `remote: ""` |
+| Tip migration | `20260801180000` |
+| Drift closed (cutover) | `supplier_invoices.due_date`, `hr_employees.employee_number` |
+| Analytics hotfix | **query-only** — no migration added |
+| Ad-hoc Production SQL for hotfix | **none** |
 
-## Columns tied to Production 42703
+## Rules observed
 
-| Column | Introduced | Compatibility re-assert | Remote status |
-| --- | --- | --- | --- |
-| `hr_employees.employee_number` | `20260731050000` | **Not** in `20260731150000` | Pending |
-| `supplier_invoices.due_date` | `20260731040000` | Yes — `20260731150000` | Pending |
-
-## Local schema spot-check
-
-Local Supabase DB container has both columns present (`employee_number`, `due_date`).
-
-## Safety
-
-- Forward-only additive migrations in repo.
-- Duplicate timestamps: none observed for pending set.
-- Production migrate **not** executed in this slice.
-
-Raw listing artifact: `migration-list-linked.json` (if present) / CLI output captured in evidence session.
+- No further Production migration in this certification evidence PR
+- No SQL Editor mutation for Analytics hotfix
+- Migration tip verification remains via Supabase CLI / ops runbooks (API `/readyz` reports migrations `unavailable` by design)

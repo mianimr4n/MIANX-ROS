@@ -1,0 +1,333 @@
+{
+  "at": "2026-08-01T21:15:35.604Z",
+  "mode": "cdp-assisted",
+  "identity": {
+    "ok": true,
+    "emailDomain": "gmail.com",
+    "emailMatchesOwner": true,
+    "rolePresent": false,
+    "hasBranchScope": true
+  },
+  "api": [
+    {
+      "path": "/api/v1/auth/me",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/dashboard/operations",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/employees?limit=50",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/shifts?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/attendance?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/attendance/corrections?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/leaves?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/compensation?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/pay-periods?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/payroll-runs?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/documents?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/purchasing/invoices?limit=50",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/finance/cash-reconciliations?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/finance/expenses?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/finance/periods",
+      "status": 400,
+      "ok": false,
+      "code": "VALIDATION_ERROR",
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": "Request validation failed."
+    },
+    {
+      "path": "/api/v1/admin/finance/exceptions?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/analytics/workspace",
+      "status": 500,
+      "ok": false,
+      "code": "ANALYTICS_ORDER_ITEMS_READ_FAILED",
+      "drift42703": true,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": "column order_items.name does not exist"
+    },
+    {
+      "path": "/api/v1/admin/analytics/modules",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/inventory/items?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/inventory/recipes?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/loyalty/accounts?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/loyalty/rewards?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/loyalty/tiers",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/marketing/campaigns?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/marketing/templates?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumberKey": false,
+      "hasDueDateKey": false,
+      "errSnippet": ""
+    }
+  ],
+  "pages": [
+    {
+      "path": "/admin/dashboard",
+      "url": "https://telepizza-website.vercel.app/admin/dashboard",
+      "drift42703InDom": false
+    },
+    {
+      "path": "/admin/hr",
+      "url": "https://telepizza-website.vercel.app/admin/hr",
+      "drift42703InDom": false
+    },
+    {
+      "path": "/admin/finance",
+      "url": "https://telepizza-website.vercel.app/admin/finance",
+      "drift42703InDom": false
+    },
+    {
+      "path": "/admin/purchasing",
+      "url": "https://telepizza-website.vercel.app/admin/purchasing",
+      "drift42703InDom": false
+    },
+    {
+      "path": "/admin/loyalty",
+      "url": "https://telepizza-website.vercel.app/admin/loyalty",
+      "drift42703InDom": false
+    },
+    {
+      "path": "/admin/inventory",
+      "url": "https://telepizza-website.vercel.app/admin/inventory",
+      "drift42703InDom": false
+    },
+    {
+      "path": "/admin/reports",
+      "url": "https://telepizza-website.vercel.app/admin/reports",
+      "drift42703InDom": false
+    }
+  ],
+  "driftFindings": [
+    "/api/v1/admin/analytics/workspace"
+  ],
+  "logout": {
+    "uiControlFound": true,
+    "meOkAfterLogout": false,
+    "meStatusAfter": 0
+  }
+}

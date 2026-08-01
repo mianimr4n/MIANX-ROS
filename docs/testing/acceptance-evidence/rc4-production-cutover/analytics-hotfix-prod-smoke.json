@@ -1,0 +1,174 @@
+{
+  "at": "2026-08-01T22:36:18.863Z",
+  "ok": true,
+  "mode": "cdp",
+  "authorizedSha": "2f0e4326310e1036cc23a94d5573dd4d774eaf0f",
+  "deployedSha": "2f0e4326310e1036cc23a94d5573dd4d774eaf0f",
+  "healthOk": true,
+  "readyOk": true,
+  "issuesEmpty": true,
+  "identity": {
+    "ok": true,
+    "status": 200,
+    "emailDomain": "gmail.com",
+    "emailMatchesOwner": true,
+    "rolePresent": false
+  },
+  "ui": {
+    "url": "https://telepizza-website.vercel.app/admin/reports",
+    "hasAnalyticsCopy": true,
+    "hasPeriodControl": true,
+    "hasBranchControl": true,
+    "schemaErrorInDom": false,
+    "orderItemsNameInDom": false
+  },
+  "logout": {
+    "clicked": true,
+    "sessionCleared": true
+  },
+  "consoleErrorCount": 0,
+  "consoleErrorSamples": [],
+  "summary": {
+    "analyticsOk": true,
+    "productModuleOk": true,
+    "workspaceOk": true,
+    "orderItemsName42703": false,
+    "dueDate42703": false,
+    "employeeNumber42703": false,
+    "schemaErrorCount": 0,
+    "analytics5xxCount": 0
+  },
+  "probes": [
+    {
+      "path": "/api/v1/auth/me",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "orderItemsNameError": false,
+      "errSnippet": null,
+      "hasMetrics": false
+    },
+    {
+      "path": "/api/v1/admin/analytics/modules",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "orderItemsNameError": false,
+      "errSnippet": null,
+      "hasMetrics": false
+    },
+    {
+      "path": "/api/v1/admin/analytics/registry",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "orderItemsNameError": false,
+      "errSnippet": null,
+      "hasMetrics": false
+    },
+    {
+      "path": "/api/v1/admin/analytics/workspace",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "orderItemsNameError": false,
+      "errSnippet": null,
+      "hasMetrics": true
+    },
+    {
+      "path": "/api/v1/admin/analytics/modules/sales",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "orderItemsNameError": false,
+      "errSnippet": null,
+      "hasMetrics": true
+    },
+    {
+      "path": "/api/v1/admin/analytics/modules/product",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "orderItemsNameError": false,
+      "errSnippet": null,
+      "hasMetrics": true
+    },
+    {
+      "path": "/api/v1/admin/analytics/modules/executive",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "orderItemsNameError": false,
+      "errSnippet": null,
+      "hasMetrics": true
+    },
+    {
+      "path": "/api/v1/admin/analytics/modules/finance",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "orderItemsNameError": false,
+      "errSnippet": null,
+      "hasMetrics": true
+    },
+    {
+      "path": "/api/v1/admin/analytics/drilldown/product.top_items",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "orderItemsNameError": false,
+      "errSnippet": null,
+      "hasMetrics": false
+    },
+    {
+      "path": "/api/v1/admin/analytics/drilldown/sales.gross_sales",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "orderItemsNameError": false,
+      "errSnippet": null,
+      "hasMetrics": false
+    },
+    {
+      "path": "/api/v1/admin/hr/employees?limit=5",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "orderItemsNameError": false,
+      "errSnippet": null,
+      "hasMetrics": false
+    },
+    {
+      "path": "/api/v1/admin/purchasing/invoices?limit=5",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "orderItemsNameError": false,
+      "errSnippet": null,
+      "hasMetrics": false
+    },
+    {
+      "path": "/api/v1/admin/dashboard/operations",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "orderItemsNameError": false,
+      "errSnippet": null,
+      "hasMetrics": false
+    }
+  ],
+  "noMigrationOrSql": true
+}

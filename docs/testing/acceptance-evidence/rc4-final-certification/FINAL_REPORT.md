@@ -1,34 +1,44 @@
-# RC4 Final Certification — Final Report
+# RC4 Final Report
 
-## Decision
+**Decision:** `RC4_NOT_CERTIFIED`
+**Blocker:** `SECURITY_ROTATION_PENDING` (`SECURITY_CLOSEOUT.md`)
+**Date:** 2026-08-02 (Asia/Karachi)
 
-**RC4_SCHEMA_DRIFT_BLOCKED**
+## Production facts (operational — not a full RC4 certify)
 
-## Why
-
-Linked Production (`supabase migration list --linked`) remote tip is `20260730290000` while local tip is `20260801180000`. Pending migrations include:
-
-- `20260731040000` → `supplier_invoices.due_date`
-- `20260731050000` → `hr_employees.employee_number`
-
-These match the observed Production `42703` errors. Per mission rule: RC4 cannot be certified while Production reports missing required columns.
-
-## Phase 1 merge record
-
-| Item | Value |
+| Fact | Value |
 | --- | --- |
-| PR | #161 MERGED |
-| Merged head | `ecf5b772fae5fc8a6c2dda6f3730fa8b72e6851b` |
-| Merge / origin/main | `1d648950a8ea5bfb982713a203bacc6c7dd93ec1` |
+| Migration tip | `20260801180000` |
+| Live Production SHA | `2f0e4326310e1036cc23a94d5573dd4d774eaf0f` |
+| Render deployment | `dep-d9n75v15efls73a4j5hg` |
+| `/healthz` / `/readyz` | PASS (empty `issues`) |
+| Owner authenticated cutover smoke | PASS |
+| Analytics hotfix smoke | PASS (`analytics-hotfix-prod-smoke.json`) |
+| Finance / Payroll / HR / Inventory / Loyalty / Documents | PASS in Owner smoke |
+| `due_date` / `employee_number` / `order_items.name` 42703 | none observed post-hotfix |
+| Analytics hotfix migrations / SQL | none |
 
-## Repository-side fix included
+## Implementation chain (merged on main)
 
-Supabase connectivity probe now sends anon `apikey` + Bearer headers to stop unauthenticated `/auth/v1/health` 401 noise (tests added). **Does not clear schema drift.**
+| Slice | PR / note |
+| --- | --- |
+| RC4-2 Analytics & BI | #159 |
+| RC4-3 Payroll | #158 |
+| RC4-5 Documents / Inventory / Finance Phase 2 | prior RC4 merges on main |
+| RC4-11 Loyalty & Marketing Depth | #160 |
+| RC4-7 Performance polish | #161 |
+| Health-probe anon headers | #162 @ `538c289` |
+| Analytics `product_name` schema hotfix | #163 @ `2f0e432` |
 
-## Branch
+## Why not certified
 
-`feature/rc4-final-certification` — evidence + health probe fix only. Not pushed unless instructed.
+Operational Production cutover and Analytics hotfix are complete, but **security closeout is incomplete**. Per mission rules, RC4 must not be certified while `SECURITY_ROTATION_PENDING`.
 
-## Next ops action (human)
+## Evidence index
 
-Apply pending Production migrations through approved runbook (not this agent). Then re-run certification.
+- This folder: `PRODUCTION_READINESS.md`, `MIGRATION_ALIGNMENT.md`, `SCHEMA_CERTIFICATION.md`, `POST_DEPLOY_SMOKE_RESULTS.md`, `LOG_MONITORING.md`, `ANALYTICS_HOTFIX.md`, `SECURITY_CLOSEOUT.md`, `KNOWN_LIMITATIONS.md`, `FINAL_CUTOVER_REPORT.md`
+- Cutover pack: `docs/testing/acceptance-evidence/rc4-production-cutover/`
+
+## Next action
+
+Complete security rotation closeout → update `SECURITY_CLOSEOUT.md` → re-issue certification decision.

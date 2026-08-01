@@ -1,0 +1,371 @@
+{
+  "at": "2026-08-01T20:58:15.987Z",
+  "projectRef": "pyeowxvacgypohrbvgee",
+  "credentialSource": "env:TELEPIZZA_PROD_OWNER_*",
+  "localFixtureUsed": false,
+  "frontend": {
+    "status": 200,
+    "ok": true
+  },
+  "auth": {
+    "ok": true,
+    "emailDomain": "gmail.com"
+  },
+  "me": {
+    "path": "/api/v1/auth/me",
+    "status": 200,
+    "ok": true,
+    "code": null,
+    "drift42703": false,
+    "missingRelation": false,
+    "hasEmployeeNumber": null,
+    "hasDueDate": null,
+    "errSnippet": ""
+  },
+  "refresh": {
+    "ok": true,
+    "meOk": true
+  },
+  "logout": {
+    "ok": true,
+    "statusAfter": 401,
+    "note": "Best-effort: client signOut; API should reject stale/revoked token depending on JWT validity window"
+  },
+  "unauthenticated": [
+    {
+      "path": "/healthz",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/readyz",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/employees",
+      "status": 401,
+      "ok": false,
+      "code": "UNAUTHORIZED",
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": "Authentication required."
+    },
+    {
+      "path": "/api/v1/admin/purchasing/invoices",
+      "status": 401,
+      "ok": false,
+      "code": "UNAUTHORIZED",
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": "Authentication required."
+    }
+  ],
+  "authenticated": [
+    {
+      "path": "/api/v1/admin/dashboard/operations",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/employees?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": false,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/shifts?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/attendance?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/attendance/corrections?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/leave?limit=20",
+      "status": 404,
+      "ok": false,
+      "code": "NOT_FOUND",
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": "Route not found."
+    },
+    {
+      "path": "/api/v1/admin/hr/compensation?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/payroll/periods?limit=20",
+      "status": 404,
+      "ok": false,
+      "code": "NOT_FOUND",
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": "Route not found."
+    },
+    {
+      "path": "/api/v1/admin/hr/payroll/runs?limit=20",
+      "status": 404,
+      "ok": false,
+      "code": "NOT_FOUND",
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": "Route not found."
+    },
+    {
+      "path": "/api/v1/admin/purchasing/invoices?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/finance/cash-reconciliations?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/finance/expense-claims?limit=20",
+      "status": 404,
+      "ok": false,
+      "code": "NOT_FOUND",
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": "Route not found."
+    },
+    {
+      "path": "/api/v1/admin/finance/customer-invoices?limit=20",
+      "status": 404,
+      "ok": false,
+      "code": "NOT_FOUND",
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": "Route not found."
+    },
+    {
+      "path": "/api/v1/admin/finance/period-controls",
+      "status": 404,
+      "ok": false,
+      "code": "NOT_FOUND",
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": "Route not found."
+    },
+    {
+      "path": "/api/v1/admin/reports/analytics/workspace",
+      "status": 404,
+      "ok": false,
+      "code": "NOT_FOUND",
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": "Route not found."
+    },
+    {
+      "path": "/api/v1/admin/reports/analytics/modules",
+      "status": 404,
+      "ok": false,
+      "code": "NOT_FOUND",
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": "Route not found."
+    },
+    {
+      "path": "/api/v1/admin/inventory/items?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/inventory/recipes?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/loyalty/accounts?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/loyalty/rewards?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/loyalty/tiers",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/marketing/campaigns?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/marketing/templates?limit=20",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/documents?limit=20",
+      "status": 404,
+      "ok": false,
+      "code": "NOT_FOUND",
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": "Route not found."
+    },
+    {
+      "path": "/api/v1/admin/orders?limit=5",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/kitchen/tickets?limit=5",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "missingRelation": false,
+      "hasEmployeeNumber": null,
+      "hasDueDate": null,
+      "errSnippet": ""
+    }
+  ],
+  "driftFindings": [],
+  "missingRelationFindings": [],
+  "limitations": []
+}
