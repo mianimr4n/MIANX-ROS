@@ -367,7 +367,7 @@ export function createLoyaltyDepthService(
   return {
     async listRewards(query) {
       const client = supabase();
-      let q = client.from("loyalty_rewards").select("*").order("updated_at", { ascending: false }).limit(500);
+      let q = client.from("loyalty_rewards").select("*").order("updated_at", { ascending: false }).limit(100);
       if (query?.branchId) q = q.or(`branch_id.eq.${query.branchId},branch_id.is.null`);
       if (!query?.includeInactive) {
         q = q.eq("is_active", true).eq("approval_status", "approved");
@@ -782,18 +782,36 @@ export function createLoyaltyDepthService(
 
     async getLiabilitySnapshot() {
       const client = supabase();
-      const accounts = await loyalty.listAccounts(500);
+      const accounts = await loyalty.listAccounts(200);
       const outstanding = accounts.reduce((s, a) => s + a.pointsBalance, 0);
-      const { data: txns } = await client.from("loyalty_transactions").select("points, type").limit(20000);
-      const earned = (txns ?? [])
-        .filter((t) => (t as { type: string }).type === "earn")
-        .reduce((s, t) => s + Number((t as { points: number }).points), 0);
-      const redeemed = (txns ?? [])
-        .filter((t) => (t as { type: string }).type === "burn")
-        .reduce((s, t) => s + Number((t as { points: number }).points), 0);
-      const expired = (txns ?? [])
-        .filter((t) => (t as { type: string }).type === "expire")
-        .reduce((s, t) => s + Number((t as { points: number }).points), 0);
+
+      async function sumPointsByType(type: string): Promise<number> {
+        const pageSize = 1000;
+        const maxPages = 10;
+        let sum = 0;
+        for (let page = 0; page < maxPages; page += 1) {
+          const from = page * pageSize;
+          const to = from + pageSize - 1;
+          const { data, error } = await client
+            .from("loyalty_transactions")
+            .select("points")
+            .eq("type", type)
+            .range(from, to);
+          if (error) throwMappedDbError("LOYALTY_LIABILITY_SUM_FAILED", error);
+          const rows = data ?? [];
+          if (rows.length === 0) break;
+          sum += rows.reduce((s, row) => s + Number((row as { points: number }).points), 0);
+          if (rows.length < pageSize) break;
+        }
+        return sum;
+      }
+
+      const [earned, redeemed, expired] = await Promise.all([
+        sumPointsByType("earn"),
+        sumPointsByType("burn"),
+        sumPointsByType("expire"),
+      ]);
+
       const { data: policies } = await client
         .from("loyalty_expiry_policies")
         .select("*")

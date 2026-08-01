@@ -18,12 +18,15 @@ function resolveApiUrl(path: string) {
 export class ApiRequestError extends Error {
   statusCode: number;
   code?: string;
+  /** Server `X-Request-ID` when present — safe to show on technical errors. */
+  requestId?: string;
 
-  constructor(message: string, statusCode: number, code?: string) {
+  constructor(message: string, statusCode: number, code?: string, requestId?: string) {
     super(message);
     this.name = "ApiRequestError";
     this.statusCode = statusCode;
     this.code = code;
+    this.requestId = requestId;
   }
 }
 
@@ -115,18 +118,22 @@ export async function fetchApiEnvelope<T>(
     payload !== null &&
     "ok" in payload;
 
+  const requestIdHeader =
+    response.headers.get("X-Request-ID") ?? response.headers.get("x-request-id") ?? undefined;
+
   if (
     !response.ok ||
     !isApiPayload ||
     !(payload as { ok: boolean }).ok
   ) {
     const apiPayload = isApiPayload
-      ? (payload as { error?: { message?: string; code?: string } })
+      ? (payload as { error?: { message?: string; code?: string; requestId?: string } })
       : undefined;
     const message = apiPayload?.error?.message ?? "The API request failed.";
     const code = apiPayload?.error?.code;
+    const requestId = apiPayload?.error?.requestId ?? requestIdHeader ?? undefined;
 
-    throw new ApiRequestError(message, response.status, code);
+    throw new ApiRequestError(message, response.status, code, requestId);
   }
 
   const body = payload as { data: T; meta?: Record<string, unknown> };
@@ -168,14 +175,19 @@ export async function downloadApiFile(
   if (!response.ok) {
     let message = "The API request failed.";
     let code: string | undefined;
+    let requestId =
+      response.headers.get("X-Request-ID") ?? response.headers.get("x-request-id") ?? undefined;
     try {
-      const payload = (await response.json()) as { error?: { message?: string; code?: string } };
+      const payload = (await response.json()) as {
+        error?: { message?: string; code?: string; requestId?: string };
+      };
       message = payload.error?.message ?? message;
       code = payload.error?.code;
+      requestId = payload.error?.requestId ?? requestId;
     } catch {
       /* non-JSON error body */
     }
-    throw new ApiRequestError(message, response.status, code);
+    throw new ApiRequestError(message, response.status, code, requestId);
   }
 
   const disposition = response.headers.get("Content-Disposition") ?? "";

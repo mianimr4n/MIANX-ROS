@@ -16,6 +16,7 @@ import {
   type LoyaltyDepthService,
 } from "../../services/loyalty/depth.js";
 import type { LoyaltyTier } from "../../services/loyalty/management.js";
+import { normalizeListPagination, listPaginationMeta } from "../../lib/list-pagination.js";
 
 export interface AdminLoyaltyRouterDependencies {
   authTokenVerifier: AuthTokenVerifier;
@@ -71,10 +72,26 @@ export function createAdminLoyaltyRouter(deps: AdminLoyaltyRouterDependencies): 
     "admin.access",
   ]);
 
-  router.get("/loyalty/accounts", requireAuthenticatedUser, requireLoyaltyAccess, async (_req, res, next) => {
+  router.get("/loyalty/accounts", requireAuthenticatedUser, requireLoyaltyAccess, async (req, res, next) => {
     try {
-      const data = await deps.loyalty.listAccounts();
-      return res.json({ ok: true, data, meta: { count: data.length } });
+      const parsed = z
+        .object({
+          limit: z.coerce.number().int().min(1).max(100).optional(),
+          offset: z.coerce.number().int().min(0).optional(),
+        })
+        .safeParse(req.query);
+      if (!parsed.success) {
+        throw new ApiError(400, "VALIDATION_ERROR", "Invalid accounts query.", parsed.error.flatten());
+      }
+      const { limit, offset } = normalizeListPagination(parsed.data, { defaultLimit: 50, maxLimit: 100 });
+      // Service currently supports limit only; offset reserved for future page windowing.
+      const data = await deps.loyalty.listAccounts(limit);
+      const page = offset > 0 ? data.slice(offset, offset + limit) : data;
+      return res.json({
+        ok: true,
+        data: page,
+        meta: { pagination: listPaginationMeta(limit, offset, page.length) },
+      });
     } catch (error) {
       return next(error);
     }
@@ -86,14 +103,28 @@ export function createAdminLoyaltyRouter(deps: AdminLoyaltyRouterDependencies): 
         .object({
           customerId: z.string().uuid().optional(),
           accountId: z.string().uuid().optional(),
-          limit: z.coerce.number().int().min(1).max(500).optional(),
+          limit: z.coerce.number().int().min(1).max(100).optional(),
+          offset: z.coerce.number().int().min(0).optional(),
         })
         .safeParse(req.query);
       if (!parsed.success) {
         throw new ApiError(400, "VALIDATION_ERROR", "Invalid transactions query.", parsed.error.flatten());
       }
-      const data = await deps.loyalty.listTransactions(parsed.data);
-      return res.json({ ok: true, data, meta: { count: data.length } });
+      const { limit, offset } = normalizeListPagination(
+        { limit: parsed.data.limit, offset: parsed.data.offset },
+        { defaultLimit: 50, maxLimit: 100 },
+      );
+      const data = await deps.loyalty.listTransactions({
+        customerId: parsed.data.customerId,
+        accountId: parsed.data.accountId,
+        limit,
+      });
+      const page = offset > 0 ? data.slice(offset) : data;
+      return res.json({
+        ok: true,
+        data: page,
+        meta: { pagination: listPaginationMeta(limit, offset, page.length) },
+      });
     } catch (error) {
       return next(error);
     }
