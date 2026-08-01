@@ -186,6 +186,10 @@ import {
   createFinanceOperationsService,
   type FinanceOperationsService,
 } from "./services/finance/operations.js";
+import {
+  createFinancePhase2Service,
+  type FinancePhase2Service,
+} from "./services/finance/phase2.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -227,6 +231,7 @@ export interface AppDependencies {
   supplierPortal: SupplierPortalService;
   finance: FinanceService;
   financeOperations: FinanceOperationsService;
+  financePhase2: FinancePhase2Service;
   posZReport: PosZReportService;
   reports: ReportsService;
   loyalty: LoyaltyService;
@@ -284,6 +289,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     supplierPortal: createSupplierPortalService(envStatus),
     finance,
     financeOperations: createFinanceOperationsService(envStatus, finance),
+    financePhase2: createFinancePhase2Service(envStatus, finance),
     posZReport: createPosZReportService(envStatus),
     reports: createReportsService(envStatus),
     loyalty: createLoyaltyService(envStatus),

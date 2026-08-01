@@ -44,7 +44,9 @@ describe("Finance & Accounting V1 (static)", () => {
     const statements = read("apps/website/client/src/components/admin/finance/LedgerPanel.tsx");
     assert.match(statements, /Trial balance/);
     assert.match(statements, /No financial data available/);
-    assert.match(statements, /Planned for Phase 2/);
+    assert.match(statements, /Balance sheet/);
+    assert.match(statements, /Cash flow \(indirect\)/);
+    assert.match(statements, /LIVE/);
     assert.doesNotMatch(statements, /totalAssets:\s*\d|netIncome:\s*5000|operatingCash:\s*\d/i);
   });
 
@@ -57,11 +59,11 @@ describe("Finance & Accounting V1 (static)", () => {
     assert.match(sales, /Operational order totals/);
   });
 
-  it("wires operational payables from Purchasing and keeps AR as Phase 2", () => {
+  it("wires operational payables from Purchasing and AR foundation LIVE", () => {
     const panels = read("apps/website/client/src/components/admin/finance/FinancePanels.tsx");
     assert.match(panels, /Operational supplier invoices/);
     assert.match(panels, /No outstanding supplier invoices/);
-    assert.match(panels, /Accounts receivable — Planned for Phase 2/);
+    assert.match(panels, /Accounts receivable — LIVE foundation/);
     assert.match(panels, /listSupplierInvoices|SupplierInvoice|invoices/);
     const page = read("apps/website/client/src/pages/admin/AdminFinance.tsx");
     assert.match(page, /listSupplierInvoices/);
@@ -70,8 +72,9 @@ describe("Finance & Accounting V1 (static)", () => {
 
   it("tax panel does not fabricate VAT/GST figures", () => {
     const tax = read("apps/website/client/src/components/admin/finance/FinancePanels.tsx");
-    assert.match(tax, /VAT\/GST returns — Planned for Phase 2/);
-    assert.match(tax, /not a tax engine/);
+    assert.match(tax, /Tax configuration — LIVE foundation/);
+    assert.match(tax, /Filing DEFERRED/);
+    assert.match(tax, /not a compliance engine|no hardcoded Pakistan rates/i);
     assert.doesNotMatch(tax, /vatRate|gstRate|taxLiability:\s*\d/i);
   });
 

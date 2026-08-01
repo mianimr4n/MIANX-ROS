@@ -169,6 +169,7 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
       supplierPortal: dependencies.supplierPortal,
       finance: dependencies.finance,
       financeOperations: dependencies.financeOperations,
+      financePhase2: dependencies.financePhase2,
       posZReport: dependencies.posZReport,
       reports: dependencies.reports,
       loyalty: dependencies.loyalty,

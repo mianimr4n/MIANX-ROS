@@ -238,19 +238,19 @@ export function CashPanel({
 export function ReceivablePanel() {
   return (
     <AdminSurface aria-labelledby="finance-receivables-heading" className="mb-6">
-      <AdminSurfaceHeader title="Receivables" description="Trade debtors, aging, and collections." />
+      <AdminSurfaceHeader title="Receivables" description="Customer invoices, receipts, and credit notes." />
       <AdminSurfaceBody>
         <h2 id="finance-receivables-heading" className="sr-only">
           Receivables
         </h2>
-        <div className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6 text-center">
-          <p className="font-semibold text-[var(--admin-ink)]">Accounts receivable — Planned for Phase 2</p>
+        <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6">
+          <p className="font-semibold text-[var(--admin-ink)]">Accounts receivable — LIVE foundation</p>
           <p className="mt-2 text-sm text-[var(--admin-muted)]">
-            Walk-in and delivery orders settle at checkout. No credit invoices, aging buckets, or collection workflow in
-            repository.
+            Draft/issue invoices, receipt allocation, and credit notes are available via Finance AR APIs. Aging dashboard
+            UI remains DERIVED from invoice balances — filing and collections automation stay DEFERRED.
           </p>
-          <span className="mt-3 inline-block rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--admin-muted)]">
-            Planned for Phase 2
+          <span className="mt-3 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-800">
+            LIVE
           </span>
         </div>
       </AdminSurfaceBody>
@@ -569,19 +569,22 @@ export function ExpensePanel({
 export function TaxPanel() {
   return (
     <AdminSurface aria-labelledby="finance-tax-heading" className="mb-6">
-      <AdminSurfaceHeader title="Tax" description="VAT/GST configuration, liability, and returns." />
+      <AdminSurfaceHeader title="Tax" description="Configurable tax definitions and posted tax ledger foundations." />
       <AdminSurfaceBody>
         <h2 id="finance-tax-heading" className="sr-only">
           Tax
         </h2>
-        <div className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6 text-center">
-          <p className="font-semibold text-[var(--admin-ink)]">VAT/GST returns — Planned for Phase 2</p>
+        <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6">
+          <p className="font-semibold text-[var(--admin-ink)]">Tax configuration — LIVE foundation</p>
           <p className="mt-2 text-sm text-[var(--admin-muted)]">
-            orders.tax_amount is not a tax engine. No tax codes, filing exports, or automated VAT/GST returns — do not
-            treat order tax lines as compliance-ready VAT/GST.
+            Tax codes and rates are configurable via API (no hardcoded Pakistan rates). Jurisdiction filing/export remains
+            DEFERRED. Order tax_amount alone is not a compliance engine.
           </p>
-          <span className="mt-3 inline-block rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--admin-muted)]">
-            Planned for Phase 2
+          <span className="mt-3 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-800">
+            LIVE
+          </span>
+          <span className="mt-3 ml-2 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-800">
+            Filing DEFERRED
           </span>
         </div>
       </AdminSurfaceBody>
