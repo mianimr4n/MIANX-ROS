@@ -11,7 +11,7 @@
 | Branch | `feature/rc4-payroll` |
 | Start (origin/main with RC4-8) | `06e6d618c7c19d6393c05873c0fb8851a318191f` |
 | Primary implementation (Finance LIVE posting) | `faa919fd9420a236e88516621517b7eb375f6379` |
-| Tip (this report) | pending tip commit |
+| Tip (this report) | dd650fc06e8d6d54fd52a2fb43318f7b8378677d |
 
 ## Why complete
 
