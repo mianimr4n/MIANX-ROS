@@ -249,6 +249,7 @@ export interface AppDependencies {
 export function createAppDependencies(envStatus: EnvironmentStatus): AppDependencies {
   const qrTokenValidator = createQrTokenValidator(envStatus);
   const finance = createFinanceService(envStatus);
+  const financePhase2 = createFinancePhase2Service(envStatus, finance);
   return {
     catalogDataSource: createSupabaseCatalogDataSource(envStatus),
     ordersDataSource: createOrdersDataSource(envStatus),
@@ -282,14 +283,14 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     hrEmployees: createHrEmployeesService(envStatus),
     hrWorkforce: createHrWorkforceService(envStatus),
     hrScheduling: createHrSchedulingService(envStatus),
-    hrPayroll: createHrPayrollService(envStatus),
     inventory: createInventoryService(envStatus),
     inventoryRecipes: createInventoryRecipeService(envStatus),
     purchasing: createPurchasingService(envStatus),
     supplierPortal: createSupplierPortalService(envStatus),
     finance,
     financeOperations: createFinanceOperationsService(envStatus, finance),
-    financePhase2: createFinancePhase2Service(envStatus, finance),
+    financePhase2,
+    hrPayroll: createHrPayrollService(envStatus, financePhase2),
     posZReport: createPosZReportService(envStatus),
     reports: createReportsService(envStatus),
     loyalty: createLoyaltyService(envStatus),

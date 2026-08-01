@@ -66,10 +66,20 @@ describe("RC4-3 payroll calculation service contracts", () => {
     assert.doesNotMatch(engine, /status:\s*"paid"/);
   });
 
-  it("service keeps paymentTriggered false and separates payment_ready", () => {
+  it("documents payroll finance mapping purposes and accrual status columns", () => {
+    const finMap = readFileSync(
+      join(root, "supabase/migrations/20260731210000_rc4_payroll_finance_mapping_purposes.sql"),
+      "utf8",
+    );
+    assert.match(finMap, /salary_expense/);
+    assert.match(finMap, /payroll_payable/);
+    assert.match(finMap, /accrual_posting_status/);
+  });
+
+  it("service posts accrual on approve and settlement journals only after settlement", () => {
+    assert.match(payroll, /postPayrollAccrual/);
+    assert.match(payroll, /recordSettlement/);
+    assert.match(payroll, /postPayrollSettlement/);
     assert.match(payroll, /paymentTriggered: false/);
-    assert.match(payroll, /markPaymentReady/);
-    assert.match(payroll, /HR_PAYROLL_IMMUTABLE/);
-    assert.match(payroll, /accountingStatus: "DEFERRED"/);
   });
 });

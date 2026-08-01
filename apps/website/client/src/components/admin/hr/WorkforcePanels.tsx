@@ -1269,7 +1269,9 @@ export function PayrollOverview({
                       </p>
                       <p className="mt-1 text-xs text-[var(--admin-muted)]">{run.paymentMessage}</p>
                       <p className="mt-1 text-xs text-[var(--admin-muted)]">
-                        Accounting: {run.accountingStatus ?? "DEFERRED"} · paymentTriggered=false
+                        Accounting: {run.accountingStatus ?? "PENDING"}
+                        {run.accrualPostingBlockedReason ? ` — ${run.accrualPostingBlockedReason}` : ""} ·
+                        paymentTriggered=false
                       </p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         <button

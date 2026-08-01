@@ -2096,7 +2096,9 @@ export type HrPayrollRun = {
   calculationVersion?: string | null;
   paymentTriggered: false;
   paymentMessage: string;
-  accountingStatus?: "DEFERRED" | "LIVE";
+  accountingStatus?: "DEFERRED" | "LIVE" | "BLOCKED" | "PENDING";
+  accrualPostingStatus?: string | null;
+  accrualPostingBlockedReason?: string | null;
   createdAt: string;
   updatedAt: string;
 };

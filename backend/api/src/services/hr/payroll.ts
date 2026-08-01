@@ -7,6 +7,7 @@ import { loadBranchRow } from "../branches/lookup.js";
 import type { BranchActorScope } from "../tables/management.js";
 import { CALC_VERSION } from "./payroll-calc.js";
 import { executePayrollCalculation, PAYMENT_MSG } from "./payroll-engine.js";
+import type { FinancePhase2Service } from "../finance/phase2.js";
 
 export const HR_PAYROLL_STATUSES = [
   "draft",
@@ -69,6 +70,9 @@ export interface PayrollRunRecord {
   calculationVersion: string | null;
   calculatedAt: string | null;
   paymentReadyAt: string | null;
+  accrualPostingStatus: string | null;
+  accrualPostingBlockedReason: string | null;
+  accrualJournalEntryId: string | null;
   createdBy: string | null;
   approvedBy: string | null;
   lockedAt: string | null;
@@ -76,7 +80,7 @@ export interface PayrollRunRecord {
   updatedAt: string;
   paymentTriggered: false;
   paymentMessage: string;
-  accountingStatus: "DEFERRED" | "LIVE";
+  accountingStatus: "DEFERRED" | "LIVE" | "BLOCKED" | "PENDING";
 }
 
 export interface PayrollLineRecord {
@@ -173,6 +177,26 @@ export interface HrPayrollService {
     runId: string,
     reason?: string,
   ): Promise<PayrollRunRecord>;
+  recordSettlement(
+    scope: BranchActorScope,
+    actorUserId: string,
+    input: {
+      payrollRunId: string;
+      employeeId: string;
+      amount: number;
+      paymentReference: string;
+      settledAt: string;
+      provider?: string;
+      idempotencyKey: string;
+    },
+    requestId?: string | null,
+  ): Promise<{
+    settlementId: string;
+    run: PayrollRunRecord;
+    paymentTriggered: false;
+    postingStatus: string;
+    postingBlockedReason: string | null;
+  }>;
   listPayrollLines(scope: BranchActorScope, runId: string): Promise<PayrollLineRecord[]>;
   listPayrollExceptions(scope: BranchActorScope, runId: string): Promise<PayrollExceptionRecord[]>;
   listPayslips(scope: BranchActorScope, runId: string): Promise<PayslipRecord[]>;
@@ -220,6 +244,9 @@ type RunRow = {
   calculation_version?: string | null;
   calculated_at?: string | null;
   payment_ready_at?: string | null;
+  accrual_posting_status?: string | null;
+  accrual_posting_blocked_reason?: string | null;
+  accrual_journal_entry_id?: string | null;
   created_by: string | null;
   approved_by: string | null;
   locked_at: string | null;
@@ -282,6 +309,12 @@ function mapPeriod(row: PeriodRow): PayPeriodRecord {
 }
 
 function mapRun(row: RunRow): PayrollRunRecord {
+  const accrualStatus = row.accrual_posting_status ?? "pending";
+  let accountingStatus: PayrollRunRecord["accountingStatus"] = "PENDING";
+  if (accrualStatus === "posted" || accrualStatus === "already_posted") accountingStatus = "LIVE";
+  else if (accrualStatus === "blocked") accountingStatus = "BLOCKED";
+  else if (accrualStatus === "deferred") accountingStatus = "DEFERRED";
+
   return {
     id: row.id,
     payPeriodId: row.pay_period_id,
@@ -292,6 +325,9 @@ function mapRun(row: RunRow): PayrollRunRecord {
     calculationVersion: row.calculation_version ?? null,
     calculatedAt: row.calculated_at ?? null,
     paymentReadyAt: row.payment_ready_at ?? null,
+    accrualPostingStatus: row.accrual_posting_status ?? null,
+    accrualPostingBlockedReason: row.accrual_posting_blocked_reason ?? null,
+    accrualJournalEntryId: row.accrual_journal_entry_id ?? null,
     createdBy: row.created_by,
     approvedBy: row.approved_by,
     lockedAt: row.locked_at,
@@ -299,7 +335,7 @@ function mapRun(row: RunRow): PayrollRunRecord {
     updatedAt: row.updated_at,
     paymentTriggered: false,
     paymentMessage: PAYMENT_MSG,
-    accountingStatus: "DEFERRED",
+    accountingStatus,
   };
 }
 
@@ -337,7 +373,10 @@ async function loadRun(client: SupabaseClient, runId: string): Promise<PayrollRu
   return mapRun(data as unknown as RunRow);
 }
 
-export function createHrPayrollService(envStatus: EnvironmentStatus): HrPayrollService {
+export function createHrPayrollService(
+  envStatus: EnvironmentStatus,
+  financePhase2?: FinancePhase2Service,
+): HrPayrollService {
   const supabase = () => createServiceClient(envStatus);
 
   return {
@@ -621,7 +660,24 @@ export function createHrPayrollService(envStatus: EnvironmentStatus): HrPayrollS
         .single();
       if (error) throw new ApiError(500, "HR_PAYROLL_APPROVE_FAILED", error.message);
 
-      const after = mapRun(data as unknown as RunRow);
+      const afterBase = mapRun(data as unknown as RunRow);
+      let after = afterBase;
+      if (financePhase2) {
+        const post = await financePhase2.postPayrollAccrual(scope, actorUserId, runId, null);
+        after = await loadRun(client, runId);
+        after = {
+          ...after,
+          accrualPostingStatus: post.postingStatus,
+          accrualPostingBlockedReason: post.postingBlockedReason,
+          accrualJournalEntryId: post.journalEntryId,
+          accountingStatus:
+            post.postingStatus === "posted" || post.postingStatus === "already_posted"
+              ? "LIVE"
+              : post.postingStatus === "blocked"
+                ? "BLOCKED"
+                : "DEFERRED",
+        };
+      }
       await writePayrollEvent(client, {
         runId,
         branchId: after.branchId,
@@ -630,7 +686,7 @@ export function createHrPayrollService(envStatus: EnvironmentStatus): HrPayrollS
         before,
         after,
       });
-      return after;
+      return { ...after, paymentTriggered: false as const, paymentMessage: PAYMENT_MSG };
     },
 
     async rejectPayrollRun(scope, actorUserId, runId, reason) {
@@ -814,6 +870,115 @@ export function createHrPayrollService(envStatus: EnvironmentStatus): HrPayrollS
         after,
       });
       return after;
+    },
+
+    async recordSettlement(scope, actorUserId, input, requestId) {
+      const client = supabase();
+      const before = await loadRun(client, input.payrollRunId);
+      assertBranchMembership(scope, before.branchId);
+
+      if (!["approved", "payment_ready", "locked", "paid"].includes(before.status)) {
+        throw new ApiError(
+          409,
+          "HR_PAYROLL_NOT_SETTLEABLE",
+          "Settlement requires approved, payment_ready, locked, or partially paid run.",
+        );
+      }
+      if (input.amount <= 0) {
+        throw new ApiError(400, "VALIDATION_ERROR", "Settlement amount must be > 0.");
+      }
+
+      const { data: existing } = await client
+        .from("hr_payroll_settlements")
+        .select("id")
+        .eq("idempotency_key", input.idempotencyKey)
+        .maybeSingle();
+      if (existing) {
+        const run = await loadRun(client, input.payrollRunId);
+        return {
+          settlementId: existing.id as string,
+          run,
+          paymentTriggered: false as const,
+          postingStatus: "already_posted",
+          postingBlockedReason: null,
+        };
+      }
+
+      const { data: settlement, error } = await client
+        .from("hr_payroll_settlements")
+        .insert({
+          payroll_run_id: input.payrollRunId,
+          employee_id: input.employeeId,
+          amount: input.amount,
+          currency: "PKR",
+          payment_reference: input.paymentReference,
+          settled_at: input.settledAt,
+          actor_user_id: actorUserId,
+          provider: input.provider ?? "manual_verified",
+          idempotency_key: input.idempotencyKey,
+          status: "settled",
+        })
+        .select("id")
+        .single();
+      if (error) {
+        if (error.code === "23505") {
+          throw new ApiError(409, "HR_SETTLEMENT_DUPLICATE", "Duplicate settlement idempotency key.");
+        }
+        throw new ApiError(500, "HR_SETTLEMENT_CREATE_FAILED", error.message);
+      }
+
+      await client
+        .from("hr_payslips")
+        .update({ payment_status: "paid" })
+        .eq("payroll_run_id", input.payrollRunId)
+        .eq("employee_id", input.employeeId);
+
+      let postingStatus = "deferred";
+      let postingBlockedReason: string | null =
+        "Finance posting deferred — mappings or phase2 service unavailable.";
+      if (financePhase2) {
+        const post = await financePhase2.postPayrollSettlement(
+          scope,
+          actorUserId,
+          settlement.id as string,
+          requestId,
+        );
+        postingStatus = post.postingStatus;
+        postingBlockedReason = post.postingBlockedReason;
+      }
+
+      // Run becomes paid only when every payslip is paid
+      const { data: slips } = await client
+        .from("hr_payslips")
+        .select("payment_status")
+        .eq("payroll_run_id", input.payrollRunId);
+      const allPaid = (slips ?? []).length > 0 && (slips ?? []).every((s) => s.payment_status === "paid");
+      if (allPaid) {
+        await client
+          .from("hr_payroll_runs")
+          .update({ status: "paid", updated_at: new Date().toISOString() })
+          .eq("id", input.payrollRunId);
+      }
+
+      const run = await loadRun(client, input.payrollRunId);
+      await writePayrollEvent(client, {
+        runId: input.payrollRunId,
+        branchId: run.branchId,
+        actorUserId,
+        action: "payroll.settlement",
+        reason: input.paymentReference,
+        before,
+        after: { run, settlementId: settlement.id, postingStatus, paymentTriggered: false },
+      });
+
+      // Explicit: settlement recorded does not flip paymentTriggered API flag semantics for unsafe auto-pay
+      return {
+        settlementId: settlement.id as string,
+        run: { ...run, paymentTriggered: false as const, paymentMessage: PAYMENT_MSG },
+        paymentTriggered: false as const,
+        postingStatus,
+        postingBlockedReason: postingBlockedReason,
+      };
     },
 
     async listPayrollLines(scope, runId) {

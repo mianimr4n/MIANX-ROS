@@ -76,6 +76,17 @@ describe("RC4-8 finance phase2 calc", () => {
     expect(MAPPING_PURPOSES).toContain("ar_control");
     expect(MAPPING_PURPOSES).toContain("cogs");
     expect(MAPPING_PURPOSES).toContain("sales_revenue");
+    expect(MAPPING_PURPOSES).toContain("salary_expense");
+    expect(MAPPING_PURPOSES).toContain("payroll_payable");
+    expect(MAPPING_PURPOSES).toContain("payroll_deduction_payable");
+  });
+
+  it("phase2 service source includes payroll accrual and settlement posting", () => {
+    const phase2 = readFileSync(join(here, "../src/services/finance/phase2.ts"), "utf8");
+    expect(phase2).toMatch(/postPayrollAccrual/);
+    expect(phase2).toMatch(/postPayrollSettlement/);
+    expect(phase2).toMatch(/payroll_accrual:/);
+    expect(phase2).toMatch(/payroll_settlement:/);
   });
 
   it("migration defines AR, tax, periods, BS/CF", () => {

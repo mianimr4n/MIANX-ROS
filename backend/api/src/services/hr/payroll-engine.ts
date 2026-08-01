@@ -239,7 +239,7 @@ export async function executePayrollCalculation(
       idempotency_key: `payroll_accrual_ready:${input.runId}`,
       payload: { calculationVersion: CALC_VERSION, lineCount: total },
       deferred_reason:
-        "RC4-8 Finance Phase 2 is not merged to origin/main for this payroll baseline; GL posting DEFERRED. Payroll calculation does not require Finance.",
+        "Payroll accrual posting runs on approve when salary_expense and payroll_payable mappings exist; until then event remains deferred.",
     },
     { onConflict: "idempotency_key" },
   );

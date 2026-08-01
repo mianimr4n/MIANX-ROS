@@ -478,6 +478,9 @@ const hrPayroll: HrPayrollService = {
       calculationVersion: null,
       calculatedAt: null,
       paymentReadyAt: null,
+      accrualPostingStatus: null,
+      accrualPostingBlockedReason: null,
+      accrualJournalEntryId: null,
       createdBy: "user-admin",
       approvedBy: null,
       lockedAt: null,
@@ -485,7 +488,7 @@ const hrPayroll: HrPayrollService = {
       updatedAt: new Date().toISOString(),
       paymentTriggered: false,
       paymentMessage: "paymentTriggered=false. Settlement required.",
-      accountingStatus: "DEFERRED",
+      accountingStatus: "PENDING",
     };
   },
   async calculatePayrollRun(_scope, _actor, runId) {
@@ -499,6 +502,9 @@ const hrPayroll: HrPayrollService = {
       calculationVersion: "rc4-3.payroll.v1",
       calculatedAt: new Date().toISOString(),
       paymentReadyAt: null,
+      accrualPostingStatus: "pending",
+      accrualPostingBlockedReason: null,
+      accrualJournalEntryId: null,
       createdBy: "user-admin",
       approvedBy: null,
       lockedAt: null,
@@ -506,7 +512,7 @@ const hrPayroll: HrPayrollService = {
       updatedAt: new Date().toISOString(),
       paymentTriggered: false,
       paymentMessage: "paymentTriggered=false. Settlement required.",
-      accountingStatus: "DEFERRED",
+      accountingStatus: "PENDING",
     };
   },
   async approvePayrollRun(_scope, _actor, runId) {
@@ -520,6 +526,9 @@ const hrPayroll: HrPayrollService = {
       calculationVersion: "rc4-3.payroll.v1",
       calculatedAt: new Date().toISOString(),
       paymentReadyAt: null,
+      accrualPostingStatus: "posted",
+      accrualPostingBlockedReason: null,
+      accrualJournalEntryId: "journal-1",
       createdBy: "user-admin",
       approvedBy: "user-admin",
       lockedAt: null,
@@ -527,7 +536,7 @@ const hrPayroll: HrPayrollService = {
       updatedAt: new Date().toISOString(),
       paymentTriggered: false,
       paymentMessage: "paymentTriggered=false. Settlement required.",
-      accountingStatus: "DEFERRED",
+      accountingStatus: "LIVE",
     };
   },
   async rejectPayrollRun() {
@@ -544,6 +553,9 @@ const hrPayroll: HrPayrollService = {
       calculationVersion: "rc4-3.payroll.v1",
       calculatedAt: new Date().toISOString(),
       paymentReadyAt: new Date().toISOString(),
+      accrualPostingStatus: "posted",
+      accrualPostingBlockedReason: null,
+      accrualJournalEntryId: "journal-1",
       createdBy: "user-admin",
       approvedBy: "user-admin",
       lockedAt: null,
@@ -551,7 +563,7 @@ const hrPayroll: HrPayrollService = {
       updatedAt: new Date().toISOString(),
       paymentTriggered: false,
       paymentMessage: "paymentTriggered=false. Settlement required.",
-      accountingStatus: "DEFERRED",
+      accountingStatus: "LIVE",
     };
   },
   async lockPayrollRun(_scope, _actor, runId) {
@@ -565,6 +577,9 @@ const hrPayroll: HrPayrollService = {
       calculationVersion: "rc4-3.payroll.v1",
       calculatedAt: new Date().toISOString(),
       paymentReadyAt: null,
+      accrualPostingStatus: "posted",
+      accrualPostingBlockedReason: null,
+      accrualJournalEntryId: "journal-1",
       createdBy: "user-admin",
       approvedBy: "user-admin",
       lockedAt: new Date().toISOString(),
@@ -572,7 +587,7 @@ const hrPayroll: HrPayrollService = {
       updatedAt: new Date().toISOString(),
       paymentTriggered: false,
       paymentMessage: "paymentTriggered=false. Settlement required.",
-      accountingStatus: "DEFERRED",
+      accountingStatus: "LIVE",
     };
   },
   async cancelPayrollRun() {
@@ -580,6 +595,36 @@ const hrPayroll: HrPayrollService = {
   },
   async reversePayrollRun() {
     throw new Error("unused");
+  },
+  async recordSettlement(_scope, _actor, input) {
+    return {
+      settlementId: "settlement-1",
+      run: {
+        id: input.payrollRunId,
+        payPeriodId: "period-1",
+        branchId: "550e8400-e29b-41d4-a716-446655440000",
+        status: "payment_ready" as const,
+        calculationStatus: "complete" as const,
+        calculationNote: "Calculated",
+        calculationVersion: "rc4-3.payroll.v1",
+        calculatedAt: new Date().toISOString(),
+        paymentReadyAt: new Date().toISOString(),
+        accrualPostingStatus: "posted",
+        accrualPostingBlockedReason: null,
+        accrualJournalEntryId: "journal-1",
+        createdBy: "user-admin",
+        approvedBy: "user-admin",
+        lockedAt: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        paymentTriggered: false as const,
+        paymentMessage: "paymentTriggered=false. Settlement required.",
+        accountingStatus: "LIVE" as const,
+      },
+      paymentTriggered: false as const,
+      postingStatus: "posted",
+      postingBlockedReason: null,
+    };
   },
   async listPayrollLines() {
     return [];
@@ -834,7 +879,7 @@ describe("HR employee directory APIs", () => {
     expect(res.status).toBe(200);
     expect(res.body.data.paymentTriggered).toBe(false);
     expect(res.body.data.calculationStatus).toBe("complete");
-    expect(res.body.data.accountingStatus).toBe("DEFERRED");
+    expect(res.body.data.accountingStatus).toBe("PENDING");
   });
 
   it("POST payroll payment-ready does not set paid", async () => {

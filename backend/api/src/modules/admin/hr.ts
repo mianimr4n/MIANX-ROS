@@ -1037,6 +1037,47 @@ export function createAdminHrRouter(deps: AdminHrRouterDependencies): Router {
     },
   );
 
+  router.post(
+    "/hr/payroll-runs/:id/settlements",
+    requireAuthenticatedUser,
+    requireHrAccess,
+    validateBody(
+      z
+        .object({
+          employeeId: z.string().uuid(),
+          amount: z.number().positive(),
+          paymentReference: z.string().trim().min(1).max(200),
+          settledAt: z.string().datetime(),
+          provider: z.string().trim().min(1).max(80).optional(),
+          idempotencyKey: z.string().trim().min(8).max(200),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const runId = z.string().uuid().parse(req.params.id);
+        const principal = (req as AuthorizedRequest).principal!;
+        const body = req.body as {
+          employeeId: string;
+          amount: number;
+          paymentReference: string;
+          settledAt: string;
+          provider?: string;
+          idempotencyKey: string;
+        };
+        const data = await deps.hrPayroll.recordSettlement(
+          scopeFrom(principal),
+          principal.userId,
+          { payrollRunId: runId, ...body },
+          getRequestId(req),
+        );
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
   router.get("/hr/payroll-runs/:id/lines", requireAuthenticatedUser, requireHrAccess, async (req, res, next) => {
     try {
       const runId = z.string().uuid().parse(req.params.id);
