@@ -154,7 +154,9 @@ export interface AdminRouterDependencies {
   reports: ReportsService;
   analytics: import("../../services/analytics/engine.js").AnalyticsService;
   loyalty: LoyaltyService;
+  loyaltyDepth: import("../../services/loyalty/depth.js").LoyaltyDepthService;
   marketing: MarketingService;
+  marketingDepth: import("../../services/marketing/depth.js").MarketingDepthService;
 }
 
 function toSafeInvite(invite: {
@@ -642,6 +644,7 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       loyalty: dependencies.loyalty,
+      loyaltyDepth: dependencies.loyaltyDepth,
     }),
   );
 
@@ -650,6 +653,7 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       marketing: dependencies.marketing,
+      marketingDepth: dependencies.marketingDepth,
     }),
   );
 

@@ -20,8 +20,8 @@ export default function Loyalty() {
 
         <div className="rounded-3xl border border-border bg-white p-6 space-y-4">
           <p className="text-muted-foreground">
-            Loyalty points are not available yet. We are connecting rewards to real customer profiles and verified order
-            history so points stay with you across devices and visits.
+            Customer rewards UX is not live yet. Admin loyalty experience APIs are LIVE for staff — points balances and
+            catalogue data are not shown here until the customer surface ships.
           </p>
           <ul className="text-sm text-muted-foreground space-y-2 list-disc pl-5">
             <li>Points tied to your Telepizza account</li>

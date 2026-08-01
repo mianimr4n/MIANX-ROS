@@ -563,7 +563,9 @@ export default function AdminDashboard() {
         pendingManualReviewAdjustments: loyaltyAttentionUnavailable
           ? null
           : (loyaltyAttention.data?.pendingManualReviewAdjustments ?? null),
-        rewardsCatalogueConfigured: false as const,
+        rewardsCatalogueConfigured: loyaltyAttentionUnavailable
+          ? false
+          : Boolean(loyaltyAttention.data?.rewardsCatalogueConfigured),
       },
       marketingAttention: {
         unavailable: marketingAttentionUnavailable,

@@ -14,11 +14,15 @@ import {
   listMarketingCampaigns,
   listMarketingConsent,
   listMarketingCoupons,
+  listMarketingSegments,
   listMarketingSuppressions,
+  listMarketingTemplates,
   patchMarketingConsent,
   patchMarketingCoupon,
+  previewMarketingSegment,
   queueCampaignSubmissions,
   transitionMarketingCampaign,
+  transitionMarketingCampaignLifecycle,
   type CampaignChannel,
   type CampaignSubmission,
   type CampaignStatus,
@@ -26,18 +30,22 @@ import {
   type MarketingCampaign,
   type MarketingConsent,
   type MarketingCoupon,
+  type MarketingSegment,
+  type MarketingSegmentPreview,
   type MarketingSuppression,
+  type MarketingTemplate,
 } from "@/lib/admin-api";
 import { ApiRequestError } from "@/lib/api";
 import { AdminShell } from "./AdminShell";
 
 const CAMPAIGN_TRANSITIONS: Partial<Record<CampaignStatus, CampaignStatus[]>> = {
-  draft: ["scheduled", "running", "cancelled"],
+  draft: ["awaiting_approval", "scheduled", "running", "cancelled"],
+  awaiting_approval: ["approved", "draft", "cancelled"],
+  approved: ["scheduled", "running", "cancelled"],
   scheduled: ["running", "paused", "cancelled"],
   running: ["paused", "completed", "cancelled"],
   paused: ["running", "cancelled"],
 };
-
 export default function AdminMarketing() {
   const { session, permissions, isSuperAdmin, roles } = useAuth();
   const { branchIdFilter, label: branchLabel } = useAdminBranch();
@@ -53,6 +61,11 @@ export default function AdminMarketing() {
   const [suppressions, setSuppressions] = useState<MarketingSuppression[] | null>(null);
   const [consent, setConsent] = useState<MarketingConsent[] | null>(null);
   const [submissions, setSubmissions] = useState<CampaignSubmission[] | null>(null);
+  const [segments, setSegments] = useState<MarketingSegment[] | null>(null);
+  const [templates, setTemplates] = useState<MarketingTemplate[] | null>(null);
+  const [segmentPreview, setSegmentPreview] = useState<MarketingSegmentPreview | null>(null);
+  const [previewCode, setPreviewCode] = useState("loyalty_members");
+  const [depthError, setDepthError] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,24 +107,31 @@ export default function AdminMarketing() {
     setError(null);
     setPanelError(null);
     try {
-      const [couponRows, redemptionRows, campaignRows, suppressionRows, consentRows] = await Promise.all([
-        listMarketingCoupons(token, { branchId: branchIdFilter || undefined }),
-        listCouponRedemptions(token, { branchId: branchIdFilter || undefined }),
-        listMarketingCampaigns(token, { branchId: branchIdFilter || undefined }),
-        listMarketingSuppressions(token),
-        listMarketingConsent(token),
-      ]);
+      const [couponRows, redemptionRows, campaignRows, suppressionRows, consentRows, segmentRows, templateRows] =
+        await Promise.all([
+          listMarketingCoupons(token, { branchId: branchIdFilter || undefined }),
+          listCouponRedemptions(token, { branchId: branchIdFilter || undefined }),
+          listMarketingCampaigns(token, { branchId: branchIdFilter || undefined }),
+          listMarketingSuppressions(token),
+          listMarketingConsent(token),
+          listMarketingSegments(token).catch(() => null),
+          listMarketingTemplates(token).catch(() => null),
+        ]);
       setCoupons(couponRows);
       setRedemptions(redemptionRows);
       setCampaigns(campaignRows);
       setSuppressions(suppressionRows);
       setConsent(consentRows);
+      setSegments(segmentRows);
+      setTemplates(templateRows);
     } catch (err) {
       setCoupons(null);
       setRedemptions(null);
       setCampaigns(null);
       setSuppressions(null);
       setConsent(null);
+      setSegments(null);
+      setTemplates(null);
       setError(err instanceof ApiRequestError ? err.message : "Failed to load marketing data.");
     } finally {
       setLoading(false);
@@ -207,14 +227,38 @@ export default function AdminMarketing() {
     if (!token || !canManage) return;
     setPanelError(null);
     try {
-      await transitionMarketingCampaign(token, campaignId, {
-        status,
-        cancelReason: status === "cancelled" ? cancelReason : undefined,
-      });
+      const useLifecycle =
+        status === "awaiting_approval" ||
+        status === "approved" ||
+        campaigns?.find((c) => c.id === campaignId)?.status === "awaiting_approval" ||
+        campaigns?.find((c) => c.id === campaignId)?.status === "approved";
+      if (useLifecycle) {
+        await transitionMarketingCampaignLifecycle(token, campaignId, {
+          status,
+          cancelReason: status === "cancelled" ? cancelReason : undefined,
+        });
+      } else {
+        await transitionMarketingCampaign(token, campaignId, {
+          status,
+          cancelReason: status === "cancelled" ? cancelReason : undefined,
+        });
+      }
       if (status === "cancelled") setCancelReason("");
       await load();
     } catch (err) {
       setPanelError(err instanceof ApiRequestError ? err.message : "Failed to update campaign status.");
+    }
+  }
+
+  async function onPreviewSegment() {
+    if (!token) return;
+    setDepthError(null);
+    setSegmentPreview(null);
+    try {
+      const preview = await previewMarketingSegment(token, previewCode.trim());
+      setSegmentPreview(preview);
+    } catch (err) {
+      setDepthError(err instanceof ApiRequestError ? err.message : "Segment preview failed.");
     }
   }
 
@@ -460,17 +504,120 @@ export default function AdminMarketing() {
         </AdminSurfaceBody>
       </AdminSurface>
 
+      <div className="mb-6 grid gap-6 lg:grid-cols-2">
+        <AdminSurface aria-labelledby="segments-heading">
+          <AdminSurfaceHeader
+            title="Audience segments"
+            description="Documented segment formulas — preview may be LIVE or UNAVAILABLE (never fabricate counts)."
+          />
+          <AdminSurfaceBody>
+            <h2 id="segments-heading" className="sr-only">
+              Audience segments
+            </h2>
+            {depthError ? (
+              <p className="mb-2 text-sm text-red-700" role="alert">
+                {depthError}
+              </p>
+            ) : null}
+            {!segments ? (
+              <p className="text-sm text-[var(--admin-muted)]">Segments API unavailable.</p>
+            ) : segments.length === 0 ? (
+              <p className="text-sm text-[var(--admin-muted)]">No segments seeded yet.</p>
+            ) : (
+              <>
+                <ul className="mb-3 max-h-48 space-y-1 overflow-y-auto text-xs text-[var(--admin-muted)]">
+                  {segments.map((s) => (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewCode(s.code)}
+                        className="font-semibold text-[var(--admin-ink)] underline-offset-2 hover:underline"
+                      >
+                        {s.code}
+                      </button>
+                      {" — "}
+                      {s.name}
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex flex-wrap items-end gap-2">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+                    Preview code
+                    <input
+                      value={previewCode}
+                      onChange={(e) => setPreviewCode(e.target.value)}
+                      className="mt-1 block min-h-10 rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => void onPreviewSegment()}
+                    className="min-h-10 rounded-lg bg-[var(--admin-ink)] px-3 text-xs font-semibold text-[var(--admin-panel)]"
+                  >
+                    Preview
+                  </button>
+                </div>
+                {segmentPreview ? (
+                  <div className="mt-3 rounded-lg border border-dashed border-[var(--admin-border)] px-3 py-2 text-xs">
+                    <p className="font-semibold">
+                      {segmentPreview.status}
+                      {segmentPreview.memberCount != null ? ` · ${segmentPreview.memberCount} members` : ""}
+                    </p>
+                    {segmentPreview.reason ? (
+                      <p className="mt-1 text-[var(--admin-muted)]">{segmentPreview.reason}</p>
+                    ) : null}
+                    {segmentPreview.status === "UNAVAILABLE" ? (
+                      <p className="mt-1 text-amber-900">Count not fabricated — formula documented only.</p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </>
+            )}
+          </AdminSurfaceBody>
+        </AdminSurface>
+
+        <AdminSurface aria-labelledby="templates-heading">
+          <AdminSurfaceHeader
+            title="Message templates"
+            description="Stored templates with variable extraction — provider approval is not delivery confirmation."
+          />
+          <AdminSurfaceBody>
+            <h2 id="templates-heading" className="sr-only">
+              Message templates
+            </h2>
+            {!templates ? (
+              <p className="text-sm text-[var(--admin-muted)]">Templates API unavailable.</p>
+            ) : templates.length === 0 ? (
+              <p className="text-sm text-[var(--admin-muted)]">No templates created yet.</p>
+            ) : (
+              <ul className="max-h-64 space-y-2 overflow-y-auto text-sm">
+                {templates.map((t) => (
+                  <li key={t.id} className="rounded-lg border border-[var(--admin-border)] px-3 py-2">
+                    <p className="font-semibold">{t.name}</p>
+                    <p className="mt-1 text-xs text-[var(--admin-muted)]">
+                      {t.channel} · {t.providerApprovalState}
+                      {t.variables.length > 0 ? ` · vars: ${t.variables.join(", ")}` : ""}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </AdminSurfaceBody>
+        </AdminSurface>
+      </div>
+
       <AdminSurface aria-labelledby="campaigns-heading" className="mb-6">
         <AdminSurfaceHeader
           title="Campaigns"
-          description="Lifecycle management only — submissions stay queued/suppressed until a messaging provider is configured."
+          description="Lifecycle includes awaiting_approval → approved. Queue only when approved/scheduled/running — provider delivery is not configured."
         />
         <AdminSurfaceBody>
           <h2 id="campaigns-heading" className="sr-only">
             Campaigns
           </h2>
           <p className="mb-4 rounded-xl border border-dashed border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-            Messaging provider is not configured. Campaign queue creates submissions only — never claim delivered messages.
+            Messaging provider is not configured. Submissions stay queued/suppressed — never claim delivered, opened, or
+            clicked. Depth lifecycle: draft → awaiting_approval → approved before queue.
           </p>
 
           {canManage ? (
@@ -645,30 +792,39 @@ export default function AdminMarketing() {
             </h2>
             {canManage ? (
               <form onSubmit={(e) => void onCreateSuppression(e)} className="mb-4 grid gap-2">
-                <input
-                  required
-                  placeholder="Customer ID"
-                  value={suppressionCustomerId}
-                  onChange={(e) => setSuppressionCustomerId(e.target.value)}
-                  className="min-h-10 rounded-lg border border-[var(--admin-border)] px-3 text-sm"
-                />
-                <select
-                  value={suppressionChannel}
-                  onChange={(e) => setSuppressionChannel(e.target.value)}
-                  className="min-h-10 rounded-lg border border-[var(--admin-border)] px-3 text-sm"
-                >
-                  <option value="whatsapp">WhatsApp</option>
-                  <option value="sms">SMS</option>
-                  <option value="email">Email</option>
-                  <option value="all">All</option>
-                </select>
-                <input
-                  required
-                  placeholder="Reason"
-                  value={suppressionReason}
-                  onChange={(e) => setSuppressionReason(e.target.value)}
-                  className="min-h-10 rounded-lg border border-[var(--admin-border)] px-3 text-sm"
-                />
+                <label className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+                  Customer ID
+                  <input
+                    required
+                    placeholder="Customer UUID"
+                    value={suppressionCustomerId}
+                    onChange={(e) => setSuppressionCustomerId(e.target.value)}
+                    className="mt-1 min-h-10 w-full rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
+                  />
+                </label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+                  Channel
+                  <select
+                    value={suppressionChannel}
+                    onChange={(e) => setSuppressionChannel(e.target.value)}
+                    className="mt-1 min-h-10 w-full rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
+                  >
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="sms">SMS</option>
+                    <option value="email">Email</option>
+                    <option value="all">All</option>
+                  </select>
+                </label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
+                  Reason
+                  <input
+                    required
+                    placeholder="Suppression reason"
+                    value={suppressionReason}
+                    onChange={(e) => setSuppressionReason(e.target.value)}
+                    className="mt-1 min-h-10 w-full rounded-lg border border-[var(--admin-border)] px-3 text-sm font-normal normal-case"
+                  />
+                </label>
                 <button
                   type="submit"
                   className="min-h-10 rounded-lg bg-[var(--admin-ink)] px-3 text-sm font-semibold text-[var(--admin-panel)]"

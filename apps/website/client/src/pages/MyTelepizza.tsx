@@ -2105,7 +2105,7 @@ export default function MyTelepizza() {
                 <CustomerEmptyState
                   icon={Gift}
                   title="Rewards are coming soon."
-                  description="We'll share exclusive offers here when Rewards launches. No points balance is shown until then."
+                  description="We'll share exclusive offers here when Rewards launches. No points balance is shown until then. (Staff admin experience APIs are LIVE separately — this customer surface is not live.)"
                   action={
                     <Button asChild className="min-h-11 rounded-2xl brand-gradient text-white">
                       <Link href="/menu">Browse Menu</Link>

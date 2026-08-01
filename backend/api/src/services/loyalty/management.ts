@@ -65,8 +65,10 @@ export interface LoyaltyAttentionSnapshot {
   earnTransactionsToday: number;
   burnTransactionsToday: number;
   pendingManualReviewAdjustments: number;
-  rewardsCatalogueConfigured: false;
+  rewardsCatalogueConfigured: boolean;
   rewardsCatalogueMessage: string;
+  rewardsAwaitingApproval: number;
+  pointsExpiringAttention: string;
 }
 
 export interface LoyaltyService {
@@ -292,7 +294,7 @@ export function createLoyaltyService(envStatus: EnvironmentStatus): LoyaltyServi
         const dayStart = `${today}T00:00:00+05:00`;
         const dayEnd = `${today}T23:59:59.999+05:00`;
 
-        const [accountsRes, earnRes, burnRes] = await Promise.all([
+        const [accountsRes, earnRes, burnRes, rewardsRes, awaitingRes] = await Promise.all([
           client.from("loyalty_accounts").select("id", { count: "exact", head: true }).gt("points_balance", 0),
           client
             .from("loyalty_transactions")
@@ -306,8 +308,18 @@ export function createLoyaltyService(envStatus: EnvironmentStatus): LoyaltyServi
             .eq("type", "burn")
             .gte("created_at", dayStart)
             .lte("created_at", dayEnd),
+          client
+            .from("loyalty_rewards")
+            .select("id", { count: "exact", head: true })
+            .eq("is_active", true)
+            .eq("approval_status", "approved"),
+          client
+            .from("loyalty_rewards")
+            .select("id", { count: "exact", head: true })
+            .eq("approval_status", "awaiting_approval"),
         ]);
 
+        const catalogueConfigured = (rewardsRes.count ?? 0) > 0;
         return {
           state: "available" as const,
           unavailableReason: null,
@@ -315,8 +327,13 @@ export function createLoyaltyService(envStatus: EnvironmentStatus): LoyaltyServi
           earnTransactionsToday: earnRes.count ?? 0,
           burnTransactionsToday: burnRes.count ?? 0,
           pendingManualReviewAdjustments: 0,
-          rewardsCatalogueConfigured: false as const,
-          rewardsCatalogueMessage: "Rewards catalogue is not configured.",
+          rewardsCatalogueConfigured: catalogueConfigured,
+          rewardsCatalogueMessage: catalogueConfigured
+            ? "Approved rewards catalogue is LIVE."
+            : "No approved active rewards yet.",
+          rewardsAwaitingApproval: awaitingRes.count ?? 0,
+          pointsExpiringAttention:
+            "Points-expiring attention stays informational until an active expiry policy stamps earn rows.",
         };
       } catch (error) {
         return {
@@ -326,8 +343,10 @@ export function createLoyaltyService(envStatus: EnvironmentStatus): LoyaltyServi
           earnTransactionsToday: 0,
           burnTransactionsToday: 0,
           pendingManualReviewAdjustments: 0,
-          rewardsCatalogueConfigured: false as const,
-          rewardsCatalogueMessage: "Rewards catalogue is not configured.",
+          rewardsCatalogueConfigured: false,
+          rewardsCatalogueMessage: "Rewards catalogue unavailable.",
+          rewardsAwaitingApproval: 0,
+          pointsExpiringAttention: "Unavailable.",
         };
       }
     },

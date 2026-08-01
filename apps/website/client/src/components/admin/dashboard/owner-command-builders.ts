@@ -60,7 +60,7 @@ export type OwnerCommandLiveExtras = {
     earnTransactionsToday: number | null;
     burnTransactionsToday: number | null;
     pendingManualReviewAdjustments: number | null;
-    rewardsCatalogueConfigured: false;
+    rewardsCatalogueConfigured: boolean;
   } | null;
   marketingAttention?: {
     unavailable: boolean;

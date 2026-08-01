@@ -18,11 +18,16 @@ import {
   COUPON_STATUSES,
   type MarketingService,
 } from "../../services/marketing/coupons.js";
+import {
+  DEPTH_CAMPAIGN_STATUSES,
+  type MarketingDepthService,
+} from "../../services/marketing/depth.js";
 
 export interface AdminMarketingRouterDependencies {
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
   marketing: MarketingService;
+  marketingDepth: MarketingDepthService;
 }
 
 function scopeFrom(principal: AuthPrincipal): BranchActorScope {
@@ -267,7 +272,7 @@ export function createAdminMarketingRouter(deps: AdminMarketingRouterDependencie
         const campaignId = z.string().uuid().parse(req.params.id);
         const principal = (req as AuthorizedRequest).principal!;
         const body = req.body as z.infer<typeof queueSchema>;
-        const data = await deps.marketing.queueCampaignSubmissions(
+        const data = await deps.marketingDepth.queueWithProviderGate(
           scopeFrom(principal),
           campaignId,
           body.customerIds,
@@ -355,6 +360,172 @@ export function createAdminMarketingRouter(deps: AdminMarketingRouterDependencie
       }
       const principal = (req as AuthorizedRequest).principal!;
       const data = await deps.marketing.getAttention(scopeFrom(principal), parsed.data.branchId);
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  // —— RC4-11 depth ——
+  router.get("/marketing/segments", requireAuthenticatedUser, requireMarketingAccess, async (_req, res, next) => {
+    try {
+      const data = await deps.marketingDepth.listSegments();
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.get("/marketing/segments/:code/preview", requireAuthenticatedUser, requireMarketingAccess, async (req, res, next) => {
+    try {
+      const data = await deps.marketingDepth.previewSegment(req.params.code);
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.get("/marketing/templates", requireAuthenticatedUser, requireMarketingAccess, async (req, res, next) => {
+    try {
+      const channel =
+        typeof req.query.channel === "string" && CAMPAIGN_CHANNELS.includes(req.query.channel as never)
+          ? (req.query.channel as (typeof CAMPAIGN_CHANNELS)[number])
+          : undefined;
+      const data = await deps.marketingDepth.listTemplates(channel);
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.post(
+    "/marketing/templates",
+    requireAuthenticatedUser,
+    requireMarketingAccess,
+    validateBody(
+      z
+        .object({
+          name: z.string().trim().min(1).max(160),
+          channel: z.enum(CAMPAIGN_CHANNELS),
+          language: z.string().trim().min(2).max(12).optional(),
+          subject: z.string().trim().max(200).nullable().optional(),
+          body: z.string().trim().min(1).max(8000),
+          branchId: z.string().uuid().nullable().optional(),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.marketingDepth.createTemplate(principal.userId, req.body);
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/marketing/campaigns/depth",
+    requireAuthenticatedUser,
+    requireMarketingAccess,
+    validateBody(
+      z
+        .object({
+          branchId: z.string().uuid().nullable().optional(),
+          name: z.string().trim().min(1).max(160),
+          channel: z.enum(CAMPAIGN_CHANNELS),
+          messageTemplate: z.string().trim().max(4000).optional(),
+          templateId: z.string().uuid().nullable().optional(),
+          segmentId: z.string().uuid().nullable().optional(),
+          couponId: z.string().uuid().nullable().optional(),
+          rewardId: z.string().uuid().nullable().optional(),
+          objective: z.string().trim().max(500).nullable().optional(),
+          scheduledAt: z.string().datetime({ offset: true }).nullable().optional(),
+          budgetMetadata: z.record(z.string(), z.unknown()).optional(),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        const data = await deps.marketingDepth.createDepthCampaign(
+          scopeFrom(principal),
+          principal.userId,
+          req.body,
+        );
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.patch(
+    "/marketing/campaigns/:id/lifecycle",
+    requireAuthenticatedUser,
+    requireMarketingAccess,
+    validateBody(
+      z
+        .object({
+          status: z.enum(DEPTH_CAMPAIGN_STATUSES),
+          cancelReason: z.string().trim().min(1).max(2000).nullable().optional(),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const campaignId = z.string().uuid().parse(req.params.id);
+        const principal = (req as AuthorizedRequest).principal!;
+        const body = req.body as {
+          status: (typeof DEPTH_CAMPAIGN_STATUSES)[number];
+          cancelReason?: string | null;
+        };
+        const data = await deps.marketingDepth.transitionDepthCampaign(
+          scopeFrom(principal),
+          principal.userId,
+          campaignId,
+          body.status,
+          body.cancelReason,
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/marketing/attribution",
+    requireAuthenticatedUser,
+    requireMarketingAccess,
+    validateBody(
+      z
+        .object({
+          orderId: z.string().uuid(),
+          sourceType: z.enum(["coupon", "campaign", "reward_redemption", "provider_ref"]),
+          couponId: z.string().uuid().nullable().optional(),
+          campaignId: z.string().uuid().nullable().optional(),
+          rewardRedemptionId: z.string().uuid().nullable().optional(),
+          providerMessageId: z.string().trim().min(1).max(200).nullable().optional(),
+          attributableRevenue: z.number().finite().min(0).nullable().optional(),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const data = await deps.marketingDepth.recordAttribution(req.body);
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.get("/marketing/attribution/summary", requireAuthenticatedUser, requireMarketingAccess, async (req, res, next) => {
+    try {
+      const campaignId = typeof req.query.campaignId === "string" ? req.query.campaignId : undefined;
+      const data = await deps.marketingDepth.getAttributionSummary(campaignId);
       return res.json({ ok: true, data });
     } catch (error) {
       return next(error);

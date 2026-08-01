@@ -92,14 +92,16 @@ const loyaltyStub = (overrides: Partial<LoyaltyService> = {}): LoyaltyService =>
   },
   async getAttention() {
     return {
-      state: "available",
+      state: "available" as const,
       unavailableReason: null,
       accountsWithBalance: 0,
       earnTransactionsToday: 0,
       burnTransactionsToday: 0,
       pendingManualReviewAdjustments: 0,
-      rewardsCatalogueConfigured: false,
+      rewardsCatalogueConfigured: false as const,
       rewardsCatalogueMessage: "Rewards catalogue is not configured.",
+      rewardsAwaitingApproval: 0,
+      pointsExpiringAttention: "No expiry policy configured.",
     };
   },
   ...overrides,
