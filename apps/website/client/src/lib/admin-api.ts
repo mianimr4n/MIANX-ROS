@@ -2048,7 +2048,17 @@ export type HrWorkforceAttentionSnapshot = {
 };
 
 export type HrSalaryType = "monthly" | "hourly" | "daily";
-export type HrPayrollStatus = "draft" | "calculated" | "under_review" | "approved" | "locked" | "cancelled";
+export type HrPayrollStatus =
+  | "draft"
+  | "calculated"
+  | "under_review"
+  | "review_required"
+  | "approved"
+  | "payment_ready"
+  | "paid"
+  | "cancelled"
+  | "reversed"
+  | "locked";
 
 export type HrCompensationProfile = {
   id: string;
@@ -2070,6 +2080,7 @@ export type HrPayPeriod = {
   branchId: string;
   periodStart: string;
   periodEnd: string;
+  payDate?: string | null;
   status: HrPayrollStatus;
   createdAt: string;
   updatedAt: string;
@@ -2082,10 +2093,52 @@ export type HrPayrollRun = {
   status: HrPayrollStatus;
   calculationStatus: "unavailable" | "partial" | "complete";
   calculationNote: string | null;
+  calculationVersion?: string | null;
   paymentTriggered: false;
   paymentMessage: string;
+  accountingStatus?: "DEFERRED" | "LIVE" | "BLOCKED" | "PENDING";
+  accrualPostingStatus?: string | null;
+  accrualPostingBlockedReason?: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type HrPayrollLine = {
+  id: string;
+  payrollRunId: string;
+  employeeId: string;
+  earnings: number;
+  deductions: number;
+  adjustments: number;
+  grossPay: number;
+  netPay: number;
+  currency: string;
+  lineStatus: string;
+  notes: string | null;
+};
+
+export type HrPayrollException = {
+  id: string;
+  payrollRunId: string;
+  employeeId: string | null;
+  exceptionCode: string;
+  severity: string;
+  message: string;
+  status: string;
+};
+
+export type HrPayslip = {
+  id: string;
+  payrollRunId: string;
+  employeeId: string;
+  periodStart: string;
+  periodEnd: string;
+  grossPay: number;
+  netPay: number;
+  currency: string;
+  paymentStatus: string;
+  payload: Record<string, unknown>;
+  issuedAt: string;
 };
 
 export type CreateHrLeaveInput = {
@@ -2456,6 +2509,33 @@ export function lockHrPayrollRun(accessToken: string, runId: string) {
     headers: bearerHeaders(accessToken),
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
+}
+
+export function markHrPayrollPaymentReady(accessToken: string, runId: string) {
+  return fetchApiData<HrPayrollRun>(`/admin/hr/payroll-runs/${runId}/payment-ready`, {
+    method: "POST",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listHrPayrollLines(accessToken: string, runId: string, opts?: AdminReadOptions) {
+  return fetchApiData<HrPayrollLine[]>(`/admin/hr/payroll-runs/${runId}/lines`, readInit(accessToken, opts));
+}
+
+export function listHrPayrollExceptions(accessToken: string, runId: string, opts?: AdminReadOptions) {
+  return fetchApiData<HrPayrollException[]>(
+    `/admin/hr/payroll-runs/${runId}/exceptions`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function listHrPayslips(accessToken: string, runId: string, opts?: AdminReadOptions) {
+  return fetchApiData<HrPayslip[]>(`/admin/hr/payroll-runs/${runId}/payslips`, readInit(accessToken, opts));
+}
+
+export function getHrPayslip(accessToken: string, payslipId: string, opts?: AdminReadOptions) {
+  return fetchApiData<HrPayslip>(`/admin/hr/payslips/${payslipId}`, readInit(accessToken, opts));
 }
 
 export function listHrDocuments(

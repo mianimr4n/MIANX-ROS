@@ -48,6 +48,11 @@ export const MAPPING_PURPOSES = [
   "cash_flow_operating",
   "cash_flow_investing",
   "cash_flow_financing",
+  "salary_expense",
+  "allowance_expense",
+  "payroll_payable",
+  "payroll_tax_payable",
+  "payroll_deduction_payable",
 ] as const;
 
 export type MappingPurpose = (typeof MAPPING_PURPOSES)[number] | `expense_category:${string}`;

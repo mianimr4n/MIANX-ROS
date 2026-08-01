@@ -474,14 +474,21 @@ const hrPayroll: HrPayrollService = {
       branchId: "550e8400-e29b-41d4-a716-446655440000",
       status: "draft",
       calculationStatus: "unavailable",
-      calculationNote: "Payroll calculation is not available until compensation rules are configured.",
+      calculationNote: "Draft — not yet calculated.",
+      calculationVersion: null,
+      calculatedAt: null,
+      paymentReadyAt: null,
+      accrualPostingStatus: null,
+      accrualPostingBlockedReason: null,
+      accrualJournalEntryId: null,
       createdBy: "user-admin",
       approvedBy: null,
       lockedAt: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       paymentTriggered: false,
-      paymentMessage: "Payroll foundation does not trigger payments.",
+      paymentMessage: "paymentTriggered=false. Settlement required.",
+      accountingStatus: "PENDING",
     };
   },
   async calculatePayrollRun(_scope, _actor, runId) {
@@ -489,20 +496,75 @@ const hrPayroll: HrPayrollService = {
       id: runId,
       payPeriodId: "period-1",
       branchId: "550e8400-e29b-41d4-a716-446655440000",
-      status: "under_review",
-      calculationStatus: "unavailable",
-      calculationNote: "unavailable",
+      status: "calculated",
+      calculationStatus: "complete",
+      calculationNote: "Calculated with rc4-3.payroll.v1",
+      calculationVersion: "rc4-3.payroll.v1",
+      calculatedAt: new Date().toISOString(),
+      paymentReadyAt: null,
+      accrualPostingStatus: "pending",
+      accrualPostingBlockedReason: null,
+      accrualJournalEntryId: null,
       createdBy: "user-admin",
       approvedBy: null,
       lockedAt: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       paymentTriggered: false,
-      paymentMessage: "Payroll foundation does not trigger payments.",
+      paymentMessage: "paymentTriggered=false. Settlement required.",
+      accountingStatus: "PENDING",
     };
   },
-  async approvePayrollRun() {
+  async approvePayrollRun(_scope, _actor, runId) {
+    return {
+      id: runId,
+      payPeriodId: "period-1",
+      branchId: "550e8400-e29b-41d4-a716-446655440000",
+      status: "approved",
+      calculationStatus: "complete",
+      calculationNote: "Calculated",
+      calculationVersion: "rc4-3.payroll.v1",
+      calculatedAt: new Date().toISOString(),
+      paymentReadyAt: null,
+      accrualPostingStatus: "posted",
+      accrualPostingBlockedReason: null,
+      accrualJournalEntryId: "journal-1",
+      createdBy: "user-admin",
+      approvedBy: "user-admin",
+      lockedAt: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      paymentTriggered: false,
+      paymentMessage: "paymentTriggered=false. Settlement required.",
+      accountingStatus: "LIVE",
+    };
+  },
+  async rejectPayrollRun() {
     throw new Error("unused");
+  },
+  async markPaymentReady(_scope, _actor, runId) {
+    return {
+      id: runId,
+      payPeriodId: "period-1",
+      branchId: "550e8400-e29b-41d4-a716-446655440000",
+      status: "payment_ready",
+      calculationStatus: "complete",
+      calculationNote: "Calculated",
+      calculationVersion: "rc4-3.payroll.v1",
+      calculatedAt: new Date().toISOString(),
+      paymentReadyAt: new Date().toISOString(),
+      accrualPostingStatus: "posted",
+      accrualPostingBlockedReason: null,
+      accrualJournalEntryId: "journal-1",
+      createdBy: "user-admin",
+      approvedBy: "user-admin",
+      lockedAt: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      paymentTriggered: false,
+      paymentMessage: "paymentTriggered=false. Settlement required.",
+      accountingStatus: "LIVE",
+    };
   },
   async lockPayrollRun(_scope, _actor, runId) {
     return {
@@ -510,16 +572,71 @@ const hrPayroll: HrPayrollService = {
       payPeriodId: "period-1",
       branchId: "550e8400-e29b-41d4-a716-446655440000",
       status: "locked",
-      calculationStatus: "unavailable",
-      calculationNote: "unavailable",
+      calculationStatus: "complete",
+      calculationNote: "Calculated",
+      calculationVersion: "rc4-3.payroll.v1",
+      calculatedAt: new Date().toISOString(),
+      paymentReadyAt: null,
+      accrualPostingStatus: "posted",
+      accrualPostingBlockedReason: null,
+      accrualJournalEntryId: "journal-1",
       createdBy: "user-admin",
       approvedBy: "user-admin",
       lockedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       paymentTriggered: false,
-      paymentMessage: "Payroll foundation does not trigger payments.",
+      paymentMessage: "paymentTriggered=false. Settlement required.",
+      accountingStatus: "LIVE",
     };
+  },
+  async cancelPayrollRun() {
+    throw new Error("unused");
+  },
+  async reversePayrollRun() {
+    throw new Error("unused");
+  },
+  async recordSettlement(_scope, _actor, input) {
+    return {
+      settlementId: "settlement-1",
+      run: {
+        id: input.payrollRunId,
+        payPeriodId: "period-1",
+        branchId: "550e8400-e29b-41d4-a716-446655440000",
+        status: "payment_ready" as const,
+        calculationStatus: "complete" as const,
+        calculationNote: "Calculated",
+        calculationVersion: "rc4-3.payroll.v1",
+        calculatedAt: new Date().toISOString(),
+        paymentReadyAt: new Date().toISOString(),
+        accrualPostingStatus: "posted",
+        accrualPostingBlockedReason: null,
+        accrualJournalEntryId: "journal-1",
+        createdBy: "user-admin",
+        approvedBy: "user-admin",
+        lockedAt: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        paymentTriggered: false as const,
+        paymentMessage: "paymentTriggered=false. Settlement required.",
+        accountingStatus: "LIVE" as const,
+      },
+      paymentTriggered: false as const,
+      postingStatus: "posted",
+      postingBlockedReason: null,
+    };
+  },
+  async listPayrollLines() {
+    return [];
+  },
+  async listPayrollExceptions() {
+    return [];
+  },
+  async listPayslips() {
+    return [];
+  },
+  async getPayslip() {
+    throw new Error("unused");
   },
 };
 
@@ -761,7 +878,33 @@ describe("HR employee directory APIs", () => {
       .set("Authorization", "Bearer test-token");
     expect(res.status).toBe(200);
     expect(res.body.data.paymentTriggered).toBe(false);
-    expect(res.body.data.calculationStatus).toBe("unavailable");
+    expect(res.body.data.calculationStatus).toBe("complete");
+    expect(res.body.data.accountingStatus).toBe("PENDING");
+  });
+
+  it("POST payroll payment-ready does not set paid", async () => {
+    const { app } = createApp(readyEnv, {
+      hrEmployees,
+      hrWorkforce,
+      hrScheduling,
+      hrPayroll,
+      authTokenVerifier: verifier("auth-admin", "admin@example.com"),
+      authProfileRepository: authRepo(principal()),
+    });
+    const res = await request(app)
+      .post("/api/v1/admin/hr/payroll-runs/550e8400-e29b-41d4-a716-446655440088/payment-ready")
+      .set("Authorization", "Bearer test-token");
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe("payment_ready");
+    expect(res.body.data.paymentTriggered).toBe(false);
+  });
+
+  it("GET payroll lines requires auth", async () => {
+    const { app } = createApp(readyEnv, { hrEmployees, hrWorkforce, hrScheduling, hrPayroll });
+    const res = await request(app).get(
+      "/api/v1/admin/hr/payroll-runs/550e8400-e29b-41d4-a716-446655440088/lines",
+    );
+    expect(res.status).toBe(401);
   });
 
   it("POST /api/v1/admin/hr/employees/:id/documents stores a document URL", async () => {

@@ -174,6 +174,32 @@ export interface FinancePhase2Service {
     cogsEventId: string,
     requestId?: string | null,
   ): Promise<unknown>;
+  postPayrollAccrual(
+    scope: BranchActorScope,
+    actorUserId: string,
+    payrollRunId: string,
+    requestId?: string | null,
+  ): Promise<{
+    ok: boolean;
+    payrollRunId: string;
+    journalEntryId: string | null;
+    postingStatus: "posted" | "blocked" | "already_posted" | "deferred";
+    postingBlockedReason: string | null;
+    idempotent?: boolean;
+  }>;
+  postPayrollSettlement(
+    scope: BranchActorScope,
+    actorUserId: string,
+    settlementId: string,
+    requestId?: string | null,
+  ): Promise<{
+    ok: boolean;
+    settlementId: string;
+    journalEntryId: string | null;
+    postingStatus: "posted" | "blocked" | "already_posted" | "deferred";
+    postingBlockedReason: string | null;
+    idempotent?: boolean;
+  }>;
   mappingHealth(scope: BranchActorScope, branchId: string): Promise<{
     branchId: string;
     required: string[];
@@ -857,6 +883,290 @@ export function createFinancePhase2Service(
       }
     },
 
+    async postPayrollAccrual(scope, actorUserId, payrollRunId, requestId) {
+      const db = client(env);
+      const { data: existing } = await db
+        .from("finance_postings")
+        .select("id, journal_entry_id, status")
+        .eq("source_module", "payroll_run")
+        .eq("source_id", payrollRunId)
+        .maybeSingle();
+      if (existing?.status === "posted" && existing.journal_entry_id) {
+        return {
+          ok: true,
+          payrollRunId,
+          journalEntryId: String(existing.journal_entry_id),
+          postingStatus: "already_posted" as const,
+          postingBlockedReason: null,
+          idempotent: true,
+        };
+      }
+
+      const { data: run, error } = await db
+        .from("hr_payroll_runs")
+        .select("id, branch_id, status, accrual_posting_status, accrual_journal_entry_id")
+        .eq("id", payrollRunId)
+        .maybeSingle();
+      if (error) throwMappedDbError("FINANCE_PHASE2_DB", error);
+      if (!run) throw new ApiError(404, "HR_PAYROLL_RUN_NOT_FOUND", "Payroll run not found.");
+      assertBranchMembership(scope, run.branch_id);
+
+      if (!["approved", "payment_ready", "locked"].includes(String(run.status))) {
+        throw new ApiError(409, "HR_PAYROLL_NOT_APPROVED", "Accrual posting requires an approved payroll run.");
+      }
+
+      const { data: lines, error: lineErr } = await db
+        .from("hr_payroll_lines")
+        .select("gross_pay, net_pay, deductions, line_status")
+        .eq("payroll_run_id", payrollRunId);
+      if (lineErr) throwMappedDbError("FINANCE_PHASE2_DB", lineErr);
+
+      const postable = (lines ?? []).filter((l) => l.line_status !== "blocked");
+      const gross = Math.round(postable.reduce((s, l) => s + Number(l.gross_pay ?? 0), 0) * 100) / 100;
+      const net = Math.round(postable.reduce((s, l) => s + Number(l.net_pay ?? 0), 0) * 100) / 100;
+      const deductions = Math.round(postable.reduce((s, l) => s + Number(l.deductions ?? 0), 0) * 100) / 100;
+
+      if (gross <= 0) {
+        await db
+          .from("hr_payroll_runs")
+          .update({
+            accrual_posting_status: "deferred",
+            accrual_posting_blocked_reason: "No postable gross pay on run lines.",
+          })
+          .eq("id", payrollRunId);
+        return {
+          ok: true,
+          payrollRunId,
+          journalEntryId: null,
+          postingStatus: "deferred" as const,
+          postingBlockedReason: "No postable gross pay on run lines.",
+        };
+      }
+
+      const today = new Date().toISOString().slice(0, 10);
+      try {
+        await assertPeriodAllows(db, run.branch_id, today);
+        const expense = await requireMapping(db, run.branch_id, "salary_expense");
+        const payable = await requireMapping(db, run.branch_id, "payroll_payable");
+        const journalLines: Array<{ accountId: string; debit?: number; credit?: number }> = [
+          { accountId: expense.accountId, debit: gross },
+          { accountId: payable.accountId, credit: net },
+        ];
+        if (deductions > 0) {
+          const dedMap = await requireMapping(db, run.branch_id, "payroll_deduction_payable");
+          journalLines.push({ accountId: dedMap.accountId, credit: deductions });
+        }
+
+        const journal = await finance.createJournalEntry(scope, actorUserId, {
+          branchId: run.branch_id,
+          entryDate: today,
+          description: `Payroll accrual run ${payrollRunId}`,
+          referenceType: "payroll_run",
+          referenceId: payrollRunId,
+          status: "posted",
+          lines: journalLines,
+        });
+
+        await db.from("finance_postings").upsert(
+          {
+            source_module: "payroll_run",
+            source_id: payrollRunId,
+            journal_entry_id: journal.id,
+            idempotency_key: `payroll_accrual:${payrollRunId}`,
+            status: "posted",
+            branch_id: run.branch_id,
+            posted_by: actorUserId,
+          },
+          { onConflict: "source_module,source_id" },
+        );
+
+        await db
+          .from("hr_payroll_runs")
+          .update({
+            accrual_journal_entry_id: journal.id,
+            accrual_posting_status: "posted",
+            accrual_posting_blocked_reason: null,
+          })
+          .eq("id", payrollRunId);
+
+        await db.from("hr_payroll_posting_events").upsert(
+          {
+            payroll_run_id: payrollRunId,
+            branch_id: run.branch_id,
+            event_type: "payroll_accrual_ready",
+            status: "posted",
+            idempotency_key: `payroll_accrual_ready:${payrollRunId}`,
+            payload: { journalEntryId: journal.id, gross, net, deductions },
+            deferred_reason: "",
+          },
+          { onConflict: "idempotency_key" },
+        );
+
+        return {
+          ok: true,
+          payrollRunId,
+          journalEntryId: journal.id,
+          postingStatus: "posted" as const,
+          postingBlockedReason: null,
+        };
+      } catch (e) {
+        const reason = e instanceof ApiError ? e.message : "Payroll accrual post failed";
+        const status = e instanceof ApiError && e.code === "ACCOUNT_MAPPING_REQUIRED" ? "blocked" : "blocked";
+        await recordException(db, {
+          branchId: run.branch_id,
+          exceptionType:
+            e instanceof ApiError && e.code === "ACCOUNT_MAPPING_REQUIRED"
+              ? "missing_account_mapping"
+              : "failed_automated_posting",
+          sourceModule: "payroll_run",
+          sourceId: payrollRunId,
+          message: reason,
+          requestId,
+        });
+        await db
+          .from("hr_payroll_runs")
+          .update({
+            accrual_posting_status: status,
+            accrual_posting_blocked_reason: reason,
+          })
+          .eq("id", payrollRunId);
+        await db.from("hr_payroll_posting_events").upsert(
+          {
+            payroll_run_id: payrollRunId,
+            branch_id: run.branch_id,
+            event_type: "payroll_accrual_ready",
+            status: "deferred",
+            idempotency_key: `payroll_accrual_ready:${payrollRunId}`,
+            payload: { gross, net, deductions },
+            deferred_reason: reason,
+          },
+          { onConflict: "idempotency_key" },
+        );
+        return {
+          ok: false,
+          payrollRunId,
+          journalEntryId: null,
+          postingStatus: "blocked" as const,
+          postingBlockedReason: reason,
+        };
+      }
+    },
+
+    async postPayrollSettlement(scope, actorUserId, settlementId, requestId) {
+      const db = client(env);
+      const { data: existing } = await db
+        .from("finance_postings")
+        .select("id, journal_entry_id, status")
+        .eq("source_module", "payroll_settlement")
+        .eq("source_id", settlementId)
+        .maybeSingle();
+      if (existing?.status === "posted" && existing.journal_entry_id) {
+        return {
+          ok: true,
+          settlementId,
+          journalEntryId: String(existing.journal_entry_id),
+          postingStatus: "already_posted" as const,
+          postingBlockedReason: null,
+          idempotent: true,
+        };
+      }
+
+      const { data: settlement, error } = await db
+        .from("hr_payroll_settlements")
+        .select("id, payroll_run_id, employee_id, amount, currency, status, payment_reference")
+        .eq("id", settlementId)
+        .maybeSingle();
+      if (error) throwMappedDbError("FINANCE_PHASE2_DB", error);
+      if (!settlement) throw new ApiError(404, "HR_PAYROLL_SETTLEMENT_NOT_FOUND", "Settlement not found.");
+      if (settlement.status !== "settled") {
+        throw new ApiError(409, "SETTLEMENT_NOT_SETTLED", "Only settled settlements can post payment journals.");
+      }
+
+      const { data: run, error: runErr } = await db
+        .from("hr_payroll_runs")
+        .select("id, branch_id, status")
+        .eq("id", settlement.payroll_run_id)
+        .maybeSingle();
+      if (runErr) throwMappedDbError("FINANCE_PHASE2_DB", runErr);
+      if (!run) throw new ApiError(404, "HR_PAYROLL_RUN_NOT_FOUND", "Payroll run not found.");
+      assertBranchMembership(scope, run.branch_id);
+
+      const amount = Number(settlement.amount);
+      const today = new Date().toISOString().slice(0, 10);
+      try {
+        await assertPeriodAllows(db, run.branch_id, today);
+        const payable = await requireMapping(db, run.branch_id, "payroll_payable");
+        const cash = await requireMapping(db, run.branch_id, "cash_on_hand").catch(async () =>
+          requireMapping(db, run.branch_id, "bank_clearing"),
+        );
+        const journal = await finance.createJournalEntry(scope, actorUserId, {
+          branchId: run.branch_id,
+          entryDate: today,
+          description: `Payroll settlement ${settlement.payment_reference}`,
+          referenceType: "payroll_settlement",
+          referenceId: settlement.id,
+          status: "posted",
+          lines: [
+            { accountId: payable.accountId, debit: amount },
+            { accountId: cash.accountId, credit: amount },
+          ],
+        });
+        await db.from("finance_postings").upsert(
+          {
+            source_module: "payroll_settlement",
+            source_id: settlement.id,
+            journal_entry_id: journal.id,
+            idempotency_key: `payroll_settlement:${settlement.id}`,
+            status: "posted",
+            branch_id: run.branch_id,
+            posted_by: actorUserId,
+          },
+          { onConflict: "source_module,source_id" },
+        );
+        await db.from("hr_payroll_posting_events").upsert(
+          {
+            payroll_run_id: run.id,
+            branch_id: run.branch_id,
+            event_type: "payroll_payment_ready",
+            status: "posted",
+            idempotency_key: `payroll_settlement_post:${settlement.id}`,
+            payload: { settlementId: settlement.id, journalEntryId: journal.id, amount },
+            deferred_reason: "",
+          },
+          { onConflict: "idempotency_key" },
+        );
+        return {
+          ok: true,
+          settlementId,
+          journalEntryId: journal.id,
+          postingStatus: "posted" as const,
+          postingBlockedReason: null,
+        };
+      } catch (e) {
+        const reason = e instanceof ApiError ? e.message : "Payroll settlement post failed";
+        await recordException(db, {
+          branchId: run.branch_id,
+          exceptionType:
+            e instanceof ApiError && e.code === "ACCOUNT_MAPPING_REQUIRED"
+              ? "missing_account_mapping"
+              : "failed_automated_posting",
+          sourceModule: "payroll_settlement",
+          sourceId: settlementId,
+          message: reason,
+          requestId,
+        });
+        return {
+          ok: false,
+          settlementId,
+          journalEntryId: null,
+          postingStatus: "blocked" as const,
+          postingBlockedReason: reason,
+        };
+      } finally {
+        void actorUserId;
+      }
+    },
+
     async mappingHealth(scope, branchId) {
       assertBranchMembership(scope, branchId);
       const db = client(env);
@@ -868,6 +1178,8 @@ export function createFinancePhase2Service(
         "sales_revenue",
         "inventory_asset",
         "cogs",
+        "salary_expense",
+        "payroll_payable",
       ];
       const { data, error } = await db
         .from("finance_account_mappings")
@@ -879,7 +1191,9 @@ export function createFinancePhase2Service(
       return {
         branchId,
         required,
-        present: present.filter((p) => (MAPPING_PURPOSES as readonly string[]).includes(p) || p.startsWith("expense_category:")),
+        present: present.filter(
+          (p) => (MAPPING_PURPOSES as readonly string[]).includes(p) || p.startsWith("expense_category:"),
+        ),
         missing,
         status: missing.length === 0 ? "LIVE" : "UNAVAILABLE",
       };

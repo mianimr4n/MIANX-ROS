@@ -266,6 +266,7 @@ const createPayPeriodSchema = z
     branchId: z.string().uuid(),
     periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    payDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
   })
   .strict();
 
@@ -950,6 +951,171 @@ export function createAdminHrRouter(deps: AdminHrRouterDependencies): Router {
       const runId = z.string().uuid().parse(req.params.id);
       const principal = (req as AuthorizedRequest).principal!;
       const data = await deps.hrPayroll.lockPayrollRun(scopeFrom(principal), principal.userId, runId);
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.post("/hr/payroll-runs/:id/payment-ready", requireAuthenticatedUser, requireHrAccess, async (req, res, next) => {
+    try {
+      const runId = z.string().uuid().parse(req.params.id);
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.hrPayroll.markPaymentReady(scopeFrom(principal), principal.userId, runId);
+      return res.json({ ok: true, data });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.post(
+    "/hr/payroll-runs/:id/reject",
+    requireAuthenticatedUser,
+    requireHrAccess,
+    validateBody(z.object({ reason: z.string().trim().min(1).max(500).optional() }).strict()),
+    async (req, res, next) => {
+      try {
+        const runId = z.string().uuid().parse(req.params.id);
+        const principal = (req as AuthorizedRequest).principal!;
+        const body = req.body as { reason?: string };
+        const data = await deps.hrPayroll.rejectPayrollRun(
+          scopeFrom(principal),
+          principal.userId,
+          runId,
+          body.reason,
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/hr/payroll-runs/:id/cancel",
+    requireAuthenticatedUser,
+    requireHrAccess,
+    validateBody(z.object({ reason: z.string().trim().min(1).max(500).optional() }).strict()),
+    async (req, res, next) => {
+      try {
+        const runId = z.string().uuid().parse(req.params.id);
+        const principal = (req as AuthorizedRequest).principal!;
+        const body = req.body as { reason?: string };
+        const data = await deps.hrPayroll.cancelPayrollRun(
+          scopeFrom(principal),
+          principal.userId,
+          runId,
+          body.reason,
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/hr/payroll-runs/:id/reverse",
+    requireAuthenticatedUser,
+    requireHrAccess,
+    validateBody(z.object({ reason: z.string().trim().min(3).max(500) }).strict()),
+    async (req, res, next) => {
+      try {
+        const runId = z.string().uuid().parse(req.params.id);
+        const principal = (req as AuthorizedRequest).principal!;
+        const body = req.body as { reason: string };
+        const data = await deps.hrPayroll.reversePayrollRun(
+          scopeFrom(principal),
+          principal.userId,
+          runId,
+          body.reason,
+        );
+        return res.json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/hr/payroll-runs/:id/settlements",
+    requireAuthenticatedUser,
+    requireHrAccess,
+    validateBody(
+      z
+        .object({
+          employeeId: z.string().uuid(),
+          amount: z.number().positive(),
+          paymentReference: z.string().trim().min(1).max(200),
+          settledAt: z.string().datetime(),
+          provider: z.string().trim().min(1).max(80).optional(),
+          idempotencyKey: z.string().trim().min(8).max(200),
+        })
+        .strict(),
+    ),
+    async (req, res, next) => {
+      try {
+        const runId = z.string().uuid().parse(req.params.id);
+        const principal = (req as AuthorizedRequest).principal!;
+        const body = req.body as {
+          employeeId: string;
+          amount: number;
+          paymentReference: string;
+          settledAt: string;
+          provider?: string;
+          idempotencyKey: string;
+        };
+        const data = await deps.hrPayroll.recordSettlement(
+          scopeFrom(principal),
+          principal.userId,
+          { payrollRunId: runId, ...body },
+          getRequestId(req),
+        );
+        return res.status(201).json({ ok: true, data });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.get("/hr/payroll-runs/:id/lines", requireAuthenticatedUser, requireHrAccess, async (req, res, next) => {
+    try {
+      const runId = z.string().uuid().parse(req.params.id);
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.hrPayroll.listPayrollLines(scopeFrom(principal), runId);
+      return res.json({ ok: true, data, meta: { count: data.length } });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.get("/hr/payroll-runs/:id/exceptions", requireAuthenticatedUser, requireHrAccess, async (req, res, next) => {
+    try {
+      const runId = z.string().uuid().parse(req.params.id);
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.hrPayroll.listPayrollExceptions(scopeFrom(principal), runId);
+      return res.json({ ok: true, data, meta: { count: data.length } });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.get("/hr/payroll-runs/:id/payslips", requireAuthenticatedUser, requireHrAccess, async (req, res, next) => {
+    try {
+      const runId = z.string().uuid().parse(req.params.id);
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.hrPayroll.listPayslips(scopeFrom(principal), runId);
+      return res.json({ ok: true, data, meta: { count: data.length } });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.get("/hr/payslips/:id", requireAuthenticatedUser, requireHrAccess, async (req, res, next) => {
+    try {
+      const payslipId = z.string().uuid().parse(req.params.id);
+      const principal = (req as AuthorizedRequest).principal!;
+      const data = await deps.hrPayroll.getPayslip(scopeFrom(principal), payslipId);
       return res.json({ ok: true, data });
     } catch (error) {
       return next(error);

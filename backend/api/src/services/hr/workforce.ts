@@ -1267,7 +1267,10 @@ export function createHrWorkforceService(envStatus: EnvironmentStatus): HrWorkfo
         const client = supabase();
         let corrQ = client.from("hr_attendance_corrections").select("id").eq("status", "pending");
         let leaveQ = client.from("hr_leave_requests").select("id").eq("status", "PENDING");
-        let payQ = client.from("hr_payroll_runs").select("id").in("status", ["under_review", "calculated"]);
+        let payQ = client
+          .from("hr_payroll_runs")
+          .select("id")
+          .in("status", ["under_review", "calculated", "review_required"]);
 
         if (branchScope !== "all" && branchScope !== "none") {
           corrQ = corrQ.in("branch_id", branchScope);
