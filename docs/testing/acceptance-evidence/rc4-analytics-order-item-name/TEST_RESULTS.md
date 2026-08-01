@@ -1,26 +1,17 @@
 # Analytics order_items.name hotfix — test results
 
 **Branch:** `fix/analytics-order-item-name-schema`  
-**Base:** `origin/main` @ `538c289`
+**Date:** 2026-08-02
 
-## Commands
+| Gate | Result | Notes |
+| --- | --- | --- |
+| `pnpm check:website` (tsc) | PASS | |
+| `pnpm exec tsc --noEmit` (backend) | PASS | |
+| `pnpm test:db` | PASS | 800 tests incl. updated `rc4-analytics-bi` contract |
+| `pnpm test:backend` | PASS | 619 tests (+6 schema/aggregation) |
+| `git diff --check` | PASS | |
+| Analytics Vitest (`analytics-order-items-schema`) | PASS | 6/6 |
+| `pnpm rc1:gate` | FAIL (env) | Local Docker/Supabase `:54321` unavailable — auth/KDS refuse connect |
+| Playwright `playwright.rc4-analytics-bi.config.ts` | FAIL (env) | Needs local API+website+Supabase seed; Chromium installed afterward |
 
-| Command | Result |
-| --- | --- |
-| `pnpm check` | **PASS** |
-| `pnpm test` | **PASS** — db 800 + backend 619 |
-| `pnpm test:db` | **PASS** |
-| `git diff --check` | **PASS** |
-| Targeted Vitest (`analytics-order-items-schema`, `analytics-api`, `analytics-registry`) | **PASS** (13) |
-| `pnpm rc1:gate` | **FAIL** — local API `127.0.0.1:4000` ECONNREFUSED (auth/KDS matrix); not caused by this diff |
-| Playwright `playwright.rc4-analytics-bi.config.ts` | **FAIL / not run against live stack** — local Supabase/API/website not up |
-
-## Fix summary
-
-- Select `order_items.product_name` (canonical order-time snapshot), never `order_items.name`
-- Aggregate by `menu_item_id`; honest `Unavailable item name` when snapshot blank
-- No migration; no Production SQL; no deploy
-
-## Axe / browser
-
-Deferred until local stack is available; static + unit regression covers the 42703 root cause.
+No Production SQL. No migration added (query/select fix only).
