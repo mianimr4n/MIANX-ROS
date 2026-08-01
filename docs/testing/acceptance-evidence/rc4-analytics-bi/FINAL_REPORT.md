@@ -11,7 +11,7 @@
 | Branch | `feature/rc4-analytics-bi` |
 | Start (origin/main with Payroll) | `89280176f857a709eb7b5b25f9d12d745984f2ce` |
 | Primary implementation | 45cffa16e284563c38ffd7272fd9b245fddb913a |
-| Tip (this report) | pending tip commit |
+| Tip (this report) | 52e00e8d1ac42b55bab789861204fcc88e15efe5 |
 
 ## Why complete
 
