@@ -10,7 +10,7 @@
 | --- | --- |
 | Branch | `feature/rc4-loyalty-marketing-depth` |
 | Start (origin/main) | `8967d4d8f595cd4ca742d364be01b590c1cd4d92` |
-| Tip | set after local commit (`git rev-parse HEAD`) |
+| Tip | `44efc5279545bb3112b99179253fbb008fbda4d4` |
 | Push / PR | Not pushed. PR not opened (per instructions). |
 
 ## Why complete
