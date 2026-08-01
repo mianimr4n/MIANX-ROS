@@ -1,6 +1,6 @@
 /**
- * Loyalty & Rewards V1 — composition and honesty wiring (static).
- * Points ledger is LIVE; Rewards Catalog remains Planned for Phase 2.
+ * Loyalty & Rewards V1 + RC4-11 depth — composition and honesty wiring (static).
+ * Points ledger LIVE; Rewards Catalogue LIVE via depth APIs.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -15,15 +15,14 @@ function read(rel) {
 }
 
 describe("Loyalty & Rewards V1 (static)", () => {
-  it("composes /admin/loyalty with live accounts list, ledger, and rewards Planned for Phase 2", () => {
+  it("composes /admin/loyalty with live accounts list, ledger, and LIVE rewards catalogue", () => {
     const page = read("apps/website/client/src/pages/admin/AdminLoyalty.tsx");
     assert.match(page, /listLoyaltyAccounts/);
     assert.match(page, /listLoyaltyTransactions/);
     assert.match(page, /burnLoyaltyPoints|adjustLoyaltyPoints|expireLoyaltyPoints|reverseLoyaltyTransaction/);
     assert.match(page, /RewardCatalogue/);
     assert.match(page, /canAccessAdminLoyalty/);
-    assert.match(page, /LIVE accounts \+ ledger/);
-    assert.match(page, /Points ledger/);
+    assert.match(page, /listLoyaltyTiers|fetchLoyaltyLiability/);
     assert.doesNotMatch(page, /Foundation \+ Derived|FOUNDATION/);
     assert.doesNotMatch(page, /ledger API|no ledger endpoint/i);
   });
@@ -34,10 +33,12 @@ describe("Loyalty & Rewards V1 (static)", () => {
     assert.doesNotMatch(page, /Math\.random|localStorage|getLoyaltyPoints/);
   });
 
-  it("keeps Rewards Catalog as Planned for Phase 2", () => {
+  it("wires Rewards Catalogue to live loyalty depth APIs", () => {
     const catalogue = read("apps/website/client/src/components/admin/loyalty/RewardCatalogue.tsx");
-    assert.match(catalogue, /Rewards Catalog — Planned for Phase 2/);
-    assert.match(catalogue, /Planned for Phase 2 — no sample rewards/i);
+    assert.match(catalogue, /LIVE catalogue API|listLoyaltyRewards/);
+    assert.match(catalogue, /createLoyaltyReward|approveLoyaltyReward/);
+    assert.doesNotMatch(catalogue, /Planned for Phase 2/);
+    assert.match(catalogue, /No sample rewards are shown as live/);
   });
 
   it("gates /admin/loyalty with canAccessAdminLoyalty", () => {
@@ -58,7 +59,7 @@ describe("Loyalty & Rewards V1 (static)", () => {
     assert.doesNotMatch(page, /getLoyaltyPoints|LOYALTY_POINTS_KEY|localStorage/);
   });
 
-  it("exposes loyalty API helpers for ledger mutations and attention", () => {
+  it("exposes loyalty API helpers for ledger mutations, depth, and attention", () => {
     const api = read("apps/website/client/src/lib/admin-api.ts");
     assert.match(api, /listLoyaltyTransactions/);
     assert.match(api, /burnLoyaltyPoints/);
@@ -66,6 +67,8 @@ describe("Loyalty & Rewards V1 (static)", () => {
     assert.match(api, /expireLoyaltyPoints/);
     assert.match(api, /reverseLoyaltyTransaction/);
     assert.match(api, /fetchLoyaltyAttention/);
+    assert.match(api, /listLoyaltyRewards/);
+    assert.match(api, /fetchLoyaltyLiability/);
   });
 
   it("wires Owner loyalty attention from verified API", () => {

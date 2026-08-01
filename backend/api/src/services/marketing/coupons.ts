@@ -18,6 +18,8 @@ export type CampaignChannel = (typeof CAMPAIGN_CHANNELS)[number];
 
 export const CAMPAIGN_STATUSES = [
   "draft",
+  "awaiting_approval",
+  "approved",
   "scheduled",
   "running",
   "paused",
@@ -552,8 +554,12 @@ export function createMarketingService(envStatus: EnvironmentStatus): MarketingS
       if (!campaign) throw new ApiError(404, "CAMPAIGN_NOT_FOUND", "Campaign not found.");
       const camp = mapCampaign(campaign as unknown as Record<string, unknown>);
       if (camp.branchId) assertBranchMembership(scope, camp.branchId);
-      if (camp.status !== "running" && camp.status !== "scheduled") {
-        throw new ApiError(409, "CAMPAIGN_NOT_SENDABLE", "Campaign must be scheduled or running to queue submissions.");
+      if (camp.status !== "running" && camp.status !== "scheduled" && camp.status !== "approved") {
+        throw new ApiError(
+          409,
+          "CAMPAIGN_NOT_SENDABLE",
+          "Campaign must be approved, scheduled, or running to queue submissions. Unapproved campaigns are blocked.",
+        );
       }
 
       let queued = 0;

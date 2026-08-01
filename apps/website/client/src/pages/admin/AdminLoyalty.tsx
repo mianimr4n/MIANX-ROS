@@ -9,10 +9,14 @@ import {
   adjustLoyaltyPoints,
   burnLoyaltyPoints,
   expireLoyaltyPoints,
+  fetchLoyaltyLiability,
   listLoyaltyAccounts,
+  listLoyaltyTiers,
   listLoyaltyTransactions,
   reverseLoyaltyTransaction,
   type LoyaltyAccount,
+  type LoyaltyLiabilitySnapshot,
+  type LoyaltyTierDefinition,
   type LoyaltyTransaction,
 } from "@/lib/admin-api";
 import { ApiRequestError } from "@/lib/api";
@@ -30,6 +34,10 @@ export default function AdminLoyalty() {
 
   const [accounts, setAccounts] = useState<LoyaltyAccount[] | null>(null);
   const [transactions, setTransactions] = useState<LoyaltyTransaction[] | null>(null);
+  const [tiers, setTiers] = useState<LoyaltyTierDefinition[] | null>(null);
+  const [liability, setLiability] = useState<LoyaltyLiabilitySnapshot | null>(null);
+  const [tiersError, setTiersError] = useState<string | null>(null);
+  const [liabilityError, setLiabilityError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [txnLoading, setTxnLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +80,31 @@ export default function AdminLoyalty() {
     }
   }, [session?.access_token]);
 
+  const loadDepthSnapshots = useCallback(async () => {
+    const token = session?.access_token;
+    if (!token) {
+      setTiers(null);
+      setLiability(null);
+      return;
+    }
+    setTiersError(null);
+    setLiabilityError(null);
+    try {
+      const tierRows = await listLoyaltyTiers(token);
+      setTiers(tierRows);
+    } catch (err) {
+      setTiers(null);
+      setTiersError(err instanceof ApiRequestError ? err.message : "Failed to load tier definitions.");
+    }
+    try {
+      const snap = await fetchLoyaltyLiability(token);
+      setLiability(snap);
+    } catch (err) {
+      setLiability(null);
+      setLiabilityError(err instanceof ApiRequestError ? err.message : "Failed to load liability snapshot.");
+    }
+  }, [session?.access_token]);
+
   const loadTransactions = useCallback(async () => {
     const token = session?.access_token;
     if (!token) {
@@ -98,7 +131,8 @@ export default function AdminLoyalty() {
   useEffect(() => {
     if (!gateReady || !allowed) return;
     void loadAccounts();
-  }, [allowed, gateReady, loadAccounts]);
+    void loadDepthSnapshots();
+  }, [allowed, gateReady, loadAccounts, loadDepthSnapshots]);
 
   useEffect(() => {
     if (!gateReady || !allowed) return;
@@ -193,11 +227,15 @@ export default function AdminLoyalty() {
           <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-900">
             LIVE accounts + ledger
           </span>
+          <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-900">
+            LIVE rewards + tiers
+          </span>
           <button
             type="button"
             onClick={() => {
               void loadAccounts();
               void loadTransactions();
+              void loadDepthSnapshots();
             }}
             className="min-h-9 rounded-lg border border-[var(--admin-border)] bg-white px-3 text-sm font-semibold"
           >
@@ -205,6 +243,91 @@ export default function AdminLoyalty() {
           </button>
         </div>
       </header>
+
+      <div className="mb-6 grid gap-6 lg:grid-cols-2">
+        <AdminSurface aria-labelledby="loyalty-tiers-heading">
+          <AdminSurfaceHeader
+            title="Tier definitions"
+            description="Configurable qualification thresholds from the live tiers API."
+          />
+          <AdminSurfaceBody>
+            <h2 id="loyalty-tiers-heading" className="sr-only">
+              Tier definitions
+            </h2>
+            {tiersError ? (
+              <p className="text-sm text-red-700" role="alert">
+                {tiersError}
+              </p>
+            ) : !tiers ? (
+              <p className="text-sm text-[var(--admin-muted)]">Tier definitions unavailable.</p>
+            ) : tiers.length === 0 ? (
+              <p className="text-sm text-[var(--admin-muted)]">No tier definitions configured.</p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {tiers.map((t) => (
+                  <li key={t.id} className="rounded-lg border border-[var(--admin-border)] px-3 py-2">
+                    <p className="font-semibold capitalize">
+                      {t.name}{" "}
+                      <span className="text-xs font-normal text-[var(--admin-muted)]">({t.tierCode})</span>
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--admin-muted)]">
+                      ≥ {t.thresholdPoints} pts · ×{t.earningMultiplier} earn
+                      {t.isActive ? "" : " · inactive"}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </AdminSurfaceBody>
+        </AdminSurface>
+
+        <AdminSurface aria-labelledby="loyalty-liability-heading">
+          <AdminSurfaceHeader
+            title="Liability snapshot"
+            description="Outstanding points from the ledger — PKR only when a valuation rule is configured."
+          />
+          <AdminSurfaceBody>
+            <h2 id="loyalty-liability-heading" className="sr-only">
+              Liability snapshot
+            </h2>
+            {liabilityError ? (
+              <p className="text-sm text-red-700" role="alert">
+                {liabilityError}
+              </p>
+            ) : !liability ? (
+              <p className="text-sm text-[var(--admin-muted)]">Liability snapshot unavailable.</p>
+            ) : (
+              <div>
+                <dl className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">Outstanding pts</dt>
+                    <dd className="mt-1 font-semibold tabular-nums">{liability.outstandingPointBalance}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">Expired pts</dt>
+                    <dd className="mt-1 font-semibold tabular-nums">{liability.expiredPoints}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">Earned / redeemed</dt>
+                    <dd className="mt-1 font-semibold tabular-nums">
+                      {liability.earned} / {liability.redeemed}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-[var(--admin-muted)]">Liability PKR</dt>
+                    <dd className="mt-1 font-semibold tabular-nums">
+                      {liability.valuationConfigured && liability.liabilityPkr != null
+                        ? liability.liabilityPkr.toLocaleString("en-PK")
+                        : "—"}
+                    </dd>
+                  </div>
+                </dl>
+                <p className="mt-3 text-xs text-[var(--admin-muted)]">{liability.liabilityMessage}</p>
+              </div>
+            )}
+          </AdminSurfaceBody>
+        </AdminSurface>
+      </div>
 
       <AdminSurface aria-labelledby="loyalty-accounts-heading" className="mb-6">
         <AdminSurfaceHeader
@@ -471,7 +594,7 @@ export default function AdminLoyalty() {
         </AdminSurfaceBody>
       </AdminSurface>
 
-      <RewardCatalogue />
+      <RewardCatalogue canManage={canMutate} />
     </AdminShell>
   );
 }

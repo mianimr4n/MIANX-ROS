@@ -3549,8 +3549,10 @@ export type LoyaltyAttentionSnapshot = {
   earnTransactionsToday: number;
   burnTransactionsToday: number;
   pendingManualReviewAdjustments: number;
-  rewardsCatalogueConfigured: false;
+  rewardsCatalogueConfigured: boolean;
   rewardsCatalogueMessage: string;
+  rewardsAwaitingApproval?: number;
+  pointsExpiringAttention?: string;
 };
 
 export function listLoyaltyTransactions(
@@ -3731,7 +3733,15 @@ export function listCouponRedemptions(
 }
 
 export type CampaignChannel = "whatsapp" | "sms" | "email" | "push";
-export type CampaignStatus = "draft" | "scheduled" | "running" | "paused" | "completed" | "cancelled";
+export type CampaignStatus =
+  | "draft"
+  | "awaiting_approval"
+  | "approved"
+  | "scheduled"
+  | "running"
+  | "paused"
+  | "completed"
+  | "cancelled";
 export type SubmissionStatus =
   | "queued"
   | "suppressed"
@@ -3919,6 +3929,240 @@ export function fetchMarketingAttention(
     `/admin/marketing/attention${qs ? `?${qs}` : ""}`,
     readInit(accessToken, opts),
   );
+}
+
+/* —— RC4-11 Loyalty depth —— */
+
+export type LoyaltyRewardType =
+  | "fixed_discount"
+  | "percentage_discount"
+  | "free_item"
+  | "category_reward"
+  | "delivery_fee_waiver";
+
+export type LoyaltyRewardApproval = "draft" | "awaiting_approval" | "approved" | "rejected";
+
+export type LoyaltyReward = {
+  id: string;
+  branchId: string | null;
+  name: string;
+  description: string | null;
+  rewardType: LoyaltyRewardType;
+  pointsCost: number;
+  monetaryValue: number | null;
+  productRef: string | null;
+  categoryRef: string | null;
+  isActive: boolean;
+  validFrom: string | null;
+  validTo: string | null;
+  perCustomerLimit: number | null;
+  globalRedemptionLimit: number | null;
+  minOrderAmount: number;
+  approvalStatus: LoyaltyRewardApproval;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateLoyaltyRewardInput = {
+  branchId?: string | null;
+  name: string;
+  description?: string | null;
+  rewardType: LoyaltyRewardType;
+  pointsCost: number;
+  monetaryValue?: number | null;
+  productRef?: string | null;
+  categoryRef?: string | null;
+  validFrom?: string | null;
+  validTo?: string | null;
+  perCustomerLimit?: number | null;
+  globalRedemptionLimit?: number | null;
+  minOrderAmount?: number;
+};
+
+export type LoyaltyTierDefinition = {
+  id: string;
+  tierCode: string;
+  name: string;
+  qualificationRule: "lifetime_earned_points" | "rolling_earned_points";
+  thresholdPoints: number;
+  rollingPeriodDays: number | null;
+  earningMultiplier: number;
+  benefits: Record<string, unknown>;
+  effectiveFrom: string | null;
+  effectiveTo: string | null;
+  isActive: boolean;
+  sortOrder: number;
+};
+
+export type LoyaltyLiabilitySnapshot = {
+  outstandingPointBalance: number;
+  pointsExpiringSoon: number | null;
+  expiredPoints: number;
+  earned: number;
+  redeemed: number;
+  redemptionRate: number | null;
+  liabilityPkr: number | null;
+  liabilityMessage: string;
+  valuationConfigured: boolean;
+};
+
+export function listLoyaltyRewards(
+  accessToken: string,
+  query?: { includeInactive?: boolean; branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.includeInactive) params.set("includeInactive", "1");
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<LoyaltyReward[]>(
+    `/admin/loyalty/rewards${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createLoyaltyReward(accessToken: string, input: CreateLoyaltyRewardInput) {
+  return fetchApiData<LoyaltyReward>("/admin/loyalty/rewards", {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function approveLoyaltyReward(
+  accessToken: string,
+  rewardId: string,
+  input: { approvalStatus: LoyaltyRewardApproval; activate?: boolean },
+) {
+  return fetchApiData<LoyaltyReward>(`/admin/loyalty/rewards/${rewardId}/approval`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function listLoyaltyTiers(accessToken: string, opts?: AdminReadOptions) {
+  return fetchApiData<LoyaltyTierDefinition[]>("/admin/loyalty/tiers", readInit(accessToken, opts));
+}
+
+export function fetchLoyaltyLiability(accessToken: string, opts?: AdminReadOptions) {
+  return fetchApiData<LoyaltyLiabilitySnapshot>("/admin/loyalty/liability", readInit(accessToken, opts));
+}
+
+export function fetchCustomerLoyaltyExperience(
+  accessToken: string,
+  customerId: string,
+  query?: { branchId?: string },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.branchId) params.set("branchId", query.branchId);
+  const qs = params.toString();
+  return fetchApiData<unknown>(
+    `/admin/loyalty/customers/${customerId}/experience${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+/* —— RC4-11 Marketing depth —— */
+
+export type MarketingSegment = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  formula: string;
+  authoritativeSource: string;
+  timeWindow: string;
+  exclusions: string;
+  branchScope: string;
+  freshness: string;
+  completeness: string;
+  isActive: boolean;
+};
+
+export type MarketingSegmentPreview = {
+  segment: MarketingSegment;
+  memberCount: number | null;
+  sampleCustomerIds: string[];
+  status: "LIVE" | "UNAVAILABLE";
+  reason: string | null;
+};
+
+export type MarketingTemplate = {
+  id: string;
+  name: string;
+  channel: CampaignChannel;
+  language: string;
+  subject: string | null;
+  body: string;
+  variables: string[];
+  providerApprovalState: string;
+  isActive: boolean;
+  branchId: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export function listMarketingSegments(accessToken: string, opts?: AdminReadOptions) {
+  return fetchApiData<MarketingSegment[]>("/admin/marketing/segments", readInit(accessToken, opts));
+}
+
+export function previewMarketingSegment(accessToken: string, code: string, opts?: AdminReadOptions) {
+  return fetchApiData<MarketingSegmentPreview>(
+    `/admin/marketing/segments/${encodeURIComponent(code)}/preview`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function listMarketingTemplates(
+  accessToken: string,
+  query?: { channel?: CampaignChannel },
+  opts?: AdminReadOptions,
+) {
+  const params = new URLSearchParams();
+  if (query?.channel) params.set("channel", query.channel);
+  const qs = params.toString();
+  return fetchApiData<MarketingTemplate[]>(
+    `/admin/marketing/templates${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export function createMarketingTemplate(
+  accessToken: string,
+  input: {
+    name: string;
+    channel: CampaignChannel;
+    language?: string;
+    subject?: string | null;
+    body: string;
+    branchId?: string | null;
+  },
+) {
+  return fetchApiData<MarketingTemplate>("/admin/marketing/templates", {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function transitionMarketingCampaignLifecycle(
+  accessToken: string,
+  campaignId: string,
+  input: { status: CampaignStatus; cancelReason?: string | null },
+) {
+  return fetchApiData<MarketingCampaign>(`/admin/marketing/campaigns/${campaignId}/lifecycle`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
 }
 
 export type SupplierAttentionSnapshot = {

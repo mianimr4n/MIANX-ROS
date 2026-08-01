@@ -175,9 +175,17 @@ import {
   type LoyaltyService,
 } from "./services/loyalty/management.js";
 import {
+  createLoyaltyDepthService,
+  type LoyaltyDepthService,
+} from "./services/loyalty/depth.js";
+import {
   createMarketingService,
   type MarketingService,
 } from "./services/marketing/coupons.js";
+import {
+  createMarketingDepthService,
+  type MarketingDepthService,
+} from "./services/marketing/depth.js";
 import {
   createAiPlatformService,
   type AiPlatformService,
@@ -240,7 +248,9 @@ export interface AppDependencies {
   reports: ReportsService;
   analytics: AnalyticsService;
   loyalty: LoyaltyService;
+  loyaltyDepth: LoyaltyDepthService;
   marketing: MarketingService;
+  marketingDepth: MarketingDepthService;
   aiPlatform: AiPlatformService;
   tableService: TableServiceOperations;
   paymentSettlement: PaymentSettlementService;
@@ -260,6 +270,8 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
   const hrPayroll = createHrPayrollService(envStatus, financePhase2);
   const loyalty = createLoyaltyService(envStatus);
   const marketing = createMarketingService(envStatus);
+  const loyaltyDepth = createLoyaltyDepthService(envStatus, loyalty);
+  const marketingDepth = createMarketingDepthService(envStatus, marketing);
   return {
     catalogDataSource: createSupabaseCatalogDataSource(envStatus),
     ordersDataSource: createOrdersDataSource(envStatus),
@@ -314,7 +326,9 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
       marketing,
     }),
     loyalty,
+    loyaltyDepth,
     marketing,
+    marketingDepth,
     aiPlatform: createAiPlatformService(envStatus),
     tableService: createTableServiceOperations(envStatus),
     paymentSettlement: createPaymentSettlementService(envStatus),
