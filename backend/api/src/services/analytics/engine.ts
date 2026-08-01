@@ -323,6 +323,55 @@ function pctChange(current: number, prior: number): number | null {
   return money(((current - prior) / prior) * 100);
 }
 
+/** Order-line row used by product analytics (canonical columns only). */
+export type AnalyticsOrderItemQtyRow = {
+  menu_item_id: string | null;
+  product_name: string | null;
+  quantity: number | string;
+};
+
+export type AnalyticsTopItemPoint = {
+  menuItemId: string;
+  /** Display label from order-time `product_name` snapshot; never invented from live menu. */
+  label: string;
+  quantity: number;
+};
+
+/**
+ * Aggregate top SKUs by `menu_item_id` using order-time `product_name` snapshots.
+ * Blank snapshots surface an honest unavailable label (menu delete-safe, no N+1).
+ */
+export function aggregateTopItemsByMenuItemId(
+  rows: AnalyticsOrderItemQtyRow[],
+  limit = 20,
+): AnalyticsTopItemPoint[] {
+  const bySku = new Map<string, { quantity: number; label: string | null }>();
+  for (const row of rows) {
+    const menuItemId = typeof row.menu_item_id === "string" ? row.menu_item_id.trim() : "";
+    if (!menuItemId) continue;
+    const quantity = parseNumber(row.quantity);
+    const snapshot =
+      typeof row.product_name === "string" && row.product_name.trim() !== ""
+        ? row.product_name.trim()
+        : null;
+    const existing = bySku.get(menuItemId);
+    if (!existing) {
+      bySku.set(menuItemId, { quantity, label: snapshot });
+    } else {
+      existing.quantity += quantity;
+      if (!existing.label && snapshot) existing.label = snapshot;
+    }
+  }
+  return [...bySku.entries()]
+    .map(([menuItemId, value]) => ({
+      menuItemId,
+      label: value.label ?? "Unavailable item name",
+      quantity: value.quantity,
+    }))
+    .sort((a, b) => b.quantity - a.quantity || a.label.localeCompare(b.label))
+    .slice(0, limit);
+}
+
 export function createAnalyticsService(deps: AnalyticsServiceDeps): AnalyticsService {
   const supabase = () => createServiceClient(deps.envStatus);
 
@@ -732,24 +781,21 @@ export function createAnalyticsService(deps: AnalyticsServiceDeps): AnalyticsSer
         const s = await salesBundle(scope, query);
         const client = supabase();
         const ids = s.included.map((o) => o.id);
-        const qtyByItem = new Map<string, number>();
+        const itemRows: AnalyticsOrderItemQtyRow[] = [];
         for (let i = 0; i < ids.length; i += 200) {
           const chunk = ids.slice(i, i + 200);
           if (chunk.length === 0) break;
+          // Canonical columns only: sold-item label is order-time product_name (not order_items.name).
           const { data, error } = await client
             .from("order_items")
-            .select("menu_item_id, quantity, name")
+            .select("menu_item_id, quantity, product_name")
             .in("order_id", chunk);
           if (error) throwMappedDbError("ANALYTICS_ORDER_ITEMS_READ_FAILED", error);
           for (const row of data ?? []) {
-            const key = String((row as { menu_item_id?: string; name?: string }).menu_item_id
-              ?? (row as { name?: string }).name
-              ?? "unknown");
-            const qty = parseNumber((row as { quantity: number | string }).quantity);
-            qtyByItem.set(key, (qtyByItem.get(key) ?? 0) + qty);
+            itemRows.push(row as AnalyticsOrderItemQtyRow);
           }
         }
-        const top = [...qtyByItem.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20);
+        const top = aggregateTopItemsByMenuItemId(itemRows, 20);
         return {
           moduleId,
           title: titles[moduleId],
@@ -766,7 +812,7 @@ export function createAnalyticsService(deps: AnalyticsServiceDeps): AnalyticsSer
             {
               key: "top_items",
               label: "Top items by qty",
-              points: top.map(([t, v]) => ({ t, v })),
+              points: top.map((row) => ({ t: row.label, v: row.quantity })),
             },
           ],
         };
