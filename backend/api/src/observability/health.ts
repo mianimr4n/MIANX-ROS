@@ -38,27 +38,47 @@ export interface VersionPayload {
   startedAt: string;
 }
 
-/** Optional lightweight probe — never sends secrets; skips when URL missing. */
+export type ProbeSupabaseOptions = {
+  /** Supabase anon/publishable key — sent as apikey + Bearer; never logged. */
+  anonKey?: string;
+  timeoutMs?: number;
+};
+
+/**
+ * Lightweight Supabase reachability probe.
+ * Uses `/auth/v1/health` with required gateway headers when anonKey is provided
+ * so Production health checks do not generate repeated unauthenticated 401 noise.
+ */
 export async function probeSupabaseConnectivity(
   supabaseUrl: string | undefined,
-  timeoutMs = 2500,
+  options: ProbeSupabaseOptions = {},
 ): Promise<DbConnectivity> {
   if (!supabaseUrl) return "not_configured";
   // Keep unit/CI tests fast and offline-friendly unless explicitly forced.
   if (process.env.NODE_ENV === "test" && process.env.TELEPIZZA_FORCE_DB_PROBE !== "1") {
     return "skipped";
   }
+  const timeoutMs = options.timeoutMs ?? 2500;
   try {
     const base = supabaseUrl.replace(/\/$/, "");
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const headers: Record<string, string> = { Accept: "application/json" };
+    const anonKey = options.anonKey?.trim();
+    if (anonKey) {
+      headers.apikey = anonKey;
+      headers.Authorization = `Bearer ${anonKey}`;
+    }
     const response = await fetch(`${base}/auth/v1/health`, {
       method: "GET",
       signal: controller.signal,
-      headers: { Accept: "application/json" },
+      headers,
     });
     clearTimeout(timer);
-    return response.ok || response.status === 401 || response.status === 404 ? "ok" : "error";
+    // With apikey: expect 200. Without: gateway often returns 401 (reachability only).
+    if (response.ok) return "ok";
+    if (!anonKey && (response.status === 401 || response.status === 404)) return "ok";
+    return "error";
   } catch {
     return "error";
   }

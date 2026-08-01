@@ -44,7 +44,9 @@ export function createApp(
   app.use(express.json({ limit: "2mb" }));
 
   app.get("/healthz", async (_req, res) => {
-    const dbConnectivity = await probeSupabaseConnectivity(envStatus.config.supabaseUrl);
+    const dbConnectivity = await probeSupabaseConnectivity(envStatus.config.supabaseUrl, {
+      anonKey: envStatus.config.supabaseAnonKey,
+    });
     const diagnostics = buildHealthDiagnostics(envStatus, { dbConnectivity, env: sourceEnv });
     res.json({
       ...diagnostics,
@@ -56,7 +58,9 @@ export function createApp(
     const statusCode = envStatus.isReady ? 200 : 503;
     const runtime = buildVersionPayload(envStatus, sourceEnv);
     const dbConnectivity = envStatus.isReady
-      ? await probeSupabaseConnectivity(envStatus.config.supabaseUrl)
+      ? await probeSupabaseConnectivity(envStatus.config.supabaseUrl, {
+          anonKey: envStatus.config.supabaseAnonKey,
+        })
       : ("skipped" as const);
 
     res.status(statusCode).json({

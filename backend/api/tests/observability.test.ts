@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import request from "supertest";
 import express from "express";
 
@@ -178,5 +178,83 @@ describe("RC4 observability", () => {
     } finally {
       process.env.NODE_ENV = prev;
     }
+  });
+});
+
+describe("probeSupabaseConnectivity", () => {
+  const originalFetch = globalThis.fetch;
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    delete process.env.TELEPIZZA_FORCE_DB_PROBE;
+  });
+
+  it("returns not_configured when URL missing", async () => {
+    const { probeSupabaseConnectivity } = await import("../src/observability/health.js");
+    expect(await probeSupabaseConnectivity(undefined)).toBe("not_configured");
+  });
+
+  it("skips in NODE_ENV=test unless forced", async () => {
+    const { probeSupabaseConnectivity } = await import("../src/observability/health.js");
+    expect(await probeSupabaseConnectivity("http://127.0.0.1:54321", { anonKey: "secret-anon" })).toBe(
+      "skipped",
+    );
+  });
+
+  it("sends apikey and Authorization without logging the secret", async () => {
+    process.env.TELEPIZZA_FORCE_DB_PROBE = "1";
+    let seenHeaders: HeadersInit | undefined;
+    globalThis.fetch = (async (_url, init) => {
+      seenHeaders = init?.headers;
+      return new Response(JSON.stringify({ version: "v1" }), { status: 200 });
+    }) as typeof fetch;
+
+    const { probeSupabaseConnectivity } = await import("../src/observability/health.js");
+    const result = await probeSupabaseConnectivity("http://example.supabase.co", {
+      anonKey: "secret-anon-key-value",
+      timeoutMs: 1000,
+    });
+    expect(result).toBe("ok");
+    const headers = new Headers(seenHeaders);
+    expect(headers.get("apikey")).toBe("secret-anon-key-value");
+    expect(headers.get("Authorization")).toBe("Bearer secret-anon-key-value");
+    // Probe must never emit keys into logger helpers.
+    expect(redactForLogs({ apikey: "secret-anon-key-value" })).toEqual({ apikey: "[REDACTED]" });
+  });
+
+  it("treats 401 as ok only when anonKey was not supplied", async () => {
+    process.env.TELEPIZZA_FORCE_DB_PROBE = "1";
+    globalThis.fetch = (async () => new Response("unauthorized", { status: 401 })) as typeof fetch;
+    const { probeSupabaseConnectivity } = await import("../src/observability/health.js");
+    expect(await probeSupabaseConnectivity("http://example.supabase.co", { timeoutMs: 500 })).toBe("ok");
+    expect(
+      await probeSupabaseConnectivity("http://example.supabase.co", {
+        anonKey: "anon",
+        timeoutMs: 500,
+      }),
+    ).toBe("error");
+  });
+
+  it("maps 5xx to error", async () => {
+    process.env.TELEPIZZA_FORCE_DB_PROBE = "1";
+    globalThis.fetch = (async () => new Response("fail", { status: 503 })) as typeof fetch;
+    const { probeSupabaseConnectivity } = await import("../src/observability/health.js");
+    expect(
+      await probeSupabaseConnectivity("http://example.supabase.co", {
+        anonKey: "anon",
+        timeoutMs: 500,
+      }),
+    ).toBe("error");
+  });
+
+  it("maps network failure to error", async () => {
+    process.env.TELEPIZZA_FORCE_DB_PROBE = "1";
+    globalThis.fetch = (async () => {
+      throw new Error("network down");
+    }) as typeof fetch;
+    const { probeSupabaseConnectivity } = await import("../src/observability/health.js");
+    expect(await probeSupabaseConnectivity("http://example.supabase.co", { anonKey: "anon" })).toBe(
+      "error",
+    );
   });
 });
