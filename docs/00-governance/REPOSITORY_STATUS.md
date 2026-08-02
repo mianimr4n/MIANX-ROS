@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-02 — repository main `c1859117b24d6adbe2fb0633ea518538047cc120` (includes RC5-OPS-01 + RC5-A11Y-01; RC5-DOC-01 in progress)
+**Last reconciled:** 2026-08-02 — repository main `152ce409609dc78e48d0d2b6b0c34a35d6338c24` (RC5 slices complete; Production website cutover evidenced)
 
 ---
 
@@ -28,7 +28,7 @@ Repository status must always distinguish between:
 
 These states must never be treated as equivalent.
 
-Repository tip, released tag commit, and Production application tip must also be labeled separately when they differ.
+Repository tip, released tag commit, Production website tip, Production API tip, and migration tip must also be labeled separately when they differ.
 
 ---
 
@@ -36,13 +36,13 @@ Repository tip, released tag commit, and Production application tip must also be
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main | `c1859117b24d6adbe2fb0633ea518538047cc120` | Current documentation/code tip on `origin/main` |
+| Repository main | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | Current tip on `origin/main` |
 | Released baseline | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Annotated git tag; **no** GitHub Release |
 | RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
-| Production app | `e5c6daf0ba57f6a601f6a902821d41bfc5b3a291` | Live application tip until newer deploy evidence |
-| Production database | Migrations through `20260801180000` | Distinct from repository main and from `v1.3.0` tag commit |
-
----
+| Production website | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | Vercel `dpl_7xaV34uyAEdMLvWckWKQASPAxJ7r` — `rc5-production-cutover/` |
+| Production API (observed) | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | `/healthz`/`/readyz` `gitSha`; RC5 website cutover did **not** intentionally trigger API deploy |
+| Production database | Migrations through `20260801180000` | Distinct from tag commit; RC5 cutover migrations **NONE** |
+| Prior website rollback target | `dpl_FriiC2PsK3bEYrXbXLVuNSXv3G3y` (`795efee…`) | Not executed |
 
 ## Current Repository Status
 
@@ -56,7 +56,7 @@ Repository tip, released tag commit, and Production application tip must also be
 | Acceptance Process | Active |
 | Release Policy | Active |
 | RC4 | Released (`v1.3.0`) |
-| RC5 | Active planning / sequential slices on `main` |
+| RC5 | **Complete** (repository slices + Production website smoke) |
 
 ---
 
@@ -64,17 +64,18 @@ Repository tip, released tag commit, and Production application tip must also be
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | RC5-DOC-01 — Release & status documentation sync |
-| Completed RC5 slices (on `main`, not claimed Production-deployed) | RC5-OPS-01, RC5-A11Y-01 |
-| Next roadmap step after DOC-01 | RC5-TEST-01 — Analytics schema regression guards |
+| Current Delivery Slice | RC5 final closeout documentation |
+| Completed RC5 slices (on `main`) | OPS-01, A11Y-01, DOC-01, TEST-01, PERF-01, OBS-01, QA-01 |
+| Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc5-production-cutover/` |
+| RC5 release blockers | **None evidenced** |
 | Released baseline | `v1.3.0` @ `74b6b8e…` |
-| Production app vs repository | Production app `e5c6daf…`; repository main is ahead |
+| Proposed next SemVer (not created) | `v1.4.0` — recommendation only |
 | Northern Bypass | `coming-soon` (unchanged) |
 | Royal Orchard target opening | **14 August 2026** — software readiness ≠ restaurant Production-ready |
 
 Owner-facing summary remains in [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 
-Admin ERP core modules remain LIVE on `main` with documented gaps (tables below). That capability baseline is unchanged by this reconciliation; RC4/`v1.3.0` release status supersedes the former “release certification still in progress” focus.
+Admin ERP core modules remain LIVE on `main` with documented gaps (tables below). That capability baseline is unchanged by RC5 closeout; RC4/`v1.3.0` remains the last annotated release tag until Founder authorizes `v1.4.0`.
 
 ### Merged delivery through PR #133 (2026-07-30)
 
@@ -250,4 +251,4 @@ This document should be updated whenever:
 
 Repository Status provides an honest view of the current verified state of the repository.
 
-Admin ERP core modules are LIVE on `main` through PR #133 with documented gaps. RC4 is certified and released as `v1.3.0` (`74b6b8e…`). Repository main (`c185911…`) is ahead of Production application SHA (`e5c6daf…`). Current engineering focus is RC5 documentation honesty and the roadmap sequence (DOC-01 → TEST-01) — not inventing metrics, not claiming GRN stock posting, float variance, HR lifecycle, AI runtime, or Production deploys that repository evidence does not support.
+Admin ERP core modules are LIVE on `main` through PR #133 with documented gaps. RC4 is certified and released as `v1.3.0` (`74b6b8e…`). RC5 roadmap slices are complete on repository main `152ce40…` with Production website cutover evidenced at the same SHA (`dpl_7xaV34uy…`). Migration tip remains `20260801180000`. Residual non-blocking limitations remain in `docs/testing/acceptance-evidence/rc5-final-closeout/` — not inventing metrics, not claiming GRN stock posting, float variance, HR lifecycle, AI runtime, or GitHub Releases that repository evidence does not support.
