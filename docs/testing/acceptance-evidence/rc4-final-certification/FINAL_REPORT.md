@@ -1,34 +1,39 @@
-# RC4 Final Certification — Final Report
+# RC4 Final Report
 
-## Decision
+**Decision:** `RC4_CERTIFICATION_PR_READY`
+**Security closeout:** `SECURITY_CLOSEOUT_COMPLETE`
+**Date:** 2026-08-02 (Asia/Karachi)
 
-**RC4_SCHEMA_DRIFT_BLOCKED**
+## Production facts
 
-## Why
-
-Linked Production (`supabase migration list --linked`) remote tip is `20260730290000` while local tip is `20260801180000`. Pending migrations include:
-
-- `20260731040000` → `supplier_invoices.due_date`
-- `20260731050000` → `hr_employees.employee_number`
-
-These match the observed Production `42703` errors. Per mission rule: RC4 cannot be certified while Production reports missing required columns.
-
-## Phase 1 merge record
-
-| Item | Value |
+| Fact | Value |
 | --- | --- |
-| PR | #161 MERGED |
-| Merged head | `ecf5b772fae5fc8a6c2dda6f3730fa8b72e6851b` |
-| Merge / origin/main | `1d648950a8ea5bfb982713a203bacc6c7dd93ec1` |
+| Migration tip | `20260801180000` |
+| Live Production SHA | `e5c6daf0ba57f6a601f6a902821d41bfc5b3a291` |
+| Prior hotfix SHA (Analytics) | `2f0e4326310e1036cc23a94d5573dd4d774eaf0f` |
+| Password recovery deploy | PR #165 → `e5c6daf` |
+| Render API deploy | `main - telepizza-api` success for `e5c6daf` |
+| `/healthz` / `/readyz` | PASS (empty `issues`) |
+| Owner authenticated smoke (post-rotation) | PASS |
+| Analytics / Finance / Payroll / HR / Inventory / Loyalty / Documents | PASS in closeout smoke |
+| `due_date` / `employee_number` / `order_items.name` 42703 | none observed |
+| Analytics hotfix migrations / SQL | none |
+| Security rotation | COMPLETE — see `SECURITY_CLOSEOUT.md` |
 
-## Repository-side fix included
+## Implementation chain (merged on main)
 
-Supabase connectivity probe now sends anon `apikey` + Bearer headers to stop unauthenticated `/auth/v1/health` 401 noise (tests added). **Does not clear schema drift.**
+| Slice | PR / note |
+| --- | --- |
+| RC4 feature chain | Analytics BI, Payroll, Documents, Inventory, Finance Phase 2, Loyalty/Marketing, Performance |
+| Health-probe anon headers | #162 |
+| Analytics `product_name` schema hotfix | #163 |
+| Password recovery flow | #165 @ `e5c6daf` |
 
-## Branch
+## Evidence index
 
-`feature/rc4-final-certification` — evidence + health probe fix only. Not pushed unless instructed.
+- This folder: readiness, migration, schema, smoke, logs, analytics hotfix summary, security closeout, known limitations
+- Cutover pack: `../rc4-production-cutover/` including `security-closeout-smoke.json` and secret rotation metadata (names/timestamps only)
 
-## Next ops action (human)
+## Residual non-blocking limitations
 
-Apply pending Production migrations through approved runbook (not this agent). Then re-run certification.
+See `KNOWN_LIMITATIONS.md` (SEC-1 closed).

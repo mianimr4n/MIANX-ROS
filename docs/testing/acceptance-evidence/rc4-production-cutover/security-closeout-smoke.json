@@ -1,0 +1,118 @@
+{
+  "at": "2026-08-02T01:18:22.045Z",
+  "ok": true,
+  "expectedSha": "e5c6daf0ba57f6a601f6a902821d41bfc5b3a291",
+  "shaMatch": true,
+  "health": {
+    "healthOk": true,
+    "readyOk": true,
+    "issuesEmpty": true,
+    "healthSha": "e5c6daf0ba57f6a601f6a902821d41bfc5b3a291",
+    "readySha": "e5c6daf0ba57f6a601f6a902821d41bfc5b3a291",
+    "db": "ok"
+  },
+  "login": {
+    "ok": true,
+    "mode": "cdp",
+    "emailDomain": "gmail.com",
+    "emailMatchesOwner": true
+  },
+  "summary": {
+    "probeCount": 11,
+    "failedCount": 0,
+    "schemaErrorCount": 0,
+    "orderItemsName42703": false,
+    "dueDate42703": false,
+    "employeeNumber42703": false
+  },
+  "probes": [
+    {
+      "path": "/api/v1/auth/me",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/dashboard/operations",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/employees?limit=5",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/purchasing/invoices?limit=5",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/finance/expenses?limit=5",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/payroll-runs?limit=5",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/analytics/workspace",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/analytics/modules/product",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/inventory/items?limit=5",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/loyalty/accounts?limit=5",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/documents?limit=5",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "schemaError": false,
+      "errSnippet": ""
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "at": "2026-08-01T17:10:28.448Z",
+  "projectRef": "pyeowxvacgypohrbvgee",
+  "frontend": {
+    "status": 200,
+    "ok": true
+  },
+  "auth": {
+    "ok": false,
+    "reason": "Invalid login credentials"
+  },
+  "unauthenticated": [
+    {
+      "path": "/healthz",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/readyz",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/branches",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/menu/catalog",
+      "status": 200,
+      "ok": true,
+      "code": null,
+      "drift42703": false,
+      "errSnippet": ""
+    },
+    {
+      "path": "/api/v1/admin/hr/employees",
+      "status": 401,
+      "ok": false,
+      "code": "UNAUTHORIZED",
+      "drift42703": false,
+      "errSnippet": "Authentication required."
+    },
+    {
+      "path": "/api/v1/admin/purchasing/invoices",
+      "status": 401,
+      "ok": false,
+      "code": "UNAUTHORIZED",
+      "drift42703": false,
+      "errSnippet": "Authentication required."
+    }
+  ],
+  "authenticated": [],
+  "driftFindings": [],
+  "limitations": [
+    "Production Owner sign-in failed with local handover password",
+    "Authenticated API smoke skipped"
+  ]
+}

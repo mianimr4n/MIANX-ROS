@@ -1,5 +1,7 @@
-# Loyalty Integrity
+# Loyalty integrity (RC4 certification)
 
-Local Vitest depth tests + DB static: ledger earn/burn/idempotency/redemption contracts PASS.
+**Status:** PASS for deployed RC4 loyalty surfaces exercised in Owner smokes
 
-Production: loyalty migrations from `20260731090000` onward pending on linked remote — Production loyalty depth not aligned. **Not Production-certified.**
+Loyalty migrations through tip `20260801180000` are applied on Production. Post-rotation Owner smoke included loyalty account listing with HTTP 200 and no schema 42703/42P01.
+
+See `security-closeout-smoke.json` and `FINAL_REPORT.md`.

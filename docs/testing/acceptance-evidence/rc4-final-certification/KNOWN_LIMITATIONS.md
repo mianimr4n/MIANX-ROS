@@ -1,8 +1,26 @@
-# Known Limitations
+# RC4 known limitations
 
-1. Linked Production migration tip lags by entire RC3/RC4 window starting `20260731010000`.
-2. `employee_number` not re-asserted in `20260731150000` compatibility file (still covered by pending `20260731050000`).
-3. Full clean `supabase db reset` not re-executed in this session; local spot-check + linked list used.
-4. Firefox/WebKit not run.
-5. No Production migration/deploy from this agent.
-6. Stashes preserved; not applied.
+**As of:** 2026-08-02 — Production tip SHA `e5c6daf`
+
+## Blocking for RC4 certification
+
+None. Security closeout is complete — see `SECURITY_CLOSEOUT.md`.
+
+## Non-blocking operational notes
+
+| ID | Limitation | Notes |
+| --- | --- | --- |
+| OPS-1 | Free-plan Supabase | Logical dumps only; no PITR |
+| OPS-2 | Local grants gap | Fresh local `supabase start` still needs public grants until migrations include them |
+| OPS-3 | Render log export | Session often lacks Render API key; smoke uses authenticated API responses |
+| OPS-4 | Some Analytics modules | Deferred/unavailable metrics remain honest (by design) |
+| OPS-5 | Supplier A/B RLS matrix | Partial Production credential coverage historically noted |
+
+## Closed this cycle
+
+| ID | Item | Resolution |
+| --- | --- | --- |
+| SEC-1 | Security rotation | `SECURITY_CLOSEOUT_COMPLETE` |
+| CUT-2 | Health-probe anon headers | PR #162 |
+| CUT-4 | Analytics `order_items.name` 42703 | PR #163 |
+| AUTH-1 | Password recovery landing | PR #165 @ `e5c6daf` |
