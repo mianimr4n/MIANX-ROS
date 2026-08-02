@@ -61,11 +61,14 @@ export function MenuSectionRow({
               </p>
             )}
           </div>
-          <Link href={viewAllHref}>
-            <span className="inline-flex items-center text-brand-red font-[var(--font-accent)] font-bold text-xs sm:text-sm hover:underline shrink-0">
-              View All
-              <ChevronRight className="w-4 h-4 ml-0.5" />
-            </span>
+          <Link
+            href={viewAllHref}
+            className={`inline-flex items-center font-[var(--font-accent)] font-bold text-xs sm:text-sm hover:underline shrink-0 ${
+              dark ? "text-brand-gold" : "text-brand-red-dark"
+            }`}
+          >
+            View All
+            <ChevronRight className="w-4 h-4 ml-0.5" aria-hidden />
           </Link>
         </div>
 

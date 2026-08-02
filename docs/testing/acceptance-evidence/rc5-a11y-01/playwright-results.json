@@ -1,0 +1,159 @@
+{
+  "config": {
+    "configFile": "D:\\projects\\telepizza\\playwright.rc5-a11y-01.config.ts",
+    "rootDir": "D:/projects/telepizza/e2e/rc5",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/testing/acceptance-evidence/rc5-a11y-01/playwright-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/projects/telepizza/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "D:/projects/telepizza/e2e/rc5",
+        "testIgnore": [],
+        "testMatch": [
+          "/public-home-a11y\\.spec\\.ts/"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.52.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "public-home-a11y.spec.ts",
+      "file": "public-home-a11y.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "RC5-A11Y-01 public home",
+          "file": "public-home-a11y.spec.ts",
+          "line": 30,
+          "column": 6,
+          "specs": [
+            {
+              "title": "desktop @1440: axe 0 critical/serious + named chrome",
+              "ok": true,
+              "tags": [
+                "1440:"
+              ],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7572,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-02T03:28:25.760Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b87809bc6caea5751c1f-aef79ea9857a89e4a746",
+              "file": "public-home-a11y.spec.ts",
+              "line": 31,
+              "column": 7
+            },
+            {
+              "title": "mobile @390: axe 0 critical/serious + menu operable",
+              "ok": true,
+              "tags": [
+                "390:"
+              ],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6206,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-02T03:28:33.511Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b87809bc6caea5751c1f-3e0b6c3f6c51103bfbd0",
+              "file": "public-home-a11y.spec.ts",
+              "line": 49,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-08-02T03:28:23.891Z",
+    "duration": 16089.036999999998,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

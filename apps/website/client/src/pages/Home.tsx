@@ -135,10 +135,13 @@ export default function Home() {
               Top picks from our verified menu
             </p>
           </div>
-          <Link href="/menu">
-            <Button variant="outline" className="hidden sm:flex rounded-2xl border-brand-red/30 text-brand-red hover:bg-brand-red hover:text-white">
+          <Link href="/menu" className="hidden sm:inline-flex">
+            <Button
+              variant="outline"
+              className="rounded-2xl border-brand-red-dark/40 text-brand-red-dark hover:bg-brand-red-dark hover:text-white"
+            >
               View Full Menu
-              <ChevronRight className="w-4 h-4 ml-1" />
+              <ChevronRight className="w-4 h-4 ml-1" aria-hidden />
             </Button>
           </Link>
         </div>

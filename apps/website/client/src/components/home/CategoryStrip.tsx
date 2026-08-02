@@ -55,11 +55,12 @@ export function CategoryStrip() {
             Browse the Telepizza menu by category
           </p>
         </div>
-        <Link href="/menu">
-          <span className="inline-flex items-center text-brand-red font-[var(--font-accent)] font-bold text-xs sm:text-sm hover:underline shrink-0">
-            View All
-            <ChevronRight className="w-4 h-4 ml-0.5" />
-          </span>
+        <Link
+          href="/menu"
+          className="inline-flex items-center text-brand-red-dark font-[var(--font-accent)] font-bold text-xs sm:text-sm hover:underline shrink-0"
+        >
+          View All
+          <ChevronRight className="w-4 h-4 ml-0.5" aria-hidden />
         </Link>
       </div>
 
