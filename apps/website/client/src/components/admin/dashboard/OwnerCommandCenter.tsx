@@ -1,8 +1,9 @@
-import { useMemo } from "react";
-import { Link } from "wouter";
+import { useCallback, useMemo, type ReactNode } from "react";
+import { Link, useLocation, useSearch } from "wouter";
 
 import { AdminKpiCard, AdminSectionTitle, type AdminKpiState } from "@/components/admin/AdminKpiCard";
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
+import { CommandModeHeader } from "@/components/admin/dashboard/CommandModeHeader";
 import { ExceptionCenterPanel } from "@/components/admin/dashboard/ExceptionCenterPanel";
 import { ReportBarChart } from "@/components/admin/reports/ReportCharts";
 import {
@@ -17,6 +18,14 @@ import {
   type SalesReport,
 } from "@/components/admin/dashboard/owner-command-builders";
 import type { AdminOperationsDashboard, AdminOrderListItem, GoodsReceiving, HrEmployee, PurchaseOrder, StockMovement, SupplierInvoice } from "@/lib/admin-api";
+import {
+  getModeComposition,
+  hasUnresolvedOperationsFromSignals,
+  readCommandModeFromSearch,
+  suggestCommandMode,
+  writeCommandModeSearch,
+  type CommandModeId,
+} from "@/lib/command-modes";
 import {
   buildExceptionCenter,
   type DeliveryAssignmentLike,
@@ -449,6 +458,12 @@ export type OwnerCommandCenterProps = {
   loading: boolean;
   branchId: string | null;
   branchLabel: string;
+  /** Branch profile hours when a single branch is selected (read-only). */
+  branchOpensAt?: string | null;
+  branchClosesAt?: string | null;
+  branchTimezone?: string | null;
+  /** Optional injected clock for tests; defaults to Date.now(). */
+  now?: Date;
   extras: OwnerCommandLiveExtras;
   kitchenTickets: KitchenTicketLike[] | null;
   kitchenState: OperationalState;
@@ -479,6 +494,10 @@ export function OwnerCommandCenter({
   loading,
   branchId,
   branchLabel,
+  branchOpensAt = null,
+  branchClosesAt = null,
+  branchTimezone = null,
+  now,
   extras,
   kitchenTickets,
   kitchenState,
@@ -502,6 +521,10 @@ export function OwnerCommandCenter({
   error7d,
   error30d,
 }: OwnerCommandCenterProps) {
+  const search = useSearch();
+  const [locationPath, setLocation] = useLocation();
+  const pathOnly = locationPath.split("?")[0] || "/admin/dashboard";
+
   const todayMetrics = buildTodayMetrics(data, opState, loading);
   const liveMetrics = buildLiveOpsMetrics(data, opState, extras, loading);
   const attentionMetrics = buildAttentionMetrics(data, opState, extras);
@@ -564,57 +587,141 @@ export function OwnerCommandCenter({
         }))
       : null;
 
-  return (
-    <div className="owner-command-center min-w-0" data-testid="owner-command-center">
-      <p className="mb-4 text-sm text-[var(--admin-muted)]">
-        Owner Command Center — answers “What needs my attention today?” using verified live APIs only.
-      </p>
+  const openKitchenTickets =
+    kitchenTickets?.filter((t) => ["queued", "accepted", "preparing", "ready"].includes(String(t.status)))
+      .length ?? null;
+  const activeAssignments =
+    deliveryAssignments?.filter((a) => ["pending", "assigned", "picked-up"].includes(String(a.status)))
+      .length ?? null;
 
+  const suggestion = useMemo(() => {
+    const clock = now ?? new Date();
+    return suggestCommandMode({
+      now: clock,
+      timeZone: branchTimezone || data?.timezone || "Asia/Karachi",
+      opensAt: branchOpensAt,
+      closesAt: branchClosesAt,
+      hasUnresolvedOperations: hasUnresolvedOperationsFromSignals({
+        activeOrders: data?.kpis.activeOrders,
+        kitchenWaiting: data?.kpis.kitchenWaiting,
+        activeDeliveries: data?.kpis.activeDeliveries,
+        openKitchenTickets,
+        activeAssignments,
+      }),
+    });
+  }, [
+    now,
+    branchTimezone,
+    data?.timezone,
+    branchOpensAt,
+    branchClosesAt,
+    data?.kpis.activeOrders,
+    data?.kpis.kitchenWaiting,
+    data?.kpis.activeDeliveries,
+    openKitchenTickets,
+    activeAssignments,
+  ]);
+
+  const manualMode = readCommandModeFromSearch(search);
+  const selectedMode: CommandModeId = manualMode ?? suggestion.mode;
+
+  const setCommandMode = useCallback(
+    (mode: CommandModeId | null) => {
+      const nextSearch = writeCommandModeSearch(search, mode);
+      setLocation(nextSearch ? `${pathOnly}${nextSearch}` : pathOnly);
+    },
+    [pathOnly, search, setLocation],
+  );
+
+  const composition = getModeComposition(selectedMode);
+
+  const todaySection = (
+    <section className="mb-8" aria-labelledby="owner-today-heading" data-mode-section="today-kpis">
+      <AdminSectionTitle
+        eyebrow="Today"
+        title="Today"
+        description="Sales and order KPIs for the Asia/Karachi business day."
+      />
+      <h2 id="owner-today-heading" className="sr-only">
+        Today
+      </h2>
+      <MetricGrid metrics={todayMetrics} />
+    </section>
+  );
+
+  const liveOpsSection = (
+    <section className="mb-8" aria-labelledby="owner-live-ops-heading" data-mode-section="live-ops-kpis">
+      <AdminSectionTitle
+        eyebrow="Live"
+        title="Live operations"
+        description="Kitchen, delivery, and completion counts refresh automatically."
+      />
+      <h2 id="owner-live-ops-heading" className="sr-only">
+        Live operations
+      </h2>
+      <MetricGrid metrics={liveMetrics} columnsClass="sm:grid-cols-2 xl:grid-cols-3" />
+    </section>
+  );
+
+  const attentionSection = (
+    <section className="mb-8" aria-labelledby="owner-attention-heading" data-mode-section="attention-kpis">
+      <AdminSectionTitle
+        eyebrow="Attention"
+        title="Business attention"
+        description="Each card explains why attention is required."
+      />
+      <h2 id="owner-attention-heading" className="sr-only">
+        Business attention
+      </h2>
+      <MetricGrid metrics={attentionMetrics} columnsClass="sm:grid-cols-2 xl:grid-cols-3" />
+    </section>
+  );
+
+  const unsupportedSection =
+    composition.unsupportedNote ? (
+      <section
+        className="mb-6 rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-3"
+        aria-label="Mode coverage limitations"
+        data-mode-section="unsupported-note"
+        data-testid="command-mode-limitations"
+      >
+        <p className="text-sm text-[var(--admin-muted)]">{composition.unsupportedNote}</p>
+      </section>
+    ) : null;
+
+  const modeSummary = (
+    <p className="mb-4 text-sm text-[var(--admin-muted)]" data-mode-section="mode-summary">
+      Mode view prioritizes existing verified widgets. Critical exceptions stay visible in every mode.
+      This selector does not change branch hours or open/close status.
+    </p>
+  );
+
+  const sectionMap: Record<string, ReactNode> = {
+    "exception-center": (
       <ExceptionCenterPanel
+        key="exception-center"
         result={exceptionCenter}
         loading={loading || kitchenState === "LOADING" || deliveryState === "LOADING" || financeState === "LOADING"}
         onRetry={onExceptionRetry}
       />
-
-      <section className="mb-8" aria-labelledby="owner-today-heading">
-        <AdminSectionTitle
-          eyebrow="Today"
-          title="Today"
-          description="Sales and order KPIs for the Asia/Karachi business day."
-        />
-        <h2 id="owner-today-heading" className="sr-only">
-          Today
-        </h2>
-        <MetricGrid metrics={todayMetrics} />
-      </section>
-
-      <section className="mb-8" aria-labelledby="owner-live-ops-heading">
-        <AdminSectionTitle
-          eyebrow="Live"
-          title="Live operations"
-          description="Kitchen, delivery, and completion counts refresh automatically."
-        />
-        <h2 id="owner-live-ops-heading" className="sr-only">
-          Live operations
-        </h2>
-        <MetricGrid metrics={liveMetrics} columnsClass="sm:grid-cols-2 xl:grid-cols-3" />
-      </section>
-
-      <section className="mb-8" aria-labelledby="owner-attention-heading">
-        <AdminSectionTitle
-          eyebrow="Attention"
-          title="Business attention"
-          description="Each card explains why attention is required."
-        />
-        <h2 id="owner-attention-heading" className="sr-only">
-          Business attention
-        </h2>
-        <MetricGrid metrics={attentionMetrics} columnsClass="sm:grid-cols-2 xl:grid-cols-3" />
-      </section>
-
-      <ActivitySection items={activity} loading={activityLoading} unavailable={activityUnavailable} />
-      <QuickActionsSection />
+    ),
+    "mode-summary": <div key="mode-summary">{modeSummary}</div>,
+    "unsupported-note": unsupportedSection ? <div key="unsupported-note">{unsupportedSection}</div> : null,
+    "today-kpis": <div key="today-kpis">{todaySection}</div>,
+    "live-ops-kpis": <div key="live-ops-kpis">{liveOpsSection}</div>,
+    "attention-kpis": <div key="attention-kpis">{attentionSection}</div>,
+    activity: (
+      <ActivitySection
+        key="activity"
+        items={activity}
+        loading={activityLoading}
+        unavailable={activityUnavailable}
+      />
+    ),
+    "quick-actions": <QuickActionsSection key="quick-actions" />,
+    "sales-trend": (
       <SalesTrendSection
+        key="sales-trend"
         report7d={report7d}
         report30d={report30d}
         loading7d={loading7d}
@@ -624,8 +731,39 @@ export function OwnerCommandCenter({
         orderTrend={orderTrend}
         orderTrendReady={!error7d && Boolean(report7d)}
       />
-      <TopProductsSection channelMix={channelMix} averageBasket={averageBasket} ready={dataReady} />
-      <OwnerBriefSection lines={briefLines} loading={loading && !data} />
+    ),
+    "top-products": (
+      <TopProductsSection
+        key="top-products"
+        channelMix={channelMix}
+        averageBasket={averageBasket}
+        ready={dataReady}
+      />
+    ),
+    "owner-brief": (
+      <OwnerBriefSection key="owner-brief" lines={briefLines} loading={loading && !data} />
+    ),
+  };
+
+  return (
+    <div
+      className="owner-command-center min-w-0"
+      data-testid="owner-command-center"
+      data-selected-command-mode={selectedMode}
+    >
+      <p className="mb-4 text-sm text-[var(--admin-muted)]">
+        Owner Command Center — answers “What needs my attention today?” using verified live APIs only.
+      </p>
+
+      <CommandModeHeader
+        selectedMode={selectedMode}
+        suggestion={suggestion}
+        manualOverride={Boolean(manualMode)}
+        onSelectMode={(mode) => setCommandMode(mode)}
+        onUseSuggested={() => setCommandMode(null)}
+      />
+
+      {composition.sections.map((id) => sectionMap[id] ?? null)}
     </div>
   );
 }

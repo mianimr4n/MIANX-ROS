@@ -40,8 +40,8 @@ No planning document, roadmap, or UI label overrides repository evidence.
 | --- | --- | --- |
 | Released baseline tag | `v1.4.0` (annotated) | Message: RC5 certified closeout |
 | Tag target / certified closeout commit | `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | = merge of PR #175 |
-| Current repository main (DASH-02 baseline) | `b913ecad14f147b0a58d48224ce25d474af524f3` | Post–PR #182 (RC6-DASH-01) merge |
-| Post–DASH-00 tip (historical) | `cc09e239f966ac7173536f54eec63ae1fb01e1f8` | Superseded by DASH-01 |
+| Current repository main (DASH-03 baseline) | `80cd2c4f6d554c805d4e72973c83311242c5a242` | Post–PR #183 (RC6-DASH-02) merge |
+| Post–DASH-01 tip (historical) | `b913ecad14f147b0a58d48224ce25d474af524f3` | Superseded by DASH-02 |
 | Post–PR #176 planning tip (historical) | `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` | Superseded by honesty/CI/a11y/contracts merges |
 | `v1.4.0` tag peel | `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Distinct from current tip when docs advance |
 | Production website runtime SHA | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | Evidenced cutover; **docs-only delta** after this SHA to tip |
@@ -161,7 +161,8 @@ RC6 candidates are evidence-driven slice IDs, not linked issue numbers.
 | RC6-QA-02 | **Merged** #179 |
 | RC6-A11Y-02 | **Merged** #180 → `da99875…` |
 | RC6-DASH-00 | **Merged** #181 → `cc09e239…` |
-| RC6-DASH-01 | **Merged** #182 → `b913ecad14f147b0a58d48224ce25d474af524f3` |
-| Current runtime slice | **RC6-DASH-02** — KPI drill-downs (repository; **not** Production-verified; DRILL_DOWN) |
-| Next runtime after DASH-02 | **RC6-DASH-03** |
+| RC6-DASH-01 | **Merged** #182 → `b913eca…` |
+| RC6-DASH-02 | **Merged** #183 → `80cd2c4f6d554c805d4e72973c83311242c5a242` |
+| Current runtime slice | **RC6-DASH-03** — daily command modes (repository; **not** Production-verified; read-only) |
+| Next runtime after DASH-03 | **RC6-DASH-04** |
 | Pending Production operation | **NONE** |
