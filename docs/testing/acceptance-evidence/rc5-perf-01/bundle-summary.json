@@ -1,0 +1,68 @@
+{
+  "entryBefore": {
+    "f": "index-As0WwPEE.js",
+    "raw": 1022605,
+    "gzip": 294633
+  },
+  "entryAfter": {
+    "f": "index-DPBhipH8.js",
+    "raw": 869748,
+    "gzip": 254945
+  },
+  "entryGzipReductionPct": 13.47,
+  "totalBefore": {
+    "raw": 2162241,
+    "gzip": 589097,
+    "chunks": 79
+  },
+  "totalAfter": {
+    "raw": 2167143,
+    "gzip": 594174,
+    "chunks": 61
+  },
+  "routesAfter": {
+    "/": {
+      "raw": 896487,
+      "gzip": 265448,
+      "requests": 2,
+      "files": [
+        "index-DPBhipH8.js",
+        "HeroSlider-DYhUvfUz.js"
+      ]
+    },
+    "/menu": {
+      "raw": 869748,
+      "gzip": 254945,
+      "requests": 1,
+      "files": [
+        "index-DPBhipH8.js"
+      ]
+    },
+    "/admin/login": {
+      "raw": 869748,
+      "gzip": 254945,
+      "requests": 1,
+      "files": [
+        "index-DPBhipH8.js"
+      ]
+    }
+  },
+  "routesBefore": {
+    "/": {
+      "raw": 1022605,
+      "gzip": 294633,
+      "requests": 1
+    },
+    "/menu": {
+      "raw": 1022605,
+      "gzip": 294633,
+      "requests": 1
+    },
+    "/admin/login": {
+      "raw": 1022605,
+      "gzip": 294633,
+      "requests": 1
+    }
+  },
+  "staticImportCount": 0
+}

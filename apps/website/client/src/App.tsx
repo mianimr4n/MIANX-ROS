@@ -6,30 +6,35 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { RouteLoadingFallback } from "./components/RouteLoadingFallback";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
-/** Eager: public marketing + checkout path (first paint / conversion). */
+/**
+ * Eager critical routes (RC5-PERF-01):
+ * `/` Home, `/menu` Menu, `/admin/login` AdminLogin.
+ * Everything else is route-lazy so AdminShell / checkout / auth / booking
+ * do not inflate the shared entry chunk.
+ */
 import Home from "./pages/Home";
 import Menu from "./pages/Menu";
-import ProductDetail from "./pages/ProductDetail";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import Checkout from "./pages/Checkout";
-import OrderSuccess from "./pages/OrderSuccess";
-import TrackOrder from "./pages/TrackOrder";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import AuthCallback from "./pages/AuthCallback";
-import Welcome from "./pages/Welcome";
-import Branches from "./pages/Branches";
-import PublicBooking from "./pages/PublicBooking";
-import NotFound from "./pages/NotFound";
-import StaffLogin from "./pages/StaffLogin";
 import AdminLogin from "./pages/admin/AdminLogin";
-import AdminUnauthorized from "./pages/admin/AdminUnauthorized";
-import AdminIndexRedirect from "./pages/admin/AdminIndexRedirect";
 
-/** Lazy: staff / account / ops / supplier — keep out of customer first paint. */
+/** Lazy: secondary public, auth, booking, checkout, and staff surfaces. */
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const OrderSuccess = lazy(() => import("./pages/OrderSuccess"));
+const TrackOrder = lazy(() => import("./pages/TrackOrder"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const Welcome = lazy(() => import("./pages/Welcome"));
+const Branches = lazy(() => import("./pages/Branches"));
+const PublicBooking = lazy(() => import("./pages/PublicBooking"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const StaffLogin = lazy(() => import("./pages/StaffLogin"));
+const AdminUnauthorized = lazy(() => import("./pages/admin/AdminUnauthorized"));
+const AdminIndexRedirect = lazy(() => import("./pages/admin/AdminIndexRedirect"));
 const StaffAccept = lazy(() => import("./pages/StaffAccept"));
 const SupplierLogin = lazy(() => import("./pages/supplier/SupplierLogin"));
 const SupplierDashboard = lazy(() => import("./pages/supplier/SupplierDashboard"));
@@ -95,6 +100,7 @@ import { MenuCatalogProvider } from "./contexts/MenuCatalogContext";
  * Commit E — Kitchen Manager KDS route wiring on Admin ERP.
  * Branch Manager /admin/branch remains Commit D; Owner /admin/kitchen remains Commit C.
  * RC4-7 — route-level code splitting for staff/account surfaces.
+ * RC5-PERF-01 — residual entry reduction: defer non-critical public/auth/admin shells.
  */
 
 function ScrollToTop() {
