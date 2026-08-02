@@ -49,8 +49,12 @@ Complete means: implementation + tests + docs + security review (if required) + 
 
 ## Selected next runtime slice
 
-**RC6-DASH-08 — What Changed** (after DASH-07 merge `1dcc8ba…`)
+**RC6-DASH-08 — What Changed** (merged `9fed3b4…` / PR #189)
 
 DASH-08: read-only What Changed + derived operational timeline — **not** Production-verified; device-local since wording; no fake last-login; no event mutation/AI/providers/realtime. Unified org event store remains a gap.
+
+**RC6-QA-03 — Command Center integration** (after DASH-08)
+
+Integrates DASH-01…08 on local ephemeral stack; website a11y heading fix only; **not** Production-verified; Phase 1 cutover pending.
 
 DASH-07 EOD Pack: read-only preview composed from verified DASH-01…06 sources — **not** Production-verified; no finalize, register close, email/WhatsApp, or accounting close.

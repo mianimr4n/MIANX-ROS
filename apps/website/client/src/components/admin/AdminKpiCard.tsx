@@ -181,11 +181,14 @@ export function AdminSectionTitle({
   title,
   description,
   action,
+  headingId,
 }: {
   eyebrow?: string;
   title: string;
   description?: string;
   action?: ReactNode;
+  /** Optional id for aria-labelledby on the wrapping section (single h2 only). */
+  headingId?: string;
 }) {
   return (
     <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -193,7 +196,9 @@ export function AdminSectionTitle({
         {eyebrow ? (
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--admin-muted)]">{eyebrow}</p>
         ) : null}
-        <h2 className="text-lg font-semibold tracking-tight text-[var(--admin-ink)]">{title}</h2>
+        <h2 id={headingId} className="text-lg font-semibold tracking-tight text-[var(--admin-ink)]">
+          {title}
+        </h2>
         {description ? <p className="mt-1 text-sm text-[var(--admin-muted)]">{description}</p> : null}
       </div>
       {action}

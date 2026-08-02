@@ -139,13 +139,11 @@ export function ProfitabilityTruthPanel({
       data-command-mode={commandMode}
     >
       <AdminSectionTitle
+        headingId="profitability-truth-heading"
         eyebrow="Business performance"
         title="Profitability Truth"
         description="Operational Estimate ≠ Accounting Posted. Estimates are never labeled as posted profit."
       />
-      <h2 id="profitability-truth-heading" className="sr-only">
-        Profitability Truth
-      </h2>
 
       {loading && result.operational.state === "LOADING" && result.accounting.state === "LOADING" ? (
         <p className="text-sm text-[var(--admin-muted)]" data-testid="profitability-loading">

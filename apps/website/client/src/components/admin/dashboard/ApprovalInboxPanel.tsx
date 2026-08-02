@@ -121,13 +121,11 @@ export function ApprovalInboxPanel({
       data-command-mode={commandMode}
     >
       <AdminSectionTitle
+        headingId="approval-inbox-heading"
         eyebrow="Approvals"
         title="Approval Inbox"
         description="Read-only queue of supported pending approvals. Drill down to existing modules — no inline approve/reject."
       />
-      <h2 id="approval-inbox-heading" className="sr-only">
-        Approval Inbox
-      </h2>
 
       <p className="mb-3 text-sm text-[var(--admin-muted)]" data-testid="approval-inbox-counts">
         Supported pending: {result.totalPendingCount}

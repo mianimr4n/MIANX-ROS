@@ -128,6 +128,16 @@
 | Q-04 | Mutation workflows remain excluded |
 | Q-05 | Branch protection change **out of scope** unless OPS-03 |
 
+### RC6-QA-03 — Command Center integration certification
+
+| # | Criterion |
+| --- | --- |
+| I-01 | DASH-01…08 load together in Owner Command Center with honest trust/degraded states |
+| I-02 | Modes reorder emphasis only; source values/formulas unchanged |
+| I-03 | Complete read-only Owner journey + 3-run repeatability on local ephemeral stack |
+| I-04 | Axe spot-check 0 critical / 0 serious across Pre-open / Live / Closing (not full WCAG cert) |
+| I-05 | No migration, Production deploy, provider, AI, or business mutation; **not** Production-verified |
+
 ### RC6-FIN-01 — Finance panel honesty or bounded wire-up
 
 | # | Criterion |
