@@ -53,25 +53,25 @@ export default function Footer() {
             <nav className="flex flex-col gap-3">
               {operatingBranches.map((branch) => (
                 <div key={branch.id} className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-brand-red mt-0.5 shrink-0" />
+                  <MapPin className="w-4 h-4 text-brand-gold mt-0.5 shrink-0" aria-hidden />
                   <div className="text-sm">
                     <span className={`font-[var(--font-accent)] font-semibold ${
-                      selectedBranch.id === branch.id ? "text-brand-red" : "text-white/60"
+                      selectedBranch.id === branch.id ? "text-brand-gold" : "text-white/80"
                     }`}>
                       {branch.shortName}
                     </span>
-                    <p className="text-white/40 text-xs mt-0.5">{branch.hours}</p>
+                    <p className="text-white/70 text-xs mt-0.5">{branch.hours}</p>
                   </div>
                 </div>
               ))}
               {comingSoonBranches.map((branch) => (
-                <div key={branch.id} className="flex items-start gap-2 opacity-50">
-                  <Construction className="w-4 h-4 text-white/40 mt-0.5 shrink-0" />
+                <div key={branch.id} className="flex items-start gap-2">
+                  <Construction className="w-4 h-4 text-white/70 mt-0.5 shrink-0" aria-hidden />
                   <div className="text-sm">
-                    <span className="font-[var(--font-accent)] font-semibold text-white/40">
+                    <span className="font-[var(--font-accent)] font-semibold text-white/70">
                       {branch.shortName}
                     </span>
-                    <p className="text-white/20 text-xs mt-0.5">Coming Soon</p>
+                    <p className="text-white/65 text-xs mt-0.5">Coming Soon</p>
                   </div>
                 </div>
               ))}
@@ -83,15 +83,15 @@ export default function Footer() {
             <h4 className="font-[var(--font-display)] font-bold text-sm uppercase tracking-wider text-brand-gold mb-4">
               Contact
             </h4>
-            <div className="flex flex-col gap-3 text-sm text-white/60">
+            <div className="flex flex-col gap-3 text-sm text-white/80">
               <a href={`tel:+92${selectedBranch.phone.replace(/-/g, "").replace(/^0/, "")}`} className="flex items-center gap-2 hover:text-white transition-colors">
-                <Phone className="w-4 h-4 text-brand-red" /> {selectedBranch.phone}
+                <Phone className="w-4 h-4 text-brand-gold" aria-hidden /> {selectedBranch.phone}
               </a>
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-brand-red" /> {selectedBranch.shortName}, Multan
+                <MapPin className="w-4 h-4 text-brand-gold" aria-hidden /> {selectedBranch.shortName}, Multan
               </div>
               <div className="flex items-center gap-2">
-                <Heart className="w-4 h-4 text-brand-red" /> {selectedBranch.hours}
+                <Heart className="w-4 h-4 text-brand-gold" aria-hidden /> {selectedBranch.hours}
               </div>
             </div>
             <div className="flex gap-3 mt-4">
@@ -128,14 +128,16 @@ export default function Footer() {
 
         {/* Bottom */}
         <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-white/40 text-xs">
+          <p className="text-white/70 text-xs">
             &copy; 2026 Telepizza Pakistan. All rights reserved.
           </p>
-          <div className="flex items-center gap-4 text-white/30 text-xs">
+          <div className="flex items-center gap-4 text-white/70 text-xs">
             <span>Royal Orchard, Multan</span>
-            <span className="hidden md:inline">|</span>
+            <span className="hidden md:inline" aria-hidden>
+              |
+            </span>
             <span className="flex items-center gap-1.5">
-              <Zap className="w-3 h-3" /> Powered by Mianx.ai
+              <Zap className="w-3 h-3" aria-hidden /> Powered by Mianx.ai
             </span>
           </div>
         </div>

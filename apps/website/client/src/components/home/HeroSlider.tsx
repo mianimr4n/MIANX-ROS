@@ -77,8 +77,8 @@ export function HeroSlider() {
                     transition={{ duration: 0.7 }}
                     className="max-w-2xl"
                   >
-                    <div className="inline-flex items-center gap-2 rounded-full border border-brand-gold/40 bg-brand-red px-3.5 py-1.5 mb-5 shadow-lg shadow-brand-red/40">
-                      <Flame className="w-4 h-4 text-brand-gold" />
+                    <div className="relative isolate inline-flex items-center gap-2 rounded-full border border-brand-gold/50 bg-brand-charcoal px-3.5 py-1.5 mb-5 shadow-lg">
+                      <Flame className="w-4 h-4 text-brand-gold" aria-hidden />
                       <span className="text-white text-xs sm:text-sm font-[var(--font-accent)] font-semibold">
                         {deal.badge ? `${deal.badge.toUpperCase()} · ` : "HOT · "}
                         Open Daily · {selectedBranch.hours}
@@ -108,9 +108,9 @@ export function HeroSlider() {
 
                     <div className="mt-7 flex flex-wrap gap-3">
                       <Link href="/menu">
-                        <Button className="rounded-2xl bg-brand-red hover:bg-brand-red-light text-white font-[var(--font-display)] font-bold text-base px-7 py-6 shadow-xl shadow-brand-red/35">
+                        <Button className="relative isolate rounded-2xl bg-brand-red-dark hover:bg-brand-red text-white font-[var(--font-display)] font-bold text-base px-7 py-6 shadow-xl shadow-brand-red/35">
                           Order Now
-                          <ChevronRight className="w-5 h-5 ml-2" />
+                          <ChevronRight className="w-5 h-5 ml-2" aria-hidden />
                         </Button>
                       </Link>
                       <Link href="/menu?category=Deals">

@@ -233,9 +233,10 @@ export default function Navbar() {
             </a>
           )}
 
-          {/* My Telepizza */}
+          {/* My Telepizza — hide entire link on small screens (mobile sheet covers account) */}
           <Link
             href={hubHref}
+            className="hidden md:inline-flex"
             onClick={() => {
               if (!isAuthenticated) rememberAuthNextPath("/my-telepizza");
             }}
@@ -243,7 +244,7 @@ export default function Navbar() {
             <Button
               variant="ghost"
               size="sm"
-              className={`hidden md:inline-flex rounded-xl font-[var(--font-accent)] font-semibold ${
+              className={`rounded-xl font-[var(--font-accent)] font-semibold ${
                 pathOnly === "/my-telepizza" || pathOnly === "/account"
                   ? "text-brand-red"
                   : scrolled
@@ -265,18 +266,21 @@ export default function Navbar() {
                 : "bg-white/10 hover:bg-brand-red hover:text-white text-white"
             }`}
           >
-            <ShoppingCart className="w-5 h-5" />
+            <ShoppingCart className="w-5 h-5" aria-hidden />
             {totalItems > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-brand-red text-white text-[10px] font-[var(--font-accent)] font-bold rounded-full flex items-center justify-center shadow-md">
+              <span
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-brand-red text-white text-[10px] font-[var(--font-accent)] font-bold rounded-full flex items-center justify-center shadow-md"
+                aria-hidden
+              >
                 {totalItems}
               </span>
             )}
           </button>
 
-          {/* Order Now CTA */}
-          <Link href="/menu">
+          {/* Order Now CTA — hide entire link below sm (mobile sheet includes Order Now) */}
+          <Link href="/menu" className="hidden sm:inline-flex">
             <Button
-              className="hidden sm:flex bg-brand-red hover:bg-brand-red-dark text-white font-[var(--font-accent)] font-bold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-brand-red/25 ring-1 ring-brand-gold/40 transition-all active:scale-95"
+              className="bg-brand-red hover:bg-brand-red-dark text-white font-[var(--font-accent)] font-bold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-brand-red/25 ring-1 ring-brand-gold/40 transition-all active:scale-95"
             >
               Order Now
             </Button>
