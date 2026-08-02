@@ -57,6 +57,8 @@ test("Auth callback maps expired and invalid email links safely", () => {
   assert.match(redirect, /getPasswordRecoveryRedirectTo/);
   assert.match(redirect, /getEmailChangeRedirectTo/);
   assert.match(redirect, /\/reset-password/);
+  assert.match(redirect, /resolveApprovedAuthOrigin/);
+  assert.match(redirect, /clearSensitiveAuthUrl/);
 });
 
 test("profile shows honest phone Unverified and email verification status", () => {

@@ -5,11 +5,18 @@
 
 export const DEFAULT_AUTH_DESTINATION = "/my-telepizza";
 export const AUTH_CALLBACK_PATH = "/auth/callback";
+export const PASSWORD_RECOVERY_PATH = "/reset-password";
+
+/** Canonical Production website origin (password recovery redirect fallback). */
+export const PRODUCTION_AUTH_ORIGIN = "https://telepizza-website.vercel.app";
+
+/** Canonical local website origin for password recovery. */
+export const LOCAL_AUTH_ORIGIN = "http://localhost:3000";
 
 /** Approved website origins (Supabase redirect allowlist must match). */
 export const APPROVED_AUTH_ORIGINS = [
-  "https://telepizza-website.vercel.app",
-  "http://localhost:3000",
+  PRODUCTION_AUTH_ORIGIN,
+  LOCAL_AUTH_ORIGIN,
   "http://localhost:5173",
 ] as const;
 
@@ -161,11 +168,47 @@ export function getEmailConfirmationRedirectTo(): string {
 }
 
 /**
- * Password recovery + email-change confirmation redirect.
+ * Resolve an allowlisted website origin for auth redirects.
+ * Never trusts arbitrary client-provided URLs — unknown origins fall back to Production.
+ */
+export function resolveApprovedAuthOrigin(candidate?: string | null): string {
+  const raw =
+    (candidate ?? (typeof window !== "undefined" ? window.location.origin : "")).trim() ||
+    PRODUCTION_AUTH_ORIGIN;
+  let origin = raw;
+  try {
+    origin = new URL(raw).origin;
+  } catch {
+    return PRODUCTION_AUTH_ORIGIN;
+  }
+  if ((APPROVED_AUTH_ORIGINS as readonly string[]).includes(origin)) {
+    // Prefer canonical local :3000 when the app is served from Vite :5173 unless caller is already :3000.
+    if (origin === "http://localhost:5173") {
+      return LOCAL_AUTH_ORIGIN;
+    }
+    return origin;
+  }
+  return PRODUCTION_AUTH_ORIGIN;
+}
+
+/**
+ * Password recovery email redirect — lands directly on `/reset-password`.
+ * Production: https://telepizza-website.vercel.app/reset-password
+ * Local: http://localhost:3000/reset-password
  * Must be listed under Supabase Auth → Redirect URLs.
  */
 export function getPasswordRecoveryRedirectTo(): string {
-  return getOAuthRedirectTo();
+  return `${resolveApprovedAuthOrigin()}${PASSWORD_RECOVERY_PATH}`;
+}
+
+/**
+ * After Supabase consumes the recovery fragment/code, drop tokens from the visible URL.
+ * Never logs the previous URL, hash, or query.
+ */
+export function clearSensitiveAuthUrl(pathname: string = PASSWORD_RECOVERY_PATH): void {
+  if (typeof window === "undefined") return;
+  const safePath = pathname.startsWith("/") ? pathname.split(/[?#]/)[0] || PASSWORD_RECOVERY_PATH : PASSWORD_RECOVERY_PATH;
+  window.history.replaceState({}, document.title, safePath);
 }
 
 export function getEmailChangeRedirectTo(): string {

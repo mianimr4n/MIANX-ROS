@@ -114,6 +114,18 @@ function isOpsChrome(path: string) {
   );
 }
 
+/** Customer auth surfaces use AuthPageShell — hide marketing navbar/footer for contrast + focus. */
+function isCustomerAuthChrome(path: string) {
+  return (
+    path === "/login" ||
+    path === "/register" ||
+    path === "/forgot-password" ||
+    path === "/reset-password" ||
+    path === "/auth/callback" ||
+    path === "/welcome"
+  );
+}
+
 function SupportComingSoon() {
   return <AdminComingSoon moduleName="Support" />;
 }
@@ -226,16 +238,19 @@ function Router() {
 
 function AppShell() {
   const [location] = useLocation();
-  const ops = isOpsChrome(location);
+  const pathOnly = location.split(/[?#]/)[0] || location;
+  const ops = isOpsChrome(pathOnly);
+  const auth = isCustomerAuthChrome(pathOnly);
+  const bare = ops || auth;
 
   return (
     <>
-      {!ops ? <Navbar /> : null}
+      {!bare ? <Navbar /> : null}
       <ScrollToTop />
-      <main className={ops ? "min-h-screen" : "min-h-screen pt-[72px]"}>
+      <main className={bare ? "min-h-screen" : "min-h-screen pt-[72px]"}>
         <Router />
       </main>
-      {!ops ? (
+      {!bare ? (
         <>
           <Footer />
           <CartDrawer />
