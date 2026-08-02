@@ -114,7 +114,7 @@ export function ExceptionCenterPanel({
   return (
     <section
       className="mb-8 min-w-0"
-      aria-labelledby="needs-attention-heading"
+      aria-label="Needs Attention Now"
       data-testid="exception-center"
     >
       <AdminSectionTitle
@@ -122,9 +122,6 @@ export function ExceptionCenterPanel({
         title="Needs Attention Now"
         description="Read-only Exception Center from verified live sources. Does not cover every restaurant risk."
       />
-      <h2 id="needs-attention-heading" className="sr-only">
-        Needs Attention Now
-      </h2>
 
       {loading && result.exceptions.length === 0 && !result.partialFailure && !result.totalFailure ? (
         <p className="text-sm text-[var(--admin-muted)]" role="status">
