@@ -4,6 +4,7 @@ import { Link, useLocation, useSearch } from "wouter";
 import { AdminKpiCard, AdminSectionTitle, type AdminKpiState } from "@/components/admin/AdminKpiCard";
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
 import { CommandModeHeader } from "@/components/admin/dashboard/CommandModeHeader";
+import { ApprovalInboxPanel } from "@/components/admin/dashboard/ApprovalInboxPanel";
 import { ExceptionCenterPanel } from "@/components/admin/dashboard/ExceptionCenterPanel";
 import { ReportBarChart } from "@/components/admin/reports/ReportCharts";
 import {
@@ -26,6 +27,7 @@ import {
   writeCommandModeSearch,
   type CommandModeId,
 } from "@/lib/command-modes";
+import { buildApprovalInbox } from "@/lib/approval-inbox";
 import {
   buildExceptionCenter,
   type DeliveryAssignmentLike,
@@ -470,6 +472,8 @@ export type OwnerCommandCenterProps = {
   deliveryAssignments: DeliveryAssignmentLike[] | null;
   deliveryState: OperationalState;
   financeEnabled: boolean;
+  purchasingEnabled?: boolean;
+  hrEnabled?: boolean;
   financeState: OperationalState;
   onExceptionRetry?: () => void;
   orders: AdminOrderListItem[] | null;
@@ -504,6 +508,8 @@ export function OwnerCommandCenter({
   deliveryAssignments,
   deliveryState,
   financeEnabled,
+  purchasingEnabled = true,
+  hrEnabled = true,
   financeState,
   onExceptionRetry,
   orders,
@@ -635,6 +641,46 @@ export function OwnerCommandCenter({
 
   const composition = getModeComposition(selectedMode);
 
+  const approvalInbox = useMemo(
+    () =>
+      buildApprovalInbox({
+        branchId,
+        branchName: branchLabel,
+        financeEnabled,
+        purchasingEnabled,
+        hrEnabled,
+        procurement: extras.procurement
+          ? {
+              unavailable: Boolean(extras.procurement.unavailable),
+              pendingPoApprovals: extras.procurement.pendingPoApprovals,
+            }
+          : null,
+        financeAttention: extras.financeAttention
+          ? {
+              unavailable: Boolean(extras.financeAttention.unavailable),
+              cashClosesAwaitingApproval: extras.financeAttention.cashClosesAwaitingApproval,
+              pendingExpenseApprovals: extras.financeAttention.pendingExpenseApprovals,
+            }
+          : null,
+        workforceAttention: extras.workforceAttention
+          ? {
+              unavailable: Boolean(extras.workforceAttention.unavailable),
+              leaveRequestsAwaitingApproval: extras.workforceAttention.leaveRequestsAwaitingApproval,
+            }
+          : null,
+      }),
+    [
+      branchId,
+      branchLabel,
+      financeEnabled,
+      purchasingEnabled,
+      hrEnabled,
+      extras.procurement,
+      extras.financeAttention,
+      extras.workforceAttention,
+    ],
+  );
+
   const todaySection = (
     <section className="mb-8" aria-labelledby="owner-today-heading" data-mode-section="today-kpis">
       <AdminSectionTitle
@@ -702,6 +748,15 @@ export function OwnerCommandCenter({
         key="exception-center"
         result={exceptionCenter}
         loading={loading || kitchenState === "LOADING" || deliveryState === "LOADING" || financeState === "LOADING"}
+        onRetry={onExceptionRetry}
+      />
+    ),
+    "approval-inbox": (
+      <ApprovalInboxPanel
+        key="approval-inbox"
+        result={approvalInbox}
+        loading={loading}
+        commandMode={selectedMode}
         onRetry={onExceptionRetry}
       />
     ),

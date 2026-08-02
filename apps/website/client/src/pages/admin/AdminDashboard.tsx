@@ -767,6 +767,8 @@ export default function AdminDashboard() {
           deliveryAssignments={assignmentsUnavailable ? null : (deliveryAssignments.data ?? null)}
           deliveryState={deliveryAssignments.state}
           financeEnabled={canLoadFinance}
+          purchasingEnabled={canLoadPurchasing}
+          hrEnabled={canLoadHr}
           financeState={financeAttention.state}
           onExceptionRetry={() => {
             retry();

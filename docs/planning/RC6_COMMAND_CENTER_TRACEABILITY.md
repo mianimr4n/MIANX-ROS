@@ -10,7 +10,8 @@ Complete means: implementation + tests + docs + security review (if required) + 
 | Six-zone Command Center | Architecture | Owner CC LIVE shell | Zones not formalized in UI | DASH-00→08 | Dashboard + e2e | — | NONE early | — | Owner smoke | — |
 | Exception Center | Catalogue + W-EXC-01 | **DASH-01 repo foundation** (5 types; read-only) | Ack/full catalogue/Prod | DASH-01 done (repo); later expand | Static + Owner smoke | PII mask | NONE | Preview UI | **Not Prod-verified** | — |
 | KPI drill-downs | KPI + Widget registries | **DASH-02 repo** (selected; DRILL_DOWN) | Date filters / AOV depth / accounting | DASH-02 done (repo); later expand | Static + Owner smoke | — | NONE | Preview UI | **Not Prod-verified** | — |
-| Opening/live/closing modes | Architecture §4 | **DASH-03 repo** (advisory) | Checklist/register/EOD still deferred | DASH-03 done (repo); later expand | Mode unit + static | — | NONE | Preview UI | **Not Prod-verified** | — |
+| Opening/live/closing modes | Architecture §4 | **DASH-03 merged** (advisory) | Checklist/register/EOD still deferred | DASH-03 done (repo) | Mode unit + static | — | NONE | Preview UI | **Not Prod-verified** | — |
+| Approval Inbox | Action registry | **DASH-04 repo** (selected; DRILL_DOWN) | Inline execution / bulk / SoD engine | DASH-04 done (repo); later execute | Static + Owner smoke | — | NONE | Preview UI | **Not Prod-verified** | — |
 | Approval Inbox | Actions + W-APR-01 | Fragmented approvals | Unified inbox | DASH-04 | Mutation tests | SoD | EXISTING | — | SoD Prod | — |
 | Branch health score | KPI-BRANCH-HEALTH | PLANNED | Formula + UI | DASH-05 | Formula tests | — | NONE | — | Audit | — |
 | Profitability truth | KPI-PROFIT + FIN | PARTIAL/FOUNDATION | EST vs ACCOUNTING | DASH-06 / FIN-01 | Finance tests | Financial | EXISTING | — | Reconcile | — |
@@ -48,6 +49,6 @@ Complete means: implementation + tests + docs + security review (if required) + 
 
 ## Selected next runtime slice
 
-**RC6-DASH-04 — Approval Inbox foundation** (after DASH-03 merges)
+**RC6-DASH-05 — Branch Health Score** (after DASH-04 merges)
 
-DASH-03 daily command modes: implemented in repository as advisory Pre-open / Live / Closing views — **not** Production-verified; no branch open/close mutation.
+DASH-04 Approval Inbox: implemented in repository for selected verified sources at **DRILL_DOWN** maturity — **not** Production-verified; no inline approve/reject.
