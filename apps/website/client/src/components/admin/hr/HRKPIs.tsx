@@ -75,7 +75,12 @@ export function HRKPIs({
           unavailable={inviteSummary == null}
           detail={inviteSummary != null ? "Staff invitations waiting" : "Invite list unavailable"}
         />
-        <AdminKpiCard title="Upcoming shifts" value="—" source="UNAVAILABLE" unavailable detail="No shift roster API yet" />
+        <AdminKpiCard
+          title="Upcoming shifts"
+          value="—"
+          source="PARTIAL"
+          detail="Open Shift planner below — roster APIs are available"
+        />
         <AdminKpiCard title="Training completion" value="—" source="UNAVAILABLE" unavailable detail="No training backend yet" />
         <AdminKpiCard
           title="Payroll"

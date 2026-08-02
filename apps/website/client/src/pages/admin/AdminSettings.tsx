@@ -32,7 +32,7 @@ const LIVE_MODULE_HINTS: Partial<Record<SettingsCategoryId, string>> = {
   kitchen: "Manage tickets in Admin → Kitchen. Station and printer config is Planned for Phase 2.",
   reports: "Open Admin → Reports for sales analytics and CSV export.",
   hr: "Open Admin → HR for the team directory and workforce tools.",
-  finance: "Finance & tax configuration is Planned for Phase 2 — no invented tax rates.",
+  finance: "Use Admin → Finance for CoA/journals/TB/P&L (Partial LIVE). Settings tax controls remain Planned — no invented rates.",
   operations: "Opening operations use per-row Save / Delete in the panels above.",
   payments: "Opening operations use per-row Save / Delete in the panels above.",
   communications: "Opening operations use per-row Save / Delete in the panels above.",

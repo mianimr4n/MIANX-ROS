@@ -244,13 +244,17 @@ export function ReceivablePanel() {
           Receivables
         </h2>
         <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6">
-          <p className="font-semibold text-[var(--admin-ink)]">Accounts receivable — LIVE foundation</p>
+          <p className="font-semibold text-[var(--admin-ink)]">Accounts receivable — Foundation</p>
           <p className="mt-2 text-sm text-[var(--admin-muted)]">
-            Draft/issue invoices, receipt allocation, and credit notes are available via Finance AR APIs. Aging dashboard
-            UI remains DERIVED from invoice balances — filing and collections automation stay DEFERRED.
+            Finance AR APIs exist for draft/issue invoices, receipts, and credit notes. This panel is not wired to load
+            that data yet — treat as Foundation / read-only until RC6-FIN-01. Collections automation stays Deferred.
           </p>
-          <span className="mt-3 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-800">
-            LIVE
+          <span
+            role="status"
+            aria-label="Capability status: Foundation"
+            className="mt-3 inline-block rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-sky-900"
+          >
+            Foundation
           </span>
         </div>
       </AdminSurfaceBody>
@@ -575,16 +579,25 @@ export function TaxPanel() {
           Tax
         </h2>
         <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6">
-          <p className="font-semibold text-[var(--admin-ink)]">Tax configuration — LIVE foundation</p>
+          <p className="font-semibold text-[var(--admin-ink)]">Tax configuration — Foundation</p>
           <p className="mt-2 text-sm text-[var(--admin-muted)]">
-            Tax codes and rates are configurable via API (no hardcoded Pakistan rates). Jurisdiction filing/export remains
-            DEFERRED. Order tax_amount alone is not a compliance engine.
+            Tax definition APIs exist (no hardcoded Pakistan rates). This panel is not wired for list/edit yet — Foundation
+            until RC6-FIN-01. Jurisdiction filing/export remains Deferred. Order tax_amount alone is not a compliance
+            engine.
           </p>
-          <span className="mt-3 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-800">
-            LIVE
+          <span
+            role="status"
+            aria-label="Capability status: Foundation"
+            className="mt-3 inline-block rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-sky-900"
+          >
+            Foundation
           </span>
-          <span className="mt-3 ml-2 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-800">
-            Filing DEFERRED
+          <span
+            role="status"
+            aria-label="Capability status: Deferred"
+            className="mt-3 ml-2 inline-block rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-800"
+          >
+            Filing Deferred
           </span>
         </div>
       </AdminSurfaceBody>

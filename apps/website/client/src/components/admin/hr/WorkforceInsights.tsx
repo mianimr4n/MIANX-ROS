@@ -37,7 +37,8 @@ export function WorkforceInsights({ items }: { items: WorkforceInsightItem[] }) 
         ))}
       </ul>
       <p className="mt-4 text-xs text-[var(--admin-muted)]">
-        Live attendance, leave, and documents · Payroll/performance Planned for Phase 2 · No prediction models from this
+        Live attendance, leave, documents, shifts, and payroll calc · Performance/training Planned · No prediction
+        models from this panel.
         workspace.
       </p>
     </section>

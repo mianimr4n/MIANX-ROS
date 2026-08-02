@@ -593,21 +593,21 @@ export default function AdminBranchManager() {
           />
           <AdminModuleCard
             title="Inventory"
-            description="Stock records — automatic alerts arrive later."
+            description="Stock, recipes, and GRN stock posting — Partial LIVE."
             href="/admin/inventory"
             icon={Package}
-            statusLabel="Basic"
-            statusTone="soon"
+            statusLabel="Partial"
+            statusTone="ready"
             actionLabel="Open inventory"
             available
           />
           <AdminModuleCard
             title="Staff schedule"
-            description="Staff directory — live attendance arrives later."
+            description="Directory, attendance, shifts, and payroll calc — Partial LIVE."
             href="/admin/hr"
             icon={UserRound}
-            statusLabel="Basic"
-            statusTone="soon"
+            statusLabel="Partial"
+            statusTone="ready"
             actionLabel="Open staff"
             available
           />
@@ -655,12 +655,11 @@ export default function AdminBranchManager() {
         <AdminSurface>
           <AdminSurfaceHeader
             title="Staff today"
-            description="Attendance, late, and absent require HR APIs."
+            description="Open Admin → HR for live attendance, shifts, and payroll calc."
           />
           <AdminSurfaceBody>
             <p className="text-sm text-[var(--admin-muted)]">
-              Live attendance isn't connected yet. The shift shown above is an estimate based on the
-              time of day.
+              Branch home does not embed the attendance feed. Use HR for check-in status, shifts, and deactivate.
             </p>
             <Link href="/admin/hr" className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-[var(--brand-red)]">
               Open staff directory →

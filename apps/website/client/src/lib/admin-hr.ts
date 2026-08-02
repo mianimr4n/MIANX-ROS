@@ -195,8 +195,8 @@ export function integrationChecks(): HrIntegrationCheck[] {
     {
       id: "shifts",
       label: "Shift scheduling / roster",
-      status: "missing",
-      note: "Planned for Phase 2 — no shift planner API.",
+      status: "present",
+      note: "Shift planner + /admin/hr/shifts APIs — Partial LIVE (not Production-verified).",
     },
     {
       id: "payroll",
@@ -230,10 +230,14 @@ export function readinessGroups(): HrReadinessGroup[] {
     {
       id: "directory",
       title: "Employee directory",
-      unavailable: "Profile edit / deactivate APIs",
-      why: "List and create are live via hr_employees; update/deactivate not in this slice.",
+      unavailable: "— Partial LIVE (deactivate shipped)",
+      why: "List, create, and deactivate are live via hr_employees; broader profile-edit depth may still be incomplete.",
       entities: ["hr_employees"],
-      apis: ["GET /api/v1/admin/hr/employees", "POST /api/v1/admin/hr/employees"],
+      apis: [
+        "GET /api/v1/admin/hr/employees",
+        "POST /api/v1/admin/hr/employees",
+        "POST /api/v1/admin/hr/employees/:id/deactivate",
+      ],
       permission: "hr.manage, staff.manage, or admin.access",
       related: "Staff invite acceptance still provisions users + roles separately.",
     },

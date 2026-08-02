@@ -995,7 +995,8 @@ export function HrSettings() {
           <Link href="/admin/hr" className="font-semibold text-[var(--admin-ink)] underline">
             Admin → HR
           </Link>{" "}
-          for the employee directory and workforce workflows. Payroll configuration is Planned for Phase 2.
+          for the employee directory, attendance, shifts, payroll calculation, and deactivate. Settings payroll policy
+          toggles remain Planned.
         </p>
       </AdminSurfaceBody>
     </AdminSurface>
@@ -1007,7 +1008,7 @@ export function FinanceTaxSettings() {
     <SettingsUnavailablePanel
       title="Finance & Tax"
       description="Fiscal year, VAT/GST rates, and account mapping."
-      body="Finance module is not implemented — no chart of accounts or tax engine. Coming soon; Settings will never invent tax rates."
+      body="Tax rate and fiscal-year controls in Settings remain Planned. Use Admin → Finance for CoA, journals, TB/P&L (Partial LIVE). Settings will never invent tax rates."
       scope="Organization"
     />
   );
@@ -1045,7 +1046,7 @@ export function CustomerLoyaltySettings() {
     <SettingsFoundationPanel
       title="Customers & Loyalty"
       description="Guest checkout, consent, earning and redemption rules."
-      body="Loyalty ledger is absent. Points, tiers, and reward expiry settings cannot be invented. Marketing consent fields exist on customers — policy configuration API does not."
+      body="Points ledger, tiers, and rewards are managed in Admin → Loyalty. Settings earning/redemption policy controls remain Planned — this panel will not invent policy fields."
       scope="Organization"
     />
   );

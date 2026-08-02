@@ -6,7 +6,11 @@ export default function AdminComingSoon({ moduleName }: { moduleName: string }) 
   return (
     <AdminShell title={moduleName}>
       <div className="mx-auto max-w-xl rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] p-8">
-        <span className="inline-flex rounded-full bg-[var(--admin-soft)] px-3 py-1 text-xs font-semibold text-[var(--admin-muted)]">
+        <span
+          role="status"
+          aria-label="Capability status: Planned"
+          className="inline-flex rounded-full bg-[var(--admin-soft)] px-3 py-1 text-xs font-semibold text-[var(--admin-muted)]"
+        >
           Planned
         </span>
         <h2 className="mt-3 text-2xl font-semibold">{moduleName}</h2>
