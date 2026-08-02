@@ -1,7 +1,8 @@
 # RC4 Schema certification notes
 
 **Schema tip:** `20260801180000`
-**App SHA:** `2f0e4326310e1036cc23a94d5573dd4d774eaf0f`
+**App SHA:** `e5c6daf0ba57f6a601f6a902821d41bfc5b3a291`
+**Security closeout:** `SECURITY_CLOSEOUT_COMPLETE`
 
 ## Canonical contracts validated in Production smoke
 
@@ -18,6 +19,6 @@
 - Invalid historical Analytics select: `order_items.name` (never existed)
 - Fix: PR #163 — select `product_name`, aggregate by `menu_item_id`
 
-## Certification caveat
+## Status
 
-This schema alignment evidence supports operational cutover completeness. Full **RC4 certify** remains blocked by `SECURITY_ROTATION_PENDING`.
+Schema alignment and post-cutover hotfixes are evidenced. Security closeout is complete — see `SECURITY_CLOSEOUT.md` and `FINAL_REPORT.md`.

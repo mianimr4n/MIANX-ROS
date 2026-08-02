@@ -4,7 +4,7 @@
 
 ## Blocking for RC4 certification
 
-None. `SECURITY_ROTATION_PENDING` cleared — see `SECURITY_CLOSEOUT.md`.
+None. Security closeout is complete — see `SECURITY_CLOSEOUT.md`.
 
 ## Non-blocking operational notes
 

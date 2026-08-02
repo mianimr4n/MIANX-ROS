@@ -33,4 +33,4 @@
 
 ## Prior status
 
-Previously `SECURITY_ROTATION_PENDING`. Cleared only after the evidence above was produced.
+Earlier certification drafts were blocked pending password/secret rotation. Cleared only after the evidence above was produced.
