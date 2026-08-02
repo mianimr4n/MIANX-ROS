@@ -1,6 +1,6 @@
 # RC6 Baseline
 
-**Status:** Living baseline (planning — not implementation)
+**Status:** Living baseline — planning merged (#176); **RC6-DOC-01** active
 **Date:** 2026-08-02
 **Authority:** Repository evidence after annotated tag `v1.4.0`, RC5 certification closeout PR #175, and RC5 Production website cutover evidence
 
@@ -40,7 +40,8 @@ No planning document, roadmap, or UI label overrides repository evidence.
 | --- | --- | --- |
 | Released baseline tag | `v1.4.0` (annotated) | Message: RC5 certified closeout |
 | Tag target / certified closeout commit | `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | = merge of PR #175 |
-| Current repository main | `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Equals tag peel |
+| Current repository main | `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` | Post–PR #176 merge (planning pack on main) |
+| `v1.4.0` tag peel | `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Distinct from current tip when docs advance |
 | Production website runtime SHA | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | Evidenced cutover; **docs-only delta** after this SHA to tip |
 | Production website Vercel deployment | `dpl_7xaV34uyAEdMLvWckWKQASPAxJ7r` | Rollback target `dpl_FriiC2Ps…` not executed |
 | Production API SHA (observed at RC5 cutover) | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | `/healthz`/`/readyz`; **not** intentionally redeployed by RC5 website cutover |
@@ -147,3 +148,12 @@ RC6 candidates are evidence-driven slice IDs, not linked issue numbers.
 - Tip `96f1e803` is **not** a new Production website runtime cutover.
 - No RC6 feature is LIVE solely because a sidebar entry exists.
 - No migration, deploy, tag move, or GitHub Release is authorized by this planning pack.
+
+## RC6 delivery status
+
+| Item | Status |
+| --- | --- |
+| Planning PR #176 | **Merged** → `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` |
+| Current implementation slice | **RC6-DOC-01** |
+| Later slices (UI-01, QA-02, …) | Planned — not started |
+| Pending Production operation | **NONE** |

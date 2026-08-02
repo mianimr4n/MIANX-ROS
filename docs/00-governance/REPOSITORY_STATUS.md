@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-02 — repository main `152ce409609dc78e48d0d2b6b0c34a35d6338c24` (RC5 slices complete; Production website cutover evidenced)
+**Last reconciled:** 2026-08-02 — repository main `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` (RC6 planning #176 merged; RC6-DOC-01 living-status honesty in progress; Production website still `152ce40…`)
 
 ---
 
@@ -36,8 +36,9 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | Current tip on `origin/main` |
-| Released baseline | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Annotated git tag; **no** GitHub Release |
+| Repository main | `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` | Current tip on `origin/main` (RC6 planning + docs after `v1.4.0`) |
+| Released baseline | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Annotated git tag; **no** GitHub Release object |
+| Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Unchanged |
 | RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
 | Production website | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | Vercel `dpl_7xaV34uyAEdMLvWckWKQASPAxJ7r` — `rc5-production-cutover/` |
 | Production API (observed) | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | `/healthz`/`/readyz` `gitSha`; RC5 website cutover did **not** intentionally trigger API deploy |
@@ -56,7 +57,8 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Acceptance Process | Active |
 | Release Policy | Active |
 | RC4 | Released (`v1.3.0`) |
-| RC5 | **Complete** (repository slices + Production website smoke) |
+| RC5 | **Released** (`v1.4.0`; certified + Production website verified) |
+| RC6 | Planning merged (#176); **RC6-DOC-01** active |
 
 ---
 
@@ -64,18 +66,19 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | RC5 final closeout documentation |
+| Current Delivery Slice | **RC6-DOC-01** — living status honesty (docs only) |
+| RC6 planning | Merged #176 → `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` |
 | Completed RC5 slices (on `main`) | OPS-01, A11Y-01, DOC-01, TEST-01, PERF-01, OBS-01, QA-01 |
 | Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc5-production-cutover/` |
 | RC5 release blockers | **None evidenced** |
-| Released baseline | `v1.3.0` @ `74b6b8e…` |
-| Proposed next SemVer (not created) | `v1.4.0` — recommendation only |
+| Released baseline | `v1.4.0` @ `96f1e80…` |
+| Proposed next SemVer | Not selected — RC6 in progress |
 | Northern Bypass | `coming-soon` (unchanged) |
 | Royal Orchard target opening | **14 August 2026** — software readiness ≠ restaurant Production-ready |
 
 Owner-facing summary remains in [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 
-Admin ERP core modules remain LIVE on `main` with documented gaps (tables below). That capability baseline is unchanged by RC5 closeout; RC4/`v1.3.0` remains the last annotated release tag until Founder authorizes `v1.4.0`.
+Admin ERP core modules remain LIVE on `main` with documented gaps (tables below). RC5 is **released** as annotated `v1.4.0`. Finance truth for RC6 planning is **PARTIAL_LIVE** (see `docs/planning/RC6_CAPABILITY_TRUTH.md`). Misleading Admin UI labels are deferred to **RC6-UI-01** (not changed in DOC-01).
 
 ### Merged delivery through PR #133 (2026-07-30)
 
@@ -102,21 +105,22 @@ Prior baseline still released: Opening Operations M1–M4 ([PR #113](https://git
 | Module | Live capability | Documented gap / Coming Soon |
 | --- | --- | --- |
 | Owner Executive Dashboard | Live order KPIs + low-stock count | Acceptance remains PASS WITH LIMITATIONS from D1 |
-| Inventory | Items, stock ledger, adjustments | Adjustment atomicity risk; GRN does not post stock |
-| Purchasing | Suppliers, POs, requisitions, GRN headers, PO approve/reject | GRN line → stock_movements posting; invoice matching; payables |
+| Inventory | Items, stock ledger, adjustments | Adjustment atomicity residual; GRN→stock posting exists in **repository** (atomic RPC) — **not** Production-verified |
+| Purchasing | Suppliers, POs, requisitions, GRN (+ atomic stock post in repo), PO approve/reject | Invoice matching / payables depth; GRN stock post **Prod-unverified** |
 | Menu | Write APIs for prices, availability, categories | — |
 | Settings | Org/branch/delivery writes; hours/radius/fees | — |
+| Finance | CoA / journals / TB / P&L / cash / AP (repo) | **PARTIAL_LIVE** — BS/CF/AR/Tax UI honesty → RC6-FIN-01 / RC6-UI-01 |
 | Reports | Sales analytics + CSV export | — |
 | POS | Cash checkout + Z-Report shift close | No starting float / counted cash variance |
-| HR | Employee directory | No update/deactivate lifecycle APIs |
+| HR | Employee directory + deactivate API in repo | Broader update lifecycle / Prod verification incomplete; UI Phase-2 banners → RC6-UI-01 |
 | AI platform | Foundation tables/APIs | No runtime execution / agent loop |
 
 ### Known risks (audit — do not overstate as complete)
 
 1. **Inventory adjustment atomicity** — stock mutations may not be fully transactional across ledger + on-hand update paths; race/partial-write risk under concurrent adjust.
-2. **GRN does not post stock** — goods receiving headers are LIVE; line-level posting into `stock_movements` / on-hand is Coming Soon. Inventory quantities must still be adjusted via Inventory APIs.
+2. **GRN→stock posting** — repository implements `create_goods_receiving_with_stock_atomic` (tests present). **Not** claimed Production-verified. Residual: invoice matching / payables depth.
 3. **Z-Report lacks float / counted cash** — expected drawer cash equals paid cash sales for the Asia/Karachi business day only; no opening float, counted cash, or variance capture.
-4. **HR lacks update/deactivate lifecycle** — directory create/list exist; employee update and deactivate flows are not shipped.
+4. **HR deactivate** — `POST /hr/employees/:id/deactivate` exists in repository. Do **not** claim full HR lifecycle or Production verification. Misleading HR Phase-2 banners → RC6-UI-01.
 5. **AI foundation exists without runtime execution** — platform tables and APIs are present; no production agent runtime or autonomous execution path.
 
 ### Opening Operations (M1–M4) — verified baseline
@@ -251,4 +255,4 @@ This document should be updated whenever:
 
 Repository Status provides an honest view of the current verified state of the repository.
 
-Admin ERP core modules are LIVE on `main` through PR #133 with documented gaps. RC4 is certified and released as `v1.3.0` (`74b6b8e…`). RC5 roadmap slices are complete on repository main `152ce40…` with Production website cutover evidenced at the same SHA (`dpl_7xaV34uy…`). Migration tip remains `20260801180000`. Residual non-blocking limitations remain in `docs/testing/acceptance-evidence/rc5-final-closeout/` — not inventing metrics, not claiming GRN stock posting, float variance, HR lifecycle, AI runtime, or GitHub Releases that repository evidence does not support.
+Admin ERP core modules are LIVE on `main` through PR #133 with documented gaps. RC5 is certified, Production-website-verified, and released as annotated `v1.4.0` @ `96f1e80…`. Current repository main is `25960eb…` (includes RC6 planning #176). Production website runtime remains `152ce40…` / `dpl_7xaV34uy…`. Migration tip remains `20260801180000`. GRN stock posting and HR deactivate are **repository-implemented**; Finance is **PARTIAL_LIVE**. UI label honesty is **RC6-UI-01**. Do not invent Production verification, AI runtime, or GitHub Releases.

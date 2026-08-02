@@ -27,7 +27,7 @@ Severity scale (judgment): **H** high · **M** medium · **L** low
 | R-11 | Documents upload lacks virus scan | Deferred | H | M | rc4-documents | Product/security ADR | Founder |
 | R-13 | Merged feature branches / stashes clutter | TD-6 | H | L | RC4_RELEASE_NOTES hygiene | Owner-reviewed cleanup | Eng |
 | R-14 | CI Playwright gap for Owner paths | Mitigated w/ limitation | L | M | QA-01 | Job exists; branch protection unchanged; `/admin/reports` deferred | Eng |
-| R-15 | Package.json versions diverge from `v*` tags | TD-3 | H | L | website `1.0.0`, api `0.1.0` | Optional hygiene; proposed `v1.4.0` tag not created by closeout | Eng |
+| R-15 | Package.json versions diverge from `v*` tags | TD-3 | H | L | website `1.0.0`, api `0.1.0` | Optional hygiene; `v1.4.0` tag now exists — package.json still diverges | Eng |
 
 ---
 

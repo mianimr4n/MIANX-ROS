@@ -98,3 +98,14 @@ Non-blocking items from RC4 certification remain in force unless closed with new
 ## Explicit non-claims
 
 This baseline does not authorize Production mutation, schema changes, secret rotation, feature implementation, moving tags, or creating a GitHub Release. Proposed `v1.4.0` is recommendation-only until Founder executes tagging.
+
+---
+
+## Post-release note (RC6-DOC-01)
+
+Historical sections above describe RC5 planning/closeout-time truth. After closeout:
+
+- Annotated tag `v1.4.0` was created and pushed at `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824`.
+- Repository main advanced with RC6 planning (#176) to `25960eb2b69d2c390fe0ce364458c9cb3feeac0c`.
+- Production website runtime remains `152ce409609dc78e48d0d2b6b0c34a35d6338c24`.
+- Living status docs are reconciled under RC6-DOC-01; do not treat “recommended `v1.4.0`” language above as current.

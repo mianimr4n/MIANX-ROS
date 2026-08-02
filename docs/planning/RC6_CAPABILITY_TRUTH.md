@@ -133,4 +133,4 @@
 | Settings security / tax / printers FOUNDATION cards | Appear navigable; config writes missing |
 | Support / Integrations / AI Command Center | Placeholder only |
 
-Do **not** change labels in discovery. Label correction is proposed as RC6-DOC-01 / follow-on UI honesty slices.
+Do **not** change labels in discovery. Label correction in application components is **RC6-UI-01**. Living governance/status contradictions for tip/`v1.4.0`/GRN/HR/Finance are addressed by **RC6-DOC-01**.

@@ -27,7 +27,7 @@ Verified against repository main `36c5848` (includes PR #113 Opening Operations 
 
 ## What is FOUNDATION
 - Inventory ledger, purchasing settlement, full GL/finance ledger, analytics warehouse
-- HR module (attendance, leave, payroll, training center, employee documents) — staff table + roles exist, no directory/attendance/payroll APIs
+- HR module (attendance, leave, payroll, documents, deactivate) — repository APIs exist; Production verification incomplete; UI Phase-2 banners deferred to RC6-UI-01 (see `RC6_CAPABILITY_TRUTH.md`)
 - WhatsApp provider integration (order-derived view only, no live conversation storage)
 - Autonomous AI workforce / background agent runtime
 - Kubernetes, microservices, Prisma, native mobile apps, event bus (legacy archive claims — not Production)
