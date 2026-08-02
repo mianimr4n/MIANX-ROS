@@ -1,0 +1,155 @@
+# RC6 Acceptance Criteria
+
+**Status:** Proposed planning document
+**Date:** 2026-08-02
+**Baseline:** `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824`
+
+> Criteria apply to **proposed** slices in `RC6_ROADMAP.md`. Planning alone is not acceptance. Repository evidence wins.
+
+---
+
+## Universal gates (every RC6 implementation PR)
+
+| # | Criterion |
+| --- | --- |
+| U-1 | `pnpm check` PASS |
+| U-2 | `pnpm test` PASS |
+| U-3 | `pnpm test:db` PASS |
+| U-4 | `pnpm rc1:gate` PASS |
+| U-5 | `git diff --check` PASS |
+| U-6 | GitHub CI Typecheck and test SUCCESS on the PR |
+| U-7 | No secrets, JWTs, passwords, dumps, or private env values in the diff |
+| U-8 | Scope matches the slice exact scope; no silent architecture expansion |
+| U-9 | Production claims only with evidence; no invented LIVE status |
+| U-10 | Tip / Prod website SHA / API SHA / migration tip labeled separately |
+| U-11 | If Production mutation involved: separate Founder authorization before execute |
+| U-12 | Evidence pack under `docs/testing/acceptance-evidence/rc6-<slice>/` |
+
+---
+
+## Security criteria
+
+| # | Criterion |
+| --- | --- |
+| S-1 | No widening of anon write grants beyond harden design |
+| S-2 | PII (phone, payroll, documents) not logged or committed |
+| S-3 | New webhook ingress requires signature validation design before LIVE claim |
+| S-4 | Document upload changes address malware posture or explicitly retain deferred limitation |
+| S-5 | Playwright artifacts must not be committed; failure uploads sanitized |
+
+---
+
+## Migration criteria
+
+| # | Criterion |
+| --- | --- |
+| M-1 | Prefer NONE / EXISTING_SCHEMA_ONLY for early slices |
+| M-2 | Additive migrations only when gap proven; timestamp after `20260801180000` |
+| M-3 | No destructive DROP/TRUNCATE without separate ADR + Founder auth |
+| M-4 | Production apply only via approved cutover; never ad hoc SQL |
+| M-5 | Local grant/RLS intent covered by static tests when migrations touch privileges |
+
+---
+
+## Accessibility criteria
+
+| # | Criterion |
+| --- | --- |
+| A-1 | Public surfaces touched by a slice: 0 critical / 0 serious axe (or listed residuals) |
+| A-2 | Do not claim zero total findings |
+| A-3 | Admin routes touched: spot-check or suite evidence |
+
+---
+
+## Performance criteria
+
+| # | Criterion |
+| --- | --- |
+| P-1 | No unexplained entry-bundle regression beyond stated budget |
+| P-2 | No Lighthouse/RUM/CWV certification claim without new evidence |
+| P-3 | Keep HeroSlider deferred pattern unless intentionally changed with evidence |
+
+---
+
+## Production-verification criteria
+
+| # | Criterion |
+| --- | --- |
+| V-1 | Docs-only PRs: no Production smoke required |
+| V-2 | Website runtime Production cutovers: public smoke + relevant a11y/perf sanity + Owner smoke if auth/admin touched |
+| V-3 | API-only cutovers: `/healthz`/`/readyz` + targeted API smoke; do not conflate with website deploy |
+| V-4 | Migration cutovers: tip alignment evidence + rollback notes |
+| V-5 | Final RC6 closeout: repeat website smoke on authorized SHA |
+
+---
+
+## Evidence requirements
+
+| Artifact | Required |
+| --- | --- |
+| Contradiction / scope note | Yes |
+| Gate command results | Yes (summarized; no secrets) |
+| Acceptance matrix for slice criteria | Yes |
+| Residual limitations update | If residuals change |
+| Screenshots / raw logs / cookies | **Forbidden** |
+
+---
+
+## Slice-specific criteria
+
+### RC6-DOC-01 — Living status honesty sync
+
+| # | Criterion |
+| --- | --- |
+| D-01 | Living docs no longer claim GRN never posts stock as absolute gap |
+| D-02 | Living docs no longer claim HR lacks deactivate when route exists |
+| D-03 | Living docs record `v1.4.0` as released annotated tag @ `96f1e803` |
+| D-04 | Tip vs Production website SHA vs migration tip distinguished |
+| D-05 | Docs-only PR; no `apps/`, `backend/`, `supabase/migrations`, `.github/workflows` |
+| D-06 | Optional static test fails if forbidden stale phrases reappear |
+
+### RC6-UI-01 — Admin status-label honesty
+
+| # | Criterion |
+| --- | --- |
+| L-01 | HR banner no longer marks payroll/shifts as Phase 2 if those UIs ship |
+| L-02 | Finance BS/CF/AR/Tax badges match wire status (FOUNDATION or LIVE with data) |
+| L-03 | Loyalty “ledger absent” copy removed or corrected |
+| L-04 | Operations/BM grid labels reconciled with module truth |
+| L-05 | No new product features; labels/honesty only unless paired FIN-01 |
+
+### RC6-QA-02 — Owner Playwright CI expansion
+
+| # | Criterion |
+| --- | --- |
+| Q-01 | Additional readonly Owner paths asserted in CI job |
+| Q-02 | `/admin/reports` included **or** residual explicitly re-justified |
+| Q-03 | Job fails on real Playwright failure (no `continue-on-error`) |
+| Q-04 | Mutation workflows remain excluded |
+| Q-05 | Branch protection change **out of scope** unless OPS-03 |
+
+### RC6-FIN-01 — Finance panel honesty or bounded wire-up
+
+| # | Criterion |
+| --- | --- |
+| F-01 | Chosen strategy recorded: downgrade **or** wire |
+| F-02 | If wire: read-only list for selected panels uses real APIs; empty/error honesty |
+| F-03 | If downgrade: no LIVE badge without fetch |
+| F-04 | Bank/year-end/VAT filing remain out of scope |
+| F-05 | No migration |
+
+### RC6-OPS-02 — Alert enablement
+
+| # | Criterion |
+| --- | --- |
+| O-01 | Founder-approved signal list + destinations recorded |
+| O-02 | Status moves only with proof (`ENABLED_AND_VERIFIED`) |
+| O-03 | No secrets in Git |
+
+### RC6-SEC-01 — Documents malware controls
+
+| # | Criterion |
+| --- | --- |
+| X-01 | ADR decision recorded (block / scan / defer) |
+| X-02 | Implementation matches ADR; limitations honest |
+| X-03 | No claim of virus-free storage without control evidence |
