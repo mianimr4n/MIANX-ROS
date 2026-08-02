@@ -13,7 +13,7 @@ Complete means: implementation + tests + docs + security review (if required) + 
 | Opening/live/closing modes | Architecture §4 | **DASH-03 merged** (advisory) | Checklist/register/EOD still deferred | DASH-03 done (repo) | Mode unit + static | — | NONE | Preview UI | **Not Prod-verified** | — |
 | Approval Inbox | Action registry | **DASH-04 repo** (selected; DRILL_DOWN) | Inline execution / bulk / SoD engine | DASH-04 done (repo); later execute | Static + Owner smoke | — | NONE | Preview UI | **Not Prod-verified** | — |
 | Approval Inbox | Actions + W-APR-01 | Fragmented approvals | Unified inbox | DASH-04 | Mutation tests | SoD | EXISTING | — | SoD Prod | — |
-| Branch health score | KPI-BRANCH-HEALTH | PLANNED | Formula + UI | DASH-05 | Formula tests | — | NONE | — | Audit | — |
+| Branch health score | KPI-BRANCH-HEALTH | IMPLEMENTED_NOT_PRODUCTION_VERIFIED | Formula + UI | DASH-05 | Formula tests | — | NONE | — | Audit | — |
 | Profitability truth | KPI-PROFIT + FIN | PARTIAL/FOUNDATION | EST vs ACCOUNTING | DASH-06 / FIN-01 | Finance tests | Financial | EXISTING | — | Reconcile | — |
 | EOD pack | W-EOD-01 | Cash/Z fragmented | Pack product | DASH-07 | Pack tests | Cash | ADD possible | — | Close proof | — |
 | What Changed / timeline | Event model | NOT_PRESENT unified | Event store | DASH-08 | Event tests | Redaction | ADD likely | — | — | — |
@@ -49,6 +49,6 @@ Complete means: implementation + tests + docs + security review (if required) + 
 
 ## Selected next runtime slice
 
-**RC6-DASH-05 — Branch Health Score** (after DASH-04 merges)
+**RC6-DASH-06 — Profitability truth** (after DASH-05 merges)
 
-DASH-04 Approval Inbox: implemented in repository for selected verified sources at **DRILL_DOWN** maturity — **not** Production-verified; no inline approve/reject.
+DASH-05 Branch Health Score: implemented in repository as explainable, coverage-adjusted, read-only score from selected verified components — **not** Production-verified; no AI; peer league ranking deferred.

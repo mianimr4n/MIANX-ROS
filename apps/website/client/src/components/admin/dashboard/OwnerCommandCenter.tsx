@@ -5,6 +5,7 @@ import { AdminKpiCard, AdminSectionTitle, type AdminKpiState } from "@/component
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
 import { CommandModeHeader } from "@/components/admin/dashboard/CommandModeHeader";
 import { ApprovalInboxPanel } from "@/components/admin/dashboard/ApprovalInboxPanel";
+import { BranchHealthPanel } from "@/components/admin/dashboard/BranchHealthPanel";
 import { ExceptionCenterPanel } from "@/components/admin/dashboard/ExceptionCenterPanel";
 import { ReportBarChart } from "@/components/admin/reports/ReportCharts";
 import {
@@ -28,6 +29,10 @@ import {
   type CommandModeId,
 } from "@/lib/command-modes";
 import { buildApprovalInbox } from "@/lib/approval-inbox";
+import {
+  buildBranchHealthScore,
+  emphasizeBranchHealthForMode,
+} from "@/lib/branch-health";
 import {
   buildExceptionCenter,
   type DeliveryAssignmentLike,
@@ -681,6 +686,44 @@ export function OwnerCommandCenter({
     ],
   );
 
+  const branchHealthBase = useMemo(
+    () =>
+      buildBranchHealthScore({
+        branchId,
+        branchName: branchLabel,
+        nowMs: (now ?? new Date()).getTime(),
+        ops: { data, state: opState },
+        kitchen: { tickets: kitchenTickets, state: kitchenState },
+        delivery: { assignments: deliveryAssignments, state: deliveryState },
+        finance: {
+          enabled: financeEnabled,
+          unresolvedCashVariance: extras.financeAttention?.unresolvedCashVariance ?? null,
+          unavailable: Boolean(extras.financeAttention?.unavailable),
+          state: financeState,
+        },
+      }),
+    [
+      branchId,
+      branchLabel,
+      now,
+      data,
+      opState,
+      kitchenTickets,
+      kitchenState,
+      deliveryAssignments,
+      deliveryState,
+      financeEnabled,
+      financeState,
+      extras.financeAttention?.unresolvedCashVariance,
+      extras.financeAttention?.unavailable,
+    ],
+  );
+
+  const branchHealth = useMemo(
+    () => emphasizeBranchHealthForMode(branchHealthBase, selectedMode),
+    [branchHealthBase, selectedMode],
+  );
+
   const todaySection = (
     <section className="mb-8" aria-labelledby="owner-today-heading" data-mode-section="today-kpis">
       <AdminSectionTitle
@@ -758,6 +801,16 @@ export function OwnerCommandCenter({
         loading={loading}
         commandMode={selectedMode}
         onRetry={onExceptionRetry}
+      />
+    ),
+    "branch-health": (
+      <BranchHealthPanel
+        key="branch-health"
+        result={branchHealth}
+        loading={
+          loading || kitchenState === "LOADING" || deliveryState === "LOADING" || financeState === "LOADING"
+        }
+        commandMode={selectedMode}
       />
     ),
     "mode-summary": <div key="mode-summary">{modeSummary}</div>,

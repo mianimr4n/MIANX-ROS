@@ -71,8 +71,8 @@ Each candidate scored **1–5**. Preference direction:
 | **RC6-DASH-01** | Exception Center read-only foundation (**merged** — repo; not Prod-verified) |
 | **RC6-DASH-02** | Actionable KPI drill-downs (**merged** — repo; not Prod-verified) |
 | **RC6-DASH-03** | Opening/live/closing modes (**merged** — repo; not Prod-verified) |
-| **RC6-DASH-04** | Approval Inbox foundation (**this wave** — DRILL_DOWN only) |
-| RC6-DASH-05 | Branch Health Score |
+| **RC6-DASH-04** | Approval Inbox foundation (**merged** — repo; not Prod-verified; DRILL_DOWN) |
+| **RC6-DASH-05** | Branch Health Score (**this wave** — explainable; coverage-adjusted) |
 | RC6-DASH-06 | Profitability truth |
 | RC6-DASH-07 | EOD pack |
 | RC6-DASH-08 | What Changed and timeline |

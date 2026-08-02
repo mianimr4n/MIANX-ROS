@@ -33,6 +33,7 @@ export type DeliveryAssignmentLike = {
   orderStatus?: string | null;
   createdAt?: string | null;
   assignedAt?: string | null;
+  pickedUpAt?: string | null;
 };
 
 export type ExceptionCenterInput = {
