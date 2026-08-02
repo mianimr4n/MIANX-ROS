@@ -10,6 +10,7 @@ export type ModeSectionId =
   | "branch-health"
   | "profitability-truth"
   | "eod-pack"
+  | "what-changed"
   | "mode-summary"
   | "today-kpis"
   | "live-ops-kpis"
@@ -33,6 +34,7 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
   PRE_OPEN: {
     mode: "PRE_OPEN",
     sections: [
+      "what-changed",
       "exception-center",
       "approval-inbox",
       "branch-health",
@@ -50,6 +52,7 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "owner-brief",
     ],
     emphasize: [
+      "what-changed",
       "exception-center",
       "approval-inbox",
       "branch-health",
@@ -65,6 +68,7 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
   LIVE_OPERATIONS: {
     mode: "LIVE_OPERATIONS",
     sections: [
+      "what-changed",
       "exception-center",
       "approval-inbox",
       "branch-health",
@@ -81,6 +85,7 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "owner-brief",
     ],
     emphasize: [
+      "what-changed",
       "exception-center",
       "approval-inbox",
       "branch-health",
@@ -96,6 +101,7 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "exception-center",
       "approval-inbox",
       "eod-pack",
+      "what-changed",
       "branch-health",
       "profitability-truth",
       "mode-summary",
@@ -111,6 +117,7 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
     ],
     emphasize: [
       "eod-pack",
+      "what-changed",
       "exception-center",
       "approval-inbox",
       "branch-health",

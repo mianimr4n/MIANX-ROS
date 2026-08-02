@@ -143,6 +143,14 @@ Formulas unsupported by current repository evidence are marked **PROPOSED**.
 | Trust | IMPLEMENTED_NOT_PRODUCTION_VERIFIED after DASH-07 (preview only; not closed/final) |
 | Slice | RC6-DASH-07 |
 
+### What Changed / timeline (DASH-08)
+
+| Field | Value |
+| --- | --- |
+| Trust | IMPLEMENTED_NOT_PRODUCTION_VERIFIED — derived deltas + list-derived timeline; incomplete audit |
+| Since anchor | Browser-local review on this device (never fake last login) |
+| Slice | RC6-DASH-08 |
+
 ### KPI-HEALTH
 
 | Field | Content |

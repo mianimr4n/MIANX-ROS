@@ -581,6 +581,7 @@ export function buildEodPack(input: EodPackBuildInput): EodPack {
       "Accounting figures are not finalized unless explicitly marked posted.",
       "REVIEWABLE does not mean day closed, accounting complete, or all operations resolved.",
       "No finalize, email, WhatsApp, register close, or journal posting from this pack.",
+      "What Changed / operational timeline (DASH-08) does not mark this pack final; browser-local review state does not alter EOD coverage; exports omit event detail.",
       !input.branchId
         ? "All-branches aggregate preview may mix scopes — prefer a selected branch for closing review."
         : "",
