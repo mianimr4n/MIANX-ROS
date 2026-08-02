@@ -1,5 +1,5 @@
 /**
- * RC5-QA-01 — static read-only / local-only guard for owner-critical-smoke.spec.ts.
+ * RC6-QA-02 — static read-only / local-only guard for owner-critical-smoke.spec.ts.
  * Kept separate so assertion strings do not self-match inside the smoke suite.
  */
 import { expect, test } from "@playwright/test";
@@ -27,4 +27,12 @@ test("owner-critical-smoke.spec.ts remains read-only and local-only", () => {
   expect(src).toMatch(/browserLogin/);
   expect(src).toMatch(/\/admin\/dashboard/);
   expect(src).toMatch(/\/admin\/login/);
+  expect(src).toMatch(/\/admin\/branch/);
+  expect(src).toMatch(/\/admin\/orders/);
+  expect(src).toMatch(/\/admin\/kitchen/);
+  expect(src).toMatch(/\/admin\/delivery/);
+  expect(src).toMatch(/\/admin\/kitchen-dashboard/);
+  expect(src).toMatch(/\/admin\/reports/);
+  expect(src).toMatch(/Sign out/);
+  expect(src).toMatch(/AxeBuilder/);
 });
