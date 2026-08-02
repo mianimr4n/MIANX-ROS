@@ -1,3 +1,5 @@
+import { CapabilityStatusBadge } from "@/components/admin/CapabilityStatusBadge";
+
 export function HRStatusBanner() {
   return (
     <div
@@ -5,11 +7,16 @@ export function HRStatusBanner() {
       role="status"
       aria-live="polite"
     >
-      <p className="font-semibold">Workforce tools are ready</p>
-      <p className="mt-1 text-emerald-900/90">
-        Manage employees, attendance, leave, and document links here. Payroll, performance reviews, shift roster, and
-        training are Planned for Phase 2.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="font-semibold">Workforce tools are ready</p>
+          <p className="mt-1 text-emerald-900/90">
+            Manage employees (including deactivate), attendance, leave, documents, shift roster, and payroll calculation
+            here. Performance reviews and training remain Planned. Not Production-verified end-to-end.
+          </p>
+        </div>
+        <CapabilityStatusBadge status="PARTIAL_LIVE" />
+      </div>
     </div>
   );
 }

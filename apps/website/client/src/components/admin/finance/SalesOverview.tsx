@@ -79,7 +79,8 @@ export function SalesOverview({
         )}
         <p className="mt-4 text-xs text-[var(--admin-muted)]">{snapshot.note}</p>
         <p className="mt-2 text-xs text-[var(--admin-muted)]">
-          Accounting revenue recognition, deferred sales, and GL postings are Foundation until ledger backend ships.
+          Accounting revenue recognition and deferred sales remain Foundation. CoA/journals/TB/P&L are available in Finance
+          (Partial LIVE); auto-post from orders stays Deferred.
         </p>
       </AdminSurfaceBody>
     </AdminSurface>

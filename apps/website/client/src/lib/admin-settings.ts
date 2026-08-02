@@ -334,14 +334,14 @@ export function capabilityMatrix(): SettingsCapabilityRow[] {
     {
       domain: "Loyalty",
       capability: "Loyalty earning and redemption rules",
-      source: "Absent ledger",
-      readApi: "None",
-      writeApi: "None",
+      source: "Admin loyalty module + Settings policy gap",
+      readApi: "GET /api/v1/admin/loyalty/* (module)",
+      writeApi: "None in Settings",
       permission: "admin.access",
       scope: "Organization",
       sensitive: false,
       classification: "FOUNDATION",
-      decision: "Phase 2 — no loyalty configuration without a points ledger",
+      decision: "Phase 2 — Settings policy controls; ledger lives in Admin → Loyalty",
     },
     {
       domain: "Integrations",
@@ -418,7 +418,7 @@ export function integrationChecks(): SettingsIntegrationCheck[] {
       id: "loyalty",
       label: "Loyalty rules engine",
       status: "missing",
-      note: "Loyalty ledger absent — earning/redemption settings unavailable.",
+      note: "Loyalty ledger exists in Admin → Loyalty. Settings earning/redemption policy controls remain Planned.",
     },
     {
       id: "tax",
@@ -492,7 +492,7 @@ export function buildConfigurationInsights(input: {
     {
       id: "loyalty",
       title: "Loyalty configuration is Planned for Phase 2",
-      detail: "Earning and redemption rules need a points ledger before Settings can expose controls.",
+      detail: "Points ledger is available in Admin → Loyalty. Settings earning/redemption policy controls remain Planned.",
       source: "foundation",
     },
     {

@@ -63,7 +63,7 @@ describe("Finance & Accounting V1 (static)", () => {
     const panels = read("apps/website/client/src/components/admin/finance/FinancePanels.tsx");
     assert.match(panels, /Operational supplier invoices/);
     assert.match(panels, /No outstanding supplier invoices/);
-    assert.match(panels, /Accounts receivable — LIVE foundation/);
+    assert.match(panels, /Accounts receivable — Foundation/);
     assert.match(panels, /listSupplierInvoices|SupplierInvoice|invoices/);
     const page = read("apps/website/client/src/pages/admin/AdminFinance.tsx");
     assert.match(page, /listSupplierInvoices/);
@@ -72,8 +72,8 @@ describe("Finance & Accounting V1 (static)", () => {
 
   it("tax panel does not fabricate VAT/GST figures", () => {
     const tax = read("apps/website/client/src/components/admin/finance/FinancePanels.tsx");
-    assert.match(tax, /Tax configuration — LIVE foundation/);
-    assert.match(tax, /Filing DEFERRED/);
+    assert.match(tax, /Tax configuration — Foundation/);
+    assert.match(tax, /Filing Deferred|Filing DEFERRED/);
     assert.match(tax, /not a compliance engine|no hardcoded Pakistan rates/i);
     assert.doesNotMatch(tax, /vatRate|gstRate|taxLiability:\s*\d/i);
   });

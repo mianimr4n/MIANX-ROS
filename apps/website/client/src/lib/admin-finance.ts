@@ -111,14 +111,14 @@ export function integrationChecks(): FinanceIntegrationCheck[] {
     {
       id: "payroll",
       label: "Payroll linkage",
-      status: "missing",
-      note: "Planned for Phase 2 — no payroll runs or salary accrual journals.",
+      status: "partial",
+      note: "Payroll calc/approve APIs LIVE in HR — GL salary accrual journals remain Deferred.",
     },
     {
       id: "statements",
       label: "Financial statements",
       status: "partial",
-      note: "LIVE trial balance + P&L (dynamic). Balance sheet / cash flow Planned for Phase 2.",
+      note: "LIVE trial balance + P&L (dynamic). Balance sheet / cash flow UI Foundation (API may exist; panel unwired).",
     },
     {
       id: "permission",
@@ -187,7 +187,7 @@ export function readinessGroups(): FinanceReadinessGroup[] {
     {
       id: "statements",
       title: "Financial statements",
-      unavailable: "Balance sheet and cash flow Planned for Phase 2",
+      unavailable: "Balance sheet and cash flow UI Foundation (unwired)",
       why: "Trial balance and P&L are calculated dynamically from posted journal lines.",
       entities: ["(dynamic — no snapshot tables)"],
       apis: [
@@ -282,7 +282,7 @@ export function buildFinanceInsights(
     {
       id: "no-cashflow",
       title: "Cash flow statement Planned for Phase 2",
-      detail: "Trial balance and P&L are LIVE; cash flow and balance sheet remain Planned for Phase 2.",
+      detail: "Trial balance and P&L are LIVE; cash flow and balance sheet UI remain Foundation until wired.",
       source: "foundation",
     },
   );

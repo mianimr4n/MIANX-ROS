@@ -76,7 +76,7 @@ const MODULES: ModuleDef[] = [
   },
   {
     title: "Inventory",
-    description: "Stock records — automatic alerts arrive later.",
+    description: "Stock, adjustments, recipes, and GRN stock posting (repo) — Partial LIVE.",
     href: "/admin/inventory",
     icon: Package,
     status: "limited",
@@ -85,7 +85,7 @@ const MODULES: ModuleDef[] = [
   },
   {
     title: "Finance",
-    description: "Sales records — full ledger arrives later.",
+    description: "CoA, journals, TB/P&L — Partial LIVE (BS/CF/AR/Tax UI Foundation).",
     href: "/admin/finance",
     icon: Wallet,
     status: "limited",
@@ -94,7 +94,7 @@ const MODULES: ModuleDef[] = [
   },
   {
     title: "Employees",
-    description: "Staff directory — payroll arrives later.",
+    description: "Directory, attendance, shifts, payroll calc — Partial LIVE.",
     href: "/admin/hr",
     icon: UtensilsCrossed,
     status: "limited",
@@ -103,7 +103,7 @@ const MODULES: ModuleDef[] = [
   },
   {
     title: "Reports",
-    description: "Today's sales and orders — trends arrive later.",
+    description: "Sales analytics and exports — Implemented (scheduled worker Planned).",
     href: "/admin/reports",
     icon: Banknote,
     status: "limited",

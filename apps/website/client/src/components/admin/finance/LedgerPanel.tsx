@@ -480,16 +480,20 @@ export function StatementsPanel({
 
         <ul className="mt-4 grid gap-3 sm:grid-cols-2">
           {[
-            { id: "balance-sheet", label: "Balance sheet", state: "LIVE" },
-            { id: "cash-flow", label: "Cash flow (indirect)", state: "LIVE" },
-            { id: "vat-gst", label: "VAT/GST filing export", state: "DEFERRED" },
+            { id: "balance-sheet", label: "Balance sheet", state: "Foundation" as const },
+            { id: "cash-flow", label: "Cash flow (indirect)", state: "Foundation" as const },
+            { id: "vat-gst", label: "VAT/GST filing export", state: "Deferred" as const },
           ].map((item) => (
             <li
               key={item.id}
               className="flex items-center justify-between rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-3"
             >
               <span className="text-sm font-semibold">{item.label}</span>
-              <span className="rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--admin-muted)]">
+              <span
+                role="status"
+                aria-label={`Capability status: ${item.state}`}
+                className="rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--admin-muted)]"
+              >
                 {item.state}
               </span>
             </li>

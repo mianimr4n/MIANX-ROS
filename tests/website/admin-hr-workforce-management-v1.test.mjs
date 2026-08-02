@@ -96,7 +96,7 @@ describe("HR & Workforce Management V1 (static)", () => {
     const insights = read("apps/website/client/src/components/admin/hr/WorkforceInsights.tsx");
     assert.match(insights, /Mianx\.ai Workforce Insights/);
     assert.match(insights, /Rule-based Summary/);
-    assert.match(insights, /Live attendance, leave, and documents/);
+    assert.match(insights, /Live attendance, leave, documents, shifts, and payroll calc/);
     assert.doesNotMatch(insights, /employee scoring|hiring recommendations|salary recommendations|termination recommendations/i);
   });
 
