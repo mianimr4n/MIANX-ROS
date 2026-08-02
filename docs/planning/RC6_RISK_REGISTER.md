@@ -29,6 +29,10 @@ Severity: **H** high · **M** medium · **L** low
 | R6-13 | Branch protection not requiring Owner Playwright | RC6-OPS-03 | L | M | Founder GitHub admin change | Founder | QA-01 limitation | No |
 | R6-14 | package.json SemVer ≠ `v*` tags | RC6-REL-01 | H | L | Policy hygiene | Eng | TD-3 | No |
 | R6-15 | Playwright failure artifacts may contain session material | QA | M | M | Sanitize artifact policy; no commit | Eng | Documented in QA-01 | No |
+| R6-16 | Implementing Command Center without contracts → false LIVE / omitted capabilities | RC6-DASH-00+ | H | H | Contracts first; traceability | Eng+Founder | Until DASH-00 merges | No (process) |
+| R6-17 | Treating delivery assign/status as full rider/POD/COD system | DEL/RIDER/CASH | H | H | Domain contract honesty | Eng | Until DEL slices | No |
+| R6-18 | Treating Settings Foundation panels as versioned config | SET-* | H | M | Settings contract + SET-08 | Eng | Until versioning | No |
+| R6-19 | Unified What Changed without event model → fabricated timeline | DASH-08 | M | M | Event contract first | Eng | Until DASH-08 | No |
 
 ---
 
@@ -39,7 +43,7 @@ Severity: **H** high · **M** medium · **L** low
 | R-01 | Local privilege gap residual | Optional RC6-QA-03 |
 | R-06 | No PITR | RC6-PITR-01 Founder |
 | R-07 | Log export / alerting | RC6-OPS-02 / OBS-02 |
-| R-08 | Moderate a11y | RC6-A11Y-02 |
+| R-08 | Moderate a11y | **Closed in RC6-A11Y-02** (residuals: cart-drawer targets; full admin WCAG not claimed) |
 | R-10 | Supplier RLS matrix | RC6-SEC-02 |
 | R-11 | Documents virus scan | RC6-SEC-01 |
 | R-14 | Branch protection | RC6-OPS-03 |

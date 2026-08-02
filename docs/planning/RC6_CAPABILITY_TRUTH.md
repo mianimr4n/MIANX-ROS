@@ -102,7 +102,12 @@
 | APM/paging | Still relevant · provider/ops · not early RC6 unless scoped |
 | `/admin/reports` CI | Still relevant · QA |
 | Branch protection Owner Playwright | Founder-gated |
-| Moderate a11y advisories | Still relevant |
+| Moderate a11y advisories | **Addressed in RC6-A11Y-02** · residual cart-drawer targets / full admin cert not claimed |
+| Owner Command Center depth | Still relevant · contracts in RC6-DASH-00; runtime DASH-01+ |
+| Delivery/Rider complete lifecycle | Still relevant · PARTIAL_LIVE foundation; DEL/RIDER/CASH slices |
+| Settings inheritance/versioning | Still relevant · PARTIAL_LIVE writes; SET slices |
+| Unified What Changed / timeline | Still relevant · NOT_PRESENT; DASH-08 |
+| Exception Center (ops) | Still relevant · attention cards ≠ unified center; DASH-01 |
 | Loyalty/marketing provider send | Provider-dependent · Founder-gated |
 | WhatsApp conversation/webhooks | Provider-dependent · not present |
 | Analytics worker | Still relevant · backend |

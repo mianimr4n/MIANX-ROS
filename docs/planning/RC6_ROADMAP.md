@@ -1,13 +1,24 @@
 # RC6 Roadmap
 
-**Status:** Planning merged (#176 → `25960eb…`); **RC6-DOC-01** active
+**Status:** Living roadmap — honesty wave complete through **RC6-A11Y-02**; **RC6-DASH-00** contracts in progress
 **Date:** 2026-08-02
 **Baseline tag:** `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824`
-**Current repository main (DOC-01 baseline):** `25960eb2b69d2c390fe0ce364458c9cb3feeac0c`
+**Current repository tip (DASH-00 baseline):** `da99875ddedbc25ae51e6db22a16de4a50d2ea16`
 **Production website runtime:** `152ce409609dc78e48d0d2b6b0c34a35d6338c24`
 **Migration tip:** `20260801180000`
 
-> This roadmap does **not** authorize Production mutation, migrations, deploys, tags, or GitHub Releases.
+> This roadmap does **not** authorize Production mutation, migrations, deploys, tags, or GitHub Releases. Planning is not implementation evidence.
+
+---
+
+## Completed (repository evidence)
+
+| ID | Title | Evidence / merge |
+| --- | --- | --- |
+| RC6-DOC-01 | Living status honesty sync | `rc6-doc-01/` · #177 |
+| RC6-UI-01 | Admin capability-label honesty | `rc6-ui-01/` · #178 |
+| RC6-QA-02 | Owner CI path expansion | `rc6-qa-02/` · #179 |
+| RC6-A11Y-02 | Moderate a11y remediation | `rc6-a11y-02/` · #180 → `da99875…` |
 
 ---
 
@@ -28,37 +39,7 @@ Each candidate scored **1–5**. Preference direction:
 | Provider dependency | Lower better | Prefer none |
 | Implementation size | Lower better | Prefer S for early waves |
 
-**Order rule:**
-
-1. Release/security blockers (honesty that misleads LIVE)
-2. Misleading or broken LIVE workflows
-3. High-value existing-schema depth
-4. Provider-independent features
-5. Small, strongly testable slices
-6. Operational debt
-7. Provider/Founder-gated work
-8. Speculative features
-
----
-
-## Candidate scores (discovery)
-
-| ID | UV | OV | Ev | Dep | Test | Mig | Sec↓ | Blast↓ | Prov↓ | Size↓ | Rank notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| RC6-DOC-01 | 4 | 5 | 5 | 5 | 5 | 5 | 1 | 1 | 1 | 1 | **First** — truth hygiene |
-| RC6-UI-01 | 4 | 4 | 5 | 5 | 4 | 5 | 2 | 2 | 1 | 2 | Label/badge honesty in Admin UI |
-| RC6-QA-02 | 3 | 4 | 5 | 5 | 5 | 5 | 2 | 2 | 1 | 3 | Expand Owner CI readonly paths |
-| RC6-OPS-03 | 2 | 5 | 5 | 4 | 3 | 5 | 1 | 2 | 1 | 1 | Branch protection Founder |
-| RC6-OPS-02 | 3 | 5 | 5 | 3 | 2 | 5 | 2 | 3 | 2 | 2 | Alerts enablement Founder |
-| RC6-SEC-01 | 3 | 4 | 5 | 3 | 4 | 4 | 4 | 3 | 1 | 3 | Documents malware ADR |
-| RC6-A11Y-02 | 3 | 2 | 4 | 5 | 4 | 5 | 1 | 2 | 1 | 2 | Moderate public a11y debt |
-| RC6-SEC-02 | 2 | 4 | 4 | 3 | 3 | 5 | 3 | 2 | 1 | 3 | Supplier RLS matrix |
-| RC6-INV-01 | 3 | 3 | 4 | 4 | 4 | 5 | 2 | 3 | 1 | 3 | Inventory adjust residual proof |
-| RC6-CHK-01 | 4 | 2 | 4 | 4 | 4 | 5 | 2 | 3 | 1 | 3 | Customer checkout promo redeem |
-| RC6-FIN-01 | 4 | 3 | 5 | 4 | 4 | 5 | 2 | 3 | 1 | 3 | Wire or downgrade BS/CF/AR/Tax UI |
-| RC6-QA-03 | 2 | 3 | 4 | 5 | 5 | 5 | 1 | 1 | 1 | 2 | Live-DB privilege static→job residual |
-| RC6-REL-01 | 1 | 3 | 5 | 5 | 3 | 5 | 1 | 1 | 1 | 1 | package.json SemVer hygiene |
-| Defer providers | — | — | — | — | — | — | — | — | 5 | L | WhatsApp/loyalty send/APM/PITR/AI |
+**Order rule:** honesty → contracts → read-only Command Center foundations → bounded mutations with SoD → Founder/provider work.
 
 ---
 
@@ -66,181 +47,168 @@ Each candidate scored **1–5**. Preference direction:
 
 ### Release blockers
 
-**None evidenced** for RC6 start.
-Closest: **misleading LIVE/governance claims** (treated as high-priority honesty, not a Production outage).
+**None evidenced** as Production outages. Misleading LIVE claims remain honesty risks (FIN-01 still open).
 
-### Committed / high priority
-
-| ID | Title | Why |
-| --- | --- | --- |
-| **RC6-DOC-01** | Living status honesty sync (GRN/HR/`v1.4.0`/tip anchors) | Fixes stale governance vs repository evidence |
-| **RC6-UI-01** | Admin status-label honesty (HR/Finance/Loyalty/grids) | Removes contradictory LIVE/Phase 2 badges |
-| **RC6-QA-02** | Expand Owner Playwright CI (readonly; include `/admin/reports`) | Closes QA residual without Prod credentials |
-| **RC6-FIN-01** | Finance BS/CF/AR/Tax UI honesty or wire-up (bounded) | Fixes overly optimistic LIVE badges |
-
-### Normal priority
+### Architecture / contracts (docs-first)
 
 | ID | Title |
 | --- | --- |
-| RC6-A11Y-02 | Moderate public a11y advisories (accessible-name, touch targets, headings, menu contrast) |
-| RC6-INV-01 | Inventory adjustment residual honesty/proof |
-| RC6-CHK-01 | Customer checkout coupon redeem (existing marketing schema) |
-| RC6-SEC-02 | Supplier portal RLS credentialed matrix |
-| RC6-QA-03 | Live-DB privilege CI residual (if Founder wants) |
+| **RC6-DASH-00** | Restaurant Command Center contracts (this wave) |
+| RC6-DEL-00 | Covered inside Delivery/Rider domain contract (DASH-00 pack) |
+| RC6-SET-00 | Covered inside Settings configuration contract (DASH-00 pack) |
+
+### Command Center runtime sequence
+
+| ID | Title |
+| --- | --- |
+| **RC6-DASH-01** | Exception Center read-only foundation (**next runtime**) |
+| RC6-DASH-02 | Actionable KPI drill-downs |
+| RC6-DASH-03 | Opening/live/closing modes |
+| RC6-DASH-04 | Approval Inbox |
+| RC6-DASH-05 | Branch Health Score |
+| RC6-DASH-06 | Profitability truth |
+| RC6-DASH-07 | EOD pack |
+| RC6-DASH-08 | What Changed and timeline |
+
+### Delivery / Rider
+
+| ID | Title |
+| --- | --- |
+| RC6-DEL-01 | Dispatch queue and assignment |
+| RC6-RIDER-01 | Rider profiles/status/shifts |
+| RC6-DEL-02 | Lifecycle and exceptions |
+| RC6-DEL-03 | POD and failed-delivery flow |
+| RC6-CASH-01 | Rider COD settlement |
+| RC6-DEL-04 | SLA/zone/performance analytics |
+| RC6-RIDER-02 | Rider app/offline sync |
+| RC6-DEL-05 | Smart dispatch recommendations |
+| RC6-RISK-01 | Safety/fraud/compliance |
+
+### Settings
+
+| ID | Title |
+| --- | --- |
+| RC6-SET-01 | Organization/brand/branch |
+| RC6-SET-02 | Effective values and overrides |
+| RC6-SET-03 | Hours and service modes |
+| RC6-SET-04 | Delivery/order/payment policies |
+| RC6-SET-05 | Roles/permissions/approvals |
+| RC6-SET-06 | POS/KDS/printer/device |
+| RC6-SET-07 | Finance/tax/inventory policies |
+| RC6-SET-08 | Versioning/scheduling/rollback |
+| RC6-SET-09 | Readiness and drift |
+| RC6-SET-10 | AI configuration assistant |
+
+### Previously approved high / normal (retained)
+
+| ID | Title | Notes |
+| --- | --- | --- |
+| **RC6-FIN-01** | Finance BS/CF/AR/Tax honesty or wire-up | Still high; pairs with DASH-06 |
+| RC6-INV-01 | Inventory adjustment residual proof | Retained |
+| RC6-CHK-01 | Customer checkout coupon redeem | Retained |
+| RC6-SEC-02 | Supplier portal RLS matrix | Retained |
+| RC6-QA-03 | Live-DB privilege CI residual | Optional |
 
 ### Optional
 
 | ID | Title |
 | --- | --- |
-| RC6-REL-01 | Align package.json SemVer narrative with `v*` tags (policy first) |
-| RC6-OBS-02 | Bulk log export proof / APM adapter (provider) |
+| RC6-REL-01 | package.json SemVer hygiene |
+| RC6-OBS-02 | Bulk log export / APM |
 
 ### Founder-gated / provider-dependent
 
 | ID | Title | Gate |
 | --- | --- | --- |
-| RC6-OPS-02 | Enable Production alerts | Thresholds + destinations |
-| RC6-OPS-03 | Require Owner Playwright in branch protection | GitHub admin |
-| RC6-SEC-01 | Documents virus/magic-byte controls | Security ADR |
-| RC6-PITR-01 | Supabase PITR | Commercial plan |
-| RC6-WA-01 | WhatsApp conversation/provider webhooks | Provider ADR |
-| RC6-LOY-01 | Loyalty/marketing provider send | Provider + Founder |
+| RC6-OPS-02 | Enable Production alerts | Destinations |
+| RC6-OPS-03 | Branch protection Owner Playwright | GitHub admin |
+| RC6-SEC-01 | Documents malware controls | Security ADR |
+| RC6-PITR-01 | Supabase PITR | Commercial |
+| RC6-WA-01 | WhatsApp conversation/webhooks | Provider ADR |
+| RC6-LOY-01 | Loyalty/marketing send | Provider |
 | RC6-AN-01 | Analytics scheduled worker | Product ADR |
 | RC6-AI-01 | AI Command Center runtime | Product ADR |
-| RC6-NB-01 | Northern Bypass go-live | Founder authorization |
+| RC6-NB-01 | Northern Bypass go-live | Founder |
 
-### Explicitly deferred (unsuitable as early RC6)
+### Explicitly deferred
 
-- Speculative microservices / mobile apps
-- Broad “finish finance” / “finish settings” megaslices
-- Lighthouse/RUM certification as release gate
-- GitHub Release UI automation (unless Founder changes tag-only convention)
+- Speculative microservices / native mobile megaslices without ADR
+- Broad “finish finance/settings” without contracts
+- Lighthouse/RUM as release gate
+- GitHub Release UI automation (tag-only unless Founder changes policy)
 
 ---
 
-## Recommended implementation order
+## Recommended implementation order (post-honesty wave)
 
 ```text
-1. RC6-DOC-01          (first — docs only)
-2. RC6-UI-01           (label honesty; may parallel after DOC-01)
-3. RC6-FIN-01          (wire or downgrade finance badges — existing schema)
-4. RC6-QA-02           (CI Owner path expansion)
-5. RC6-A11Y-02         (moderate a11y)
-6. RC6-CHK-01          (checkout promo — if marketing redeem is prioritized)
-7. RC6-INV-01 / SEC-02 (hardening)
-8. Founder-gated ops   (OPS-02/03, SEC-01, PITR, providers)
+1. RC6-DASH-00         (contracts — docs only)
+2. RC6-DASH-01         (Exception Center read-only — next runtime)
+3. RC6-FIN-01          (finance honesty/wire; parallelizable with early DASH)
+4. RC6-DASH-02…08      (Command Center depth)
+5. RC6-DEL-01 / RIDER-01 → DEL-02… / CASH-01
+6. RC6-SET-01…10       (after SET contracts in DASH-00)
+7. RC6-CHK-01 / INV-01 / SEC-02
+8. Founder-gated ops/providers/AI
 ```
 
-Parallelizable after DOC-01: UI-01 ∥ QA-02 ∥ A11Y-02 (low coupling).
-
 ---
 
-## Slice briefs (high priority)
-
-### RC6-DOC-01 — Living status honesty sync
+## Slice brief — RC6-DASH-00
 
 | Field | Content |
 | --- | --- |
-| Verified problem | Living docs claim GRN does not post stock, HR lacks deactivate, `v1.4.0` not created, tip still `152ce40` |
-| User value | Operators/engineers trust repository truth |
-| Evidence | `REPOSITORY_STATUS.md` vs `grn-stock-posting-atomic.test.ts`, `hr.ts` deactivate, tag `v1.4.0` |
-| Scope | Update living status/release/residual docs + optional static phrase guards |
-| Out of scope | Runtime UI, migrations, Production, tag moves |
+| Problem | Advanced Owner Dashboard / Delivery / Settings vision lacks canonical contracts → risk of silent omission or false LIVE |
+| Scope | Architecture, widget/KPI/action/exception/event/delivery/settings/role/NFR/traceability docs + roadmap wiring |
+| Out of scope | Runtime code, migrations, providers, CI behavior changes, Production |
 | DB impact | **NONE** |
-| Migration | None |
-| Security | None (no secrets) |
-| Complexity | **S** |
-| Priority | High (first) |
-| Founder decision | Authorize honesty-only opener |
+| Next runtime | **RC6-DASH-01** |
 
-### RC6-UI-01 — Admin status-label honesty
+## Next runtime brief — RC6-DASH-01 (do not implement in DASH-00)
 
 | Field | Content |
 | --- | --- |
-| Verified problem | HR/Finance/Loyalty/Operations grids contradict APIs |
-| Evidence | `HRStatusBanner.tsx`, `FinanceStatusBanner.tsx`, `LedgerPanel.tsx`, `admin-settings.ts` loyalty copy |
-| Scope | Correct labels/banners only; no new product features |
-| Out of scope | Wiring BS/CF data (that is FIN-01), providers |
-| DB impact | **NONE** |
-| Complexity | **S–M** |
-| Priority | High |
-
-### RC6-QA-02 — Owner Playwright CI expansion
-
-| Field | Content |
-| --- | --- |
-| Verified problem | CI Owner smoke covers login/dashboard only; `/admin/reports` deferred |
-| Evidence | `rc5-qa-01/`, `.github/workflows/ci.yml` |
-| Scope | Readonly navigation assertions for approved Owner paths; keep mutation-free |
-| Out of scope | Branch protection change; Prod credentials |
-| DB impact | **NONE** |
-| Complexity | **M** |
-| Priority | High |
-
-### RC6-FIN-01 — Finance panel honesty or bounded wire-up
-
-| Field | Content |
-| --- | --- |
-| Verified problem | BS/CF/AR/Tax show LIVE without wired UI clients |
-| Evidence | `LedgerPanel.tsx`, `ReceivablePanel.tsx`, `TaxPanel.tsx`, finance admin APIs |
-| Scope | Either downgrade badges to FOUNDATION **or** wire read-only lists for one bounded panel set |
-| Out of scope | Bank transfers, year-end close, VAT filing export |
-| DB impact | **EXISTING_SCHEMA_ONLY** |
-| Complexity | **M** |
-| Priority | High |
+| ID | RC6-DASH-01 — Owner Exception Center read-only foundation |
+| Zone | What Needs Attention |
+| Scope | Severity, branch, age, freshness, trust/source labels, empty/stale/error, drill-down to existing routes |
+| Sources | Existing trusted attention/ops APIs only |
+| Out of scope | AI, new providers, ack mutation unless safe existing schema, avoidable migrations |
+| DB impact | Prefer **NONE** |
+| Testability | Browser + API; no Prod credentials |
+| Branch (future) | `feature/rc6-dash-01-exception-center-readonly` |
 
 ---
 
-## Selected first slice
+## Contract index (DASH-00)
 
-**RC6-DOC-01 — Living status honesty sync**
-
-See full implementation brief in § First-slice implementation brief below.
-
----
-
-## First-slice implementation brief (RC6-DOC-01)
-
-| Field | Content |
-| --- | --- |
-| ID / title | `RC6-DOC-01` — Living status honesty sync |
-| Reason selected | Evidence-backed; high operational value; no migration; no provider; no secrets; tiny blast radius; strongly testable; fixes misleading LIVE/governance claims |
-| Problem | Post-`v1.4.0` living docs retain superseded RC4/RC5 residual language |
-| Current state | Code: GRN stock RPC + HR deactivate exist; Tag `v1.4.0` exists; Docs: still claim otherwise in places |
-| Likely files | `docs/00-governance/REPOSITORY_STATUS.md`, `PROJECT_STATUS.md` (if stale), `docs/17-releases/RELEASE_HISTORY.md`, `docs/testing/acceptance-evidence/rc5-final-closeout/RESIDUAL_LIMITATIONS.md` (historical note vs current), optional `tests/website/*` static phrase guards |
-| Scope | Reconcile anchors (tip vs Prod SHA), GRN/HR/payroll residual claims, tag existence; preserve PASS WITH LIMITATIONS where still true |
-| Out of scope | Admin UI banner rewrites (RC6-UI-01); migrations; deploys; tags; Releases; Production SQL |
-| Database impact | **NONE** |
-| Security/privacy | No PII/secrets in diffs |
-| Acceptance | Contradiction table closed; forbidden stale phrases fail static tests if added; universal gates PASS |
-| Automated tests | Static doc/contract tests; `pnpm check`/`test`/`test:db`/`rc1:gate` |
-| Manual tests | Diff review of living docs; verify no runtime file touched |
-| Local verification | Same gates |
-| Preview verification | N/A (docs-only) |
-| Production verification | None required for docs PR |
-| Rollback | Revert PR |
-| Evidence files | `docs/testing/acceptance-evidence/rc6-doc-01/` (to create during implementation) |
-| Unresolved questions | Whether residual pack should be amended in place or annotated “superseded by RC6-DOC-01” |
-| Branch name | `docs/rc6-doc-01-living-status-honesty` |
-| PR title | `RC6-DOC-01: sync living status docs with v1.4.0 and repository truth` |
+| Document |
+| --- |
+| `RC6_COMMAND_CENTER_ARCHITECTURE.md` |
+| `RC6_COMMAND_CENTER_WIDGET_REGISTRY.md` |
+| `RC6_KPI_TRUST_REGISTRY.md` |
+| `RC6_COMMAND_CENTER_ACTION_REGISTRY.md` |
+| `RC6_EXCEPTION_AND_RISK_CATALOGUE.md` |
+| `RC6_UNIFIED_EVENT_MODEL.md` |
+| `RC6_DELIVERY_RIDER_DOMAIN_CONTRACT.md` |
+| `RC6_SETTINGS_CONFIGURATION_CONTRACT.md` |
+| `RC6_COMMAND_CENTER_ROLE_MATRIX.md` |
+| `RC6_COMMAND_CENTER_NON_FUNCTIONAL_REQUIREMENTS.md` |
+| `RC6_COMMAND_CENTER_TRACEABILITY.md` |
 
 ---
 
-## Release strategy (recommendation)
+## Release strategy (unchanged intent)
 
 | Topic | Recommendation |
 | --- | --- |
-| Version bump class | Likely **minor** (`v1.5.0`) after multiple certified slices; patch only for tiny honesty/hotfix if Founder prefers |
-| Incremental deploy | Yes for website/runtime slices; docs-only need no Production cutover |
-| Migrations | Separate Founder-authorized cutovers; none expected for Wave 0–1 preferred slices |
-| Certification | Per-slice acceptance packs + final closeout when Founder declares RC6 complete |
-| Tag strategy | Annotated `v*` on closeout merge SHA (docs included), matching `v1.3.0`/`v1.4.0` |
-| GitHub Releases | Remain **out of convention** unless Founder changes policy |
-| Rollback | Vercel prior deployment for website; revert PR for docs; API separate |
-| Production smoke | Required after each **runtime** Production cutover; docs-only merges do not require Prod smoke; final RC6 closeout repeats website smoke |
+| Version class | Likely **minor** after certified runtime waves |
+| Docs-only | No Production cutover |
+| Migrations | Separate Founder-authorized cutovers |
+| Tags | Annotated `v*` on closeout; Releases optional/out of convention |
+| Rollback | Revert PR for docs; Vercel prior deploy for website |
 
 ---
 
-## Explicit non-actions of this planning PR
+## Explicit non-actions of DASH-00
 
-No implementation, workflow change, migration, Production operation, secret change, tag, or GitHub Release.
+No implementation, workflow change, migration, Production SQL, deployment, secret, tag, or GitHub Release.
