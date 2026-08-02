@@ -20,7 +20,7 @@ Severity scale (judgment): **H** high · **M** medium · **L** low
 | R-04 | Analytics column naming regression | High priority | L | H | PR #163 hotfix; `analytics-order-items-schema` tests | Keep/expand contract tests (RC5-TEST-01) | Eng |
 | R-05 | Secret refresh without coordinated API redeploy breaks auth/DB probes | Security/ops | L | H | RC4 security closeout sequence | Follow closeout runbook; no ad-hoc key edits | Founder+Ops |
 | R-06 | Free-plan Supabase — no PITR; restore limited to logical dumps | Deferred / OPS | H | M | OPS-1 | Document restore drills; commercial PITR only with Founder approval | Founder |
-| R-07 | Render/Supabase log export unavailable in many sessions | Optional / OPS-3 | H | M | OPS-3; LOG_MONITORING | RC5-OBS-01 runbook; keep smoke JSON as fallback | Ops |
+| R-07 | Render/Supabase log export unavailable in many sessions | Optional / OPS-3 | H | M | OPS-3; LOG_MONITORING; RC5-OBS-01 runbook | Runbook documented (`PRODUCTION_LOGS_AND_ALERTING.md`); operator credentialed correlation proof still required to close; keep smoke JSON as fallback | Ops |
 | R-08 | Public marketing a11y debt (contrast / icon names) | High priority | H | M | RC4-7 ACCESSIBILITY / KNOWN_LIMITATIONS | RC5-A11Y-01 | Eng |
 | R-09 | Entry JS ~1 MB residual | Optional / perf | H | L–M | RC4-7 BUNDLE_ANALYSIS | RC5-PERF-01 with measured artifacts | Eng |
 | R-10 | Supplier A/B RLS matrix incompletely proven in Production credentials | TD / OPS-5 | M | M | OPS-5 | Credentialed matrix when Founder provides coverage; no inventing access | Eng+Founder |
