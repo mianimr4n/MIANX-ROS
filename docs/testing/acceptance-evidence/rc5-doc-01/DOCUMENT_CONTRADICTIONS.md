@@ -1,7 +1,7 @@
 # RC5-DOC-01 — Document Contradictions
 
-**Baseline SHA:** `c1859117b24d6adbe2fb0633ea518538047cc120`  
-**Branch:** `docs/rc5-doc-01-release-status-sync`  
+**Baseline SHA:** `c1859117b24d6adbe2fb0633ea518538047cc120`
+**Branch:** `docs/rc5-doc-01-release-status-sync`
 **Date:** 2026-08-02
 
 ## Files reviewed

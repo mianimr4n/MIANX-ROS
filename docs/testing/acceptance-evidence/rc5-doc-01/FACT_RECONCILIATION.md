@@ -1,6 +1,6 @@
 # RC5-DOC-01 — Fact Reconciliation
 
-**Baseline SHA:** `c1859117b24d6adbe2fb0633ea518538047cc120`  
+**Baseline SHA:** `c1859117b24d6adbe2fb0633ea518538047cc120`
 **Date:** 2026-08-02
 
 ## Canonical fact matrix
@@ -20,9 +20,9 @@
 
 ## Distinctions enforced in docs
 
-1. **Repository main** may include post-tag merges (OPS-01, A11Y-01) without implying Production deploy.  
-2. **`v1.3.0` tag commit** is the released baseline (`74b6b8e…`), not current main.  
-3. **Production application SHA** remains `e5c6daf…` until newer deployment evidence.  
+1. **Repository main** may include post-tag merges (OPS-01, A11Y-01) without implying Production deploy.
+2. **`v1.3.0` tag commit** is the released baseline (`74b6b8e…`), not current main.
+3. **Production application SHA** remains `e5c6daf…` until newer deployment evidence.
 4. **Production migration tip** is independent of application SHA and of repository main.
 
 ## Exact files changed
