@@ -248,16 +248,20 @@ Standard scripts live in the root `package.json` and each package's `package.jso
 1. Start the Docker daemon (needed by Supabase): `sudo dockerd > /tmp/dockerd.log 2>&1 &`. The daemon is configured for `fuse-overlayfs` with the containerd snapshotter disabled (required for Docker 29 in this VM); do not change `/etc/docker/daemon.json`.
 2. Start Supabase: `sudo supabase start` (from repo root). This pulls images on first run and applies the migrations in `supabase/migrations/`.
 3. The backend requires these env vars (values from `sudo supabase status -o env` — the classic `ANON_KEY` / `SERVICE_ROLE_KEY` JWTs, not the new `sb_publishable_`/`sb_secret_` keys): `API_JWT_SECRET` (any string ≥16 chars), `SUPABASE_URL=http://127.0.0.1:54321`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Without them `/readyz` returns 503 (but `/healthz` still responds and the server still boots).
-4. **Known repo gap:** the SQL migrations enable RLS and add public read policies but never `GRANT` table privileges to the `anon`/`authenticated`/`service_role` roles, so every table returns `42501 permission denied` (affects both PostgREST and the API) until grants are applied. After `supabase start`, run:
+4. **Local privilege contract (migration-managed):** table/schema privileges for `anon` / `authenticated` / `service_role` are applied by migrations — not by undocumented manual `GRANT` after every start.
 
-   ```sql
-   sudo docker exec supabase_db_telepizza-platform psql -U postgres -d postgres -c \
-     "GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role; \
-      GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role; \
-      GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;"
-   ```
+   | Layer | Migration | Role |
+   | --- | --- | --- |
+   | Baseline privileges | `20260714120000_grant_public_access.sql` | Schema USAGE + table/sequence grants + default privileges |
+   | Hardened client surface | `20260718130000_p0_harden_grants_and_definer_execute.sql` | Revokes dangerous client privileges; restores selective SELECT/DML |
+   | Feature privileges | Later `supabase/migrations/*` | Selective per-table / EXECUTE grants as needed |
 
-   This must be re-applied after any `supabase db reset` / fresh `supabase start`. The proper fix is to add these grants to the migrations.
+   Fresh `supabase start` / `pnpm local:reset` (`supabase db reset`) re-applies migrations automatically. **Do not** treat blanket manual `GRANT` as the normal workflow.
+
+   - A `42501 permission denied` after a clean local reset is evidence of **drift or a real residual gap** — investigate the failing role/table/action; do not paper over with undocumented blanket grants.
+   - Manual blanket `GRANT` is diagnostic/emergency-only for local Docker, never the documented happy path.
+   - Production privilege changes require separate Founder authorization and migration review (never ad-hoc Production SQL).
+   - Static tests under `tests/database/rc5-ops-01-privilege-contract.test.mjs` assert migration presence/SQL intent only; they do not prove live DB privileges. Live local verification: `docs/testing/acceptance-evidence/rc5-ops-01/`.
 
 ### Verifying the stack
 
