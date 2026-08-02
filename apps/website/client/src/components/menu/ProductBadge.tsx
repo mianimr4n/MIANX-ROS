@@ -2,17 +2,18 @@ import { Flame, Sparkles, Star, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const badgeStyles: Record<string, string> = {
-  Signature: "bg-brand-gold text-brand-charcoal",
-  Hot: "bg-brand-red text-white",
-  HOT: "bg-brand-red text-white",
-  New: "bg-brand-orange text-white",
-  NEW: "bg-brand-orange text-white",
-  "Best Seller": "bg-brand-charcoal text-white",
-  "BEST SELLER": "bg-brand-charcoal text-white",
-  POPULAR: "bg-brand-red text-white",
-  "BEST VALUE": "bg-brand-gold text-brand-charcoal",
-  "Chef Special": "bg-brand-red-dark text-white",
-  Limited: "bg-brand-gold text-brand-charcoal",
+  Signature: "bg-[#F5B800] text-[#1F1F1F]",
+  // Darker red improves small-badge contrast for white label text (WCAG AA).
+  Hot: "bg-[#B5121B] text-white",
+  HOT: "bg-[#B5121B] text-white",
+  New: "bg-[#C2410C] text-white",
+  NEW: "bg-[#C2410C] text-white",
+  "Best Seller": "bg-[#1F1F1F] text-white",
+  "BEST SELLER": "bg-[#1F1F1F] text-white",
+  POPULAR: "bg-[#B5121B] text-white",
+  "BEST VALUE": "bg-[#F5B800] text-[#1F1F1F]",
+  "Chef Special": "bg-[#B5121B] text-white",
+  Limited: "bg-[#F5B800] text-[#1F1F1F]",
 };
 
 const badgeIcons: Record<string, typeof Flame> = {
@@ -37,17 +38,17 @@ export function ProductBadge({
   className?: string;
 }) {
   const Icon = badgeIcons[badge] ?? Flame;
-  const style = badgeStyles[badge] ?? "bg-brand-red text-white";
+  const style = badgeStyles[badge] ?? "bg-[#B5121B] text-white";
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 text-[10px] font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide",
+        "relative isolate inline-flex items-center gap-1 text-xs font-[var(--font-accent)] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide shadow-sm",
         style,
         className,
       )}
     >
-      <Icon className="w-3 h-3" />
+      <Icon className="w-3 h-3" aria-hidden="true" />
       {badge}
     </span>
   );

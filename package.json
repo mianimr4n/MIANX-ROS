@@ -28,7 +28,8 @@
     "rc1:test:auth": "node scripts/rc1/auth-branch-matrix.mjs",
     "rc1:test:kds": "node scripts/rc1/kds-auth.mjs",
     "rc1:test:browser": "node scripts/rc1/bm-landing.mjs",
-    "test:e2e:owner": "playwright test --config=playwright.rc5-qa-01.config.ts"
+    "test:e2e:owner": "playwright test --config=playwright.rc5-qa-01.config.ts",
+    "test:e2e:a11y02": "playwright test --config=playwright.rc6-a11y-02.config.ts"
   },
   "pnpm": {
     "overrides": {

@@ -93,7 +93,7 @@ export default function Home() {
         <div className="container">
           <div className="text-center mb-10">
             <h2 className="brand-heading text-3xl md:text-5xl">
-              Today&apos;s <span className="text-brand-red">Deals</span>
+              Today&apos;s <span className="text-brand-red-dark">Deals</span>
             </h2>
             <p className="text-muted-foreground mt-3 font-[var(--font-body)] max-w-xl mx-auto">
               Verified Telepizza meal combos at official branch prices
@@ -146,7 +146,7 @@ export default function Home() {
         <div className="flex items-end justify-between mb-8">
           <div>
             <h2 className="brand-heading text-3xl md:text-4xl">
-              Customer <span className="text-brand-red">Favorites</span>
+              Customer <span className="text-brand-red-dark">Favorites</span>
             </h2>
             <p className="text-muted-foreground mt-2 font-[var(--font-body)]">
               Top picks from our verified menu
@@ -173,7 +173,7 @@ export default function Home() {
       <section className="container py-14 md:py-16">
         <div className="text-center mb-10">
           <h2 className="brand-heading text-3xl md:text-4xl">
-            Why <span className="text-brand-red">Telepizza</span>
+            Why <span className="text-brand-red-dark">Telepizza</span>
           </h2>
           <p className="text-muted-foreground mt-2 font-[var(--font-body)] max-w-xl mx-auto">
             Fresh food, verified prices, and bold flavors you can trust
@@ -227,7 +227,7 @@ export default function Home() {
             className="text-center mb-12"
           >
             <h2 className="brand-heading text-3xl md:text-4xl">
-              Our <span className="text-brand-red">Branches</span>
+              Our <span className="text-brand-red-dark">Branches</span>
             </h2>
             <p className="text-muted-foreground mt-2 font-[var(--font-body)]">
               Currently serving Multan from Royal Orchard — new branch coming soon

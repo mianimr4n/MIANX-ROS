@@ -32,6 +32,8 @@ export default function Navbar() {
 
   const pathOnly = location.split("?")[0] ?? location;
   const hubHref = isAuthenticated ? "/my-telepizza" : `/login?next=${encodeURIComponent("/my-telepizza")}`;
+  // Home keeps transparent-over-hero chrome; other routes use opaque bar for AA contrast.
+  const chromeOpaque = scrolled || pathOnly !== "/";
 
   function isNavActive(href: string): boolean {
     if (href === "/") return pathOnly === "/";
@@ -66,37 +68,39 @@ export default function Navbar() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
+        chromeOpaque
           ? "bg-white/95 backdrop-blur-xl shadow-md shadow-brand-red/10 border-b border-brand-red/10"
-          : "bg-transparent"
+          : "bg-brand-charcoal border-b border-white/10"
       }`}
     >
-      {scrolled && (
+      {chromeOpaque && (
         <div className="h-1 w-full brand-stripe" aria-hidden />
       )}
       <div className="container flex items-center justify-between h-16 md:h-20">
         {/* Logo */}
         <BrandLogo
-          imageClassName={scrolled ? "ring-2 ring-brand-red/15" : "ring-2 ring-brand-gold/35"}
+          imageClassName={chromeOpaque ? "ring-2 ring-brand-red/15" : "ring-2 ring-brand-gold/35"}
         />
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1" aria-label="Primary">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`relative font-[var(--font-accent)] font-semibold text-sm px-4 py-2 rounded-lg transition-all duration-200 active:scale-95 ${
+              className={`relative font-[var(--font-accent)] font-semibold text-sm min-h-11 inline-flex items-center px-4 py-2 rounded-lg transition-all duration-200 active:scale-95 ${
                 isNavActive(link.href)
-                  ? "text-brand-red bg-brand-red/10"
-                  : scrolled
-                  ? "text-brand-charcoal/75 hover:text-brand-red hover:bg-brand-cream-dark"
-                  : "text-white/80 hover:text-brand-gold hover:bg-white/10"
+                  ? chromeOpaque
+                    ? "text-brand-red-dark bg-brand-red/10"
+                    : "text-brand-gold bg-white/15"
+                  : chromeOpaque
+                  ? "text-brand-charcoal hover:text-brand-red-dark hover:bg-brand-cream-dark"
+                  : "text-white hover:text-brand-gold hover:bg-white/10"
               }`}
             >
               {link.label}
               {isNavActive(link.href) && (
-                <span className="absolute left-3 right-3 -bottom-0.5 h-0.5 rounded-full bg-brand-gold" />
+                <span className="absolute left-3 right-3 -bottom-0.5 h-0.5 rounded-full bg-brand-gold" aria-hidden />
               )}
             </Link>
           ))}
@@ -108,20 +112,22 @@ export default function Navbar() {
           <div ref={dropdownRef} className="relative hidden md:block">
             <button
               type="button"
-              aria-label="Select branch"
+              aria-expanded={branchDropdownOpen}
+              aria-haspopup="listbox"
+              aria-label={`Branch: ${selectedBranch.shortName}`}
               onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
-              className={`flex items-center gap-2 text-sm font-[var(--font-accent)] font-medium transition-colors px-3 py-2 rounded-lg ${
-                scrolled
+              className={`flex items-center gap-2 text-sm font-[var(--font-accent)] font-medium transition-colors min-h-11 px-3 py-2 rounded-lg ${
+                chromeOpaque
                   ? "text-brand-charcoal hover:bg-brand-cream-dark"
-                  : "text-white/80 hover:bg-white/10"
+                  : "text-white hover:bg-white/10"
               }`}
             >
-              <MapPin className="w-4 h-4" />
+              <MapPin className="w-4 h-4" aria-hidden />
               <span className="max-w-[120px] truncate">{selectedBranch.shortName}</span>
               {branchDropdownOpen ? (
-                <ChevronUp className="w-3 h-3" />
+                <ChevronUp className="w-3 h-3" aria-hidden />
               ) : (
-                <ChevronDown className="w-3 h-3" />
+                <ChevronDown className="w-3 h-3" aria-hidden />
               )}
             </button>
 
@@ -224,11 +230,11 @@ export default function Navbar() {
           {selectedBranch.status === "operating" && (
             <a
               href={`tel:+92${selectedBranch.phone.replace(/-/g, "").replace(/^0/, "")}`}
-              className={`hidden md:flex items-center gap-2 text-sm font-[var(--font-accent)] font-medium transition-colors ${
-                scrolled ? "text-brand-charcoal" : "text-white"
+              className={`hidden md:flex items-center gap-2 text-sm font-[var(--font-accent)] font-medium transition-colors min-h-11 ${
+                chromeOpaque ? "text-brand-charcoal" : "text-white"
               }`}
             >
-              <Phone className="w-4 h-4" />
+              <Phone className="w-4 h-4" aria-hidden />
               <span>{selectedBranch.phone}</span>
             </a>
           )}
@@ -244,11 +250,11 @@ export default function Navbar() {
             <Button
               variant="ghost"
               size="sm"
-              className={`rounded-xl font-[var(--font-accent)] font-semibold ${
+              className={`rounded-xl font-[var(--font-accent)] font-semibold min-h-11 ${
                 pathOnly === "/my-telepizza" || pathOnly === "/account"
-                  ? "text-brand-red"
-                  : scrolled
-                    ? "text-brand-charcoal hover:text-brand-red"
+                  ? "text-brand-red-dark"
+                  : chromeOpaque
+                    ? "text-brand-charcoal hover:text-brand-red-dark"
                     : "text-white hover:text-brand-gold"
               }`}
             >
@@ -258,10 +264,11 @@ export default function Navbar() {
 
           {/* Cart Button */}
           <button
+            type="button"
             onClick={toggleCart}
-            aria-label={totalItems > 0 ? `Cart, ${totalItems} items` : "Open cart"}
-            className={`relative p-2.5 rounded-xl transition-all duration-200 active:scale-95 ${
-              scrolled
+            aria-label={totalItems > 0 ? `Cart, ${totalItems} items` : "Cart"}
+            className={`relative inline-flex items-center justify-center min-h-11 min-w-11 rounded-xl transition-all duration-200 active:scale-95 ${
+              chromeOpaque
                 ? "bg-brand-cream-dark hover:bg-brand-red hover:text-white text-brand-charcoal"
                 : "bg-white/10 hover:bg-brand-red hover:text-white text-white"
             }`}
@@ -280,7 +287,7 @@ export default function Navbar() {
           {/* Order Now CTA — hide entire link below sm (mobile sheet includes Order Now) */}
           <Link href="/menu" className="hidden sm:inline-flex">
             <Button
-              className="bg-brand-red hover:bg-brand-red-dark text-white font-[var(--font-accent)] font-bold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-brand-red/25 ring-1 ring-brand-gold/40 transition-all active:scale-95"
+              className="bg-brand-red-dark hover:bg-brand-red text-white font-[var(--font-accent)] font-bold text-sm min-h-11 px-5 py-2.5 rounded-xl shadow-lg shadow-brand-red/25 ring-1 ring-brand-gold/40 transition-all active:scale-95"
             >
               Order Now
             </Button>
@@ -292,8 +299,9 @@ export default function Navbar() {
               <button
                 type="button"
                 aria-label={mobileOpen ? "Close menu" : "Open menu"}
-                className={`md:hidden p-2.5 rounded-xl transition-all ${
-                  scrolled
+                aria-expanded={mobileOpen}
+                className={`md:hidden inline-flex items-center justify-center min-h-11 min-w-11 rounded-xl transition-all ${
+                  chromeOpaque
                     ? "bg-brand-cream-dark text-brand-charcoal"
                     : "bg-white/10 text-white"
                 }`}
@@ -323,7 +331,7 @@ export default function Navbar() {
                       onClick={() => setMobileOpen(false)}
                       className={`font-[var(--font-display)] font-semibold text-lg py-3 px-3 rounded-xl transition-colors ${
                         isNavActive(link.href)
-                          ? "text-brand-red bg-brand-red/15 border border-brand-red/30"
+                          ? "text-brand-gold bg-white/10 border border-brand-gold/40"
                           : "text-white hover:text-brand-gold hover:bg-white/5"
                       }`}
                     >
@@ -336,9 +344,9 @@ export default function Navbar() {
                       toggleCart();
                       setMobileOpen(false);
                     }}
-                    className="font-[var(--font-display)] font-semibold text-lg py-3 px-3 rounded-xl text-left text-white hover:text-brand-gold hover:bg-white/5"
+                    className="font-[var(--font-display)] font-semibold text-lg min-h-11 py-3 px-3 rounded-xl text-left text-white hover:text-brand-gold hover:bg-white/5"
                   >
-                    Cart{totalItems > 0 ? ` (${totalItems})` : ""}
+                    Cart{totalItems > 0 ? `, ${totalItems} items` : ""}
                   </button>
                   <Link
                     href={hubHref}
@@ -348,7 +356,7 @@ export default function Navbar() {
                     }}
                     className={`font-[var(--font-display)] font-semibold text-lg py-3 px-3 rounded-xl transition-colors ${
                       pathOnly === "/my-telepizza" || pathOnly === "/account"
-                        ? "text-brand-red bg-brand-red/15 border border-brand-red/30"
+                        ? "text-brand-gold bg-white/10 border border-brand-gold/40"
                         : "text-white hover:text-brand-gold hover:bg-white/5"
                     }`}
                   >
@@ -362,7 +370,7 @@ export default function Navbar() {
                   <div className="mt-auto pt-6 border-t border-white/10 space-y-3">
                     {/* Mobile Branch Selector */}
                     <div className="bg-white/5 rounded-xl p-4">
-                      <span className="text-xs text-white/40 uppercase tracking-wider font-[var(--font-accent)] font-medium">
+                      <span className="text-xs text-white/75 uppercase tracking-wider font-[var(--font-accent)] font-medium">
                         Your Branch
                       </span>
                       <div className="mt-2 space-y-2">
@@ -370,19 +378,20 @@ export default function Navbar() {
                         {operatingBranches.map((branch) => (
                           <button
                             key={branch.id}
+                            type="button"
                             onClick={() => {
                               setSelectedBranch(branch);
                               setMobileOpen(false);
                             }}
-                            className={`w-full text-left p-2 rounded-lg flex items-center gap-2 transition-colors ${
+                            className={`w-full text-left min-h-11 p-3 rounded-lg flex items-center gap-2 transition-colors ${
                               selectedBranch.id === branch.id
                                 ? "bg-brand-red/20 border border-brand-red/40"
                                 : "hover:bg-white/5"
                             }`}
                           >
-                            <MapPin className="w-4 h-4 text-brand-gold" />
+                            <MapPin className="w-4 h-4 text-brand-gold" aria-hidden />
                             <span className={`text-sm font-[var(--font-accent)] ${
-                              selectedBranch.id === branch.id ? "text-brand-red font-bold" : "text-white/70"
+                              selectedBranch.id === branch.id ? "text-brand-gold font-bold" : "text-white"
                             }`}>
                               {branch.shortName}
                             </span>
@@ -392,10 +401,10 @@ export default function Navbar() {
                         {comingSoonBranches.map((branch) => (
                           <div
                             key={branch.id}
-                            className="w-full text-left p-2 rounded-lg flex items-center gap-2 opacity-50"
+                            className="w-full text-left min-h-11 p-3 rounded-lg flex items-center gap-2 opacity-70"
                           >
-                            <Construction className="w-4 h-4 text-white/40" />
-                            <span className="text-sm font-[var(--font-accent)] text-white/40">
+                            <Construction className="w-4 h-4 text-white/75" aria-hidden />
+                            <span className="text-sm font-[var(--font-accent)] text-white/75">
                               {branch.shortName} — Coming Soon
                             </span>
                           </div>

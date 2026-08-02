@@ -18,7 +18,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <BrandLogo showRegion imageClassName="h-9 w-9" />
-            <p className="text-white/50 text-sm leading-relaxed max-w-xs mt-4">
+            <p className="text-white/75 text-sm leading-relaxed max-w-xs mt-4">
               {BRAND.tagline}. Pakistan&apos;s boldest pizza experience — fresh dough, premium toppings,
               and flavors that fire up your craving.
             </p>
@@ -26,20 +26,20 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-[var(--font-display)] font-bold text-sm uppercase tracking-wider text-brand-gold mb-4">
+            <h2 className="font-[var(--font-display)] font-bold text-sm uppercase tracking-wider text-brand-gold mb-4">
               Quick Links
-            </h4>
-            <nav className="flex flex-col gap-3">
-              <Link href="/" className="text-white/60 hover:text-white text-sm transition-colors">
+            </h2>
+            <nav className="flex flex-col gap-3" aria-label="Footer quick links">
+              <Link href="/" className="text-white/80 hover:text-white text-sm transition-colors min-h-11 inline-flex items-center">
                 Home
               </Link>
-              <Link href="/menu" className="text-white/60 hover:text-white text-sm transition-colors">
+              <Link href="/menu" className="text-white/80 hover:text-white text-sm transition-colors min-h-11 inline-flex items-center">
                 Full Menu
               </Link>
-              <Link href="/about" className="text-white/60 hover:text-white text-sm transition-colors">
+              <Link href="/about" className="text-white/80 hover:text-white text-sm transition-colors min-h-11 inline-flex items-center">
                 About Us
               </Link>
-              <Link href="/contact" className="text-white/60 hover:text-white text-sm transition-colors">
+              <Link href="/contact" className="text-white/80 hover:text-white text-sm transition-colors min-h-11 inline-flex items-center">
                 Contact
               </Link>
             </nav>
@@ -47,9 +47,9 @@ export default function Footer() {
 
           {/* Branches */}
           <div>
-            <h4 className="font-[var(--font-display)] font-bold text-sm uppercase tracking-wider text-brand-gold mb-4">
+            <h2 className="font-[var(--font-display)] font-bold text-sm uppercase tracking-wider text-brand-gold mb-4">
               Our Branches
-            </h4>
+            </h2>
             <nav className="flex flex-col gap-3">
               {operatingBranches.map((branch) => (
                 <div key={branch.id} className="flex items-start gap-2">
@@ -80,11 +80,11 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 className="font-[var(--font-display)] font-bold text-sm uppercase tracking-wider text-brand-gold mb-4">
+            <h2 className="font-[var(--font-display)] font-bold text-sm uppercase tracking-wider text-brand-gold mb-4">
               Contact
-            </h4>
+            </h2>
             <div className="flex flex-col gap-3 text-sm text-white/80">
-              <a href={`tel:+92${selectedBranch.phone.replace(/-/g, "").replace(/^0/, "")}`} className="flex items-center gap-2 hover:text-white transition-colors">
+              <a href={`tel:+92${selectedBranch.phone.replace(/-/g, "").replace(/^0/, "")}`} className="flex items-center gap-2 hover:text-white transition-colors min-h-11">
                 <Phone className="w-4 h-4 text-brand-gold" aria-hidden /> {selectedBranch.phone}
               </a>
               <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Telepizza Pakistan on Facebook"
-                className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-brand-red transition-colors"
+                className="min-h-11 min-w-11 w-11 h-11 bg-white/10 rounded-lg flex items-center justify-center hover:bg-brand-red transition-colors"
               >
                 <Facebook className="w-4 h-4" aria-hidden />
               </a>
@@ -109,7 +109,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Telepizza Pakistan on Instagram"
-                className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-brand-red transition-colors"
+                className="min-h-11 min-w-11 w-11 h-11 bg-white/10 rounded-lg flex items-center justify-center hover:bg-brand-red transition-colors"
               >
                 <Instagram className="w-4 h-4" aria-hidden />
               </a>
@@ -118,7 +118,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Telepizza Pakistan on TikTok"
-                className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-brand-red transition-colors"
+                className="min-h-11 min-w-11 w-11 h-11 bg-white/10 rounded-lg flex items-center justify-center hover:bg-brand-red transition-colors"
               >
                 <MessageCircle className="w-4 h-4" aria-hidden />
               </a>

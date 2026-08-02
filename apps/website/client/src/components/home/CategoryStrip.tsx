@@ -49,7 +49,7 @@ export function CategoryStrip() {
       <div className="flex items-end justify-between mb-8">
         <div>
           <h2 className="brand-heading text-3xl md:text-4xl">
-            Popular <span className="text-brand-red">Categories</span>
+            Popular <span className="text-brand-red-dark">Categories</span>
           </h2>
           <p className="text-muted-foreground mt-2 font-[var(--font-body)]">
             Browse the Telepizza menu by category
@@ -57,7 +57,7 @@ export function CategoryStrip() {
         </div>
         <Link
           href="/menu"
-          className="inline-flex items-center text-brand-red-dark font-[var(--font-accent)] font-bold text-xs sm:text-sm hover:underline shrink-0"
+          className="inline-flex items-center min-h-11 text-brand-red-dark font-[var(--font-accent)] font-bold text-xs sm:text-sm hover:underline shrink-0"
         >
           View All
           <ChevronRight className="w-4 h-4 ml-0.5" aria-hidden />
@@ -90,7 +90,7 @@ export function CategoryStrip() {
                     {category.name}
                   </h3>
                   {category.priceHint && (
-                    <p className="text-white/80 text-[10px] font-[var(--font-accent)] font-semibold mt-1">
+                    <p className="text-white text-[10px] font-[var(--font-accent)] font-semibold mt-1">
                       {category.priceHint}
                     </p>
                   )}

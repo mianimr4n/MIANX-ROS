@@ -43,22 +43,22 @@ export function FavoriteHeartButton({ item, className = "", size = "md" }: Favor
       typeof window !== "undefined"
         ? `${window.location.pathname}${window.location.search}`
         : "/menu";
+    // Single interactive control: Button-as-Link (avoids unnamed nested <button>).
     return (
-      <Link
-        href={`/login?next=${encodeURIComponent(returnPath)}`}
-        onClick={() => rememberAuthNextPath(returnPath)}
-        className={className}
-        aria-label={`Sign in to save ${item.name} to favorites`}
+      <Button
+        asChild
+        variant="outline"
+        size="icon"
+        className={`${buttonSize} min-h-11 min-w-11 rounded-2xl border-border bg-white/90 text-muted-foreground hover:text-brand-red ${className}`}
       >
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className={`${buttonSize} rounded-2xl border-border bg-white/90 text-muted-foreground hover:text-brand-red`}
+        <Link
+          href={`/login?next=${encodeURIComponent(returnPath)}`}
+          onClick={() => rememberAuthNextPath(returnPath)}
+          aria-label={`Sign in to save ${item.name} to favorites`}
         >
           <Heart className={iconSize} aria-hidden="true" />
-        </Button>
-      </Link>
+        </Link>
+      </Button>
     );
   }
 
@@ -86,7 +86,7 @@ export function FavoriteHeartButton({ item, className = "", size = "md" }: Favor
       type="button"
       variant="outline"
       size="icon"
-      className={`${buttonSize} rounded-2xl border-border bg-white/90 ${
+      className={`${buttonSize} min-h-11 min-w-11 rounded-2xl border-border bg-white/90 ${
         favorited ? "text-brand-red border-brand-red/30" : "text-muted-foreground hover:text-brand-red"
       } ${className}`}
       aria-pressed={favorited}
