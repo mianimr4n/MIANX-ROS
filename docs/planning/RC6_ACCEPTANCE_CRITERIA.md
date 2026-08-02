@@ -166,7 +166,7 @@
 | C-06 | Next runtime slice selected with bounded brief (DASH-01) |
 | C-07 | Docs/planning/evidence only — no runtime/migration/Production |
 
-### RC6-DASH-01 — Exception Center read-only foundation (future runtime; not implemented in DASH-00)
+### RC6-DASH-01 — Exception Center read-only foundation
 
 | # | Criterion |
 | --- | --- |
@@ -176,3 +176,5 @@
 | E-04 | Drill-down to existing routes with preserved filters |
 | E-05 | No AI; no new provider; prefer no migration; no ack mutation unless safe existing schema |
 | E-06 | Acceptance evidence pack + gates PASS |
+
+> DASH-01 repository implementation must still record **not Production-verified** until an authorized Production deploy + smoke.

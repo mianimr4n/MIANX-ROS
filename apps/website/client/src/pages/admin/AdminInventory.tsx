@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearch } from "wouter";
 
 import { InventoryFilters } from "@/components/admin/inventory/InventoryFilters";
 import { InventoryHeader } from "@/components/admin/inventory/InventoryHeader";
@@ -61,8 +62,17 @@ export default function AdminInventory() {
   const [addBusy, setAddBusy] = useState(false);
   const [adjustError, setAdjustError] = useState<string | null>(null);
   const [adjustBusy, setAdjustBusy] = useState(false);
+  const searchParams = useSearch();
+  const lowStockFromUrl = useMemo(() => {
+    const params = new URLSearchParams(searchParams.startsWith("?") ? searchParams.slice(1) : searchParams);
+    return params.get("lowStock") === "1" || params.get("lowStock") === "true";
+  }, [searchParams]);
   const [search, setSearch] = useState("");
-  const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [lowStockOnly, setLowStockOnly] = useState(lowStockFromUrl);
+
+  useEffect(() => {
+    setLowStockOnly(lowStockFromUrl);
+  }, [lowStockFromUrl]);
 
   const snapshot = useMemo(
     () => buildInventoryKpis(items, toppings, stockItems, movements),

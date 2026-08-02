@@ -1,9 +1,9 @@
 # RC6 Roadmap
 
-**Status:** Living roadmap — honesty wave complete through **RC6-A11Y-02**; **RC6-DASH-00** contracts in progress
+**Status:** Living roadmap — **RC6-DASH-00** merged; **RC6-DASH-01** Exception Center in repository (not Production-verified)
 **Date:** 2026-08-02
 **Baseline tag:** `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824`
-**Current repository tip (DASH-00 baseline):** `da99875ddedbc25ae51e6db22a16de4a50d2ea16`
+**Current repository tip (DASH-01 baseline):** `cc09e239f966ac7173536f54eec63ae1fb01e1f8`
 **Production website runtime:** `152ce409609dc78e48d0d2b6b0c34a35d6338c24`
 **Migration tip:** `20260801180000`
 
@@ -19,6 +19,8 @@
 | RC6-UI-01 | Admin capability-label honesty | `rc6-ui-01/` · #178 |
 | RC6-QA-02 | Owner CI path expansion | `rc6-qa-02/` · #179 |
 | RC6-A11Y-02 | Moderate a11y remediation | `rc6-a11y-02/` · #180 → `da99875…` |
+| RC6-DASH-00 | Command Center contracts | `rc6-dash-00/` · #181 → `cc09e239…` |
+| RC6-DASH-01 | Exception Center read-only (repo) | `rc6-dash-01/` · **not Production-verified** |
 
 ---
 
@@ -53,7 +55,7 @@ Each candidate scored **1–5**. Preference direction:
 
 | ID | Title |
 | --- | --- |
-| **RC6-DASH-00** | Restaurant Command Center contracts (this wave) |
+| **RC6-DASH-00** | Restaurant Command Center contracts (**merged**) |
 | RC6-DEL-00 | Covered inside Delivery/Rider domain contract (DASH-00 pack) |
 | RC6-SET-00 | Covered inside Settings configuration contract (DASH-00 pack) |
 
@@ -61,8 +63,8 @@ Each candidate scored **1–5**. Preference direction:
 
 | ID | Title |
 | --- | --- |
-| **RC6-DASH-01** | Exception Center read-only foundation (**next runtime**) |
-| RC6-DASH-02 | Actionable KPI drill-downs |
+| **RC6-DASH-01** | Exception Center read-only foundation (**this wave** — repo; not Prod-verified) |
+| RC6-DASH-02 | Actionable KPI drill-downs (**next runtime** after DASH-01) |
 | RC6-DASH-03 | Opening/live/closing modes |
 | RC6-DASH-04 | Approval Inbox |
 | RC6-DASH-05 | Branch Health Score |

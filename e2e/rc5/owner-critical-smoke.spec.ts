@@ -157,6 +157,11 @@ test.describe("RC6-QA-02 Owner critical smoke", () => {
     expect(text.length, "dashboard main should not be empty").toBeGreaterThan(40);
     expect(text, "no fake placeholder copy").not.toMatch(/lorem ipsum|fake production/i);
 
+    await expect(page.getByTestId("exception-center")).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByRole("heading", { name: /Needs Attention Now/i })).toBeVisible();
+    // Read-only foundation: no acknowledge / snooze mutation controls.
+    await expect(page.getByTestId("exception-center").getByRole("button", { name: /acknowledge|snooze/i })).toHaveCount(0);
+
     await assertNoFatalUi(page);
     guards.assertClean();
   });

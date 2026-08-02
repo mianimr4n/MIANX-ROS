@@ -1,22 +1,27 @@
+import { useMemo } from "react";
 import { Link } from "wouter";
 
 import { AdminKpiCard, AdminSectionTitle, type AdminKpiState } from "@/components/admin/AdminKpiCard";
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
+import { ExceptionCenterPanel } from "@/components/admin/dashboard/ExceptionCenterPanel";
 import { ReportBarChart } from "@/components/admin/reports/ReportCharts";
 import {
   buildAttentionMetrics,
   buildLiveOpsMetrics,
   buildOwnerActivity,
-  buildOwnerAlerts,
   buildOwnerBriefLines,
   buildTodayMetrics,
   type OwnerActivityItem,
-  type OwnerCommandAlert,
   type OwnerCommandLiveExtras,
   type OwnerCommandMetric,
   type SalesReport,
 } from "@/components/admin/dashboard/owner-command-builders";
 import type { AdminOperationsDashboard, AdminOrderListItem, GoodsReceiving, HrEmployee, PurchaseOrder, StockMovement, SupplierInvoice } from "@/lib/admin-api";
+import {
+  buildExceptionCenter,
+  type DeliveryAssignmentLike,
+  type KitchenTicketLike,
+} from "@/lib/exception-center/build-exceptions";
 import type { OperationalState } from "@/lib/op-status";
 
 const QUICK_ACTIONS: Array<{ href: string; label: string }> = [
@@ -94,51 +99,6 @@ function MetricGrid({
         <MetricLinkCard key={metric.id} metric={metric} />
       ))}
     </div>
-  );
-}
-
-function AlertsSection({ alerts, loading }: { alerts: OwnerCommandAlert[]; loading: boolean }) {
-  return (
-    <section className="mb-8" aria-labelledby="owner-alerts-heading">
-      <AdminSectionTitle
-        eyebrow="Alerts"
-        title="Operational alerts"
-        description="Only alerts backed by verified live counts appear here."
-      />
-      <h2 id="owner-alerts-heading" className="sr-only">
-        Operational alerts
-      </h2>
-      {loading ? (
-        <p className="text-sm text-[var(--admin-muted)]" role="status">
-          Loading alerts…
-        </p>
-      ) : alerts.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-6 text-sm text-[var(--admin-muted)]" role="status">
-          No operational alerts right now.
-        </p>
-      ) : (
-        <ul className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3" role="list">
-          {alerts.map((alert) => (
-            <li key={alert.id}>
-              <Link
-                href={alert.href}
-                className={`block rounded-2xl border px-4 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)] ${
-                  alert.severity === "critical"
-                    ? "border-red-200 bg-red-50"
-                    : alert.severity === "warning"
-                      ? "border-amber-200 bg-amber-50"
-                      : "border-sky-200 bg-sky-50"
-                }`}
-                aria-label={`${alert.title}. ${alert.detail}`}
-              >
-                <p className="text-sm font-semibold text-[var(--admin-ink)]">{alert.title}</p>
-                <p className="mt-1 text-sm text-[var(--admin-muted)]">{alert.detail}</p>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
   );
 }
 
@@ -460,8 +420,16 @@ export type OwnerCommandCenterProps = {
   data: AdminOperationsDashboard | null;
   opState: OperationalState;
   loading: boolean;
+  branchId: string | null;
   branchLabel: string;
   extras: OwnerCommandLiveExtras;
+  kitchenTickets: KitchenTicketLike[] | null;
+  kitchenState: OperationalState;
+  deliveryAssignments: DeliveryAssignmentLike[] | null;
+  deliveryState: OperationalState;
+  financeEnabled: boolean;
+  financeState: OperationalState;
+  onExceptionRetry?: () => void;
   orders: AdminOrderListItem[] | null;
   movements: StockMovement[] | null;
   purchaseOrders: PurchaseOrder[] | null;
@@ -482,8 +450,16 @@ export function OwnerCommandCenter({
   data,
   opState,
   loading,
+  branchId,
   branchLabel,
   extras,
+  kitchenTickets,
+  kitchenState,
+  deliveryAssignments,
+  deliveryState,
+  financeEnabled,
+  financeState,
+  onExceptionRetry,
   orders,
   movements,
   purchaseOrders,
@@ -502,7 +478,36 @@ export function OwnerCommandCenter({
   const todayMetrics = buildTodayMetrics(data, opState, loading);
   const liveMetrics = buildLiveOpsMetrics(data, opState, extras, loading);
   const attentionMetrics = buildAttentionMetrics(data, opState, extras);
-  const alerts = buildOwnerAlerts(data, extras);
+  const exceptionCenter = useMemo(
+    () =>
+      buildExceptionCenter({
+        branchId,
+        branchName: branchLabel,
+        ops: { data, state: opState },
+        kitchen: { tickets: kitchenTickets, state: kitchenState },
+        delivery: { assignments: deliveryAssignments, state: deliveryState },
+        finance: {
+          enabled: financeEnabled,
+          unresolvedCashVariance: extras.financeAttention?.unresolvedCashVariance ?? null,
+          unavailable: Boolean(extras.financeAttention?.unavailable),
+          state: financeState,
+        },
+      }),
+    [
+      branchId,
+      branchLabel,
+      data,
+      opState,
+      kitchenTickets,
+      kitchenState,
+      deliveryAssignments,
+      deliveryState,
+      financeEnabled,
+      financeState,
+      extras.financeAttention?.unresolvedCashVariance,
+      extras.financeAttention?.unavailable,
+    ],
+  );
   const activity = buildOwnerActivity({
     orders,
     movements,
@@ -537,6 +542,12 @@ export function OwnerCommandCenter({
       <p className="mb-4 text-sm text-[var(--admin-muted)]">
         Owner Command Center — answers “What needs my attention today?” using verified live APIs only.
       </p>
+
+      <ExceptionCenterPanel
+        result={exceptionCenter}
+        loading={loading || kitchenState === "LOADING" || deliveryState === "LOADING" || financeState === "LOADING"}
+        onRetry={onExceptionRetry}
+      />
 
       <section className="mb-8" aria-labelledby="owner-today-heading">
         <AdminSectionTitle
@@ -574,7 +585,6 @@ export function OwnerCommandCenter({
         <MetricGrid metrics={attentionMetrics} columnsClass="sm:grid-cols-2 xl:grid-cols-3" />
       </section>
 
-      <AlertsSection alerts={alerts} loading={loading && !data} />
       <ActivitySection items={activity} loading={activityLoading} unavailable={activityUnavailable} />
       <QuickActionsSection />
       <SalesTrendSection
