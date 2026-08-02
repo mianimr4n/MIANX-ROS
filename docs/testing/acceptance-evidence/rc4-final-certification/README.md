@@ -1,8 +1,7 @@
 # RC4 Final Production Certification — evidence pack
 
-**Certification decision:** `RC4_NOT_CERTIFIED`
-**Blocker:** `SECURITY_ROTATION_PENDING` — see `SECURITY_CLOSEOUT.md`
+**Certification evidence decision:** `RC4_CERTIFICATION_PR_READY`
+**Security closeout:** `SECURITY_CLOSEOUT_COMPLETE`
 
-Operational Production cutover + Analytics hotfix evidence is recorded; security rotation closeout is required before any `RC4_CERTIFIED` claim.
-
+Live Production SHA: `e5c6daf0ba57f6a601f6a902821d41bfc5b3a291`
 Companion cutover pack: `../rc4-production-cutover/`

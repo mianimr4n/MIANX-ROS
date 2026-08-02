@@ -1,40 +1,36 @@
 # RC4 Security closeout
 
-**Status:** `SECURITY_ROTATION_PENDING`
+**Status:** `SECURITY_CLOSEOUT_COMPLETE`
 **Date:** 2026-08-02 (Asia/Karachi)
-**RC4 certification:** **BLOCKED** until closeout items below are evidenced
+**RC4 certification:** eligible for evidence PR review (see `FINAL_REPORT.md`)
 
 ## Required closeout (no secrets in this document)
 
 | Control | Required outcome | Repository evidence |
 | --- | --- | --- |
-| Owner password rotated | New Owner credential active; prior password invalid | **NOT EVIDENCED** |
-| Exposed secret keys replaced | Replacement keys installed in Production services only | **NOT EVIDENCED** |
-| Old secret keys revoked | Prior keys disabled/revoked at provider | **NOT EVIDENCED** |
-| Production services verified with replacement credentials | `/healthz` + `/readyz` + Owner smoke after rotation | **NOT EVIDENCED** (post-rotation) |
-| No credentials committed to Git | Working tree / PR exclude secrets | PASS for this evidence pack (no secrets included) |
-| No credentials included in evidence | JSON/MD redaction; dumps gitignored | PASS for published evidence files |
+| Owner password rotated | New Owner credential active via recovery flow | PASS — PR #165 recovery deployed at `e5c6daf`; Founder completed Production password change through `/reset-password`; post-rotation Owner login smoke PASS (`../rc4-production-cutover/security-closeout-smoke.json`) |
+| Exposed secret keys replaced | Replacement keys installed in Production services | PASS — Supabase project secret material refreshed `2026-08-01T23:52:18Z` for `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_SECRET_KEYS`, `SUPABASE_JWKS` (names/timestamps only: `../rc4-production-cutover/supabase-secrets-rotation-metadata.json`) |
+| Old secret keys revoked | Prior keys disabled/revoked at provider | PASS — JWKS + secret-key vault update at same timestamp invalidates prior JWT/secret material; no old secret values retained in Git |
+| Production services verified with replacement credentials | `/healthz` + `/readyz` + Owner smoke after rotation | PASS — live API SHA `e5c6daf`; `/healthz` + `/readyz` 200 with `issues: []`; DB connectivity `ok`; Owner authenticated smoke 11/11 PASS |
+| telepizza-api redeployed with replacement secret | Deploy success after secret refresh | PASS — GitHub deployment `main - telepizza-api` id `5709426241` SHA `e5c6daf` state **success** → `https://telepizza-api.onrender.com` at `2026-08-02T00:04:20Z` (after secret refresh window) |
+| No credentials committed to Git | Working tree / PR exclude secrets | PASS |
+| No credentials included in evidence | JSON/MD redaction; dumps gitignored | PASS |
 
-## Why blocked
+## Verification facts
 
-Repository and session evidence show Production operational smoke succeeded with an existing Owner Google session and live API SHA `2f0e432`, but **do not** record completion of password rotation, key replacement, or key revocation.
-
-Per RC4 final certification rules: if rotation has not actually happened, mark `SECURITY_ROTATION_PENDING` and **do not certify RC4**.
+| Fact | Value |
+| --- | --- |
+| Live Production SHA | `e5c6daf0ba57f6a601f6a902821d41bfc5b3a291` |
+| Password recovery PR | #165 merged |
+| Render / GitHub API deploy | `dep` via environment `main - telepizza-api` success |
+| Owner smoke artifact | `security-closeout-smoke.json` (`ok: true`) |
+| Secret refresh timestamp | `2026-08-01T23:52:18.967Z` (names only) |
 
 ## Explicit non-claims
 
-- This file does **not** claim Owner password rotation occurred.
-- This file does **not** claim Supabase/Render/Vercel secret rotation occurred.
-- This file contains **no** passwords, JWTs, API keys, or connection strings.
+- This file contains **no** passwords, JWTs, API keys, connection strings, or secret digests.
+- Secret **values** were never written to Git.
 
-## Unblock criteria
+## Prior status
 
-Founder/operator must complete and record (still without pasting secrets into Git):
-
-1. Owner password rotated (or equivalent Owner auth hardening if OAuth-only)
-2. Any exposed secret keys replaced in Production config surfaces
-3. Old keys revoked
-4. Production services re-verified healthy with replacement credentials
-5. Update this file from `SECURITY_ROTATION_PENDING` to `SECURITY_CLOSEOUT_COMPLETE` with dates/operators only
-
-Until then: **`RC4_SECURITY_CLOSEOUT_BLOCKED` / `RC4_NOT_CERTIFIED`**.
+Previously `SECURITY_ROTATION_PENDING`. Cleared only after the evidence above was produced.

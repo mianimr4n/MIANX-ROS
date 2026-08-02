@@ -1,44 +1,39 @@
 # RC4 Final Report
 
-**Decision:** `RC4_NOT_CERTIFIED`
-**Blocker:** `SECURITY_ROTATION_PENDING` (`SECURITY_CLOSEOUT.md`)
+**Decision:** `RC4_CERTIFICATION_PR_READY`
+**Security closeout:** `SECURITY_CLOSEOUT_COMPLETE`
 **Date:** 2026-08-02 (Asia/Karachi)
 
-## Production facts (operational — not a full RC4 certify)
+## Production facts
 
 | Fact | Value |
 | --- | --- |
 | Migration tip | `20260801180000` |
-| Live Production SHA | `2f0e4326310e1036cc23a94d5573dd4d774eaf0f` |
-| Render deployment | `dep-d9n75v15efls73a4j5hg` |
+| Live Production SHA | `e5c6daf0ba57f6a601f6a902821d41bfc5b3a291` |
+| Prior hotfix SHA (Analytics) | `2f0e4326310e1036cc23a94d5573dd4d774eaf0f` |
+| Password recovery deploy | PR #165 → `e5c6daf` |
+| Render API deploy | `main - telepizza-api` success for `e5c6daf` |
 | `/healthz` / `/readyz` | PASS (empty `issues`) |
-| Owner authenticated cutover smoke | PASS |
-| Analytics hotfix smoke | PASS (`analytics-hotfix-prod-smoke.json`) |
-| Finance / Payroll / HR / Inventory / Loyalty / Documents | PASS in Owner smoke |
-| `due_date` / `employee_number` / `order_items.name` 42703 | none observed post-hotfix |
+| Owner authenticated smoke (post-rotation) | PASS |
+| Analytics / Finance / Payroll / HR / Inventory / Loyalty / Documents | PASS in closeout smoke |
+| `due_date` / `employee_number` / `order_items.name` 42703 | none observed |
 | Analytics hotfix migrations / SQL | none |
+| Security rotation | COMPLETE — see `SECURITY_CLOSEOUT.md` |
 
 ## Implementation chain (merged on main)
 
 | Slice | PR / note |
 | --- | --- |
-| RC4-2 Analytics & BI | #159 |
-| RC4-3 Payroll | #158 |
-| RC4-5 Documents / Inventory / Finance Phase 2 | prior RC4 merges on main |
-| RC4-11 Loyalty & Marketing Depth | #160 |
-| RC4-7 Performance polish | #161 |
-| Health-probe anon headers | #162 @ `538c289` |
-| Analytics `product_name` schema hotfix | #163 @ `2f0e432` |
-
-## Why not certified
-
-Operational Production cutover and Analytics hotfix are complete, but **security closeout is incomplete**. Per mission rules, RC4 must not be certified while `SECURITY_ROTATION_PENDING`.
+| RC4 feature chain | Analytics BI, Payroll, Documents, Inventory, Finance Phase 2, Loyalty/Marketing, Performance |
+| Health-probe anon headers | #162 |
+| Analytics `product_name` schema hotfix | #163 |
+| Password recovery flow | #165 @ `e5c6daf` |
 
 ## Evidence index
 
-- This folder: `PRODUCTION_READINESS.md`, `MIGRATION_ALIGNMENT.md`, `SCHEMA_CERTIFICATION.md`, `POST_DEPLOY_SMOKE_RESULTS.md`, `LOG_MONITORING.md`, `ANALYTICS_HOTFIX.md`, `SECURITY_CLOSEOUT.md`, `KNOWN_LIMITATIONS.md`, `FINAL_CUTOVER_REPORT.md`
-- Cutover pack: `docs/testing/acceptance-evidence/rc4-production-cutover/`
+- This folder: readiness, migration, schema, smoke, logs, analytics hotfix summary, security closeout, known limitations
+- Cutover pack: `../rc4-production-cutover/` including `security-closeout-smoke.json` and secret rotation metadata (names/timestamps only)
 
-## Next action
+## Residual non-blocking limitations
 
-Complete security rotation closeout → update `SECURITY_CLOSEOUT.md` → re-issue certification decision.
+See `KNOWN_LIMITATIONS.md` (SEC-1 closed).

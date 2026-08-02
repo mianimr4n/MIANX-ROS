@@ -1,7 +1,10 @@
-# Security closeout (cutover pack pointer)
+# Security closeout (cutover pack)
 
-**Status:** `SECURITY_ROTATION_PENDING`
+**Status:** `SECURITY_CLOSEOUT_COMPLETE`
 
-Canonical closeout record: `../rc4-final-certification/SECURITY_CLOSEOUT.md`
+Canonical record: `../rc4-final-certification/SECURITY_CLOSEOUT.md`
 
-RC4 final certification is **blocked** until Owner password rotation, exposed key replacement, old key revocation, and post-rotation Production verification are evidenced (without committing secrets).
+Artifacts:
+
+- `security-closeout-smoke.json` — Owner authenticated smoke after password recovery deploy `e5c6daf`
+- `supabase-secrets-rotation-metadata.json` — secret **names** + `updated_at` only (no values)

@@ -1,27 +1,31 @@
 # RC4 Final cutover report (certification pack)
 
 **Cutover decision (schema + smoke):** `PRODUCTION_MIGRATION_AND_SMOKE_COMPLETE`
-**RC4 certification decision:** `RC4_NOT_CERTIFIED` — blocked by `SECURITY_ROTATION_PENDING`
+**RC4 certification evidence decision:** `RC4_CERTIFICATION_PR_READY`
+**Security closeout:** `SECURITY_CLOSEOUT_COMPLETE`
 
-## Cutover delivery
+## Cutover + post-cutover delivery
 
 | Step | Result |
 | --- | --- |
 | Production migrations 23/23 | Applied; remote tip `20260801180000` |
-| Backup / history / precheck | Passed prior to apply (see cutover `BACKUP_*`) |
-| Authenticated Owner smoke | PASS |
-| Targeted HR `employee_number` | PASS |
-| Targeted invoices `due_date` | PASS |
-| Health-probe fix #162 | Merged + live on `2f0e432` |
-| Analytics hotfix #163 | Merged + deployed `dep-d9n75v15efls73a4j5hg` |
-| Post-hotfix Analytics smoke | PASS |
+| Authenticated Owner cutover smoke | PASS |
+| Health-probe fix #162 | Merged + live |
+| Analytics hotfix #163 | Merged + deployed |
+| Password recovery #165 | Merged + deployed `e5c6daf` |
+| Owner password rotation via recovery | PASS |
+| Secret key refresh + API redeploy | PASS — see `SECURITY_CLOSEOUT.md` |
+| Post-rotation Owner smoke | PASS (`security-closeout-smoke.json`) |
 
-## Mutations not used for Analytics hotfix
+## Live tip
 
-- No migration
-- No SQL Editor
-- No ad-hoc Production SQL
+| Fact | Value |
+| --- | --- |
+| Migration tip | `20260801180000` |
+| App SHA | `e5c6daf0ba57f6a601f6a902821d41bfc5b3a291` |
+| `/healthz` `/readyz` | PASS |
 
-## Certification gate
+## Mutations not used for Analytics hotfix / recovery
 
-Security closeout incomplete — see `SECURITY_CLOSEOUT.md`.
+- No ad-hoc Production SQL for Analytics or recovery UI
+- Recovery is application-only (PR #165)
