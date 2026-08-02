@@ -40,7 +40,7 @@ test.describe("RC5-A11Y-01 public home", () => {
     await expect(page.getByRole("link", { name: /View All/i }).first()).toBeVisible();
     await expect(banner.getByRole("link", { name: /^Order Now$/i })).toBeVisible();
     await expect(banner.getByRole("link", { name: /^My Telepizza$/i })).toBeVisible();
-    await expect(banner.getByRole("button", { name: /cart|open cart/i })).toBeVisible();
+    await expect(banner.getByRole("button", { name: /cart/i })).toBeVisible();
     await page.locator("footer").scrollIntoViewIfNeeded();
     await expect(page.getByRole("link", { name: /Telepizza Pakistan on Facebook/i })).toBeVisible();
     await assertNoOverflow(page);

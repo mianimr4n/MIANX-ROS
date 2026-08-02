@@ -273,11 +273,11 @@ export default function Menu() {
 
                 aria-pressed={activeCategory === cat}
 
-                className={`px-4 py-2 rounded-full text-sm font-[var(--font-accent)] font-medium whitespace-nowrap transition-all duration-200 active:scale-95 ${
+                className={`min-h-11 px-4 py-2.5 rounded-full text-sm font-[var(--font-accent)] font-medium whitespace-nowrap transition-all duration-200 active:scale-95 ${
 
                   activeCategory === cat
 
-                    ? "bg-brand-red text-white shadow-md shadow-brand-red/25"
+                    ? "bg-brand-red-dark text-white shadow-md shadow-brand-red/25"
 
                     : "bg-white text-brand-charcoal hover:bg-brand-cream-dark border border-border"
 
@@ -441,17 +441,13 @@ export default function Menu() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            {filteredGroups.map((group, i) => (
+            {filteredGroups.map((group) => (
 
               <motion.div
 
                 key={group.productGroupSlug}
 
-   initial={{ opacity: 0, y: 20 }}
-
-                animate={{ opacity: 1, y: 0 }}
-
-                transition={{ duration: 0.4, delay: i * 0.06, ease: [0.23, 1, 0.32, 1] }}
+                initial={false}
 
                 className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-border hover:border-brand-red/30 hover:shadow-xl hover:shadow-brand-red/5 transition-all duration-300"
 
@@ -485,21 +481,23 @@ export default function Menu() {
 
                 <div className="flex flex-col flex-1 p-5">
 
-                  <p className="text-[11px] uppercase tracking-wider text-brand-red font-[var(--font-accent)] font-bold mb-1">
+                  <p className="text-sm uppercase tracking-wider text-brand-charcoal font-[var(--font-accent)] font-bold mb-1">
+
+                    <span className="mr-2 inline-block h-2 w-2 rounded-full bg-brand-red-dark align-middle" aria-hidden />
 
                     {group.category}
 
                   </p>
 
                   <Link href={`/menu/${encodeURIComponent(group.productGroupSlug)}`}>
-                    <h3 className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal mb-1 hover:text-brand-red">
+                    <h2 className="font-[var(--font-display)] font-bold text-lg text-brand-charcoal mb-1 hover:text-brand-red-dark">
 
                       {group.name}
 
-                    </h3>
+                    </h2>
                   </Link>
 
-                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                  <p className="text-sm text-brand-charcoal mb-3 line-clamp-2">
 
                     {group.description}
 
@@ -527,6 +525,10 @@ export default function Menu() {
 
                             disabled={option.available === false}
 
+                            aria-pressed={isSelected}
+
+                            aria-label={`${option.sizeLabel ?? option.name}, Rs ${(option.price ?? 0).toLocaleString()}`}
+
                             onClick={() =>
 
                               setSelectedSkus((current) => ({
@@ -539,21 +541,23 @@ export default function Menu() {
 
                             }
 
-                            className={`rounded-lg border px-3 py-2 text-xs font-[var(--font-accent)] font-semibold transition-all disabled:opacity-40 ${
+                            className={`rounded-lg border min-h-11 px-3 py-2 text-sm font-[var(--font-accent)] font-semibold transition-all disabled:opacity-50 ${
 
                               isSelected
 
-                                ? "border-brand-red bg-brand-red text-white"
+                                ? "border-[#B5121B] bg-[#B5121B] text-white"
 
-                                : "border-border bg-white text-brand-charcoal hover:border-brand-red/40"
+                                : "border-border bg-white text-[#1F1F1F] hover:border-brand-red/40"
 
                             }`}
 
                           >
 
-                            {option.sizeLabel ?? option.name}
+                            <span>
 
-                            <span className="ml-1 opacity-80">
+                              {option.sizeLabel ?? option.name}
+
+                              {" · "}
 
                               Rs {(option.price ?? 0).toLocaleString()}
 
@@ -571,7 +575,7 @@ export default function Menu() {
 
                   <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
 
-                    <span className="font-[var(--font-accent)] font-bold text-xl text-brand-red">
+                    <span className="font-[var(--font-accent)] font-bold text-xl text-brand-red-dark">
 
                       {formatMenuPriceLabel(group, getGroupPrice(group))}
 
@@ -579,7 +583,7 @@ export default function Menu() {
 
                     <div className="flex items-center gap-2">
                     <Link href={`/menu/${encodeURIComponent(group.productGroupSlug)}`}>
-                      <Button variant="ghost" size="sm" className="rounded-xl text-brand-red">
+                      <Button variant="ghost" size="sm" className="rounded-xl text-brand-red-dark min-h-11">
                         View
                       </Button>
                     </Link>
@@ -589,11 +593,11 @@ export default function Menu() {
 
                       size="sm"
 
-                      className="bg-brand-red hover:bg-brand-red-light text-white font-[var(--font-accent)] font-semibold rounded-xl transition-all active:scale-95 shadow-md shadow-brand-red/20"
+                      className="bg-brand-red-dark hover:bg-brand-red text-white font-[var(--font-accent)] font-semibold rounded-xl min-h-11 transition-all active:scale-95 shadow-md shadow-brand-red/20"
 
                     >
 
-                      <Plus className="w-4 h-4 mr-1" />
+                      <Plus className="w-4 h-4 mr-1" aria-hidden />
 
                       {isPizzaFamily(group) ? "Customize" : "Add"}
 

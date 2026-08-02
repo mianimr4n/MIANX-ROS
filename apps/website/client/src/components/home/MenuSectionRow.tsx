@@ -53,17 +53,17 @@ export function MenuSectionRow({
               className={`brand-heading text-3xl md:text-4xl ${dark ? "text-white" : ""}`}
             >
               {title}{" "}
-              {highlight && <span className="text-brand-red">{highlight}</span>}
+              {highlight && <span className={dark ? "text-brand-gold" : "text-brand-red-dark"}>{highlight}</span>}
             </h2>
             {subtitle && (
-              <p className={`mt-2 font-[var(--font-body)] ${dark ? "text-white/60" : "text-muted-foreground"}`}>
+              <p className={`mt-2 font-[var(--font-body)] ${dark ? "text-white/80" : "text-muted-foreground"}`}>
                 {subtitle}
               </p>
             )}
           </div>
           <Link
             href={viewAllHref}
-            className={`inline-flex items-center font-[var(--font-accent)] font-bold text-xs sm:text-sm hover:underline shrink-0 ${
+            className={`inline-flex items-center min-h-11 font-[var(--font-accent)] font-bold text-xs sm:text-sm hover:underline shrink-0 ${
               dark ? "text-brand-gold" : "text-brand-red-dark"
             }`}
           >

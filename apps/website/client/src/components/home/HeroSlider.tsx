@@ -58,7 +58,7 @@ export function HeroSlider() {
 
       <Carousel setApi={setApi} opts={{ loop: true }} className="w-full">
         <CarouselContent>
-          {heroDeals.map((deal) => (
+          {heroDeals.map((deal, index) => (
             <CarouselItem key={deal.id}>
               <div className="relative min-h-[min(92svh,900px)]">
                 <img
@@ -72,43 +72,50 @@ export function HeroSlider() {
 
                 <div className="relative z-10 container min-h-[min(92svh,900px)] flex flex-col justify-end md:justify-center pb-24 md:pb-16 pt-10">
                   <motion.div
-                    initial={{ opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7 }}
+                    initial={false}
                     className="max-w-2xl"
                   >
-                    <div className="relative isolate inline-flex items-center gap-2 rounded-full border border-brand-gold/50 bg-brand-charcoal px-3.5 py-1.5 mb-5 shadow-lg">
+                    <div className="relative isolate inline-flex items-center gap-2 rounded-full border border-brand-gold bg-[#1F1F1F] px-3.5 py-1.5 mb-5 shadow-lg">
                       <Flame className="w-4 h-4 text-brand-gold" aria-hidden />
-                      <span className="text-white text-xs sm:text-sm font-[var(--font-accent)] font-semibold">
+                      <span className="text-white text-sm font-[var(--font-accent)] font-semibold">
                         {deal.badge ? `${deal.badge.toUpperCase()} · ` : "HOT · "}
                         Open Daily · {selectedBranch.hours}
                       </span>
                     </div>
 
-                    {/* Brand is the hero signal */}
-                    <p className="font-[var(--font-display)] font-black text-4xl sm:text-5xl md:text-6xl text-white leading-none tracking-tight drop-shadow-[0_4px_0_rgba(227,30,36,0.55)]">
-                      {BRAND.name}
-                    </p>
+                    {/* One page-level h1 (active slide only); inactive slides keep visual brand as <p>. */}
+                    {index === activeIndex ? (
+                      <h1 className="font-[var(--font-display)] font-black text-4xl sm:text-5xl md:text-6xl text-white leading-none tracking-tight drop-shadow-[0_4px_0_rgba(227,30,36,0.55)]">
+                        {BRAND.name}
+                      </h1>
+                    ) : (
+                      <p
+                        className="font-[var(--font-display)] font-black text-4xl sm:text-5xl md:text-6xl text-white leading-none tracking-tight drop-shadow-[0_4px_0_rgba(227,30,36,0.55)]"
+                        aria-hidden="true"
+                      >
+                        {BRAND.name}
+                      </p>
+                    )}
                     <p className="mt-2 text-brand-gold font-[var(--font-accent)] font-bold uppercase tracking-[0.22em] text-xs sm:text-sm">
                       {BRAND.tagline}
                     </p>
 
-                    <h1 className="mt-5 font-[var(--font-display)] font-extrabold text-3xl sm:text-4xl md:text-6xl text-white leading-[1.05] tracking-tight">
+                    <h2 className="mt-5 font-[var(--font-display)] font-extrabold text-3xl sm:text-4xl md:text-6xl text-white leading-[1.05] tracking-tight">
                       {deal.name}
-                    </h1>
-                    <p className="mt-4 text-base md:text-xl text-white/80 font-[var(--font-body)] max-w-xl leading-relaxed">
+                    </h2>
+                    <p className="mt-4 text-base md:text-xl text-white font-[var(--font-body)] max-w-xl leading-relaxed">
                       {deal.description}
                     </p>
 
-                    <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-brand-gold px-5 py-2.5 shadow-xl shadow-brand-gold/30">
-                      <span className="text-brand-charcoal font-[var(--font-accent)] font-extrabold text-2xl sm:text-3xl">
+                    <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#F5B800] px-5 py-2.5 shadow-xl ring-2 ring-[#1F1F1F]/30">
+                      <span className="text-[#1F1F1F] font-[var(--font-accent)] font-extrabold text-2xl sm:text-3xl">
                         Rs {deal.price?.toLocaleString()}
                       </span>
                     </div>
 
                     <div className="mt-7 flex flex-wrap gap-3">
                       <Link href="/menu">
-                        <Button className="relative isolate rounded-2xl bg-brand-red-dark hover:bg-brand-red text-white font-[var(--font-display)] font-bold text-base px-7 py-6 shadow-xl shadow-brand-red/35">
+                        <Button className="relative isolate rounded-2xl bg-[#B5121B] hover:bg-brand-red text-white font-[var(--font-display)] font-bold text-base min-h-11 px-7 py-6 shadow-xl ring-1 ring-white/30">
                           Order Now
                           <ChevronRight className="w-5 h-5 ml-2" aria-hidden />
                         </Button>
@@ -132,17 +139,23 @@ export function HeroSlider() {
         <CarouselNext className="hidden sm:flex right-4 border-white/20 bg-white/10 text-white hover:bg-brand-red hover:text-white hover:border-brand-red" />
       </Carousel>
 
-      <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+      <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-1">
         {heroDeals.map((deal, index) => (
           <button
             key={deal.id}
             type="button"
             aria-label={`Go to ${deal.name}`}
+            aria-current={activeIndex === index ? "true" : undefined}
             onClick={() => api?.scrollTo(index)}
-            className={`h-2.5 rounded-full transition-all ${
-              activeIndex === index ? "w-9 bg-brand-gold" : "w-2.5 bg-white/40 hover:bg-white/70"
-            }`}
-          />
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-gold"
+          >
+            <span
+              aria-hidden
+              className={`h-2.5 rounded-full transition-all ${
+                activeIndex === index ? "w-9 bg-brand-gold" : "w-2.5 bg-white/70 hover:bg-white"
+              }`}
+            />
+          </button>
         ))}
       </div>
     </section>
