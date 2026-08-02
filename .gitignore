@@ -61,6 +61,7 @@ scripts/.tmp_pw/
 
 # Production cutover logical backups (never commit dumps)
 .local-backups/
+.wt-health-probe/
 
 # Accidental npm lockfile at monorepo root (pnpm is packageManager)
 /package-lock.json
