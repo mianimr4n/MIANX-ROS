@@ -239,3 +239,14 @@
 | P-04 | Reconciliation shown only when comparable; otherwise explicit incompatibility |
 | P-05 | Finance permission-gated; drill-downs only; no journal/expense mutation |
 | P-06 | Acceptance evidence pack + gates PASS; **not Production-verified** |
+
+### RC6-DASH-07 — Automated EOD Pack foundation
+
+| # | Criterion |
+| --- | --- |
+| E-01 | Read-only EOD Pack preview from verified sources with coverage and limitations |
+| E-02 | Pack states exclude FINAL/CLOSED/POSTED/APPROVED; REVIEWABLE ≠ day closed |
+| E-03 | Unresolved items aggregated with drill-downs; no in-pack resolution |
+| E-04 | Exports limited to safe local print/CSV/JSON; no email/WhatsApp/providers |
+| E-05 | No register close, Z-report, cash settlement, journal post, or finalize |
+| E-06 | Acceptance evidence pack + gates PASS; **not Production-verified** |

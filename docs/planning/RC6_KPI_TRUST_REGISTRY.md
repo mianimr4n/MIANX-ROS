@@ -138,9 +138,9 @@ Formulas unsupported by current repository evidence are marked **PROPOSED**.
 
 | Field | Content |
 | --- | --- |
-| Definition | Checklist completeness for close |
-| Formula | **PROPOSED** boolean gates (cash close, open tickets, COD pending, printers) |
-| Trust | PARTIAL fragmented |
+| Definition | End-of-day pack preview from verified operational/financial signals |
+| Formula | Coverage-adjusted section composition; states DRAFT/PARTIAL/REVIEWABLE/INSUFFICIENT_DATA — see `rc6-dash-07/` |
+| Trust | IMPLEMENTED_NOT_PRODUCTION_VERIFIED after DASH-07 (preview only; not closed/final) |
 | Slice | RC6-DASH-07 |
 
 ### KPI-HEALTH

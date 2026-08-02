@@ -43,7 +43,7 @@
 | ACT-COMPLAINT-OPEN | W-CMP-01 | Support, BM | complaint | create | branch | customer known | yes | no | no | — | — | — | CRM audit | — | — | — | med | PARTIAL / weak CRM |
 | ACT-CONTACT-CUSTOMER | W-DEL-01 | Support, Delivery | customer | outbound call/msg | branch | order context | yes | no | no | — | — | rate limit | audit mask phone | — | — | provider | high PII | PROPOSED provider |
 | ACT-REGISTER-CLOSE | W-EOD-01 | Cashier, BM | register | close | branch | Z ready | yes | yes | BM if variance | — | close id | one open | POS Z / cash | — | reopen policy | — | high | PARTIAL |
-| ACT-EOD-PACK | W-EOD-01 | BM, Owner | branch day | generate pack | branch | checklist | yes | no | Owner optional | — | pack version | — | audit | — | — | — | med | PROPOSED DASH-07 |
+| ACT-EOD-PACK | W-EOD-01 | BM, Owner | branch day | generate pack | branch | checklist | yes | no | Owner optional | — | pack version | — | audit | — | — | — | med | DRILL_DOWN + local export (DASH-07; no finalize/delivery) |
 | ACT-CFG-ACTIVATE | Settings | Owner | config version | activate | org/brand/branch | validated draft | yes | yes | dual for high risk | — | version id | — | config history | — | rollback new version | — | high | NOT_PRESENT (SET-08) |
 | ACT-CFG-ROLLBACK | Settings | Owner | config | rollback | same | prior version | yes | yes | dual | — | new version id | — | history | — | — | — | high | NOT_PRESENT |
 | ACT-AI-ACCEPT | W-AI-01 | Owner | recommendation | accept draft | org | AI draft | yes | no | required for exec | — | recommendation id | — | AI audit | — | — | — | med | PLANNED draft-only |
