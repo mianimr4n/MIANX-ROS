@@ -109,7 +109,7 @@ jobs:
       - name: Wait for website readiness
         run: node scripts/rc5/wait-http.mjs http://localhost:3000/ 120 200
 
-      - name: Run RC5-QA-01 Owner Playwright smoke
+      - name: Run RC6-QA-02 Owner Playwright smoke
         env:
           CI: "true"
           D3_E2E_BASE_URL: http://localhost:3000
@@ -120,7 +120,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: rc5-qa-01-owner-playwright-${{ github.run_id }}-${{ github.run_attempt }}
+          name: rc6-qa-02-owner-playwright-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             playwright-report-rc5-qa-01/
             test-results/rc5-qa-01/

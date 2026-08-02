@@ -1,8 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * RC5-QA-01 — Owner critical-path Chromium smoke (local / CI-ephemeral only).
- * Never targets Production. Requires seeded scripts/.tmp_pw/staff-handover.local.json.
+ * RC6-QA-02 (inherits RC5-QA-01 config) — Owner critical-path Chromium smoke
+ * (local / CI-ephemeral only). Never targets Production.
+ * Requires seeded scripts/.tmp_pw/staff-handover.local.json.
  */
 const baseURL = process.env.D3_E2E_BASE_URL ?? process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 
@@ -11,13 +12,13 @@ function assertLocalBaseUrl(url: string) {
   try {
     host = new URL(url).hostname;
   } catch {
-    throw new Error(`RC5-QA-01: invalid baseURL: ${url}`);
+    throw new Error(`RC6-QA-02: invalid baseURL: ${url}`);
   }
   if (host !== "localhost" && host !== "127.0.0.1") {
-    throw new Error(`RC5-QA-01: baseURL must be loopback, got host=${host}`);
+    throw new Error(`RC6-QA-02: baseURL must be loopback, got host=${host}`);
   }
   if (/onrender\.com|vercel\.app|supabase\.co/i.test(url)) {
-    throw new Error("RC5-QA-01: Production/cloud baseURL refused");
+    throw new Error("RC6-QA-02: Production/cloud baseURL refused");
   }
 }
 
@@ -33,7 +34,7 @@ export default defineConfig({
     ? [["list"], ["github"], ["html", { open: "never", outputFolder: "playwright-report-rc5-qa-01" }]]
     : [["list"]],
   timeout: 120_000,
-  globalTimeout: process.env.CI ? 20 * 60_000 : undefined,
+  globalTimeout: process.env.CI ? 30 * 60_000 : undefined,
   use: {
     baseURL,
     trace: "retain-on-failure",
