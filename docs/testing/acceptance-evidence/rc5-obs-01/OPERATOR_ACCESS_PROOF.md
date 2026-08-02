@@ -1,65 +1,74 @@
 # RC5-OBS-01 — Operator access proof
 
-**Result:** `PENDING` — platform credentials unavailable in authoring session.  
-**Do not treat this file as proof of Render/Supabase Log Explorer correlation.**
+**Result:** `OPERATOR_ACCESS_PROVEN` (Render dashboard correlation + Supabase unified-log searches)
+**Operator runbook:** `COMPLETE` — `docs/10-devops/PRODUCTION_LOGS_AND_ALERTING.md`
+**Alerts:** `PROPOSED_NOT_ENABLED`
+**Bulk log export:** `NOT_PROVEN` / `NOT_CLAIMED`
+**Full APM or paging:** `NOT IMPLEMENTED`
 
-## A. Public read-only health probe (completed — no platform credentials)
+No screenshots, raw Production logs, full request IDs, IPs, user-agents, user IDs, emails, tokens, cookies, or Authorization headers are included.
 
-| Field | Value |
+---
+
+## A. Render dashboard correlation (OPERATOR_ACCESS_PROVEN)
+
+| Field | Sanitized value |
 | --- | --- |
-| Probe UTC window | 2026-08-02T07:03:20Z (±1 min) |
-| Platform / service | Render-hosted API `telepizza-api` (`https://telepizza-api.onrender.com`) |
-| Endpoints | `GET /healthz`, `GET /readyz` |
-| HTTP results | `/healthz` **200** (`ok: true`); `/readyz` **200** (`ok: true`, `issues` count **0**, `database.connectivity` **ok**) |
-| Application request IDs | Present on responses as `X-Request-ID` (values **partially redacted** below) |
-| Deployed gitSha reported by API | `11aa195361364d1e48b3f1f589acbb9ca8bd173f` |
-| Note on SHA | Website merge `fb7737c` (PERF-01) does not imply API redeploy; API metadata still reported `11aa195` at probe time |
+| Platform / service | Render — Production API service `telepizza-api` |
+| Endpoint | `GET /readyz` |
+| HTTP status | **200** |
+| Partial request ID | `obs-20260802…4853Z` |
+| Matching Render log found | **YES** |
+| Structured JSON confirmed | **YES** |
+| Sensitive token observed in matched log | **NO** |
+| Production mutation | **NONE** |
 
-### Partial request IDs (sanitized)
+**Correlation result:** `OPERATOR_ACCESS_PROVEN`
 
-| Endpoint | Partial `X-Request-ID` |
+Application `requestId` from the probe was located in Render Log Explorer for `telepizza-api`. The matched line was structured JSON. No sensitive token was observed in the reviewed log fields. Full request ID was not committed.
+
+---
+
+## B. Supabase unified-log access (OPERATOR_ACCESS_PROVEN)
+
+| Field | Sanitized value |
 | --- | --- |
-| `/healthz` | `4f4718df…` |
-| `/readyz` | `7ec0da0a…` |
+| Reviewed UTC window | **2026-08-02 07:45Z–07:55Z** (exact window only) |
+| Access method | Supabase Production project unified / product Logs (Dashboard) |
+| `42703` results | **0** |
+| `42P01` results | **0** |
+| `42501` results | **0** |
 
-Full IDs were not committed. No Authorization headers were used or stored.
+**Zero results apply only to the exact reviewed UTC window** `2026-08-02 07:45Z–07:55Z`. They are not a claim about other time ranges or about “no schema errors ever.”
 
-### Correlation to Render logs
+**Search result:** `OPERATOR_ACCESS_PROVEN`
 
-| Step | Status |
+---
+
+## C. Explicit non-claims
+
+| Item | Status |
 | --- | --- |
-| Open Render → `telepizza-api` → Logs | **Not performed** — no Render operator credential in session |
-| Search by requestId / timestamp / path | **Not performed** |
-| Confirm structured JSON access log line | **Not performed** |
-| Confirm redaction on log fields | **Not performed** (code-level redaction remains unit-tested) |
+| Bulk log export API / automated export in repo | `NOT_PROVEN` / `NOT_CLAIMED` |
+| Platform alerts enabled | `PROPOSED_NOT_ENABLED` |
+| Full APM or paging | `NOT IMPLEMENTED` |
+| Screenshots / raw logs in Git | Not included |
 
-**Correlation result:** `NOT_PROVEN`
+---
 
-## B. Supabase log area
-
-| Step | Status |
-| --- | --- |
-| Open Production project Logs | **Not performed** — no Supabase management/operator token in session |
-| Search window for `42703`, `42P01`, `42501` | **Not performed** |
-
-**Error-code search result:** `NOT_PERFORMED` (no fabricated “none observed”).
-
-## C. Operator attestation
+## D. Operator attestation
 
 | Statement | Attestation |
 | --- | --- |
-| Public health/ready probes executed read-only | **Yes** |
-| Render Log Explorer correlation executed | **No** |
-| Supabase Logs search executed | **No** |
+| Read-only `/readyz` probe used for correlation | **Yes** |
+| Render Log Explorer correlation executed | **Yes** |
+| Supabase Logs search executed for SQLSTATE codes | **Yes** (window above only) |
 | Production data mutated | **No** |
-| Credentials pasted into Git/chat/evidence | **No** |
-| Alerts enabled on platform | **No** (not claimed) |
+| Credentials / tokens / cookies committed | **No** |
+| Alerts enabled on platform | **No** |
 
-## D. How to complete proof (follow-up)
+---
 
-An authorized operator with Dashboard access should:
+## E. Earlier probe note (superseded for proof status)
 
-1. Repeat §A public probe; capture fresh `X-Request-ID` + UTC time + `gitSha`.
-2. In Render Logs for `telepizza-api`, locate the JSON `"msg":"request"` line for that `requestId`.
-3. In Supabase Logs, open Postgres/API views and search the same window for `42703` / `42P01` / `42501`; record counts or “none observed” for that window only.
-4. Append a new dated section to this file (redacted) and update OPS-3 / R-07 if correlation succeeds.
+An earlier public probe at ~2026-08-02T07:03:20Z recorded `/healthz` and `/readyz` HTTP 200 without Dashboard correlation. That session lacked operator credentials and is **not** the proving event. The proving event is §A–§B above.

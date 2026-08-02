@@ -2,7 +2,10 @@
 
 **Rule:** No alert is described as enabled unless platform evidence proves `ENABLED_AND_VERIFIED`.
 
-All candidates below are **`PROPOSED_NOT_ENABLED`** as of 2026-08-02. Numerical thresholds are **operator-owned** (no measured baseline in this slice).
+**Current overall status:** all candidates remain **`PROPOSED_NOT_ENABLED`** (2026-08-02).
+Operator Dashboard log access is proven separately; **that does not enable alerts**.
+
+Numerical thresholds are **operator-owned** (no measured baseline in this slice).
 
 | Signal | Source | Candidate condition | Severity | Candidate destination | Secret required | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -16,8 +19,10 @@ All candidates below are **`PROPOSED_NOT_ENABLED`** as of 2026-08-02. Numerical 
 
 ## Explicitly not claimed
 
+- No alert `ENABLED_AND_VERIFIED`
 - No PagerDuty / Slack / email integration committed
-- No Render alert rules verified
-- No Supabase alert rules verified
-- No APM vendor enabled (`apm.ts` remains noop)
+- No Render alert rules verified as enabled
+- No Supabase alert rules verified as enabled
+- Full APM or paging: **`NOT IMPLEMENTED`**
+- Bulk log export: **`NOT_PROVEN` / `NOT_CLAIMED`**
 - No paid log-stream / SIEM enabled in this slice

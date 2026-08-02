@@ -1,11 +1,11 @@
 # Production logs and alerting (operator runbook)
 
-**Status:** ACTIVE (process documentation)  
-**Slice:** RC5-OBS-01  
-**Baseline SHA (docs authored against):** `fb7737c76f8a9127456ce7149d23620cec6e1d58`  
-**Last reviewed:** 2026-08-02  
+**Status:** ACTIVE (process documentation)
+**Slice:** RC5-OBS-01
+**Baseline SHA (docs authored against):** `fb7737c76f8a9127456ce7149d23620cec6e1d58`
+**Last reviewed:** 2026-08-02
 
-> This runbook describes **how operators obtain Render and Supabase logs without storing secrets in Git**, how to correlate API `requestId` values, and which alerts are **candidates** versus **enabled**.  
+> This runbook describes **how operators obtain Render and Supabase logs without storing secrets in Git**, how to correlate API `requestId` values, and which alerts are **candidates** versus **enabled**.
 > It does **not** claim that platform alerts are enabled, that bulk log export APIs are wired in-repo, or that a full APM/paging stack exists.
 
 ---
@@ -113,7 +113,7 @@ Do **not** store full `Authorization` headers, cookies, or JWTs alongside these 
 
 ## 6. Render log access (canonical workflow)
 
-**Canonical supported method for this repository:** Render Dashboard Log Explorer for service **`telepizza-api`**.  
+**Canonical supported method for this repository:** Render Dashboard Log Explorer for service **`telepizza-api`**.
 Docs: https://render.com/docs/logging (reviewed 2026-08-02).
 
 This repository does **not** ship a Render API client or commit a Render API key. Optional platform features (log streams, CLI) require operator-local credentials and are **not** required for this runbook.
@@ -144,7 +144,7 @@ This repository does **not** ship a Render API client or commit a Render API key
 
 ## 7. Supabase log access (canonical workflow)
 
-**Canonical supported method:** Supabase Dashboard → Project → **Logs** (product logs + Logs Explorer).  
+**Canonical supported method:** Supabase Dashboard → Project → **Logs** (product logs + Logs Explorer).
 Docs: https://supabase.com/docs/guides/platform/logs (reviewed 2026-08-02).
 
 ### Steps
@@ -218,7 +218,7 @@ Never preserve in Git, chat, or shared evidence:
 
 ## 10. Alerting matrix (candidates)
 
-Threshold numbers are **operator decisions** until a measured baseline exists.  
+Threshold numbers are **operator decisions** until a measured baseline exists.
 **No alert in this table is claimed enabled by this documentation alone.**
 
 | Signal | Source | Candidate condition | Severity | Candidate destination | Permission / secret | Status |
@@ -247,12 +247,15 @@ Optional future hooks (webhooks, log drains, APM) are **DEFERRED** unless Founde
 
 ## 12. OPS-3 / R-07 disposition
 
-| Item | Disposition after RC5-OBS-01 docs |
+| Item | Disposition after RC5-OBS-01 |
 | --- | --- |
-| Durable **runbook** path | **Documented** in this file (Render Dashboard + Supabase Dashboard) |
-| Credentialed **session proof** (log line ↔ requestId) | Required for `OPERATOR_ACCESS_PROVEN`; see acceptance evidence |
-| Smoke/probe JSON fallback | **Retained** (R-07) |
-| Platform alerts | Remain `PROPOSED_NOT_ENABLED` until separately enabled and verified |
+| Durable **runbook** path | **`COMPLETE`** — this file (Render Dashboard + Supabase Dashboard) |
+| Credentialed **session proof** (log line ↔ requestId) | **`OPERATOR_ACCESS_PROVEN`** — see `docs/testing/acceptance-evidence/rc5-obs-01/OPERATOR_ACCESS_PROOF.md` |
+| Supabase SQLSTATE searches (`42703` / `42P01` / `42501`) | **`OPERATOR_ACCESS_PROVEN`** for the exact reviewed UTC window in evidence (not a forever claim) |
+| Smoke/probe JSON fallback | **Retained** when Dashboard access is unavailable (R-07 residual) |
+| Platform alerts | Remain **`PROPOSED_NOT_ENABLED`** until separately enabled and verified |
+| Bulk log export | **`NOT_PROVEN` / `NOT_CLAIMED`** |
+| Full APM or paging | **`NOT IMPLEMENTED`** |
 
 ---
 

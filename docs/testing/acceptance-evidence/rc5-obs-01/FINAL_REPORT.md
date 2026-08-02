@@ -2,11 +2,12 @@
 
 ## Verdict
 
-Delivered a **secret-free Production logs & alerting runbook** and honest OPS-3/R-07 updates.  
-**Credentialed Render/Supabase Log Explorer correlation was not proven** in this session (operator keys absent).  
-Acceptance: **F-01 PASS** · **F-02 PASS (honest partial)** · **F-03 PASS (manual; no dedicated scanner)** · operator proof **PENDING**.
+Secret-free operator runbook is **COMPLETE**.
+Render dashboard requestId correlation is **`OPERATOR_ACCESS_PROVEN`**.
+Supabase unified-log access and schema/privilege error searches are **`OPERATOR_ACCESS_PROVEN`** for the exact reviewed UTC window.
+Alerts remain **`PROPOSED_NOT_ENABLED`**. Bulk export is **`NOT_PROVEN` / `NOT_CLAIMED`**. Full APM/paging is **`NOT IMPLEMENTED`**.
 
-Token for this delivery: expect PR open with `RC5_OBS01_OPERATOR_PROOF_PENDING` (not full close of OPS-3).
+Acceptance: **F-01 PASS** · **F-02 PASS** (OPS-3/R-07 updated for proven Dashboard path; non-claims retained) · **F-03 PASS** (manual secret/PII review).
 
 ## Identity
 
@@ -15,40 +16,46 @@ Token for this delivery: expect PR open with `RC5_OBS01_OPERATOR_PROOF_PENDING` 
 | Baseline SHA | `fb7737c76f8a9127456ce7149d23620cec6e1d58` |
 | Branch | `docs/rc5-obs-01-operator-log-alerting` |
 | Primary runbook | `docs/10-devops/PRODUCTION_LOGS_AND_ALERTING.md` |
+| Proof | `OPERATOR_ACCESS_PROOF.md` |
 
-## Files changed
+## Required status language
 
-- `docs/10-devops/PRODUCTION_LOGS_AND_ALERTING.md` (new)
-- `docs/10-devops/README.md`
-- `docs/testing/acceptance-evidence/rc4-final-certification/KNOWN_LIMITATIONS.md` (OPS-3 honesty)
-- `docs/planning/RC5_RISK_REGISTER.md` (R-07 mitigation note)
-- `docs/testing/acceptance-evidence/rc5-obs-01/**`
+| Topic | Status |
+| --- | --- |
+| Render dashboard correlation | `OPERATOR_ACCESS_PROVEN` |
+| Supabase unified-log access + `42703`/`42P01`/`42501` searches | `OPERATOR_ACCESS_PROVEN` |
+| Operator runbook | `COMPLETE` |
+| Alerts | `PROPOSED_NOT_ENABLED` |
+| Bulk log export | `NOT_PROVEN` / `NOT_CLAIMED` |
+| Full APM or paging | `NOT IMPLEMENTED` |
 
-No `apps/`, `backend/`, `supabase/migrations`, secrets, or Production configuration changes.
+## Sanitized proof summary
+
+| Fact | Value |
+| --- | --- |
+| Render endpoint | `/readyz` |
+| HTTP status | 200 |
+| Partial request ID | `obs-20260802…4853Z` |
+| Matching Render log | YES (structured JSON; no sensitive token observed) |
+| Supabase window (UTC) | 2026-08-02 07:45Z–07:55Z |
+| `42703` / `42P01` / `42501` | 0 / 0 / 0 (**this window only**) |
+| Production mutation | NONE |
 
 ## Acceptance
 
 | ID | Criterion | Result |
 | --- | --- | --- |
 | F-01 | Runbook for Render/Supabase logs without secrets in Git | **PASS** |
-| F-02 | OPS-3 updated honestly | **PASS** — partial; proof pending; alerts not enabled |
+| F-02 | OPS-3 updated honestly | **PASS** — durable Dashboard path + proof; alerts/bulk export/APM not overstated |
 | F-03 | Secret scan of PR clean | **PASS** (manual inspection; no CI secret-scan job exists) |
-
-## Operator results
-
-| Surface | Result |
-| --- | --- |
-| Public `/healthz` + `/readyz` | 200 / 200; request IDs issued; gitSha observed |
-| Render log correlation | **PENDING** (no credentials) |
-| Supabase log search (`42703`/`42P01`/`42501`) | **PENDING** (no credentials) |
-| Alerts enabled | **None** (`PROPOSED_NOT_ENABLED`) |
 
 ## Remaining limitations
 
-1. OPS-3 remains open until an authorized operator completes Dashboard correlation.
-2. Platform alerts are candidates only.
-3. Bulk export APIs / log drains / APM are not provided.
-4. Smoke/probe JSON fallback remains valid (R-07).
+1. Platform alerts are candidates only (`PROPOSED_NOT_ENABLED`).
+2. Bulk export APIs / log drains are not claimed.
+3. Full APM or paging is not implemented.
+4. SQLSTATE zero counts are window-scoped only.
+5. Smoke/probe JSON remains a useful fallback when Dashboard access is unavailable (R-07 residual).
 
 ## Rollback
 
@@ -56,4 +63,4 @@ Revert the documentation PR. No DB/migration/deploy rollback required.
 
 ## Helper script decision
 
-**Not added.** Render/Supabase Dashboards are the canonical supported workflows per official docs reviewed 2026-08-02.
+**Not added.** Render/Supabase Dashboards are the canonical supported workflows.

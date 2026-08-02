@@ -28,16 +28,17 @@
 
 ## Operator credential check (names only)
 
-Environment variables for Render/Supabase management API keys were **ABSENT** in the authoring session. No `.env` files with operator keys were present in the workspace. Therefore platform Log Explorer correlation could **not** be completed in-session.
+Initial authoring session lacked Render/Supabase management API keys in the agent environment.
+**Follow-up:** an authorized operator completed Dashboard correlation using credentials **outside Git**. Sanitized proof is in `OPERATOR_ACCESS_PROOF.md` (`OPERATOR_ACCESS_PROVEN`).
 
-## Public probe (read-only, no credentials)
+## Public probe (read-only)
 
-Performed against `https://telepizza-api.onrender.com` — see `OPERATOR_ACCESS_PROOF.md`.
+Production health endpoints remain the preferred benign correlation seed. Proving event used `/readyz` HTTP 200 with partial request ID `obs-20260802…4853Z` — see proof file.
 
 ## Decision
 
-- Deliver durable secret-free runbook under `docs/10-devops/PRODUCTION_LOGS_AND_ALERTING.md`.
+- Deliver durable secret-free runbook under `docs/10-devops/PRODUCTION_LOGS_AND_ALERTING.md` — **`COMPLETE`**.
 - Do **not** add a helper script (Dashboard is canonical).
 - Do **not** enable paid services or change Production configuration.
-- Keep OPS-3 / R-07 **open/partial** until credentialed log correlation is proven.
-- No helper CLI; no APM wiring.
+- Mark Render + Supabase Dashboard access **`OPERATOR_ACCESS_PROVEN`**; keep alerts **`PROPOSED_NOT_ENABLED`**; bulk export **`NOT_CLAIMED`**; APM/paging **`NOT IMPLEMENTED`**.
+- Update OPS-3 / R-07 honestly for the proven Dashboard path while retaining non-claims.
