@@ -126,13 +126,11 @@ export function BranchHealthPanel({
       data-coverage={result.coveragePercent}
     >
       <AdminSectionTitle
+        headingId="branch-health-heading"
         eyebrow="Multi-branch control"
         title="Branch Health Score"
         description="Explainable, coverage-adjusted score from verified operational sources. Not a black box."
       />
-      <h2 id="branch-health-heading" className="sr-only">
-        Branch Health Score
-      </h2>
 
       {loading && result.score == null && result.coveragePercent === 0 ? (
         <p className="text-sm text-[var(--admin-muted)]" data-testid="branch-health-loading">

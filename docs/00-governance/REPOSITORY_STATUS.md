@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-02 — **RC6-DASH-08** What Changed / timeline foundation in progress after DASH-07 merge `1dcc8ba…`; Production website still `152ce40…`
+**Last reconciled:** 2026-08-03 — **RC6-QA-03** Command Center integration certification in progress after DASH-08 merge `9fed3b4…`; Production website still `152ce40…`
 
 ---
 
@@ -36,7 +36,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main | `1dcc8ba076ac0aee56de021e3c30b156ebc8c068` | Post–RC6-DASH-07 (#188); DASH-08 implements What Changed / timeline on a feature branch |
+| Repository main | `9fed3b4392015db69ebdc652dd9a693811d335c8` | Post–RC6-DASH-08 (#189); QA-03 integration certification on a test branch |
 | Released baseline | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Annotated git tag; **no** GitHub Release object |
 | Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Unchanged |
 | RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
@@ -58,7 +58,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Release Policy | Active |
 | RC4 | Released (`v1.3.0`) |
 | RC5 | **Released** (`v1.4.0`; certified + Production website verified) |
-| RC6 | Honesty wave + DASH-00…07 merged; **RC6-DASH-08** What Changed / timeline foundation in progress (read-only; not Production-verified) |
+| RC6 | Honesty wave + DASH-00…08 merged (Phase 1 features on `main`); **RC6-QA-03** integration certification in progress — **not** Production-verified; cutover pending |
 
 ---
 
@@ -66,10 +66,11 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **RC6-DASH-08** — What Changed and Operational Timeline foundation (repository; **not** Production-verified; read-only) |
-| RC6 planning | … · DASH-06 #187 · DASH-07 #188 → `1dcc8ba…` |
+| Current Delivery Slice | **RC6-QA-03** — Command Center integration certification (repository; **not** Production-verified) |
+| RC6 planning | … · DASH-07 #188 · DASH-08 #189 → `9fed3b4…` |
 | Completed RC5 slices (on `main`) | OPS-01, A11Y-01, DOC-01, TEST-01, PERF-01, OBS-01, QA-01 |
-| Next after DASH-08 (not started) | **RC6-DASH-09** (per roadmap) |
+| Phase 1 features on main | DASH-01…08 complete in repository |
+| Next after QA-03 | Phase 1 Production cutover + verification (not started); Delivery/Rider & Settings later |
 | Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc5-production-cutover/` |
 | RC5 release blockers | **None evidenced** |
 | Released baseline | `v1.4.0` @ `96f1e80…` |

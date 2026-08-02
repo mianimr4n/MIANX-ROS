@@ -103,7 +103,7 @@
 | `/admin/reports` CI | Still relevant · QA |
 | Branch protection Owner Playwright | Founder-gated |
 | Moderate a11y advisories | **Addressed in RC6-A11Y-02** · residual cart-drawer targets / full admin cert not claimed |
-| Owner Command Center depth | Still relevant · DASH-01…08 (repo; not Prod-verified); deeper event store remains |
+| Owner Command Center depth | DASH-01…08 on `main` (repo); **QA-03** integration cert in progress; not Prod-verified; deeper event store remains |
 | Exception Center (ops) | **DASH-01 merged** (selected sources; not Prod-verified) |
 | KPI drill-downs | **DASH-02 merged** (selected KPIs; DRILL_DOWN; not Prod-verified) |
 | Daily command modes | **DASH-03 merged** (advisory; read-only; not Prod-verified) |

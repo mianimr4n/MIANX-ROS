@@ -75,7 +75,7 @@ Each candidate scored **1–5**. Preference direction:
 | **RC6-DASH-05** | Branch Health Score (**merged** — repo; not Prod-verified; explainable) |
 | **RC6-DASH-06** | Profitability truth (**merged** — ops≠posted; not Prod-verified) |
 | RC6-DASH-07 | EOD pack (merged — read-only preview; no finalize) |
-| **RC6-DASH-08** | What Changed and timeline (**this wave** — device-local / derived foundation) |
+| RC6-DASH-08 | What Changed and timeline (merged — device-local / derived foundation) |
 
 ### Delivery / Rider
 
@@ -114,7 +114,7 @@ Each candidate scored **1–5**. Preference direction:
 | RC6-INV-01 | Inventory adjustment residual proof | Retained |
 | RC6-CHK-01 | Customer checkout coupon redeem | Retained |
 | RC6-SEC-02 | Supplier portal RLS matrix | Retained |
-| RC6-QA-03 | Live-DB privilege CI residual | Optional |
+| **RC6-QA-03** | Command Center integration certification (**this wave**) |
 
 ### Optional
 

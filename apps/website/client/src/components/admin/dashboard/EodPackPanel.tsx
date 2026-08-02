@@ -60,16 +60,12 @@ export function EodPackPanel({
       data-pack-state={result.state}
       data-coverage={result.sourceCoveragePercent}
     >
-      <div className="print:hidden">
-        <AdminSectionTitle
-          eyebrow={commandMode === "CLOSING" ? "Closing control" : "Preview"}
-          title="EOD Pack preview"
-          description="Reviewable end-of-day snapshot from verified sources. Not a closed day, final pack, or accounting close."
-        />
-      </div>
-      <h2 id={titleId} className="sr-only print:not-sr-only print:text-xl print:font-bold">
-        EOD Pack preview
-      </h2>
+      <AdminSectionTitle
+        headingId={titleId}
+        eyebrow={commandMode === "CLOSING" ? "Closing control" : "Preview"}
+        title="EOD Pack preview"
+        description="Reviewable end-of-day snapshot from verified sources. Not a closed day, final pack, or accounting close."
+      />
 
       {loading ? (
         <p className="text-sm text-[var(--admin-muted)] print:hidden" data-testid="eod-pack-loading">

@@ -45,6 +45,10 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   expect: { timeout: 30_000 },
-  testMatch: [/owner-critical-smoke\.spec\.ts/, /owner-smoke-readonly\.guard\.spec\.ts/],
+  testMatch: [
+    /owner-critical-smoke\.spec\.ts/,
+    /owner-smoke-readonly\.guard\.spec\.ts/,
+    /owner-command-center-integration\.spec\.ts/,
+  ],
   outputDir: "test-results/rc5-qa-01",
 });

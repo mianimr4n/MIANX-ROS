@@ -74,13 +74,11 @@ export function WhatChangedPanel({
       data-coverage={summary.coverageState}
     >
       <AdminSectionTitle
+        headingId={titleId}
         eyebrow={commandMode === "CLOSING" ? "Closing context" : "What Changed"}
         title="What Changed?"
         description="Derived deltas from a device-local review baseline, plus a privacy-safe operational timeline. Not a complete audit log."
       />
-      <h2 id={titleId} className="sr-only">
-        What Changed
-      </h2>
 
       {loading ? (
         <p className="text-sm text-[var(--admin-muted)]" data-testid="what-changed-loading">

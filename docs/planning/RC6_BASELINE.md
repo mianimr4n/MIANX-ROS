@@ -167,6 +167,7 @@ RC6 candidates are evidence-driven slice IDs, not linked issue numbers.
 | RC6-DASH-04 | **Merged** #185 → `1c1fecd4dbfd8a605ddd9995f34fa6470bffd6eb` |
 | RC6-DASH-05 | **Merged** #186 → `64d655760fb9564ac841bff05cd797241b2a7743` |
 | RC6-DASH-06 | **Merged** #187 → `19fdb0a51f00b646130ca7ec12cc09fe51532366` |
-| Current runtime slice | **RC6-DASH-08** — What Changed / timeline foundation (repository; **not** Production-verified; read-only) |
-| Next runtime after DASH-08 | Per roadmap (post–What Changed foundation) |
+| Current runtime slice | **RC6-QA-03** — Command Center integration certification (repository; **not** Production-verified) |
+| Phase 1 features | DASH-01…08 on `main` after #189 (`9fed3b4…`) |
+| Next after QA-03 | Phase 1 Production cutover (prepare only until authorized) |
 | Pending Production operation | **NONE** |
