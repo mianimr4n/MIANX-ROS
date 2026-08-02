@@ -5,7 +5,14 @@
 **Certified main SHA:** `e40351b2793ffda6a62aec60f817eff3dd0352cf`  
 **Production application SHA (live at certification):** `e5c6daf0ba57f6a601f6a902821d41bfc5b3a291`  
 **Production migration tip:** `20260801180000`  
-**Recommended release tag (not created by this PR):** `v1.3.0` → `e40351b`
+**Recommended release tag (not created by this PR):** `v1.3.0` → originally recommended at certification tip `e40351b`
+
+### Subsequent status (post-closeout)
+
+- Annotated tag **`v1.3.0` was later created and pushed**.
+- Tag commit: **`74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b`** (RC4 closeout tip on `main`, after this notes PR).
+- Repository convention: annotated git tag only.
+- **No GitHub Release** was created for `v1.3.0`.
 
 ## Release convention (inspection)
 
@@ -116,4 +123,6 @@ This document contains **no** passwords, secret keys, JWTs, tokens, cookies, bac
 
 ## Tag approval gate
 
-Creating/pushing `v1.3.0` (or any GitHub Release) requires **separate Founder approval**. This closeout PR documents the recommendation only.
+Creating/pushing `v1.3.0` (or any GitHub Release) required **separate Founder approval** at closeout time. This closeout PR documented the recommendation only and did **not** create the tag.
+
+**Post-approval outcome:** `v1.3.0` exists as an annotated tag at `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b`; no GitHub Release object was published.

@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-07-30 — through [PR #133](https://github.com/mianimr4n/telepizza/pull/133) (`e5c3910`)
+**Last reconciled:** 2026-08-02 — repository main `c1859117b24d6adbe2fb0633ea518538047cc120` (includes RC5-OPS-01 + RC5-A11Y-01; RC5-DOC-01 in progress)
 
 ---
 
@@ -28,6 +28,20 @@ Repository status must always distinguish between:
 
 These states must never be treated as equivalent.
 
+Repository tip, released tag commit, and Production application tip must also be labeled separately when they differ.
+
+---
+
+## Release and tip anchors
+
+| Concept | Canonical value | Notes |
+| --- | --- | --- |
+| Repository main | `c1859117b24d6adbe2fb0633ea518538047cc120` | Current documentation/code tip on `origin/main` |
+| Released baseline | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Annotated git tag; **no** GitHub Release |
+| RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
+| Production app | `e5c6daf0ba57f6a601f6a902821d41bfc5b3a291` | Live application tip until newer deploy evidence |
+| Production database | Migrations through `20260801180000` | Distinct from repository main and from `v1.3.0` tag commit |
+
 ---
 
 ## Current Repository Status
@@ -41,6 +55,8 @@ These states must never be treated as equivalent.
 | Repository Evidence | Current |
 | Acceptance Process | Active |
 | Release Policy | Active |
+| RC4 | Released (`v1.3.0`) |
+| RC5 | Active planning / sequential slices on `main` |
 
 ---
 
@@ -48,12 +64,17 @@ These states must never be treated as equivalent.
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | Admin ERP Core Modules — LIVE with documented actions |
-| Current Focus | Release certification and production migration verification |
+| Current Delivery Slice | RC5-DOC-01 — Release & status documentation sync |
+| Completed RC5 slices (on `main`, not claimed Production-deployed) | RC5-OPS-01, RC5-A11Y-01 |
+| Next roadmap step after DOC-01 | RC5-TEST-01 — Analytics schema regression guards |
+| Released baseline | `v1.3.0` @ `74b6b8e…` |
+| Production app vs repository | Production app `e5c6daf…`; repository main is ahead |
 | Northern Bypass | `coming-soon` (unchanged) |
 | Royal Orchard target opening | **14 August 2026** — software readiness ≠ restaurant Production-ready |
 
 Owner-facing summary remains in [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
+
+Admin ERP core modules remain LIVE on `main` with documented gaps (tables below). That capability baseline is unchanged by this reconciliation; RC4/`v1.3.0` release status supersedes the former “release certification still in progress” focus.
 
 ### Merged delivery through PR #133 (2026-07-30)
 
@@ -128,13 +149,16 @@ Executive Dashboard v1 remains **Released** to production as of merge commit `f6
 
 ### Production migrations
 
-**Verified 2026-07-30** via `npx supabase migration list --linked` against the linked production project.
+**Current Production migration tip (RC4 cutover evidence):** `20260801180000`.
+
+Historical note — ERP-wave alignment **2026-07-30** via `npx supabase migration list --linked` (superseded tip; retained as audit trail of that pass):
 
 | Result | Detail |
 | --- | --- |
 | Pre-push gap | Local-only: `20260730193000` (reports.read), `20260730210000` (pos_z_report_events) |
 | Action | `npx supabase db push --linked` applied both migrations to production |
-| Post-push | Local and Remote aligned through `20260730210000` — **0 local-only**, **0 remote-only** |
+| Post-push (that day) | Local and Remote aligned through `20260730210000` — **0 local-only**, **0 remote-only** |
+| Later Production tip | Advanced through RC4 cutover to `20260801180000` (do not treat `20260730210000` as current) |
 
 Key post-#120 migrations (ERP wave) — all present on Local and Remote after push:
 
@@ -226,4 +250,4 @@ This document should be updated whenever:
 
 Repository Status provides an honest view of the current verified state of the repository.
 
-Admin ERP core modules are LIVE on `main` through PR #133 with documented gaps. Current engineering focus is release certification and production migration verification — not inventing metrics, not claiming GRN stock posting, float variance, HR lifecycle, or AI runtime that repository evidence does not support.
+Admin ERP core modules are LIVE on `main` through PR #133 with documented gaps. RC4 is certified and released as `v1.3.0` (`74b6b8e…`). Repository main (`c185911…`) is ahead of Production application SHA (`e5c6daf…`). Current engineering focus is RC5 documentation honesty and the roadmap sequence (DOC-01 → TEST-01) — not inventing metrics, not claiming GRN stock posting, float variance, HR lifecycle, AI runtime, or Production deploys that repository evidence does not support.
