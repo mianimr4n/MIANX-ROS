@@ -130,9 +130,9 @@ Formulas unsupported by current repository evidence are marked **PROPOSED**.
 | Field | Content |
 | --- | --- |
 | Definition | Composite readiness/ops score |
-| Formula | **PROPOSED** weighted inputs (exceptions, delays, stock, cash, attendance) |
-| Trust | PLANNED / ESTIMATED until DASH-05 |
-| Rule | Must expose component breakdown |
+| Formula | Coverage-adjusted weighted mean of 6 verified components (kitchen, delivery late, confirm, dispatch, cash clear, stock bands) — see `rc6-dash-05/SCORE_FORMULA_AND_WEIGHTS.md` |
+| Trust | IMPLEMENTED_NOT_PRODUCTION_VERIFIED / DERIVED after DASH-05 |
+| Rule | Must expose component breakdown, coverage, confidence; missing ≠ healthy |
 
 ### KPI-EOD
 

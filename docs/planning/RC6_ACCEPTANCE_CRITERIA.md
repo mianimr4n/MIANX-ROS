@@ -216,3 +216,15 @@
 | A-04 | No inline approve/reject; maturity remains DRILL_DOWN |
 | A-05 | Source failure is never shown as all-clear zero |
 | A-06 | Acceptance evidence pack + gates PASS; **not Production-verified** |
+
+### RC6-DASH-05 — Explainable Branch Health Score
+
+| # | Criterion |
+| --- | --- |
+| H-01 | Score is explainable with component breakdown, coverage, confidence, and limitations |
+| H-02 | Only verified branch-scoped sources; missing/failed never become healthy 100 |
+| H-03 | Weights/formulas documented; coverage-adjusted; INSUFFICIENT_DATA below minimum |
+| H-04 | Command modes reorder emphasis only — same score for same data window |
+| H-05 | Drill-downs reuse existing routes/filters; maturity remains INSIGHT_ONLY + DRILL_DOWN |
+| H-06 | Peer ranking only when comparable; otherwise deferred with honest note |
+| H-07 | Acceptance evidence pack + gates PASS; **not Production-verified** |

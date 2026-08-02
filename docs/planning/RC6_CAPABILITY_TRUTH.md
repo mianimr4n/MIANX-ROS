@@ -103,11 +103,12 @@
 | `/admin/reports` CI | Still relevant · QA |
 | Branch protection Owner Playwright | Founder-gated |
 | Moderate a11y advisories | **Addressed in RC6-A11Y-02** · residual cart-drawer targets / full admin cert not claimed |
-| Owner Command Center depth | Still relevant · DASH-01…03 (repo; not Prod-verified); DASH-04+ remain |
+| Owner Command Center depth | Still relevant · DASH-01…05 (repo; not Prod-verified); DASH-06+ remain |
 | Exception Center (ops) | **DASH-01 merged** (selected sources; not Prod-verified) |
 | KPI drill-downs | **DASH-02 merged** (selected KPIs; DRILL_DOWN; not Prod-verified) |
 | Daily command modes | **DASH-03 merged** (advisory; read-only; not Prod-verified) |
-| Approval Inbox | **DASH-04 in repository** (selected sources; DRILL_DOWN only; not Prod-verified) |
+| Approval Inbox | **DASH-04 merged** (selected sources; DRILL_DOWN only; not Prod-verified) |
+| Branch Health Score | **DASH-05 in repository** (explainable; coverage-adjusted; not Prod-verified) |
 | Loyalty/marketing provider send | Provider-dependent · Founder-gated |
 | WhatsApp conversation/webhooks | Provider-dependent · not present |
 | Analytics worker | Still relevant · backend |
