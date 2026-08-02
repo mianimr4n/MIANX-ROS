@@ -1,14 +1,14 @@
 # RC6 Command Center Traceability
 
-**Status:** Proposed planning contract (RC6-DASH-00)
-**Baseline tip:** `da99875…`
+**Status:** Living planning contract (updated RC6-DASH-01)
+**Baseline tip:** `cc09e239…` (post-DASH-00)
 
 Complete means: implementation + tests + docs + security review (if required) + Production verification (if required).
 
 | Vision capability | Contract | Current truth | Gap | Planned slice | Tests | Security | Migration | Preview | Production | Release |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Six-zone Command Center | Architecture | Owner CC LIVE shell | Zones not formalized in UI | DASH-00→08 | Dashboard + e2e | — | NONE early | — | Owner smoke | — |
-| Exception Center | Catalogue + W-EXC-01 | Attention cards PARTIAL | Unified queue/ack | **DASH-01** | Browser + API | PII mask | Prefer NONE | Preview UI | Prod list smoke | — |
+| Exception Center | Catalogue + W-EXC-01 | **DASH-01 repo foundation** (5 types; read-only) | Ack/full catalogue/Prod | DASH-01 done (repo); later expand | Static + Owner smoke | PII mask | NONE | Preview UI | **Not Prod-verified** | — |
 | KPI drill-downs | KPI + Widget registries | PARTIAL KPIs | Trust labels + filters | DASH-02 | KPI unit + e2e | — | NONE | — | Sample reconcile | — |
 | Opening/live/closing modes | Architecture §4 | Fragmented | Mode model | DASH-03 | Mode tests | — | NONE/EXISTING | — | — | — |
 | Approval Inbox | Actions + W-APR-01 | Fragmented approvals | Unified inbox | DASH-04 | Mutation tests | SoD | EXISTING | — | SoD Prod | — |
@@ -48,5 +48,6 @@ Complete means: implementation + tests + docs + security review (if required) + 
 
 ## Selected next runtime slice
 
-**RC6-DASH-01 — Owner Exception Center read-only foundation**
-See evidence `NEXT_SLICE_RECOMMENDATION.md`.
+**RC6-DASH-02 — Actionable KPI drill-downs** (after DASH-01 merges)
+
+DASH-01 Exception Center: implemented in repository as read-only foundation over selected existing sources — **not** Production-verified; **not** full catalogue; no ack/mutation.

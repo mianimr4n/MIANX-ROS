@@ -1,8 +1,8 @@
 # RC6 Baseline
 
-**Status:** Living baseline — honesty wave through **RC6-A11Y-02** merged; **RC6-DASH-00** contracts next
+**Status:** Living baseline — honesty wave + DASH-00 merged; **RC6-DASH-01** Exception Center next/runtime
 **Date:** 2026-08-02
-**Authority:** Repository evidence after annotated tag `v1.4.0`, RC5 certification, and RC6 honesty/CI/a11y slices
+**Authority:** Repository evidence after annotated tag `v1.4.0`, RC5 certification, and RC6 honesty/contracts slices
 
 > Planning documents do **not** determine repository status. This baseline records verified anchors for RC6 discovery only.
 
@@ -40,8 +40,9 @@ No planning document, roadmap, or UI label overrides repository evidence.
 | --- | --- | --- |
 | Released baseline tag | `v1.4.0` (annotated) | Message: RC5 certified closeout |
 | Tag target / certified closeout commit | `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | = merge of PR #175 |
-| Current repository main (DASH-00 baseline) | `da99875ddedbc25ae51e6db22a16de4a50d2ea16` | Post–PR #180 (RC6-A11Y-02) merge |
-| Post–PR #176 planning tip (historical) | `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` | Superseded by honesty/CI/a11y merges |
+| Current repository main (DASH-01 baseline) | `cc09e239f966ac7173536f54eec63ae1fb01e1f8` | Post–PR #181 (RC6-DASH-00) merge |
+| Post–A11Y-02 tip (historical) | `da99875ddedbc25ae51e6db22a16de4a50d2ea16` | Superseded by DASH-00 |
+| Post–PR #176 planning tip (historical) | `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` | Superseded by honesty/CI/a11y/contracts merges |
 | `v1.4.0` tag peel | `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Distinct from current tip when docs advance |
 | Production website runtime SHA | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | Evidenced cutover; **docs-only delta** after this SHA to tip |
 | Production website Vercel deployment | `dpl_7xaV34uyAEdMLvWckWKQASPAxJ7r` | Rollback target `dpl_FriiC2Ps…` not executed |
@@ -158,7 +159,8 @@ RC6 candidates are evidence-driven slice IDs, not linked issue numbers.
 | RC6-DOC-01 | **Merged** #177 |
 | RC6-UI-01 | **Merged** #178 |
 | RC6-QA-02 | **Merged** #179 |
-| RC6-A11Y-02 | **Merged** #180 → `da99875ddedbc25ae51e6db22a16de4a50d2ea16` |
-| Current contracts slice | **RC6-DASH-00** (docs/planning only) |
-| Next runtime slice | **RC6-DASH-01** — Exception Center read-only (not started) |
+| RC6-A11Y-02 | **Merged** #180 → `da99875…` |
+| RC6-DASH-00 | **Merged** #181 → `cc09e239f966ac7173536f54eec63ae1fb01e1f8` |
+| Current runtime slice | **RC6-DASH-01** — Exception Center read-only (repository; **not** Production-verified) |
+| Next runtime after DASH-01 | **RC6-DASH-02** |
 | Pending Production operation | **NONE** |

@@ -750,8 +750,21 @@ export default function AdminDashboard() {
           data={data}
           opState={opState}
           loading={loading && !data}
+          branchId={branchIdFilter}
           branchLabel={branchLabel}
           extras={ownerExtras}
+          kitchenTickets={kitchenTicketsUnavailable ? null : (kitchenTickets.data ?? null)}
+          kitchenState={kitchenTickets.state}
+          deliveryAssignments={assignmentsUnavailable ? null : (deliveryAssignments.data ?? null)}
+          deliveryState={deliveryAssignments.state}
+          financeEnabled={canLoadFinance}
+          financeState={financeAttention.state}
+          onExceptionRetry={() => {
+            retry();
+            kitchenTickets.retry();
+            deliveryAssignments.retry();
+            if (canLoadFinance) financeAttention.retry();
+          }}
           orders={filteredOrders.length > 0 ? filteredOrders : recentOrdersSource}
           movements={wasteUnavailable ? null : (stockMovements.data ?? null)}
           purchaseOrders={

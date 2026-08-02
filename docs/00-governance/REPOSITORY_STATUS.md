@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-02 — repository main `da99875ddedbc25ae51e6db22a16de4a50d2ea16` (RC6-A11Y-02 #180 merged; RC6-DASH-00 contracts in progress; Production website still `152ce40…`)
+**Last reconciled:** 2026-08-02 — repository work on **RC6-DASH-01** (Owner Exception Center read-only foundation) after DASH-00 merge `cc09e239…`; Production website still `152ce40…`
 
 ---
 
@@ -36,7 +36,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main | `da99875ddedbc25ae51e6db22a16de4a50d2ea16` | Post–RC6-A11Y-02 (#180); tip includes honesty/CI/a11y after `v1.4.0` |
+| Repository main | `cc09e239f966ac7173536f54eec63ae1fb01e1f8` | Post–RC6-DASH-00 (#181); DASH-01 implements Exception Center on a feature branch |
 | Released baseline | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Annotated git tag; **no** GitHub Release object |
 | Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Unchanged |
 | RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
@@ -58,7 +58,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Release Policy | Active |
 | RC4 | Released (`v1.3.0`) |
 | RC5 | **Released** (`v1.4.0`; certified + Production website verified) |
-| RC6 | Honesty wave through **RC6-A11Y-02** merged; **RC6-DASH-00** contracts active (docs only) |
+| RC6 | Honesty wave + **RC6-DASH-00** contracts merged; **RC6-DASH-01** Exception Center in progress (read-only; not Production-verified) |
 
 ---
 
@@ -66,10 +66,10 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **RC6-DASH-00** — Restaurant Command Center contracts (docs/planning only) |
-| RC6 planning | Merged #176; honesty DOC-01 #177 · UI-01 #178 · QA-02 #179 · A11Y-02 #180 → `da99875…` |
+| Current Delivery Slice | **RC6-DASH-01** — Owner Exception Center read-only foundation (repository implementation; **not** Production-verified) |
+| RC6 planning | Merged #176; honesty DOC-01 #177 · UI-01 #178 · QA-02 #179 · A11Y-02 #180 · DASH-00 #181 → `cc09e239…` |
 | Completed RC5 slices (on `main`) | OPS-01, A11Y-01, DOC-01, TEST-01, PERF-01, OBS-01, QA-01 |
-| Next runtime (not started) | **RC6-DASH-01** — Exception Center read-only foundation |
+| Next after DASH-01 (not started) | **RC6-DASH-02** — Actionable KPI drill-downs |
 | Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc5-production-cutover/` |
 | RC5 release blockers | **None evidenced** |
 | Released baseline | `v1.4.0` @ `96f1e80…` |
