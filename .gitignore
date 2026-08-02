@@ -72,5 +72,6 @@ scripts/_tmp_*.mjs
 # Playwright local run artifacts (if generated)
 /test-results/
 /playwright-report/
+/playwright-report-rc5-qa-01/
 /blob-report/
 /playwright/.cache/

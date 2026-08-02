@@ -35,3 +35,105 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+  # RC5-QA-01 — Owner critical smoke on ephemeral local Supabase (never Production).
+  # Job fails on Playwright failure (no continue-on-error). Branch protection is out of scope.
+  owner-playwright:
+    name: Owner Playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Start local Supabase
+        run: npx supabase start
+
+      - name: Write local env from Supabase status
+        run: |
+          mkdir -p .tmp
+          npx supabase status -o env > .tmp/supabase.local.env
+          node scripts/rc5/mask-local-secrets.mjs env .tmp/supabase.local.env
+          node scripts/write-local-env-from-supabase.mjs .tmp/supabase.local.env
+
+      - name: Local cloud-binding guard
+        run: pnpm local:guard
+
+      - name: Assert local-only E2E targets
+        env:
+          D3_E2E_BASE_URL: http://localhost:3000
+          D3_E2E_API_URL: http://127.0.0.1:4000
+        run: node scripts/rc5/assert-local-e2e-targets.mjs
+
+      - name: Seed deterministic local Owner fixture
+        run: |
+          pnpm local:seed
+          node scripts/rc5/mask-local-secrets.mjs handover scripts/.tmp_pw/staff-handover.local.json
+
+      - name: Start backend API
+        run: |
+          nohup node scripts/rc5/run-with-local-env.mjs backend/api/.env.local -- \
+            pnpm --filter @telepizza/api exec tsx src/main.ts \
+            > /tmp/telepizza-api.log 2>&1 &
+          echo $! > /tmp/telepizza-api.pid
+
+      - name: Wait for API healthz and readyz
+        run: |
+          node scripts/rc5/wait-http.mjs http://127.0.0.1:4000/healthz 120 200
+          node scripts/rc5/wait-http.mjs http://127.0.0.1:4000/readyz 120 200
+
+      - name: Start website
+        working-directory: apps/website
+        run: |
+          nohup pnpm exec vite --host localhost --port 3000 > /tmp/telepizza-web.log 2>&1 &
+          echo $! > /tmp/telepizza-web.pid
+
+      - name: Wait for website readiness
+        run: node scripts/rc5/wait-http.mjs http://localhost:3000/ 120 200
+
+      - name: Run RC5-QA-01 Owner Playwright smoke
+        env:
+          CI: "true"
+          D3_E2E_BASE_URL: http://localhost:3000
+          D3_E2E_API_URL: http://127.0.0.1:4000
+        run: pnpm test:e2e:owner
+
+      - name: Upload Playwright failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rc5-qa-01-owner-playwright-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            playwright-report-rc5-qa-01/
+            test-results/rc5-qa-01/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Stop local stack
+        if: always()
+        run: |
+          if [ -f /tmp/telepizza-web.pid ]; then kill "$(cat /tmp/telepizza-web.pid)" 2>/dev/null || true; fi
+          if [ -f /tmp/telepizza-api.pid ]; then kill "$(cat /tmp/telepizza-api.pid)" 2>/dev/null || true; fi
+          # Kill orphaned children of nohup wrappers
+          pkill -f "tsx src/main.ts" 2>/dev/null || true
+          pkill -f "vite --host localhost --port 3000" 2>/dev/null || true
+          npx supabase stop || true
+          rm -f scripts/.tmp_pw/staff-handover.local.json .tmp/supabase.local.env || true
