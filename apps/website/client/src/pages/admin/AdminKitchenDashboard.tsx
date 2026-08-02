@@ -35,8 +35,10 @@ import { useLocation } from "wouter";
 
 function readState(search: string) {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  const rawView = (params.get("view") ?? "board").trim().toLowerCase();
+  const view = ["board", "queue", "ready", "delayed"].includes(rawView) ? rawView : "board";
   return {
-    view: params.get("view") ?? "board",
+    view,
     status: params.get("status") ?? "",
     orderType: params.get("orderType") ?? "",
     source: params.get("source") ?? "",
@@ -438,11 +440,12 @@ export default function AdminKitchenDashboard() {
             type="button"
             onClick={() => {
               setSearchDraft("");
-              writeUrl({ search: "", orderType: "", source: "", status: "" });
+              writeUrl({ search: "", orderType: "", source: "", status: "", view: "board" });
             }}
             className="min-h-11 rounded-lg border border-[var(--admin-border)] px-4 text-sm font-semibold"
+            aria-label="Clear filters"
           >
-            Reset
+            Clear filters
           </button>
         </form>
       </div>

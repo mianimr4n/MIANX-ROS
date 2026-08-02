@@ -5,11 +5,13 @@ export function InventoryFilters({
   onSearchChange,
   lowStockOnly,
   onLowStockOnlyChange,
+  onClearFilters,
 }: {
   search: string;
   onSearchChange: (value: string) => void;
   lowStockOnly: boolean;
   onLowStockOnlyChange: (value: boolean) => void;
+  onClearFilters?: () => void;
 }) {
   return (
     <section aria-label="Inventory filters" className="mb-6 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
@@ -28,7 +30,7 @@ export function InventoryFilters({
           />
           Low stock
         </label>
-        <label className="block text-sm md:col-span-2 xl:col-span-3">
+        <label className="block text-sm md:col-span-2 xl:col-span-2">
           <span className="mb-1 block text-xs font-medium text-[var(--admin-muted)]">Search stock items</span>
           <input
             value={search}
@@ -37,6 +39,18 @@ export function InventoryFilters({
             className="min-h-11 w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 text-sm"
           />
         </label>
+        {onClearFilters ? (
+          <div className="flex items-end">
+            <button
+              type="button"
+              className="min-h-11 w-full rounded-lg border border-[var(--admin-border)] bg-white px-3 text-sm font-medium text-[var(--admin-ink)]"
+              onClick={onClearFilters}
+              aria-label="Clear filters"
+            >
+              Clear filters
+            </button>
+          </div>
+        ) : null}
       </div>
     </section>
   );

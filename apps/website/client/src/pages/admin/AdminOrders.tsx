@@ -4,6 +4,8 @@ import { useLocation, useSearch } from "wouter";
 import { OrderAIInsights, buildOrderInsights } from "@/components/admin/orders/OrderAIInsights";
 import { OrderDrawer } from "@/components/admin/orders/OrderDrawer";
 import { OrderFilters, type OrderFilterState } from "@/components/admin/orders/OrderFilters";
+import { ORDER_STATUSES } from "@/lib/admin-order-format";
+import { sanitizeStatusFilter } from "@/lib/kpi-drilldown/registry";
 import { OrderGrid, type OrderSortKey } from "@/components/admin/orders/OrderGrid";
 import { OrderKPIs, type OrderKpiSnapshot } from "@/components/admin/orders/OrderKPIs";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,7 +31,7 @@ const PAGE_SIZE = 20;
 function readFilters(search: string) {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
   return {
-    status: params.get("status") ?? "",
+    status: sanitizeStatusFilter(params.get("status"), ORDER_STATUSES),
     orderType: params.get("orderType") ?? "",
     orderSource: params.get("orderSource") ?? "",
     orderNumber: params.get("orderNumber") ?? "",
@@ -335,6 +337,21 @@ export default function AdminOrders() {
           setLocation("/admin/orders");
         }}
       />
+
+      {filters.status || filters.orderType || filters.orderSource || filters.orderNumber ? (
+        <p
+          className="mb-4 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2 text-sm text-[var(--admin-muted)]"
+          role="status"
+          data-testid="orders-active-filters"
+        >
+          Active filters:
+          {filters.status ? ` status=${filters.status}` : ""}
+          {filters.orderType ? ` type=${filters.orderType}` : ""}
+          {filters.orderSource ? ` source=${filters.orderSource}` : ""}
+          {filters.orderNumber ? ` order#=${filters.orderNumber}` : ""}
+          . Branch scope follows the Owner branch selector.
+        </p>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <OrderGrid
