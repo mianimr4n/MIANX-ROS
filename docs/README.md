@@ -74,3 +74,9 @@ Branches: Royal Orchard = operating · Northern Bypass = coming-soon
 ## ARCHIVE / REFERENCE
 
 Historical packs remain under `18-reference/archive/`. Legacy ZIP corpus is catalogued privately outside Git and is **not** imported wholesale.
+
+---
+
+## RC6 planning (not implementation evidence)
+
+Living RC6 contracts and roadmap live under [`planning/`](./planning/). Command Center contracts: `RC6_COMMAND_CENTER_ARCHITECTURE.md` and related registries. Acceptance evidence: `testing/acceptance-evidence/rc6-*/`.

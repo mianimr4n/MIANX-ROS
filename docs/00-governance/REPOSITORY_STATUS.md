@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-02 — repository main `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` (RC6 planning #176 merged; RC6-DOC-01 living-status honesty in progress; Production website still `152ce40…`)
+**Last reconciled:** 2026-08-02 — repository main `da99875ddedbc25ae51e6db22a16de4a50d2ea16` (RC6-A11Y-02 #180 merged; RC6-DASH-00 contracts in progress; Production website still `152ce40…`)
 
 ---
 
@@ -36,7 +36,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main | `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` | Current tip on `origin/main` (RC6 planning + docs after `v1.4.0`) |
+| Repository main | `da99875ddedbc25ae51e6db22a16de4a50d2ea16` | Post–RC6-A11Y-02 (#180); tip includes honesty/CI/a11y after `v1.4.0` |
 | Released baseline | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Annotated git tag; **no** GitHub Release object |
 | Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Unchanged |
 | RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
@@ -58,7 +58,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Release Policy | Active |
 | RC4 | Released (`v1.3.0`) |
 | RC5 | **Released** (`v1.4.0`; certified + Production website verified) |
-| RC6 | Planning merged (#176); **RC6-DOC-01** active |
+| RC6 | Honesty wave through **RC6-A11Y-02** merged; **RC6-DASH-00** contracts active (docs only) |
 
 ---
 
@@ -66,9 +66,10 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **RC6-DOC-01** — living status honesty (docs only) |
-| RC6 planning | Merged #176 → `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` |
+| Current Delivery Slice | **RC6-DASH-00** — Restaurant Command Center contracts (docs/planning only) |
+| RC6 planning | Merged #176; honesty DOC-01 #177 · UI-01 #178 · QA-02 #179 · A11Y-02 #180 → `da99875…` |
 | Completed RC5 slices (on `main`) | OPS-01, A11Y-01, DOC-01, TEST-01, PERF-01, OBS-01, QA-01 |
+| Next runtime (not started) | **RC6-DASH-01** — Exception Center read-only foundation |
 | Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc5-production-cutover/` |
 | RC5 release blockers | **None evidenced** |
 | Released baseline | `v1.4.0` @ `96f1e80…` |
@@ -78,7 +79,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 Owner-facing summary remains in [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 
-Admin ERP core modules remain LIVE on `main` with documented gaps (tables below). RC5 is **released** as annotated `v1.4.0`. Finance truth for RC6 planning is **PARTIAL_LIVE** (see `docs/planning/RC6_CAPABILITY_TRUTH.md`). Misleading Admin UI labels are deferred to **RC6-UI-01** (not changed in DOC-01).
+Admin ERP core modules remain LIVE on `main` with documented gaps (tables below). RC5 is **released** as annotated `v1.4.0`. Finance truth for RC6 planning is **PARTIAL_LIVE** (see `docs/planning/RC6_CAPABILITY_TRUTH.md`). Admin capability-label honesty is **merged** as RC6-UI-01. Command Center depth remains contracts-first (**RC6-DASH-00** → **RC6-DASH-01**).
 
 ### Merged delivery through PR #133 (2026-07-30)
 
@@ -255,4 +256,4 @@ This document should be updated whenever:
 
 Repository Status provides an honest view of the current verified state of the repository.
 
-Admin ERP core modules are LIVE on `main` through PR #133 with documented gaps. RC5 is certified, Production-website-verified, and released as annotated `v1.4.0` @ `96f1e80…`. Current repository main is `25960eb…` (includes RC6 planning #176). Production website runtime remains `152ce40…` / `dpl_7xaV34uy…`. Migration tip remains `20260801180000`. GRN stock posting and HR deactivate are **repository-implemented**; Finance is **PARTIAL_LIVE**. UI label honesty is **RC6-UI-01**. Do not invent Production verification, AI runtime, or GitHub Releases.
+Admin ERP core modules are LIVE on `main` through PR #133 with documented gaps. RC5 is certified, Production-website-verified, and released as annotated `v1.4.0` @ `96f1e80…`. Current repository main is `da99875…` (honesty wave through RC6-A11Y-02 #180). Production website runtime remains `152ce40…` / `dpl_7xaV34uy…`. Migration tip remains `20260801180000`. GRN stock posting and HR deactivate are **repository-implemented**; Finance is **PARTIAL_LIVE**. UI label honesty is **merged** (RC6-UI-01). Command Center contracts are **RC6-DASH-00** (planning only). Do not invent Production verification, AI runtime, or GitHub Releases.

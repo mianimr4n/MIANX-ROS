@@ -153,3 +153,26 @@
 | X-01 | ADR decision recorded (block / scan / defer) |
 | X-02 | Implementation matches ADR; limitations honest |
 | X-03 | No claim of virus-free storage without control evidence |
+
+### RC6-DASH-00 — Command Center contracts
+
+| # | Criterion |
+| --- | --- |
+| C-01 | Architecture defines six zones + progressive levels + operating modes |
+| C-02 | Widget, KPI trust, action, exception, event, delivery/rider, settings, role, NFR, and traceability contracts exist |
+| C-03 | Every vision capability distinguishes current truth vs proposed |
+| C-04 | Delivery/Rider and Settings are first-class domains with gap maps |
+| C-05 | Roadmap/dependency updated; completed DOC/UI/QA/A11Y preserved |
+| C-06 | Next runtime slice selected with bounded brief (DASH-01) |
+| C-07 | Docs/planning/evidence only — no runtime/migration/Production |
+
+### RC6-DASH-01 — Exception Center read-only foundation (future runtime; not implemented in DASH-00)
+
+| # | Criterion |
+| --- | --- |
+| E-01 | Needs Attention zone surfaces exceptions from existing trusted sources |
+| E-02 | Severity, branch, age, freshness, trust/source labels present |
+| E-03 | Empty / stale / error / denied states distinct; no fake zeros |
+| E-04 | Drill-down to existing routes with preserved filters |
+| E-05 | No AI; no new provider; prefer no migration; no ack mutation unless safe existing schema |
+| E-06 | Acceptance evidence pack + gates PASS |
