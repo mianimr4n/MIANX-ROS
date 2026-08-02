@@ -20,11 +20,11 @@ Env: `D3_E2E_BASE_URL=http://localhost:3000`, `D3_E2E_API_URL=http://127.0.0.1:4
 
 ## CI
 
-Recorded after PR push (update this section with workflow run URL / duration).
-
 | Field | Value |
 | --- | --- |
-| Workflow | `CI` / job `owner-playwright` |
-| Run | _pending push_ |
-| Duration | _pending_ |
-| Result | _pending_ |
+| Workflow | `CI` / job `Owner Playwright` (`owner-playwright`) |
+| Run | https://github.com/mianimr4n/telepizza/actions/runs/30740745027 |
+| Job window | 2026-08-02T08:56:04Z → 2026-08-02T09:00:02Z (~3m 58s) |
+| Conclusion | **success** |
+| Production credentials | Not used |
+| Cleanup | `if: always()` stop step present |

@@ -2,7 +2,7 @@
 
 ## Verdict
 
-Ready for PR review after CI Owner Playwright job is green on the branch.
+**PASS** — PR opened; CI `Owner Playwright` green on run [30740745027](https://github.com/mianimr4n/telepizza/actions/runs/30740745027) (~3m 58s).
 
 ## Gates (G-01 … G-04)
 
