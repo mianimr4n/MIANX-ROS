@@ -16,7 +16,7 @@ Complete means: implementation + tests + docs + security review (if required) + 
 | Branch health score | KPI-BRANCH-HEALTH | IMPLEMENTED_NOT_PRODUCTION_VERIFIED | Formula + UI | DASH-05 | Formula tests | — | NONE | — | Audit | — |
 | Profitability truth | KPI-PROFIT + FIN | IMPLEMENTED_NOT_PRODUCTION_VERIFIED | EST vs ACCOUNTING | DASH-06 | Formula tests | Financial | NONE | — | Reconcile | — |
 | EOD pack | W-EOD-01 | IMPLEMENTED_NOT_PRODUCTION_VERIFIED | Pack preview | DASH-07 | Pack tests | Cash | NONE | — | Close proof | — |
-| What Changed / timeline | Event model | NOT_PRESENT unified | Event store | DASH-08 | Event tests | Redaction | ADD likely | — | — | — |
+| What Changed / timeline | Event model | IMPLEMENTED_NOT_PRODUCTION_VERIFIED (derived + device baseline; not unified store) | Device baseline + list events | DASH-08 | Event tests | Redaction | NONE this slice | — | — | — |
 | Dispatch queue & assign | Delivery contract | PARTIAL_LIVE | UX depth | DEL-01 | Delivery tests | Address | NONE | — | Assign proof | — |
 | Rider profiles/shifts | Delivery contract | FOUNDATION | Lifecycle UI | RIDER-01 | Rider tests | PII | EXISTING/ADD | — | — | — |
 | Full delivery lifecycle | Delivery contract | 3 statuses | Extended states | DEL-02 | Transition matrix | — | ADD | — | Prod transitions | — |
@@ -49,6 +49,8 @@ Complete means: implementation + tests + docs + security review (if required) + 
 
 ## Selected next runtime slice
 
-**RC6-DASH-08 — What Changed** (after DASH-07 merges)
+**RC6-DASH-08 — What Changed** (after DASH-07 merge `1dcc8ba…`)
+
+DASH-08: read-only What Changed + derived operational timeline — **not** Production-verified; device-local since wording; no fake last-login; no event mutation/AI/providers/realtime. Unified org event store remains a gap.
 
 DASH-07 EOD Pack: read-only preview composed from verified DASH-01…06 sources — **not** Production-verified; no finalize, register close, email/WhatsApp, or accounting close.

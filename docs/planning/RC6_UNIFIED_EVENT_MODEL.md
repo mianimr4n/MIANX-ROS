@@ -65,4 +65,4 @@ phone, address detail, payment tokens, payroll amounts (role-gated), document co
 
 ## Honesty
 
-Fragmented audit tables **do not** equal a unified What Changed product (`W-CHG-01` = NOT_PRESENT today).
+Fragmented audit tables **do not** equal a unified org-wide event store. DASH-08 delivers a **foundation** (`W-CHG-01` / `W-TL-01` = IMPLEMENTED_NOT_PRODUCTION_VERIFIED): device-local review baseline + derived list timeline — still **not** a complete audit explorer or cross-device last-login history.

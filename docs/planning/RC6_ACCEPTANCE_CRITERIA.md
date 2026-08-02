@@ -250,3 +250,14 @@
 | E-04 | Exports limited to safe local print/CSV/JSON; no email/WhatsApp/providers |
 | E-05 | No register close, Z-report, cash settlement, journal post, or finalize |
 | E-06 | Acceptance evidence pack + gates PASS; **not Production-verified** |
+
+### RC6-DASH-08 — What Changed and Operational Timeline foundation
+
+| # | Criterion |
+| --- | --- |
+| C-01 | What Changed uses honest since-anchor (device review or business window — never fake last login) |
+| C-02 | Timeline/events limited to verified derived/list sources; incomplete audit coverage disclosed |
+| C-03 | Derived comparisons require matching branch + business window; failures ≠ “No changes” |
+| C-04 | Browser-local storage holds only safe aggregates/timestamps; no PII/tokens |
+| C-05 | Read-only: no acknowledge/assign/resolve/AI/providers/realtime; drill-downs only |
+| C-06 | Acceptance evidence pack + gates PASS; **not Production-verified** |

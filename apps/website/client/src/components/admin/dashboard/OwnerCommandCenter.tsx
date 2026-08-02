@@ -9,6 +9,7 @@ import { BranchHealthPanel } from "@/components/admin/dashboard/BranchHealthPane
 import { EodPackPanel } from "@/components/admin/dashboard/EodPackPanel";
 import { ExceptionCenterPanel } from "@/components/admin/dashboard/ExceptionCenterPanel";
 import { ProfitabilityTruthPanel } from "@/components/admin/dashboard/ProfitabilityTruthPanel";
+import { WhatChangedPanel } from "@/components/admin/dashboard/WhatChangedPanel";
 import { ReportBarChart } from "@/components/admin/reports/ReportCharts";
 import {
   buildAttentionMetrics,
@@ -47,6 +48,17 @@ import {
   type KitchenTicketLike,
 } from "@/lib/exception-center/build-exceptions";
 import type { OperationalState } from "@/lib/op-status";
+import {
+  buildCurrentSnapshot,
+  buildOperationalTimeline,
+  buildWhatChangedSummary,
+  clearReviewSnapshot,
+  emphasizeWhatChangedForMode,
+  readReviewSnapshot,
+  writeReviewSnapshot,
+  type WhatChangedDomain,
+  type WhatChangedSeverity,
+} from "@/lib/what-changed";
 
 const QUICK_ACTIONS: Array<{ href: string; label: string }> = [
   { href: "/admin/orders", label: "Open Orders" },
@@ -166,11 +178,14 @@ function ActivitySection({
     <section className="mb-8" aria-labelledby="owner-activity-heading">
       <AdminSectionTitle
         eyebrow="Activity"
-        title="Recent activity"
-        description="Latest verified events from Orders, Inventory, Purchasing, and HR."
+        title="Recent activity (legacy list)"
+        description="Supplemental list. Prefer What Changed / Operational timeline above for privacy-safe derived events."
       />
       <AdminSurface aria-labelledby="owner-activity-heading">
-        <AdminSurfaceHeader title="Timeline" description="Settings change history is not available yet." />
+        <AdminSurfaceHeader
+          title="Legacy recent list"
+          description="Settings change history is not available yet. Employee identity is omitted from this list."
+        />
         <AdminSurfaceBody>
           <h2 id="owner-activity-heading" className="sr-only">
             Recent activity
@@ -588,8 +603,10 @@ export function OwnerCommandCenter({
     ordersPurchasing: purchaseOrders,
     invoices,
     receipts,
-    employees,
+    // DASH-08: do not surface employee identity in Owner activity lists.
+    employees: null,
   });
+  void employees;
   const briefLines = buildOwnerBriefLines(data, extras, branchLabel);
   const dataReady = Boolean(data) && opState !== "ERROR" && opState !== "OFFLINE" && opState !== "UNAVAILABLE";
   const channelMix =
@@ -874,6 +891,176 @@ export function OwnerCommandCenter({
     [eodPackBase, selectedMode],
   );
 
+  const [whatChangedTick, setWhatChangedTick] = useState(0);
+  const [timelineDomainFilter, setTimelineDomainFilter] = useState<WhatChangedDomain | "all">("all");
+  const [timelineSeverityFilter, setTimelineSeverityFilter] = useState<WhatChangedSeverity | "all">(
+    "all",
+  );
+
+  const businessWindow = useMemo(() => {
+    const tz = branchTimezone || data?.timezone || "Asia/Karachi";
+    const clock = now ?? new Date();
+    if (data?.dayStart && /^\d{4}-\d{2}-\d{2}/.test(data.dayStart)) {
+      return data.dayStart.slice(0, 10);
+    }
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(clock);
+  }, [branchTimezone, data?.timezone, data?.dayStart, now]);
+
+  const currentSafeMetrics = useMemo(() => {
+    const delayedKitchen =
+      exceptionCenter.exceptions.find((e) => e.type === "EXC-KDS-DELAY")?.count ??
+      (kitchenState !== "ERROR" && kitchenState !== "OFFLINE" && kitchenState !== "UNAVAILABLE"
+        ? 0
+        : null);
+    const criticalExceptions = exceptionCenter.exceptions
+      .filter((e) => e.severity === "CRITICAL")
+      .reduce((sum, e) => sum + e.count, 0);
+    const warningExceptions = exceptionCenter.exceptions
+      .filter((e) => e.severity === "WARNING")
+      .reduce((sum, e) => sum + e.count, 0);
+    const opsOk = opState !== "ERROR" && opState !== "OFFLINE" && opState !== "UNAVAILABLE" && Boolean(data);
+    return {
+      metrics: {
+        grossSales: opsOk ? (data?.kpis.todayGrossSales ?? null) : null,
+        orderCount: opsOk ? (data?.kpis.todayOrders ?? null) : null,
+        openOrders: opsOk ? (data?.kpis.activeOrders ?? null) : null,
+        lowStockCount: opsOk ? (data?.kpis.lowStockCount ?? null) : null,
+        delayedKitchenCount: delayedKitchen,
+        pendingApprovals: approvalInbox.totalFailure ? null : approvalInbox.totalPendingCount,
+        criticalExceptions: exceptionCenter.totalFailure ? null : criticalExceptions,
+        warningExceptions: exceptionCenter.totalFailure ? null : warningExceptions,
+        branchHealthScore:
+          branchHealthBase.scoreState === "INSUFFICIENT_DATA" || branchHealthBase.score == null
+            ? null
+            : branchHealthBase.score,
+        activeDeliveries:
+          deliveryState !== "ERROR" &&
+          deliveryState !== "OFFLINE" &&
+          deliveryState !== "UNAVAILABLE"
+            ? (deliveryAssignments?.filter((a) =>
+                ["pending", "assigned", "picked-up"].includes(String(a.status)),
+              ).length ?? 0)
+            : null,
+      },
+      sourceOk: {
+        ops: opsOk,
+        kitchen: kitchenState !== "ERROR" && kitchenState !== "OFFLINE" && kitchenState !== "UNAVAILABLE",
+        delivery:
+          deliveryState !== "ERROR" &&
+          deliveryState !== "OFFLINE" &&
+          deliveryState !== "UNAVAILABLE",
+        approvals: !approvalInbox.totalFailure,
+        exceptions: !exceptionCenter.totalFailure,
+        health: branchHealthBase.freshnessState !== "UNAVAILABLE",
+      },
+    };
+  }, [
+    data,
+    opState,
+    kitchenState,
+    deliveryState,
+    deliveryAssignments,
+    exceptionCenter,
+    approvalInbox,
+    branchHealthBase,
+  ]);
+
+  const whatChangedBase = useMemo(() => {
+    void whatChangedTick;
+    const previous = readReviewSnapshot();
+    return buildWhatChangedSummary({
+      branchId,
+      branchName: branchLabel,
+      businessWindow,
+      nowMs: (now ?? new Date()).getTime(),
+      previousSnapshot: previous,
+      currentMetrics: currentSafeMetrics.metrics,
+      sourceOk: currentSafeMetrics.sourceOk,
+    });
+  }, [
+    whatChangedTick,
+    branchId,
+    branchLabel,
+    businessWindow,
+    now,
+    currentSafeMetrics,
+  ]);
+
+  const whatChanged = useMemo(
+    () => emphasizeWhatChangedForMode(whatChangedBase, selectedMode),
+    [whatChangedBase, selectedMode],
+  );
+
+  const operationalTimeline = useMemo(() => {
+    void whatChangedTick;
+    const windowStartMs = whatChangedBase.comparisonStart
+      ? Date.parse(whatChangedBase.comparisonStart)
+      : null;
+    return buildOperationalTimeline({
+      branchId,
+      branchName: branchLabel,
+      orders,
+      ordersFailed: activityUnavailable,
+      movements,
+      movementsFailed: activityUnavailable,
+      purchaseOrders,
+      purchasingFailed: !purchasingEnabled || activityUnavailable,
+      kitchenTickets,
+      kitchenFailed:
+        kitchenState === "ERROR" || kitchenState === "OFFLINE" || kitchenState === "UNAVAILABLE",
+      deliveryAssignments,
+      deliveryFailed:
+        deliveryState === "ERROR" ||
+        deliveryState === "OFFLINE" ||
+        deliveryState === "UNAVAILABLE",
+      hrAvailable: hrEnabled,
+      hrFailed: false,
+      financeRestricted: !financeEnabled,
+      windowStartMs: Number.isFinite(windowStartMs) ? windowStartMs : null,
+      nowMs: (now ?? new Date()).getTime(),
+    });
+  }, [
+    whatChangedTick,
+    whatChangedBase.comparisonStart,
+    branchId,
+    branchLabel,
+    orders,
+    movements,
+    purchaseOrders,
+    kitchenTickets,
+    deliveryAssignments,
+    activityUnavailable,
+    activityLoading,
+    purchasingEnabled,
+    kitchenState,
+    deliveryState,
+    hrEnabled,
+    financeEnabled,
+    now,
+  ]);
+
+  const markReviewedOnDevice = useCallback(() => {
+    const snap = buildCurrentSnapshot({
+      branchId,
+      businessWindow,
+      reviewedAt: new Date((now ?? new Date()).getTime()).toISOString(),
+      metrics: currentSafeMetrics.metrics,
+      sourceOk: currentSafeMetrics.sourceOk,
+    });
+    writeReviewSnapshot(snap);
+    setWhatChangedTick((n) => n + 1);
+  }, [branchId, businessWindow, now, currentSafeMetrics]);
+
+  const resetReviewBaseline = useCallback(() => {
+    clearReviewSnapshot();
+    setWhatChangedTick((n) => n + 1);
+  }, []);
+
   const todaySection = (
     <section className="mb-8" aria-labelledby="owner-today-heading" data-mode-section="today-kpis">
       <AdminSectionTitle
@@ -981,6 +1168,25 @@ export function OwnerCommandCenter({
           setEodRefreshTick((n) => n + 1);
           onExceptionRetry?.();
         }}
+      />
+    ),
+    "what-changed": (
+      <WhatChangedPanel
+        key="what-changed"
+        summary={whatChanged}
+        timeline={operationalTimeline}
+        loading={loading || kitchenState === "LOADING" || deliveryState === "LOADING" || activityLoading}
+        commandMode={selectedMode}
+        onRefresh={() => {
+          setWhatChangedTick((n) => n + 1);
+          onExceptionRetry?.();
+        }}
+        onMarkReviewed={markReviewedOnDevice}
+        onResetBaseline={resetReviewBaseline}
+        domainFilter={timelineDomainFilter}
+        severityFilter={timelineSeverityFilter}
+        onDomainFilter={setTimelineDomainFilter}
+        onSeverityFilter={setTimelineSeverityFilter}
       />
     ),
     "mode-summary": <div key="mode-summary">{modeSummary}</div>,

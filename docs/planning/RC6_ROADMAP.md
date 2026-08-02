@@ -74,8 +74,8 @@ Each candidate scored **1–5**. Preference direction:
 | **RC6-DASH-04** | Approval Inbox foundation (**merged** — repo; not Prod-verified; DRILL_DOWN) |
 | **RC6-DASH-05** | Branch Health Score (**merged** — repo; not Prod-verified; explainable) |
 | **RC6-DASH-06** | Profitability truth (**merged** — ops≠posted; not Prod-verified) |
-| **RC6-DASH-07** | EOD pack (**this wave** — read-only preview; no finalize) |
-| RC6-DASH-08 | What Changed and timeline |
+| RC6-DASH-07 | EOD pack (merged — read-only preview; no finalize) |
+| **RC6-DASH-08** | What Changed and timeline (**this wave** — device-local / derived foundation) |
 
 ### Delivery / Rider
 
