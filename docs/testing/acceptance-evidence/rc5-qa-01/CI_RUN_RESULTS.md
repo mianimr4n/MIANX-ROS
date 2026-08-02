@@ -23,8 +23,8 @@ Env: `D3_E2E_BASE_URL=http://localhost:3000`, `D3_E2E_API_URL=http://127.0.0.1:4
 | Field | Value |
 | --- | --- |
 | Workflow | `CI` / job `Owner Playwright` (`owner-playwright`) |
-| Run | https://github.com/mianimr4n/telepizza/actions/runs/30740745027 |
-| Job window | 2026-08-02T08:56:04Z → 2026-08-02T09:00:02Z (~3m 58s) |
-| Conclusion | **success** |
+| Implementation green | https://github.com/mianimr4n/telepizza/actions/runs/30740745027 (~3m 58s Owner job) |
+| Post-evidence green | https://github.com/mianimr4n/telepizza/actions/runs/30740917419 (Owner ~4m 12s; tip SHA includes evidence update) |
+| Conclusion | **success** (both runs) |
 | Production credentials | Not used |
 | Cleanup | `if: always()` stop step present |
