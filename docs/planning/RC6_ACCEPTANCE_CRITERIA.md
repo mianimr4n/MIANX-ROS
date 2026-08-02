@@ -228,3 +228,14 @@
 | H-05 | Drill-downs reuse existing routes/filters; maturity remains INSIGHT_ONLY + DRILL_DOWN |
 | H-06 | Peer ranking only when comparable; otherwise deferred with honest note |
 | H-07 | Acceptance evidence pack + gates PASS; **not Production-verified** |
+
+### RC6-DASH-06 — Profitability Truth
+
+| # | Criterion |
+| --- | --- |
+| P-01 | Operational Estimate and Accounting Posted are separate labeled lanes |
+| P-02 | Estimates are never described as posted; drafts never enter posted totals |
+| P-03 | Only verified sources; missing costs do not become silent zeros or fake profit |
+| P-04 | Reconciliation shown only when comparable; otherwise explicit incompatibility |
+| P-05 | Finance permission-gated; drill-downs only; no journal/expense mutation |
+| P-06 | Acceptance evidence pack + gates PASS; **not Production-verified** |
