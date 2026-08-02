@@ -386,6 +386,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     rememberAuthEmailFlow("recovery");
     rememberAuthNextPath("/reset-password");
 
+    // redirectTo is allowlisted only (Production or local /reset-password) — never an open redirect.
     const { error } = await supabase.auth.resetPasswordForEmail(normalized, {
       redirectTo: getPasswordRecoveryRedirectTo(),
     });
