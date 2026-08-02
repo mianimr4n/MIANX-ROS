@@ -25,6 +25,7 @@ import { useBranch } from "@/contexts/BranchContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import {
   fetchAdminOperationsDashboard,
+  fetchBranchProfile,
   fetchSalesReport,
   fetchSystemHealth,
   fetchTableServiceDashboard,
@@ -176,6 +177,11 @@ export default function AdminDashboard() {
       fetchAdminOperationsDashboard(token!, { branchId: branchIdFilter }, { signal, correlationId }),
     [token, branchIdFilter],
     { enabled: Boolean(token) && allowed && gateReady && !comingSoonBranch },
+  );
+  const branchProfile = useOperationalData(
+    ({ signal, correlationId }) => fetchBranchProfile(token!, branchIdFilter!, { signal, correlationId }),
+    [token, branchIdFilter],
+    { enabled: Boolean(token) && allowed && gateReady && Boolean(branchIdFilter) },
   );
   const ordersList = useOperationalData(
     ({ signal, correlationId }) =>
@@ -752,6 +758,9 @@ export default function AdminDashboard() {
           loading={loading && !data}
           branchId={branchIdFilter}
           branchLabel={branchLabel}
+          branchOpensAt={branchProfile.data?.opensAt ?? null}
+          branchClosesAt={branchProfile.data?.closesAt ?? null}
+          branchTimezone={branchProfile.data?.timezone ?? null}
           extras={ownerExtras}
           kitchenTickets={kitchenTicketsUnavailable ? null : (kitchenTickets.data ?? null)}
           kitchenState={kitchenTickets.state}

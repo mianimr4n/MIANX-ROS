@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-02 — **RC6-DASH-02** KPI drill-downs in progress after DASH-01 merge `b913eca…`; Production website still `152ce40…`
+**Last reconciled:** 2026-08-02 — **RC6-DASH-03** daily command modes in progress after DASH-02 merge `80cd2c4…`; Production website still `152ce40…`
 
 ---
 
@@ -36,7 +36,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main | `b913ecad14f147b0a58d48224ce25d474af524f3` | Post–RC6-DASH-01 (#182); DASH-02 implements KPI drill-downs on a feature branch |
+| Repository main | `80cd2c4f6d554c805d4e72973c83311242c5a242` | Post–RC6-DASH-02 (#183); DASH-03 implements daily command modes on a feature branch |
 | Released baseline | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Annotated git tag; **no** GitHub Release object |
 | Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Unchanged |
 | RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
@@ -58,7 +58,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Release Policy | Active |
 | RC4 | Released (`v1.3.0`) |
 | RC5 | **Released** (`v1.4.0`; certified + Production website verified) |
-| RC6 | Honesty wave + **RC6-DASH-00** + **RC6-DASH-01** merged; **RC6-DASH-02** KPI drill-downs in progress (DRILL_DOWN; not Production-verified) |
+| RC6 | Honesty wave + DASH-00…02 merged; **RC6-DASH-03** daily command modes in progress (read-only; not Production-verified) |
 
 ---
 
@@ -66,10 +66,10 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **RC6-DASH-02** — trusted Owner KPI drill-downs (repository; **not** Production-verified; DRILL_DOWN only) |
-| RC6 planning | … · DASH-00 #181 · DASH-01 #182 → `b913eca…` |
+| Current Delivery Slice | **RC6-DASH-03** — Owner daily command modes (repository; **not** Production-verified; read-only / DRILL_DOWN) |
+| RC6 planning | … · DASH-01 #182 · DASH-02 #183 → `80cd2c4…` |
 | Completed RC5 slices (on `main`) | OPS-01, A11Y-01, DOC-01, TEST-01, PERF-01, OBS-01, QA-01 |
-| Next after DASH-02 (not started) | **RC6-DASH-03** — Opening/live/closing modes |
+| Next after DASH-03 (not started) | **RC6-DASH-04** — Approval Inbox foundation |
 | Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc5-production-cutover/` |
 | RC5 release blockers | **None evidenced** |
 | Released baseline | `v1.4.0` @ `96f1e80…` |
@@ -79,7 +79,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 Owner-facing summary remains in [`PROJECT_STATUS.md`](./PROJECT_STATUS.md).
 
-Admin ERP core modules remain LIVE on `main` with documented gaps (tables below). RC5 is **released** as annotated `v1.4.0`. Finance truth for RC6 planning is **PARTIAL_LIVE** (see `docs/planning/RC6_CAPABILITY_TRUTH.md`). Admin capability-label honesty is **merged** as RC6-UI-01. Command Center depth: **RC6-DASH-00** contracts + **RC6-DASH-01** Exception Center merged; **RC6-DASH-02** KPI drill-downs (repo; not Prod-verified).
+Admin ERP core modules remain LIVE on `main` with documented gaps (tables below). RC5 is **released** as annotated `v1.4.0`. Finance truth for RC6 planning is **PARTIAL_LIVE** (see `docs/planning/RC6_CAPABILITY_TRUTH.md`). Admin capability-label honesty is **merged** as RC6-UI-01. Command Center depth: DASH-00…02 merged; **RC6-DASH-03** daily command modes (repo; not Prod-verified).
 
 ### Merged delivery through PR #133 (2026-07-30)
 
@@ -256,4 +256,4 @@ This document should be updated whenever:
 
 Repository Status provides an honest view of the current verified state of the repository.
 
-Admin ERP core modules are LIVE on `main` through PR #133 with documented gaps. RC5 is certified, Production-website-verified, and released as annotated `v1.4.0` @ `96f1e80…`. Current repository main is `b913eca…` (DASH-01 Exception Center #182). Production website runtime remains `152ce40…` / `dpl_7xaV34uy…`. Migration tip remains `20260801180000`. GRN stock posting and HR deactivate are **repository-implemented**; Finance is **PARTIAL_LIVE**. UI label honesty is **merged** (RC6-UI-01). Command Center: DASH-00 contracts + DASH-01 Exception Center merged; DASH-02 KPI drill-downs are repository work (not Production-verified). Do not invent Production verification, AI runtime, or GitHub Releases.
+Admin ERP core modules are LIVE on `main` through PR #133 with documented gaps. RC5 is certified, Production-website-verified, and released as annotated `v1.4.0` @ `96f1e80…`. Current repository main is `80cd2c4…` (DASH-02 KPI drill-downs #183). Production website runtime remains `152ce40…` / `dpl_7xaV34uy…`. Migration tip remains `20260801180000`. GRN stock posting and HR deactivate are **repository-implemented**; Finance is **PARTIAL_LIVE**. UI label honesty is **merged** (RC6-UI-01). Command Center: DASH-00…02 merged; DASH-03 daily command modes are repository work (not Production-verified). Do not invent Production verification, AI runtime, or GitHub Releases.

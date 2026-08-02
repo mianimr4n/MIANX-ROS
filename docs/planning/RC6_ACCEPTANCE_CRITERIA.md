@@ -193,3 +193,15 @@
 | D2-08 | Acceptance evidence pack + gates PASS; **not Production-verified** |
 
 > Deferred KPIs (AOV depth, refunds, late GPS, cash variance card, PO/HR/complaints/health, Accounting Net Sales) remain out of scope until honest destinations exist.
+
+### RC6-DASH-03 — Owner daily command modes
+
+| # | Criterion |
+| --- | --- |
+| D3-01 | Three decision modes: Pre-open, Live Operations, Closing |
+| D3-02 | Automatic suggestion is explainable, timezone-aware, and non-authoritative |
+| D3-03 | Manual override via sanitized `commandMode` URL; Use suggested clears it |
+| D3-04 | Exception Center remains visible in every mode; critical risk not suppressed |
+| D3-05 | Unsupported readiness domains are explicit (no false ready-to-open/close) |
+| D3-06 | No branch open/close, checklist, register, migration, provider, or AI |
+| D3-07 | Acceptance evidence pack + gates PASS; **not Production-verified** |
