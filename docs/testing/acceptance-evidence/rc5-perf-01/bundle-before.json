@@ -1,0 +1,407 @@
+{
+  "entry": {
+    "f": "index-As0WwPEE.js",
+    "raw": 1022605,
+    "gzip": 294633
+  },
+  "totalRaw": 2162241,
+  "totalGz": 589097,
+  "chunkCount": 79,
+  "chunks": [
+    {
+      "f": "index-As0WwPEE.js",
+      "raw": 1022605,
+      "gzip": 294633
+    },
+    {
+      "f": "AdminSettings-DmFH-kup.js",
+      "raw": 87847,
+      "gzip": 19805
+    },
+    {
+      "f": "AdminHr-DGo8aQMW.js",
+      "raw": 77058,
+      "gzip": 14808
+    },
+    {
+      "f": "MyTelepizza-DFWpUl9V.js",
+      "raw": 66286,
+      "gzip": 14951
+    },
+    {
+      "f": "AdminDashboard-BBbmwwPj.js",
+      "raw": 63718,
+      "gzip": 14568
+    },
+    {
+      "f": "AdminMenu-CIc6vg8q.js",
+      "raw": 52860,
+      "gzip": 13063
+    },
+    {
+      "f": "OpeningCommandCenter-CGHQqmWf.js",
+      "raw": 49745,
+      "gzip": 9589
+    },
+    {
+      "f": "AdminPurchasing-7aZRxctW.js",
+      "raw": 49529,
+      "gzip": 10261
+    },
+    {
+      "f": "AdminFinance-Eu41_uZE.js",
+      "raw": 43054,
+      "gzip": 9124
+    },
+    {
+      "f": "AdminDelivery-DkSuJmwm.js",
+      "raw": 41936,
+      "gzip": 10262
+    },
+    {
+      "f": "AdminPos-Bmf9B1Si.js",
+      "raw": 40940,
+      "gzip": 10866
+    },
+    {
+      "f": "AdminWhatsApp-BpHESBmn.js",
+      "raw": 35457,
+      "gzip": 8407
+    },
+    {
+      "f": "AdminInventory-Ds3kGPOJ.js",
+      "raw": 35258,
+      "gzip": 8584
+    },
+    {
+      "f": "AdminCrm-BUX8ad-A.js",
+      "raw": 32641,
+      "gzip": 7951
+    },
+    {
+      "f": "admin-api-DcFEtUhD.js",
+      "raw": 32613,
+      "gzip": 4818
+    },
+    {
+      "f": "AdminOrders-Bx-NL4eJ.js",
+      "raw": 30948,
+      "gzip": 7415
+    },
+    {
+      "f": "AdminAiTeam-CGb3shic.js",
+      "raw": 26572,
+      "gzip": 7649
+    },
+    {
+      "f": "AdminBranchManager-BkJt1TOS.js",
+      "raw": 24457,
+      "gzip": 7359
+    },
+    {
+      "f": "AdminLoyalty-C9fI-m4W.js",
+      "raw": 23481,
+      "gzip": 5063
+    },
+    {
+      "f": "AdminMarketing-O9aX7CQZ.js",
+      "raw": 21545,
+      "gzip": 4853
+    },
+    {
+      "f": "AdminKitchen-jsL6uZdQ.js",
+      "raw": 20426,
+      "gzip": 5998
+    },
+    {
+      "f": "AdminReservations-SEXMpz61.js",
+      "raw": 20289,
+      "gzip": 5525
+    },
+    {
+      "f": "KitchenDetailsPanel-Bm-K7BSN.js",
+      "raw": 18415,
+      "gzip": 5018
+    },
+    {
+      "f": "Settings-5B3OKrBV.js",
+      "raw": 18159,
+      "gzip": 5682
+    },
+    {
+      "f": "AdminKitchenDashboard-EZAHFn1I.js",
+      "raw": 18073,
+      "gzip": 6068
+    },
+    {
+      "f": "AdminFloorPlan-DAaN1rXL.js",
+      "raw": 17051,
+      "gzip": 4382
+    },
+    {
+      "f": "AdminReports-YkBqD8gR.js",
+      "raw": 14638,
+      "gzip": 4458
+    },
+    {
+      "f": "Orders-6lsbNsQH.js",
+      "raw": 11670,
+      "gzip": 4129
+    },
+    {
+      "f": "AdminWaitlist-BHOWn5-w.js",
+      "raw": 10297,
+      "gzip": 3209
+    },
+    {
+      "f": "reorder-C8fvhr4w.js",
+      "raw": 9104,
+      "gzip": 3417
+    },
+    {
+      "f": "AdminFloorConsole-BbyxHZLG.js",
+      "raw": 8725,
+      "gzip": 3187
+    },
+    {
+      "f": "OpeningReadinessSummary-C0d9M2dM.js",
+      "raw": 7560,
+      "gzip": 2751
+    },
+    {
+      "f": "OpsDashboard-CY1i6_2t.js",
+      "raw": 6568,
+      "gzip": 1599
+    },
+    {
+      "f": "AdminOrderDetail-AN04Xv6s.js",
+      "raw": 6437,
+      "gzip": 1638
+    },
+    {
+      "f": "OpsOrders-oTUk7dbT.js",
+      "raw": 5427,
+      "gzip": 2008
+    },
+    {
+      "f": "AdminWaiterHome-BovEVeCt.js",
+      "raw": 5313,
+      "gzip": 2137
+    },
+    {
+      "f": "admin-hr-Cft1vb5x.js",
+      "raw": 4941,
+      "gzip": 1716
+    },
+    {
+      "f": "table-service-api-BKQDmvfG.js",
+      "raw": 4313,
+      "gzip": 1334
+    },
+    {
+      "f": "ExecutiveFilterBar-CnKRM0Vm.js",
+      "raw": 4204,
+      "gzip": 1226
+    },
+    {
+      "f": "AdminHostHome-D_80XZx2.js",
+      "raw": 4052,
+      "gzip": 1663
+    },
+    {
+      "f": "StaffAccept-Cy2QqiRe.js",
+      "raw": 3923,
+      "gzip": 1413
+    },
+    {
+      "f": "Notifications-WVPnyi1T.js",
+      "raw": 3852,
+      "gzip": 1248
+    },
+    {
+      "f": "Favorites-DJ4gGoin.js",
+      "raw": 3823,
+      "gzip": 1545
+    },
+    {
+      "f": "AdminStaffHome-C9R2FEgm.js",
+      "raw": 3807,
+      "gzip": 1538
+    },
+    {
+      "f": "OpsDispatch-Bm7FwyEW.js",
+      "raw": 3797,
+      "gzip": 1539
+    },
+    {
+      "f": "OperationalStatusBanner-i891kKCc.js",
+      "raw": 3788,
+      "gzip": 1804
+    },
+    {
+      "f": "AdminCashierHome-CyHATHTJ.js",
+      "raw": 3730,
+      "gzip": 1556
+    },
+    {
+      "f": "AdminDeliveryHome-CovSFMAO.js",
+      "raw": 3685,
+      "gzip": 1581
+    },
+    {
+      "f": "SupplierDocuments-C_23yZYb.js",
+      "raw": 3585,
+      "gzip": 1547
+    },
+    {
+      "f": "OpsKitchen-CSF24hhN.js",
+      "raw": 3262,
+      "gzip": 1518
+    },
+    {
+      "f": "AdminKpiCard-uT67VUqz.js",
+      "raw": 3136,
+      "gzip": 1185
+    },
+    {
+      "f": "SupplierPurchaseOrderDetail-DQdStIi2.js",
+      "raw": 2920,
+      "gzip": 1273
+    },
+    {
+      "f": "TableServiceSummary-BSj5y186.js",
+      "raw": 2808,
+      "gzip": 1248
+    },
+    {
+      "f": "AdminConfigHome-BllArgtB.js",
+      "raw": 2772,
+      "gzip": 1349
+    },
+    {
+      "f": "SupplierDashboard-Buq62Hp_.js",
+      "raw": 2689,
+      "gzip": 927
+    },
+    {
+      "f": "SupplierShell-BVh3wYQN.js",
+      "raw": 2608,
+      "gzip": 1003
+    },
+    {
+      "f": "OpsShell-CkP2X1bm.js",
+      "raw": 2510,
+      "gzip": 1026
+    },
+    {
+      "f": "admin-crm-BZYIU_ie.js",
+      "raw": 2384,
+      "gzip": 1038
+    },
+    {
+      "f": "AdminSupplierOperations-C2KZn9zb.js",
+      "raw": 2344,
+      "gzip": 1102
+    },
+    {
+      "f": "operational-truth-Cm3HAjSD.js",
+      "raw": 2306,
+      "gzip": 798
+    },
+    {
+      "f": "DocumentUploadDropzone-BzWrEEqc.js",
+      "raw": 2205,
+      "gzip": 1220
+    },
+    {
+      "f": "SupplierPurchaseOrders-artAe_1q.js",
+      "raw": 1950,
+      "gzip": 1005
+    },
+    {
+      "f": "SupplierProfilePage-DbKc3v5h.js",
+      "raw": 1872,
+      "gzip": 800
+    },
+    {
+      "f": "ops-api-BPWFOoDb.js",
+      "raw": 1850,
+      "gzip": 569
+    },
+    {
+      "f": "Loyalty-WImdzQAT.js",
+      "raw": 1849,
+      "gzip": 848
+    },
+    {
+      "f": "SupplierLogin-D_V-QjUt.js",
+      "raw": 1757,
+      "gzip": 844
+    },
+    {
+      "f": "DashboardActionCard-BQFvNXf_.js",
+      "raw": 1746,
+      "gzip": 701
+    },
+    {
+      "f": "RoleHomeShell-Ce_BNaxh.js",
+      "raw": 1741,
+      "gzip": 796
+    },
+    {
+      "f": "customer-errors-Da-36v18.js",
+      "raw": 1523,
+      "gzip": 731
+    },
+    {
+      "f": "admin-order-format-CuwlqT8u.js",
+      "raw": 1423,
+      "gzip": 634
+    },
+    {
+      "f": "CustomerRetryCard-O-ZTHQ0u.js",
+      "raw": 1291,
+      "gzip": 620
+    },
+    {
+      "f": "OrderTimeline-p89Szgtl.js",
+      "raw": 1172,
+      "gzip": 582
+    },
+    {
+      "f": "AdminComingSoon-DXkkLNEs.js",
+      "raw": 972,
+      "gzip": 507
+    },
+    {
+      "f": "AdminSurface-BQpI2JzO.js",
+      "raw": 917,
+      "gzip": 454
+    },
+    {
+      "f": "customer-reviews-api-DIF_jZVq.js",
+      "raw": 520,
+      "gzip": 275
+    },
+    {
+      "f": "user-round-BwQ2dYY3.js",
+      "raw": 512,
+      "gzip": 319
+    },
+    {
+      "f": "Account-C-t3o8hO.js",
+      "raw": 409,
+      "gzip": 316
+    },
+    {
+      "f": "gift-cnZTJfcM.js",
+      "raw": 353,
+      "gzip": 254
+    },
+    {
+      "f": "useAdminAccessGate-BIEushSe.js",
+      "raw": 238,
+      "gzip": 210
+    }
+  ]
+}

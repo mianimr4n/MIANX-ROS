@@ -1,0 +1,487 @@
+{
+  "entry": {
+    "f": "index-DPBhipH8.js",
+    "raw": 869748,
+    "gzip": 254945
+  },
+  "css": {
+    "f": "index-0G9BwhiZ.css",
+    "raw": 175680,
+    "gzip": 26749
+  },
+  "totalRaw": 2167143,
+  "totalGz": 594174,
+  "chunkCount": 61,
+  "staticImports": [],
+  "dynamicImports": [
+    "PizzaCustomizerDialog-BIEqkR0R.js",
+    "HeroSlider-DYhUvfUz.js",
+    "ProductDetail-BUxyrsV7.js",
+    "About-BPcbiwkT.js",
+    "Contact-1Pjz2NQz.js",
+    "Checkout-d1vVH2sK.js",
+    "OrderSuccess-uQxMh_zh.js",
+    "TrackOrder-CYXwBcSe.js",
+    "ResetPassword-CiTTdwMo.js",
+    "Register-CYs0Q7RW.js",
+    "SupplierProfilePage-CZKTNg0P.js",
+    "Branches-B7KF6GsT.js",
+    "PublicBooking-sdKlvsKX.js",
+    "NotFound-Ddpq5LEk.js",
+    "AdminUnauthorized-BmLmcuFz.js",
+    "Favorites-C2eJDSSL.js",
+    "OrderTimeline-CUX4paE4.js",
+    "AdminOrderDetail-Doh-VGjB.js",
+    "MyTelepizza-JHPfk2nv.js",
+    "Orders-ZUQOqYio.js",
+    "Settings-yrJe5F85.js",
+    "Loyalty-CFuWo8PJ.js",
+    "Notifications-rdl489xY.js",
+    "OpsOrders-BeUpTUUV.js",
+    "admin-hr-BiWUTXAL.js",
+    "admin-crm-Bwv-E9yA.js",
+    "AdminDashboard-B5wlLWkd.js",
+    "AdminAiTeam-CDyDc9bU.js",
+    "AdminStaffHome-DzjEXPp1.js",
+    "AdminDeliveryHome-BPc_k26J.js",
+    "AdminConfigHome-YkOFHjbd.js",
+    "AdminOrders-BFuF3fNg.js",
+    "AdminKitchen-gqD6ukq1.js",
+    "AdminDelivery-Bjle13_1.js",
+    "AdminPos-DWDyaBYE.js",
+    "AdminCrm-DI14DDWY.js",
+    "AdminLoyalty-DRK_BScd.js",
+    "AdminMarketing-Dqu7Fkj-.js",
+    "AdminWhatsApp-v8sC0Sqp.js",
+    "AdminMenu-Cb7CauqF.js",
+    "AdminInventory-MzMDoTF9.js",
+    "AdminPurchasing-BWsxmXF1.js",
+    "AdminFinance-8Hz9t-EV.js",
+    "AdminReports-AwS1kU4H.js",
+    "AdminHr-BNBU7LBC.js",
+    "AdminSettings-btTAJb3f.js",
+    "AdminBranchManager-CDOHKwaC.js",
+    "AdminKitchenDashboard-BFWZsZ95.js",
+    "AdminFloorConsole-DYOhJes6.js",
+    "AdminFloorPlan-GKowANyl.js",
+    "AdminReservations-MwiaXULi.js",
+    "AdminWaitlist-DYJemWr7.js"
+  ],
+  "routes": {
+    "/": {
+      "raw": 896487,
+      "gzip": 265448,
+      "requests": 2,
+      "files": [
+        "index-DPBhipH8.js",
+        "HeroSlider-DYhUvfUz.js"
+      ]
+    },
+    "/menu": {
+      "raw": 869748,
+      "gzip": 254945,
+      "requests": 1,
+      "files": [
+        "index-DPBhipH8.js"
+      ]
+    },
+    "/admin/login": {
+      "raw": 869748,
+      "gzip": 254945,
+      "requests": 1,
+      "files": [
+        "index-DPBhipH8.js"
+      ]
+    }
+  },
+  "largest": {
+    "f": "index-DPBhipH8.js",
+    "raw": 869748,
+    "gzip": 254945
+  },
+  "top15": [
+    {
+      "f": "index-DPBhipH8.js",
+      "raw": 869748,
+      "gzip": 254945
+    },
+    {
+      "f": "AdminSettings-btTAJb3f.js",
+      "raw": 87898,
+      "gzip": 19835
+    },
+    {
+      "f": "AdminHr-BNBU7LBC.js",
+      "raw": 77060,
+      "gzip": 14831
+    },
+    {
+      "f": "MyTelepizza-JHPfk2nv.js",
+      "raw": 66465,
+      "gzip": 15043
+    },
+    {
+      "f": "AdminDashboard-B5wlLWkd.js",
+      "raw": 63624,
+      "gzip": 14550
+    },
+    {
+      "f": "OpeningReadinessSummary-B9XEj11Q.js",
+      "raw": 59689,
+      "gzip": 12293
+    },
+    {
+      "f": "AdminMenu-Cb7CauqF.js",
+      "raw": 52904,
+      "gzip": 13098
+    },
+    {
+      "f": "AdminPurchasing-BWsxmXF1.js",
+      "raw": 49617,
+      "gzip": 10315
+    },
+    {
+      "f": "admin-hr-BiWUTXAL.js",
+      "raw": 48763,
+      "gzip": 9778
+    },
+    {
+      "f": "AdminFinance-8Hz9t-EV.js",
+      "raw": 43063,
+      "gzip": 9137
+    },
+    {
+      "f": "AdminDelivery-Bjle13_1.js",
+      "raw": 41851,
+      "gzip": 10245
+    },
+    {
+      "f": "AdminPos-DWDyaBYE.js",
+      "raw": 40985,
+      "gzip": 10889
+    },
+    {
+      "f": "AdminWhatsApp-v8sC0Sqp.js",
+      "raw": 35455,
+      "gzip": 8423
+    },
+    {
+      "f": "AdminInventory-MzMDoTF9.js",
+      "raw": 35343,
+      "gzip": 8629
+    },
+    {
+      "f": "PizzaCustomizerDialog-BIEqkR0R.js",
+      "raw": 33501,
+      "gzip": 11150
+    }
+  ],
+  "warningLargeChunk": true,
+  "chunks": [
+    {
+      "f": "index-DPBhipH8.js",
+      "raw": 869748,
+      "gzip": 254945
+    },
+    {
+      "f": "AdminSettings-btTAJb3f.js",
+      "raw": 87898,
+      "gzip": 19835
+    },
+    {
+      "f": "AdminHr-BNBU7LBC.js",
+      "raw": 77060,
+      "gzip": 14831
+    },
+    {
+      "f": "MyTelepizza-JHPfk2nv.js",
+      "raw": 66465,
+      "gzip": 15043
+    },
+    {
+      "f": "AdminDashboard-B5wlLWkd.js",
+      "raw": 63624,
+      "gzip": 14550
+    },
+    {
+      "f": "OpeningReadinessSummary-B9XEj11Q.js",
+      "raw": 59689,
+      "gzip": 12293
+    },
+    {
+      "f": "AdminMenu-Cb7CauqF.js",
+      "raw": 52904,
+      "gzip": 13098
+    },
+    {
+      "f": "AdminPurchasing-BWsxmXF1.js",
+      "raw": 49617,
+      "gzip": 10315
+    },
+    {
+      "f": "admin-hr-BiWUTXAL.js",
+      "raw": 48763,
+      "gzip": 9778
+    },
+    {
+      "f": "AdminFinance-8Hz9t-EV.js",
+      "raw": 43063,
+      "gzip": 9137
+    },
+    {
+      "f": "AdminDelivery-Bjle13_1.js",
+      "raw": 41851,
+      "gzip": 10245
+    },
+    {
+      "f": "AdminPos-DWDyaBYE.js",
+      "raw": 40985,
+      "gzip": 10889
+    },
+    {
+      "f": "AdminWhatsApp-v8sC0Sqp.js",
+      "raw": 35455,
+      "gzip": 8423
+    },
+    {
+      "f": "AdminInventory-MzMDoTF9.js",
+      "raw": 35343,
+      "gzip": 8629
+    },
+    {
+      "f": "PizzaCustomizerDialog-BIEqkR0R.js",
+      "raw": 33501,
+      "gzip": 11150
+    },
+    {
+      "f": "AdminCrm-DI14DDWY.js",
+      "raw": 32645,
+      "gzip": 7966
+    },
+    {
+      "f": "AdminOrders-BFuF3fNg.js",
+      "raw": 30860,
+      "gzip": 7400
+    },
+    {
+      "f": "HeroSlider-DYhUvfUz.js",
+      "raw": 26739,
+      "gzip": 10503
+    },
+    {
+      "f": "AdminAiTeam-CDyDc9bU.js",
+      "raw": 26533,
+      "gzip": 7666
+    },
+    {
+      "f": "AdminBranchManager-CDOHKwaC.js",
+      "raw": 24395,
+      "gzip": 7351
+    },
+    {
+      "f": "AdminLoyalty-DRK_BScd.js",
+      "raw": 23605,
+      "gzip": 5134
+    },
+    {
+      "f": "KitchenDetailsPanel-DDz4I4gx.js",
+      "raw": 21913,
+      "gzip": 5992
+    },
+    {
+      "f": "AdminMarketing-Dqu7Fkj-.js",
+      "raw": 21669,
+      "gzip": 4925
+    },
+    {
+      "f": "AdminReservations-MwiaXULi.js",
+      "raw": 20383,
+      "gzip": 5585
+    },
+    {
+      "f": "AdminKitchen-gqD6ukq1.js",
+      "raw": 20299,
+      "gzip": 5955
+    },
+    {
+      "f": "Settings-yrJe5F85.js",
+      "raw": 18146,
+      "gzip": 5676
+    },
+    {
+      "f": "AdminKitchenDashboard-BFWZsZ95.js",
+      "raw": 17899,
+      "gzip": 6000
+    },
+    {
+      "f": "Checkout-d1vVH2sK.js",
+      "raw": 17581,
+      "gzip": 5878
+    },
+    {
+      "f": "AdminFloorPlan-GKowANyl.js",
+      "raw": 17157,
+      "gzip": 4452
+    },
+    {
+      "f": "PublicBooking-sdKlvsKX.js",
+      "raw": 15130,
+      "gzip": 4331
+    },
+    {
+      "f": "SupplierProfilePage-CZKTNg0P.js",
+      "raw": 14992,
+      "gzip": 4395
+    },
+    {
+      "f": "AdminReports-AwS1kU4H.js",
+      "raw": 14541,
+      "gzip": 4423
+    },
+    {
+      "f": "ResetPassword-CiTTdwMo.js",
+      "raw": 14471,
+      "gzip": 4625
+    },
+    {
+      "f": "AdminOrderDetail-Doh-VGjB.js",
+      "raw": 13092,
+      "gzip": 3677
+    },
+    {
+      "f": "OrderTimeline-CUX4paE4.js",
+      "raw": 12847,
+      "gzip": 4522
+    },
+    {
+      "f": "OpsOrders-BeUpTUUV.js",
+      "raw": 11951,
+      "gzip": 3220
+    },
+    {
+      "f": "Orders-ZUQOqYio.js",
+      "raw": 11667,
+      "gzip": 4140
+    },
+    {
+      "f": "Contact-1Pjz2NQz.js",
+      "raw": 10667,
+      "gzip": 2983
+    },
+    {
+      "f": "AdminWaitlist-DYJemWr7.js",
+      "raw": 10403,
+      "gzip": 3269
+    },
+    {
+      "f": "AdminUnauthorized-BmLmcuFz.js",
+      "raw": 10347,
+      "gzip": 3211
+    },
+    {
+      "f": "admin-crm-Bwv-E9yA.js",
+      "raw": 9279,
+      "gzip": 3031
+    },
+    {
+      "f": "reorder-D2zRD2wZ.js",
+      "raw": 9105,
+      "gzip": 3420
+    },
+    {
+      "f": "AdminFloorConsole-DYOhJes6.js",
+      "raw": 8831,
+      "gzip": 3254
+    },
+    {
+      "f": "TrackOrder-CYXwBcSe.js",
+      "raw": 8541,
+      "gzip": 3313
+    },
+    {
+      "f": "Favorites-C2eJDSSL.js",
+      "raw": 7825,
+      "gzip": 2696
+    },
+    {
+      "f": "AdminConfigHome-YkOFHjbd.js",
+      "raw": 7800,
+      "gzip": 2789
+    },
+    {
+      "f": "AdminDeliveryHome-BPc_k26J.js",
+      "raw": 7470,
+      "gzip": 2317
+    },
+    {
+      "f": "AdminStaffHome-DzjEXPp1.js",
+      "raw": 7363,
+      "gzip": 2612
+    },
+    {
+      "f": "Register-CYs0Q7RW.js",
+      "raw": 7129,
+      "gzip": 2648
+    },
+    {
+      "f": "About-BPcbiwkT.js",
+      "raw": 5817,
+      "gzip": 2338
+    },
+    {
+      "f": "Notifications-rdl489xY.js",
+      "raw": 4976,
+      "gzip": 1682
+    },
+    {
+      "f": "OrderSuccess-uQxMh_zh.js",
+      "raw": 4344,
+      "gzip": 1711
+    },
+    {
+      "f": "Branches-B7KF6GsT.js",
+      "raw": 3420,
+      "gzip": 1331
+    },
+    {
+      "f": "ProductDetail-BUxyrsV7.js",
+      "raw": 2321,
+      "gzip": 1026
+    },
+    {
+      "f": "Loyalty-CFuWo8PJ.js",
+      "raw": 2223,
+      "gzip": 1071
+    },
+    {
+      "f": "DashboardActionCard-Ch1-z0L0.js",
+      "raw": 1856,
+      "gzip": 773
+    },
+    {
+      "f": "NotFound-Ddpq5LEk.js",
+      "raw": 1817,
+      "gzip": 865
+    },
+    {
+      "f": "user-round-D_uq31zv.js",
+      "raw": 512,
+      "gzip": 317
+    },
+    {
+      "f": "house-xsWubiME.js",
+      "raw": 286,
+      "gzip": 217
+    },
+    {
+      "f": "circle-check-CKRpyTm9.js",
+      "raw": 169,
+      "gzip": 163
+    },
+    {
+      "f": "arrow-left-BDpWnZMQ.js",
+      "raw": 161,
+      "gzip": 160
+    }
+  ]
+}

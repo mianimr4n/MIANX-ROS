@@ -1,5 +1,5 @@
 /* Telepizza Pakistan — brand-forward homepage driven by the live menu catalog */
-import { useMemo } from "react";
+import { Suspense, lazy, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ChevronRight,
@@ -22,9 +22,13 @@ import { Button } from "@/components/ui/button";
 import { DealCard } from "@/components/menu/DealCard";
 import { ProductCard } from "@/components/menu/ProductCard";
 import { CategoryStrip } from "@/components/home/CategoryStrip";
-import { HeroSlider } from "@/components/home/HeroSlider";
 import { MenuSectionRow } from "@/components/home/MenuSectionRow";
 import { VERIFIED_DEAL_IDS } from "@/lib/brand";
+
+/** Embla carousel stays out of entry; loads with the home route only. */
+const HeroSlider = lazy(() =>
+  import("@/components/home/HeroSlider").then((m) => ({ default: m.HeroSlider })),
+);
 
 const FEATURED_PIZZA_IDS = [
   "tele-special",
@@ -67,7 +71,20 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <HeroSlider />
+      <Suspense
+        fallback={
+          <div
+            className="relative min-h-[52vh] w-full bg-[var(--brand-red,#c8102e)]"
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+          >
+            <span className="sr-only">Loading featured deals</span>
+          </div>
+        }
+      >
+        <HeroSlider />
+      </Suspense>
 
       <CategoryStrip />
 

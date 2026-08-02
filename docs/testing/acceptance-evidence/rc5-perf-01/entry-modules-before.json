@@ -1,0 +1,165 @@
+{
+  "top": [
+    {
+      "k": "npm:.pnpm",
+      "raw": 2492723
+    },
+    {
+      "k": "app:data/menu-data.ts",
+      "raw": 33941
+    },
+    {
+      "k": "app:pages/Checkout.tsx",
+      "raw": 27376
+    },
+    {
+      "k": "app:lib/admin-access.ts",
+      "raw": 26624
+    },
+    {
+      "k": "app:contexts/AuthContext.tsx",
+      "raw": 26209
+    },
+    {
+      "k": "app:pages/PublicBooking.tsx",
+      "raw": 20960
+    },
+    {
+      "k": "app:components/Navbar.tsx",
+      "raw": 20553
+    },
+    {
+      "k": "app:pages/Home.tsx",
+      "raw": 17170
+    },
+    {
+      "k": "app:components/CartDrawer.tsx",
+      "raw": 16182
+    },
+    {
+      "k": "app:lib/menu-catalog.ts",
+      "raw": 15553
+    },
+    {
+      "k": "app:pages/Menu.tsx",
+      "raw": 15412
+    },
+    {
+      "k": "app:pages/admin/AdminShell.tsx",
+      "raw": 14636
+    },
+    {
+      "k": "app:App.tsx",
+      "raw": 14404
+    },
+    {
+      "k": "app:pages/Register.tsx",
+      "raw": 14214
+    },
+    {
+      "k": "app:components/menu/ProductConfigurator.tsx",
+      "raw": 13671
+    },
+    {
+      "k": "app:pages/TrackOrder.tsx",
+      "raw": 13177
+    },
+    {
+      "k": "app:pages/ResetPassword.tsx",
+      "raw": 11143
+    },
+    {
+      "k": "app:pages/Contact.tsx",
+      "raw": 10904
+    },
+    {
+      "k": "app:lib/auth-utils.ts",
+      "raw": 10811
+    },
+    {
+      "k": "app:lib/auth-redirect.ts",
+      "raw": 9129
+    },
+    {
+      "k": "app:pages/Login.tsx",
+      "raw": 9045
+    },
+    {
+      "k": "app:lib/customer-store.ts",
+      "raw": 8498
+    },
+    {
+      "k": "app:lib/customer-addresses.ts",
+      "raw": 7886
+    },
+    {
+      "k": "app:pages/About.tsx",
+      "raw": 7465
+    },
+    {
+      "k": "app:data/modifier-catalog.ts",
+      "raw": 7110
+    },
+    {
+      "k": "app:components/home/HeroSlider.tsx",
+      "raw": 7094
+    },
+    {
+      "k": "app:components/SocialAuthButtons.tsx",
+      "raw": 7028
+    },
+    {
+      "k": "app:lib/api.ts",
+      "raw": 6940
+    },
+    {
+      "k": "app:components/Footer.tsx",
+      "raw": 6912
+    },
+    {
+      "k": "app:components/ui/select.tsx",
+      "raw": 6482
+    },
+    {
+      "k": "app:components/ui/dialog.tsx",
+      "raw": 6233
+    },
+    {
+      "k": "app:pages/OrderSuccess.tsx",
+      "raw": 5913
+    },
+    {
+      "k": "app:pages/admin/AdminLogin.tsx",
+      "raw": 5908
+    },
+    {
+      "k": "app:components/ui/carousel.tsx",
+      "raw": 5842
+    },
+    {
+      "k": "app:lib/menu-images.ts",
+      "raw": 5831
+    },
+    {
+      "k": "app:lib/checkout-order.ts",
+      "raw": 5726
+    },
+    {
+      "k": "app:pages/ForgotPassword.tsx",
+      "raw": 5573
+    },
+    {
+      "k": "app:pages/Welcome.tsx",
+      "raw": 5486
+    },
+    {
+      "k": "app:pages/AuthCallback.tsx",
+      "raw": 5326
+    },
+    {
+      "k": "app:contexts/CartContext.tsx",
+      "raw": 5218
+    }
+  ],
+  "totalSources": 528
+}

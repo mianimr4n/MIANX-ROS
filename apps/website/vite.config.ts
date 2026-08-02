@@ -17,6 +17,16 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        /**
+         * RC5-PERF-01 — merge tiny async fragments (e.g. single lucide icons)
+         * so route splitting does not explode request count / gzip overhead.
+         * Does not force deferred modules back into the sync entry graph.
+         */
+        experimentalMinChunkSize: 12_000,
+      },
+    },
   },
   server: {
     port: 3000,

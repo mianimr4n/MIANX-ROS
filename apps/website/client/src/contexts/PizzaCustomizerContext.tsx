@@ -1,6 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { Suspense, lazy, createContext, useContext, useState, type ReactNode } from "react";
 import type { MenuItem } from "@/lib/telepizza-types";
-import { PizzaCustomizerDialog } from "@/components/menu/PizzaCustomizerDialog";
 
 interface PizzaCustomizerContextType {
   /** Opens the configurator on an exact sellable SKU; siblings come from its product family. */
@@ -9,13 +8,24 @@ interface PizzaCustomizerContextType {
 
 const PizzaCustomizerContext = createContext<PizzaCustomizerContextType | null>(null);
 
+/** Dialog + radix select + configurator stay out of the entry chunk until opened. */
+const PizzaCustomizerDialog = lazy(() =>
+  import("@/components/menu/PizzaCustomizerDialog").then((m) => ({
+    default: m.PizzaCustomizerDialog,
+  })),
+);
+
 export function PizzaCustomizerProvider({ children }: { children: ReactNode }) {
   const [sku, setSku] = useState<MenuItem | null>(null);
 
   return (
     <PizzaCustomizerContext.Provider value={{ openCustomizer: setSku }}>
       {children}
-      <PizzaCustomizerDialog sku={sku} onClose={() => setSku(null)} />
+      {sku ? (
+        <Suspense fallback={null}>
+          <PizzaCustomizerDialog sku={sku} onClose={() => setSku(null)} />
+        </Suspense>
+      ) : null}
     </PizzaCustomizerContext.Provider>
   );
 }
