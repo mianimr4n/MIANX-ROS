@@ -1,9 +1,9 @@
 # RC6 Roadmap
 
-**Status:** Living roadmap — **RC6-DASH-00** merged; **RC6-DASH-01** Exception Center in repository (not Production-verified)
+**Status:** Living roadmap — **RC6-DASH-01** merged; **RC6-DASH-02** KPI drill-downs in progress
 **Date:** 2026-08-02
 **Baseline tag:** `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824`
-**Current repository tip (DASH-01 baseline):** `cc09e239f966ac7173536f54eec63ae1fb01e1f8`
+**Current repository tip (DASH-02 baseline):** `b913ecad14f147b0a58d48224ce25d474af524f3`
 **Production website runtime:** `152ce409609dc78e48d0d2b6b0c34a35d6338c24`
 **Migration tip:** `20260801180000`
 
@@ -20,7 +20,8 @@
 | RC6-QA-02 | Owner CI path expansion | `rc6-qa-02/` · #179 |
 | RC6-A11Y-02 | Moderate a11y remediation | `rc6-a11y-02/` · #180 → `da99875…` |
 | RC6-DASH-00 | Command Center contracts | `rc6-dash-00/` · #181 → `cc09e239…` |
-| RC6-DASH-01 | Exception Center read-only (repo) | `rc6-dash-01/` · **not Production-verified** |
+| RC6-DASH-01 | Exception Center read-only (repo) | `rc6-dash-01/` · #182 → `b913eca…` · **not Production-verified** |
+| RC6-DASH-02 | Trusted KPI drill-downs (repo) | `rc6-dash-02/` · **not Production-verified** · DRILL_DOWN only |
 
 ---
 
@@ -63,8 +64,9 @@ Each candidate scored **1–5**. Preference direction:
 
 | ID | Title |
 | --- | --- |
-| **RC6-DASH-01** | Exception Center read-only foundation (**this wave** — repo; not Prod-verified) |
-| RC6-DASH-02 | Actionable KPI drill-downs (**next runtime** after DASH-01) |
+| **RC6-DASH-01** | Exception Center read-only foundation (**merged** — repo; not Prod-verified) |
+| **RC6-DASH-02** | Actionable KPI drill-downs (**this wave** — DRILL_DOWN only) |
+| RC6-DASH-03 | Opening/live/closing modes (**next runtime** after DASH-02) |
 | RC6-DASH-03 | Opening/live/closing modes |
 | RC6-DASH-04 | Approval Inbox |
 | RC6-DASH-05 | Branch Health Score |
@@ -144,14 +146,15 @@ Each candidate scored **1–5**. Preference direction:
 ## Recommended implementation order (post-honesty wave)
 
 ```text
-1. RC6-DASH-00         (contracts — docs only)
-2. RC6-DASH-01         (Exception Center read-only — next runtime)
-3. RC6-FIN-01          (finance honesty/wire; parallelizable with early DASH)
-4. RC6-DASH-02…08      (Command Center depth)
-5. RC6-DEL-01 / RIDER-01 → DEL-02… / CASH-01
-6. RC6-SET-01…10       (after SET contracts in DASH-00)
-7. RC6-CHK-01 / INV-01 / SEC-02
-8. Founder-gated ops/providers/AI
+1. RC6-DASH-00         (contracts — docs only) — merged
+2. RC6-DASH-01         (Exception Center read-only) — merged
+3. RC6-DASH-02         (KPI drill-downs — this wave)
+4. RC6-FIN-01          (finance honesty/wire; parallelizable)
+5. RC6-DASH-03…08      (Command Center depth)
+6. RC6-DEL-01 / RIDER-01 → DEL-02… / CASH-01
+7. RC6-SET-01…10       (after SET contracts in DASH-00)
+8. RC6-CHK-01 / INV-01 / SEC-02
+9. Founder-gated ops/providers/AI
 ```
 
 ---
@@ -164,7 +167,18 @@ Each candidate scored **1–5**. Preference direction:
 | Scope | Architecture, widget/KPI/action/exception/event/delivery/settings/role/NFR/traceability docs + roadmap wiring |
 | Out of scope | Runtime code, migrations, providers, CI behavior changes, Production |
 | DB impact | **NONE** |
-| Next runtime | **RC6-DASH-01** |
+| Next runtime | **RC6-DASH-01** (merged) → **RC6-DASH-02** |
+
+## Runtime brief — RC6-DASH-02
+
+| Field | Content |
+| --- | --- |
+| ID | RC6-DASH-02 — Trusted Owner KPI drill-downs |
+| Maturity | **DRILL_DOWN** only (no draft/approve/execute) |
+| Scope | Central registry; selected verified KPIs; filter-aware links; destination query init |
+| Out of scope | Mutations, migrations, Accounting Net Sales claims, fake filters, AI, providers, Production |
+| DB impact | **NONE** |
+| Evidence | `docs/testing/acceptance-evidence/rc6-dash-02/` |
 
 ## Next runtime brief — RC6-DASH-01 (do not implement in DASH-00)
 

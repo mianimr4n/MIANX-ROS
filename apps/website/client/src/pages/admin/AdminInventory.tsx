@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearch } from "wouter";
+import { useLocation, useSearch } from "wouter";
 
 import { InventoryFilters } from "@/components/admin/inventory/InventoryFilters";
 import { InventoryHeader } from "@/components/admin/inventory/InventoryHeader";
@@ -62,6 +62,7 @@ export default function AdminInventory() {
   const [addBusy, setAddBusy] = useState(false);
   const [adjustError, setAdjustError] = useState<string | null>(null);
   const [adjustBusy, setAdjustBusy] = useState(false);
+  const [, setLocation] = useLocation();
   const searchParams = useSearch();
   const lowStockFromUrl = useMemo(() => {
     const params = new URLSearchParams(searchParams.startsWith("?") ? searchParams.slice(1) : searchParams);
@@ -73,6 +74,24 @@ export default function AdminInventory() {
   useEffect(() => {
     setLowStockOnly(lowStockFromUrl);
   }, [lowStockFromUrl]);
+
+  const writeLowStockFilter = useCallback(
+    (value: boolean) => {
+      setLowStockOnly(value);
+      const params = new URLSearchParams(searchParams.startsWith("?") ? searchParams.slice(1) : searchParams);
+      if (value) params.set("lowStock", "1");
+      else params.delete("lowStock");
+      const qs = params.toString();
+      setLocation(qs ? `/admin/inventory?${qs}` : "/admin/inventory");
+    },
+    [searchParams, setLocation],
+  );
+
+  const clearInventoryFilters = useCallback(() => {
+    setSearch("");
+    setLowStockOnly(false);
+    setLocation("/admin/inventory");
+  }, [setLocation]);
 
   const snapshot = useMemo(
     () => buildInventoryKpis(items, toppings, stockItems, movements),
@@ -220,8 +239,21 @@ export default function AdminInventory() {
         search={search}
         onSearchChange={setSearch}
         lowStockOnly={lowStockOnly}
-        onLowStockOnlyChange={setLowStockOnly}
+        onLowStockOnlyChange={writeLowStockFilter}
+        onClearFilters={clearInventoryFilters}
       />
+      {lowStockOnly || search.trim() ? (
+        <p
+          className="mb-4 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2 text-sm text-[var(--admin-muted)]"
+          role="status"
+          data-testid="inventory-active-filters"
+        >
+          Active filters:
+          {lowStockOnly ? " lowStock=1" : ""}
+          {search.trim() ? ` search=${search.trim()}` : ""}
+          . Branch scope follows the Owner branch selector.
+        </p>
+      ) : null}
 
       <InventoryTable
         items={filteredStockItems}

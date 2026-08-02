@@ -24,11 +24,13 @@ import {
 } from "@/lib/admin-access";
 import {
   DELIVERY_LATE_MINUTES,
+  DELIVERY_ALL_FILTER_STATUSES,
   averageDeliveryMinutes,
   currentShiftLabel,
   isKarachiToday,
   isOnlineRiderStatus,
 } from "@/lib/admin-delivery";
+import { sanitizeStatusFilter } from "@/lib/kpi-drilldown/registry";
 import {
   canAssignRider,
   classifyDeliveryLate,
@@ -52,7 +54,7 @@ import { AdminShell } from "./AdminShell";
 function readFilters(search: string) {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
   return {
-    status: params.get("status") ?? "",
+    status: sanitizeStatusFilter(params.get("status"), DELIVERY_ALL_FILTER_STATUSES),
     riderId: params.get("riderId") ?? "",
     search: params.get("q") ?? "",
     selected: params.get("selected") ?? "",

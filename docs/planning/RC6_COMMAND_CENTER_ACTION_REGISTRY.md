@@ -21,9 +21,9 @@
 
 | Action ID | Source widget | Roles | Entity | Mutation | Scope | Preconditions | Confirm | Re-auth | Approval | SoD | Idempotency | Duplicate prevention | Audit | Failure/retry | Rollback | Notify | Prod risk | Truth status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| ACT-DRILL-ORDERS | W-ORD-01 | Owner, BM | orders | none | branch | authz | no | no | no | n/a | n/a | n/a | optional nav | n/a | n/a | no | low | DRILL_DOWN LIVE |
-| ACT-DRILL-KDS | W-KDS-01 | Owner, Kitchen | tickets | none | branch | authz | no | no | no | n/a | n/a | n/a | optional | n/a | n/a | no | low | DRILL_DOWN PARTIAL |
-| ACT-DRILL-DEL | W-DEL-01 | Owner, Delivery | deliveries | none | branch | authz | no | no | no | n/a | n/a | n/a | optional | n/a | n/a | no | low | DRILL_DOWN PARTIAL |
+| ACT-DRILL-ORDERS | W-ORD-01 | Owner, BM | orders | none | branch | authz | no | no | no | n/a | n/a | n/a | optional nav | n/a | n/a | no | low | DRILL_DOWN LIVE (DASH-02) |
+| ACT-DRILL-KDS | W-KDS-01 | Owner, Kitchen | tickets | none | branch | authz | no | no | no | n/a | n/a | n/a | optional | n/a | n/a | no | low | DRILL_DOWN PARTIAL (DASH-02) |
+| ACT-DRILL-DEL | W-DEL-01 | Owner, Delivery | deliveries | none | branch | authz | no | no | no | n/a | n/a | n/a | optional | n/a | n/a | no | low | DRILL_DOWN PARTIAL (DASH-02) |
 | ACT-DEL-ASSIGN | W-DEL-01 | Delivery Mgr, BM | delivery | assign rider | branch | rider available; status pending | yes | no | no | avoid self-conflict rules TBD | Idempotency-Key | one active assignment | delivery audit | retry safe | reassign flow | rider notify **PROPOSED** | med | PARTIAL_LIVE (`POST .../assign`) |
 | ACT-DEL-STATUS | W-DEL-01 | Delivery, Rider | delivery | status transition | branch | valid transition | yes on terminal | no | no | — | idempotent transition | reject illegal | audit | reject illegal | compensation TBD | optional | med | PARTIAL_LIVE (assigned/picked-up/delivered only) |
 | ACT-DEL-FAIL | W-DEL-01 | Delivery | delivery | mark failed | branch | in lifecycle | yes | no | BM for high value **PROPOSED** | — | — | — | audit | — | return flow | customer msg **PROPOSED** | high | NOT_PRESENT in status API |

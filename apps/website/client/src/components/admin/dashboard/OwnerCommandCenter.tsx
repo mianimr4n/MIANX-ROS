@@ -46,41 +46,68 @@ function metricCardState(state: OwnerCommandMetric["state"]): AdminKpiState {
   return "available";
 }
 
+import {
+  buildKpiDrillDownAriaLabel,
+  buildKpiDrillDownHref,
+  getKpiDrillDown,
+} from "@/lib/kpi-drilldown/registry";
+import type { AdminKpiSource } from "@/components/admin/AdminKpiCard";
+
 function MetricLinkCard({ metric }: { metric: OwnerCommandMetric }) {
+  const drill = getKpiDrillDown(metric.id);
+  const href = drill ? buildKpiDrillDownHref({ metricId: metric.id }) : metric.href;
+  const source: AdminKpiSource =
+    metric.state === "unavailable"
+      ? "UNAVAILABLE"
+      : drill?.cardSource ?? "LIVE";
   const card = (
     <AdminKpiCard
       title={metric.title}
       value={metric.value}
-      source={metric.state === "unavailable" ? "UNAVAILABLE" : "LIVE"}
+      source={source}
       state={metricCardState(metric.state)}
       detail={metric.detail}
       showResolvedZero={metric.state === "available" || metric.state === "empty"}
       className="h-full"
+      secondary={
+        drill ? `Trust ${drill.trustState} · ${drill.timeWindowLabel}` : undefined
+      }
     />
   );
 
-  if (!metric.href || metric.state === "loading") {
+  if (!href || metric.state === "loading") {
     return (
-      <div className="min-w-0">
+      <div className="min-w-0" data-kpi-id={metric.id}>
         {card}
         {metric.attentionWhy ? (
           <p className="mt-2 text-xs text-[var(--admin-muted)]">{metric.attentionWhy}</p>
+        ) : null}
+        {drill?.limitation && metric.state !== "loading" ? (
+          <p className="mt-1 text-xs text-[var(--admin-muted)]">{drill.limitation}</p>
         ) : null}
       </div>
     );
   }
 
   return (
-    <div className="min-w-0">
+    <div className="min-w-0" data-kpi-id={metric.id} data-kpi-maturity="DRILL_DOWN">
       <Link
-        href={metric.href}
+        href={href}
         className="block rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)]"
-        aria-label={`${metric.title}: ${metric.value ?? "unavailable"}. Open module.`}
+        aria-label={buildKpiDrillDownAriaLabel({
+          title: metric.title,
+          value: metric.value,
+          metricId: metric.id,
+        })}
+        data-testid={`kpi-drilldown-${metric.id}`}
       >
         {card}
       </Link>
       {metric.attentionWhy ? (
         <p className="mt-2 text-xs text-[var(--admin-muted)]">{metric.attentionWhy}</p>
+      ) : null}
+      {drill?.limitation ? (
+        <p className="mt-1 text-xs text-[var(--admin-muted)]">{drill.limitation}</p>
       ) : null}
     </div>
   );

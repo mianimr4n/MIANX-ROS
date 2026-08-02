@@ -179,8 +179,9 @@ export function OrderFilters({
           type="button"
           onClick={onReset}
           className="min-h-10 rounded-lg border border-[var(--admin-border)] px-3 text-sm font-semibold hover:bg-[var(--admin-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-red)]"
+          aria-label="Clear filters"
         >
-          Reset filters
+          Clear filters
         </button>
       </div>
     </form>

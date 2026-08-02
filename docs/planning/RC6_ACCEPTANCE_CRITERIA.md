@@ -178,3 +178,18 @@
 | E-06 | Acceptance evidence pack + gates PASS |
 
 > DASH-01 repository implementation must still record **not Production-verified** until an authorized Production deploy + smoke.
+
+### RC6-DASH-02 — Trusted Owner KPI drill-downs
+
+| # | Criterion |
+| --- | --- |
+| D2-01 | Selected verified KPIs use a central drill-down registry at **DRILL_DOWN** maturity only |
+| D2-02 | Destination routes exist; only repository-supported filters are propagated |
+| D2-03 | Branch scope remains AdminBranchContext (not invented URL branchId authz) |
+| D2-04 | Trust/freshness labels use approved terms; sales not labeled ACCOUNTING |
+| D2-05 | Accessible names include KPI context; keyboard focus retained |
+| D2-06 | Destinations initialize from query params; Clear filters where supported |
+| D2-07 | No mutation, migration, provider, AI, or fake destination filters |
+| D2-08 | Acceptance evidence pack + gates PASS; **not Production-verified** |
+
+> Deferred KPIs (AOV depth, refunds, late GPS, cash variance card, PO/HR/complaints/health, Accounting Net Sales) remain out of scope until honest destinations exist.
