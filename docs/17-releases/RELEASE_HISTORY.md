@@ -11,15 +11,17 @@ Owner-facing operating documentation for Telepizza ROS release and repository ti
 
 | Concept | Canonical value |
 | --- | --- |
-| Current verified repository main | `c1859117b24d6adbe2fb0633ea518538047cc120` |
+| Current verified repository main | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` |
 | Latest released tag | `v1.3.0` (annotated git tag; no GitHub Release) |
 | Released tag commit | `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` |
-| Production application SHA | `e5c6daf0ba57f6a601f6a902821d41bfc5b3a291` (still applicable until a newer Production deploy is evidenced) |
+| Production website SHA | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` (Vercel `dpl_7xaV34uyAEdMLvWckWKQASPAxJ7r`) |
+| Production API SHA (observed) | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` (`/healthz`/`/readyz`; not intentionally redeployed by RC5 website cutover) |
 | Production migration tip | `20260801180000` |
+| Prior website rollback target | `dpl_FriiC2PsK3bEYrXbXLVuNSXv3G3y` (`795efee…`) — not executed |
 
 ## Current verified state
 
-Verified **2026-08-02** against repository main `c1859117b24d6adbe2fb0633ea518538047cc120`.
+Verified **2026-08-02** against repository main `152ce409609dc78e48d0d2b6b0c34a35d6338c24`.
 
 ### RC4 release
 
@@ -27,26 +29,31 @@ Verified **2026-08-02** against repository main `c1859117b24d6adbe2fb0633ea51853
 - Release mechanism: annotated git tag only. **No** GitHub Release exists for `v1.3.0`.
 - Evidence: `docs/releases/RC4_RELEASE_NOTES.md`, `docs/testing/acceptance-evidence/rc4-final-certification/`, `docs/testing/acceptance-evidence/rc4-production-cutover/`.
 
-### RC5 repository work (merged on main — not claimed Production-deployed)
+### RC5 repository + Production website
 
-| Slice | Status on repository main | Notes |
+| Slice | Status | Notes |
 | --- | --- | --- |
-| RC5-OPS-01 | Merged | Local privilege contract / AGENTS truth |
-| RC5-A11Y-01 | Merged (PR #169 → `c185911…`) | Public marketing home accessibility |
-| RC5-DOC-01 | Current planned / in progress | Release & status documentation sync |
-| RC5-TEST-01 | Next after DOC-01 | Analytics schema regression guards (roadmap order 4) |
+| RC5-OPS-01 | Merged #168 → `e5963a6…` | Local privilege contract / AGENTS truth |
+| RC5-A11Y-01 | Merged #169 → `c185911…` | Public marketing home accessibility |
+| RC5-DOC-01 | Merged #170 → `cb13f39…` | Release & status documentation sync |
+| RC5-TEST-01 | Merged #171 → `11aa195…` | Analytics schema regression guards |
+| RC5-PERF-01 | Merged #172 → `fb7737c…` | Entry bundle residual reduction |
+| RC5-OBS-01 | Merged #173 → `795efee…` | Operator log/alerting runbook |
+| RC5-QA-01 | Merged #174 → `152ce40…` | CI Owner Playwright (PASS WITH DOCUMENTED LIMITATION) |
+| Production website cutover | **Complete** | Same SHA; smoke + Owner attestation `2026-08-02T10:23:52Z` |
 
-These RC5 merges update repository `main`. They are **not** claimed as the live Production application tip unless separate deployment evidence exists.
+Evidence: `docs/testing/acceptance-evidence/rc5-*/`, `docs/testing/acceptance-evidence/rc5-production-cutover/`, `docs/testing/acceptance-evidence/rc5-final-closeout/`.
+
+Do **not** infer Production deployment from merge history alone — website cutover is separately evidenced.
 
 ## What is LIVE
 
-- Website on Vercel (`telepizza-website`)
-- API on Render (`telepizza-api`)
+- Website on Vercel (`telepizza-website`) at SHA `152ce40…`
+- API on Render (`telepizza-api`) — observed `gitSha` `152ce40…`
 - PostgreSQL + Auth on Supabase
 - Royal Orchard branch status = `operating`
 - Northern Bypass branch status = `coming-soon`
 - Canonical staff roles: super-admin, branch-manager, kitchen, cashier, rider, customer-support, host, waiter
-- Production application tip (evidenced): `e5c6daf…`
 - Production database migrations through `20260801180000`
 
 ## What is DERIVED
@@ -65,12 +72,13 @@ These RC5 merges update repository `main`. They are **not** claimed as the live 
 - Private credentials, service-role keys, and private absolute evidence paths in Production UI
 - Owner/Founder database roles (display labels only; authorization remains `super-admin` with `branch_id = null`)
 - GitHub Release UI for `v1.3.0` (tag exists; Release object does not)
+- Proposed `v1.4.0` tag (recommendation only — not created by closeout)
 
 ## Known limitations (non-exhaustive)
 
 - Non-blocking RC4 ops limitations remain in `docs/testing/acceptance-evidence/rc4-final-certification/KNOWN_LIMITATIONS.md` (OPS-1…OPS-5 as documented).
+- RC5 residuals: alerts `PROPOSED_NOT_ENABLED`; bulk log export not claimed; APM not implemented; `/admin/reports` CI deferred; branch protection unchanged; moderate a11y advisories — see `rc5-final-closeout/RESIDUAL_LIMITATIONS.md`.
 - Northern Bypass remains `coming-soon` unless separately authorized.
-- Repository `main` can be ahead of Production application SHA; do not treat them as identical.
 
 ## Owner decision required
 
@@ -78,14 +86,13 @@ Confirm opening-day staffing, devices, and provider readiness for Royal Orchard 
 
 ## Next implementation action
 
-1. Complete **RC5-DOC-01** (this documentation sync).
-2. Proceed to roadmap-defined **RC5-TEST-01** (Analytics schema regression guards).
-
-RC4 certification/release and opening-readiness branch framing are **not** the current active engineering task.
+1. Founder review of RC5 final closeout PR.
+2. Optional annotated tag `v1.4.0` after closeout merge (not created in this documentation PR).
+3. Product-depth streams (finance/loyalty send/Analytics worker/PITR) remain Founder-gated — not RC5 blockers.
 
 ## Source of truth
 
-Repository evidence under `docs/`, `apps/website`, `backend/api`, `supabase/`, plus Production smoke evidence outside Git. Planning documents alone never override repository evidence.
+Repository evidence under `docs/`, `apps/website`, `backend/api`, `supabase/`, plus Production smoke evidence packs. Planning documents alone never override repository evidence.
 
 ## Related routes/files/services
 
@@ -95,13 +102,14 @@ Repository evidence under `docs/`, `apps/website`, `backend/api`, `supabase/`, p
 - Team Center: `/admin/ai-team`
 - Release notes: `docs/releases/RC4_RELEASE_NOTES.md`
 - RC5 planning: `docs/planning/RC5_ROADMAP.md`
+- RC5 closeout: `docs/testing/acceptance-evidence/rc5-final-closeout/`
 
 ## Acceptance criteria (living doc)
 
 - Documentation states LIVE/DERIVED/FOUNDATION/UNAVAILABLE honestly
 - No claim of unverified Kubernetes/microservices/Prisma/mobile/event-bus in Production
 - Northern Bypass remains `coming-soon`
-- Distinguishes repository main, release tag commit, and Production application SHA
+- Distinguishes repository main, release tag commit, Production website SHA, Production API SHA, and migration tip
 
 ## Recent release and RC5 merges (selected)
 
@@ -110,6 +118,6 @@ Repository evidence under `docs/`, `apps/website`, `backend/api`, `supabase/`, p
 | Tag `v1.3.0` | Annotated tag at `74b6b8e…` (RC4 closeout tip); no GitHub Release |
 | PR #166 | RC4 release closeout docs |
 | PR #164 | RC4 final certification (`e40351b…`) |
-| PR #168 | RC5-OPS-01 privilege contract / AGENTS truth |
-| PR #169 | RC5-A11Y-01 public home accessibility → main `c185911…` |
+| PR #168–#174 | RC5 OPS → QA complete on `main` |
+| Vercel `dpl_7xaV34uy…` | Production website at `152ce40…` |
 | Earlier | Admin ERP through PR #133; Executive Dashboard v1 (PR #100) — see governance status |

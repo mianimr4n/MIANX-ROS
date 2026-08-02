@@ -1,13 +1,26 @@
 # RC5 Roadmap
 
-**Status:** Proposed planning document (not implementation authorization)  
-**Date:** 2026-08-02  
-**Released baseline:** `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b`  
-**Production application SHA (still applicable until next deploy):** `e5c6daf0ba57f6a601f6a902821d41bfc5b3a291`  
-**Production migration tip:** `20260801180000`  
-**Authority inputs:** `RC5_BASELINE.md`, `RC4_RELEASE_NOTES.md`, RC4 certification evidence, `AGENTS.md`
+**Status:** Planning document — **repository slices complete** (2026-08-02 closeout)
+**Date:** 2026-08-02
+**Released baseline:** `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b`
+**Current repository main:** `152ce409609dc78e48d0d2b6b0c34a35d6338c24`
+**Production website SHA:** `152ce409609dc78e48d0d2b6b0c34a35d6338c24` (`dpl_7xaV34uyAEdMLvWckWKQASPAxJ7r`)
+**Production migration tip:** `20260801180000`
+**Authority inputs:** `RC5_BASELINE.md`, `RC4_RELEASE_NOTES.md`, RC4 certification evidence, `AGENTS.md`, `rc5-final-closeout/`
 
-> All slices below are **proposed**. They are not Founder-authorized delivery commitments. Assumptions are marked.
+> Historical slice definitions below remain as planning record. **Completion status** is tracked in `RC5_BASELINE.md` and `docs/testing/acceptance-evidence/rc5-final-closeout/`. This roadmap does not authorize new Production mutation by itself.
+
+---
+
+## Completion status (2026-08-02)
+
+| Band | Status |
+| --- | --- |
+| Release blockers | **None evidenced** |
+| High priority (OPS, A11Y, DOC, TEST) | **Merged** |
+| Optional (PERF, OBS, QA) | **Merged** |
+| Production website smoke | **Complete** |
+| Deferred product ideas | Still deferred / Founder-gated |
 
 ---
 
@@ -15,9 +28,9 @@
 
 | Band | Meaning | Current contents |
 | --- | --- | --- |
-| Release blockers | Must close before claiming any RC5 release | **None evidenced** — RC4 released as `v1.3.0` |
-| High priority | Strong ops/product value; recommend early | RC5-OPS-01, RC5-A11Y-01, RC5-DOC-01, RC5-TEST-01 |
-| Optional enhancements | Valuable when capacity allows | RC5-PERF-01, RC5-OBS-01, RC5-QA-01 |
+| Release blockers | Must close before claiming any RC5 release | **None evidenced** — RC4 released as `v1.3.0`; RC5 closeout complete |
+| High priority | Strong ops/product value; recommend early | RC5-OPS-01, RC5-A11Y-01, RC5-DOC-01, RC5-TEST-01 — **complete** |
+| Optional enhancements | Valuable when capacity allows | RC5-PERF-01, RC5-OBS-01, RC5-QA-01 — **complete** |
 | Technical debt | Hygiene / correctness without new product surface | RC5-TD-* (see register) |
 | Deferred ideas | Needs ADR + provider/commercial decision | Finance/payroll depth, loyalty provider send, PITR upgrade, Analytics worker |
 
