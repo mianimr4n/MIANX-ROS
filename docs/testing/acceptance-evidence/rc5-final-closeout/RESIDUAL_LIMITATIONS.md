@@ -20,3 +20,10 @@ These items remain after RC5 closeout. They are **not** designated RC5 release b
 ## Explicit non-claims
 
 Residuals above must not be rewritten as “RC5 incomplete” unless Founder designates them as blockers.
+
+## Supersession note (RC6-DOC-01)
+
+The table above records residuals **at RC5 closeout time**. After closeout:
+
+- Annotated tag `v1.4.0` **was created and pushed** at `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` (GitHub Release object still absent).
+- Living status docs are updated under RC6-DOC-01; do not treat “proposed `v1.4.0`” as current.

@@ -1,8 +1,9 @@
 # RC6 Roadmap
 
-**Status:** Planning document — discovery complete; implementation not started
+**Status:** Planning merged (#176 → `25960eb…`); **RC6-DOC-01** active
 **Date:** 2026-08-02
-**Baseline:** `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824`
+**Baseline tag:** `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824`
+**Current repository main (DOC-01 baseline):** `25960eb2b69d2c390fe0ce364458c9cb3feeac0c`
 **Production website runtime:** `152ce409609dc78e48d0d2b6b0c34a35d6338c24`
 **Migration tip:** `20260801180000`
 
