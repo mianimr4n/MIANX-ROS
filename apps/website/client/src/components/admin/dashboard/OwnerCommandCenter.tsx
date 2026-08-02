@@ -7,6 +7,7 @@ import { CommandModeHeader } from "@/components/admin/dashboard/CommandModeHeade
 import { ApprovalInboxPanel } from "@/components/admin/dashboard/ApprovalInboxPanel";
 import { BranchHealthPanel } from "@/components/admin/dashboard/BranchHealthPanel";
 import { ExceptionCenterPanel } from "@/components/admin/dashboard/ExceptionCenterPanel";
+import { ProfitabilityTruthPanel } from "@/components/admin/dashboard/ProfitabilityTruthPanel";
 import { ReportBarChart } from "@/components/admin/reports/ReportCharts";
 import {
   buildAttentionMetrics,
@@ -33,6 +34,11 @@ import {
   buildBranchHealthScore,
   emphasizeBranchHealthForMode,
 } from "@/lib/branch-health";
+import {
+  buildProfitabilitySnapshot,
+  emphasizeProfitabilityForMode,
+} from "@/lib/profitability-truth";
+import type { ProfitLossReport } from "@/lib/admin-api";
 import {
   buildExceptionCenter,
   type DeliveryAssignmentLike,
@@ -480,6 +486,9 @@ export type OwnerCommandCenterProps = {
   purchasingEnabled?: boolean;
   hrEnabled?: boolean;
   financeState: OperationalState;
+  /** Posted P&L only — null when restricted, loading, or unavailable. */
+  profitLoss: ProfitLossReport | null;
+  profitLossState: OperationalState;
   onExceptionRetry?: () => void;
   orders: AdminOrderListItem[] | null;
   movements: StockMovement[] | null;
@@ -516,6 +525,8 @@ export function OwnerCommandCenter({
   purchasingEnabled = true,
   hrEnabled = true,
   financeState,
+  profitLoss,
+  profitLossState,
   onExceptionRetry,
   orders,
   movements,
@@ -724,6 +735,43 @@ export function OwnerCommandCenter({
     [branchHealthBase, selectedMode],
   );
 
+  const profitabilityBase = useMemo(
+    () =>
+      buildProfitabilitySnapshot({
+        branchId,
+        branchName: branchLabel,
+        nowMs: (now ?? new Date()).getTime(),
+        timezone: branchTimezone || data?.timezone || "Asia/Karachi",
+        financeEnabled,
+        ops: { data, state: opState },
+        accounting: {
+          profitLoss,
+          state: profitLossState,
+          unavailable:
+            financeEnabled &&
+            (profitLossState === "ERROR" ||
+              profitLossState === "OFFLINE" ||
+              profitLossState === "UNAVAILABLE"),
+        },
+      }),
+    [
+      branchId,
+      branchLabel,
+      now,
+      branchTimezone,
+      data,
+      opState,
+      financeEnabled,
+      profitLoss,
+      profitLossState,
+    ],
+  );
+
+  const profitability = useMemo(
+    () => emphasizeProfitabilityForMode(profitabilityBase, selectedMode),
+    [profitabilityBase, selectedMode],
+  );
+
   const todaySection = (
     <section className="mb-8" aria-labelledby="owner-today-heading" data-mode-section="today-kpis">
       <AdminSectionTitle
@@ -810,6 +858,14 @@ export function OwnerCommandCenter({
         loading={
           loading || kitchenState === "LOADING" || deliveryState === "LOADING" || financeState === "LOADING"
         }
+        commandMode={selectedMode}
+      />
+    ),
+    "profitability-truth": (
+      <ProfitabilityTruthPanel
+        key="profitability-truth"
+        result={profitability}
+        loading={loading || (financeEnabled && profitLossState === "LOADING")}
         commandMode={selectedMode}
       />
     ),

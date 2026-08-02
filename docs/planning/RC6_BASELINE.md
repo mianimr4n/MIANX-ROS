@@ -165,6 +165,7 @@ RC6 candidates are evidence-driven slice IDs, not linked issue numbers.
 | RC6-DASH-02 | **Merged** #183 → `80cd2c4…` |
 | RC6-DASH-03 | **Merged** #184 → `08ca0e413d8863f835cf21aa0c14736b61f39dc1` |
 | RC6-DASH-04 | **Merged** #185 → `1c1fecd4dbfd8a605ddd9995f34fa6470bffd6eb` |
-| Current runtime slice | **RC6-DASH-05** — Branch Health Score (repository; **not** Production-verified; explainable) |
-| Next runtime after DASH-05 | **RC6-DASH-06** |
+| RC6-DASH-05 | **Merged** #186 → `64d655760fb9564ac841bff05cd797241b2a7743` |
+| Current runtime slice | **RC6-DASH-06** — Profitability Truth (repository; **not** Production-verified) |
+| Next runtime after DASH-06 | **RC6-DASH-07** |
 | Pending Production operation | **NONE** |

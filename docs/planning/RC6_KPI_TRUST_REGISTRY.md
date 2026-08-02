@@ -155,9 +155,10 @@ Formulas unsupported by current repository evidence are marked **PROPOSED**.
 
 | Field | Content |
 | --- | --- |
-| Definition | Contribution / margin views |
-| Formula | **PROPOSED**; must label ESTIMATED vs ACCOUNTING |
-| Sources | Finance GL when wired; else UNAVAILABLE |
+| Definition | Dual-lane operational estimate vs accounting-posted views |
+| Formula | Ops: gross sales / orders / AOV from operations dashboard. Posted: `finance_profit_loss` revenue − expenses. Net sales / COGS / estimated profit deferred — see `rc6-dash-06/` |
+| Trust | IMPLEMENTED_NOT_PRODUCTION_VERIFIED after DASH-06; ESTIMATED vs ACCOUNTING labels required |
+| Sources | Ops KPIs + posted journals only; never substitute ops for posted |
 | Related | RC6-FIN-01, RC6-DASH-06 |
 
 ### KPI-ATTEND

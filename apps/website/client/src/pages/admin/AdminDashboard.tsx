@@ -36,6 +36,7 @@ import {
   listStockMovements,
   listSupplierInvoices,
   fetchFinanceAttention,
+  fetchProfitLoss,
   fetchHrAttention,
   fetchLoyaltyAttention,
   fetchMarketingAttention,
@@ -245,6 +246,16 @@ export default function AdminDashboard() {
     [token, branchIdFilter],
     {
       enabled: Boolean(token) && canLoadFinance && gateReady && !comingSoonBranch,
+      pollMs: 60_000,
+    },
+  );
+  /** Posted P&L only — requires a selected branch (API contract). */
+  const profitLoss = useOperationalData(
+    ({ signal, correlationId }) =>
+      fetchProfitLoss(token!, { branchId: branchIdFilter! }, { signal, correlationId }),
+    [token, branchIdFilter],
+    {
+      enabled: Boolean(token) && canLoadFinance && Boolean(branchIdFilter) && gateReady && !comingSoonBranch,
       pollMs: 60_000,
     },
   );
@@ -770,11 +781,24 @@ export default function AdminDashboard() {
           purchasingEnabled={canLoadPurchasing}
           hrEnabled={canLoadHr}
           financeState={financeAttention.state}
+          profitLoss={
+            !canLoadFinance || !branchIdFilter || profitLoss.data == null
+              ? null
+              : profitLoss.data
+          }
+          profitLossState={
+            !canLoadFinance
+              ? "UNAVAILABLE"
+              : !branchIdFilter
+                ? "EMPTY"
+                : profitLoss.state
+          }
           onExceptionRetry={() => {
             retry();
             kitchenTickets.retry();
             deliveryAssignments.retry();
             if (canLoadFinance) financeAttention.retry();
+            if (canLoadFinance && branchIdFilter) profitLoss.retry();
           }}
           orders={filteredOrders.length > 0 ? filteredOrders : recentOrdersSource}
           movements={wasteUnavailable ? null : (stockMovements.data ?? null)}

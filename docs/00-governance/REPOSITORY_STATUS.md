@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-02 — **RC6-DASH-05** Branch Health Score in progress after DASH-04 merge `1c1fecd…`; Production website still `152ce40…`
+**Last reconciled:** 2026-08-02 — **RC6-DASH-06** Profitability Truth in progress after DASH-05 merge `64d6557…`; Production website still `152ce40…`
 
 ---
 
@@ -36,7 +36,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main | `1c1fecd4dbfd8a605ddd9995f34fa6470bffd6eb` | Post–RC6-DASH-04 (#185); DASH-05 implements Branch Health Score on a feature branch |
+| Repository main | `64d655760fb9564ac841bff05cd797241b2a7743` | Post–RC6-DASH-05 (#186); DASH-06 implements Profitability Truth on a feature branch |
 | Released baseline | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Annotated git tag; **no** GitHub Release object |
 | Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Unchanged |
 | RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
@@ -58,7 +58,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Release Policy | Active |
 | RC4 | Released (`v1.3.0`) |
 | RC5 | **Released** (`v1.4.0`; certified + Production website verified) |
-| RC6 | Honesty wave + DASH-00…04 merged; **RC6-DASH-05** Branch Health Score in progress (explainable; not Production-verified) |
+| RC6 | Honesty wave + DASH-00…05 merged; **RC6-DASH-06** Profitability Truth in progress (ops≠posted; not Production-verified) |
 
 ---
 
@@ -66,10 +66,10 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **RC6-DASH-05** — Explainable Branch Health Score (repository; **not** Production-verified; DRILL_DOWN / INSIGHT_ONLY) |
-| RC6 planning | … · DASH-03 #184 · DASH-04 #185 → `1c1fecd…` |
+| Current Delivery Slice | **RC6-DASH-06** — Profitability Truth (repository; **not** Production-verified; Operational Estimate ≠ Accounting Posted) |
+| RC6 planning | … · DASH-04 #185 · DASH-05 #186 → `64d6557…` |
 | Completed RC5 slices (on `main`) | OPS-01, A11Y-01, DOC-01, TEST-01, PERF-01, OBS-01, QA-01 |
-| Next after DASH-05 (not started) | **RC6-DASH-06** |
+| Next after DASH-06 (not started) | **RC6-DASH-07** |
 | Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc5-production-cutover/` |
 | RC5 release blockers | **None evidenced** |
 | Released baseline | `v1.4.0` @ `96f1e80…` |

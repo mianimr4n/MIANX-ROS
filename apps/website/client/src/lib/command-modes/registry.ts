@@ -8,6 +8,7 @@ export type ModeSectionId =
   | "exception-center"
   | "approval-inbox"
   | "branch-health"
+  | "profitability-truth"
   | "mode-summary"
   | "today-kpis"
   | "live-ops-kpis"
@@ -34,6 +35,7 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "exception-center",
       "approval-inbox",
       "branch-health",
+      "profitability-truth",
       "mode-summary",
       "unsupported-note",
       "attention-kpis",
@@ -45,7 +47,14 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "top-products",
       "owner-brief",
     ],
-    emphasize: ["exception-center", "approval-inbox", "branch-health", "attention-kpis", "unsupported-note"],
+    emphasize: [
+      "exception-center",
+      "approval-inbox",
+      "branch-health",
+      "profitability-truth",
+      "attention-kpis",
+      "unsupported-note",
+    ],
     unsupportedNote:
       "No supported pre-open exceptions detected does not mean ready to open. " +
       `Not included yet: ${UNSUPPORTED_READINESS_SIGNALS.slice(0, 4).join(", ")}, and more.`,
@@ -56,6 +65,7 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "exception-center",
       "approval-inbox",
       "branch-health",
+      "profitability-truth",
       "mode-summary",
       "today-kpis",
       "live-ops-kpis",
@@ -66,7 +76,14 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "top-products",
       "owner-brief",
     ],
-    emphasize: ["exception-center", "approval-inbox", "branch-health", "live-ops-kpis", "today-kpis"],
+    emphasize: [
+      "exception-center",
+      "approval-inbox",
+      "branch-health",
+      "profitability-truth",
+      "live-ops-kpis",
+      "today-kpis",
+    ],
     unsupportedNote: "",
   },
   CLOSING: {
@@ -75,6 +92,7 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "exception-center",
       "approval-inbox",
       "branch-health",
+      "profitability-truth",
       "mode-summary",
       "unsupported-note",
       "live-ops-kpis",
@@ -86,7 +104,14 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "top-products",
       "owner-brief",
     ],
-    emphasize: ["exception-center", "approval-inbox", "branch-health", "live-ops-kpis", "unsupported-note"],
+    emphasize: [
+      "exception-center",
+      "approval-inbox",
+      "branch-health",
+      "profitability-truth",
+      "live-ops-kpis",
+      "unsupported-note",
+    ],
     unsupportedNote:
       "Closing view is partial; register and staff clock-out readiness are not yet included. " +
       "Z-report closure, EOD pack, and rider COD settlement remain deferred.",
