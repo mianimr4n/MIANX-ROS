@@ -1,8 +1,8 @@
 # RC5-OPS-01 — Fresh-local privilege verification
 
-**Date:** 2026-08-02  
-**Branch:** `feature/rc5-ops-01-agents-truth`  
-**Baseline SHA:** `1a3e61ff08d8dd521158c765f3867b89136d0b1e`  
+**Date:** 2026-08-02
+**Branch:** `feature/rc5-ops-01-agents-truth`
+**Baseline SHA:** `1a3e61ff08d8dd521158c765f3867b89136d0b1e`
 **Conclusion:** `FRESH_LOCAL_PRIVILEGE_CONTRACT_PASS`
 
 ## Local-only safety
@@ -60,7 +60,7 @@ Sample matrix after fresh reset (**no manual GRANT**):
 | authenticated | users | yes | no | yes | no | no |
 | service_role | (sampled tables) | yes | yes | yes | yes | yes |
 
-`SET ROLE anon` / `authenticated` + `SELECT id FROM public.branches LIMIT 1` → **success** (exit 0).  
+`SET ROLE anon` / `authenticated` + `SELECT id FROM public.branches LIMIT 1` → **success** (exit 0).
 **No `42501`** observed in privilege probes.
 
 Schema USAGE: `anon` / `authenticated` / `service_role` → true.
@@ -76,3 +76,7 @@ HTTP probes to `http://127.0.0.1:54321/rest/v1/branches` returned **401** in thi
 ## Conclusion
 
 `FRESH_LOCAL_PRIVILEGE_CONTRACT_PASS` — baseline + harden migrations apply on fresh local reset; application roles retain intended access; dangerous client privileges remain revoked on sampled catalog/ops tables; no residual gap requiring a new privilege migration.
+
+## RC1 gate note
+
+After db reset, pnpm rc1:gate auth/KDS steps require pnpm local:seed (local only). Initial gate FAIL with `NO_SESSION` was environmental (empty staff after reset), not a privilege `42501`. After reseed: `pnpm rc1:gate` **PASS**.

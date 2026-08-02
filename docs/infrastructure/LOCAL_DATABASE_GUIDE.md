@@ -41,7 +41,7 @@ If you see `42501 permission denied` after a clean local reset:
 3. Investigate the exact role/table/action — do not paper over with undocumented blanket grants
 4. Production privilege changes require separate authorization (not part of local startup)
 
-Empirical local verification (no Production): `docs/testing/acceptance-evidence/rc5-ops-01/`.  
+Empirical local verification (no Production): `docs/testing/acceptance-evidence/rc5-ops-01/`.
 Static SQL-intent tests: `tests/database/rc5-ops-01-privilege-contract.test.mjs` (do not claim live-DB proof).
 
 ## Rules

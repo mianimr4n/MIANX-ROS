@@ -1,10 +1,10 @@
 # RC5-OPS-01 Final Report
 
-**Status:** Ready for PR review  
-**Slice:** Local privilege contract / AGENTS truth  
-**Branch:** `feature/rc5-ops-01-agents-truth`  
-**Baseline SHA:** `1a3e61ff08d8dd521158c765f3867b89136d0b1e`  
-**Fresh-local:** `FRESH_LOCAL_PRIVILEGE_CONTRACT_PASS`  
+**Status:** Ready for PR review
+**Slice:** Local privilege contract / AGENTS truth
+**Branch:** `feature/rc5-ops-01-agents-truth`
+**Baseline SHA:** `1a3e61ff08d8dd521158c765f3867b89136d0b1e`
+**Fresh-local:** `FRESH_LOCAL_PRIVILEGE_CONTRACT_PASS`
 **New privilege migration:** none (not required)
 
 ## Contradiction resolved

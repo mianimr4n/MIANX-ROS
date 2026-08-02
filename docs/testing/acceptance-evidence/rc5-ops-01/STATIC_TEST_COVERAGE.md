@@ -1,6 +1,6 @@
 # RC5-OPS-01 — Static test coverage
 
-**Suite:** `tests/database/rc5-ops-01-privilege-contract.test.mjs`  
+**Suite:** `tests/database/rc5-ops-01-privilege-contract.test.mjs`
 **Runner:** Node test (`pnpm test:db` includes `tests/database/**/*.test.mjs`)
 
 ## What is covered
@@ -17,7 +17,7 @@ Patterns use case-insensitive regex with flexible whitespace so harmless formatt
 
 ## Explicit limitation
 
-These tests verify **migration presence and SQL intent in the repository only**.  
+These tests verify **migration presence and SQL intent in the repository only**.
 They **do not** prove live database privilege behavior. CI has no live Supabase privilege job.
 
 Live proof: `FRESH_LOCAL_PRIVILEGE_VERIFICATION.md`.

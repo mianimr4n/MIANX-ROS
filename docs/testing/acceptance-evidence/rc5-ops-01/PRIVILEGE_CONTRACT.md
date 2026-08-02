@@ -1,6 +1,6 @@
 # RC5-OPS-01 — Privilege contract
 
-**Baseline SHA:** `1a3e61ff08d8dd521158c765f3867b89136d0b1e`  
+**Baseline SHA:** `1a3e61ff08d8dd521158c765f3867b89136d0b1e`
 **Empirical status:** `FRESH_LOCAL_PRIVILEGE_CONTRACT_PASS`
 
 ## Layers
