@@ -9,6 +9,7 @@ export type ModeSectionId =
   | "approval-inbox"
   | "branch-health"
   | "profitability-truth"
+  | "eod-pack"
   | "mode-summary"
   | "today-kpis"
   | "live-ops-kpis"
@@ -36,6 +37,7 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "approval-inbox",
       "branch-health",
       "profitability-truth",
+      "eod-pack",
       "mode-summary",
       "unsupported-note",
       "attention-kpis",
@@ -52,6 +54,7 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "approval-inbox",
       "branch-health",
       "profitability-truth",
+      "eod-pack",
       "attention-kpis",
       "unsupported-note",
     ],
@@ -66,6 +69,7 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "approval-inbox",
       "branch-health",
       "profitability-truth",
+      "eod-pack",
       "mode-summary",
       "today-kpis",
       "live-ops-kpis",
@@ -91,6 +95,7 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
     sections: [
       "exception-center",
       "approval-inbox",
+      "eod-pack",
       "branch-health",
       "profitability-truth",
       "mode-summary",
@@ -105,16 +110,16 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "owner-brief",
     ],
     emphasize: [
+      "eod-pack",
       "exception-center",
       "approval-inbox",
       "branch-health",
       "profitability-truth",
-      "live-ops-kpis",
       "unsupported-note",
     ],
     unsupportedNote:
       "Closing view is partial; register and staff clock-out readiness are not yet included. " +
-      "Z-report closure, EOD pack, and rider COD settlement remain deferred.",
+      "EOD Pack is a read-only preview — Z-report closure, finalize/approve pack, and rider COD settlement remain deferred.",
   },
 };
 

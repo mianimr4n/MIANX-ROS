@@ -1,4 +1,4 @@
-import { useCallback, useMemo, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 
 import { AdminKpiCard, AdminSectionTitle, type AdminKpiState } from "@/components/admin/AdminKpiCard";
@@ -6,6 +6,7 @@ import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components
 import { CommandModeHeader } from "@/components/admin/dashboard/CommandModeHeader";
 import { ApprovalInboxPanel } from "@/components/admin/dashboard/ApprovalInboxPanel";
 import { BranchHealthPanel } from "@/components/admin/dashboard/BranchHealthPanel";
+import { EodPackPanel } from "@/components/admin/dashboard/EodPackPanel";
 import { ExceptionCenterPanel } from "@/components/admin/dashboard/ExceptionCenterPanel";
 import { ProfitabilityTruthPanel } from "@/components/admin/dashboard/ProfitabilityTruthPanel";
 import { ReportBarChart } from "@/components/admin/reports/ReportCharts";
@@ -38,6 +39,7 @@ import {
   buildProfitabilitySnapshot,
   emphasizeProfitabilityForMode,
 } from "@/lib/profitability-truth";
+import { buildEodPack, emphasizeEodPackForMode } from "@/lib/eod-pack";
 import type { ProfitLossReport } from "@/lib/admin-api";
 import {
   buildExceptionCenter,
@@ -772,6 +774,106 @@ export function OwnerCommandCenter({
     [profitabilityBase, selectedMode],
   );
 
+  const [eodRefreshTick, setEodRefreshTick] = useState(0);
+
+  const eodPackBase = useMemo(
+    () =>
+      buildEodPack({
+        branchId,
+        branchName: branchLabel,
+        nowMs: (now ?? new Date()).getTime(),
+        timezone: branchTimezone || data?.timezone || "Asia/Karachi",
+        financeEnabled,
+        purchasingEnabled,
+        hrEnabled,
+        ops: { data, state: opState },
+        kitchen: { tickets: kitchenTickets, state: kitchenState },
+        delivery: { assignments: deliveryAssignments, state: deliveryState },
+        exceptionCenter: {
+          exceptions: exceptionCenter.exceptions.map((e) => ({
+            type: e.type,
+            domain: e.domain,
+            severity: e.severity,
+            count: e.count,
+            title: e.title,
+            oldestAt: e.oldestAt,
+            source: e.source,
+            trustState: e.trustState,
+            drillDown: e.drillDown,
+            limitation: e.limitation ?? e.drillDown.limitation,
+          })),
+          totalFailure: exceptionCenter.totalFailure,
+          partialFailure: exceptionCenter.partialFailure,
+          unavailableSources: exceptionCenter.unavailableSources,
+        },
+        approvalInbox: {
+          items: approvalInbox.items.map((a) => ({
+            approvalType: a.approvalType,
+            domain: a.domain,
+            priority: a.priority,
+            count: a.count,
+            title: a.title,
+            source: a.source,
+            destinationHref: a.destinationHref,
+            destinationLabel: a.destinationLabel,
+          })),
+          totalPendingCount: approvalInbox.totalPendingCount,
+          urgentCount: approvalInbox.urgentCount,
+          totalFailure: approvalInbox.totalFailure,
+          deferredDomainsNote: approvalInbox.deferredDomainsNote,
+        },
+        branchHealth: {
+          score: branchHealthBase.score,
+          scoreState: branchHealthBase.scoreState,
+          statusLabel: branchHealthBase.statusLabel,
+          confidence: branchHealthBase.confidence,
+          coveragePercent: branchHealthBase.coveragePercent,
+          freshnessState: branchHealthBase.freshnessState,
+        },
+        profitability: {
+          operationalState: profitabilityBase.operational.state,
+          accountingState: profitabilityBase.accounting.state,
+          accountingPeriod: profitabilityBase.accounting.accountingPeriod,
+          operationalCoverage: profitabilityBase.operational.coveragePercent,
+          accountingCoverage: profitabilityBase.accounting.coveragePercent,
+        },
+        financeAttention: extras.financeAttention
+          ? {
+              unavailable: Boolean(extras.financeAttention.unavailable),
+              unresolvedCashVariance: extras.financeAttention.unresolvedCashVariance,
+              cashClosesAwaitingApproval: extras.financeAttention.cashClosesAwaitingApproval,
+              pendingExpenseApprovals: extras.financeAttention.pendingExpenseApprovals,
+            }
+          : null,
+      }),
+    [
+      branchId,
+      branchLabel,
+      now,
+      eodRefreshTick,
+      branchTimezone,
+      data,
+      opState,
+      financeEnabled,
+      purchasingEnabled,
+      hrEnabled,
+      kitchenTickets,
+      kitchenState,
+      deliveryAssignments,
+      deliveryState,
+      exceptionCenter,
+      approvalInbox,
+      branchHealthBase,
+      profitabilityBase,
+      extras.financeAttention,
+    ],
+  );
+
+  const eodPack = useMemo(
+    () => emphasizeEodPackForMode(eodPackBase, selectedMode),
+    [eodPackBase, selectedMode],
+  );
+
   const todaySection = (
     <section className="mb-8" aria-labelledby="owner-today-heading" data-mode-section="today-kpis">
       <AdminSectionTitle
@@ -867,6 +969,18 @@ export function OwnerCommandCenter({
         result={profitability}
         loading={loading || (financeEnabled && profitLossState === "LOADING")}
         commandMode={selectedMode}
+      />
+    ),
+    "eod-pack": (
+      <EodPackPanel
+        key="eod-pack"
+        result={eodPack}
+        loading={loading || kitchenState === "LOADING" || deliveryState === "LOADING"}
+        commandMode={selectedMode}
+        onRefresh={() => {
+          setEodRefreshTick((n) => n + 1);
+          onExceptionRetry?.();
+        }}
       />
     ),
     "mode-summary": <div key="mode-summary">{modeSummary}</div>,
