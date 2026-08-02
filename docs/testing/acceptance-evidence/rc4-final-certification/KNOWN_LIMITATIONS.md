@@ -11,7 +11,7 @@ None. Security closeout is complete — see `SECURITY_CLOSEOUT.md`.
 | ID | Limitation | Notes |
 | --- | --- | --- |
 | OPS-1 | Free-plan Supabase | Logical dumps only; no PITR |
-| OPS-2 | Local grants gap | Fresh local `supabase start` still needs public grants until migrations include them |
+| OPS-2 | Local grants guidance (historical) | **Resolved for operator truth in RC5-OPS-01** — privileges are migration-managed (`20260714120000` + `20260718130000`); fresh-local empirical PASS without manual GRANT. Live-DB privilege job still deferred in CI. |
 | OPS-3 | Render log export | Session often lacks Render API key; smoke uses authenticated API responses |
 | OPS-4 | Some Analytics modules | Deferred/unavailable metrics remain honest (by design) |
 | OPS-5 | Supplier A/B RLS matrix | Partial Production credential coverage historically noted |

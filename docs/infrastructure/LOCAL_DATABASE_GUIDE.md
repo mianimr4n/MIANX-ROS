@@ -22,9 +22,27 @@ From `supabase status`:
 
 Default local DB password is the Supabase CLI demo password — **never** reuse for production.
 
-## Grants
+## Privileges (local contract)
 
-Migration `20260714120000_grant_public_access.sql` grants table privileges for fresh local installs. Older `AGENTS.md` notes about missing grants apply mainly to environments that ran older migration sets; prefer `db reset` if PostgREST returns `42501`.
+Privileges are **migration-managed**. Fresh `supabase start` / `db reset` applies:
+
+| Layer | Migration |
+| --- | --- |
+| Baseline | `20260714120000_grant_public_access.sql` |
+| Harden client surface | `20260718130000_p0_harden_grants_and_definer_execute.sql` |
+| Feature-selective | Later migrations as needed |
+
+Normal workflow: start or reset — **do not** run blanket manual `GRANT` after every reset.
+
+If you see `42501 permission denied` after a clean local reset:
+
+1. Confirm migrations through tip applied (`supabase migration list` / `schema_migrations`)
+2. Prefer `pnpm local:reset` when local migration state is stale
+3. Investigate the exact role/table/action — do not paper over with undocumented blanket grants
+4. Production privilege changes require separate authorization (not part of local startup)
+
+Empirical local verification (no Production): `docs/testing/acceptance-evidence/rc5-ops-01/`.  
+Static SQL-intent tests: `tests/database/rc5-ops-01-privilege-contract.test.mjs` (do not claim live-DB proof).
 
 ## Rules
 

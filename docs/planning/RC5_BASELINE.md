@@ -19,7 +19,7 @@ RC5 work **starts from** `e40351b`. Production app code may remain on `e5c6daf` 
 
 | ID | Debt | Evidence |
 | --- | --- | --- |
-| TD-1 | Local Supabase public grants gap after fresh start / reset | `AGENTS.md`, RC4 `KNOWN_LIMITATIONS` OPS-2 |
+| TD-1 | Local privilege contract / AGENTS truth | **Addressed by RC5-OPS-01** (docs + static tests + fresh-local empirical). Residual: no live-DB privilege job in CI. |
 | TD-2 | Free-plan Supabase backup posture (no PITR) | RC4 OPS-1 |
 | TD-3 | Package.json versions diverge from `v*` tag convention | website `1.0.0`, API `0.1.0` vs tag `v1.2.0` / proposed `v1.3.0` |
 | TD-4 | No automated GitHub Release workflow | only `.github/workflows/ci.yml` |

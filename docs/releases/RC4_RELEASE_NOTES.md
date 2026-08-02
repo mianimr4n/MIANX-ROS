@@ -78,7 +78,7 @@ Modules exercised in closeout smoke include auth/me, Owner dashboard, Analytics,
 From `docs/testing/acceptance-evidence/rc4-final-certification/KNOWN_LIMITATIONS.md`:
 
 - OPS-1: Free-plan Supabase — logical dumps only; no PITR
-- OPS-2: Fresh local `supabase start` still needs public grants until migrations include them
+- OPS-2: Historical local grants guidance — **operator truth closed in RC5-OPS-01** (migration-managed; fresh-local PASS; CI live-DB privilege job still deferred)
 - OPS-3: Render log export often unavailable without API key; smokes use authenticated API responses
 - OPS-4: Some Analytics modules remain deferred/unavailable by design (honest UI)
 - OPS-5: Supplier A/B RLS matrix historically had partial credential coverage

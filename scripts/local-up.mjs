@@ -70,8 +70,11 @@ Next manual commands (Windows / local):
        npx supabase status -o env > .tmp/supabase.local.env
   4) Write local app env (refuses cloud):
        node scripts/write-local-env-from-supabase.mjs .tmp/supabase.local.env
-  5) Grants (known repo gap — see AGENTS.md):
-       apply public schema grants to anon/authenticated/service_role
+  5) Privileges are migration-managed (see AGENTS.md):
+       baseline 20260714120000_grant_public_access + harden 20260718130000_p0_harden…
+       if migration state looks stale → pnpm local:reset
+       persistent 42501 → investigate role/table/action (do not blanket GRANT)
+       Production privilege changes are not part of local startup
   6) Start API + website:
        pnpm --filter @telepizza/api dev
        pnpm dev:website
