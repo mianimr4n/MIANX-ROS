@@ -205,3 +205,14 @@
 | D3-05 | Unsupported readiness domains are explicit (no false ready-to-open/close) |
 | D3-06 | No branch open/close, checklist, register, migration, provider, or AI |
 | D3-07 | Acceptance evidence pack + gates PASS; **not Production-verified** |
+
+### RC6-DASH-04 — Owner Approval Inbox foundation
+
+| # | Criterion |
+| --- | --- |
+| A-01 | Central inbox surfaces selected verified approval/review sources only |
+| A-02 | Priority ordering is deterministic and documented |
+| A-03 | Filters and drill-downs are truthful; no invented destination filters |
+| A-04 | No inline approve/reject; maturity remains DRILL_DOWN |
+| A-05 | Source failure is never shown as all-clear zero |
+| A-06 | Acceptance evidence pack + gates PASS; **not Production-verified** |

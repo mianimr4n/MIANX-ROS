@@ -1,9 +1,11 @@
 # RC6 Roadmap
 
-**Status:** Living roadmap — **RC6-DASH-02** merged; **RC6-DASH-03** daily command modes in progress
+**Status:** Living roadmap — **RC6-DASH-03** merged; **RC6-DASH-04** Approval Inbox in progress
+
+**Current repository tip (DASH-04 baseline):** `08ca0e413d8863f835cf21aa0c14736b61f39dc1`
 **Date:** 2026-08-02
 **Baseline tag:** `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824`
-**Current repository tip (DASH-03 baseline):** `80cd2c4f6d554c805d4e72973c83311242c5a242`
+**Current repository tip (DASH-04 baseline):** `08ca0e413d8863f835cf21aa0c14736b61f39dc1`
 **Production website runtime:** `152ce409609dc78e48d0d2b6b0c34a35d6338c24`
 **Migration tip:** `20260801180000`
 
@@ -22,7 +24,8 @@
 | RC6-DASH-00 | Command Center contracts | `rc6-dash-00/` · #181 → `cc09e239…` |
 | RC6-DASH-01 | Exception Center read-only (repo) | `rc6-dash-01/` · #182 → `b913eca…` · **not Production-verified** |
 | RC6-DASH-02 | Trusted KPI drill-downs (repo) | `rc6-dash-02/` · #183 → `80cd2c4…` · **not Production-verified** · DRILL_DOWN only |
-| RC6-DASH-03 | Daily command modes (repo) | `rc6-dash-03/` · **not Production-verified** · advisory / read-only |
+| RC6-DASH-03 | Daily command modes (repo) | `rc6-dash-03/` · #184 → `08ca0e4…` · **not Production-verified** · advisory / read-only |
+| RC6-DASH-04 | Approval Inbox foundation (repo) | `rc6-dash-04/` · **not Production-verified** · DRILL_DOWN only |
 
 ---
 
@@ -67,10 +70,8 @@ Each candidate scored **1–5**. Preference direction:
 | --- | --- |
 | **RC6-DASH-01** | Exception Center read-only foundation (**merged** — repo; not Prod-verified) |
 | **RC6-DASH-02** | Actionable KPI drill-downs (**merged** — repo; not Prod-verified) |
-| **RC6-DASH-03** | Opening/live/closing modes (**this wave** — advisory / read-only) |
-| RC6-DASH-04 | Approval Inbox foundation (**next runtime** after DASH-03) |
-| RC6-DASH-03 | Opening/live/closing modes |
-| RC6-DASH-04 | Approval Inbox |
+| **RC6-DASH-03** | Opening/live/closing modes (**merged** — repo; not Prod-verified) |
+| **RC6-DASH-04** | Approval Inbox foundation (**this wave** — DRILL_DOWN only) |
 | RC6-DASH-05 | Branch Health Score |
 | RC6-DASH-06 | Profitability truth |
 | RC6-DASH-07 | EOD pack |

@@ -106,7 +106,8 @@
 | Owner Command Center depth | Still relevant · DASH-01…03 (repo; not Prod-verified); DASH-04+ remain |
 | Exception Center (ops) | **DASH-01 merged** (selected sources; not Prod-verified) |
 | KPI drill-downs | **DASH-02 merged** (selected KPIs; DRILL_DOWN; not Prod-verified) |
-| Daily command modes | **DASH-03 in repository** (advisory suggestion; read-only; not Prod-verified) |
+| Daily command modes | **DASH-03 merged** (advisory; read-only; not Prod-verified) |
+| Approval Inbox | **DASH-04 in repository** (selected sources; DRILL_DOWN only; not Prod-verified) |
 | Loyalty/marketing provider send | Provider-dependent · Founder-gated |
 | WhatsApp conversation/webhooks | Provider-dependent · not present |
 | Analytics worker | Still relevant · backend |

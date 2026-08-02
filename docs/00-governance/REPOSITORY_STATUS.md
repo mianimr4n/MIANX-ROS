@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-02 — **RC6-DASH-03** daily command modes in progress after DASH-02 merge `80cd2c4…`; Production website still `152ce40…`
+**Last reconciled:** 2026-08-02 — **RC6-DASH-04** Approval Inbox in progress after DASH-03 merge `08ca0e4…`; Production website still `152ce40…`
 
 ---
 
@@ -36,7 +36,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main | `80cd2c4f6d554c805d4e72973c83311242c5a242` | Post–RC6-DASH-02 (#183); DASH-03 implements daily command modes on a feature branch |
+| Repository main | `08ca0e413d8863f835cf21aa0c14736b61f39dc1` | Post–RC6-DASH-03 (#184); DASH-04 implements Approval Inbox on a feature branch |
 | Released baseline | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Annotated git tag; **no** GitHub Release object |
 | Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Unchanged |
 | RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
@@ -58,7 +58,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Release Policy | Active |
 | RC4 | Released (`v1.3.0`) |
 | RC5 | **Released** (`v1.4.0`; certified + Production website verified) |
-| RC6 | Honesty wave + DASH-00…02 merged; **RC6-DASH-03** daily command modes in progress (read-only; not Production-verified) |
+| RC6 | Honesty wave + DASH-00…03 merged; **RC6-DASH-04** Approval Inbox in progress (DRILL_DOWN; not Production-verified) |
 
 ---
 
@@ -66,10 +66,10 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **RC6-DASH-03** — Owner daily command modes (repository; **not** Production-verified; read-only / DRILL_DOWN) |
-| RC6 planning | … · DASH-01 #182 · DASH-02 #183 → `80cd2c4…` |
+| Current Delivery Slice | **RC6-DASH-04** — Owner Approval Inbox foundation (repository; **not** Production-verified; DRILL_DOWN only) |
+| RC6 planning | … · DASH-02 #183 · DASH-03 #184 → `08ca0e4…` |
 | Completed RC5 slices (on `main`) | OPS-01, A11Y-01, DOC-01, TEST-01, PERF-01, OBS-01, QA-01 |
-| Next after DASH-03 (not started) | **RC6-DASH-04** — Approval Inbox foundation |
+| Next after DASH-04 (not started) | **RC6-DASH-05** |
 | Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc5-production-cutover/` |
 | RC5 release blockers | **None evidenced** |
 | Released baseline | `v1.4.0` @ `96f1e80…` |
