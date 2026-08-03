@@ -11,18 +11,21 @@ Owner-facing operating documentation for Telepizza ROS release and repository ti
 
 | Concept | Canonical value |
 | --- | --- |
-| Current verified repository main | `b14163ccbc82fca0b2856ea137bddb746ed5716b` |
-| Latest released tag | `v1.4.0` (annotated git tag; no GitHub Release) — Phase 1 closeout targets `v1.5.0` |
-| Released tag commit | `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` |
+| Current verified repository main | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` |
+| Latest released tag | `v1.5.0` (annotated git tag; **no** GitHub Release) |
+| Released tag object | `d52f3a4729f398143463e72e8147e4cb0ada1faa` |
+| Released tag commit (peeled) | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` |
+| Prior released tag | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` (unchanged) |
 | Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` |
-| Production website SHA | `b14163ccbc82fca0b2856ea137bddb746ed5716b` (Vercel `dpl_Hi35GYuauM5W9hdomkPEhppmuV6D`) |
-| Production API SHA (observed) | `b14163ccbc82fca0b2856ea137bddb746ed5716b` (`/healthz`/`/readyz`; Phase 1 did not intentionally deploy backend) |
+| RC6 feature/runtime tip | `b14163ccbc82fca0b2856ea137bddb746ed5716b` (`apps/website` identical to `830dbc8…`) |
+| Production website commit | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` (Vercel `dpl_BtPH8AvtUsKHwjJaQAf7gEVMMpom`) |
+| Production API SHA (observed) | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` (`/healthz`/`/readyz`; Phase 1 did not intentionally deploy backend) |
 | Production migration tip | `20260801180000` |
-| Prior website rollback target | `dpl_HhvEuMZERVSLi7KK694cfeizcC7R` (`bf5912c…`) — not executed |
+| Prior website rollback target | `dpl_Hi35GYuauM5W9hdomkPEhppmuV6D` (`b14163c…`) — not executed |
 
 ## Current verified state
 
-Verified **2026-08-03** against repository main `b14163ccbc82fca0b2856ea137bddb746ed5716b` (RC6 Phase 1 Production website runtime; Owner smoke PASS).
+RC6 Phase 1 was released as annotated tag `v1.5.0` at closeout commit `830dbc8…`. Production deployment `dpl_BtPH8…` runs that commit. The website runtime files are identical to QA-04 runtime tip `b14163c…`. Final verification (public smoke, public a11y, Owner smoke `failCount: 0`, logout/protected-route, CI) PASS on Production; no backend deploy; no migration/Production SQL.
 
 ### RC4 release
 
@@ -52,17 +55,18 @@ Do **not** infer Production deployment from merge history alone — website cuto
 | Item | Status |
 | --- | --- |
 | DASH-00…08 + QA-03 | Merged through #190 → `bf5912c…` |
-| QA-04 logout bounce fix | Merged #191 → `b14163c…` |
-| Production website | **Verified** at `b14163c…` / `dpl_Hi35GYu…` |
-| Phase 1 closeout + `v1.5.0` | In progress — `docs/testing/acceptance-evidence/rc6-phase1-closeout/` |
+| QA-04 logout bounce fix | Merged #191 → `b14163c…` (feature/runtime tip) |
+| Phase 1 closeout docs | Merged #192 → `830dbc8…` |
+| Production website | **Released** at `830dbc8…` / `dpl_BtPH8…` (website files ≡ `b14163c…`) |
+| Annotated release | **`v1.5.0`** tag object `d52f3a47…` — evidence `rc6-phase1-closeout/` + `rc6-v1.5.0-anchor-sync/` |
 | Phase 2 runtime | **Not started** |
 | Planning evidence | `docs/planning/RC6_*.md` |
 
 
 ## What is LIVE
 
-- Website on Vercel (`telepizza-website`) at SHA `b14163c…`
-- API on Render (`telepizza-api`) — observed `gitSha` `b14163c…`
+- Website on Vercel (`telepizza-website`) at commit `830dbc8…` / `dpl_BtPH8…`
+- API on Render (`telepizza-api`) — observed `gitSha` `830dbc8…`
 - PostgreSQL + Auth on Supabase
 - Royal Orchard branch status = `operating`
 - Northern Bypass branch status = `coming-soon`

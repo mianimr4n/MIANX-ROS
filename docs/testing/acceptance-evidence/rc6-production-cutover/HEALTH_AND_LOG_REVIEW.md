@@ -6,8 +6,8 @@
 | --- | --- |
 | Website public smoke | PASS (8/8) |
 | Owner smoke | PASS (`ok: true`, `failCount: 0`) |
-| API `/healthz` | 200 / ok / `gitSha=b14163c…` / db connectivity ok |
-| API `/readyz` | 200 / ok / `issues: []` / `gitSha=b14163c…` |
+| API `/healthz` | 200 / ok / `gitSha=830dbc8…` (at release; historical QA-04 window observed `b14163c…`) / db connectivity ok |
+| API `/readyz` | 200 / ok / `issues: []` / `gitSha=830dbc8…` (historical QA-04: `b14163c…`) |
 | SQLSTATE 42703 / 42P01 / 42501 in probes | not observed |
 | Unexpected 5xx in public smoke | not observed |
 | Chunk/asset failures | not observed |

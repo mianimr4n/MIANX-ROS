@@ -2,7 +2,7 @@
 
 **Status:** ACTIVE Owner-first documentation spine
 **Authority:** Navigation for Founder / Owner (super-admin) and engineering
-**Last verified:** 2026-08-03 — RC6 Phase 1 Production-verified; see `00-governance/REPOSITORY_STATUS.md`
+**Last verified:** 2026-08-03 — RC6 Phase 1 **released** as `v1.5.0` @ `830dbc8…` / `dpl_BtPH8…`; see `00-governance/REPOSITORY_STATUS.md`
 
 ---
 

@@ -1,9 +1,11 @@
 # RC6 Capability Truth
 
-**Status:** Living capability truth — Phase 1 Owner Command Center Production-verified (PASS WITH LIMITATIONS); Phase 2 Delivery/Settings not started
-**Date:** 2026-08-02
-**Baseline tip:** `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` (`v1.4.0`)
-**Production website runtime:** `152ce409609dc78e48d0d2b6b0c34a35d6338c24`
+**Status:** Living capability truth — Phase 1 Owner Command Center **released** as `v1.5.0` (PASS WITH LIMITATIONS); Phase 2 Delivery/Settings not started
+**Date:** 2026-08-03
+**Released tag:** `v1.5.0` @ `830dbc8b5916cc0a724a0d7489a0e34387a26f78`
+**Feature/runtime tip:** `b14163ccbc82fca0b2856ea137bddb746ed5716b` (`apps/website` ≡ released commit)
+**Production website commit:** `830dbc8b5916cc0a724a0d7489a0e34387a26f78` (`dpl_BtPH8AvtUsKHwjJaQAf7gEVMMpom`)
+**Baseline prior tag:** `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824`
 
 > Truth statuses use the closed enum below. A route or sidebar entry alone is **not** implementation proof. A migration alone is not E2E proof. A test fixture alone is not Production proof.
 

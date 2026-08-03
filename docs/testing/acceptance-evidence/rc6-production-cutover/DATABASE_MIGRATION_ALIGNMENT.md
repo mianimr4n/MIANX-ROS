@@ -4,7 +4,7 @@
 | --- | --- |
 | Expected Production migration tip | `20260801180000` |
 | Latest repository migration | `20260801180000_rc4_loyalty_marketing_depth.sql` |
-| Migrations in `v1.4.0..b14163c` | **none** |
+| Migrations in `v1.4.0..830dbc8` (incl. tip `b14163c`) | **none** |
 | Production SQL by Phase 1 | **none** |
 | Migration performed by Phase 1 | **none** |
 | `pnpm test:db` (local, prior candidate) | PASS on `bf5912c…` |

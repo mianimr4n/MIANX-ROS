@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-03 — **RC6 Phase 1** Owner Command Center Production-verified (`b14163c…` / `dpl_Hi35GYu…`); closeout → annotated `v1.5.0` pending docs merge
+**Last reconciled:** 2026-08-03 — **RC6 Phase 1 released** as annotated `v1.5.0` at closeout `830dbc8…`; Production `dpl_BtPH8…` runs that commit (website files identical to QA-04 tip `b14163c…`)
 
 ---
 
@@ -36,15 +36,17 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main | `b14163ccbc82fca0b2856ea137bddb746ed5716b` | Post–RC6-QA-04 (#191); Phase 1 closeout docs may advance tip further |
-| Released baseline | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Annotated git tag; **no** GitHub Release object |
-| Target Phase 1 release | `v1.5.0` | Annotated tag after Phase 1 closeout merge; **no** GitHub Release |
+| Repository main | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | Phase 1 closeout merge (#192); docs tip may advance after honesty patches |
+| Released baseline | `v1.5.0` @ `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | Annotated tag object `d52f3a4729f398143463e72e8147e4cb0ada1faa`; **no** GitHub Release |
+| Prior released tag | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Unchanged |
 | Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Unchanged |
 | RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
-| Production website | `b14163ccbc82fca0b2856ea137bddb746ed5716b` | Vercel `dpl_Hi35GYuauM5W9hdomkPEhppmuV6D` — `rc6-production-cutover/` |
-| Production API (observed) | `b14163ccbc82fca0b2856ea137bddb746ed5716b` | `/healthz`/`/readyz` `gitSha`; Phase 1 did **not** intentionally deploy backend (`BACKEND_RUNTIME_UNCHANGED`) |
+| RC6 feature/runtime tip | `b14163ccbc82fca0b2856ea137bddb746ed5716b` | QA-04 (#191); `apps/website` identical through `830dbc8…` |
+| Production website commit | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | Vercel `dpl_BtPH8AvtUsKHwjJaQAf7gEVMMpom` — do **not** call `b14163c…` the active deploy commit |
+| Prior QA-04 Vercel deploy (historical) | `dpl_Hi35GYuauM5W9hdomkPEhppmuV6D` (`b14163c…`) | Owner smoke first green; superseded by docs closeout deploy |
+| Production API (observed) | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | `/healthz`/`/readyz` `gitSha`; Phase 1 did **not** intentionally deploy backend (`BACKEND_RUNTIME_UNCHANGED`) |
 | Production database | Migrations through `20260801180000` | Distinct from tag commit; RC6 Phase 1 migrations **NONE** |
-| Prior website rollback target | `dpl_HhvEuMZERVSLi7KK694cfeizcC7R` (`bf5912c…`) | Not executed |
+| Prior website rollback target | `dpl_Hi35GYuauM5W9hdomkPEhppmuV6D` (`b14163c…`) / earlier `dpl_HhvEuM…` (`bf5912c…`) | Not executed |
 
 ## Current Repository Status
 
@@ -59,7 +61,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Release Policy | Active |
 | RC4 | Released (`v1.3.0`) |
 | RC5 | **Released** (`v1.4.0`; certified + Production website verified) |
-| RC6 Phase 1 | **Production-verified** (Owner Command Center); closeout → `v1.5.0` | PASS WITH LIMITATIONS — see `rc6-phase1-closeout/` |
+| RC6 Phase 1 | **Released** (`v1.5.0`; Owner Command Center Production-verified) | PASS WITH LIMITATIONS — see `rc6-phase1-closeout/` + `rc6-v1.5.0-anchor-sync/` |
 
 ---
 
@@ -67,15 +69,15 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **RC6 Phase 1 closeout** — Production-verified Owner Command Center → annotated `v1.5.0` |
-| RC6 planning | … · QA-03 #190 → `bf5912c…` · QA-04 #191 → `b14163c…` |
+| Current Delivery Slice | **RC6 Phase 1 released** (`v1.5.0`) — Owner Command Center Production-verified |
+| RC6 planning | … · QA-03 #190 → `bf5912c…` · QA-04 #191 → `b14163c…` · closeout #192 → `830dbc8…` / tag `v1.5.0` |
 | Completed RC5 slices (on `main`) | OPS-01, A11Y-01, DOC-01, TEST-01, PERF-01, OBS-01, QA-01 |
-| Phase 1 features on main | DASH-00…08 + QA-03/QA-04 complete; Production-verified |
+| Phase 1 features on main | DASH-00…08 + QA-03/QA-04 complete; Production-verified and released |
 | Next after Phase 1 release | Phase 2 readiness (Delivery/Rider + Settings) — **not started** |
-| Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc6-production-cutover/` |
-| RC6 Phase 1 release blockers | **None evidenced** after QA-04 Owner smoke |
-| Released baseline | `v1.4.0` @ `96f1e80…` (until `v1.5.0` tagged) |
-| Proposed next SemVer | `v1.5.0` annotated tag at Phase 1 closeout merge SHA |
+| Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc6-production-cutover/` (re-verified on `830dbc8…`) |
+| RC6 Phase 1 release blockers | **None** — annotated `v1.5.0` created |
+| Released baseline | `v1.5.0` @ `830dbc8…` (tag object `d52f3a47…`); prior `v1.4.0` @ `96f1e80…` unchanged |
+| Anchor honesty | `docs/testing/acceptance-evidence/rc6-v1.5.0-anchor-sync/` |
 | Northern Bypass | `coming-soon` (unchanged) |
 | Royal Orchard target opening | **14 August 2026** — software readiness ≠ restaurant Production-ready |
 

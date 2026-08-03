@@ -1,10 +1,11 @@
 # RC6 Phase 1 — Authenticated Owner Production smoke
 
-**Status:** `PASS`  
-**Target:** `https://telepizza-website.vercel.app`  
-**UTC:** `2026-08-03T00:44:05Z`  
-**Runtime SHA:** `b14163ccbc82fca0b2856ea137bddb746ed5716b` / `dpl_Hi35GYu…`  
-**Deploy action:** `ALREADY_ACTIVE` (git Production on PR #191 merge)
+**Status:** `PASS`
+**Target:** `https://telepizza-website.vercel.app`
+**UTC:** `2026-08-03T00:44:05Z`
+**Historical runtime (first green):** `b14163ccbc82fca0b2856ea137bddb746ed5716b` / `dpl_Hi35GYu…`
+**Release re-verify runtime:** `830dbc8b5916cc0a724a0d7489a0e34387a26f78` / `dpl_BtPH8…` (`apps/website` ≡ tip)
+**Deploy action (QA-04 window):** `ALREADY_ACTIVE` (git Production on PR #191 merge)
 
 ## Summary
 

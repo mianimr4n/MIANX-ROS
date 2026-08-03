@@ -1,6 +1,6 @@
 # RC6 Risk Register
 
-**Status:** Living risk register — Phase 1 Production cutover risks closed or residual (see `rc6-phase1-closeout/RESIDUAL_LIMITATIONS.md`)
+**Status:** Living risk register — Phase 1 **released** (`v1.5.0`); cutover risks closed or residual (see `rc6-phase1-closeout/RESIDUAL_LIMITATIONS.md`)
 **Date:** 2026-08-02
 **Baseline:** `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824`
 

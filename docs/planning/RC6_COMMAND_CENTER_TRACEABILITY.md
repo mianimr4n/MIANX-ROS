@@ -1,6 +1,6 @@
 # RC6 Command Center Traceability
 
-**Status:** Living planning contract — DASH-00…08 + QA-03/QA-04 Production-verified
+**Status:** Living planning contract — DASH-00…08 + QA-03/QA-04 Production-verified; Phase 1 **released** as `v1.5.0`
 **Baseline tip:** `cc09e239…` (post-DASH-00)
 
 Complete means: implementation + tests + docs + security review (if required) + Production verification (if required).
@@ -51,10 +51,10 @@ Complete means: implementation + tests + docs + security review (if required) + 
 
 **RC6-DASH-08 — What Changed** (merged `9fed3b4…` / PR #189)
 
-DASH-08: read-only What Changed + derived operational timeline — **not** Production-verified; device-local since wording; no fake last-login; no event mutation/AI/providers/realtime. Unified org event store remains a gap.
+DASH-08: read-only What Changed + derived operational timeline — Production-verified under Phase 1 cutover/release; device-local since wording; no fake last-login; no event mutation/AI/providers/realtime. Unified org event store remains a gap.
 
 **RC6-QA-03 — Command Center integration** (after DASH-08)
 
-Integrates DASH-01…08 on local ephemeral stack; website a11y heading fix only; **not** Production-verified; Phase 1 cutover pending.
+Integrates DASH-01…08; website a11y heading fix; Production-verified under Phase 1 cutover; released as `v1.5.0` at `830dbc8…`.
 
-DASH-07 EOD Pack: read-only preview composed from verified DASH-01…06 sources — **not** Production-verified; no finalize, register close, email/WhatsApp, or accounting close.
+DASH-07 EOD Pack: read-only preview composed from verified DASH-01…06 sources — Production-verified under Phase 1; no finalize, register close, email/WhatsApp, or accounting close.
