@@ -21,16 +21,19 @@ Phase 2 runtime (Delivery/Rider + Settings depth)
 
 ## Waves
 
-| ID | Title | Goal |
+| ID | Title | Status |
 | --- | --- | --- |
-| POLISH-01 | Global shell & navigation | Remove dead controls; unify branch context |
-| POLISH-02 | Owner dashboards | 30-second clarity; density |
-| POLISH-03 | Operations | Honesty chrome; overflow |
-| POLISH-04 | Commerce & business admin | Settings/HR/Inventory honesty |
-| POLISH-05 | Shared states & design system | Vocabulary + tokens |
-| POLISH-06 | A11y & responsive | critical/serious = 0 on touched |
-| POLISH-07 | Perf / security / privacy | Budgets + PII hygiene |
-| POLISH-QA | Certification | Multi-role + Prod read-only |
+| POLISH-01 | Global shell & navigation | **In PR** — `phase1-polish-01/` |
+| POLISH-02 | Owner dashboards | Pending |
+| POLISH-03 | Operations | Pending |
+| POLISH-04 | Commerce & business admin | Pending |
+| POLISH-05 | Shared states & design system | Pending |
+| POLISH-06 | A11y & responsive | Pending |
+| POLISH-07 | Perf / security / privacy | Pending |
+| POLISH-QA | Certification | Pending |
+
+Phase 1.1 gate remains **NOT PASSED**. Phase 2 runtime **not started**.
+
 
 ## Explicit non-goals
 

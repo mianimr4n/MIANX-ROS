@@ -30,7 +30,7 @@ None evidenced. (Logout bounce fixed in QA-04 / `v1.5.0`.)
 | P11-OPS-01 | `/admin/delivery` | delivery | Deferred not primary chrome | Disabled Phase 2 actions prominent | POLISH-03 |
 | P11-OPS-02 | `/admin/whatsapp` | order.manage | Orders-only framing | Inbox-like chrome residual | POLISH-03 |
 | P11-CRM-01 | `/admin/crm` | order.manage | VIP/blocked Foundation | May read LIVE | POLISH-04 |
-| P11-SHELL-branch | shell+filters | all | Single branch mental model | Dual selectors | POLISH-01 |
+| P11-SHELL-branch | shell+filters | all | Single branch mental model | Dual selectors | **POLISH-01 partial** — Settings edit-target labeled; filter-bar dupes residual |
 
 (Full P2/P3 enumerated across domain audit files; tracked in backlog.)
 

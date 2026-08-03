@@ -72,11 +72,8 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **Phase 1.1** — professional hardening & polish (after `v1.5.0`) |
-| RC6 planning | … · QA-03 #190 → `bf5912c…` · QA-04 #191 → `b14163c…` · closeout #192 → `830dbc8…` / tag `v1.5.0` · anchor-sync #193 |
-| Completed RC5 slices (on `main`) | OPS-01, A11Y-01, DOC-01, TEST-01, PERF-01, OBS-01, QA-01 |
-| Phase 1 features on main | DASH-00…08 + QA-03/QA-04 complete; Production-verified and released |
-| Phase 1.1 | Audit complete; POLISH-01…QA sequenced; gate **not passed** |
+| Current Delivery Slice | **Phase 1.1 / POLISH-01** — Admin shell navigation (after `v1.5.0`) |
+| Phase 1.1 | Audit complete; POLISH-01 in flight; gate **not passed** |
 | Phase 2 runtime | **Not started** — blocked on Phase 1.1 gate |
 | Planning | `docs/planning/PHASE1_1_*.md` |
 | Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc6-production-cutover/` (re-verified on `830dbc8…`) |
