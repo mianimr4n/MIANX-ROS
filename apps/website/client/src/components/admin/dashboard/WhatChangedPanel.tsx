@@ -75,9 +75,9 @@ export function WhatChangedPanel({
     >
       <AdminSectionTitle
         headingId={titleId}
-        eyebrow={commandMode === "CLOSING" ? "Closing context" : "What Changed"}
-        title="What Changed?"
-        description="Derived deltas from a device-local review baseline, plus a privacy-safe operational timeline. Not a complete audit log."
+        eyebrow={commandMode === "CLOSING" ? "Closing context" : "Review"}
+        title="What Changed"
+        description="Since your last review on this device (or selected business window). Never “since last login.” Not a complete audit log."
       />
 
       {loading ? (
@@ -86,7 +86,7 @@ export function WhatChangedPanel({
         </p>
       ) : null}
 
-      <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-4">
+      <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-4">
         <p className="text-sm font-semibold text-[var(--admin-ink)]" data-testid="what-changed-since">
           {summary.sinceLabel}
         </p>

@@ -3,6 +3,11 @@ import { Link } from "wouter";
 
 import { AdminSectionTitle } from "@/components/admin/AdminKpiCard";
 import {
+  OwnerDashboardCard,
+  OwnerDashboardDetails,
+  OwnerDashboardProvenance,
+} from "@/components/admin/dashboard/OwnerDashboardPresentation";
+import {
   buildApprovalDrillDownAriaLabel,
   emphasizeApprovalsForMode,
   filterApprovalItems,
@@ -22,58 +27,19 @@ function ApprovalCard({ item }: { item: OwnerApprovalSummary }) {
   const aria = buildApprovalDrillDownAriaLabel(item);
   return (
     <li className="min-w-0">
-      <article
-        className={`rounded-2xl border px-4 py-3 ${PRIORITY_STYLES[item.priority]}`}
-        data-approval-type={item.approvalType}
-        data-approval-priority={item.priority}
-        data-testid={`approval-card-${item.approvalType}`}
-        data-kpi-maturity="DRILL_DOWN"
-      >
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-ink)]">
-              <span className="sr-only">Priority: </span>
-              {item.priority}
-              <span className="mx-1 text-[var(--admin-muted)]">·</span>
-              <span className="sr-only">Status: </span>
-              {item.status}
-            </p>
-            <h3 className="mt-1 text-base font-semibold text-[var(--admin-ink)]">{item.title}</h3>
-            <p className="mt-1 text-sm text-[var(--admin-muted)]">{item.summary}</p>
-          </div>
-          <p
-            className="rounded-lg bg-white/70 px-2.5 py-1 text-lg font-semibold tabular-nums text-[var(--admin-ink)]"
-            aria-label={`Count ${item.count}`}
-          >
-            {item.count}
-          </p>
-        </div>
-        <dl className="mt-3 grid gap-1 text-xs text-[var(--admin-muted)] sm:grid-cols-2">
-          <div>
-            <dt className="inline font-medium text-[var(--admin-ink)]">Domain: </dt>
-            <dd className="inline">{item.domain}</dd>
-          </div>
-          <div>
-            <dt className="inline font-medium text-[var(--admin-ink)]">Branch: </dt>
-            <dd className="inline">{item.branchName}</dd>
-          </div>
-          <div>
-            <dt className="inline font-medium text-[var(--admin-ink)]">Source: </dt>
-            <dd className="inline">{item.source}</dd>
-          </div>
-          <div>
-            <dt className="inline font-medium text-[var(--admin-ink)]">Trust: </dt>
-            <dd className="inline">{item.trustState}</dd>
-          </div>
-          <div className="sm:col-span-2">
-            <dt className="inline font-medium text-[var(--admin-ink)]">Priority reason: </dt>
-            <dd className="inline">{item.priorityReason}</dd>
-          </div>
-        </dl>
-        {item.limitation ? (
-          <p className="mt-2 text-xs text-[var(--admin-muted)]">{item.limitation}</p>
-        ) : null}
-        <div className="mt-3">
+      <OwnerDashboardCard
+        title={item.title}
+        description={item.summary}
+        count={item.count}
+        severityLabel={`Priority: ${item.priority} · Status: ${item.status}`}
+        className={PRIORITY_STYLES[item.priority]}
+        testId={`approval-card-${item.approvalType}`}
+        dataAttrs={{
+          "data-approval-type": item.approvalType,
+          "data-approval-priority": item.priority,
+          "data-kpi-maturity": "DRILL_DOWN",
+        }}
+        action={
           <Link
             href={item.destinationHref}
             className="inline-flex min-h-11 items-center rounded-xl border border-[var(--admin-border)] bg-white px-3 text-sm font-semibold text-[var(--admin-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)]"
@@ -82,8 +48,22 @@ function ApprovalCard({ item }: { item: OwnerApprovalSummary }) {
           >
             {item.destinationLabel}
           </Link>
-        </div>
-      </article>
+        }
+      >
+        <OwnerDashboardProvenance
+          items={[
+            { label: "Domain", value: item.domain },
+            { label: "Branch", value: item.branchName },
+          ]}
+        />
+        <OwnerDashboardDetails summary="Source & priority reason">
+          <p>
+            Source: {item.source}. Trust: {item.trustState}.
+          </p>
+          <p>Priority reason: {item.priorityReason}</p>
+          {item.limitation ? <p>{item.limitation}</p> : null}
+        </OwnerDashboardDetails>
+      </OwnerDashboardCard>
     </li>
   );
 }
@@ -115,16 +95,17 @@ export function ApprovalInboxPanel({
 
   return (
     <section
-      className="mb-8 min-w-0"
+      className="mb-6 min-w-0"
       aria-labelledby="approval-inbox-heading"
       data-testid="approval-inbox"
+      data-mode-section="approval-inbox"
       data-command-mode={commandMode}
     >
       <AdminSectionTitle
         headingId="approval-inbox-heading"
         eyebrow="Approvals"
         title="Approval Inbox"
-        description="Read-only queue of supported pending approvals. Drill down to existing modules — no inline approve/reject."
+        description="Read-only pending queues — drill down to modules; no inline approve/reject. Zero pending is distinct from unavailable sources."
       />
 
       <p className="mb-3 text-sm text-[var(--admin-muted)]" data-testid="approval-inbox-counts">

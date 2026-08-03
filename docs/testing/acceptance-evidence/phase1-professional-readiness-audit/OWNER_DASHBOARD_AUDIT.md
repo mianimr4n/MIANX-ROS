@@ -18,14 +18,14 @@
 
 ## Professional (not merely correct) findings
 
-| ID | Severity | Issue |
-| --- | --- | --- |
-| P11-OWN-01 | P2 | Long vertical stack → below-fold fatigue; prioritize Needs Attention + Branch Health |
-| P11-OWN-02 | P2 | Trust/Source/Freshness labels compete with actions visually |
-| P11-OWN-03 | P2 | Duplicate metrics possible across KPI strip and panels |
-| P11-OWN-04 | P2 | Mode switch UX ok; ensure progressive disclosure for Closing |
-| P11-OWN-05 | P3 | Print/CSV/JSON EOD — filenames only in smoke; confirm operator copy |
+| ID | Severity | Issue | Status |
+| --- | --- | --- | --- |
+| P11-OWN-01 | P2 | Long vertical stack → below-fold fatigue; prioritize Needs Attention + Branch Health | **Addressed POLISH-02** |
+| P11-OWN-02 | P2 | Trust/Source/Freshness labels compete with actions visually | **Addressed POLISH-02** (details disclosure) |
+| P11-OWN-03 | P2 | Duplicate metrics possible across KPI strip and panels | **Mitigated POLISH-02** (strip labeled operational; attention strip secondary) |
+| P11-OWN-04 | P2 | Mode switch UX ok; ensure progressive disclosure for Closing | **Addressed POLISH-02** |
+| P11-OWN-05 | P3 | Print/CSV/JSON EOD — filenames only in smoke; confirm operator copy | Residual / POLISH-QA |
 
 ## Assessment
 
-Technically **LIVE_VERIFIED** for Phase 1. Professionally **needs POLISH-02** for hierarchy, density, and above-the-fold clarity. No P0 dashboard defects in this audit.
+Technically **LIVE_VERIFIED** for Phase 1. Hierarchy/density polish delivered in **POLISH-02** evidence `phase1-polish-02/`. Phase 1.1 gate remains **NOT PASSED** until remaining waves complete.

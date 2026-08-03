@@ -35,7 +35,7 @@ export function CommandModeHeader({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-            Daily command mode
+            Command mode
           </p>
           <h2
             id="command-mode-heading"
@@ -45,10 +45,10 @@ export function CommandModeHeader({
           </h2>
           <p className="mt-1 text-sm text-[var(--admin-muted)]">{selected.purpose}</p>
           <p className="mt-2 text-sm text-[var(--admin-ink)]" data-testid="command-mode-local-time">
-            Branch-local time: {suggestion.branchLocalTimeLabel} ({suggestion.timeZone})
+            Local time {suggestion.branchLocalTimeLabel} ({suggestion.timeZone})
           </p>
           <p className="mt-1 text-sm text-[var(--admin-muted)]" data-testid="command-mode-suggestion-reason">
-            Suggested: {suggested.label} — {suggestion.reason}
+            Suggested {suggested.label}: {suggestion.reason}
           </p>
           {manualOverride ? (
             <p className="mt-1 text-sm font-medium text-[var(--admin-ink)]" role="status">
