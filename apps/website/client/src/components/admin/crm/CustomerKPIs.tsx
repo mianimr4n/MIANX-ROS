@@ -1,4 +1,5 @@
 import { AdminKpiCard, AdminSectionTitle } from "@/components/admin/AdminKpiCard";
+import { AdminCapabilityNotice } from "@/components/admin/AdminDataState";
 import type { CrmKpiSnapshot } from "@/lib/admin-crm";
 import { formatPkr } from "@/lib/admin-order-format";
 
@@ -93,18 +94,14 @@ export function CustomerKPIs({
           />
         </div>
       )}
-      <details
-        className="mt-3 rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-3"
-        data-testid="crm-vip-blocked-deferred"
-      >
-        <summary className="cursor-pointer text-sm font-semibold text-[var(--admin-ink)]">
-          VIP / blocked customer status — not available
-        </summary>
-        <p className="mt-2 text-sm text-[var(--admin-muted)]">
-          No authoritative VIP flag or blocklist exists on the order-derived CRM model. Do not treat missing VIP or
-          blocked counts as zero business truth.
-        </p>
-      </details>
+      <AdminCapabilityNotice
+        testId="crm-vip-blocked-deferred"
+        summary="VIP / blocked customer status — not available"
+        items={[
+          "No authoritative VIP flag or blocklist exists on the order-derived CRM model",
+          "Do not treat missing VIP or blocked counts as zero business truth",
+        ]}
+      />
     </section>
   );
 }

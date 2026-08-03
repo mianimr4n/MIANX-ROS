@@ -12,14 +12,17 @@ export function AdminSurface({
   className,
   children,
   as: Tag = "section",
+  density = "comfortable",
   ...props
-}: AdminSurfaceProps) {
+}: AdminSurfaceProps & { density?: "comfortable" | "compact" }) {
   return (
     <Tag
       className={cn(
         "min-w-0 max-w-full overflow-hidden rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] shadow-[0_1px_2px_rgba(31,31,31,0.04)]",
+        density === "compact" ? "text-sm" : null,
         className,
       )}
+      data-admin-surface-density={density}
       {...props}
     >
       {children}

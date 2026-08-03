@@ -47,13 +47,14 @@ const SOURCE_STYLES: Record<AdminKpiSource, string> = {
 
 /**
  * Human labels for data provenance. LIVE is the expected default and renders
- * no badge; unfinished capabilities show a clean Phase 2 badge.
+ * no badge; unfinished capabilities use a quiet Foundation label (not repeated
+ * Phase 2 chips).
  */
 const SOURCE_LABEL: Record<AdminKpiSource, string | null> = {
   LIVE: null,
   DERIVED: "Calculated",
   PARTIAL: "Partial data",
-  FOUNDATION: "Planned for Phase 2",
+  FOUNDATION: "Foundation",
   UNAVAILABLE: null,
   /** No provenance badge — EMPTY is owned by OperationalStatusBanner + detail. */
   EMPTY: null,
@@ -66,7 +67,7 @@ const STATE_LABEL: Record<AdminKpiState, string> = {
   unavailable: "Data unavailable",
   error: "Data unavailable",
   stale: "Earlier data",
-  planned: "Planned for Phase 2",
+  planned: "Foundation",
 };
 
 function resolveDisplayValue(
@@ -191,10 +192,12 @@ export function AdminSectionTitle({
   headingId?: string;
 }) {
   return (
-    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-      <div>
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-3" data-admin-section-title>
+      <div className="min-w-0">
         {eyebrow ? (
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--admin-muted)]">{eyebrow}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">
+            {eyebrow}
+          </p>
         ) : null}
         <h2 id={headingId} className="text-lg font-semibold tracking-tight text-[var(--admin-ink)]">
           {title}

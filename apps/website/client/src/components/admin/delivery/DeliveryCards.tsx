@@ -1,3 +1,4 @@
+import { AdminDataState } from "@/components/admin/AdminDataState";
 import {
   deliveryStatusBadgeClass,
   deliveryStatusLabel,
@@ -47,9 +48,12 @@ export function DeliveryCards({
       </div>
 
       {rows.length === 0 ? (
-        <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-6 text-center text-sm text-[var(--admin-muted)]">
-          No active in-flight deliveries.
-        </div>
+        <AdminDataState
+          state="NO_ACTIVITY_YET"
+          title="No active deliveries"
+          description="No active in-flight deliveries."
+          compact
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {rows.map((row) => {

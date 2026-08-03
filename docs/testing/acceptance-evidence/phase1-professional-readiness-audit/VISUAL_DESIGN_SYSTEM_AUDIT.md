@@ -21,10 +21,10 @@ Preserve Telepizza brand (red accents, existing admin tokens). No rebrand.
 
 | ID | Severity | Issue |
 | --- | --- | --- |
-| P11-VIS-01 | P2 | Excessive Phase 2 chip noise competes with primary actions |
-| P11-VIS-02 | P2 | Inconsistent card padding across modules |
-| P11-VIS-03 | P3 | Duplicate one-off insight list styles |
+| P11-VIS-01 | P2 | Excessive Phase 2 chip noise competes with primary actions | **Resolved POLISH-05** (Foundation labels + AdminCapabilityNotice) |
+| P11-VIS-02 | P2 | Inconsistent card padding across modules | Partial — AdminSurface density; residual POLISH-06 |
+| P11-VIS-03 | P3 | Duplicate one-off insight list styles | Residual |
 
 ## Assessment
 
-Design debt is **P2/P3 polish**, not blocking release truth. Address via shared components in POLISH-05.
+Design debt remaining is **P2/P3 polish** (P11-VIS-02/03). P11-VIS-01 addressed in POLISH-05; full Admin certification remains POLISH-06.

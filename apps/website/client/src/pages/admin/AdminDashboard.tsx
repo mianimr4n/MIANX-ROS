@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 
 import { AdminKpiCard, AdminSectionTitle, type AdminKpiState } from "@/components/admin/AdminKpiCard";
+import { AdminDataState } from "@/components/admin/AdminDataState";
 import {
   DEFAULT_EXECUTIVE_FILTERS,
   ExecutiveFilterBar,
@@ -759,10 +760,13 @@ export default function AdminDashboard() {
       />
 
       {comingSoonBranch ? (
-        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          This branch is coming soon. Opening readiness is shown below — live sales and order KPIs stay
-          hidden until the branch is operating.
-        </div>
+        <AdminDataState
+          className="mb-6"
+          state="CONFIGURATION_REQUIRED"
+          title="Branch not operating yet"
+          description="This branch is coming soon. Opening readiness is shown below — live sales and order KPIs stay hidden until the branch is operating."
+          compact
+        />
       ) : null}
 
       {!comingSoonBranch ? (

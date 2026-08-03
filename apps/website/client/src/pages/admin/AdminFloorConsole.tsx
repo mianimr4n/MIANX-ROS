@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
+import { AdminDataState } from "@/components/admin/AdminDataState";
 import {
   OperationsDeferredNote,
   OperationsWorkspaceHeader,
@@ -229,21 +230,16 @@ export default function AdminFloorConsole() {
         />
 
         {floors.length === 0 || tables.filter((t) => t.is_active).length === 0 ? (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            <p className="font-semibold">SETUP REQUIRED</p>
-            <p>
-              <span className="font-medium">Problem:</span> No active floor or tables configured for{" "}
-              {branchLabel}.
-            </p>
-            <p>
-              <span className="font-medium">Next action:</span> Create the first floor and at least one
-              active table on{" "}
-              <a className="underline" href="/admin/floor-plan">
-                Floor plan
+          <AdminDataState
+            state="CONFIGURATION_REQUIRED"
+            title="Floor configuration required"
+            description={`No active floor or tables are configured for ${branchLabel}. Create the first floor and at least one active table before live seating.`}
+            action={
+              <a className="text-sm font-semibold underline" href="/admin/floor-plan">
+                Open Floor plan
               </a>
-              .
-            </p>
-          </div>
+            }
+          />
         ) : null}
 
         {!branchId ? (

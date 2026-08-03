@@ -7,8 +7,8 @@
 | 2 | POLISH-01 | Audit | Website only | **Merged** (#195) |
 | 3 | POLISH-02 | POLISH-01 | Website only | **Merged** (#196 → `8eb81a6`) |
 | 4 | POLISH-03 | POLISH-02 | Website only | **Merged** (#197 → `936c5a3`) |
-| 5 | POLISH-04 | POLISH-03 | Website only | **In PR** — business-admin honesty |
-| 6 | POLISH-05 | 01–04 patterns | Website only | Visual/regression |
+| 5 | POLISH-04 | POLISH-03 | Website only | **Merged** (#198 → `7fa2c8b`) |
+| 6 | POLISH-05 | POLISH-04 | Website only | **In PR** — design system / data states |
 | 7 | POLISH-06 | Touched routes | Website only | a11y+responsive matrix |
 | 8 | POLISH-07 | — | Website only | Perf budgets + privacy checks |
 | 9 | POLISH-QA | All polish waves | none | Prod read-only + local roles |

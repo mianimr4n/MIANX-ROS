@@ -1,3 +1,4 @@
+import { AdminDataState, AdminErrorState } from "@/components/admin/AdminDataState";
 import type { AdminOrderListItem } from "@/lib/admin-api";
 import {
   deliveryStatusLabel,
@@ -56,12 +57,16 @@ export function OrderGrid({
   return (
     <section aria-label="Orders data grid" className="mb-6">
       {error ? (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
-          <p>{error}</p>
-          <button type="button" className="mt-2 font-semibold underline" onClick={onRetry}>
-            Retry
-          </button>
-        </div>
+        <AdminErrorState
+          className="mb-4"
+          title="Orders could not be loaded"
+          description="Retry when ready. Technical details stay hidden from this panel."
+          action={
+            <button type="button" className="text-sm font-semibold underline" onClick={onRetry}>
+              Retry
+            </button>
+          }
+        />
       ) : null}
 
       {loading ? (
@@ -73,9 +78,12 @@ export function OrderGrid({
       ) : null}
 
       {!loading && orders.length === 0 && !error ? (
-        <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-8 text-center text-sm text-[var(--admin-muted)]">
-          No orders match the current filters for this branch scope.
-        </div>
+        <AdminDataState
+          state="FILTERED_EMPTY"
+          title="No matching orders"
+          description="No orders match the current filters for this branch scope."
+          compact
+        />
       ) : null}
 
       {!loading && orders.length > 0 ? (

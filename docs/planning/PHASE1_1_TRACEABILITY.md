@@ -7,9 +7,10 @@
 | Dual branch selectors | ADMIN_SHELL_AUDIT.md | POLISH-01 | S-2 |
 | Owner hierarchy | OWNER_DASHBOARD_AUDIT.md | POLISH-02 | U-2 |
 | Delivery/WA stub chrome | OPERATIONS_WORKSPACES_AUDIT.md · `phase1-polish-03/` | POLISH-03 | H-4 (merged) |
-| Settings Available | SETTINGS_CONFIGURATION_AUDIT.md · `phase1-polish-04/` | POLISH-04 | H-1 (in PR) |
-| Inventory empty all-clear | COMMERCE_PROCUREMENT_AUDIT.md · `phase1-polish-04/` | POLISH-04 | H-2 (in PR) |
-| HR header | HR_FINANCE_REPORTING_AUDIT.md · `phase1-polish-04/` | POLISH-04 | H-3 (in PR) |
+| Settings Available | SETTINGS_CONFIGURATION_AUDIT.md · `phase1-polish-04/` | POLISH-04 | H-1 (merged) |
+| Inventory empty all-clear | COMMERCE_PROCUREMENT_AUDIT.md · `phase1-polish-04/` | POLISH-04 | H-2 (merged) |
+| HR header | HR_FINANCE_REPORTING_AUDIT.md · `phase1-polish-04/` | POLISH-04 | H-3 (merged) |
+| Design-system / Phase 2 chip noise | VISUAL_DESIGN_SYSTEM_AUDIT.md · `phase1-polish-05/` | POLISH-05 | (in PR) |
 | State vocabulary | DATA_STATE_HONESTY_AUDIT.md | POLISH-05 | H-* |
 | Design tokens | VISUAL_DESIGN_SYSTEM_AUDIT.md | POLISH-05 | — |
 | Responsive/a11y | RESPONSIVE_AUDIT.md / ACCESSIBILITY_AUDIT.md | POLISH-06 | C-3 |
