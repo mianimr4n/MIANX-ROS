@@ -8,27 +8,19 @@ function UnavailableCustomerKpis() {
     "Active customers",
     "New customers today",
     "Repeat customers",
-    "VIP customers",
-    "Blocked customers",
     "Average order value",
-    "Lifetime value",
+    "Lifetime value (loaded window)",
   ] as const;
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {cards.map((title) => (
         <AdminKpiCard
           key={title}
           title={title}
           value="—"
-          source={title === "VIP customers" || title === "Blocked customers" ? "FOUNDATION" : "UNAVAILABLE"}
+          source="UNAVAILABLE"
           unavailable
-          detail={
-            title === "VIP customers"
-              ? "No VIP flag on customers yet"
-              : title === "Blocked customers"
-                ? "No blocklist API yet"
-                : "Customer order window unavailable — not shown as zero"
-          }
+          detail="Customer order window unavailable — not shown as zero"
         />
       ))}
     </div>
@@ -49,18 +41,18 @@ export function CustomerKPIs({
       <AdminSectionTitle
         eyebrow="CRM"
         title="Customer KPIs"
-        description={`${windowNote} VIP, blocked, and email identity stay Foundation until a customers API exists.`}
+        description={`${windowNote} Order-derived CRM only — VIP and blocked customer status are not available.`}
       />
       {loading && !snapshot ? (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-busy="true">
-          {Array.from({ length: 8 }).map((_, i) => (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
+          {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-[7.25rem] animate-pulse rounded-2xl bg-[var(--admin-soft)]" />
           ))}
         </div>
       ) : !snapshot ? (
         <UnavailableCustomerKpis />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <AdminKpiCard
             title="Total customers"
             value={String(snapshot.totalCustomers)}
@@ -86,20 +78,6 @@ export function CustomerKPIs({
             detail="2+ orders in loaded window"
           />
           <AdminKpiCard
-            title="VIP customers"
-            value="—"
-            source="FOUNDATION"
-            unavailable
-            detail="No VIP flag on customers yet"
-          />
-          <AdminKpiCard
-            title="Blocked customers"
-            value="—"
-            source="FOUNDATION"
-            unavailable
-            detail="No blocklist API yet"
-          />
-          <AdminKpiCard
             title="Average order value"
             value={snapshot.averageOrderValue != null ? formatPkr(snapshot.averageOrderValue) : "—"}
             source={snapshot.averageOrderValue != null ? "DERIVED" : "UNAVAILABLE"}
@@ -107,14 +85,26 @@ export function CustomerKPIs({
             detail="Mean of per-customer average spend"
           />
           <AdminKpiCard
-            title="Lifetime value"
+            title="Lifetime value (loaded window)"
             value={snapshot.lifetimeValueAvg != null ? formatPkr(snapshot.lifetimeValueAvg) : "—"}
             source={snapshot.lifetimeValueAvg != null ? "DERIVED" : "UNAVAILABLE"}
             unavailable={snapshot.lifetimeValueAvg == null}
-            detail="Mean lifetime spend in loaded window"
+            detail="Mean spend in loaded order window — not an authoritative CRM LTV"
           />
         </div>
       )}
+      <details
+        className="mt-3 rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-3"
+        data-testid="crm-vip-blocked-deferred"
+      >
+        <summary className="cursor-pointer text-sm font-semibold text-[var(--admin-ink)]">
+          VIP / blocked customer status — not available
+        </summary>
+        <p className="mt-2 text-sm text-[var(--admin-muted)]">
+          No authoritative VIP flag or blocklist exists on the order-derived CRM model. Do not treat missing VIP or
+          blocked counts as zero business truth.
+        </p>
+      </details>
     </section>
   );
 }

@@ -106,16 +106,16 @@ export function CustomerFilters({
       </label>
 
       <label className="text-xs font-medium text-[var(--admin-muted)]">
-        VIP / Status / Loyalty tier
+        VIP / blocked filters (unavailable)
         <select
           disabled
           className="mt-1.5 w-full cursor-not-allowed rounded-lg border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2 text-sm text-[var(--admin-muted)]"
-          aria-label="VIP filter unavailable"
+          aria-label="VIP and blocked filters unavailable"
           value=""
         >
-          <option value="">Not available</option>
+          <option value="">Not available — no customer-master VIP/blocklist</option>
         </select>
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
+        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Unavailable</span>
       </label>
 
       <label className="text-xs font-medium text-[var(--admin-muted)]">

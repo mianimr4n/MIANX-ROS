@@ -6,8 +6,8 @@
 | 1 | Merge docs PR #193 (anchor sync) | **Done** | none | none |
 | 2 | POLISH-01 | Audit | Website only | **Merged** (#195) |
 | 3 | POLISH-02 | POLISH-01 | Website only | **Merged** (#196 → `8eb81a6`) |
-| 4 | POLISH-03 | POLISH-02 | Website only | **In PR** — ops workspace honesty |
-| 5 | POLISH-04 | — | Website only | Settings/HR/Inventory honesty tests |
+| 4 | POLISH-03 | POLISH-02 | Website only | **Merged** (#197 → `936c5a3`) |
+| 5 | POLISH-04 | POLISH-03 | Website only | **In PR** — business-admin honesty |
 | 6 | POLISH-05 | 01–04 patterns | Website only | Visual/regression |
 | 7 | POLISH-06 | Touched routes | Website only | a11y+responsive matrix |
 | 8 | POLISH-07 | — | Website only | Perf budgets + privacy checks |

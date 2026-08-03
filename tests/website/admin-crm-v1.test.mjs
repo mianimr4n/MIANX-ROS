@@ -35,19 +35,21 @@ describe("CRM & Customer Management V1 (static)", () => {
     assert.doesNotMatch(helper, /fakeCustomers|mockVip|Math\.random/);
   });
 
-  it("points CRM loyalty to Admin Loyalty; keeps VIP/export/WhatsApp Planned", () => {
+  it("points CRM loyalty to Admin Loyalty; keeps VIP/blocked unavailable", () => {
     const kpis = read("apps/website/client/src/components/admin/crm/CustomerKPIs.tsx");
-    assert.match(kpis, /VIP customers/);
-    assert.match(kpis, /FOUNDATION/);
-    assert.match(kpis, /Blocked customers/);
+    assert.match(kpis, /VIP \/ blocked customer status — not available/);
+    assert.match(kpis, /crm-vip-blocked-deferred/);
+    assert.match(kpis, /Order-derived CRM only/);
+    assert.doesNotMatch(kpis, /title="VIP customers"/);
+    assert.doesNotMatch(kpis, /title="Blocked customers"/);
     assert.match(kpis, /Customer order window unavailable/);
     assert.doesNotMatch(kpis, /totalCustomers \?\? 0/);
     const page = read("apps/website/client/src/pages/admin/AdminCrm.tsx");
     assert.match(page, /snapshot=\{live \? kpis : null\}/);
     const loyalty = read("apps/website/client/src/components/admin/crm/CustomerLoyalty.tsx");
     assert.match(loyalty, /Admin → Loyalty/);
-    assert.match(loyalty, /SMS opt-in/);
-    assert.match(loyalty, /WhatsApp opt-in/);
+    assert.match(loyalty, /VIP · Unavailable/);
+    assert.match(loyalty, /Blocked · Unavailable/);
     const header = read("apps/website/client/src/components/admin/crm/CRMHeader.tsx");
     assert.match(header, /Export · Planned for Phase 2/);
     const drawer = read("apps/website/client/src/components/admin/crm/CustomerDrawer.tsx");

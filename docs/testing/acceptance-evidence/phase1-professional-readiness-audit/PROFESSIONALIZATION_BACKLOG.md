@@ -23,7 +23,7 @@ Sequenced after this audit PR. **No Phase 2 runtime** in these slices.
 - Collapse Phase 2 stub buttons
 - Table overflow + filters
 - **Risk:** Med · Avoid behavior changes to mutations
-- **Status:** In PR — evidence `phase1-polish-03/` (P11-OPS-01/02/03 addressed; P11-OPS-04 residual)
+- **Status:** Merged — evidence `phase1-polish-03/` (#197 → `936c5a3`)
 
 ## POLISH-04 — Commerce & business admin
 
@@ -31,6 +31,7 @@ Sequenced after this audit PR. **No Phase 2 runtime** in these slices.
 - Mount readiness banners; HR header fix; inventory empty-state; purchasing caveat
 - CRM/Loyalty/Finance/Reports label alignment
 - **Risk:** Low–Med · Copy/state only preferred
+- **Status:** In PR — evidence `phase1-polish-04/`
 
 ## POLISH-05 — Shared states & design system
 

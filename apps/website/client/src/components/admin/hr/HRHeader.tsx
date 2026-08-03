@@ -10,7 +10,7 @@ export function HRHeader({
   onRefresh: () => void;
 }) {
   return (
-    <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
+    <header className="mb-5 flex flex-wrap items-start justify-between gap-4" data-testid="hr-workspace-header">
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">Workforce</p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">HR &amp; Workforce Management</h1>
@@ -18,12 +18,13 @@ export function HRHeader({
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
         </p>
         <p className="mt-1 text-xs text-[var(--admin-muted)]">
-          Live employees, attendance, leave, and document links — payroll and performance Planned for Phase 2
+          Live employees, attendance, leave, documents, shift roster, and payroll calculation — performance and
+          training remain Planned for Phase 2
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
-          LIVE workforce
+        <span className="inline-flex items-center gap-2 rounded-full border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-ink)]">
+          Partial live workforce
         </span>
         <button
           type="button"

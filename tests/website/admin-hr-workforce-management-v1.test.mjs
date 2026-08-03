@@ -39,6 +39,10 @@ describe("HR & Workforce Management V1 (static)", () => {
     assert.match(page, /listHrAttendance/);
     assert.match(page, /listHrLeaves/);
     assert.match(page, /listHrDocuments/);
+    const header = read("apps/website/client/src/components/admin/hr/HRHeader.tsx");
+    assert.match(header, /payroll calculation/);
+    assert.match(header, /performance and[\s\S]*training remain Planned for Phase 2/);
+    assert.doesNotMatch(header, /payroll and performance Planned for Phase 2/);
   });
 
   it("does not fabricate employees or attendance records", () => {

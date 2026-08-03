@@ -55,13 +55,13 @@ export function CustomerTagsFoundation({ repeat, inactive }: { repeat: boolean; 
       </h3>
       <div className="mt-3 flex flex-wrap gap-2">
         <span className="rounded-full border border-dashed border-[var(--admin-border)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-          VIP · Planned
+          VIP · Unavailable
         </span>
         <span className="rounded-full border border-dashed border-[var(--admin-border)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-          Corporate · Planned
+          Corporate · Unavailable
         </span>
         <span className="rounded-full border border-dashed border-[var(--admin-border)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]">
-          Blocked · Planned
+          Blocked · Unavailable
         </span>
         {repeat ? (
           <span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-950">
@@ -79,7 +79,8 @@ export function CustomerTagsFoundation({ repeat, inactive }: { repeat: boolean; 
         )}
       </div>
       <p className="mt-2 text-xs text-[var(--admin-muted)]">
-        Stored CRM tags are Planned. Activity badges above are rule-based from order history only.
+        Stored CRM tags (VIP / blocked / corporate) are unavailable — no customer-master tag API. Activity badges above
+        are rule-based from order history only.
       </p>
     </section>
   );
