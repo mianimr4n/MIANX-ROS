@@ -1,6 +1,6 @@
 # RC6 Roadmap
 
-**Status:** Living roadmap — **RC6 Phase 1 released** (`v1.5.0`); Phase 2 not started
+**Status:** Living roadmap — **RC6 Phase 1 released (`v1.5.0`)**; Phase 1.1 polish audit complete (gate pending); Phase 2 not started
 
 **Date:** 2026-08-03
 **Released tag:** `v1.5.0` @ `830dbc8b5916cc0a724a0d7489a0e34387a26f78` (tag object `d52f3a4729f398143463e72e8147e4cb0ada1faa`)
@@ -9,6 +9,7 @@
 **RC6 feature/runtime tip:** `b14163ccbc82fca0b2856ea137bddb746ed5716b` (`apps/website` ≡ closeout commit)
 **Production website commit:** `830dbc8b5916cc0a724a0d7489a0e34387a26f78` (`dpl_BtPH8AvtUsKHwjJaQAf7gEVMMpom`)
 **Migration tip:** `20260801180000`
+**Phase 1.1:** Audit complete — see `PHASE1_1_PROFESSIONAL_READINESS_ROADMAP.md`
 **GitHub Release:** none
 
 > This roadmap does **not** authorize Production mutation, migrations, deploys, tags, or GitHub Releases. Planning is not implementation evidence.
@@ -28,7 +29,8 @@
 | RC6-QA-03 | Command Center integration | `rc6-command-center-integration/` · #190 → `bf5912c…` |
 | RC6-QA-04 | Production Owner smoke blockers | `rc6-qa-04/` · #191 → `b14163c…` |
 | Phase 1 Production cutover | Website verified + released | `rc6-production-cutover/` · deploy `830dbc8…` / `dpl_BtPH8…` (files ≡ `b14163c…`) |
-| Phase 1 release | Annotated `v1.5.0` | closeout #192 → `830dbc8…`; `rc6-v1.5.0-anchor-sync/` |
+| Phase 1 release | Annotated `v1.5.0` | closeout #192 → `830dbc8…`; `rc6-v1.5.0-anchor-sync/` (#193) |
+| Phase 1.1 professional-readiness audit | Complete (gate pending) | `phase1-professional-readiness-audit/` |
 
 ---
 

@@ -1,0 +1,39 @@
+# Phase 1.1 — Findings register
+
+Severity model: P0 security/outage · P1 core/honesty · P2 professional UX · P3 cosmetic
+
+## Summary
+
+| Severity | Count |
+| --- | --- |
+| P0 | **0** |
+| P1 | **11** |
+| P2 | **28** |
+| P3 | **10** |
+| **Total** | **49** |
+
+## P0
+
+None evidenced. (Logout bounce fixed in QA-04 / `v1.5.0`.)
+
+## P1 (blockers for “professionally ready” claim)
+
+| ID | Route | Role | Expected | Actual | Fix slice |
+| --- | --- | --- | --- | --- | --- |
+| P11-SET-01 | `/admin/settings` | admin.access | Nav reflects editable | “Available” on nav-only | POLISH-04 |
+| P11-SET-02 | `/admin/settings` | admin.access | Readiness banner shown | Banner orphaned | POLISH-04 |
+| P11-HR-01 | `/admin/hr` | staff.* | Header matches payroll LIVE | Header says payroll Phase 2 | POLISH-04 |
+| P11-COM-01 | `/admin/inventory` | inventory | Empty stock ≠ all-clear | Low-stock clear at 0 items | POLISH-04 |
+| P11-COM-02 | `/admin/purchasing` | purchasing | Prod-unverified caveat | “Ready” banner | POLISH-04 |
+| P11-STATE-01 | inventory | inventory | empty ≠ healthy | Same as COM-01 | POLISH-04 |
+| P11-STATE-02 | settings | admin | unsupported ≠ Available | Same as SET-01 | POLISH-04 |
+| P11-OPS-01 | `/admin/delivery` | delivery | Deferred not primary chrome | Disabled Phase 2 actions prominent | POLISH-03 |
+| P11-OPS-02 | `/admin/whatsapp` | order.manage | Orders-only framing | Inbox-like chrome residual | POLISH-03 |
+| P11-CRM-01 | `/admin/crm` | order.manage | VIP/blocked Foundation | May read LIVE | POLISH-04 |
+| P11-SHELL-branch | shell+filters | all | Single branch mental model | Dual selectors | POLISH-01 |
+
+(Full P2/P3 enumerated across domain audit files; tracked in backlog.)
+
+## Reproduction (screenshot-free)
+
+Example **P11-COM-01:** With zero stock items, open Inventory insights → observe “Every tracked item is above its minimum” (`admin-inventory.ts` when `lowStockCount===0` without guarding `stockItemCount===0`).
