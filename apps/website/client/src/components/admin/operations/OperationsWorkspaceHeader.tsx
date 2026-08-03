@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { AdminCapabilityNotice } from "@/components/admin/AdminDataState";
 import { cn } from "@/lib/utils";
 
 export type OperationsMaturity = "LIVE" | "PARTIAL_LIVE" | "FOUNDATION";
@@ -83,7 +84,7 @@ export function OperationsWorkspaceHeader({
   );
 }
 
-/** Single deferred-capability disclosure — avoids repeating Phase 2 chips. */
+/** Single deferred-capability disclosure — shared with AdminCapabilityNotice. */
 export function OperationsDeferredNote({
   summary,
   items,
@@ -93,20 +94,5 @@ export function OperationsDeferredNote({
   items: string[];
   testId?: string;
 }) {
-  if (items.length === 0) return null;
-  return (
-    <details
-      className="mb-5 rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-3"
-      data-testid={testId}
-    >
-      <summary className="cursor-pointer text-sm font-semibold text-[var(--admin-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)]">
-        {summary}
-      </summary>
-      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--admin-muted)]">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </details>
-  );
+  return <AdminCapabilityNotice summary={summary} items={items} testId={testId} />;
 }

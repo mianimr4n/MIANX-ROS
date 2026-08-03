@@ -31,13 +31,14 @@ Sequenced after this audit PR. **No Phase 2 runtime** in these slices.
 - Mount readiness banners; HR header fix; inventory empty-state; purchasing caveat
 - CRM/Loyalty/Finance/Reports label alignment
 - **Risk:** Low–Med · Copy/state only preferred
-- **Status:** In PR — evidence `phase1-polish-04/`
+- **Status:** Merged — evidence `phase1-polish-04/` (#198 → `7fa2c8b`)
 
 ## POLISH-05 — Shared states & design system
 
 - Vocabulary components: loading/empty/unavailable/deferred
 - Cards, badges, buttons, forms, tables tokens
 - **Risk:** Low · Broad touch; visual regression tests
+- **Status:** In PR — evidence `phase1-polish-05/` (P11-VIS-01 addressed; representative adoption)
 
 ## POLISH-06 — Accessibility & responsive hardening
 

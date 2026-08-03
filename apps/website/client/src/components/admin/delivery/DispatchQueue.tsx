@@ -1,3 +1,4 @@
+import { AdminDataState } from "@/components/admin/AdminDataState";
 import { formatOrderTime, formatPkr } from "@/lib/admin-order-format";
 import {
   areaFromAddress,
@@ -73,9 +74,12 @@ export function DispatchQueue({
       ) : null}
 
       {!loading && rows.length === 0 && !error ? (
-        <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-6 text-center text-sm text-[var(--admin-muted)]">
-          No deliveries waiting for a rider.
-        </div>
+        <AdminDataState
+          state="NO_ACTIVITY_YET"
+          title="No deliveries waiting"
+          description="No deliveries waiting for a rider."
+          compact
+        />
       ) : null}
 
       {!loading && rows.length > 0 ? (

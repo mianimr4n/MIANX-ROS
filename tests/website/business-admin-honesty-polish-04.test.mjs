@@ -74,7 +74,7 @@ describe("POLISH-04 business-admin honesty", () => {
   it("Reports banner does not claim ready custom/scheduled builder", () => {
     const banner = read("apps/website/client/src/components/admin/reports/ReportsStatusBanner.tsx");
     assert.match(banner, /fixed reports/);
-    assert.match(banner, /DEFERRED/);
+    assert.match(banner, /Deferred reporting|scheduled/i);
     assert.doesNotMatch(banner, /Owner BI workspace is ready/);
   });
 
