@@ -1,8 +1,8 @@
 # RC6 Baseline
 
-**Status:** Living baseline — RC6 Phase 1 Production-verified Owner Command Center
+**Status:** Living baseline — RC6 Phase 1 **released** (`v1.5.0`) Owner Command Center
 **Date:** 2026-08-03
-**Authority:** Repository evidence after `v1.4.0`, RC6 DASH/QA slices, and Production cutover `b14163c…` / `dpl_Hi35GYu…`
+**Authority:** Repository evidence after `v1.4.0`, RC6 DASH/QA slices, Production cutover, closeout #192, and annotated `v1.5.0` at `830dbc8…` / `dpl_BtPH8…` (website files identical to QA-04 tip `b14163c…`)
 
 > Planning documents do **not** determine repository status. This baseline records verified anchors for RC6 discovery only.
 
@@ -36,28 +36,45 @@ No planning document, roadmap, or UI label overrides repository evidence.
 
 ## Anchors (do not conflate)
 
+### RC6 Phase 1 released (current)
+
+| Anchor | Value | Notes |
+| --- | --- | --- |
+| Released tag | `v1.5.0` (annotated) | Tag object `d52f3a4729f398143463e72e8147e4cb0ada1faa` |
+| Peeled / closeout commit | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | Merge of PR #192 |
+| RC6 feature/runtime tip | `b14163ccbc82fca0b2856ea137bddb746ed5716b` | QA-04 #191; `apps/website` delta to `830dbc8…` is empty |
+| Production website commit | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | Active Vercel deploy commit |
+| Production Vercel deployment | `dpl_BtPH8AvtUsKHwjJaQAf7gEVMMpom` | Do **not** treat `b14163c…` as active deploy commit |
+| Prior QA-04 deploy (historical) | `dpl_Hi35GYuauM5W9hdomkPEhppmuV6D` @ `b14163c…` | First Owner-smoke-green Production |
+| Production migration tip | `20260801180000` | Unchanged in RC6 Phase 1 |
+| Prior released tag | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Unchanged |
+| GitHub Release for `v1.5.0` | **Does not exist** | Tag-only SemVer |
+
+### RC5 / early planning rows (historical — retain)
+
 | Anchor | Value | Notes |
 | --- | --- | --- |
 | Released baseline tag | `v1.4.0` (annotated) | Message: RC5 certified closeout |
 | Tag target / certified closeout commit | `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | = merge of PR #175 |
-| Current repository main (DASH-04 baseline) | `08ca0e413d8863f835cf21aa0c14736b61f39dc1` | Post–PR #184 (RC6-DASH-03) merge |
+| Current repository main (DASH-04 baseline) | `08ca0e413d8863f835cf21aa0c14736b61f39dc1` | Post–PR #184 (RC6-DASH-03) merge — **historical** |
 | Post–DASH-02 tip (historical) | `80cd2c4f6d554c805d4e72973c83311242c5a242` | Superseded by DASH-03 |
 | Post–PR #176 planning tip (historical) | `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` | Superseded by honesty/CI/a11y/contracts merges |
 | `v1.4.0` tag peel | `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Distinct from current tip when docs advance |
-| Production website runtime SHA | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | Evidenced cutover; **docs-only delta** after this SHA to tip |
-| Production website Vercel deployment | `dpl_7xaV34uyAEdMLvWckWKQASPAxJ7r` | Rollback target `dpl_FriiC2Ps…` not executed |
-| Production API SHA (observed at RC5 cutover) | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | `/healthz`/`/readyz`; **not** intentionally redeployed by RC5 website cutover |
+| Production website runtime SHA (RC5 cutover) | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | Historical RC5 cutover evidence |
+| Production website Vercel deployment (RC5) | `dpl_7xaV34uyAEdMLvWckWKQASPAxJ7r` | Historical; superseded by RC6 cutover |
+| Production API SHA (observed at RC5 cutover) | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | Historical |
 | Production migration tip | `20260801180000` | Latest local migration on main matches tip |
 | GitHub Release object for `v1.4.0` | **Does not exist** | Tag-only SemVer (same convention as `v1.3.0`) |
 | Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Unchanged |
 
 ### Separation rules
 
-1. Repository tip ≠ Production website runtime (tip includes certification docs after runtime SHA).
-2. Production website deploy ≠ Production API deploy.
-3. Migration tip is independent of application SHAs.
-4. Tag `v1.4.0` ≠ GitHub Release UI object.
-5. RC5 planning language is historical; RC6 truth starts from this baseline.
+1. Repository tip ≠ Production website runtime when docs advance after deploy.
+2. Production website deploy commit ≠ RC6 feature tip when closeout is docs-only (`apps/website` may still be identical).
+3. Production website deploy ≠ Production API deploy.
+4. Migration tip is independent of application SHAs.
+5. Tag `v1.5.0` / `v1.4.0` ≠ GitHub Release UI object.
+6. RC5 planning language is historical; RC6 Phase 1 released truth starts from the current anchors table above.
 
 ---
 

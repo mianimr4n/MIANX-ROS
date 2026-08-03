@@ -7,7 +7,8 @@
 - Owner Command Center (DASH-00…08) integrated and smoke-verified
 - Documentation honesty wave (DOC-01, UI-01)
 - Public + Owner a11y gate (A11Y-02 scope)
-- Website cutover to `b14163ccbc82fca0b2856ea137bddb746ed5716b`
+- Website cutover feature tip `b14163ccbc82fca0b2856ea137bddb746ed5716b`; Production deploy commit `830dbc8…` / `dpl_BtPH8…` (`apps/website` identical)
+- Annotated release `v1.5.0`
 
 ## Recommended Phase 2 priorities
 
@@ -29,10 +30,10 @@
 
 | Field | Value |
 | --- | --- |
-| Production website | `b14163ccbc82fca0b2856ea137bddb746ed5716b` |
+| Production website commit | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` (`dpl_BtPH8…`) |
+| Feature/runtime tip | `b14163ccbc82fca0b2856ea137bddb746ed5716b` |
 | Migration tip | `20260801180000` |
-| Released baseline (pre-Phase-1-closeout) | `v1.4.0` @ `96f1e80…` |
-| Target after closeout | `v1.5.0` (pending tag) |
+| Released baseline | `v1.5.0` @ `830dbc8…` (prior `v1.4.0` @ `96f1e80…` unchanged) |
 
 ## Governance reminder
 

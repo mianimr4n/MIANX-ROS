@@ -1,8 +1,9 @@
 # RC6 Phase 1 — Public Production smoke
 
-**Target:** `https://telepizza-website.vercel.app`  
-**UTC:** `2026-08-03T00:44:05Z` (Owner smoke window; public subset same runtime)  
-**Runtime SHA (authoritative):** `b14163ccbc82fca0b2856ea137bddb746ed5716b`  
+**Target:** `https://telepizza-website.vercel.app`
+**UTC:** `2026-08-03T00:44:05Z` (Owner smoke window; public subset same historical runtime)
+**Historical runtime SHA:** `b14163ccbc82fca0b2856ea137bddb746ed5716b` / `dpl_Hi35GY…`
+**Release re-verify:** public smoke PASS again on `830dbc8…` / `dpl_BtPH8…` (`apps/website` ≡ tip)
 **Screenshots:** none committed
 
 | Route | Device | HTTP | Render | Console | Chunks | Landmarks | Result |

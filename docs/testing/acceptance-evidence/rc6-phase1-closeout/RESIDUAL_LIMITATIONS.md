@@ -43,7 +43,9 @@ Honest inventory of what Phase 1 does **not** complete. These are not cutover bl
 
 | Item | Status |
 | --- | --- |
-| `v1.5.0` annotated tag | not yet created |
-| GitHub Release object | none planned at closeout |
+| `v1.5.0` annotated tag | **created** — object `d52f3a47…`; peeled `830dbc8…` |
+| GitHub Release object | **none** (tag-only; retained limitation) |
+| Backend deployment in cutover | none |
+| Migration / Production SQL in cutover | none |
 
-**Stance:** Phase 1 delivers verified Owner Command Center on Production; ERP breadth and operational maturity remain future work.
+**Stance:** Phase 1 delivers verified Owner Command Center on Production and is released as `v1.5.0`; ERP breadth and operational maturity remain future work.
