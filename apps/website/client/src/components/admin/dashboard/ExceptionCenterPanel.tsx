@@ -98,7 +98,7 @@ export function ExceptionCenterPanel({
       data-mode-section="exception-center"
     >
       <div className="mb-3">
-        <h3 className="text-base font-semibold text-[var(--admin-ink)]">Exception Center</h3>
+        <h3 className="text-base font-semibold text-[var(--admin-ink)]">Needs Attention Now</h3>
         <p className="mt-0.5 text-sm text-[var(--admin-muted)]">
           Read-only Exception Center from verified live sources — not an all-clear for every restaurant risk.
         </p>

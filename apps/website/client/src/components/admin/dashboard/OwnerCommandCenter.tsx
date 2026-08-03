@@ -1259,8 +1259,7 @@ export function OwnerCommandCenter({
 
       {zones.map((zone) => {
         const primary = isPrimaryOwnerZone(zone.id, selectedMode);
-        const collapseSecondary =
-          selectedMode === "CLOSING" && (zone.id === "secondary" || zone.id === "what-changed");
+        const collapseSecondary = selectedMode === "CLOSING" && zone.id === "secondary";
         return (
           <OwnerDashboardZone
             key={zone.id}
