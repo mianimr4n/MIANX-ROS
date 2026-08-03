@@ -146,7 +146,7 @@ const OPEN_ASSIGNMENT_STATUSES = new Set([
 ]);
 
 export default function AdminDashboard() {
-  const { session, permissions, isSuperAdmin, roles, profile, branchIds } = useAuth();
+  const { session, permissions, isSuperAdmin, roles, profile, branchIds, isAuthenticated } = useAuth();
   const { branchIdFilter, label: branchLabel, setSelection, allowedBranches } = useAdminBranch();
   const { allBranches } = useBranch();
   const [, setLocation] = useLocation();
@@ -162,10 +162,13 @@ export default function AdminDashboard() {
     // Wait for AuthContext hydration — empty roles before /auth/me would falsely
     // bounce Super Admin / Owner to /admin/home/staff.
     if (isAuthLoading) return;
+    // Signed-out principals must not be role-routed: empty roles resolve to
+    // `/admin/home/staff` and race past AdminShell's login gate after logout.
+    if (!isAuthenticated) return;
     const home = resolveStaffHome(principal);
     if (home !== "/admin/dashboard") setLocation(home);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- principal fields listed below
-  }, [isAuthLoading, isSuperAdmin, permissions, roles, branchIds, setLocation]);
+  }, [isAuthLoading, isAuthenticated, isSuperAdmin, permissions, roles, branchIds, setLocation]);
 
   const selectedBranch = branchIdFilter
     ? allowedBranches.find((b) => b.id === branchIdFilter)
