@@ -14,7 +14,7 @@
 | State vocabulary | DATA_STATE_HONESTY_AUDIT.md · `phase1-polish-05/` | POLISH-05 | H-* |
 | Design tokens | VISUAL_DESIGN_SYSTEM_AUDIT.md | POLISH-05 | — |
 | Responsive/a11y | RESPONSIVE_AUDIT.md / ACCESSIBILITY_AUDIT.md · `phase1-polish-06/` | POLISH-06 | C-3 (merged #200) |
-| Perf/privacy | PERFORMANCE_NETWORK_AUDIT.md / SECURITY_PRIVACY_AUDIT.md · `phase1-polish-07/` | POLISH-07 | U-4 (in PR) |
-| Role matrix | ROLE_PERMISSION_AUDIT.md | POLISH-QA | C-1 |
-| Prod parity | PRODUCTION_PARITY_AUDIT.md | POLISH-QA | C-2 |
-| Gate | PHASE1_PROFESSIONAL_READINESS_GATE.md | POLISH-QA | Gate PASS |
+| Perf/privacy | PERFORMANCE_NETWORK_AUDIT.md / SECURITY_PRIVACY_AUDIT.md · `phase1-polish-07/` | POLISH-07 | U-4 (merged #201) |
+| Role matrix | ROLE_PERMISSION_AUDIT.md · `phase1-polish-qa/` | POLISH-QA | C-1 (local/CI) |
+| Prod parity | PRODUCTION_PARITY_AUDIT.md · `phase1-polish-qa/PRODUCTION_CERTIFICATION_PLAN.md` | POLISH-QA | C-2 **pending Production** |
+| Gate | PHASE1_PROFESSIONAL_READINESS_GATE.md | POLISH-QA | **NOT PASSED** — pending Production certification |

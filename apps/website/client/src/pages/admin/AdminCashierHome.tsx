@@ -52,7 +52,9 @@ export default function AdminCashierHome() {
       </AdminShell>
     );
   }
-  if (!allowed) return null;
+  if (!allowed) {
+    return <AdminShell title="Cashier home">{null}</AdminShell>;
+  }
 
   const opsKpi =
     opsOp.state === "LOADING"

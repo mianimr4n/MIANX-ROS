@@ -1,7 +1,7 @@
 # Phase 1.1 — Professional readiness acceptance criteria
 
-**Status:** Living acceptance — gate **NOT PASSED**  
-**Evidence pack:** `docs/testing/acceptance-evidence/phase1-professional-readiness-audit/`
+**Status:** Living acceptance — local/CI POLISH-QA complete when PR green; gate **NOT PASSED** until Production certification  
+**Evidence pack:** `docs/testing/acceptance-evidence/phase1-professional-readiness-audit/` · `phase1-polish-qa/`
 
 ## Universal
 

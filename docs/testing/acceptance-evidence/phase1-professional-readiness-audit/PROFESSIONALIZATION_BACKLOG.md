@@ -52,13 +52,14 @@ Sequenced after this audit PR. **No Phase 2 runtime** in these slices.
 - Bundle/regression budgets; refetch discipline
 - PII export/masking review; post-logout matrix expansion
 - **Risk:** Med
-- **Status:** In PR — evidence `phase1-polish-07/` (budgets, polling pause, logout storage clear)
+- **Status:** Merged — evidence `phase1-polish-07/` (#201 → `a29e8d7`)
 
 ## POLISH-QA — Professional readiness certification
 
 - Multi-role local matrix
-- Public + Owner Production read-only smoke
-- Gate document update
-- **Risk:** Low · Docs + tests
+- Headed axe + responsive + Owner ×3
+- Gate remains pending Production certification
+- **Risk:** Low · Docs + tests + narrow QA fixes
+- **Status:** In PR — evidence `phase1-polish-qa/`
 
 Each PR: docs evidence pack, tests for touched honesty/UI, no migrations/providers/secrets/Prod SQL.

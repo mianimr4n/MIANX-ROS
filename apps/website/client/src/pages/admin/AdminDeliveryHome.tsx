@@ -37,7 +37,9 @@ export default function AdminDeliveryHome() {
       </AdminShell>
     );
   }
-  if (!allowed) return null;
+  if (!allowed) {
+    return <AdminShell title="Delivery home">{null}</AdminShell>;
+  }
 
   const rows = assignmentsOp.data ?? [];
   const waiting = rows.filter((r) => r.status === "ready" || r.status === "pending");

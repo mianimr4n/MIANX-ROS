@@ -42,7 +42,9 @@ export default function AdminHostHome() {
       </AdminShell>
     );
   }
-  if (!allowed) return null;
+  if (!allowed) {
+    return <AdminShell title="Host home">{null}</AdminShell>;
+  }
 
   const d = tableOp.data;
   const kpi =

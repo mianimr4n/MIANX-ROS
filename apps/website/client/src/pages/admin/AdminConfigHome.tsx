@@ -50,7 +50,9 @@ export default function AdminConfigHome() {
       </AdminShell>
     );
   }
-  if (!allowed) return null;
+  if (!allowed) {
+    return <AdminShell title="Configuration home">{null}</AdminShell>;
+  }
 
   const warnings = healthOp.data?.configurationWarnings ?? [];
 

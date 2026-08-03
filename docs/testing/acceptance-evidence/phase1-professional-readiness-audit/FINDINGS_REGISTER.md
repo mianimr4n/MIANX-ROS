@@ -7,10 +7,12 @@ Severity model: P0 security/outage · P1 core/honesty · P2 professional UX · P
 | Severity | Count |
 | --- | --- |
 | P0 | **0** |
-| P1 | **11** |
-| P2 | **28** |
-| P3 | **10** |
-| **Total** | **49** |
+| P1 unresolved | **0** (original P1 closed or accepted P2 residual) |
+| P2 accepted residuals | See `phase1-polish-qa/ACCEPTED_P2_P3_RESIDUALS.md` |
+| P3 accepted residuals | See `phase1-polish-qa/ACCEPTED_P2_P3_RESIDUALS.md` |
+
+**Gate:** NOT PASSED — PENDING PRODUCTION CERTIFICATION (`phase1-polish-qa/`).
+
 
 ## P0
 

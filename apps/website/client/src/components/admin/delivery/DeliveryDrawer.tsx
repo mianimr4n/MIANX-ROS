@@ -218,7 +218,7 @@ export function DeliveryDrawer({
                   type="button"
                   disabled={busy}
                   onClick={onPickedUp}
-                  className="min-h-11 rounded-xl bg-amber-600 px-4 text-sm font-semibold text-white disabled:opacity-50"
+                  className="min-h-11 rounded-xl bg-amber-800 px-4 text-sm font-semibold text-white disabled:opacity-50"
                 >
                   Mark picked up
                 </button>
@@ -228,7 +228,7 @@ export function DeliveryDrawer({
                   type="button"
                   disabled={busy}
                   onClick={onDelivered}
-                  className="min-h-11 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white disabled:opacity-50"
+                  className="min-h-11 rounded-xl bg-emerald-800 px-4 text-sm font-semibold text-white disabled:opacity-50"
                 >
                   Mark delivered
                 </button>
