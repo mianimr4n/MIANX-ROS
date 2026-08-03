@@ -1,6 +1,6 @@
 # RC6 Acceptance Criteria
 
-**Status:** Proposed planning document
+**Status:** Living acceptance criteria — Phase 1 Production gates recorded in `rc6-production-cutover/` + `rc6-phase1-closeout/`
 **Date:** 2026-08-02
 **Baseline:** `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824`
 

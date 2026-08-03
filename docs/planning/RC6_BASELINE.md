@@ -1,8 +1,8 @@
 # RC6 Baseline
 
-**Status:** Living baseline — honesty wave + DASH-00 merged; **RC6-DASH-01** Exception Center next/runtime
-**Date:** 2026-08-02
-**Authority:** Repository evidence after annotated tag `v1.4.0`, RC5 certification, and RC6 honesty/contracts slices
+**Status:** Living baseline — RC6 Phase 1 Production-verified Owner Command Center
+**Date:** 2026-08-03
+**Authority:** Repository evidence after `v1.4.0`, RC6 DASH/QA slices, and Production cutover `b14163c…` / `dpl_Hi35GYu…`
 
 > Planning documents do **not** determine repository status. This baseline records verified anchors for RC6 discovery only.
 

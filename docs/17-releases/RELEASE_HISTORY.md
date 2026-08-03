@@ -1,7 +1,7 @@
 # Release History
 
 **Status:** ACTIVE
-**Last verified date:** 2026-08-02
+**Last verified date:** 2026-08-03
 
 ## Purpose
 
@@ -11,18 +11,18 @@ Owner-facing operating documentation for Telepizza ROS release and repository ti
 
 | Concept | Canonical value |
 | --- | --- |
-| Current verified repository main | `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` |
-| Latest released tag | `v1.4.0` (annotated git tag; no GitHub Release) |
+| Current verified repository main | `b14163ccbc82fca0b2856ea137bddb746ed5716b` |
+| Latest released tag | `v1.4.0` (annotated git tag; no GitHub Release) — Phase 1 closeout targets `v1.5.0` |
 | Released tag commit | `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` |
 | Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` |
-| Production website SHA | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` (Vercel `dpl_7xaV34uyAEdMLvWckWKQASPAxJ7r`) |
-| Production API SHA (observed) | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` (`/healthz`/`/readyz`; not intentionally redeployed by RC5 website cutover) |
+| Production website SHA | `b14163ccbc82fca0b2856ea137bddb746ed5716b` (Vercel `dpl_Hi35GYuauM5W9hdomkPEhppmuV6D`) |
+| Production API SHA (observed) | `b14163ccbc82fca0b2856ea137bddb746ed5716b` (`/healthz`/`/readyz`; Phase 1 did not intentionally deploy backend) |
 | Production migration tip | `20260801180000` |
-| Prior website rollback target | `dpl_FriiC2PsK3bEYrXbXLVuNSXv3G3y` (`795efee…`) — not executed |
+| Prior website rollback target | `dpl_HhvEuMZERVSLi7KK694cfeizcC7R` (`bf5912c…`) — not executed |
 
 ## Current verified state
 
-Verified **2026-08-02** against repository main `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` (RC6 planning merged; Production website runtime remains `152ce409609dc78e48d0d2b6b0c34a35d6338c24`).
+Verified **2026-08-03** against repository main `b14163ccbc82fca0b2856ea137bddb746ed5716b` (RC6 Phase 1 Production website runtime; Owner smoke PASS).
 
 ### RC4 release
 
@@ -47,20 +47,22 @@ Evidence: `docs/testing/acceptance-evidence/rc5-*/`, `docs/testing/acceptance-ev
 
 Do **not** infer Production deployment from merge history alone — website cutover is separately evidenced.
 
-### RC6 planning
+### RC6 Phase 1 (Owner Command Center)
 
 | Item | Status |
 | --- | --- |
-| RC6 planning pack | Merged #176 → `25960eb2b69d2c390fe0ce364458c9cb3feeac0c` |
-| Current slice | **RC6-DOC-01** (living status honesty) |
-| Later RC6 slices | Planned — not completed |
+| DASH-00…08 + QA-03 | Merged through #190 → `bf5912c…` |
+| QA-04 logout bounce fix | Merged #191 → `b14163c…` |
+| Production website | **Verified** at `b14163c…` / `dpl_Hi35GYu…` |
+| Phase 1 closeout + `v1.5.0` | In progress — `docs/testing/acceptance-evidence/rc6-phase1-closeout/` |
+| Phase 2 runtime | **Not started** |
 | Planning evidence | `docs/planning/RC6_*.md` |
 
 
 ## What is LIVE
 
-- Website on Vercel (`telepizza-website`) at SHA `152ce40…`
-- API on Render (`telepizza-api`) — observed `gitSha` `152ce40…`
+- Website on Vercel (`telepizza-website`) at SHA `b14163c…`
+- API on Render (`telepizza-api`) — observed `gitSha` `b14163c…`
 - PostgreSQL + Auth on Supabase
 - Royal Orchard branch status = `operating`
 - Northern Bypass branch status = `coming-soon`

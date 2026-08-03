@@ -1,6 +1,6 @@
 # RC6 Command Center Traceability
 
-**Status:** Living planning contract (updated RC6-DASH-01)
+**Status:** Living planning contract — DASH-00…08 + QA-03/QA-04 Production-verified
 **Baseline tip:** `cc09e239…` (post-DASH-00)
 
 Complete means: implementation + tests + docs + security review (if required) + Production verification (if required).
