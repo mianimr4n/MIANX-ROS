@@ -25,9 +25,9 @@
 
 | ID | Severity | Issue |
 | --- | --- | --- |
-| P11-PERF-01 | P2 | Entry ~252 kB gzip — watch regressions |
-| P11-PERF-02 | P2 | Admin lazy chunks ok; verify no public→admin eager |
-| P11-PERF-03 | P3 | Marketing JPG set large |
+| P11-PERF-01 | P2 | Entry ~252 kB gzip — watch regressions | Budget in `phase1-polish-07/` |
+| P11-PERF-02 | P2 | Admin lazy chunks ok; verify no public→admin eager | Guarded by POLISH-07 static test |
+| P11-PERF-03 | P3 | Marketing JPG set large | Residual |
 
 ## Before/after targets (POLISH-07)
 

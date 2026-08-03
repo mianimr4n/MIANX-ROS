@@ -1,9 +1,9 @@
 # Phase 1.1 — Professional readiness roadmap
 
-**Status:** Living planning — audit complete; **POLISH-01…05 merged**; **POLISH-06 in PR**; gate **NOT PASSED**
+**Status:** Living planning — audit complete; **POLISH-01…06 merged**; **POLISH-07 in PR**; gate **NOT PASSED**
 **Date:** 2026-08-03
 **Released baseline:** `v1.5.0` @ `830dbc8b5916cc0a724a0d7489a0e34387a26f78`
-**Evidence:** `docs/testing/acceptance-evidence/phase1-professional-readiness-audit/` · `phase1-polish-01/` … `phase1-polish-06/`
+**Evidence:** `docs/testing/acceptance-evidence/phase1-professional-readiness-audit/` · `phase1-polish-01/` … `phase1-polish-07/`
 
 > Planning is not implementation. Phase 2 Delivery/Settings runtime remains **not started** until the Phase 1.1 professional-readiness gate passes.
 
@@ -28,8 +28,8 @@ Phase 2 runtime (Delivery/Rider + Settings depth)
 | POLISH-03 | Operations | **Merged** — `phase1-polish-03/` (#197 → `936c5a3`) |
 | POLISH-04 | Commerce & business admin | **Merged** — `phase1-polish-04/` (#198 → `7fa2c8b`) |
 | POLISH-05 | Shared states & design system | **Merged** — `phase1-polish-05/` (#199 → `944eb8f`) |
-| POLISH-06 | A11y & responsive | **In PR** — `phase1-polish-06/` |
-| POLISH-07 | Perf / security / privacy | Pending |
+| POLISH-06 | A11y & responsive | **Merged** — `phase1-polish-06/` (#200 → `c7b91bf`) |
+| POLISH-07 | Perf / security / privacy | **In PR** — `phase1-polish-07/` |
 | POLISH-QA | Certification | Pending |
 
 Phase 1.1 gate remains **NOT PASSED**. Phase 2 runtime **not started**.

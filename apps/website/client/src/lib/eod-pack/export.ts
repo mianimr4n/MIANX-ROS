@@ -5,7 +5,9 @@
 import type { EodPack } from "./types";
 
 function csvEscape(value: string | number | null | undefined): string {
-  const raw = value == null ? "" : String(value);
+  let raw = value == null ? "" : String(value);
+  // Mitigate spreadsheet formula injection when cells begin with = + - @.
+  if (/^[=+\-@]/.test(raw)) raw = `'${raw}`;
   if (/[",\n\r]/.test(raw)) return `"${raw.replace(/"/g, '""')}"`;
   return raw;
 }

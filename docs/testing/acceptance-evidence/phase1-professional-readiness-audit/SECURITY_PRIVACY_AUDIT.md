@@ -19,10 +19,10 @@ Read-only repository review + prior Owner smoke logout proof. No Production scre
 
 | ID | Severity | Issue |
 | --- | --- | --- |
-| P11-SEC-01 | P1 | CRM/order UIs expose customer PII to authorized roles — verify export/log masking in POLISH-07 |
-| P11-SEC-02 | P2 | Ensure order IDs not leaked into public analytics payloads |
-| P11-SEC-03 | P2 | Browser Back after logout covered for dashboard; extend matrix to other admin routes |
-| P11-SEC-04 | P3 | Raw UUIDs in admin URLs acceptable if authz holds |
+| P11-SEC-01 | P1 | CRM/order UIs expose customer PII to authorized roles — verify export/log masking in POLISH-07 | Partial — logout LS clear, EOD/console; backend sales CSV residual |
+| P11-SEC-02 | P2 | Ensure order IDs not leaked into public analytics payloads | No public analytics SDK found |
+| P11-SEC-03 | P2 | Browser Back after logout covered for dashboard; extend matrix to other admin routes | Persistence clear; headed matrix → POLISH-QA |
+| P11-SEC-04 | P3 | Raw UUIDs in admin URLs acceptable if authz holds | Residual |
 
 ## P0 search
 
