@@ -184,11 +184,18 @@ export function buildInventoryInsights(
       detail: "On-hand quantity is at or below the reorder / minimum level you set on each item.",
       source: "live",
     });
-  } else if (snapshot.lowStockCount === 0) {
+  } else if (snapshot.lowStockCount === 0 && snapshot.stockItemCount != null && snapshot.stockItemCount > 0) {
     items.push({
       id: "live-low-stock-clear",
       title: "No low-stock alerts right now",
       detail: "Every tracked item is above its minimum / reorder level in this scope.",
+      source: "live",
+    });
+  } else if (snapshot.lowStockCount === 0 && snapshot.stockItemCount === 0) {
+    items.push({
+      id: "live-low-stock-empty-catalog",
+      title: "Low-stock monitoring not configured yet",
+      detail: "Add stock items before treating inventory as healthy or all-clear.",
       source: "live",
     });
   }

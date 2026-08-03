@@ -1,4 +1,5 @@
-import type { SettingsCategory } from "@/lib/admin-settings";
+﻿import type { SettingsCategory } from "@/lib/admin-settings";
+import { settingsPresentationLabel } from "@/lib/business-admin-capability";
 
 export function SettingsSearch({
   value,
@@ -47,13 +48,6 @@ export function SettingsCategoryNav({
     );
   }
 
-  const ownerStatus = (classification: SettingsCategory["classification"]) => {
-    if (classification === "LIVE") return "Available";
-    if (classification === "READ-ONLY") return "Read-only";
-    if (classification === "DERIVED") return "Calculated";
-    return "Planned for Phase 2";
-  };
-
   return (
     <nav aria-label="Settings categories" className="mb-4 lg:mb-0">
       <ul className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1 lg:overflow-visible">
@@ -70,10 +64,11 @@ export function SettingsCategoryNav({
                     : "border border-[var(--admin-border)] bg-white text-[var(--admin-ink)] hover:bg-[var(--admin-soft)]"
                 }`}
                 aria-current={active ? "page" : undefined}
+                data-settings-presentation={category.presentation}
               >
                 <span className="block">{category.label}</span>
                 <span className={`mt-0.5 block text-[10px] tracking-wide ${active ? "text-white/80" : "text-[var(--admin-muted)]"}`}>
-                  {ownerStatus(category.classification)}
+                  {settingsPresentationLabel(category.presentation)}
                 </span>
               </button>
             </li>

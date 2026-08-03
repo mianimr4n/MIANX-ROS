@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ConfigurationInsights } from "@/components/admin/settings/ConfigurationInsights";
 import { SettingsCategoryNav, SettingsSearch } from "@/components/admin/settings/SettingsNav";
 import { SettingsHeader } from "@/components/admin/settings/SettingsHeader";
+import { SettingsReadinessBanner } from "@/components/admin/settings/SettingsReadinessBanner";
 import { SettingsSaveBar } from "@/components/admin/settings/SettingsPrimitives";
 import { SettingsWorkspace } from "@/components/admin/settings/SettingsWorkspace";
 import { useAuth } from "@/contexts/AuthContext";
@@ -79,6 +80,7 @@ export default function AdminSettings() {
   return (
     <AdminShell title="Settings & Configuration">
       <SettingsHeader branchLabel={branchLabel} roleLabel={roleLabel} onRefresh={onRefresh} />
+      <SettingsReadinessBanner />
 
       <SettingsSearch value={search} onChange={setSearch} resultCount={filteredCategories.length} />
 

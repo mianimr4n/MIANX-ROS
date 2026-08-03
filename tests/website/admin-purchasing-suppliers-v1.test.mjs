@@ -58,7 +58,8 @@ describe("Purchasing & Suppliers V1 (static)", () => {
 
   it("does not derive purchase cost from menu selling price", () => {
     const banner = read("apps/website/client/src/components/admin/purchasing/ProcurementStatusBanner.tsx");
-    assert.match(banner, /Purchasing is ready/);
+    assert.match(banner, /Purchasing tools available \(Partial live\)/);
+    assert.match(banner, /configuration \/ onboarding/i);
     const helper = read("apps/website/client/src/lib/admin-purchasing.ts");
     assert.doesNotMatch(helper, /displayPrice|formatPkr|menu\.price/i);
   });

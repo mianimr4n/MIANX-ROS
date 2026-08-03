@@ -17,13 +17,28 @@ describe("Settings & Configuration V1 (static)", () => {
   it("composes /admin/settings from reusable settings components", () => {
     const page = read("apps/website/client/src/pages/admin/AdminSettings.tsx");
     assert.match(page, /SettingsHeader/);
-    assert.doesNotMatch(page, /SettingsReadinessBanner|SettingsIntegrationReadiness|SettingsCapabilityMatrix/);
+    assert.match(page, /SettingsReadinessBanner/);
+    assert.doesNotMatch(page, /SettingsIntegrationReadiness|SettingsCapabilityMatrix/);
     assert.match(page, /SettingsSearch/);
     assert.match(page, /SettingsCategoryNav/);
     assert.match(page, /SettingsWorkspace/);
     assert.match(page, /SettingsSaveBar/);
     assert.match(page, /ConfigurationInsights/);
     assert.match(page, /canAccessAdminSettings/);
+  });
+
+  it("does not label navigation-only Settings categories as Available", () => {
+    const nav = read("apps/website/client/src/components/admin/settings/SettingsNav.tsx");
+    assert.match(nav, /settingsPresentationLabel/);
+    assert.doesNotMatch(nav, /classification === "LIVE" return "Available"/);
+    const helpers = read("apps/website/client/src/lib/admin-settings.ts");
+    assert.match(helpers, /presentation: "NAVIGATION_ONLY"/);
+    assert.match(helpers, /presentation: "EDITABLE"/);
+    assert.match(helpers, /presentation: "METADATA_ONLY"/);
+    const banner = read("apps/website/client/src/components/admin/settings/SettingsReadinessBanner.tsx");
+    assert.match(banner, /settings-readiness-banner/);
+    assert.match(banner, /Opens module/);
+    assert.doesNotMatch(banner, /global system readiness/i);
   });
 
   it("does not invent settings write persistence or fake save handlers", () => {

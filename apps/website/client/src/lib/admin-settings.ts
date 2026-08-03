@@ -2,6 +2,7 @@
 
 import type { Branch } from "@/lib/telepizza-types";
 import { SEEDED_PERMISSIONS, SEEDED_ROLES } from "@/lib/admin-hr";
+import type { SettingsCategoryPresentation } from "@/lib/business-admin-capability";
 
 export type SettingsClassification = "LIVE" | "READ-ONLY" | "DERIVED" | "FOUNDATION" | "UNAVAILABLE";
 
@@ -34,6 +35,8 @@ export type SettingsCategory = {
   label: string;
   description: string;
   classification: SettingsClassification;
+  /** Honest owner-facing maturity — not "Available" merely because classification is LIVE. */
+  presentation: SettingsCategoryPresentation;
   keywords: string[];
 };
 
@@ -70,6 +73,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Organization",
     description: "Legal identity, brand, and defaults",
     classification: "LIVE",
+    presentation: "EDITABLE",
     keywords: ["organization", "legal", "brand", "logo", "timezone", "currency"],
   },
   {
@@ -77,6 +81,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Branches",
     description: "Branch directory and operating profile",
     classification: "LIVE",
+    presentation: "EDITABLE",
     keywords: ["branch", "store", "hours", "address", "phone", "status"],
   },
   {
@@ -84,6 +89,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Restaurant Operations",
     description: "Opening verification and service readiness",
     classification: "LIVE",
+    presentation: "EDITABLE",
     keywords: ["dine-in", "pickup", "delivery", "hours", "holiday"],
   },
   {
@@ -91,6 +97,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Orders",
     description: "Order intake and pipeline (manage in Orders)",
     classification: "LIVE",
+    presentation: "NAVIGATION_ONLY",
     keywords: ["order", "cancel", "refund", "minimum", "workflow"],
   },
   {
@@ -98,6 +105,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "POS",
     description: "Counter sales and cash close (manage in POS)",
     classification: "LIVE",
+    presentation: "NAVIGATION_ONLY",
     keywords: ["pos", "receipt", "cash", "drawer", "printer"],
   },
   {
@@ -105,6 +113,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Kitchen",
     description: "Kitchen tickets and prep (manage in Kitchen)",
     classification: "LIVE",
+    presentation: "NAVIGATION_ONLY",
     keywords: ["kitchen", "ticket", "station", "sla", "bump"],
   },
   {
@@ -112,6 +121,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Delivery",
     description: "Zones, fees, and dispatch policy",
     classification: "LIVE",
+    presentation: "EDITABLE",
     keywords: ["delivery", "zone", "fee", "rider", "cod"],
   },
   {
@@ -119,6 +129,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Menu",
     description: "Publishing and availability behaviour",
     classification: "LIVE",
+    presentation: "NAVIGATION_ONLY",
     keywords: ["menu", "publish", "pricing", "availability"],
   },
   {
@@ -126,6 +137,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Inventory",
     description: "Stock, adjustments, and low-stock alerts",
     classification: "LIVE",
+    presentation: "NAVIGATION_ONLY",
     keywords: ["inventory", "stock", "reorder", "waste"],
   },
   {
@@ -133,6 +145,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Purchasing",
     description: "Suppliers, POs, GRN, and payables",
     classification: "LIVE",
+    presentation: "NAVIGATION_ONLY",
     keywords: ["purchasing", "supplier", "approval", "po"],
   },
   {
@@ -140,6 +153,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Reports",
     description: "Sales analytics and exports",
     classification: "LIVE",
+    presentation: "NAVIGATION_ONLY",
     keywords: ["reports", "sales", "analytics", "export", "csv"],
   },
   {
@@ -147,6 +161,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "HR",
     description: "Team directory and workforce tools",
     classification: "LIVE",
+    presentation: "NAVIGATION_ONLY",
     keywords: ["hr", "employee", "staff", "attendance", "leave"],
   },
   {
@@ -154,6 +169,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Finance & Tax",
     description: "Fiscal and tax configuration",
     classification: "UNAVAILABLE",
+    presentation: "UNAVAILABLE",
     keywords: ["finance", "tax", "vat", "gst", "ledger"],
   },
   {
@@ -161,6 +177,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Payments",
     description: "Payment methods and provider status",
     classification: "FOUNDATION",
+    presentation: "METADATA_ONLY",
     keywords: ["payment", "cash", "card", "gateway", "wallet"],
   },
   {
@@ -168,6 +185,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Customers & Loyalty",
     description: "Consent, loyalty, and coupon policy",
     classification: "FOUNDATION",
+    presentation: "FOUNDATION",
     keywords: ["loyalty", "points", "consent", "coupon"],
   },
   {
@@ -175,6 +193,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Communications",
     description: "Email, SMS, WhatsApp, push",
     classification: "FOUNDATION",
+    presentation: "METADATA_ONLY",
     keywords: ["email", "sms", "whatsapp", "notification", "push"],
   },
   {
@@ -182,6 +201,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Users & Access",
     description: "Roles, permissions, and admin access",
     classification: "READ-ONLY",
+    presentation: "READ_ONLY",
     keywords: ["user", "role", "permission", "rbac", "access"],
   },
   {
@@ -189,6 +209,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Localization",
     description: "Language, currency, and formats",
     classification: "FOUNDATION",
+    presentation: "FOUNDATION",
     keywords: ["language", "locale", "currency", "timezone", "format"],
   },
   {
@@ -196,6 +217,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Integrations",
     description: "Provider readiness without secrets",
     classification: "FOUNDATION",
+    presentation: "METADATA_ONLY",
     keywords: ["integration", "webhook", "provider", "api"],
   },
   {
@@ -203,6 +225,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Security & Audit",
     description: "Security posture and audit controls",
     classification: "FOUNDATION",
+    presentation: "FOUNDATION",
     keywords: ["security", "mfa", "session", "audit", "password", "printer"],
   },
   {
@@ -210,6 +233,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Data & Privacy",
     description: "Consent, retention, and deletion",
     classification: "FOUNDATION",
+    presentation: "FOUNDATION",
     keywords: ["privacy", "consent", "retention", "gdpr", "deletion"],
   },
   {
@@ -217,6 +241,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Advanced",
     description: "Diagnostics and environment metadata",
     classification: "READ-ONLY",
+    presentation: "METADATA_ONLY",
     keywords: ["feature", "flag", "environment", "api", "version", "maintenance"],
   },
 ];
@@ -269,7 +294,7 @@ export function capabilityMatrix(): SettingsCapabilityRow[] {
       scope: "Organization / Branch",
       sensitive: false,
       classification: "LIVE",
-      decision: "Available — open Orders / POS / Kitchen; do not invent policy toggles here",
+      decision: "Navigation only — open Orders / POS / Kitchen; do not invent policy toggles here",
     },
     {
       domain: "Inventory",
@@ -281,7 +306,7 @@ export function capabilityMatrix(): SettingsCapabilityRow[] {
       scope: "Branch",
       sensitive: false,
       classification: "LIVE",
-      decision: "Available — manage stock in Inventory; no invented Settings toggles",
+      decision: "Navigation only — manage stock in Inventory; no invented Settings toggles",
     },
     {
       domain: "Purchasing",
@@ -293,7 +318,7 @@ export function capabilityMatrix(): SettingsCapabilityRow[] {
       scope: "Branch",
       sensitive: false,
       classification: "LIVE",
-      decision: "Available — manage procurement in Purchasing; no invented approval limits here",
+      decision: "Navigation only — manage procurement in Purchasing; no invented approval limits here",
     },
     {
       domain: "Reports / HR",
@@ -305,7 +330,7 @@ export function capabilityMatrix(): SettingsCapabilityRow[] {
       scope: "Organization / Branch",
       sensitive: false,
       classification: "LIVE",
-      decision: "Available — open Reports or HR workspaces",
+      decision: "Navigation only — open Reports or HR workspaces",
     },
     {
       domain: "Finance & Tax",

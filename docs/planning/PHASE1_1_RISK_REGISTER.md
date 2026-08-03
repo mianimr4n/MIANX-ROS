@@ -5,7 +5,7 @@
 
 | ID | Risk | Likelihood | Impact | Mitigation |
 | --- | --- | --- | --- | --- |
-| R11-01 | Misleading Available/Ready labels → operator trust loss | High | High | POLISH-04 first |
+| R11-01 | Misleading Available/Ready labels → operator trust loss | Med | High | **Mitigated in POLISH-04** (Settings/Inventory/Purchasing/CRM) |
 | R11-02 | Dual branch selectors → wrong-branch actions | Med | High | POLISH-01 partial; residual filter dupes |
 | R11-03 | Polish waves accidentally change mutations | Med | High | Scope UI/honesty; tests (POLISH-03 ops presentation-only) |
 | R11-04 | Starting Phase 2 before polish | Med | High | Gate document |

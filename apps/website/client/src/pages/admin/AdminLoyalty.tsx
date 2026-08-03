@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { AdminSurface, AdminSurfaceBody, AdminSurfaceHeader } from "@/components/admin/AdminSurface";
+import { LoyaltyProgramBanner } from "@/components/admin/loyalty/LoyaltyProgramBanner";
 import { RewardCatalogue } from "@/components/admin/loyalty/RewardCatalogue";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
@@ -224,11 +225,11 @@ export default function AdminLoyalty() {
           {roleLabel} · Live points ledger (1 point per 100 PKR on completed orders)
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-900">
-            LIVE accounts + ledger
+          <span className="rounded-full border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-ink)]">
+            Partial live · accounts + ledger
           </span>
-          <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-900">
-            LIVE rewards + tiers
+          <span className="rounded-full border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-ink)]">
+            Partial live · rewards + tiers
           </span>
           <button
             type="button"
@@ -243,6 +244,8 @@ export default function AdminLoyalty() {
           </button>
         </div>
       </header>
+
+      <LoyaltyProgramBanner />
 
       <div className="mb-6 grid gap-6 lg:grid-cols-2">
         <AdminSurface aria-labelledby="loyalty-tiers-heading">
