@@ -220,7 +220,9 @@ export default function AdminLoyalty() {
     <AdminShell title="Loyalty & Rewards">
       <header className="mb-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">Customers</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Loyalty &amp; Rewards</h1>
+        <p className="mt-1 text-2xl font-semibold tracking-tight" data-admin-page-title>
+          Loyalty &amp; Rewards
+        </p>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
           {roleLabel} · Live points ledger (1 point per 100 PKR on completed orders)
         </p>

@@ -49,10 +49,18 @@ export function AdminDataState({
   const heading = title ?? copy.heading;
   const body = description ?? copy.explanation;
   const role = state === "ERROR" || state === "UNAVAILABLE" ? "alert" : "status";
+  const live =
+    state === "ERROR" || state === "UNAVAILABLE"
+      ? "assertive"
+      : state === "LOADING"
+        ? "polite"
+        : undefined;
 
   return (
     <div
       role={role}
+      aria-live={live}
+      aria-atomic={live ? true : undefined}
       data-admin-data-state={state}
       data-testid={testId ?? `admin-data-state-${state.toLowerCase()}`}
       className={cn(

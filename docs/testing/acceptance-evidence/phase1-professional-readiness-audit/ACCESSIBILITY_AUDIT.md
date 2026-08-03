@@ -20,9 +20,9 @@
 
 | ID | Severity | Issue |
 | --- | --- | --- |
-| P11-A11Y-01 | P2 | Disabled search/notifications may confuse SR users — remove or `aria-hidden` decorative |
-| P11-A11Y-02 | P2 | Complex dashboard heading order / landmark density |
-| P11-A11Y-03 | P2 | Table semantics on ops pages need POLISH-06 pass |
-| P11-A11Y-04 | P3 | Moderate advisories may remain on ungated admin routes |
+| P11-A11Y-01 | P2 | Disabled search/notifications may confuse SR users — remove or `aria-hidden` decorative | Resolved POLISH-01 |
+| P11-A11Y-02 | P2 | Complex dashboard heading order / landmark density | Partial — shell single h1 + module title demotion (POLISH-06) |
+| P11-A11Y-03 | P2 | Table semantics on ops pages need POLISH-06 pass | Partial — Orders/Delivery captions (POLISH-06) |
+| P11-A11Y-04 | P3 | Moderate advisories may remain on ungated admin routes | Residual POLISH-QA |
 
 **Gate target for Phase 1.1 polish waves:** critical=0, serious=0 on touched routes.

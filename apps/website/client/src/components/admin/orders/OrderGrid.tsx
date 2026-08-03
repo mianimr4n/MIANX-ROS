@@ -89,7 +89,11 @@ export function OrderGrid({
       {!loading && orders.length > 0 ? (
         <>
           <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
-            <table className="min-w-[72rem] w-full text-left text-sm">
+            <table className="min-w-[72rem] w-full text-left text-sm" aria-label="Orders for current filters">
+              <caption className="sr-only">
+                Orders for the current branch scope and filters. Sortable columns expose sort direction in the header
+                label.
+              </caption>
               <thead className="sticky top-0 z-10 border-b border-[var(--admin-border)] bg-[var(--admin-panel)] text-[var(--admin-muted)]">
                 <tr>
                   <th className="px-3 py-3 font-medium">

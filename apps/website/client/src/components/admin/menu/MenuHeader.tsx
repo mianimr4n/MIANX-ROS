@@ -23,7 +23,9 @@ export function MenuHeader({
     <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">Catalog</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Menu Management</h1>
+        <p className="mt-1 text-2xl font-semibold tracking-tight" data-admin-page-title>
+          Menu Management
+        </p>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
         </p>

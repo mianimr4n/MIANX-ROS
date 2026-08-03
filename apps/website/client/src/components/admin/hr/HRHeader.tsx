@@ -13,7 +13,9 @@ export function HRHeader({
     <header className="mb-5 flex flex-wrap items-start justify-between gap-4" data-testid="hr-workspace-header">
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">Workforce</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">HR &amp; Workforce Management</h1>
+        <p className="mt-1 text-2xl font-semibold tracking-tight" data-admin-page-title>
+          HR &amp; Workforce Management
+        </p>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
         </p>

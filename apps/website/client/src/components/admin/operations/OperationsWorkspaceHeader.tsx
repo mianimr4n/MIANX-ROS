@@ -49,7 +49,9 @@ export function OperationsWorkspaceHeader({
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">
           {eyebrow}
         </p>
-        <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--admin-ink)]">{title}</p>
+        <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--admin-ink)]" data-admin-page-title>
+          {title}
+        </p>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">{description}</p>
         <p className="mt-2 text-sm text-[var(--admin-ink)]">
           <span className="font-medium">Active branch:</span> {branchLabel}

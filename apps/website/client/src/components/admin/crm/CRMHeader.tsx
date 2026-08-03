@@ -23,7 +23,9 @@ export function CRMHeader({
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">
           Customers
         </p>
-        <h2 className="mt-1 text-2xl font-semibold tracking-tight">Customer Relationship Management</h2>
+        <p className="mt-1 text-2xl font-semibold tracking-tight" data-admin-page-title>
+          Customer Relationship Management
+        </p>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
           <span className="ml-2 rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
