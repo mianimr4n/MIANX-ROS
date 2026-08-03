@@ -140,7 +140,7 @@ try {
     return {
       loginUrl,
       url: page.url(),
-      hasKds: /Kitchen Display System|Kitchen operations board/i.test(kitchenText),
+      hasKds: /Kitchen ERP|Kitchen Display System|Kitchen operations board/i.test(kitchenText),
     };
   });
 

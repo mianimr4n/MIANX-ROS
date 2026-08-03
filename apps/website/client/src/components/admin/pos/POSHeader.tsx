@@ -23,26 +23,37 @@ export function POSHeader({
   live: boolean;
 }) {
   return (
-    <header className="mb-4 flex flex-wrap items-start justify-between gap-4">
+    <header
+      className="mb-4 flex flex-wrap items-start justify-between gap-4"
+      data-testid="operations-workspace-header"
+      data-ops-maturity="FOUNDATION"
+    >
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">
           Commerce
         </p>
-        <h2 className="mt-1 text-2xl font-semibold tracking-tight">Point of Sale</h2>
+        <p className="mt-1 text-2xl font-semibold tracking-tight text-[var(--admin-ink)]">Point of Sale</p>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
-          {primaryRoleLabel(roles, isSuperAdmin)} · {branchLabel} · {currentShiftLabel()}
-          <span className="ml-2 rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-            Shift label
+          Quote and place orders for the active branch. Hardware register, draft carts, and receipt
+          printers are not integrated.
+        </p>
+        <p className="mt-2 text-sm text-[var(--admin-ink)]">
+          <span className="font-medium">Active branch:</span> {branchLabel}
+          <span className="mx-1 text-[var(--admin-muted)]">·</span>
+          {primaryRoleLabel(roles, isSuperAdmin)}
+          <span className="mx-1 text-[var(--admin-muted)]">·</span>
+          <span className="rounded-md border border-[var(--admin-border)] bg-[var(--admin-soft)] px-2 py-0.5 text-xs font-semibold">
+            Foundation
           </span>
+          <span className="mx-1 text-[var(--admin-muted)]">·</span>
+          {currentShiftLabel()}
+        </p>
+        <p className="mt-2 text-sm font-medium text-[var(--admin-ink)]" data-testid="operations-primary-task">
+          Primary task: build cart and place an order
         </p>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
           Cashier: <span className="font-semibold text-[var(--admin-ink)]">{cashierName}</span>
-          <span
-            className="ml-2 rounded-full border border-dashed border-[var(--admin-border)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]"
-            title="Hardware register status is not integrated"
-          >
-            Register · Planned for Phase 2
-          </span>
+          <span className="ml-2 text-xs">Register hardware · not connected</span>
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">

@@ -52,20 +52,17 @@ export function DeliveryPerformance({ snapshot }: { snapshot: DeliveryKpiSnapsho
 
 export function DeliveryMapFoundation() {
   return (
-    <AdminSurface aria-labelledby="delivery-map-heading" className="mb-6">
-      <AdminSurfaceHeader
-        title="Delivery map"
-        description="Foundation — real GPS tracking is not available yet."
-      />
-      <AdminSurfaceBody>
-        <h3 id="delivery-map-heading" className="sr-only">
-          Delivery map
-        </h3>
-        <div className="flex min-h-[10rem] items-center justify-center rounded-xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 text-center text-sm text-[var(--admin-muted)]">
-          No Google Maps / fake pins. Map unlocks when rider location feeds exist.
-        </div>
-      </AdminSurfaceBody>
-    </AdminSurface>
+    <details
+      className="mb-6 rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-3"
+      data-testid="delivery-map-deferred"
+    >
+      <summary className="cursor-pointer text-sm font-semibold text-[var(--admin-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)]">
+        Map &amp; GPS tracking — not available
+      </summary>
+      <p className="mt-2 text-sm text-[var(--admin-muted)]">
+        No live map, fake pins, capacity heatmaps, or traffic-based ETA. Rider location feeds remain deferred.
+      </p>
+    </details>
   );
 }
 

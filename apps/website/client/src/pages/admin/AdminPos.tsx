@@ -8,6 +8,7 @@ import { OrderTypeSelector } from "@/components/admin/pos/OrderTypeSelector";
 import { PaymentPanel } from "@/components/admin/pos/PaymentPanel";
 import { POSActions } from "@/components/admin/pos/POSActions";
 import { POSHeader } from "@/components/admin/pos/POSHeader";
+import { OperationsDeferredNote } from "@/components/admin/operations/OperationsWorkspaceHeader";
 import { POSInsights, buildPosInsights } from "@/components/admin/pos/POSInsights";
 import { ProductConfigureModal } from "@/components/admin/pos/ProductConfigureModal";
 import { ProductGrid } from "@/components/admin/pos/ProductGrid";
@@ -460,6 +461,16 @@ export default function AdminPos() {
         onSearch={() => setMenuSearch(searchDraft.trim())}
         onRefresh={() => void reloadCatalog()}
         live={!usingFallback && !menuError}
+      />
+
+      <OperationsDeferredNote
+        summary="Deferred POS capabilities"
+        items={[
+          "Hardware register and cash drawer status",
+          "Save draft cart persistence",
+          "Receipt printer hardware integration",
+          "Existing-customer lookup and table inventory session link",
+        ]}
       />
 
       {!isApiConfigured ? (

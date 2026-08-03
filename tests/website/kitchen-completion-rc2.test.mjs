@@ -78,16 +78,18 @@ describe("Kitchen Completion RC2 (static)", () => {
     assert.match(page, /KitchenStationsPanel/);
   });
 
-  it("filters by branch, status, priority, order type, search; station disabled", () => {
+  it("filters by branch, status, priority, order type, search; station deferred outside primary bar", () => {
     const filters = read("apps/website/client/src/components/admin/kitchen/KitchenFilters.tsx");
     assert.match(filters, /Branch/);
     assert.match(filters, /Status/);
     assert.match(filters, /Priority/);
     assert.match(filters, /Order type/);
     assert.match(filters, /Kitchen search/);
-    assert.match(filters, /Station/);
-    assert.match(filters, /disabled/);
+    assert.doesNotMatch(filters, /Stations — Planned for Phase 2/);
     assert.match(filters, /Pending/);
+    const stations = read("apps/website/client/src/components/admin/kitchen/KitchenStationsPanel.tsx");
+    assert.match(stations, /kitchen-stations-deferred/);
+    assert.match(stations, /Planned for Phase 2/);
   });
 
   it("uses green / yellow / red elapsed timers without fake countdowns", () => {

@@ -7,6 +7,10 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
+import {
+  OperationsDeferredNote,
+  OperationsWorkspaceHeader,
+} from "@/components/admin/operations/OperationsWorkspaceHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
@@ -161,12 +165,20 @@ export default function AdminWaitlist() {
   return (
     <AdminShell title="Waitlist">
       <div className="space-y-6">
-        <header>
-          <h2 className="text-xl font-semibold">Waitlist — {branchLabel}</h2>
-          <p className="text-sm text-muted-foreground">
-            Walk-in queue in arrival order. Seating creates a dining session atomically.
-          </p>
-        </header>
+        <OperationsWorkspaceHeader
+          className="mb-0"
+          eyebrow="Table service"
+          title="Waitlist"
+          description="Walk-in queue in arrival order. Distinct from reservations. Seating creates a dining session atomically."
+          branchLabel={branchLabel}
+          maturity="FOUNDATION"
+          primaryTask="Notify and seat waiting parties"
+        />
+
+        <OperationsDeferredNote
+          summary="Deferred waitlist capabilities"
+          items={["SMS/provider notify beyond current transitions", "Predicted wait-time engine"]}
+        />
 
         {!branchId ? (
           <p className="rounded-xl border bg-muted/40 p-4 text-sm">

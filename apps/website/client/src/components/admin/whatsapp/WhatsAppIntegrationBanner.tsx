@@ -3,12 +3,14 @@ export function WhatsAppIntegrationBanner() {
     <section
       aria-labelledby="whatsapp-integration-heading"
       className="mb-6 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 md:px-5"
+      data-testid="whatsapp-order-attribution-banner"
     >
       <h2 id="whatsapp-integration-heading" className="text-sm font-semibold text-sky-950">
-        WhatsApp order view
+        WhatsApp order attribution (not an inbox)
       </h2>
       <p className="mt-1 text-sm text-sky-900">
-        This screen shows orders that arrived via WhatsApp. Full conversation history is Planned for Phase 2.
+        This workspace lists orders with <span className="font-semibold">order_source = whatsapp</span>. There is no
+        WhatsApp provider connection, conversation storage, unread state, templates, or agent assignment here.
       </p>
     </section>
   );

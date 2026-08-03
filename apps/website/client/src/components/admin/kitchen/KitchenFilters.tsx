@@ -141,19 +141,6 @@ export function KitchenFilters({
         />
       </label>
 
-      <label className="text-xs font-medium text-[var(--admin-muted)]">
-        Station
-        <select
-          disabled
-          className="mt-1.5 w-full cursor-not-allowed rounded-lg border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2 text-sm text-[var(--admin-muted)]"
-          aria-label="Station filter unavailable"
-          value=""
-        >
-          <option value="">Stations — Planned for Phase 2</option>
-        </select>
-        <span className="mt-1 block text-[10px] tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
-      </label>
-
       <div className="flex items-end gap-2">
         <button
           type="submit"

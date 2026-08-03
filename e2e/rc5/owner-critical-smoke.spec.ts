@@ -21,7 +21,7 @@ const READONLY_SHELLS: Array<{
 }> = [
   { path: "/admin/branch", title: /Branch dashboard/i },
   { path: "/admin/orders", title: /Orders Management/i },
-  { path: "/admin/kitchen", title: /Kitchen Display System/i },
+  { path: "/admin/kitchen", title: /Kitchen ERP|Kitchen Display System/i },
   { path: "/admin/delivery", title: /Delivery Management/i },
   {
     path: "/admin/kitchen-dashboard",

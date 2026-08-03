@@ -9,6 +9,10 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
+import {
+  OperationsDeferredNote,
+  OperationsWorkspaceHeader,
+} from "@/components/admin/operations/OperationsWorkspaceHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
@@ -183,38 +187,53 @@ export default function AdminFloorConsole() {
   return (
     <AdminShell title="Live floor">
       <div className="space-y-6">
-        <header className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold">Live floor — {branchLabel}</h2>
-            <p className="text-sm text-muted-foreground">
-              {state
-                ? `Last update ${formatLastSuccess(floorOp.lastSuccessAt) ?? "—"} · ${state.waitlistCount} waiting`
-                : "Live table and session state."}
-            </p>
-          </div>
-          {floors.length > 1 ? (
-            <select
-              aria-label="Floor filter"
-              className="rounded-md border px-2 py-1.5 text-sm"
-              value={floorFilter}
-              onChange={(e) => setFloorFilter(e.target.value)}
-            >
-              <option value="">All floors</option>
-              {floors.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.display_name}
-                </option>
-              ))}
-            </select>
-          ) : null}
-        </header>
+        <OperationsWorkspaceHeader
+          className="mb-0"
+          eyebrow="Table service"
+          title="Live floor"
+          description="Table occupancy and dining-session actions for the active branch. Not a full floor-management suite."
+          branchLabel={branchLabel}
+          maturity="FOUNDATION"
+          primaryTask="Monitor tables and seat or close sessions"
+          liveLabel={
+            state
+              ? `Updated ${formatLastSuccess(floorOp.lastSuccessAt) ?? "—"} · ${state.waitlistCount} waiting`
+              : undefined
+          }
+          actions={
+            floors.length > 1 ? (
+              <select
+                aria-label="Floor filter"
+                className="min-h-11 rounded-md border px-2 py-1.5 text-sm"
+                value={floorFilter}
+                onChange={(e) => setFloorFilter(e.target.value)}
+              >
+                <option value="">All floors</option>
+                {floors.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.display_name}
+                  </option>
+                ))}
+              </select>
+            ) : null
+          }
+        />
+
+        <OperationsDeferredNote
+          summary="Deferred live-floor capabilities"
+          items={[
+            "Real-time seating intelligence beyond polled table state",
+            "Host stand hardware / layout designer in this console",
+            "Cross-branch floor analytics",
+          ]}
+        />
 
         {floors.length === 0 || tables.filter((t) => t.is_active).length === 0 ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
             <p className="font-semibold">SETUP REQUIRED</p>
             <p>
-              <span className="font-medium">Problem:</span> No active floor or tables configured for
-              Royal Orchard.
+              <span className="font-medium">Problem:</span> No active floor or tables configured for{" "}
+              {branchLabel}.
             </p>
             <p>
               <span className="font-medium">Next action:</span> Create the first floor and at least one

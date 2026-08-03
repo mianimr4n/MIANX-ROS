@@ -26,11 +26,12 @@ describe("Kitchen Display System V1 (static)", () => {
     assert.match(page, /patchKitchenTicketStatus/);
   });
 
-  it("keeps station filter and capacity labeled Planned for Phase 2", () => {
+  it("keeps capacity FOUNDATION and stations deferred (not in primary filter bar)", () => {
     const filters = read("apps/website/client/src/components/admin/kitchen/KitchenFilters.tsx");
-    assert.match(filters, /Station/);
-    assert.match(filters, /Planned for Phase 2/);
-    assert.match(filters, /disabled/);
+    assert.doesNotMatch(filters, /Stations — Planned for Phase 2/);
+    const stations = read("apps/website/client/src/components/admin/kitchen/KitchenStationsPanel.tsx");
+    assert.match(stations, /Planned for Phase 2/);
+    assert.match(stations, /kitchen-stations-deferred/);
     const kpis = read("apps/website/client/src/components/admin/kitchen/KitchenKPIs.tsx");
     assert.match(kpis, /Kitchen capacity/);
     assert.match(kpis, /FOUNDATION/);
@@ -38,6 +39,7 @@ describe("Kitchen Display System V1 (static)", () => {
     assert.doesNotMatch(kpis, /\?\? 0/);
     const page = read("apps/website/client/src/pages/admin/AdminKitchen.tsx");
     assert.match(page, /ticketsOp\.data != null \? kpiSnapshot : null/);
+    assert.match(page, /OperationsWorkspaceHeader/);
   });
 
   it("labels AI panel as rule-based only", () => {

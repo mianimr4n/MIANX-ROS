@@ -8,12 +8,12 @@ Aligned with `docs/planning/RC6_CAPABILITY_TRUTH.md` and repository evidence at 
 | Public website / menu | LIVE | Public smoke + a11y PASS @ `830dbc8…` | Polish residual only |
 | Checkout / ordering | PARTIAL_LIVE | Not mutated in Prod audit | Promo/WA checkout gaps |
 | Owner Command Center | LIVE | Owner smoke failCount 0 @ release | Hierarchy/density polish |
-| Orders / Kitchen / Delivery | PARTIAL_LIVE | Routes observed; mutations not Prod-proven | Phase 2 depth deferred |
-| POS / Floor / Reservations | FOUNDATION | Not in Phase 1 Prod smoke | Professional polish + honesty |
+| Orders / Kitchen / Delivery | PARTIAL_LIVE | Routes observed; mutations not Prod-proven | POLISH-03 presentation honesty; Phase 2 depth deferred |
+| POS / Floor / Reservations | FOUNDATION | Not in Phase 1 Prod smoke | POLISH-03 Foundation framing |
 | Inventory / Purchasing / Recipes | FOUNDATION | Empty Prod stock common | Onboarding ≠ defect; fix honesty bugs |
 | CRM | PARTIAL_LIVE | Order-derived only | Not customer master |
 | Loyalty / Marketing | FOUNDATION / PARTIAL_LIVE | Repo APIs; Prod config may be empty | |
-| WhatsApp admin | PARTIAL_LIVE | Order-source filter only | No provider inbox |
+| WhatsApp admin | PARTIAL_LIVE | Order-source filter only | POLISH-03: no provider inbox framing |
 | HR / Payroll / Finance / Reports | FOUNDATION / PARTIAL_LIVE | Repo LIVE subsets; Prod unverified | Label contradictions |
 | Settings | PARTIAL_LIVE | Org/branch writes; many nav-only | “Available” overstates |
 | Support / Integrations / AI CC | DEFERRED | Coming Soon pages | Keep out of nav claims |
