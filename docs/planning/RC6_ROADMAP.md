@@ -1,13 +1,15 @@
 # RC6 Roadmap
 
-**Status:** Living roadmap — **RC6 Phase 1 Production-verified**; Phase 2 not started
+**Status:** Living roadmap — **RC6 Phase 1 released** (`v1.5.0`); Phase 2 not started
 
 **Date:** 2026-08-03
-**Baseline tag:** `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824`
-**Current repository tip:** `b14163ccbc82fca0b2856ea137bddb746ed5716b`
-**Production website runtime:** `b14163ccbc82fca0b2856ea137bddb746ed5716b` (`dpl_Hi35GYu…`)
+**Released tag:** `v1.5.0` @ `830dbc8b5916cc0a724a0d7489a0e34387a26f78` (tag object `d52f3a4729f398143463e72e8147e4cb0ada1faa`)
+**Prior baseline tag:** `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` (unchanged)
+**Current repository tip:** `830dbc8b5916cc0a724a0d7489a0e34387a26f78` (docs tip may advance)
+**RC6 feature/runtime tip:** `b14163ccbc82fca0b2856ea137bddb746ed5716b` (`apps/website` ≡ closeout commit)
+**Production website commit:** `830dbc8b5916cc0a724a0d7489a0e34387a26f78` (`dpl_BtPH8AvtUsKHwjJaQAf7gEVMMpom`)
 **Migration tip:** `20260801180000`
-**Target Phase 1 release:** annotated `v1.5.0` (no GitHub Release)
+**GitHub Release:** none
 
 > This roadmap does **not** authorize Production mutation, migrations, deploys, tags, or GitHub Releases. Planning is not implementation evidence.
 
@@ -25,7 +27,8 @@
 | RC6-DASH-01…08 | Owner Command Center panels (repo) | `rc6-dash-0*/` · through #189 |
 | RC6-QA-03 | Command Center integration | `rc6-command-center-integration/` · #190 → `bf5912c…` |
 | RC6-QA-04 | Production Owner smoke blockers | `rc6-qa-04/` · #191 → `b14163c…` |
-| Phase 1 Production cutover | Website verified | `rc6-production-cutover/` · runtime `b14163c…` / `dpl_Hi35GYu…` |
+| Phase 1 Production cutover | Website verified + released | `rc6-production-cutover/` · deploy `830dbc8…` / `dpl_BtPH8…` (files ≡ `b14163c…`) |
+| Phase 1 release | Annotated `v1.5.0` | closeout #192 → `830dbc8…`; `rc6-v1.5.0-anchor-sync/` |
 
 ---
 

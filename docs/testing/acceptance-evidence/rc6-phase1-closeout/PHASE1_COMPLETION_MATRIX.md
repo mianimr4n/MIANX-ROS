@@ -1,7 +1,8 @@
 # RC6 Phase 1 — Completion matrix
 
-**Closeout branch:** `docs/rc6-phase1-final-closeout`  
-**Production website SHA:** `b14163ccbc82fca0b2856ea137bddb746ed5716b`
+**Closeout branch:** `docs/rc6-phase1-final-closeout` (merged #192 → `830dbc8…`)
+**Production website commit:** `830dbc8b5916cc0a724a0d7489a0e34387a26f78` (`dpl_BtPH8…`)
+**Feature/runtime tip:** `b14163ccbc82fca0b2856ea137bddb746ed5716b`
 
 | Slice | Scope | Repository | Production verified | Evidence |
 | --- | --- | --- | --- | --- |
@@ -26,6 +27,6 @@
 | API / backend | Compatibility | Unchanged runtime intent | healthz/readyz PASS | `API_BACKEND_FINAL_AUDIT.md` |
 | Database / RLS | Migration alignment | No delta | tip aligned | `DATABASE_RLS_FINAL_AUDIT.md` |
 | Security / privacy | Cutover review | Complete | PASS in scope | `SECURITY_PRIVACY_SUMMARY.md` |
-| Release closeout | Tag recommendation | Pending Founder | `v1.5.0` not yet tagged | `RELEASE_RECOMMENDATION.md` |
+| Release closeout | Annotated `v1.5.0` | **Complete** | tagged @ `830dbc8…` | `RELEASE_RECOMMENDATION.md`, `rc6-v1.5.0-anchor-sync/` |
 
 **Phase 2:** NOT STARTED — see `PHASE2_HANDOFF.md`.

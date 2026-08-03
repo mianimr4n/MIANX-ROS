@@ -1,7 +1,8 @@
 # RC6 Phase 1 — Website final audit
 
-**Target:** `https://telepizza-website.vercel.app`  
-**SHA:** `b14163ccbc82fca0b2856ea137bddb746ed5716b`
+**Target:** `https://telepizza-website.vercel.app`
+**Production commit:** `830dbc8b5916cc0a724a0d7489a0e34387a26f78` (`dpl_BtPH8…`)
+**Feature/runtime tip:** `b14163ccbc82fca0b2856ea137bddb746ed5716b` (`apps/website` identical)
 
 ## Public surface
 

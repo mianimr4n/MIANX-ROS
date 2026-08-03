@@ -1,7 +1,8 @@
 # RC6 Phase 1 — Command Center acceptance summary
 
-**Scope:** DASH-00…08 + QA-03 integration + QA-04 Production verification  
-**Production SHA:** `b14163ccbc82fca0b2856ea137bddb746ed5716b`
+**Scope:** DASH-00…08 + QA-03 integration + QA-04 Production verification
+**Production commit:** `830dbc8b5916cc0a724a0d7489a0e34387a26f78`
+**Feature/runtime tip:** `b14163ccbc82fca0b2856ea137bddb746ed5716b`
 
 ## Integrated capabilities verified
 
