@@ -2,7 +2,7 @@
 
 ## Kitchen ERP (`/admin/kitchen`)
 
-- Retitled Kitchen ERP with Partial live framing
+- Retitled Kitchen ERP with Partial live framing (Owner smoke accepts Kitchen ERP|Kitchen Display System)
 - Station Planned filter removed from primary filter bar
 - Stations catalog collapsed behind deferred disclosure
 - Ticket mutation APIs unchanged
