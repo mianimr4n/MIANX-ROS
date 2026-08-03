@@ -86,7 +86,7 @@ export function OwnerDashboardStateBadge({
       ? "border-red-200 bg-red-50 text-red-900"
       : state === "partial" || state === "stale" || state === "insufficient"
         ? "border-amber-200 bg-amber-50 text-amber-950"
-        : "border-[var(--admin-border)] bg-[var(--admin-soft)] text-[var(--admin-muted)]";
+        : "border-[var(--admin-border)] bg-[var(--admin-soft)] text-[var(--admin-ink)]";
   return (
     <span
       className={cn(

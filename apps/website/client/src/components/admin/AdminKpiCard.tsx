@@ -39,10 +39,10 @@ const SOURCE_STYLES: Record<AdminKpiSource, string> = {
   LIVE: "bg-emerald-50 text-emerald-800",
   DERIVED: "bg-sky-50 text-sky-800",
   PARTIAL: "bg-amber-50 text-amber-950",
-  FOUNDATION: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
-  UNAVAILABLE: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
+  FOUNDATION: "border border-[var(--admin-border)] bg-[var(--admin-soft)] text-[var(--admin-ink)]",
+  UNAVAILABLE: "border border-[var(--admin-border)] bg-[var(--admin-soft)] text-[var(--admin-ink)]",
   /** Successful empty collection — not LIVE traffic; page banner owns EMPTY. */
-  EMPTY: "bg-[var(--admin-soft)] text-[var(--admin-muted)]",
+  EMPTY: "border border-[var(--admin-border)] bg-[var(--admin-soft)] text-[var(--admin-ink)]",
 };
 
 /**
@@ -130,7 +130,7 @@ export function AdminKpiCard({
           {resolvedState !== "available" &&
           !resolvedZeroEmpty &&
           STATE_LABEL[resolvedState] !== SOURCE_LABEL[source] ? (
-            <span className="rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[var(--admin-muted)]">
+            <span className="rounded-full border border-[var(--admin-border)] bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[var(--admin-ink)]">
               {STATE_LABEL[resolvedState]}
             </span>
           ) : null}
