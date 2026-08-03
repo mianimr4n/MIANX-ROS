@@ -389,10 +389,11 @@ export function BranchSettings({
         ) : (
           <div className="space-y-4">
             <label className={labelClass}>
-              Branch
+              Editing settings for
               <select
                 className={fieldClass}
                 value={selectedId}
+                aria-label="Editing settings for branch"
                 onChange={(e) => setSelectedId(e.target.value)}
               >
                 {branches.map((branch) => (
@@ -402,6 +403,9 @@ export function BranchSettings({
                 ))}
               </select>
             </label>
+            <p className="text-xs text-[var(--admin-muted)]">
+              Configuration edit target — independent of the Active operational branch in the header.
+            </p>
             {profileLoading ? (
               <p className="text-sm text-[var(--admin-muted)]" aria-live="polite">
                 Loading branch settings…
@@ -792,10 +796,11 @@ export function DeliverySettings() {
             }}
           >
             <label className={labelClass}>
-              Branch
+              Editing settings for
               <select
                 className={fieldClass}
                 value={selectedId}
+                aria-label="Editing delivery settings for branch"
                 onChange={(e) => setSelectedId(e.target.value)}
               >
                 {allowedBranches.map((branch) => (
@@ -805,6 +810,9 @@ export function DeliverySettings() {
                 ))}
               </select>
             </label>
+            <p className="text-xs text-[var(--admin-muted)]">
+              Configuration edit target — does not change the Active operational branch in the header.
+            </p>
             {loading ? (
               <p className="text-sm text-[var(--admin-muted)]">Loading delivery settings…</p>
             ) : (

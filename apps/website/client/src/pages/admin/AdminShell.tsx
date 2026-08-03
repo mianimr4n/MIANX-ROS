@@ -1,13 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import {
-  Bell,
-  ChevronDown,
-  LogOut,
-  Menu,
-  Search,
-  X,
-} from "lucide-react";
+import { ChevronDown, LogOut, Menu, X } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
@@ -16,41 +9,10 @@ import {
   canAccessAdminOrdersApi,
   filterVisibleAdminNav,
   primaryRoleLabel,
-  type AdminNavItem,
 } from "@/lib/admin-access";
-
-const GROUP_ORDER = [
-  "Overview",
-  "Operations",
-  "Commerce",
-  "Customers",
-  "Management",
-  "Intelligence",
-  "System",
-] as const;
-
-function groupNav(items: AdminNavItem[]) {
-  return GROUP_ORDER.map((group) => ({
-    group,
-    items: items.filter((item) => item.group === group),
-  })).filter((entry) => entry.items.length > 0);
-}
-
-function pageTitle(path: string): string {
-  if (path.startsWith("/admin/orders/")) return "Order detail";
-  if (path.startsWith("/admin/orders")) return "Orders";
-  if (path.startsWith("/admin/kitchen-dashboard")) return "Kitchen Manager KDS";
-  if (path.startsWith("/admin/kitchen")) return "Kitchen Display";
-  if (path.startsWith("/admin/branch")) return "Branch dashboard";
-  if (path.startsWith("/admin/dashboard")) return "Executive dashboard";
-  if (path.startsWith("/admin/unauthorized")) return "Unauthorized";
-  const match = path.match(/^\/admin\/([^/]+)/);
-  if (!match?.[1]) return "Admin";
-  return match[1]
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
+import { resolveAdminNavTitle } from "@/lib/admin-nav-registry";
+import { AdminModuleNavigator } from "@/components/admin/shell/AdminModuleNavigator";
+import { AdminSidebarNav } from "@/components/admin/shell/AdminSidebarNav";
 
 export function AdminShell({
   children,
@@ -83,8 +45,7 @@ export function AdminShell({
 
   const principal = { roles, permissions, isSuperAdmin };
   const navItems = useMemo(() => filterVisibleAdminNav(principal), [roles, permissions, isSuperAdmin]);
-  const grouped = useMemo(() => groupNav(navItems), [navItems]);
-  const resolvedTitle = title ?? pageTitle(location);
+  const resolvedTitle = resolveAdminNavTitle(location, title);
   /** Desktop sidebar is always expanded; mobile drawer only when open. */
   const navExpanded = isLgUp || sidebarOpen;
 
@@ -107,6 +68,16 @@ export function AdminShell({
     }
     wasSidebarOpen.current = sidebarOpen;
   }, [sidebarOpen]);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && sidebarOpen && !isLgUp) {
+        setSidebarOpen(false);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [sidebarOpen, isLgUp]);
 
   if (isLoading) {
     return (
@@ -186,53 +157,7 @@ export function AdminShell({
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Admin modules">
-          {grouped.map((section) => (
-            <div key={section.group} className="mb-5">
-              <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--admin-muted)]">
-                {section.group}
-              </p>
-              <ul className="space-y-1">
-                {section.items.map((item) => {
-                  const active =
-                    item.href === "/admin/branch"
-                      ? location === "/admin/branch" || location.startsWith("/admin/branch/")
-                      : item.href === "/admin/dashboard"
-                        ? location === "/admin" || location.startsWith("/admin/dashboard")
-                        : location === item.href || location.startsWith(`${item.href}/`);
-                  if (!item.available) {
-                    return (
-                      <li key={item.key}>
-                        <span
-                          className="flex cursor-not-allowed items-center justify-between rounded-lg px-3 py-2 text-sm text-[var(--admin-muted)] opacity-70"
-                          title="Coming in a later release"
-                          aria-disabled="true"
-                        >
-                          <span>{item.label}</span>
-                          <span className="text-[10px] uppercase tracking-wide">Soon</span>
-                        </span>
-                      </li>
-                    );
-                  }
-                  return (
-                    <li key={item.key}>
-                      <Link
-                        href={item.href}
-                        className={`block rounded-lg px-3 py-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--brand-red)] ${
-                          active
-                            ? "bg-[var(--brand-red)] text-white"
-                            : "text-[var(--admin-ink)] hover:bg-[var(--admin-soft)]"
-                        }`}
-                      >
-                        {item.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </nav>
+        <AdminSidebarNav items={navItems} />
       </aside>
 
       <div className="min-w-0 lg:pl-[17.5rem]">
@@ -257,18 +182,22 @@ export function AdminShell({
             <div className="relative">
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm font-medium hover:bg-[var(--admin-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-red)]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm font-medium hover:bg-[var(--admin-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-red)]"
                 aria-haspopup="listbox"
                 aria-expanded={branchMenuOpen}
+                aria-label={`Active operational branch: ${branchLabel}`}
                 onClick={() => setBranchMenuOpen((open) => !open)}
               >
-                <span className="max-w-[10rem] truncate">{branchLabel}</span>
-                <ChevronDown className="h-4 w-4 text-[var(--admin-muted)]" />
+                <span className="hidden text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)] sm:inline">
+                  Active
+                </span>
+                <span className="max-w-[10rem] truncate sm:max-w-[12rem]">{branchLabel}</span>
+                <ChevronDown className="h-4 w-4 text-[var(--admin-muted)]" aria-hidden />
               </button>
               {branchMenuOpen ? (
                 <ul
                   role="listbox"
-                  aria-label="Branch scope"
+                  aria-label="Active operational branch"
                   className="absolute right-0 z-30 mt-2 max-h-72 w-56 overflow-auto rounded-lg border border-[var(--admin-border)] bg-white py-1 shadow-lg"
                 >
                   {canSelectAll ? (
@@ -310,25 +239,9 @@ export function AdminShell({
               ) : null}
             </div>
 
-            <div
-              className="hidden items-center gap-2 rounded-lg border border-dashed border-[var(--admin-border)] px-3 py-2 text-sm text-[var(--admin-muted)] md:inline-flex"
-              title="Global search arrives in a later release"
-            >
-              <Search className="h-4 w-4" />
-              <span>Search unavailable</span>
-            </div>
+            <AdminModuleNavigator items={navItems} />
 
-            <button
-              type="button"
-              className="rounded-lg border border-[var(--admin-border)] p-2 text-[var(--admin-muted)]"
-              aria-label="Notifications unavailable"
-              title="Notifications arrive in a later release"
-              disabled
-            >
-              <Bell className="h-4 w-4" />
-            </button>
-
-            <div className="flex items-center gap-2 rounded-lg border border-[var(--admin-border)] bg-white px-3 py-1.5">
+            <div className="flex min-h-11 items-center gap-2 rounded-lg border border-[var(--admin-border)] bg-white px-3 py-1.5">
               <div className="min-w-0 text-right">
                 <p className="truncate text-sm font-medium">{profile?.fullName ?? "Staff"}</p>
                 <p className="truncate text-[11px] text-[var(--admin-muted)]">
