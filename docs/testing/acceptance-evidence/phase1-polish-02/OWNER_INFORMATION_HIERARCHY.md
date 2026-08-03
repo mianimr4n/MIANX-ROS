@@ -17,6 +17,6 @@
 | --- | --- |
 | PRE_OPEN | exception → approval → branch-health → unsupported → KPIs → profitability → what-changed → eod |
 | LIVE | exception → approval → KPIs → profitability → branch-health → what-changed → eod |
-| CLOSING | exception → approval → eod → unsupported → branch-health → profitability → what-changed (collapsed) |
+| CLOSING | exception → approval → eod → unsupported → branch-health → profitability → what-changed (secondary charts collapsed) |
 
 Implementation: `lib/owner-dashboard-hierarchy.ts` + `MODE_COMPOSITION` in `command-modes/registry.ts`.
