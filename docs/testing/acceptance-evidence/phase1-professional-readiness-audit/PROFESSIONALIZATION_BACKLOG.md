@@ -45,12 +45,14 @@ Sequenced after this audit PR. **No Phase 2 runtime** in these slices.
 - Viewport matrix + axe on touched admin families
 - critical=0 serious=0 gate
 - **Risk:** Low
-- **Status:** In PR — evidence `phase1-polish-06/` (shell focus trap; single page h1; route matrix 87)
+- **Status:** Merged — evidence `phase1-polish-06/` (#200 → `c7b91bf`)
+
 ## POLISH-07 — Performance, security & privacy
 
 - Bundle/regression budgets; refetch discipline
 - PII export/masking review; post-logout matrix expansion
 - **Risk:** Med
+- **Status:** In PR — evidence `phase1-polish-07/` (budgets, polling pause, logout storage clear)
 
 ## POLISH-QA — Professional readiness certification
 

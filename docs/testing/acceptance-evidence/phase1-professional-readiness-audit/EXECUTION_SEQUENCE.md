@@ -9,8 +9,8 @@
 | 4 | POLISH-03 | POLISH-02 | Website only | **Merged** (#197 → `936c5a3`) |
 | 5 | POLISH-04 | POLISH-03 | Website only | **Merged** (#198 → `7fa2c8b`) |
 | 6 | POLISH-05 | POLISH-04 | Website only | **Merged** (#199 → `944eb8f`) |
-| 7 | POLISH-06 | POLISH-05 | Website only | **In PR** — a11y+responsive matrix |
-| 8 | POLISH-07 | — | Website only | Perf budgets + privacy checks |
+| 7 | POLISH-06 | POLISH-05 | Website only | **Merged** (#200 → `c7b91bf`) |
+| 8 | POLISH-07 | POLISH-06 | Website only | **In PR** — perf/privacy |
 | 9 | POLISH-QA | All polish waves | none | Prod read-only + local roles |
 
 **Do not** start Phase 2 Delivery/Settings runtime until Phase 1.1 gate passes. Phase 1.1 gate remains **NOT PASSED**.

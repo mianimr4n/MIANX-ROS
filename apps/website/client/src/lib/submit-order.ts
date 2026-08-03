@@ -94,7 +94,8 @@ export async function submitWebsiteOrder(
           `Your order ${apiOrder.orderNumber} was received by ${payload.branchName}.`,
         );
       } catch (notificationError) {
-        console.warn("Order placed but local notification failed.", notificationError);
+        console.warn("Order placed but local notification failed.");
+        void notificationError;
       }
 
       return result;
@@ -102,7 +103,7 @@ export async function submitWebsiteOrder(
       if (options.requireApiSuccess !== false) {
         wrapApiError(error);
       }
-      console.warn("API order failed; saving locally.", error);
+      console.warn("API order failed; saving locally.");
     }
   }
 
@@ -114,7 +115,8 @@ export async function submitWebsiteOrder(
       `Your order ${local.orderNumber} is pending — confirm on WhatsApp.`,
     );
   } catch (notificationError) {
-    console.warn("Local order saved but notification failed.", notificationError);
+    console.warn("Local order saved but notification failed.");
+    void notificationError;
   }
   return local;
 }

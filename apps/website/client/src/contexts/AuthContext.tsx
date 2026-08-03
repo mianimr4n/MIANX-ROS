@@ -31,6 +31,7 @@ import { FACEBOOK_OAUTH_SCOPES } from "@/lib/auth-identity";
 import { normalizePakistaniMobileE164 } from "@/lib/phone";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { clearStoredUser } from "@/lib/customer-store";
+import { clearPrivateBrowserPersistence } from "@/lib/clear-private-browser-persistence";
 
 export type CustomerProfile = {
   id: string;
@@ -736,6 +737,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clear legacy preview identity keys only — do not touch cart storage.
     clearStoredUser();
     clearLocalAuth();
+    clearPrivateBrowserPersistence();
 
     if (supabase) {
       await supabase.auth.signOut();

@@ -188,15 +188,45 @@ export function useOperationalData<T>(
     });
 
     const pollMs = optionsRef.current?.pollMs;
-    const pollHandle =
-      typeof pollMs === "number" && pollMs > 0
-        ? setInterval(() => setReloadToken((t) => t + 1), pollMs)
-        : undefined;
+    let pollHandle: ReturnType<typeof setInterval> | undefined;
+
+    function startPoller() {
+      if (typeof pollMs !== "number" || pollMs <= 0) return;
+      if (pollHandle !== undefined) return;
+      pollHandle = setInterval(() => {
+        if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+        setReloadToken((t) => t + 1);
+      }, pollMs);
+    }
+
+    function stopPoller() {
+      if (pollHandle !== undefined) {
+        clearInterval(pollHandle);
+        pollHandle = undefined;
+      }
+    }
+
+    function onVisibility() {
+      if (typeof document === "undefined") return;
+      if (document.visibilityState === "hidden") {
+        stopPoller();
+      } else {
+        startPoller();
+      }
+    }
+
+    startPoller();
+    if (typeof document !== "undefined" && typeof pollMs === "number" && pollMs > 0) {
+      document.addEventListener("visibilitychange", onVisibility);
+    }
 
     return () => {
       cancelled = true;
       controller.abort();
-      if (pollHandle !== undefined) clearInterval(pollHandle);
+      stopPoller();
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", onVisibility);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, reloadToken, readRetries, retryDelayMs, ...deps]);
