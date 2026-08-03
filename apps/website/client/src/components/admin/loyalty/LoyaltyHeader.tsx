@@ -23,7 +23,9 @@ export function LoyaltyHeader({
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">
           Loyalty programme
         </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Loyalty & Rewards</h1>
+        <p className="mt-1 text-2xl font-semibold tracking-tight" data-admin-page-title>
+          Loyalty & Rewards
+        </p>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
         </p>

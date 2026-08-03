@@ -325,7 +325,9 @@ export default function AdminMarketing() {
     <AdminShell title="Marketing">
       <header className="mb-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">Commerce</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Marketing &amp; Coupons</h1>
+        <p className="mt-1 text-2xl font-semibold tracking-tight" data-admin-page-title>
+          Marketing &amp; Coupons
+        </p>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
           {roleLabel} · {branchLabel} · Coupons, redemptions, and campaigns LIVE — messaging provider not configured
         </p>

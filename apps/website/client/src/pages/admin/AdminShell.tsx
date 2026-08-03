@@ -42,6 +42,7 @@ export function AdminShell({
   const [branchMenuOpen, setBranchMenuOpen] = useState(false);
   const [isLgUp, setIsLgUp] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
 
   const principal = { roles, permissions, isSuperAdmin };
   const navItems = useMemo(() => filterVisibleAdminNav(principal), [roles, permissions, isSuperAdmin]);
@@ -71,12 +72,58 @@ export function AdminShell({
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && sidebarOpen && !isLgUp) {
+      if (event.key !== "Escape") return;
+      if (branchMenuOpen) {
+        setBranchMenuOpen(false);
+        return;
+      }
+      if (sidebarOpen && !isLgUp) {
         setSidebarOpen(false);
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
+  }, [sidebarOpen, isLgUp, branchMenuOpen]);
+
+  /** Mobile drawer: focus first control, trap Tab, lock body scroll. */
+  useEffect(() => {
+    if (!sidebarOpen || isLgUp) return;
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+
+    const focusables = () =>
+      Array.from(
+        sidebar.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => !el.hasAttribute("disabled") && el.getAttribute("aria-hidden") !== "true");
+
+    const nodes = focusables();
+    (nodes[0] ?? sidebar).focus();
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Tab") return;
+      const list = focusables();
+      if (list.length === 0) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
   }, [sidebarOpen, isLgUp]);
 
   if (isLoading) {
@@ -132,9 +179,15 @@ export function AdminShell({
       ) : null}
 
       <aside
+        ref={sidebarRef}
         id="admin-sidebar"
+        aria-label="Admin navigation"
         aria-hidden={!navExpanded}
         inert={!navExpanded ? true : undefined}
+        role={sidebarOpen && !isLgUp ? "dialog" : undefined}
+        aria-modal={sidebarOpen && !isLgUp ? true : undefined}
+        tabIndex={sidebarOpen && !isLgUp ? -1 : undefined}
+        data-admin-mobile-drawer={sidebarOpen && !isLgUp ? "open" : "closed"}
         className={`fixed inset-y-0 left-0 z-40 flex w-[17.5rem] flex-col border-r border-[var(--admin-border)] bg-[var(--admin-panel)] transition-transform duration-200 ease-out motion-reduce:transition-none lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } ${navExpanded ? "" : "pointer-events-none max-lg:invisible"}`}

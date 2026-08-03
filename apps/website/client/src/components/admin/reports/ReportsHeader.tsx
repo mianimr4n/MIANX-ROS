@@ -17,7 +17,9 @@ export function ReportsHeader({
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">
           Business Intelligence
         </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Owner BI Workspace</h1>
+        <p className="mt-1 text-2xl font-semibold tracking-tight" data-admin-page-title>
+          Owner BI Workspace
+        </p>
         <p className="mt-1 text-sm text-[var(--admin-muted)]">
           {roleLabel} · {branchLabel} · {currentShiftLabel()}
           {generatedAt ? (

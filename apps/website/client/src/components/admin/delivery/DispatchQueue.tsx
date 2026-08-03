@@ -84,7 +84,8 @@ export function DispatchQueue({
 
       {!loading && rows.length > 0 ? (
         <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
-          <table className="min-w-[64rem] w-full text-left text-sm">
+          <table className="min-w-[64rem] w-full text-left text-sm" aria-label="Delivery dispatch queue">
+            <caption className="sr-only">Deliveries waiting for rider assignment.</caption>
             <thead className="sticky top-0 z-10 border-b border-[var(--admin-border)] bg-[var(--admin-panel)] text-[var(--admin-muted)]">
               <tr>
                 <th className="px-3 py-3 font-medium">Order #</th>

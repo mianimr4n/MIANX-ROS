@@ -38,14 +38,14 @@ Sequenced after this audit PR. **No Phase 2 runtime** in these slices.
 - Vocabulary components: loading/empty/unavailable/deferred
 - Cards, badges, buttons, forms, tables tokens
 - **Risk:** Low · Broad touch; visual regression tests
-- **Status:** In PR — evidence `phase1-polish-05/` (P11-VIS-01 addressed; representative adoption)
+- **Status:** Merged — evidence `phase1-polish-05/` (#199 → `944eb8f`)
 
 ## POLISH-06 — Accessibility & responsive hardening
 
 - Viewport matrix + axe on touched admin families
 - critical=0 serious=0 gate
 - **Risk:** Low
-
+- **Status:** In PR — evidence `phase1-polish-06/` (shell focus trap; single page h1; route matrix 87)
 ## POLISH-07 — Performance, security & privacy
 
 - Bundle/regression budgets; refetch discipline

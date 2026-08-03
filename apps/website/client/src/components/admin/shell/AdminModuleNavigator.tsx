@@ -26,10 +26,17 @@ export function AdminModuleNavigator({ items }: { items: AdminNavItem[] }) {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setOpen((value) => !value);
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "k") return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.closest(
+          "input, textarea, select, [contenteditable='true'], [role='textbox'], [role='combobox']",
+        )
+      ) {
+        return;
       }
+      event.preventDefault();
+      setOpen((value) => !value);
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -44,8 +51,10 @@ export function AdminModuleNavigator({ items }: { items: AdminNavItem[] }) {
       <button
         type="button"
         className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--admin-ink)] hover:bg-[var(--admin-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-red)]"
+        aria-label="Go to module"
         aria-haspopup="dialog"
         aria-expanded={open}
+        data-testid="admin-module-navigator-trigger"
         onClick={() => setOpen(true)}
       >
         <Search className="h-4 w-4 text-[var(--admin-muted)]" aria-hidden />
