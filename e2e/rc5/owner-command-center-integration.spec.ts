@@ -166,6 +166,13 @@ test.describe("RC6-QA-03 Owner Command Center integration", () => {
     ).toBeVisible({ timeout: 60_000 });
     await page.goto(DASHBOARD, { waitUntil: "domcontentloaded" });
     await expect(page.getByTestId("owner-command-center")).toHaveCount(0);
+    // Signed-out revisit must not role-bounce to `/admin/home/staff`.
+    await expect(page).not.toHaveURL(/\/admin\/home\/staff/);
+    await expect(
+      page
+        .getByLabel(/^Email$/i)
+        .or(page.getByRole("heading", { name: /Staff access required/i })),
+    ).toBeVisible({ timeout: 60_000 });
 
     guards.assertClean();
   });
