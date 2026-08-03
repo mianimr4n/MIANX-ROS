@@ -675,7 +675,7 @@ export default function AdminDashboard() {
 
   return (
     <AdminShell title="Owner Command Center">
-      <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
+      <header className="mb-5 flex flex-wrap items-start justify-between gap-4" data-owner-zone="context">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--brand-red-dark)]">
             Telepizza ROS
@@ -688,12 +688,12 @@ export default function AdminDashboard() {
             {" · "}
             {roleLabel}
             {" · "}
-            {branchLabel}
+            Active branch: {branchLabel}
             {" · "}
             {formatHeaderDate(now)}
           </p>
           <p className="mt-2 text-sm font-medium text-[var(--admin-ink)]">
-            What needs my attention today?
+            What needs attention · branch health · pulse · closing readiness
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

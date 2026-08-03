@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "wouter";
 
 import { AdminSectionTitle } from "@/components/admin/AdminKpiCard";
+import { OwnerDashboardDetails } from "@/components/admin/dashboard/OwnerDashboardPresentation";
 import {
   buildProfitMetricAriaLabel,
   type ProfitMetric,
@@ -38,27 +39,14 @@ function MetricCard({ metric }: { metric: ProfitMetric }) {
           {metric.value ?? "—"}
           {negative ? <span className="sr-only"> (negative)</span> : null}
         </p>
-        <dl className="mt-2 space-y-1 text-xs text-[var(--admin-muted)]">
-          <div>
-            <dt className="inline font-medium text-[var(--admin-ink)]">Source: </dt>
-            <dd className="inline">{metric.source}</dd>
-          </div>
-          <div>
-            <dt className="inline font-medium text-[var(--admin-ink)]">Trust: </dt>
-            <dd className="inline">{metric.trustState}</dd>
-          </div>
-          <div>
-            <dt className="inline font-medium text-[var(--admin-ink)]">Window: </dt>
-            <dd className="inline">{metric.businessWindow}</dd>
-          </div>
-          <div>
-            <dt className="inline font-medium text-[var(--admin-ink)]">Formula: </dt>
-            <dd className="inline">{metric.formula}</dd>
-          </div>
-        </dl>
-        {metric.limitation ? (
-          <p className="mt-2 text-xs text-[var(--admin-muted)]">{metric.limitation}</p>
-        ) : null}
+        <p className="mt-1 text-xs text-[var(--admin-muted)]">{metric.businessWindow}</p>
+        <OwnerDashboardDetails summary="Source, trust & formula">
+          <p>
+            Source: {metric.source}. Trust: {metric.trustState}.
+          </p>
+          <p>Formula: {metric.formula}</p>
+          {metric.limitation ? <p>{metric.limitation}</p> : null}
+        </OwnerDashboardDetails>
         {metric.value != null ? (
           <div className="mt-3">
             <Link
@@ -140,8 +128,8 @@ export function ProfitabilityTruthPanel({
     >
       <AdminSectionTitle
         headingId="profitability-truth-heading"
-        eyebrow="Business performance"
-        title="Profitability Truth"
+        eyebrow="Business pulse"
+        title="Operational Estimate vs Accounting Posted"
         description="Operational Estimate ≠ Accounting Posted. Estimates are never labeled as posted profit."
       />
 
@@ -151,10 +139,12 @@ export function ProfitabilityTruthPanel({
         </p>
       ) : (
         <div className="space-y-4" role="group" aria-label={headline}>
-          <p className="text-sm text-[var(--admin-muted)]">
-            Currency {result.currency} · Evaluated {new Date(result.evaluatedAt).toLocaleString()} · Freshness{" "}
-            {result.freshnessState}
-          </p>
+          <OwnerDashboardDetails summary="Currency, evaluation time & freshness" defaultOpen={false}>
+            <p>
+              Currency {result.currency} · Evaluated {new Date(result.evaluatedAt).toLocaleString()} ·
+              Freshness {result.freshnessState}
+            </p>
+          </OwnerDashboardDetails>
 
           <LaneSection
             title="A. Operational Estimate"

@@ -132,8 +132,11 @@ describe("RC6-DASH-03 command mode contracts", () => {
 
   it("mode composition keeps exception-center first in every mode", () => {
     for (const mode of ["PRE_OPEN", "LIVE_OPERATIONS", "CLOSING"]) {
-      const block = registrySrc.split(`${mode}:`)[1]?.slice(0, 400) ?? "";
+      const block = registrySrc.split(`${mode}:`)[1]?.slice(0, 500) ?? "";
       assert.match(block, /"exception-center"/);
+      const sectionsMatch = block.match(/sections:\s*\[([\s\S]*?)\]/);
+      const firstQuoted = sectionsMatch?.[1]?.match(/"([^"]+)"/)?.[1];
+      assert.equal(firstQuoted, "exception-center", `${mode} must lead with exception-center`);
     }
     assert.match(registrySrc, /ready to open/i);
     assert.match(registrySrc, /Closing view is partial/);

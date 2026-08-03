@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-03 — **RC6 Phase 1 released** as annotated `v1.5.0` at closeout `830dbc8…` / `dpl_BtPH8…` (website files ≡ QA-04 tip `b14163c…`); **Phase 1.1 professional-readiness audit complete** (gate not passed); Phase 2 runtime **not started**
+**Last reconciled:** 2026-08-03 — **RC6 Phase 1 released** as annotated `v1.5.0` at closeout `830dbc8…` / `dpl_BtPH8…`; **Phase 1.1** audit complete; **POLISH-01 merged** (`8ddcdd5`); **POLISH-02** Owner hierarchy in progress; gate **not passed**; Phase 2 runtime **not started**
 
 ---
 

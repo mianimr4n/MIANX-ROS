@@ -24,6 +24,11 @@ import {
 } from "@/components/admin/dashboard/owner-command-builders";
 import type { AdminOperationsDashboard, AdminOrderListItem, GoodsReceiving, HrEmployee, PurchaseOrder, StockMovement, SupplierInvoice } from "@/lib/admin-api";
 import {
+  buildOwnerDashboardZones,
+  isPrimaryOwnerZone,
+} from "@/lib/owner-dashboard-hierarchy";
+import { OwnerDashboardZone } from "@/components/admin/dashboard/OwnerDashboardPresentation";
+import {
   getModeComposition,
   hasUnresolvedOperationsFromSignals,
   readCommandModeFromSearch,
@@ -106,7 +111,7 @@ function MetricLinkCard({ metric }: { metric: OwnerCommandMetric }) {
       showResolvedZero={metric.state === "available" || metric.state === "empty"}
       className="h-full"
       secondary={
-        drill ? `Trust ${drill.trustState} · ${drill.timeWindowLabel}` : undefined
+        drill ? `${drill.timeWindowLabel}` : undefined
       }
     />
   );
@@ -1062,25 +1067,25 @@ export function OwnerCommandCenter({
   }, []);
 
   const todaySection = (
-    <section className="mb-8" aria-labelledby="owner-today-heading" data-mode-section="today-kpis">
+    <section className="mb-6" aria-labelledby="owner-today-heading" data-mode-section="today-kpis">
       <AdminSectionTitle
-        eyebrow="Today"
-        title="Today"
-        description="Sales and order KPIs for the Asia/Karachi business day."
+        eyebrow="Pulse"
+        title="Today — operational"
+        description="Gross sales, orders, and AOV for the Asia/Karachi business day — not Accounting Posted."
       />
       <h2 id="owner-today-heading" className="sr-only">
-        Today
+        Today operational KPIs
       </h2>
       <MetricGrid metrics={todayMetrics} />
     </section>
   );
 
   const liveOpsSection = (
-    <section className="mb-8" aria-labelledby="owner-live-ops-heading" data-mode-section="live-ops-kpis">
+    <section className="mb-6" aria-labelledby="owner-live-ops-heading" data-mode-section="live-ops-kpis">
       <AdminSectionTitle
-        eyebrow="Live"
+        eyebrow="Now"
         title="Live operations"
-        description="Kitchen, delivery, and completion counts refresh automatically."
+        description="Kitchen, delivery, and completion counts for the current window."
       />
       <h2 id="owner-live-ops-heading" className="sr-only">
         Live operations
@@ -1090,14 +1095,14 @@ export function OwnerCommandCenter({
   );
 
   const attentionSection = (
-    <section className="mb-8" aria-labelledby="owner-attention-heading" data-mode-section="attention-kpis">
+    <section className="mb-6" aria-labelledby="owner-attention-heading" data-mode-section="attention-kpis">
       <AdminSectionTitle
-        eyebrow="Attention"
-        title="Business attention"
-        description="Each card explains why attention is required."
+        eyebrow="Signals"
+        title="Attention signals"
+        description="KPI strip for supported attention counts — Exception Center remains authoritative above."
       />
       <h2 id="owner-attention-heading" className="sr-only">
-        Business attention
+        Attention signals
       </h2>
       <MetricGrid metrics={attentionMetrics} columnsClass="sm:grid-cols-2 xl:grid-cols-3" />
     </section>
@@ -1116,9 +1121,8 @@ export function OwnerCommandCenter({
     ) : null;
 
   const modeSummary = (
-    <p className="mb-4 text-sm text-[var(--admin-muted)]" data-mode-section="mode-summary">
-      Mode view prioritizes existing verified widgets. Critical exceptions stay visible in every mode.
-      This selector does not change branch hours or open/close status.
+    <p className="mb-3 text-sm text-[var(--admin-muted)]" data-mode-section="mode-summary">
+      Mode reorders verified widgets only. It does not change branch hours or open/close status.
     </p>
   );
 
@@ -1229,14 +1233,20 @@ export function OwnerCommandCenter({
     ),
   };
 
+  const zones = useMemo(
+    () => buildOwnerDashboardZones(selectedMode, composition.sections),
+    [selectedMode, composition.sections],
+  );
+
   return (
     <div
       className="owner-command-center min-w-0"
       data-testid="owner-command-center"
       data-selected-command-mode={selectedMode}
+      data-owner-hierarchy="polish-02"
     >
-      <p className="mb-4 text-sm text-[var(--admin-muted)]">
-        Owner Command Center — answers “What needs my attention today?” using verified live APIs only.
+      <p className="mb-3 text-sm text-[var(--admin-muted)]">
+        Scan top-down: attention → pulse → health → changes → closing readiness.
       </p>
 
       <CommandModeHeader
@@ -1247,7 +1257,23 @@ export function OwnerCommandCenter({
         onUseSuggested={() => setCommandMode(null)}
       />
 
-      {composition.sections.map((id) => sectionMap[id] ?? null)}
+      {zones.map((zone) => {
+        const primary = isPrimaryOwnerZone(zone.id, selectedMode);
+        const collapseSecondary =
+          selectedMode === "CLOSING" && (zone.id === "secondary" || zone.id === "what-changed");
+        return (
+          <OwnerDashboardZone
+            key={zone.id}
+            id={zone.id}
+            title={zone.title}
+            purpose={zone.purpose}
+            primary={primary}
+            defaultCollapsed={collapseSecondary}
+          >
+            {zone.sections.map((id) => sectionMap[id] ?? null)}
+          </OwnerDashboardZone>
+        );
+      })}
     </div>
   );
 }

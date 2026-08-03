@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "wouter";
 
 import { AdminSectionTitle } from "@/components/admin/AdminKpiCard";
+import { OwnerDashboardDetails } from "@/components/admin/dashboard/OwnerDashboardPresentation";
 import {
   buildBranchHealthAriaLabel,
   buildComponentDrillDownAriaLabel,
@@ -55,22 +56,14 @@ function ComponentRow({ item }: { item: BranchHealthComponent }) {
             <dt className="inline font-medium text-[var(--admin-ink)]">Metric: </dt>
             <dd className="inline">{item.metricValue}</dd>
           </div>
-          <div>
-            <dt className="inline font-medium text-[var(--admin-ink)]">Source: </dt>
-            <dd className="inline">{item.source}</dd>
-          </div>
-          <div>
-            <dt className="inline font-medium text-[var(--admin-ink)]">Freshness: </dt>
-            <dd className="inline">{item.freshnessState}</dd>
-          </div>
-          <div className="sm:col-span-2">
-            <dt className="inline font-medium text-[var(--admin-ink)]">Rule: </dt>
-            <dd className="inline">{item.rule}</dd>
-          </div>
         </dl>
-        {item.limitation ? (
-          <p className="mt-2 text-xs text-[var(--admin-muted)]">{item.limitation}</p>
-        ) : null}
+        <OwnerDashboardDetails summary="Source, rule & limitations">
+          <p>
+            Source: {item.source}. Freshness: {item.freshnessState}.
+          </p>
+          <p>Rule: {item.rule}</p>
+          {item.limitation ? <p>{item.limitation}</p> : null}
+        </OwnerDashboardDetails>
         {item.status !== "PERMISSION_RESTRICTED" && item.status !== "UNAVAILABLE" ? (
           <div className="mt-3">
             <Link
@@ -127,9 +120,9 @@ export function BranchHealthPanel({
     >
       <AdminSectionTitle
         headingId="branch-health-heading"
-        eyebrow="Multi-branch control"
-        title="Branch Health Score"
-        description="Explainable, coverage-adjusted score from verified operational sources. Not a black box."
+        eyebrow="Operations health"
+        title="Branch Health"
+        description="Explainable coverage-adjusted score. Insufficient coverage is not healthy."
       />
 
       {loading && result.score == null && result.coveragePercent === 0 ? (
@@ -155,15 +148,16 @@ export function BranchHealthPanel({
               <p className="mt-1 text-sm text-[var(--admin-muted)]">
                 {result.branchName}
                 <span className="mx-1">·</span>
+                {result.coveragePercent}% coverage
+                <span className="mx-1">·</span>
                 {result.confidence} confidence
-                <span className="mx-1">·</span>
-                {result.coveragePercent}% source coverage
               </p>
-              <p className="mt-1 text-xs text-[var(--admin-muted)]">
-                Evaluated {new Date(result.evaluatedAt).toLocaleString()} · {result.businessWindow}
-                <span className="mx-1">·</span>
-                Freshness {result.freshnessState}
-              </p>
+              <OwnerDashboardDetails summary="Evaluation window & freshness">
+                <p>
+                  Evaluated {new Date(result.evaluatedAt).toLocaleString()} · {result.businessWindow} ·
+                  Freshness {result.freshnessState}
+                </p>
+              </OwnerDashboardDetails>
             </div>
           </div>
 

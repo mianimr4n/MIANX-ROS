@@ -1,6 +1,10 @@
 import { Link } from "wouter";
 
-import { AdminSectionTitle } from "@/components/admin/AdminKpiCard";
+import {
+  OwnerDashboardCard,
+  OwnerDashboardDetails,
+  OwnerDashboardProvenance,
+} from "@/components/admin/dashboard/OwnerDashboardPresentation";
 import type { ExceptionCenterResult } from "@/lib/exception-center/types";
 import { formatExceptionAge } from "@/lib/exception-center/build-exceptions";
 import type { ExceptionSeverity, OwnerException } from "@/lib/exception-center/types";
@@ -34,68 +38,43 @@ function ExceptionCard({ item, nowMs }: { item: OwnerException; nowMs: number })
 
   return (
     <li className="min-w-0">
-      <article
-        className={`rounded-2xl border px-4 py-3 ${SEVERITY_STYLES[item.severity]}`}
-        data-exception-type={item.type}
-        data-testid={`exception-card-${item.type}`}
+      <OwnerDashboardCard
+        title={item.title}
+        description={item.summary}
+        count={item.count}
+        severityLabel={`Severity: ${SEVERITY_TEXT[item.severity]}`}
+        className={SEVERITY_STYLES[item.severity]}
+        testId={`exception-card-${item.type}`}
+        dataAttrs={{ "data-exception-type": item.type }}
+        action={
+          <>
+            <Link
+              href={item.drillDown.href}
+              className="inline-flex min-h-11 items-center rounded-xl border border-[var(--admin-border)] bg-white px-3 text-sm font-semibold text-[var(--admin-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)]"
+              aria-label={aria}
+              data-testid={`exception-drilldown-${item.type}`}
+            >
+              {item.drillDown.label}
+            </Link>
+            {item.drillDown.limitation ? (
+              <p className="mt-1 text-xs text-[var(--admin-muted)]">{item.drillDown.limitation}</p>
+            ) : null}
+          </>
+        }
       >
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--admin-ink)]">
-              <span className="sr-only">Severity: </span>
-              {SEVERITY_TEXT[item.severity]}
-            </p>
-            <h3 className="mt-1 text-base font-semibold text-[var(--admin-ink)]">{item.title}</h3>
-            <p className="mt-1 text-sm text-[var(--admin-muted)]">{item.summary}</p>
-          </div>
-          <p
-            className="rounded-lg bg-white/70 px-2.5 py-1 text-lg font-semibold tabular-nums text-[var(--admin-ink)]"
-            aria-label={`Count ${item.count}`}
-          >
-            {item.count}
+        <OwnerDashboardProvenance
+          items={[
+            { label: "Branch", value: item.branchName },
+            ...(age ? [{ label: "Age", value: age }] : []),
+          ]}
+        />
+        <OwnerDashboardDetails summary="Source & trust">
+          <p>
+            Source: {item.source}. Trust: {item.trustState}. Freshness: {item.freshnessState}.
           </p>
-        </div>
-        <dl className="mt-3 grid gap-1 text-xs text-[var(--admin-muted)] sm:grid-cols-2">
-          <div>
-            <dt className="inline font-medium text-[var(--admin-ink)]">Branch: </dt>
-            <dd className="inline">{item.branchName}</dd>
-          </div>
-          <div>
-            <dt className="inline font-medium text-[var(--admin-ink)]">Source: </dt>
-            <dd className="inline">{item.source}</dd>
-          </div>
-          <div>
-            <dt className="inline font-medium text-[var(--admin-ink)]">Trust: </dt>
-            <dd className="inline">{item.trustState}</dd>
-          </div>
-          <div>
-            <dt className="inline font-medium text-[var(--admin-ink)]">Freshness: </dt>
-            <dd className="inline">{item.freshnessState}</dd>
-          </div>
-          {age ? (
-            <div>
-              <dt className="inline font-medium text-[var(--admin-ink)]">Age: </dt>
-              <dd className="inline">{age}</dd>
-            </div>
-          ) : null}
-        </dl>
-        {item.limitation ? (
-          <p className="mt-2 text-xs text-[var(--admin-muted)]">{item.limitation}</p>
-        ) : null}
-        <div className="mt-3">
-          <Link
-            href={item.drillDown.href}
-            className="inline-flex min-h-11 items-center rounded-xl border border-[var(--admin-border)] bg-white px-3 text-sm font-semibold text-[var(--admin-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)]"
-            aria-label={aria}
-            data-testid={`exception-drilldown-${item.type}`}
-          >
-            {item.drillDown.label}
-          </Link>
-          {item.drillDown.limitation ? (
-            <p className="mt-1 text-xs text-[var(--admin-muted)]">{item.drillDown.limitation}</p>
-          ) : null}
-        </div>
-      </article>
+          {item.limitation ? <p>{item.limitation}</p> : null}
+        </OwnerDashboardDetails>
+      </OwnerDashboardCard>
     </li>
   );
 }
@@ -113,15 +92,17 @@ export function ExceptionCenterPanel({
 }) {
   return (
     <section
-      className="mb-8 min-w-0"
-      aria-label="Needs Attention Now"
+      className="mb-6 min-w-0"
+      aria-label="Exception Center"
       data-testid="exception-center"
+      data-mode-section="exception-center"
     >
-      <AdminSectionTitle
-        eyebrow="Zone 1"
-        title="Needs Attention Now"
-        description="Read-only Exception Center from verified live sources. Does not cover every restaurant risk."
-      />
+      <div className="mb-3">
+        <h3 className="text-base font-semibold text-[var(--admin-ink)]">Exception Center</h3>
+        <p className="mt-0.5 text-sm text-[var(--admin-muted)]">
+          Read-only Exception Center from verified live sources — not an all-clear for every restaurant risk.
+        </p>
+      </div>
 
       {loading && result.exceptions.length === 0 && !result.partialFailure && !result.totalFailure ? (
         <p className="text-sm text-[var(--admin-muted)]" role="status">

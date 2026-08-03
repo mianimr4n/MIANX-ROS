@@ -30,21 +30,26 @@ export type ModeComposition = {
   unsupportedNote: string;
 };
 
+/**
+ * POLISH-02 hierarchy (presentation only):
+ * Needs Attention → Business Pulse / Health → What Changed → Closing → secondary.
+ * Critical exceptions remain first in every mode.
+ */
 export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
   PRE_OPEN: {
     mode: "PRE_OPEN",
     sections: [
-      "what-changed",
       "exception-center",
       "approval-inbox",
       "branch-health",
-      "profitability-truth",
-      "eod-pack",
-      "mode-summary",
       "unsupported-note",
+      "mode-summary",
       "attention-kpis",
       "today-kpis",
       "live-ops-kpis",
+      "profitability-truth",
+      "what-changed",
+      "eod-pack",
       "activity",
       "quick-actions",
       "sales-trend",
@@ -52,14 +57,11 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "owner-brief",
     ],
     emphasize: [
-      "what-changed",
       "exception-center",
       "approval-inbox",
       "branch-health",
-      "profitability-truth",
-      "eod-pack",
-      "attention-kpis",
       "unsupported-note",
+      "attention-kpis",
     ],
     unsupportedNote:
       "No supported pre-open exceptions detected does not mean ready to open. " +
@@ -68,16 +70,16 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
   LIVE_OPERATIONS: {
     mode: "LIVE_OPERATIONS",
     sections: [
-      "what-changed",
       "exception-center",
       "approval-inbox",
-      "branch-health",
-      "profitability-truth",
-      "eod-pack",
       "mode-summary",
       "today-kpis",
       "live-ops-kpis",
       "attention-kpis",
+      "profitability-truth",
+      "branch-health",
+      "what-changed",
+      "eod-pack",
       "activity",
       "quick-actions",
       "sales-trend",
@@ -85,13 +87,12 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "owner-brief",
     ],
     emphasize: [
-      "what-changed",
       "exception-center",
       "approval-inbox",
-      "branch-health",
-      "profitability-truth",
-      "live-ops-kpis",
       "today-kpis",
+      "live-ops-kpis",
+      "profitability-truth",
+      "branch-health",
     ],
     unsupportedNote: "",
   },
@@ -101,11 +102,11 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "exception-center",
       "approval-inbox",
       "eod-pack",
-      "what-changed",
-      "branch-health",
-      "profitability-truth",
-      "mode-summary",
       "unsupported-note",
+      "branch-health",
+      "mode-summary",
+      "profitability-truth",
+      "what-changed",
       "live-ops-kpis",
       "attention-kpis",
       "today-kpis",
@@ -116,13 +117,11 @@ export const MODE_COMPOSITION: Record<CommandModeId, ModeComposition> = {
       "owner-brief",
     ],
     emphasize: [
-      "eod-pack",
-      "what-changed",
       "exception-center",
       "approval-inbox",
-      "branch-health",
-      "profitability-truth",
+      "eod-pack",
       "unsupported-note",
+      "branch-health",
     ],
     unsupportedNote:
       "Closing view is partial; register and staff clock-out readiness are not yet included. " +
