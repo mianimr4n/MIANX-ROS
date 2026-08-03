@@ -73,7 +73,7 @@ export function EodPackPanel({
         </p>
       ) : null}
 
-      <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-4">
+      <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-4">
         <p className="text-sm font-semibold text-[var(--admin-ink)]" data-testid="eod-pack-headline">
           {result.previewLabel} · {result.branchName} · {result.businessDate}
         </p>

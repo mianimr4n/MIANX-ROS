@@ -82,7 +82,7 @@ function LaneSection({
 }) {
   return (
     <div
-      className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-soft)] px-4 py-4"
+      className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-4"
       data-testid={testId}
       data-lane-state={state}
     >
