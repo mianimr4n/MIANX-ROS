@@ -136,7 +136,7 @@ export default function OpsDispatch() {
                       type="button"
                       disabled={busyId === row.id}
                       onClick={() => void onStatus(row.id, "picked-up")}
-                      className="min-h-12 rounded-xl bg-amber-600 font-bold hover:bg-amber-500 disabled:opacity-50"
+                      className="min-h-12 rounded-xl bg-amber-800 font-bold text-white hover:bg-amber-700 disabled:opacity-50"
                     >
                       {busyId === row.id ? "Working…" : "Mark picked up (dispatch)"}
                     </button>

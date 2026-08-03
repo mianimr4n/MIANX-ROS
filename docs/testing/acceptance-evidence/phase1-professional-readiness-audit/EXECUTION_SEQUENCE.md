@@ -10,7 +10,7 @@
 | 5 | POLISH-04 | POLISH-03 | Website only | **Merged** (#198 → `7fa2c8b`) |
 | 6 | POLISH-05 | POLISH-04 | Website only | **Merged** (#199 → `944eb8f`) |
 | 7 | POLISH-06 | POLISH-05 | Website only | **Merged** (#200 → `c7b91bf`) |
-| 8 | POLISH-07 | POLISH-06 | Website only | **In PR** — perf/privacy |
-| 9 | POLISH-QA | All polish waves | none | Prod read-only + local roles |
+| 8 | POLISH-07 | POLISH-06 | Website only | **Merged** (#201 → `a29e8d7`) |
+| 9 | POLISH-QA | All polish waves | Website QA only | **In PR** — local/CI cert; Production pending |
 
-**Do not** start Phase 2 Delivery/Settings runtime until Phase 1.1 gate passes. Phase 1.1 gate remains **NOT PASSED**.
+**Do not** start Phase 2 Delivery/Settings runtime until Phase 1.1 gate passes (including Production certification). Phase 1.1 gate remains **NOT PASSED** — **PENDING PRODUCTION CERTIFICATION**. v1.5.1 not created.

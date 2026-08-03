@@ -76,7 +76,9 @@ export default function AdminWaiterHome() {
       </AdminShell>
     );
   }
-  if (!allowed) return null;
+  if (!allowed) {
+    return <AdminShell title="Waiter home">{null}</AdminShell>;
+  }
 
   const sessions = floorOp.data?.activeSessions ?? [];
   // Architect: never fall back to all branch sessions when assignment filter is unavailable or empty.
