@@ -32,15 +32,18 @@ describe("Delivery Management V1 (static)", () => {
     assert.doesNotMatch(kpis, /snapshot\?\.waiting \?\? 0/);
   });
 
-  it("keeps map, export, failed, and call actions Foundation", () => {
+  it("collapses deferred map/export/failed/call chrome into honest deferred notes", () => {
     const page = read("apps/website/client/src/pages/admin/AdminDelivery.tsx");
-    assert.match(page, /Export · Planned for Phase 2/);
+    assert.match(page, /OperationsDeferredNote/);
     assert.match(page, /DeliveryMapFoundation/);
+    assert.match(page, /Channel\/date advanced filters and export/);
+    assert.doesNotMatch(page, /Export · Planned for Phase 2/);
     const cards = read("apps/website/client/src/components/admin/delivery/DeliveryCards.tsx");
-    assert.match(cards, /Mark failed · Planned for Phase 2/);
-    assert.match(cards, /Call customer · Planned for Phase 2/);
+    assert.doesNotMatch(cards, /Mark failed · Planned for Phase 2/);
+    assert.doesNotMatch(cards, /Call customer · Planned for Phase 2/);
     const map = read("apps/website/client/src/components/admin/delivery/DeliverySidePanels.tsx");
-    assert.match(map, /No Google Maps/);
+    assert.match(map, /Map &amp; GPS tracking — not available|Map & GPS tracking — not available/);
+    assert.match(map, /delivery-map-deferred/);
   });
 
   it("labels AI panel as rule-based only without traffic claims", () => {

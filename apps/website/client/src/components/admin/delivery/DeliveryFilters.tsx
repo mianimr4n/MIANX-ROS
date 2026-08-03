@@ -112,44 +112,7 @@ export function DeliveryFilters({
         />
       </label>
 
-      <label className="text-xs font-medium text-[var(--admin-muted)]">
-        Channel
-        <select
-          disabled
-          className="mt-1.5 w-full cursor-not-allowed rounded-lg border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2 text-sm text-[var(--admin-muted)]"
-          aria-label="Channel filter unavailable"
-          value=""
-        >
-          <option value="">Not on delivery assignment</option>
-        </select>
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
-      </label>
-
-      <label className="text-xs font-medium text-[var(--admin-muted)]">
-        Customer
-        <input
-          disabled
-          className="mt-1.5 w-full cursor-not-allowed rounded-lg border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2 text-sm text-[var(--admin-muted)]"
-          placeholder="Use search for customer name"
-          aria-label="Customer filter unavailable"
-        />
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
-      </label>
-
-      <label className="text-xs font-medium text-[var(--admin-muted)]">
-        Date
-        <select
-          disabled
-          className="mt-1.5 w-full cursor-not-allowed rounded-lg border border-[var(--admin-border)] bg-[var(--admin-soft)] px-3 py-2 text-sm text-[var(--admin-muted)]"
-          aria-label="Date filter unavailable"
-          value="loaded"
-        >
-          <option value="loaded">Loaded assignment window</option>
-        </select>
-        <span className="mt-1 block text-[10px] uppercase tracking-wide text-[var(--admin-muted)]">Planned for Phase 2</span>
-      </label>
-
-      <div className="flex items-end gap-2">
+      <div className="flex items-end gap-2 md:col-span-2 xl:col-span-4">
         <button
           type="submit"
           className="min-h-11 flex-1 rounded-lg bg-[var(--brand-red)] px-3 text-sm font-semibold text-white hover:bg-[var(--brand-red-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-red)]"

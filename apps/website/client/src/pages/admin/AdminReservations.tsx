@@ -8,6 +8,10 @@
 import { useMemo, useState } from "react";
 
 import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
+import {
+  OperationsDeferredNote,
+  OperationsWorkspaceHeader,
+} from "@/components/admin/operations/OperationsWorkspaceHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
@@ -230,48 +234,58 @@ export default function AdminReservations() {
     <AdminShell title="Reservations">
       <div className="space-y-6">
         <BookingPolicyPanel />
-        <header className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold">Reservations — {branchLabel}</h2>
-            <p className="text-sm text-muted-foreground">
-              Day view. Availability, conflicts, and double-booking protection are enforced by the
-              server.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="flex items-center gap-2 text-sm">
-              Date
-              <input
-                type="date"
+        <OperationsWorkspaceHeader
+          className="mb-0"
+          eyebrow="Table service"
+          title="Reservations"
+          description="Day view for booked parties. Distinct from waitlist walk-ins. Times follow server availability rules."
+          branchLabel={branchLabel}
+          maturity="FOUNDATION"
+          primaryTask="Confirm, seat, or complete today's reservations"
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="flex items-center gap-2 text-sm">
+                Date
+                <input
+                  type="date"
+                  className="rounded-md border px-2 py-1.5 text-sm"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </label>
+              <select
+                aria-label="Status filter"
                 className="rounded-md border px-2 py-1.5 text-sm"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </label>
-            <select
-              aria-label="Status filter"
-              className="rounded-md border px-2 py-1.5 text-sm"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as ReservationStatus | "")}
-            >
-              <option value="">All statuses</option>
-              {Object.keys(STATUS_BADGES).map((s) => (
-                <option key={s} value={s}>
-                  {s.replace(/_/g, " ")}
-                </option>
-              ))}
-            </select>
-            {canManage ? (
-              <button
-                type="button"
-                onClick={() => setShowCreate((v) => !v)}
-                className="rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as ReservationStatus | "")}
               >
-                {showCreate ? "Close" : "New reservation"}
-              </button>
-            ) : null}
-          </div>
-        </header>
+                <option value="">All statuses</option>
+                {Object.keys(STATUS_BADGES).map((s) => (
+                  <option key={s} value={s}>
+                    {s.replace(/_/g, " ")}
+                  </option>
+                ))}
+              </select>
+              {canManage ? (
+                <button
+                  type="button"
+                  onClick={() => setShowCreate((v) => !v)}
+                  className="rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground"
+                >
+                  {showCreate ? "Close" : "New reservation"}
+                </button>
+              ) : null}
+            </div>
+          }
+        />
+
+        <OperationsDeferredNote
+          summary="Deferred reservation capabilities"
+          items={[
+            "External reservation-provider sync",
+            "Fake real-time seating intelligence beyond server availability",
+          ]}
+        />
 
         {!branchId ? (
           <p className="rounded-xl border bg-muted/40 p-4 text-sm">

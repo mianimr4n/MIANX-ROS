@@ -267,9 +267,25 @@ export default function AdminWhatsApp() {
         <WhatsAppInsights items={insights} />
       </div>
 
-      <div className="mb-6 grid gap-4 lg:grid-cols-2">
-        <WhatsAppOrderBuilder />
-        <WhatsAppTemplates />
+      <div className="mb-6">
+        <details
+          className="rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-3"
+          data-testid="whatsapp-deferred-capabilities"
+        >
+          <summary className="cursor-pointer text-sm font-semibold text-[var(--admin-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)]">
+            Deferred WhatsApp provider capabilities
+          </summary>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--admin-muted)]">
+            <li>Provider connection and webhook delivery</li>
+            <li>Message / conversation storage and unread state</li>
+            <li>Templates, composer, and agent assignment</li>
+            <li>First-response timing and provider analytics</li>
+          </ul>
+          <div className="sr-only">
+            <WhatsAppOrderBuilder />
+            <WhatsAppTemplates />
+          </div>
+        </details>
       </div>
 
       <div className="mb-6">

@@ -24,6 +24,10 @@ import {
 import { ApiRequestError } from "@/lib/api";
 import { useOperationalData } from "@/lib/op-status";
 import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
+import {
+  OperationsDeferredNote,
+  OperationsWorkspaceHeader,
+} from "@/components/admin/operations/OperationsWorkspaceHeader";
 import { AdminShell } from "./AdminShell";
 
 const PAGE_SIZE = 20;
@@ -255,64 +259,59 @@ export default function AdminOrders() {
 
   return (
     <AdminShell title="Orders Management">
-      <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--brand-red)]">
-            Operations
-          </p>
-          <h2 className="mt-1 text-2xl font-semibold tracking-tight">Orders Management</h2>
-          <p className="mt-1 text-sm text-[var(--admin-muted)]">
-            {roleLabel} · {branchLabel} · {currentShiftLabel()}
-            <span className="ml-2 rounded-full bg-[var(--admin-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-              Shift label
-            </span>
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              listOp.retry();
-              kpiOp.retry();
-            }}
-            className="rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm font-semibold hover:bg-[var(--admin-soft)]"
-          >
-            Refresh
-          </button>
-          <button
-            type="button"
-            disabled
-            className="cursor-not-allowed rounded-lg border border-dashed border-[var(--admin-border)] px-3 py-2 text-sm text-[var(--admin-muted)]"
-            title="Export arrives with Reports"
-          >
-            Export · Planned for Phase 2
-          </button>
-          <form
-            className="flex gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              writeUrl({ orderNumber: orderNumberDraft.trim(), offset: 0 });
-            }}
-          >
-            <label className="sr-only" htmlFor="orders-header-search">
-              Search orders
-            </label>
-            <input
-              id="orders-header-search"
-              value={orderNumberDraft}
-              onChange={(event) => setOrderNumberDraft(event.target.value)}
-              placeholder="Search order #"
-              className="min-w-[10rem] rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm"
-            />
+      <OperationsWorkspaceHeader
+        eyebrow="Operations"
+        title="Orders Management"
+        description={`Review and advance orders in branch scope. ${currentShiftLabel()} is display-only.`}
+        branchLabel={branchLabel}
+        roleLabel={roleLabel}
+        maturity="PARTIAL_LIVE"
+        primaryTask="Triage new, active, and problem orders"
+        liveLabel={listOp.state === "STALE" ? "Stale" : listOp.state === "LIVE" ? "Live queue" : undefined}
+        actions={
+          <>
             <button
-              type="submit"
-              className="rounded-lg bg-[var(--brand-red)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--brand-red-dark)]"
+              type="button"
+              onClick={() => {
+                listOp.retry();
+                kpiOp.retry();
+              }}
+              className="rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm font-semibold hover:bg-[var(--admin-soft)]"
             >
-              Search
+              Refresh
             </button>
-          </form>
-        </div>
-      </header>
+            <form
+              className="flex gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                writeUrl({ orderNumber: orderNumberDraft.trim(), offset: 0 });
+              }}
+            >
+              <label className="sr-only" htmlFor="orders-header-search">
+                Search orders
+              </label>
+              <input
+                id="orders-header-search"
+                value={orderNumberDraft}
+                onChange={(event) => setOrderNumberDraft(event.target.value)}
+                placeholder="Search order #"
+                className="min-w-[10rem] rounded-lg border border-[var(--admin-border)] bg-white px-3 py-2 text-sm"
+              />
+              <button
+                type="submit"
+                className="rounded-lg bg-[var(--brand-red)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--brand-red-dark)]"
+              >
+                Search
+              </button>
+            </form>
+          </>
+        }
+      />
+
+      <OperationsDeferredNote
+        summary="Deferred order capabilities"
+        items={["Bulk export / reports download", "Advanced channel and date-range filters beyond current controls"]}
+      />
 
       <OperationalStatusBanner
         state={listOp.state}

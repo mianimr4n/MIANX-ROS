@@ -101,12 +101,6 @@ export function DeliveryCards({
                   <span className="rounded-full bg-[var(--admin-soft)] px-2.5 py-1 text-xs">
                     {branchLabelById[row.branchId] ?? row.branchId.slice(0, 8)}
                   </span>
-                  <span
-                    className="rounded-full border border-dashed border-[var(--admin-border)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-muted)]"
-                    title="Priority not on delivery API"
-                  >
-                    Priority · Planned for Phase 2
-                  </span>
                 </div>
 
                 <p className="mt-3 line-clamp-2 text-sm text-[var(--admin-muted)]">{row.deliveryAddress}</p>
@@ -142,18 +136,6 @@ export function DeliveryCards({
                       {busyId === row.id ? "Updating…" : "Mark delivered"}
                     </button>
                   ) : null}
-                  <span
-                    className="min-h-11 rounded-xl border border-dashed border-[var(--admin-border)] px-4 py-2 text-sm text-[var(--admin-muted)]"
-                    title="Failed transition is not exposed on the delivery status API"
-                  >
-                    Mark failed · Planned for Phase 2
-                  </span>
-                  <span
-                    className="min-h-11 rounded-xl border border-dashed border-[var(--admin-border)] px-4 py-2 text-sm text-[var(--admin-muted)]"
-                    title="Click-to-call arrives later"
-                  >
-                    Call customer · Planned for Phase 2
-                  </span>
                   {!canAssign && !canUpdate ? (
                     <span className="text-xs text-[var(--admin-muted)]">Read-only for this principal</span>
                   ) : null}

@@ -23,6 +23,7 @@ Sequenced after this audit PR. **No Phase 2 runtime** in these slices.
 - Collapse Phase 2 stub buttons
 - Table overflow + filters
 - **Risk:** Med · Avoid behavior changes to mutations
+- **Status:** In PR — evidence `phase1-polish-03/` (P11-OPS-01/02/03 addressed; P11-OPS-04 residual)
 
 ## POLISH-04 — Commerce & business admin
 

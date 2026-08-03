@@ -34,12 +34,16 @@ describe("WhatsApp Order Center V1 (static)", () => {
 
   it("uses order-derived mode without fake conversations", () => {
     const workspace = read("apps/website/client/src/components/admin/whatsapp/ConversationWorkspace.tsx");
-    assert.match(workspace, /Conversation history unavailable/);
-    assert.doesNotMatch(workspace, /MessageBubble|typing|read receipt|delivered/i);
+    assert.match(workspace, /No conversation store|Order context only/);
+    assert.match(workspace, /whatsapp-no-conversation-store/);
+    assert.doesNotMatch(workspace, /MessageComposer|MessageBubble|typing|read receipt|delivered/i);
     const queue = read("apps/website/client/src/components/admin/whatsapp/WhatsAppOrderQueue.tsx");
     assert.match(queue, /WhatsApp-attributed orders/);
     assert.match(queue, /not a conversation inbox/i);
     assert.doesNotMatch(queue, /last message preview|unread count/i);
+    const header = read("apps/website/client/src/components/admin/whatsapp/WhatsAppHeader.tsx");
+    assert.match(header, /Order channel attribution|WhatsApp-attributed orders/);
+    assert.doesNotMatch(header, /Templates · Planned for Phase 2/);
   });
 
   it("disables composer and labels external handoff honestly", () => {

@@ -1,9 +1,9 @@
 # Phase 1.1 — Professional readiness roadmap
 
-**Status:** Living planning — audit complete; **POLISH-01 merged**; **POLISH-02 in PR**; gate **NOT PASSED**
+**Status:** Living planning — audit complete; **POLISH-01/02 merged**; **POLISH-03 in PR**; gate **NOT PASSED**
 **Date:** 2026-08-03
 **Released baseline:** `v1.5.0` @ `830dbc8b5916cc0a724a0d7489a0e34387a26f78`
-**Evidence:** `docs/testing/acceptance-evidence/phase1-professional-readiness-audit/` · `phase1-polish-01/` · `phase1-polish-02/`
+**Evidence:** `docs/testing/acceptance-evidence/phase1-professional-readiness-audit/` · `phase1-polish-01/` · `phase1-polish-02/` · `phase1-polish-03/`
 
 > Planning is not implementation. Phase 2 Delivery/Settings runtime remains **not started** until the Phase 1.1 professional-readiness gate passes.
 
@@ -24,8 +24,8 @@ Phase 2 runtime (Delivery/Rider + Settings depth)
 | ID | Title | Status |
 | --- | --- | --- |
 | POLISH-01 | Global shell & navigation | **Merged** — `phase1-polish-01/` (#195 → `8ddcdd5`) |
-| POLISH-02 | Owner dashboards | **In PR** — `phase1-polish-02/` |
-| POLISH-03 | Operations | Pending |
+| POLISH-02 | Owner dashboards | **Merged** — `phase1-polish-02/` (#196 → `8eb81a6`) |
+| POLISH-03 | Operations | **In PR** — `phase1-polish-03/` |
 | POLISH-04 | Commerce & business admin | Pending |
 | POLISH-05 | Shared states & design system | Pending |
 | POLISH-06 | A11y & responsive | Pending |

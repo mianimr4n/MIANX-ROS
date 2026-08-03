@@ -6,7 +6,7 @@
 | Dead global search | ADMIN_SHELL_AUDIT.md | POLISH-01 | S-1 |
 | Dual branch selectors | ADMIN_SHELL_AUDIT.md | POLISH-01 | S-2 |
 | Owner hierarchy | OWNER_DASHBOARD_AUDIT.md | POLISH-02 | U-2 |
-| Delivery/WA stub chrome | OPERATIONS_WORKSPACES_AUDIT.md | POLISH-03 | H-4 |
+| Delivery/WA stub chrome | OPERATIONS_WORKSPACES_AUDIT.md · `phase1-polish-03/` | POLISH-03 | H-4 (in PR) |
 | Settings Available | SETTINGS_CONFIGURATION_AUDIT.md | POLISH-04 | H-1 |
 | Inventory empty all-clear | COMMERCE_PROCUREMENT_AUDIT.md | POLISH-04 | H-2 |
 | HR header | HR_FINANCE_REPORTING_AUDIT.md | POLISH-04 | H-3 |

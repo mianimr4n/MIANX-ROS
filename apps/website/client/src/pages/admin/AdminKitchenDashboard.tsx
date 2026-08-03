@@ -5,7 +5,7 @@ import { KitchenBoard } from "@/components/admin/kitchen/KitchenBoard";
 import { type KitchenCardEnrichment, KitchenCard } from "@/components/admin/kitchen/KitchenCard";
 import { KitchenDetailsPanel } from "@/components/admin/kitchen/KitchenDetailsPanel";
 import { KitchenManagerShell } from "@/components/admin/kitchen/KitchenManagerShell";
-import { AdminKpiCard, AdminKpiSkeleton, AdminSectionTitle } from "@/components/admin/AdminKpiCard";
+import { AdminKpiCard, AdminKpiSkeleton } from "@/components/admin/AdminKpiCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
@@ -26,6 +26,10 @@ import { ApiRequestError } from "@/lib/api";
 import { toast } from "sonner";
 import { useOperationalData } from "@/lib/op-status";
 import { OperationalStatusBanner } from "@/components/admin/OperationalStatusBanner";
+import {
+  OperationsDeferredNote,
+  OperationsWorkspaceHeader,
+} from "@/components/admin/operations/OperationsWorkspaceHeader";
 import {
   listKitchenTickets,
   patchKitchenTicketStatus,
@@ -378,16 +382,17 @@ export default function AdminKitchenDashboard() {
       />
 
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <AdminSectionTitle
-            eyebrow="Kitchen Manager"
+        <div className="min-w-0 flex-1">
+          <OperationsWorkspaceHeader
+            className="mb-0"
+            eyebrow="Kitchen board / KDS"
             title="Kitchen operations board"
-            description={`${roleLabel} · ${branchLabel}${kitchenOnly ? " · Branch scope enforced" : ""}`}
+            description={`Active preparation queue and timing. Distinct from Kitchen ERP management overview. Tickets move New → Accepted → Preparing → Ready. Tickets older than ${PREP_TARGET_MINUTES} minutes are flagged as delayed (a guide, not a contractual target).`}
+            branchLabel={branchLabel}
+            roleLabel={`${roleLabel}${kitchenOnly ? " · Branch scope enforced" : ""}`}
+            maturity="PARTIAL_LIVE"
+            primaryTask="Clear delayed and in-progress tickets"
           />
-          <p className="mt-1 text-xs text-[var(--admin-muted)]">
-            Tickets move New → Accepted → Preparing → Ready. Tickets older than {PREP_TARGET_MINUTES}{" "}
-            minutes are flagged as delayed (a guide, not a contractual target).
-          </p>
         </div>
         <form
           className="flex flex-wrap gap-2"
@@ -449,6 +454,15 @@ export default function AdminKitchenDashboard() {
           </button>
         </form>
       </div>
+
+      <OperationsDeferredNote
+        summary="Deferred KDS capabilities"
+        items={[
+          "Station and printer configuration",
+          "Predicted kitchen capacity",
+          "Hardware display pairing",
+        ]}
+      />
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7">
         {loading && !hasTicketPayload ? (
