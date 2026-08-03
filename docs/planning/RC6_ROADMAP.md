@@ -1,13 +1,13 @@
 # RC6 Roadmap
 
-**Status:** Living roadmap — **RC6-DASH-03** merged; **RC6-DASH-04** Approval Inbox in progress
+**Status:** Living roadmap — **RC6 Phase 1 Production-verified**; Phase 2 not started
 
-**Current repository tip (DASH-04 baseline):** `08ca0e413d8863f835cf21aa0c14736b61f39dc1`
-**Date:** 2026-08-02
+**Date:** 2026-08-03
 **Baseline tag:** `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824`
-**Current repository tip (DASH-04 baseline):** `08ca0e413d8863f835cf21aa0c14736b61f39dc1`
-**Production website runtime:** `152ce409609dc78e48d0d2b6b0c34a35d6338c24`
+**Current repository tip:** `b14163ccbc82fca0b2856ea137bddb746ed5716b`
+**Production website runtime:** `b14163ccbc82fca0b2856ea137bddb746ed5716b` (`dpl_Hi35GYu…`)
 **Migration tip:** `20260801180000`
+**Target Phase 1 release:** annotated `v1.5.0` (no GitHub Release)
 
 > This roadmap does **not** authorize Production mutation, migrations, deploys, tags, or GitHub Releases. Planning is not implementation evidence.
 
@@ -22,10 +22,10 @@
 | RC6-QA-02 | Owner CI path expansion | `rc6-qa-02/` · #179 |
 | RC6-A11Y-02 | Moderate a11y remediation | `rc6-a11y-02/` · #180 → `da99875…` |
 | RC6-DASH-00 | Command Center contracts | `rc6-dash-00/` · #181 → `cc09e239…` |
-| RC6-DASH-01 | Exception Center read-only (repo) | `rc6-dash-01/` · #182 → `b913eca…` · **not Production-verified** |
-| RC6-DASH-02 | Trusted KPI drill-downs (repo) | `rc6-dash-02/` · #183 → `80cd2c4…` · **not Production-verified** · DRILL_DOWN only |
-| RC6-DASH-03 | Daily command modes (repo) | `rc6-dash-03/` · #184 → `08ca0e4…` · **not Production-verified** · advisory / read-only |
-| RC6-DASH-04 | Approval Inbox foundation (repo) | `rc6-dash-04/` · **not Production-verified** · DRILL_DOWN only |
+| RC6-DASH-01…08 | Owner Command Center panels (repo) | `rc6-dash-0*/` · through #189 |
+| RC6-QA-03 | Command Center integration | `rc6-command-center-integration/` · #190 → `bf5912c…` |
+| RC6-QA-04 | Production Owner smoke blockers | `rc6-qa-04/` · #191 → `b14163c…` |
+| Phase 1 Production cutover | Website verified | `rc6-production-cutover/` · runtime `b14163c…` / `dpl_Hi35GYu…` |
 
 ---
 

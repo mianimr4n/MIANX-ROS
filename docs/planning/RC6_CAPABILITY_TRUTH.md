@@ -1,6 +1,6 @@
 # RC6 Capability Truth
 
-**Status:** Discovery evidence (planning)
+**Status:** Living capability truth — Phase 1 Owner Command Center Production-verified (PASS WITH LIMITATIONS); Phase 2 Delivery/Settings not started
 **Date:** 2026-08-02
 **Baseline tip:** `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` (`v1.4.0`)
 **Production website runtime:** `152ce409609dc78e48d0d2b6b0c34a35d6338c24`

@@ -1,0 +1,27 @@
+# RC6 Phase 1 — API / backend final audit
+
+**Classification:** `BACKEND_RUNTIME_UNCHANGED` for RC6 Phase 1 intent.
+
+## Code delta (`v1.4.0` → `b14163c…`)
+
+| Path | Changes |
+| --- | --- |
+| `backend/api/**` | none |
+| `supabase/migrations/**` | none |
+| Shared packages consumed by API | none in range |
+
+## Production observation
+
+| Endpoint | Result |
+| --- | --- |
+| `/healthz` | 200, `ok: true`, db connectivity ok |
+| `/readyz` | 200, `ok: true`, `issues: []` |
+| Observed `gitSha` | `b14163ccbc82fca0b2856ea137bddb746ed5716b` |
+
+Render `telepizza-api` tracks `main` SHA transitively; no intentional backend deploy was performed for Phase 1.
+
+## Contract compatibility
+
+Website Command Center reads existing admin API contracts; no new backend endpoints required for Phase 1 cutover.
+
+**Verdict:** Compatible; no backend promotion required.

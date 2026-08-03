@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-03 — **RC6-QA-03** Command Center integration certification in progress after DASH-08 merge `9fed3b4…`; Production website still `152ce40…`
+**Last reconciled:** 2026-08-03 — **RC6 Phase 1** Owner Command Center Production-verified (`b14163c…` / `dpl_Hi35GYu…`); closeout → annotated `v1.5.0` pending docs merge
 
 ---
 
@@ -36,14 +36,15 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main | `9fed3b4392015db69ebdc652dd9a693811d335c8` | Post–RC6-DASH-08 (#189); QA-03 integration certification on a test branch |
+| Repository main | `b14163ccbc82fca0b2856ea137bddb746ed5716b` | Post–RC6-QA-04 (#191); Phase 1 closeout docs may advance tip further |
 | Released baseline | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Annotated git tag; **no** GitHub Release object |
+| Target Phase 1 release | `v1.5.0` | Annotated tag after Phase 1 closeout merge; **no** GitHub Release |
 | Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Unchanged |
 | RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
-| Production website | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | Vercel `dpl_7xaV34uyAEdMLvWckWKQASPAxJ7r` — `rc5-production-cutover/` |
-| Production API (observed) | `152ce409609dc78e48d0d2b6b0c34a35d6338c24` | `/healthz`/`/readyz` `gitSha`; RC5 website cutover did **not** intentionally trigger API deploy |
-| Production database | Migrations through `20260801180000` | Distinct from tag commit; RC5 cutover migrations **NONE** |
-| Prior website rollback target | `dpl_FriiC2PsK3bEYrXbXLVuNSXv3G3y` (`795efee…`) | Not executed |
+| Production website | `b14163ccbc82fca0b2856ea137bddb746ed5716b` | Vercel `dpl_Hi35GYuauM5W9hdomkPEhppmuV6D` — `rc6-production-cutover/` |
+| Production API (observed) | `b14163ccbc82fca0b2856ea137bddb746ed5716b` | `/healthz`/`/readyz` `gitSha`; Phase 1 did **not** intentionally deploy backend (`BACKEND_RUNTIME_UNCHANGED`) |
+| Production database | Migrations through `20260801180000` | Distinct from tag commit; RC6 Phase 1 migrations **NONE** |
+| Prior website rollback target | `dpl_HhvEuMZERVSLi7KK694cfeizcC7R` (`bf5912c…`) | Not executed |
 
 ## Current Repository Status
 
@@ -58,7 +59,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Release Policy | Active |
 | RC4 | Released (`v1.3.0`) |
 | RC5 | **Released** (`v1.4.0`; certified + Production website verified) |
-| RC6 | Honesty wave + DASH-00…08 merged (Phase 1 features on `main`); **RC6-QA-03** integration certification in progress — **not** Production-verified; cutover pending |
+| RC6 Phase 1 | **Production-verified** (Owner Command Center); closeout → `v1.5.0` | PASS WITH LIMITATIONS — see `rc6-phase1-closeout/` |
 
 ---
 
@@ -66,15 +67,15 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **RC6-QA-03** — Command Center integration certification (repository; **not** Production-verified) |
-| RC6 planning | … · DASH-07 #188 · DASH-08 #189 → `9fed3b4…` |
+| Current Delivery Slice | **RC6 Phase 1 closeout** — Production-verified Owner Command Center → annotated `v1.5.0` |
+| RC6 planning | … · QA-03 #190 → `bf5912c…` · QA-04 #191 → `b14163c…` |
 | Completed RC5 slices (on `main`) | OPS-01, A11Y-01, DOC-01, TEST-01, PERF-01, OBS-01, QA-01 |
-| Phase 1 features on main | DASH-01…08 complete in repository |
-| Next after QA-03 | Phase 1 Production cutover + verification (not started); Delivery/Rider & Settings later |
-| Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc5-production-cutover/` |
-| RC5 release blockers | **None evidenced** |
-| Released baseline | `v1.4.0` @ `96f1e80…` |
-| Proposed next SemVer | Not selected — RC6 in progress |
+| Phase 1 features on main | DASH-00…08 + QA-03/QA-04 complete; Production-verified |
+| Next after Phase 1 release | Phase 2 readiness (Delivery/Rider + Settings) — **not started** |
+| Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc6-production-cutover/` |
+| RC6 Phase 1 release blockers | **None evidenced** after QA-04 Owner smoke |
+| Released baseline | `v1.4.0` @ `96f1e80…` (until `v1.5.0` tagged) |
+| Proposed next SemVer | `v1.5.0` annotated tag at Phase 1 closeout merge SHA |
 | Northern Bypass | `coming-soon` (unchanged) |
 | Royal Orchard target opening | **14 August 2026** — software readiness ≠ restaurant Production-ready |
 
