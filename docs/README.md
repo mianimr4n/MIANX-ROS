@@ -2,7 +2,7 @@
 
 **Status:** ACTIVE Owner-first documentation spine
 **Authority:** Navigation for Founder / Owner (super-admin) and engineering
-**Last verified:** 2026-08-03 — `v1.5.0` released @ `830dbc8…` / `dpl_BtPH8…`; Phase 1.1 professional-readiness audit complete (gate pending); see `00-governance/REPOSITORY_STATUS.md` and `testing/acceptance-evidence/phase1-professional-readiness-audit/`
+**Last verified:** 2026-08-04 — `v1.5.1` released @ `bfe60cc…` / `dpl_FgHub…`; Phase 1.1 gate PASSED; Phase 2 not started; see `00-governance/REPOSITORY_STATUS.md` and `testing/acceptance-evidence/phase1-1-production-closeout/`
 
 ---
 

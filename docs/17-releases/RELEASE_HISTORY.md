@@ -1,7 +1,7 @@
 # Release History
 
 **Status:** ACTIVE
-**Last verified date:** 2026-08-03
+**Last verified date:** 2026-08-04
 
 ## Purpose
 
@@ -11,21 +11,17 @@ Owner-facing operating documentation for Telepizza ROS release and repository ti
 
 | Concept | Canonical value |
 | --- | --- |
-| Current verified repository main | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` |
-| Latest released tag | `v1.5.0` (annotated git tag; **no** GitHub Release) |
-| Released tag object | `d52f3a4729f398143463e72e8147e4cb0ada1faa` |
-| Released tag commit (peeled) | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` |
-| Prior released tag | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` (unchanged) |
-| Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` |
-| RC6 feature/runtime tip | `b14163ccbc82fca0b2856ea137bddb746ed5716b` (`apps/website` identical to `830dbc8…`) |
-| Production website commit | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` (Vercel `dpl_BtPH8AvtUsKHwjJaQAf7gEVMMpom`) |
-| Production API SHA (observed) | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` (`/healthz`/`/readyz`; Phase 1 did not intentionally deploy backend) |
+| Latest released tag | `v1.5.1` (annotated; **no** GitHub Release) |
+| Released tag object | `6b86be34fc9ea15152383038d75d93d964068e2e` |
+| Released tag commit (peeled) | `bfe60cc6a3074e08e61f85b458b19e724325eba4` |
+| Production website commit | `bfe60cc…` (Vercel `dpl_FgHubLsuWo5ahYri18mjayCCw9nu`) |
+| Prior released tag | `v1.5.0` @ `830dbc8…` / `dpl_BtPH8…` (unchanged) |
 | Production migration tip | `20260801180000` |
-| Prior website rollback target | `dpl_Hi35GYuauM5W9hdomkPEhppmuV6D` (`b14163c…`) — not executed |
+| Phase 2 runtime | **Not started** |
 
 ## Current verified state
 
-RC6 Phase 1 was released as annotated tag `v1.5.0` at closeout commit `830dbc8…`. Production deployment `dpl_BtPH8…` runs that commit. The website runtime files are identical to QA-04 runtime tip `b14163c…`. Final verification (public smoke, public a11y, Owner smoke `failCount: 0`, logout/protected-route, CI) PASS on Production; no backend deploy; no migration/Production SQL.
+Phase 1.1 professional readiness was Production-certified and released as annotated `v1.5.1`. Public smoke, Owner smoke (`failCount: 0`), Admin axe critical/serious 0, responsive/performance/privacy gates PASS. No intentional backend product change; no migration/Production SQL; no GitHub Release.
 
 ### RC4 release
 
