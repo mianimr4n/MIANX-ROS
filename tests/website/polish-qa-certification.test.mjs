@@ -46,15 +46,22 @@ describe("POLISH-QA professional readiness certification", () => {
     }
   });
 
-  it("records PENDING PRODUCTION CERTIFICATION and no v1.5.1", () => {
-    const final = read("docs/testing/acceptance-evidence/phase1-polish-qa/FINAL_REPORT.md");
-    assert.match(final, /PENDING PRODUCTION CERTIFICATION|NOT PASSED/i);
-    assert.match(final, /No v1\.5\.1|v1\.5\.1 tag/i);
+  it("records Phase 1.1 PASSED with annotated v1.5.1 and closeout evidence", () => {
     const gate = read(
       "docs/testing/acceptance-evidence/phase1-professional-readiness-audit/PHASE1_PROFESSIONAL_READINESS_GATE.md",
     );
-    assert.match(gate, /PENDING PRODUCTION CERTIFICATION/);
-    assert.match(gate, /NOT PASSED/);
+    assert.match(gate, /Gate status: \*\*PASSED\*\*/);
+    assert.match(gate, /v1\.5\.1/);
+    assert.match(gate, /NOT STARTED/);
+    const closeout = read(
+      "docs/testing/acceptance-evidence/phase1-1-production-closeout/V1_5_1_TAG_VERIFICATION.md",
+    );
+    assert.match(closeout, /bfe60cc6a3074e08e61f85b458b19e724325eba4/);
+    assert.match(closeout, /6b86be34fc9ea15152383038d75d93d964068e2e/);
+    assert.match(closeout, /GitHub Release \| \*\*none\*\*/);
+    const final = read("docs/testing/acceptance-evidence/phase1-1-production-closeout/FINAL_REPORT.md");
+    assert.match(final, /v1\.5\.1/);
+    assert.match(final, /Phase 2 runtime/);
   });
 
   it("classifies backend CSV as accepted P2 residual option B", () => {
