@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-03 — **RC6 Phase 1 released** as annotated `v1.5.0` at closeout `830dbc8…` / `dpl_BtPH8…`; **Phase 1.1** audit complete; **POLISH-01 merged** (`8ddcdd5`); **POLISH-02** Owner hierarchy in progress; gate **not passed**; Phase 2 runtime **not started**
+**Last reconciled:** 2026-08-04 — **Phase 1.1 released** as annotated `v1.5.1` at `bfe60cc…` / `dpl_FgHub…`; gate **PASSED**; Phase 2 runtime **not started**; prior `v1.5.0` unchanged @ `830dbc8…` / `dpl_BtPH8…`
 
 ---
 
@@ -36,19 +36,17 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | Phase 1 closeout merge (#192); docs tip may advance |
-| Released baseline | `v1.5.0` @ `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | Annotated tag object `d52f3a4729f398143463e72e8147e4cb0ada1faa`; **no** GitHub Release |
+| Repository main (runtime release) | `bfe60cc6a3074e08e61f85b458b19e724325eba4` | PR #202 merge / `v1.5.1` peeled; docs tip may advance after closeout |
+| Latest released baseline | `v1.5.1` @ `bfe60cc6a3074e08e61f85b458b19e724325eba4` | Annotated tag object `6b86be34fc9ea15152383038d75d93d964068e2e`; **no** GitHub Release |
+| Prior released tag | `v1.5.0` @ `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | Unchanged; object `d52f3a4729f398143463e72e8147e4cb0ada1faa` |
 | Prior released tag | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Unchanged |
 | Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Unchanged |
 | RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
-| RC6 feature/runtime tip | `b14163ccbc82fca0b2856ea137bddb746ed5716b` | QA-04 (#191); `apps/website` identical through `830dbc8…` |
-| Production website commit | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | Vercel `dpl_BtPH8AvtUsKHwjJaQAf7gEVMMpom` — do **not** call `b14163c…` the active deploy commit |
-| Prior QA-04 Vercel deploy (historical) | `dpl_Hi35GYuauM5W9hdomkPEhppmuV6D` (`b14163c…`) | Owner smoke first green; superseded by docs closeout deploy |
-| Production API (observed) | `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | `/healthz`/`/readyz` `gitSha`; Phase 1 did **not** intentionally deploy backend (`BACKEND_RUNTIME_UNCHANGED`) |
-| Production database | Migrations through `20260801180000` | Distinct from tag commit; RC6 Phase 1 migrations **NONE** |
-| Prior website rollback target | `dpl_Hi35GYuauM5W9hdomkPEhppmuV6D` (`b14163c…`) / earlier `dpl_HhvEuM…` (`bf5912c…`) | Not executed |
-| Phase 1.1 audit | Complete — gate **not passed** | `phase1-professional-readiness-audit/` |
-| Anchor honesty | `rc6-v1.5.0-anchor-sync/` (#193 merged) | |
+| Production website commit | `bfe60cc6a3074e08e61f85b458b19e724325eba4` | Vercel `dpl_FgHubLsuWo5ahYri18mjayCCw9nu` |
+| Prior Production website (rollback) | `830dbc8…` / `dpl_BtPH8AvtUsKHwjJaQAf7gEVMMpom` | Not executed |
+| Production API (observed tip) | `bfe60cc…` | Process tip; Phase 1.1 did **not** intentionally change backend product (`BACKEND_RUNTIME_UNCHANGED`) |
+| Production database | Migrations through `20260801180000` | No Phase 1.1 migrations |
+| Phase 1.1 gate | **PASSED** — Production certified | `phase1-1-production-closeout/` |
 
 ## Current Repository Status
 
@@ -63,8 +61,8 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Release Policy | Active |
 | RC4 | Released (`v1.3.0`) |
 | RC5 | **Released** (`v1.4.0`; certified + Production website verified) |
-| RC6 Phase 1 | **Released** (`v1.5.0`; Owner Command Center Production-verified) | PASS WITH LIMITATIONS — see `rc6-phase1-closeout/` + `rc6-v1.5.0-anchor-sync/` |
-| Phase 1.1 Professional readiness | **Audit complete**; gate not passed | `phase1-professional-readiness-audit/` |
+| RC6 Phase 1 | **Released** (`v1.5.0`) | PASS WITH LIMITATIONS — see `rc6-phase1-closeout/` |
+| Phase 1.1 Professional readiness | **Released** (`v1.5.1`); gate **PASSED** | `phase1-1-production-closeout/` · Phase 2 **not started** |
 
 ---
 
@@ -72,9 +70,9 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **Phase 1.1 / POLISH-01** — Admin shell navigation (after `v1.5.0`) |
-| Phase 1.1 | Audit complete; POLISH-01 in flight; gate **not passed** |
-| Phase 2 runtime | **Not started** — blocked on Phase 1.1 gate |
+| Current Delivery Slice | **Phase 1.1 complete** — next: Phase 2 readiness decision only |
+| Phase 1.1 | **PASSED** / Production certified / `v1.5.1` |
+| Phase 2 runtime | **Not started** — separate start decision required |
 | Planning | `docs/planning/PHASE1_1_*.md` |
 | Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc6-production-cutover/` (re-verified on `830dbc8…`) |
 | RC6 Phase 1 release blockers | **None** — annotated `v1.5.0` created |
