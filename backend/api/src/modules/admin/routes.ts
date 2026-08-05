@@ -53,6 +53,7 @@ import { createAdminOpeningOperationsRouter } from "./opening-operations.js";
 import { createAdminOpeningGovernanceRouter } from "./opening-governance.js";
 import { createAdminOpeningDryRunRouter } from "./opening-dry-run.js";
 import { createAdminOrganizationSettingsRouter } from "./organization-settings.js";
+import { createAdminConfigurationRouter } from "./configuration.js";
 import { createAdminBranchProfileRouter } from "./branch-profile.js";
 import { createAdminDeliverySettingsRouter } from "./delivery-settings.js";
 import { createAdminBranchSettingsRouter } from "./settings.js";
@@ -564,6 +565,14 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       organizationSettings: dependencies.organizationSettings,
+    }),
+  );
+
+  router.use(
+    createAdminConfigurationRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      envStatus: dependencies.envStatus,
     }),
   );
 
