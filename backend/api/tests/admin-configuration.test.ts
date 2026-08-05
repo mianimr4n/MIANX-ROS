@@ -2,10 +2,10 @@ import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createAdminConfigurationRouter } from "../../backend/api/src/modules/admin/configuration.js";
-import type { AuthPrincipal } from "../../backend/api/src/services/auth/principal.js";
-import type { AuthPrincipalRepository } from "../../backend/api/src/services/auth/supabase.js";
-import type { AuthTokenVerifier } from "../../backend/api/src/middleware/auth.js";
+import { createAdminConfigurationRouter } from "../src/modules/admin/configuration.js";
+import type { AuthPrincipal } from "../src/services/auth/principal.js";
+import type { AuthPrincipalRepository } from "../src/services/auth/supabase.js";
+import type { AuthTokenVerifier } from "../src/middleware/auth.js";
 
 const READY_ENV = {
   port: 4000,
@@ -48,7 +48,8 @@ function authRepo(user: AuthPrincipal): AuthPrincipalRepository {
 function verifier(): AuthTokenVerifier {
   return {
     async getUser() {
-      return { user: { id: "auth-founder", email: "founder@example.com" } } as any };
+      return { user: { id: "auth-founder", email: "founder@example.com" } } as any;
+    },
   };
 }
 
@@ -232,7 +233,23 @@ describe("admin configuration router - behavioral", () => {
   });
 
   it("returns default when neither branch nor org present", async () => {
-    fromMock.mockImplementation((table: string) => ({ select: () => ({ eq() { return this; }, limit: async () => ({ data: [], error: null }) }) }));
+    fromMock.mockImplementation((table: string) => {
+      if (table === "configuration_schemas") return { select: buildQuery.bind(null, table) };
+      return {
+        select: () => ({
+          eq() {
+            return this;
+          },
+          is() {
+            return this;
+          },
+          order() {
+            return this;
+          },
+          limit: async () => ({ data: [], error: null }),
+        }),
+      };
+    });
     const app = createTestApp(principal({ permissions: ["admin.access"], isSuperAdmin: true }));
     const res = await request(app)
       .get(`/api/v1/admin/branches/${BRANCH_ID}/configuration/delivery_radius/effective`)
@@ -247,6 +264,9 @@ describe("admin configuration router - behavioral", () => {
     fromMock.mockImplementation((table: string) => ({
       select: () => ({
         eq(key: string, value: unknown) {
+          return this;
+        },
+        order() {
           return this;
         },
         limit: async () => {
