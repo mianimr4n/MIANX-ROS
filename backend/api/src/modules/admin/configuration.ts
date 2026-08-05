@@ -28,7 +28,7 @@ export function createAdminConfigurationRouter(deps: AdminConfigurationRouterDep
     deps.authProfileRepository,
   );
 
-  router.get("/schemas", requireAuthenticatedUser, requirePermission(["admin.access"]), async (req, res, next) => {
+  router.get("/schemas", requireAuthenticatedUser, requirePermission("admin.access"), async (req, res, next) => {
     try {
       const client = createServiceClient(deps.envStatus);
       const { data, error } = await client.from("configuration_schemas").select("*").order("key", { ascending: true });
@@ -39,17 +39,28 @@ export function createAdminConfigurationRouter(deps: AdminConfigurationRouterDep
     }
   });
 
-  const keyParam = z.object({ key: z.string().min(1) });
+  const keyParam = z.object({ key: z.string().min(1), branchId: z.string().uuid() });
   router.get(
     "/branches/:branchId/configuration/:key/effective",
     requireAuthenticatedUser,
-    requirePermission(["admin.access"]),
+    requirePermission("admin.access"),
     async (req, res, next) => {
       try {
-        const parse = keyParam.safeParse({ key: req.params.key });
-        if (!parse.success) return res.status(400).json({ ok: false, error: "INVALID_KEY" });
+        const parse = keyParam.safeParse({ key: req.params.key, branchId: req.params.branchId });
+        if (!parse.success) {
+          const branchIssue = parse.error.issues.some((issue) => issue.path[0] === "branchId");
+          return res
+            .status(400)
+            .json({ ok: false, error: branchIssue ? "INVALID_BRANCH_ID" : "INVALID_KEY" });
+        }
         const key = parse.data.key;
-        const branchId = req.params.branchId;
+        const branchId = parse.data.branchId;
+
+        const principal = (req as AuthorizedRequest).principal;
+        if (!principal?.isSuperAdmin && !principal?.branchIds.includes(branchId)) {
+          return res.status(403).json({ ok: false, error: "BRANCH_ACCESS_DENIED" });
+        }
+
         const client = createServiceClient(deps.envStatus);
 
         // Find schema by key
@@ -77,19 +88,27 @@ export function createAdminConfigurationRouter(deps: AdminConfigurationRouterDep
           return data && data[0];
         }
 
+        const isSecret = schema.data_type === "secret_ref";
+        const redact = (value: unknown) =>
+          isSecret && !principal?.isSuperAdmin ? "<REDACTED>" : value;
+
         // 1) branch override
         const branchActive = await findActive("branch", branchId);
-        if (branchActive) return res.json({ ok: true, data: { source: "branch", value: branchActive.value } });
+        if (branchActive) {
+          return res.json({ ok: true, data: { source: "branch", value: redact(branchActive.value) } });
+        }
 
         // 2) organization default — fetch single org settings id (organization_settings singleton)
         const { data: orgs, error: orgErr } = await client.from("organization_settings").select("id").limit(1);
         if (orgErr) throw orgErr;
         const orgId = orgs && orgs[0] ? orgs[0].id : null;
         const orgActive = await findActive("organization", orgId);
-        if (orgActive) return res.json({ ok: true, data: { source: "organization", value: orgActive.value } });
+        if (orgActive) {
+          return res.json({ ok: true, data: { source: "organization", value: redact(orgActive.value) } });
+        }
 
         // 3) fallback to schema default_value
-        return res.json({ ok: true, data: { source: "default", value: schema.default_value } });
+        return res.json({ ok: true, data: { source: "default", value: redact(schema.default_value) } });
       } catch (err) {
         return next(err);
       }
