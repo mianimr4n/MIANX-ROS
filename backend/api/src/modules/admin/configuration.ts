@@ -1,8 +1,11 @@
-import { Router } from "express";
+import { Router, type Request } from "express";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+
+import { ApiError } from "../../common/http.js";
 import { createAuthorizationHelpers, type AuthorizedRequest } from "../../middleware/authorization.js";
 import type { AuthTokenVerifier } from "../../middleware/auth.js";
+import type { AuthPrincipal, AuthPrincipal as Principal } from "../../services/auth/principal.js";
 import type { AuthPrincipalRepository } from "../../services/auth/supabase.js";
 import type { EnvironmentStatus } from "../../config/env.js";
 
@@ -10,110 +13,241 @@ export interface AdminConfigurationRouterDeps {
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
   envStatus: EnvironmentStatus;
+  clientFactory?: () => SupabaseClient;
 }
+
+type ConfigurationSchema = {
+  id: string;
+  scope_type: "organization" | "branch";
+  key: string;
+  label: string;
+  data_type: "string" | "number" | "boolean" | "jsonb" | "secret_ref";
+  default_value: unknown;
+  validation_rules: Record<string, unknown> | null;
+  is_required: boolean;
+};
+
+type PersistResult = {
+  version_id: string;
+  change_id: string | null;
+  outcome: "create" | "update" | "unchanged" | "replayed";
+  persisted_value: unknown;
+  persisted_at: string;
+};
+
+const uuidParam = z.string().uuid();
+const keyParam = z.string().trim().min(1).max(100).regex(/^[a-z][a-z0-9_.-]*$/);
+const writeBody = z.object({
+  value: z.unknown(),
+  reason: z.string().trim().min(1).max(1000).optional(),
+  idempotencyKey: z.string().trim().min(1).max(200).optional(),
+}).strict();
+const SECRET_REFERENCE = /^[A-Z][A-Z0-9_]{2,127}$/;
 
 function createServiceClient(envStatus: EnvironmentStatus): SupabaseClient {
   if (!envStatus.config.supabaseUrl || !envStatus.config.supabaseServiceRoleKey) {
-    throw new Error("SUPABASE_NOT_CONFIGURED");
+    throw new ApiError(503, "SUPABASE_NOT_CONFIGURED", "Supabase service role is not configured.");
   }
   return createClient(envStatus.config.supabaseUrl, envStatus.config.supabaseServiceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
 
+function requestContext(req: Request) {
+  const requestId = typeof resLocal(req, "requestId") === "string" ? String(resLocal(req, "requestId")) : null;
+  const correlationHeader = req.header("x-correlation-id")?.trim();
+  return { requestId, correlationId: correlationHeader || requestId };
+}
+
+function resLocal(req: Request, key: string): unknown {
+  return req.res?.locals?.[key];
+}
+
+function maskValue(schema: ConfigurationSchema, value: unknown, principal: Principal): unknown {
+  return schema.data_type === "secret_ref" && !principal.isSuperAdmin ? "<REDACTED>" : value;
+}
+
+function numberRule(rules: Record<string, unknown>, key: string): number | undefined {
+  return typeof rules[key] === "number" && Number.isFinite(rules[key]) ? rules[key] as number : undefined;
+}
+
+function validateValue(schema: ConfigurationSchema, value: unknown): unknown {
+  if (value === null && !schema.is_required) return null;
+  const rules = schema.validation_rules ?? {};
+  const invalid = (message: string): never => {
+    throw new ApiError(400, "INVALID_CONFIGURATION_VALUE", message);
+  };
+
+  if (schema.data_type === "string" || schema.data_type === "secret_ref") {
+    const stringValue = typeof value === "string" ? value : invalid(`${schema.key} must be a string.`);
+    const normalized = stringValue.trim();
+    if (!normalized && schema.is_required) invalid(`${schema.key} is required.`);
+    const minLength = numberRule(rules, "minLength");
+    const maxLength = numberRule(rules, "maxLength");
+    if (minLength !== undefined && normalized.length < minLength) invalid(`${schema.key} is shorter than minLength.`);
+    if (maxLength !== undefined && normalized.length > maxLength) invalid(`${schema.key} exceeds maxLength.`);
+    if (typeof rules.pattern === "string") {
+      let pattern: RegExp;
+      try { pattern = new RegExp(rules.pattern); } catch { throw new ApiError(500, "INVALID_CONFIGURATION_SCHEMA", `${schema.key} has an invalid pattern.`); }
+      if (!pattern.test(normalized)) invalid(`${schema.key} does not match its required pattern.`);
+    }
+    if (schema.data_type === "secret_ref" && !SECRET_REFERENCE.test(normalized)) {
+      invalid(`${schema.key} must be an approved environment-variable reference, never a raw secret.`);
+    }
+    return normalized;
+  }
+
+  if (schema.data_type === "number") {
+    const numberValue = typeof value === "number" && Number.isFinite(value)
+      ? value
+      : invalid(`${schema.key} must be a finite number.`);
+    const minimum = numberRule(rules, "minimum") ?? numberRule(rules, "min");
+    const maximum = numberRule(rules, "maximum") ?? numberRule(rules, "max");
+    if (minimum !== undefined && numberValue < minimum) invalid(`${schema.key} is below its minimum.`);
+    if (maximum !== undefined && numberValue > maximum) invalid(`${schema.key} exceeds its maximum.`);
+    return numberValue;
+  }
+
+  if (schema.data_type === "boolean") {
+    if (typeof value !== "boolean") invalid(`${schema.key} must be a boolean.`);
+    return value;
+  }
+
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    invalid(`${schema.key} must be a JSON object.`);
+  }
+  return value;
+}
+
+async function findSchema(client: SupabaseClient, scopeType: "organization" | "branch", key: string) {
+  const { data, error } = await client.from("configuration_schemas").select("*")
+    .eq("scope_type", scopeType).eq("key", key).maybeSingle();
+  if (error) throw new ApiError(500, "CONFIGURATION_SCHEMA_READ_FAILED", error.message);
+  return data as ConfigurationSchema | null;
+}
+
+async function findActive(client: SupabaseClient, schemaId: string, scopeType: string, scopeId: string) {
+  const { data, error } = await client.from("configuration_versions").select("id, value, activated_at, created_at")
+    .eq("schema_id", schemaId).eq("status", "active").eq("scope_type", scopeType)
+    .eq("scope_id", scopeId).maybeSingle();
+  if (error) throw new ApiError(500, "CONFIGURATION_VALUE_READ_FAILED", error.message);
+  return data as { id: string; value: unknown } | null;
+}
+
+async function loadBranchOrganization(client: SupabaseClient, branchId: string) {
+  const { data, error } = await client.from("branches").select("id, organization_id")
+    .eq("id", branchId).maybeSingle();
+  if (error) throw new ApiError(500, "BRANCH_READ_FAILED", error.message);
+  if (!data) throw new ApiError(404, "BRANCH_NOT_FOUND", "Branch was not found.");
+  return (data as { organization_id: string }).organization_id;
+}
+
+async function assertOrganization(client: SupabaseClient, organizationId: string) {
+  const { data, error } = await client.from("organization_settings").select("organization_id")
+    .eq("organization_id", organizationId).maybeSingle();
+  if (error) throw new ApiError(500, "ORGANIZATION_READ_FAILED", error.message);
+  if (!data) throw new ApiError(403, "ORGANIZATION_ACCESS_DENIED", "Organization access denied.");
+}
+
+async function persist(client: SupabaseClient, input: {
+  schema: ConfigurationSchema; scopeType: "organization" | "branch"; scopeId: string;
+  value: unknown; actor: AuthPrincipal; reason?: string; idempotencyKey?: string;
+  requestId: string | null; correlationId: string | null;
+}) {
+  const { data, error } = await client.rpc("persist_configuration_value", {
+    p_schema_id: input.schema.id, p_scope_type: input.scopeType, p_scope_id: input.scopeId,
+    p_value: input.value, p_actor: input.actor.userId, p_reason: input.reason ?? null,
+    p_request_id: input.requestId, p_correlation_id: input.correlationId,
+    p_idempotency_key: input.idempotencyKey ?? null,
+  });
+  if (error) throw new ApiError(500, "CONFIGURATION_PERSIST_FAILED", error.message);
+  const result = (data as PersistResult[] | null)?.[0];
+  if (!result) throw new ApiError(500, "CONFIGURATION_PERSIST_FAILED", "Persistence returned no result.");
+  return result;
+}
+
 export function createAdminConfigurationRouter(deps: AdminConfigurationRouterDeps) {
   const router = Router();
-  const { requireAuthenticatedUser, requireSuperAdmin, requirePermission } = createAuthorizationHelpers(
-    deps.authTokenVerifier,
-    deps.authProfileRepository,
-  );
+  const serviceClient = () => deps.clientFactory?.() ?? createServiceClient(deps.envStatus);
+  const { requireAuthenticatedUser, requireSuperAdmin, requireAnyPermission, requirePermission } =
+    createAuthorizationHelpers(deps.authTokenVerifier, deps.authProfileRepository);
 
   router.get("/schemas", requireAuthenticatedUser, requirePermission("admin.access"), async (req, res, next) => {
     try {
-      const client = createServiceClient(deps.envStatus);
-      const { data, error } = await client.from("configuration_schemas").select("*").order("key", { ascending: true });
-      if (error) throw error;
-      return res.json({ ok: true, data: data ?? [] });
-    } catch (err) {
-      return next(err);
-    }
+      const principal = (req as AuthorizedRequest).principal!;
+      const { data, error } = await serviceClient()
+        .from("configuration_schemas").select("*").order("key", { ascending: true });
+      if (error) throw new ApiError(500, "CONFIGURATION_SCHEMA_READ_FAILED", error.message);
+      const schemas = (data ?? []) as ConfigurationSchema[];
+      return res.json({ ok: true, data: schemas.map((schema) => ({
+        ...schema, default_value: maskValue(schema, schema.default_value, principal),
+      })) });
+    } catch (error) { return next(error); }
   });
 
-  const keyParam = z.object({ key: z.string().min(1), branchId: z.string().uuid() });
-  router.get(
-    "/branches/:branchId/configuration/:key/effective",
-    requireAuthenticatedUser,
-    requirePermission("admin.access"),
-    async (req, res, next) => {
+  router.get("/branches/:branchId/configuration/:key/effective", requireAuthenticatedUser,
+    requirePermission("admin.access"), async (req, res, next) => {
       try {
-        const parse = keyParam.safeParse({ key: req.params.key, branchId: req.params.branchId });
-        if (!parse.success) {
-          const branchIssue = parse.error.issues.some((issue) => issue.path[0] === "branchId");
-          return res
-            .status(400)
-            .json({ ok: false, error: branchIssue ? "INVALID_BRANCH_ID" : "INVALID_KEY" });
+        const branch = uuidParam.safeParse(req.params.branchId);
+        const key = keyParam.safeParse(req.params.key);
+        if (!branch.success) throw new ApiError(400, "INVALID_BRANCH_ID", "Branch ID must be a UUID.");
+        if (!key.success) throw new ApiError(400, "INVALID_CONFIGURATION_KEY", "Configuration key is invalid.");
+        const principal = (req as AuthorizedRequest).principal!;
+        if (!principal.isSuperAdmin && !principal.branchIds.includes(branch.data)) {
+          throw new ApiError(403, "BRANCH_ACCESS_DENIED", "Branch access denied.");
         }
-        const key = parse.data.key;
-        const branchId = parse.data.branchId;
-
-        const principal = (req as AuthorizedRequest).principal;
-        if (!principal?.isSuperAdmin && !principal?.branchIds.includes(branchId)) {
-          return res.status(403).json({ ok: false, error: "BRANCH_ACCESS_DENIED" });
+        const client = serviceClient();
+        const organizationId = await loadBranchOrganization(client, branch.data);
+        const branchSchema = await findSchema(client, "branch", key.data);
+        const organizationSchema = await findSchema(client, "organization", key.data);
+        if (!branchSchema && !organizationSchema) throw new ApiError(404, "SCHEMA_NOT_FOUND", "Configuration key was not found.");
+        if (branchSchema) {
+          const value = await findActive(client, branchSchema.id, "branch", branch.data);
+          if (value) return res.json({ ok: true, data: { key: key.data, source: "branch", value: maskValue(branchSchema, value.value, principal), versionId: value.id } });
         }
-
-        const client = createServiceClient(deps.envStatus);
-
-        // Find schema by key
-        const { data: schemas, error: schemaErr } = await client
-          .from("configuration_schemas")
-          .select("*")
-          .eq("key", key)
-          .limit(1);
-        if (schemaErr) throw schemaErr;
-        const schema = schemas && schemas[0];
-        if (!schema) return res.status(404).json({ ok: false, error: "SCHEMA_NOT_FOUND" });
-
-        // Helper to find active version for a scope
-        async function findActive(scopeType: string, scopeId: string | null) {
-          const q = client
-            .from("configuration_versions")
-            .select("*")
-            .eq("schema_id", schema.id)
-            .eq("status", "active")
-            .eq("scope_type", scopeType);
-          if (scopeId) q.eq("scope_id", scopeId);
-          else q.is("scope_id", null);
-          const { data, error } = await q.order("activated_at", { ascending: false }).limit(1);
-          if (error) throw error;
-          return data && data[0];
+        if (organizationSchema) {
+          const value = await findActive(client, organizationSchema.id, "organization", organizationId);
+          if (value) return res.json({ ok: true, data: { key: key.data, source: "organization", value: maskValue(organizationSchema, value.value, principal), versionId: value.id } });
         }
+        const fallback = branchSchema ?? organizationSchema!;
+        return res.json({ ok: true, data: { key: key.data, source: "default", value: maskValue(fallback, fallback.default_value, principal), versionId: null } });
+      } catch (error) { return next(error); }
+    });
 
-        const isSecret = schema.data_type === "secret_ref";
-        const redact = (value: unknown) =>
-          isSecret && !principal?.isSuperAdmin ? "<REDACTED>" : value;
-
-        // 1) branch override
-        const branchActive = await findActive("branch", branchId);
-        if (branchActive) {
-          return res.json({ ok: true, data: { source: "branch", value: redact(branchActive.value) } });
-        }
-
-        // 2) organization default — fetch single org settings id (organization_settings singleton)
-        const { data: orgs, error: orgErr } = await client.from("organization_settings").select("id").limit(1);
-        if (orgErr) throw orgErr;
-        const orgId = orgs && orgs[0] ? orgs[0].id : null;
-        const orgActive = await findActive("organization", orgId);
-        if (orgActive) {
-          return res.json({ ok: true, data: { source: "organization", value: redact(orgActive.value) } });
-        }
-
-        // 3) fallback to schema default_value
-        return res.json({ ok: true, data: { source: "default", value: redact(schema.default_value) } });
-      } catch (err) {
-        return next(err);
+  const handleWrite = (scopeType: "organization" | "branch") => async (req: Request, res: import("express").Response, next: import("express").NextFunction) => {
+    try {
+      const idName = scopeType === "organization" ? "organizationId" : "branchId";
+      const id = uuidParam.safeParse(req.params[idName]);
+      const key = keyParam.safeParse(req.params.key);
+      const body = writeBody.safeParse(req.body);
+      if (!id.success) throw new ApiError(400, scopeType === "organization" ? "INVALID_ORGANIZATION_ID" : "INVALID_BRANCH_ID", `${idName} must be a UUID.`);
+      if (!key.success) throw new ApiError(400, "INVALID_CONFIGURATION_KEY", "Configuration key is invalid.");
+      if (!body.success) throw new ApiError(400, "VALIDATION_ERROR", "Request validation failed.", body.error.flatten());
+      const principal = (req as AuthorizedRequest).principal!;
+      const client = serviceClient();
+      if (scopeType === "organization") await assertOrganization(client, id.data);
+      else {
+        const organizationId = await loadBranchOrganization(client, id.data);
+        if (!principal.isSuperAdmin && !principal.branchIds.includes(id.data)) throw new ApiError(403, "BRANCH_ACCESS_DENIED", "Branch access denied.");
+        if (!organizationId) throw new ApiError(403, "ORGANIZATION_ACCESS_DENIED", "Branch has no organization ownership.");
       }
-    },
-  );
+      const schema = await findSchema(client, scopeType, key.data);
+      if (!schema) throw new ApiError(404, "SCHEMA_NOT_FOUND", "Configuration key was not found for this scope.");
+      const value = validateValue(schema, body.data.value);
+      const context = requestContext(req);
+      const result = await persist(client, { schema, scopeType, scopeId: id.data, value, actor: principal,
+        reason: body.data.reason, idempotencyKey: body.data.idempotencyKey, ...context });
+      const status = result.outcome === "create" ? 201 : 200;
+      return res.status(status).json({ ok: true, data: { scopeType, scopeId: id.data, key: schema.key,
+        value: maskValue(schema, result.persisted_value, principal), versionId: result.version_id,
+        changeId: result.change_id, outcome: result.outcome, persistedAt: result.persisted_at } });
+    } catch (error) { return next(error); }
+  };
+
+  router.put("/organizations/:organizationId/configuration/:key", requireAuthenticatedUser,
+    requireSuperAdmin, handleWrite("organization"));
+  router.put("/branches/:branchId/configuration/:key", requireAuthenticatedUser,
+    requireAnyPermission(["branch.manage", "admin.access"]), handleWrite("branch"));
 
   return router;
 }
