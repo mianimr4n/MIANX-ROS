@@ -91,10 +91,17 @@ const createInviteSchema = z.object({
   fullName: z.string().trim().min(1).max(150),
   phone: z.string().trim().max(30).optional().nullable(),
   roleCode: z.string().trim().min(1).max(100),
-  branchId: z.string().uuid(),
-  sendNow: z.boolean().optional(),
+  organizationId: z.string().uuid(),
+  branchIds: z.array(z.string().uuid()).max(50).default([]),
   expiresInHours: z.number().int().optional(),
-});
+  correlationId: z.string().uuid().optional(),
+}).strict();
+
+const bootstrapOwnerSchema = createInviteSchema.omit({ roleCode: true, branchIds: true, organizationId: true });
+const updateStaffScopeSchema = z.object({
+  roleCode: z.string().trim().min(1).max(100),
+  branchIds: z.array(z.string().uuid()).max(50),
+}).strict();
 
 const processOutboxSchema = z
   .object({
@@ -166,12 +173,17 @@ function toSafeInvite(invite: {
   fullName: string;
   phone: string | null;
   roleCode: string;
-  branchId: string;
+  organizationId: string;
+  branchIds: string[];
+  branchId: string | null;
   status: string;
+  deliveryStatus: string;
   expiresAt: string | null;
   invitedBy: string | null;
   acceptedUserId: string | null;
+  acceptedRoleAssignmentId?: string | null;
   sendCount: number;
+  correlationId: string;
   createdAt: string;
   updatedAt: string;
 }) {
@@ -181,12 +193,17 @@ function toSafeInvite(invite: {
     fullName: invite.fullName,
     phone: invite.phone,
     roleCode: invite.roleCode,
+    organizationId: invite.organizationId,
+    branchIds: invite.branchIds,
     branchId: invite.branchId,
     status: invite.status,
+    deliveryStatus: invite.deliveryStatus,
     expiresAt: invite.expiresAt,
     invitedBy: invite.invitedBy,
     acceptedUserId: invite.acceptedUserId,
+    acceptedRoleAssignmentId: invite.acceptedRoleAssignmentId ?? null,
     sendCount: invite.sendCount,
+    correlationId: invite.correlationId,
     createdAt: invite.createdAt,
     updatedAt: invite.updatedAt,
   };
@@ -324,9 +341,31 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   );
 
   router.post(
+    "/identity/organizations/:organizationId/bootstrap-owner",
+    requireAuthenticatedUser,
+    validateBody(bootstrapOwnerSchema),
+    async (req, res, next) => {
+      try {
+        if (!z.string().uuid().safeParse(req.params.organizationId).success) {
+          throw new ApiError(400, "VALIDATION_ERROR", "organizationId must be a UUID.");
+        }
+        const principal = (req as AuthorizedRequest).principal!;
+        const result = await dependencies.staffInviteRepository.bootstrapOwner(
+          { ...req.body, organizationId: req.params.organizationId },
+          principal,
+          dependencies.inviteAppOrigin,
+          auditFromRequest(req),
+        );
+        return res.status(201).json({ ok: true, data: toSafeInvite(result.invite) });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.post(
     "/staff/invites",
     requireAuthenticatedUser,
-    requireSuperAdmin,
     validateBody(createInviteSchema),
     async (req, res, next) => {
       try {
@@ -338,13 +377,7 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
           auditFromRequest(req),
         );
 
-        return res.status(201).json({
-          ok: true,
-          data: {
-            ...toSafeInvite(result.invite),
-            inviteUrl: result.inviteUrl,
-          },
-        });
+        return res.status(201).json({ ok: true, data: toSafeInvite(result.invite) });
       } catch (error) {
         return next(error);
       }
@@ -354,15 +387,19 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   router.get(
     "/staff/invites",
     requireAuthenticatedUser,
-    requireSuperAdmin,
     async (req, res, next) => {
       try {
         const principal = (req as AuthorizedRequest).principal!;
         assertCanReadInvites(principal);
         const status =
           typeof req.query.status === "string" ? (req.query.status as StaffInviteStatus) : undefined;
+        const organizationId = typeof req.query.organizationId === "string" ? req.query.organizationId : undefined;
+        if (organizationId && !z.string().uuid().safeParse(organizationId).success) {
+          throw new ApiError(400, "VALIDATION_ERROR", "organizationId must be a UUID.");
+        }
         const invites = await dependencies.staffInviteRepository.listInvites(
-          status ? { status } : undefined,
+          principal,
+          status || organizationId ? { status, organizationId } : undefined,
         );
         return res.json({
           ok: true,
@@ -377,10 +414,11 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   router.get(
     "/staff/invites/:id",
     requireAuthenticatedUser,
-    requireSuperAdmin,
     async (req, res, next) => {
       try {
-        const invite = await dependencies.staffInviteRepository.getInvite(req.params.id);
+        if (!z.string().uuid().safeParse(req.params.id).success) throw new ApiError(400, "VALIDATION_ERROR", "id must be a UUID.");
+        const principal = (req as AuthorizedRequest).principal!;
+        const invite = await dependencies.staffInviteRepository.getInvite(req.params.id, principal);
         if (!invite) {
           throw new ApiError(404, "NOT_FOUND", "Invite not found.");
         }
@@ -394,9 +432,9 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   router.post(
     "/staff/invites/:id/send",
     requireAuthenticatedUser,
-    requireSuperAdmin,
     async (req, res, next) => {
       try {
+        if (!z.string().uuid().safeParse(req.params.id).success) throw new ApiError(400, "VALIDATION_ERROR", "id must be a UUID.");
         const principal = (req as AuthorizedRequest).principal!;
         const result = await dependencies.staffInviteRepository.sendInvite(
           req.params.id,
@@ -404,13 +442,7 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
           dependencies.inviteAppOrigin,
           auditFromRequest(req),
         );
-        return res.json({
-          ok: true,
-          data: {
-            ...toSafeInvite(result.invite),
-            inviteUrl: result.inviteUrl,
-          },
-        });
+        return res.json({ ok: true, data: toSafeInvite(result.invite) });
       } catch (error) {
         return next(error);
       }
@@ -420,9 +452,9 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   router.post(
     "/staff/invites/:id/resend",
     requireAuthenticatedUser,
-    requireSuperAdmin,
     async (req, res, next) => {
       try {
+        if (!z.string().uuid().safeParse(req.params.id).success) throw new ApiError(400, "VALIDATION_ERROR", "id must be a UUID.");
         const principal = (req as AuthorizedRequest).principal!;
         const result = await dependencies.staffInviteRepository.resendInvite(
           req.params.id,
@@ -430,13 +462,7 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
           dependencies.inviteAppOrigin,
           auditFromRequest(req),
         );
-        return res.json({
-          ok: true,
-          data: {
-            ...toSafeInvite(result.invite),
-            inviteUrl: result.inviteUrl,
-          },
-        });
+        return res.json({ ok: true, data: toSafeInvite(result.invite) });
       } catch (error) {
         return next(error);
       }
@@ -446,9 +472,9 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   router.post(
     "/staff/invites/:id/revoke",
     requireAuthenticatedUser,
-    requireSuperAdmin,
     async (req, res, next) => {
       try {
+        if (!z.string().uuid().safeParse(req.params.id).success) throw new ApiError(400, "VALIDATION_ERROR", "id must be a UUID.");
         const principal = (req as AuthorizedRequest).principal!;
         const invite = await dependencies.staffInviteRepository.revokeInvite(
           req.params.id,
@@ -456,6 +482,27 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
           auditFromRequest(req),
         );
         return res.json({ ok: true, data: toSafeInvite(invite) });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
+
+  router.patch(
+    "/staff/assignments/:id",
+    requireAuthenticatedUser,
+    validateBody(updateStaffScopeSchema),
+    async (req, res, next) => {
+      try {
+        if (!z.string().uuid().safeParse(req.params.id).success) throw new ApiError(400, "VALIDATION_ERROR", "id must be a UUID.");
+        const principal = (req as AuthorizedRequest).principal!;
+        const result = await dependencies.staffInviteRepository.updateAcceptedStaff(
+          req.params.id,
+          req.body,
+          principal,
+          auditFromRequest(req),
+        );
+        return res.json({ ok: true, data: result });
       } catch (error) {
         return next(error);
       }

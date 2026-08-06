@@ -48,8 +48,10 @@ type UserRow = {
 };
 
 type UserRoleRow = {
+  id: string;
   role_id: string;
   branch_id: string | null;
+  organization_id: string | null;
 };
 
 type RoleRow = {
@@ -125,8 +127,9 @@ async function loadPrincipalFromDb(
 
   const { data: roleLinks, error: roleLinksError } = await admin
     .from("user_roles")
-    .select("role_id, branch_id")
-    .eq("user_id", row.id);
+    .select("id, role_id, branch_id, organization_id")
+    .eq("user_id", row.id)
+    .eq("assignment_status", "ACTIVE");
 
   if (roleLinksError) {
     throw roleLinksError;
@@ -134,6 +137,21 @@ async function loadPrincipalFromDb(
 
   const links = (roleLinks ?? []) as UserRoleRow[];
   const roleIds = [...new Set(links.map((link) => link.role_id).filter(Boolean))];
+
+  const roleLinkIds = links.map((link) => link.id);
+  const branchIdsByRoleLink = new Map<string, string[]>();
+  if (roleLinkIds.length > 0) {
+    const { data: branchLinks, error: branchLinksError } = await admin
+      .from("user_role_branches")
+      .select("user_role_id, branch_id")
+      .in("user_role_id", roleLinkIds);
+    if (branchLinksError) throw branchLinksError;
+    for (const link of (branchLinks ?? []) as Array<{ user_role_id: string; branch_id: string }>) {
+      const bucket = branchIdsByRoleLink.get(link.user_role_id) ?? [];
+      bucket.push(link.branch_id);
+      branchIdsByRoleLink.set(link.user_role_id, bucket);
+    }
+  }
 
   let rolesById = new Map<string, string>();
   if (roleIds.length > 0) {
@@ -210,6 +228,8 @@ async function loadPrincipalFromDb(
       return {
         roleCode,
         branchId: link.branch_id,
+        organizationId: link.organization_id,
+        branchIds: branchIdsByRoleLink.get(link.id) ?? [],
         permissionCodes: permissionsByRoleId.get(link.role_id) ?? [],
       };
     })

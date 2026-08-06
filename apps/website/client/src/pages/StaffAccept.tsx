@@ -18,7 +18,10 @@ type InvitePreview = {
   email: string;
   fullName: string;
   roleCode: string;
-  branchId: string;
+  organizationId: string;
+  branchIds: string[];
+  branchNames: string[];
+  branchId: string | null;
   branchName: string | null;
   status: string;
   expiresAt: string | null;
@@ -179,10 +182,10 @@ export default function StaffAccept() {
           <Input id="roleCode" value={preview.roleCode} readOnly disabled />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="branch">Branch</Label>
+          <Label htmlFor="branch">Scope</Label>
           <Input
             id="branch"
-            value={preview.branchName ?? preview.branchId}
+            value={preview.branchNames.length ? preview.branchNames.join(", ") : "Organization-wide"}
             readOnly
             disabled
           />

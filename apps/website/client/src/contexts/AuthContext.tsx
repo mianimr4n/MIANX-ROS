@@ -57,6 +57,9 @@ interface AuthContextType {
   roles: string[];
   permissions: string[];
   branchIds: string[];
+  organizationIds: string[];
+  ownedOrganizationIds: string[];
+  isPlatformSuperAdmin: boolean;
   isSuperAdmin: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -131,6 +134,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<string[]>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [branchIds, setBranchIds] = useState<string[]>([]);
+  const [organizationIds, setOrganizationIds] = useState<string[]>([]);
+  const [ownedOrganizationIds, setOwnedOrganizationIds] = useState<string[]>([]);
+  const [isPlatformSuperAdmin, setIsPlatformSuperAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isProfileSyncDegraded, setIsProfileSyncDegraded] = useState(false);
@@ -147,6 +153,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRoles([]);
     setPermissions([]);
     setBranchIds([]);
+    setOrganizationIds([]);
+    setOwnedOrganizationIds([]);
+    setIsPlatformSuperAdmin(false);
     setIsSuperAdmin(false);
     setIsProfileSyncDegraded(false);
   }, []);
@@ -162,6 +171,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRoles(["customer"]);
     setPermissions([]);
     setBranchIds([]);
+    setOrganizationIds([]);
+    setOwnedOrganizationIds([]);
+    setIsPlatformSuperAdmin(false);
     setIsSuperAdmin(false);
   }, []);
 
@@ -188,6 +200,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRoles([]);
         setPermissions([]);
         setBranchIds([]);
+        setOrganizationIds([]);
+        setOwnedOrganizationIds([]);
+        setIsPlatformSuperAdmin(false);
         setIsSuperAdmin(false);
         return;
       }
@@ -207,6 +222,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setRoles([]);
             setPermissions([]);
             setBranchIds([]);
+            setOrganizationIds([]);
+            setOwnedOrganizationIds([]);
+            setIsPlatformSuperAdmin(false);
             setIsSuperAdmin(false);
           }
           setIsProfileSyncDegraded(false);
@@ -232,6 +250,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRoles(me.roles);
         setPermissions(me.permissions ?? []);
         setBranchIds(me.branchIds ?? []);
+        setOrganizationIds(me.organizationIds ?? []);
+        setOwnedOrganizationIds(me.ownedOrganizationIds ?? []);
+        setIsPlatformSuperAdmin(Boolean(me.isPlatformSuperAdmin));
         setIsSuperAdmin(Boolean(me.isSuperAdmin));
       } catch (error) {
         if (requestId !== profileRequestId.current) return;
@@ -253,6 +274,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRoles([]);
           setPermissions([]);
           setBranchIds([]);
+          setOrganizationIds([]);
+          setOwnedOrganizationIds([]);
+          setIsPlatformSuperAdmin(false);
           setIsSuperAdmin(false);
           setIsProfileSyncDegraded(false);
         }
@@ -757,6 +781,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       roles,
       permissions,
       branchIds,
+      organizationIds,
+      ownedOrganizationIds,
+      isPlatformSuperAdmin,
       isSuperAdmin,
       isLoading,
       isAuthenticated: Boolean(session?.user),
@@ -781,6 +808,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       roles,
       permissions,
       branchIds,
+      organizationIds,
+      ownedOrganizationIds,
+      isPlatformSuperAdmin,
       isSuperAdmin,
       isLoading,
       isProfileSyncDegraded,
