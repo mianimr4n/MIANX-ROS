@@ -35,12 +35,50 @@ type PersistResult = {
   persisted_at: string;
 };
 
+type ConfigurationVersion = {
+  id: string;
+  schema_id: string;
+  scope_type: "organization" | "branch";
+  scope_id: string;
+  value: unknown;
+  status: string;
+  created_by: string | null;
+  approved_by: string | null;
+  activated_at: string | null;
+  created_at: string;
+};
+
+type ActivePointer = {
+  version_id: string;
+  revision: number;
+  activated_by: string | null;
+  activated_at: string;
+};
+
 const uuidParam = z.string().uuid();
 const keyParam = z.string().trim().min(1).max(100).regex(/^[a-z][a-z0-9_.-]*$/);
 const writeBody = z.object({
   value: z.unknown(),
   reason: z.string().trim().min(1).max(1000).optional(),
   idempotencyKey: z.string().trim().min(1).max(200).optional(),
+}).strict();
+const versionBody = z.object({
+  scopeType: z.enum(["organization", "branch"]),
+  scopeId: z.string().uuid(),
+  key: keyParam,
+  value: z.unknown(),
+  reason: z.string().trim().min(1).max(1000).optional(),
+  idempotencyKey: z.string().trim().min(1).max(200).optional(),
+}).strict();
+const lifecycleBody = z.object({
+  expectedRevision: z.number().int().nonnegative().optional(),
+  reason: z.string().trim().min(1).max(1000).optional(),
+  idempotencyKey: z.string().trim().min(1).max(200).optional(),
+}).strict();
+const versionsQuery = z.object({
+  scopeType: z.enum(["organization", "branch"]),
+  scopeId: z.string().uuid(),
+  key: keyParam.optional(),
 }).strict();
 const SECRET_REFERENCE = /^[A-Z][A-Z0-9_]{2,127}$/;
 
@@ -127,11 +165,39 @@ async function findSchema(client: SupabaseClient, scopeType: "organization" | "b
 }
 
 async function findActive(client: SupabaseClient, schemaId: string, scopeType: string, scopeId: string) {
+  const { data: pointer, error: pointerError } = await client.from("configuration_active_versions")
+    .select("version_id, revision, activated_at").eq("schema_id", schemaId)
+    .eq("scope_type", scopeType).eq("scope_id", scopeId).maybeSingle();
+  if (pointerError) throw new ApiError(500, "CONFIGURATION_VALUE_READ_FAILED", pointerError.message);
+  if (!pointer) return null;
   const { data, error } = await client.from("configuration_versions").select("id, value, activated_at, created_at")
-    .eq("schema_id", schemaId).eq("status", "active").eq("scope_type", scopeType)
-    .eq("scope_id", scopeId).maybeSingle();
+    .eq("id", (pointer as ActivePointer).version_id).maybeSingle();
   if (error) throw new ApiError(500, "CONFIGURATION_VALUE_READ_FAILED", error.message);
   return data as { id: string; value: unknown } | null;
+}
+
+async function findVersion(client: SupabaseClient, versionId: string) {
+  const { data, error } = await client.from("configuration_versions").select("*").eq("id", versionId).maybeSingle();
+  if (error) throw new ApiError(500, "CONFIGURATION_VERSION_READ_FAILED", error.message);
+  if (!data) throw new ApiError(404, "CONFIGURATION_VERSION_NOT_FOUND", "Configuration version was not found.");
+  return data as ConfigurationVersion;
+}
+
+async function findPointer(client: SupabaseClient, version: ConfigurationVersion) {
+  const { data, error } = await client.from("configuration_active_versions").select("version_id, revision, activated_by, activated_at")
+    .eq("schema_id", version.schema_id).eq("scope_type", version.scope_type)
+    .eq("scope_id", version.scope_id).maybeSingle();
+  if (error) throw new ApiError(500, "CONFIGURATION_ACTIVE_READ_FAILED", error.message);
+  return data as ActivePointer | null;
+}
+
+function rpcError(error: { message: string; code?: string }, operation: string): never {
+  if (error.code === "40001") throw new ApiError(409, "STALE_CONFIGURATION_REVISION", "Configuration activation revision is stale.");
+  if (error.code === "P0002") throw new ApiError(404, "CONFIGURATION_VERSION_NOT_FOUND", "Configuration version was not found.");
+  if (error.code === "22023") throw new ApiError(400, "INVALID_CONFIGURATION_TRANSITION", error.message);
+  if (error.code === "55000") throw new ApiError(409, "CONFIGURATION_TRANSITION_CONFLICT", error.message);
+  if (error.code === "23503") throw new ApiError(403, "CONFIGURATION_SCOPE_DENIED", "Configuration scope access denied.");
+  throw new ApiError(500, `${operation}_FAILED`, error.message);
 }
 
 async function loadBranchOrganization(client: SupabaseClient, branchId: string) {
@@ -172,6 +238,36 @@ export function createAdminConfigurationRouter(deps: AdminConfigurationRouterDep
   const { requireAuthenticatedUser, requireSuperAdmin, requireAnyPermission, requirePermission } =
     createAuthorizationHelpers(deps.authTokenVerifier, deps.authProfileRepository);
 
+  const assertScopeAccess = async (client: SupabaseClient, principal: AuthPrincipal,
+    scopeType: "organization" | "branch", scopeId: string, write = false) => {
+    if (scopeType === "organization") {
+      await assertOrganization(client, scopeId);
+      if (!principal.isSuperAdmin && write) throw new ApiError(403, "ORGANIZATION_ACCESS_DENIED", "Organization access denied.");
+      return;
+    }
+    const organizationId = await loadBranchOrganization(client, scopeId);
+    await assertOrganization(client, organizationId);
+    if (!principal.isSuperAdmin && !principal.branchIds.includes(scopeId)) {
+      throw new ApiError(403, "BRANCH_ACCESS_DENIED", "Branch access denied.");
+    }
+  };
+
+  const serializeVersion = async (client: SupabaseClient, version: ConfigurationVersion,
+    principal: AuthPrincipal) => {
+    const { data: schemaData, error } = await client.from("configuration_schemas").select("*")
+      .eq("id", version.schema_id).maybeSingle();
+    if (error || !schemaData) throw new ApiError(500, "CONFIGURATION_SCHEMA_READ_FAILED", error?.message ?? "Schema missing.");
+    const schema = schemaData as ConfigurationSchema;
+    const pointer = await findPointer(client, version);
+    return {
+      ...version,
+      key: schema.key,
+      value: maskValue(schema, version.value, principal),
+      isActive: pointer?.version_id === version.id,
+      activeRevision: pointer?.revision ?? 0,
+    };
+  };
+
   router.get("/schemas", requireAuthenticatedUser, requirePermission("admin.access"), async (req, res, next) => {
     try {
       const principal = (req as AuthorizedRequest).principal!;
@@ -184,6 +280,108 @@ export function createAdminConfigurationRouter(deps: AdminConfigurationRouterDep
       })) });
     } catch (error) { return next(error); }
   });
+
+  router.post("/configuration/versions", requireAuthenticatedUser,
+    requireAnyPermission(["branch.manage", "admin.access"]), async (req, res, next) => {
+      try {
+        const body = versionBody.safeParse(req.body);
+        if (!body.success) throw new ApiError(400, "VALIDATION_ERROR", "Request validation failed.", body.error.flatten());
+        const principal = (req as AuthorizedRequest).principal!;
+        const client = serviceClient();
+        await assertScopeAccess(client, principal, body.data.scopeType, body.data.scopeId, true);
+        const schema = await findSchema(client, body.data.scopeType, body.data.key);
+        if (!schema) throw new ApiError(404, "SCHEMA_NOT_FOUND", "Configuration key was not found for this scope.");
+        const value = validateValue(schema, body.data.value);
+        const context = requestContext(req);
+        const { data, error } = await client.rpc("create_configuration_version", {
+          p_schema_id: schema.id, p_scope_type: body.data.scopeType, p_scope_id: body.data.scopeId,
+          p_value: value, p_actor: principal.userId, p_reason: body.data.reason ?? null,
+          p_request_id: context.requestId, p_correlation_id: context.correlationId,
+          p_idempotency_key: body.data.idempotencyKey ?? null,
+        });
+        if (error) rpcError(error, "CONFIGURATION_VERSION_CREATE");
+        const result = (data as Array<{ version_id: string; outcome: string; created_at: string }> | null)?.[0];
+        if (!result) throw new ApiError(500, "CONFIGURATION_VERSION_CREATE_FAILED", "Version creation returned no result.");
+        const version = await findVersion(client, result.version_id);
+        return res.status(result.outcome === "created" ? 201 : 200)
+          .json({ ok: true, data: { ...(await serializeVersion(client, version, principal)), outcome: result.outcome } });
+      } catch (error) { return next(error); }
+    });
+
+  router.get("/configuration/versions", requireAuthenticatedUser, requirePermission("admin.access"),
+    async (req, res, next) => {
+      try {
+        const query = versionsQuery.safeParse(req.query);
+        if (!query.success) throw new ApiError(400, "VALIDATION_ERROR", "Query validation failed.", query.error.flatten());
+        const principal = (req as AuthorizedRequest).principal!;
+        const client = serviceClient();
+        await assertScopeAccess(client, principal, query.data.scopeType, query.data.scopeId);
+        let schemaId: string | undefined;
+        if (query.data.key) {
+          const schema = await findSchema(client, query.data.scopeType, query.data.key);
+          if (!schema) throw new ApiError(404, "SCHEMA_NOT_FOUND", "Configuration key was not found for this scope.");
+          schemaId = schema.id;
+        }
+        let builder = client.from("configuration_versions").select("*")
+          .eq("scope_type", query.data.scopeType).eq("scope_id", query.data.scopeId);
+        if (schemaId) builder = builder.eq("schema_id", schemaId);
+        const { data, error } = await builder.order("created_at", { ascending: false });
+        if (error) throw new ApiError(500, "CONFIGURATION_VERSION_READ_FAILED", error.message);
+        const versions = await Promise.all(((data ?? []) as ConfigurationVersion[])
+          .map((version) => serializeVersion(client, version, principal)));
+        return res.json({ ok: true, data: versions });
+      } catch (error) { return next(error); }
+    });
+
+  router.get("/configuration/versions/:versionId", requireAuthenticatedUser,
+    requirePermission("admin.access"), async (req, res, next) => {
+      try {
+        const id = uuidParam.safeParse(req.params.versionId);
+        if (!id.success) throw new ApiError(400, "INVALID_VERSION_ID", "Version ID must be a UUID.");
+        const principal = (req as AuthorizedRequest).principal!;
+        const client = serviceClient();
+        const version = await findVersion(client, id.data);
+        await assertScopeAccess(client, principal, version.scope_type, version.scope_id);
+        return res.json({ ok: true, data: await serializeVersion(client, version, principal) });
+      } catch (error) { return next(error); }
+    });
+
+  const lifecycle = (operation: "activate" | "rollback") => async (req: Request,
+    res: import("express").Response, next: import("express").NextFunction) => {
+      try {
+        const id = uuidParam.safeParse(req.params.versionId);
+        const body = lifecycleBody.safeParse(req.body);
+        if (!id.success) throw new ApiError(400, "INVALID_VERSION_ID", "Version ID must be a UUID.");
+        if (!body.success) throw new ApiError(400, "VALIDATION_ERROR", "Request validation failed.", body.error.flatten());
+        const principal = (req as AuthorizedRequest).principal!;
+        const client = serviceClient();
+        const target = await findVersion(client, id.data);
+        await assertScopeAccess(client, principal, target.scope_type, target.scope_id, true);
+        const context = requestContext(req);
+        const functionName = operation === "activate" ? "activate_configuration_version" : "rollback_configuration_version";
+        const args = operation === "activate"
+          ? { p_version_id: id.data, p_actor: principal.userId, p_expected_revision: body.data.expectedRevision ?? null,
+              p_reason: body.data.reason ?? null, p_request_id: context.requestId,
+              p_correlation_id: context.correlationId, p_idempotency_key: body.data.idempotencyKey ?? null }
+          : { p_target_version_id: id.data, p_actor: principal.userId, p_expected_revision: body.data.expectedRevision ?? null,
+              p_reason: body.data.reason ?? null, p_request_id: context.requestId,
+              p_correlation_id: context.correlationId, p_idempotency_key: body.data.idempotencyKey ?? null };
+        const { data, error } = await client.rpc(functionName, args);
+        if (error) rpcError(error, operation === "activate" ? "CONFIGURATION_ACTIVATE" : "CONFIGURATION_ROLLBACK");
+        const result = (data as Array<Record<string, unknown>> | null)?.[0];
+        if (!result) throw new ApiError(500, "CONFIGURATION_TRANSITION_FAILED", "Lifecycle transition returned no result.");
+        const resultVersion = await findVersion(client, String(result.version_id));
+        return res.json({ ok: true, data: { ...(await serializeVersion(client, resultVersion, principal)),
+          outcome: result.outcome, previousVersionId: result.previous_version_id ?? null,
+          sourceVersionId: result.source_version_id ?? null, revision: result.revision,
+          activatedAt: result.activated_at } });
+      } catch (error) { return next(error); }
+    };
+
+  router.post("/configuration/versions/:versionId/activate", requireAuthenticatedUser,
+    requireSuperAdmin, lifecycle("activate"));
+  router.post("/configuration/versions/:versionId/rollback", requireAuthenticatedUser,
+    requireSuperAdmin, lifecycle("rollback"));
 
   router.get("/branches/:branchId/configuration/:key/effective", requireAuthenticatedUser,
     requirePermission("admin.access"), async (req, res, next) => {
@@ -247,7 +445,7 @@ export function createAdminConfigurationRouter(deps: AdminConfigurationRouterDep
   router.put("/organizations/:organizationId/configuration/:key", requireAuthenticatedUser,
     requireSuperAdmin, handleWrite("organization"));
   router.put("/branches/:branchId/configuration/:key", requireAuthenticatedUser,
-    requireAnyPermission(["branch.manage", "admin.access"]), handleWrite("branch"));
+    requireSuperAdmin, handleWrite("branch"));
 
   return router;
 }
