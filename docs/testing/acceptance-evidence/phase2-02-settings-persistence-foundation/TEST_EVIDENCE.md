@@ -1,7 +1,7 @@
 # PHASE2-02 Test Evidence
 
-**Status:** PASS  
-**Environment:** local workspace only  
+**Status:** PASS
+**Environment:** local workspace only
 **Remote database:** not used
 
 ## Results

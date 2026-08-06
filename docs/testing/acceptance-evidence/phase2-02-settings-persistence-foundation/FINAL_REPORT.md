@@ -1,8 +1,8 @@
 # PHASE2-02 — Settings Persistence Foundation
 
-**Date:** 2026-08-06  
-**Base:** `24f20586d24eef82e64037beedcd2039925a7237` (PR #205)  
-**Status:** FOUNDATION — implementation and local verification complete  
+**Date:** 2026-08-06
+**Base:** `24f20586d24eef82e64037beedcd2039925a7237` (PR #205)
+**Status:** FOUNDATION — implementation and local verification complete
 **Production mutation:** NONE
 
 ## Repository truth
