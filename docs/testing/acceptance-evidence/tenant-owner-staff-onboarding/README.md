@@ -1,8 +1,8 @@
 # Tenant-owner and staff onboarding audit
 
-Audit date: 2026-08-07  
-Repository baseline: `095c54139b6f9309aab93df47d8e2e4e39db627d` (`origin/main`)  
-Production Supabase project: `pyeowxvacgypohrbvgee`  
+Audit date: 2026-08-07
+Repository baseline: `095c54139b6f9309aab93df47d8e2e4e39db627d` (`origin/main`)
+Production Supabase project: `pyeowxvacgypohrbvgee`
 Verdict: **NOT IMPLEMENTATION READY — bounded corrective PR required before Production invitations**
 
 ## Safety outcome
