@@ -281,6 +281,20 @@ export function getEnvironmentStatus(source: NodeJS.ProcessEnv = process.env): E
     ),
   };
 
+  const inviteSmtpUrl = source.EMAIL_SMTP_URL?.trim() ?? "";
+  if (envClass === "production" && config.emailMode === "live") {
+    if (!inviteSmtpUrl) {
+      issues.push({ key: "EMAIL_SMTP_URL", message: "EMAIL_SMTP_URL is required for Production staff invitation delivery." });
+    } else {
+      try {
+        const smtp = new URL(inviteSmtpUrl);
+        if (smtp.protocol !== "smtps:") issues.push({ key: "EMAIL_SMTP_URL", message: "Production staff invitation SMTP must use smtps:// transport." });
+      } catch {
+        issues.push({ key: "EMAIL_SMTP_URL", message: "EMAIL_SMTP_URL must be a valid SMTP URL." });
+      }
+    }
+  }
+
   const safetyBlockers = evaluateLocalSafety(source, config);
   for (const blocker of safetyBlockers) {
     issues.push(blocker);

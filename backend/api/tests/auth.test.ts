@@ -173,6 +173,9 @@ describe("GET /api/v1/auth/me", () => {
       roles: ["customer"],
       permissions: [],
       branchIds: [],
+      organizationIds: [],
+      ownedOrganizationIds: [],
+      isPlatformSuperAdmin: false,
       isSuperAdmin: false,
     });
     expect(response.body.meta.profileReady).toBe(true);

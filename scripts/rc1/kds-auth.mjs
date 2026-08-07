@@ -35,8 +35,10 @@ function loadEnv(path) {
 }
 
 const api = loadEnv("backend/api/.env.local");
+const apiBaseUrl = process.env.RC1_API_BASE_URL ?? "http://127.0.0.1:4000/api/v1";
 const host = new URL(api.SUPABASE_URL).hostname;
-if (host !== "127.0.0.1" && host !== "localhost") {
+const apiHost = new URL(apiBaseUrl).hostname;
+if ((host !== "127.0.0.1" && host !== "localhost") || (apiHost !== "127.0.0.1" && apiHost !== "localhost")) {
   console.log(JSON.stringify({ ok: false, error: "NON_LOCAL" }));
   process.exit(2);
 }
@@ -59,7 +61,7 @@ async function apiSession(email) {
 }
 
 async function apiGet(token, path) {
-  const res = await fetch(`http://127.0.0.1:4000/api/v1${path}`, {
+  const res = await fetch(`${apiBaseUrl}${path}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   const body = await res.json().catch(() => ({}));

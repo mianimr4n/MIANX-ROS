@@ -32,8 +32,10 @@ function loadEnv(path) {
 }
 
 const api = loadEnv("backend/api/.env.local");
+const apiBaseUrl = process.env.RC1_API_BASE_URL ?? "http://127.0.0.1:4000/api/v1";
 const host = new URL(api.SUPABASE_URL).hostname;
-if (host !== "127.0.0.1" && host !== "localhost") {
+const apiHost = new URL(apiBaseUrl).hostname;
+if ((host !== "127.0.0.1" && host !== "localhost") || (apiHost !== "127.0.0.1" && apiHost !== "localhost")) {
   console.log(JSON.stringify({ ok: false, error: "NON_LOCAL" }));
   process.exit(2);
 }
@@ -59,7 +61,7 @@ async function get(token, path) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15000);
   try {
-    const res = await fetch(`http://127.0.0.1:4000/api/v1${path}`, {
+    const res = await fetch(`${apiBaseUrl}${path}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       signal: controller.signal,
     });
@@ -137,7 +139,7 @@ const summary = {
   bmForeignOpsDenied: branchProbes.bm?.opsForeign?.status === 403,
   kitchenForeignDenied: branchProbes.kitchen?.kitchenForeign?.status === 403,
   bmMalformedOps: branchProbes.bm?.opsMalformed?.status === 400,
-  bmStaffInvitesDenied: matrix.staffInvites.results.bm.status === 403,
+  bmStaffInvitesScoped: matrix.staffInvites.results.bm.status === 200 && matrix.staffInvites.results.bm.ok === true,
   incorrectlyExposed: 0,
 };
 
@@ -159,7 +161,7 @@ out.ok = Boolean(
     summary.bmForeignOpsDenied &&
     summary.kitchenForeignDenied &&
     summary.bmMalformedOps &&
-    summary.bmStaffInvitesDenied &&
+    summary.bmStaffInvitesScoped &&
     summary.incorrectlyExposed === 0,
 );
 

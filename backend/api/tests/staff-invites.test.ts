@@ -20,6 +20,11 @@ import {
 } from "../src/services/staff/invites.js";
 import type { CatalogDataSource } from "../src/services/catalog/types.js";
 import type { OrdersDataSource } from "../src/services/orders/types.js";
+import { ApiError } from "../src/common/http.js";
+
+const INVITE_ID = "11111111-1111-4111-8111-111111111111";
+const ORGANIZATION_ID = "00000000-0000-4000-8000-000000000001";
+const BRANCH_ID = "411dbfff-0db2-49b8-bbe9-08b0ffd76d3f";
 
 const readyEnv = {
   API_PORT: "4000",
@@ -70,18 +75,22 @@ function mockUser(id: string, email: string): User {
 
 function inviteRecord(overrides: Partial<StaffInviteRecord> = {}): StaffInviteRecord {
   return {
-    id: "invite-1",
+    id: INVITE_ID,
     email: "cashier@example.com",
     fullName: "Ali Cashier",
     phone: null,
     roleId: "role-cashier",
     roleCode: "cashier",
-    branchId: "411dbfff-0db2-49b8-bbe9-08b0ffd76d3f",
+    organizationId: ORGANIZATION_ID,
+    branchIds: [BRANCH_ID],
+    branchId: BRANCH_ID,
     status: "pending",
+    deliveryStatus: "sent",
     expiresAt: new Date(Date.now() + 3600_000).toISOString(),
     invitedBy: "user-sa",
     acceptedUserId: null,
     sendCount: 1,
+    correlationId: "22222222-2222-4222-8222-222222222222",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides,
@@ -90,6 +99,9 @@ function inviteRecord(overrides: Partial<StaffInviteRecord> = {}): StaffInviteRe
 
 function unusedRepo(overrides: Partial<StaffInviteRepository> = {}): StaffInviteRepository {
   return {
+    async bootstrapOwner() {
+      throw new Error("unused");
+    },
     async createInvite() {
       throw new Error("unused");
     },
@@ -112,6 +124,9 @@ function unusedRepo(overrides: Partial<StaffInviteRepository> = {}): StaffInvite
       throw new Error("unused");
     },
     async acceptInvite() {
+      throw new Error("unused");
+    },
+    async updateAcceptedStaff() {
       throw new Error("unused");
     },
     ...overrides,
@@ -138,10 +153,12 @@ describe("staff invite helpers", () => {
 
   it("allows only locked inviteable roles", () => {
     expect(isInviteableRoleCode("cashier")).toBe(true);
-    expect(isInviteableRoleCode("branch-manager")).toBe(true);
-    expect(isInviteableRoleCode("kitchen")).toBe(true);
+    expect(isInviteableRoleCode("branch_manager")).toBe(true);
+    expect(isInviteableRoleCode("kitchen_manager")).toBe(true);
     expect(isInviteableRoleCode("rider")).toBe(true);
-    expect(isInviteableRoleCode("customer-support")).toBe(true);
+    expect(isInviteableRoleCode("support")).toBe(true);
+    expect(isInviteableRoleCode("host")).toBe(false);
+    expect(isInviteableRoleCode("waiter")).toBe(false);
     expect(isInviteableRoleCode("super-admin")).toBe(false);
     expect(isInviteableRoleCode("customer")).toBe(false);
   });
@@ -180,6 +197,9 @@ describe("admin staff invites", () => {
         roles: ["super-admin"],
         permissions: ["staff.create", "staff.assign_role", "staff.read"],
         branchIds: [],
+        organizationIds: [],
+        ownedOrganizationIds: [],
+        isPlatformSuperAdmin: true,
         isSuperAdmin: true,
       };
     },
@@ -199,6 +219,8 @@ describe("admin staff invites", () => {
         roles: ["customer"],
         permissions: [],
         branchIds: [],
+        organizationIds: [],
+        ownedOrganizationIds: [],
         isSuperAdmin: false,
       };
     },
@@ -218,6 +240,8 @@ describe("admin staff invites", () => {
         roles: ["branch-manager"],
         permissions: ["staff.read", "order.read", "order.update"],
         branchIds: ["411dbfff-0db2-49b8-bbe9-08b0ffd76d3f"],
+        organizationIds: [ORGANIZATION_ID],
+        ownedOrganizationIds: [],
         isSuperAdmin: false,
       };
     },
@@ -226,12 +250,35 @@ describe("admin staff invites", () => {
     },
   };
 
-  it("allows super-admin to create invites and returns inviteUrl once without raw token", async () => {
+  it("bootstraps first owner through a platform-only non-secret contract", async () => {
+    const staffInviteRepository = unusedRepo({
+      async bootstrapOwner(input, actor) {
+        expect(input.organizationId).toBe(ORGANIZATION_ID);
+        expect(actor.isPlatformSuperAdmin).toBe(true);
+        return { invite: inviteRecord({ roleCode: "organization_owner", branchIds: [], branchId: null }) };
+      },
+    });
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource, authTokenVerifier: superAdminVerifier, authProfileRepository: superAdminRepo, staffInviteRepository });
+    const response = await request(app)
+      .post(`/api/v1/admin/identity/organizations/${ORGANIZATION_ID}/bootstrap-owner`)
+      .set("Authorization", "Bearer sa-token")
+      .send({ email: "owner@example.com", fullName: "Tenant Owner" });
+    expect(response.status).toBe(201);
+    expect(response.body.data.roleCode).toBe("organization_owner");
+    expect(JSON.stringify(response.body)).not.toMatch(/inviteUrl|token|password/i);
+  });
+
+  it("rejects unauthenticated bootstrap and malformed organization identifiers", async () => {
+    const { app } = createApp(readyEnv, { catalogDataSource, ordersDataSource, authTokenVerifier: superAdminVerifier, authProfileRepository: superAdminRepo, staffInviteRepository: unusedRepo() });
+    expect((await request(app).post(`/api/v1/admin/identity/organizations/${ORGANIZATION_ID}/bootstrap-owner`).send({ email: "owner@example.com", fullName: "Owner" })).status).toBe(401);
+    expect((await request(app).post("/api/v1/admin/identity/organizations/not-a-uuid/bootstrap-owner").set("Authorization", "Bearer sa-token").send({ email: "owner@example.com", fullName: "Owner" })).status).toBe(400);
+  });
+
+  it("returns non-secret invite metadata without a plaintext invitation URL", async () => {
     const staffInviteRepository = unusedRepo({
       async createInvite() {
         return {
           invite: inviteRecord(),
-          inviteUrl: "http://localhost:3000/staff/accept?token=abc",
         };
       },
     });
@@ -251,12 +298,13 @@ describe("admin staff invites", () => {
         email: "cashier@example.com",
         fullName: "Ali Cashier",
         roleCode: "cashier",
-        branchId: "411dbfff-0db2-49b8-bbe9-08b0ffd76d3f",
+        organizationId: ORGANIZATION_ID,
+        branchIds: [BRANCH_ID],
       });
 
     expect(response.status).toBe(201);
     expect(response.body.data.roleCode).toBe("cashier");
-    expect(response.body.data.inviteUrl).toContain("/staff/accept");
+    expect(response.body.data.inviteUrl).toBeUndefined();
     expect(response.body.data.token).toBeUndefined();
     expect(JSON.stringify(response.body)).not.toMatch(/token_hash|service_role/i);
   });
@@ -267,7 +315,7 @@ describe("admin staff invites", () => {
       ordersDataSource,
       authTokenVerifier: customerVerifier,
       authProfileRepository: customerRepo,
-      staffInviteRepository: unusedRepo(),
+      staffInviteRepository: unusedRepo({ async createInvite() { throw new ApiError(403, "FORBIDDEN", "Invitation access denied."); } }),
     });
 
     const response = await request(app)
@@ -278,14 +326,15 @@ describe("admin staff invites", () => {
         email: "cashier@example.com",
         fullName: "Ali Cashier",
         roleCode: "cashier",
-        branchId: "411dbfff-0db2-49b8-bbe9-08b0ffd76d3f",
+        organizationId: ORGANIZATION_ID,
+        branchIds: [BRANCH_ID],
       });
 
     expect(response.status).toBe(403);
     expect(response.body.error.code).toBe("FORBIDDEN");
   });
 
-  it("rejects branch-manager list and create even with staff.read", async () => {
+  it("allows branch-manager lower-role operations to reach scoped service authorization", async () => {
     const { app } = createApp(readyEnv, {
       catalogDataSource,
       ordersDataSource,
@@ -293,10 +342,10 @@ describe("admin staff invites", () => {
       authProfileRepository: branchManagerRepo,
       staffInviteRepository: unusedRepo({
         async createInvite() {
-          throw new Error("should not create");
+          return { invite: inviteRecord() };
         },
         async listInvites() {
-          throw new Error("should not list");
+          return [inviteRecord()];
         },
       }),
     });
@@ -309,18 +358,19 @@ describe("admin staff invites", () => {
         email: "cashier@example.com",
         fullName: "Ali Cashier",
         roleCode: "cashier",
-        branchId: "411dbfff-0db2-49b8-bbe9-08b0ffd76d3f",
+        organizationId: ORGANIZATION_ID,
+        branchIds: [BRANCH_ID],
       });
-    expect(create.status).toBe(403);
+    expect(create.status).toBe(201);
 
     const list = await request(app)
       .get("/api/v1/admin/staff/invites")
       .set("Authorization", "Bearer bm-token")
       .set("x-telepizza-role", "super-admin");
-    expect(list.status).toBe(403);
+    expect(list.status).toBe(200);
   });
 
-  it("requires branchId on create", async () => {
+  it("requires organizationId on create", async () => {
     const { app } = createApp(readyEnv, {
       catalogDataSource,
       ordersDataSource,
@@ -335,7 +385,7 @@ describe("admin staff invites", () => {
       .send({
         email: "cashier@example.com",
         fullName: "Ali Cashier",
-        roleCode: "cashier",
+        roleCode: "cashier", branchIds: [BRANCH_ID],
       });
 
     expect(response.status).toBe(400);
@@ -369,7 +419,7 @@ describe("admin staff invites", () => {
     expect(JSON.stringify(list.body)).not.toMatch(/token_hash/i);
 
     const one = await request(app)
-      .get("/api/v1/admin/staff/invites/invite-1")
+      .get(`/api/v1/admin/staff/invites/${INVITE_ID}`)
       .set("Authorization", "Bearer sa-token");
     expect(one.status).toBe(200);
     expect(one.body.data.token).toBeUndefined();
@@ -383,7 +433,10 @@ describe("admin staff invites", () => {
           email: "cashier@example.com",
           fullName: "Ali Cashier",
           roleCode: "cashier",
-          branchId: "411dbfff-0db2-49b8-bbe9-08b0ffd76d3f",
+          organizationId: ORGANIZATION_ID,
+          branchIds: [BRANCH_ID],
+          branchId: BRANCH_ID,
+          branchNames: ["Royal Orchard Branch"],
           branchName: "Royal Orchard Branch",
           status: "pending" as const,
           expiresAt: new Date(Date.now() + 3600_000).toISOString(),
@@ -462,7 +515,7 @@ describe("admin staff invites", () => {
     });
 
     const response = await request(app)
-      .post("/api/v1/admin/staff/invites/invite-1/revoke")
+      .post(`/api/v1/admin/staff/invites/${INVITE_ID}/revoke`)
       .set("Authorization", "Bearer sa-token");
 
     expect(response.status).toBe(200);

@@ -20,6 +20,7 @@ import {
 } from "@/components/admin/hr/WorkforcePanels";
 import { WorkforceInsights } from "@/components/admin/hr/WorkforceInsights";
 import { StaffAssignmentsPanel } from "@/components/admin/hr/StaffAssignmentsPanel";
+import { IdentityInvitationsPanel } from "@/components/admin/hr/IdentityInvitationsPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
@@ -301,6 +302,8 @@ export default function AdminHr() {
       />
 
       <StaffAssignmentsPanel />
+
+      <IdentityInvitationsPanel />
 
       <OrganizationTree />
 

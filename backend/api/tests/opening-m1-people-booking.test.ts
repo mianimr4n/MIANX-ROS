@@ -156,8 +156,11 @@ const unusedStaff: StaffAssignmentService = {
 };
 
 describe("opening M1 — staff roles allow-list", () => {
-  it("accepts canonical staff roles including host and waiter", () => {
+  it("keeps legacy assignment roles separate from IDENTITY-01 invitation roles", () => {
     for (const code of ASSIGNABLE_STAFF_ROLES) {
+      expect(isInviteableRoleCode(code)).toBe(["cashier", "rider"].includes(code));
+    }
+    for (const code of ["branch_manager", "kitchen_manager", "support", "finance", "hr", "auditor"]) {
       expect(isInviteableRoleCode(code)).toBe(true);
     }
   });

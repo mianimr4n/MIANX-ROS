@@ -303,5 +303,8 @@ export type AuthMeResponse = {
   roles: string[];
   permissions: string[];
   branchIds: string[];
+  organizationIds: string[];
+  ownedOrganizationIds: string[];
+  isPlatformSuperAdmin: boolean;
   isSuperAdmin: boolean;
 };

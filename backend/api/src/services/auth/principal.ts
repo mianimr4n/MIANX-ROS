@@ -14,6 +14,12 @@ export interface AuthPrincipal {
   roles: string[];
   permissions: string[];
   branchIds: string[];
+  /** Tenant scope is repository-derived. Optional only for legacy test doubles. */
+  organizationIds?: string[];
+  /** Organizations in which this user has an active owner assignment. */
+  ownedOrganizationIds?: string[];
+  /** Canonical platform authority; legacy super-admin is a compatibility alias. */
+  isPlatformSuperAdmin?: boolean;
   isSuperAdmin: boolean;
 }
 
@@ -30,6 +36,9 @@ export interface SafeAuthMeData {
   roles: string[];
   permissions: string[];
   branchIds: string[];
+  organizationIds?: string[];
+  ownedOrganizationIds?: string[];
+  isPlatformSuperAdmin?: boolean;
   isSuperAdmin: boolean;
   status: UserAccountStatus | null;
   profileReady: boolean;
@@ -59,6 +68,8 @@ export const CUSTOMER_FORBIDDEN_PERMISSIONS: ReadonlySet<string> = new Set([
 export interface RoleAssignmentInput {
   roleCode: string;
   branchId: string | null;
+  organizationId?: string | null;
+  branchIds?: string[];
   permissionCodes: string[];
 }
 
@@ -83,7 +94,9 @@ function uniqueSorted(values: string[]): string[] {
 export function buildAuthPrincipal(input: BuildPrincipalInput): AuthPrincipal {
   const isCustomer = input.userType === "customer";
   const roleCodes = uniqueSorted(input.assignments.map((entry) => entry.roleCode));
-  const isSuperAdmin = !isCustomer && roleCodes.includes("super-admin");
+  const isPlatformSuperAdmin = !isCustomer &&
+    (roleCodes.includes("platform_super_admin") || roleCodes.includes("super-admin"));
+  const isSuperAdmin = isPlatformSuperAdmin;
 
   const effectiveAssignments = isCustomer
     ? input.assignments.filter((entry) => entry.roleCode === "customer")
@@ -102,9 +115,19 @@ export function buildAuthPrincipal(input: BuildPrincipalInput): AuthPrincipal {
     ? []
     : uniqueSorted(
         effectiveAssignments
-          .map((entry) => entry.branchId)
+          .flatMap((entry) => [entry.branchId, ...(entry.branchIds ?? [])])
           .filter((branchId): branchId is string => Boolean(branchId)),
       );
+
+  const organizationIds = isCustomer ? [] : uniqueSorted(
+    effectiveAssignments.map((entry) => entry.organizationId).filter((id): id is string => Boolean(id)),
+  );
+  const ownedOrganizationIds = isCustomer ? [] : uniqueSorted(
+    effectiveAssignments
+      .filter((entry) => entry.roleCode === "organization_owner")
+      .map((entry) => entry.organizationId)
+      .filter((id): id is string => Boolean(id)),
+  );
 
   return {
     authUserId: input.authUserId,
@@ -115,6 +138,9 @@ export function buildAuthPrincipal(input: BuildPrincipalInput): AuthPrincipal {
     roles: roleCodes,
     permissions: permissionCodes,
     branchIds,
+    organizationIds,
+    ownedOrganizationIds,
+    isPlatformSuperAdmin,
     isSuperAdmin,
   };
 }
@@ -137,6 +163,9 @@ export function toSafeAuthMeData(
       roles: [],
       permissions: [],
       branchIds: [],
+      organizationIds: [],
+      ownedOrganizationIds: [],
+      isPlatformSuperAdmin: false,
       isSuperAdmin: false,
       status: principal?.status ?? null,
       profileReady: false,
@@ -150,6 +179,9 @@ export function toSafeAuthMeData(
     roles: principal.roles,
     permissions: principal.permissions,
     branchIds: principal.branchIds,
+    organizationIds: principal.organizationIds ?? [],
+    ownedOrganizationIds: principal.ownedOrganizationIds ?? [],
+    isPlatformSuperAdmin: principal.isPlatformSuperAdmin ?? principal.isSuperAdmin,
     isSuperAdmin: principal.isSuperAdmin,
     status: principal.status,
     profileReady: true,

@@ -718,12 +718,17 @@ export type AdminStaffInvite = {
   fullName: string;
   phone: string | null;
   roleCode: string;
-  branchId: string;
+  organizationId: string;
+  branchIds: string[];
+  branchId: string | null;
   status: string;
+  deliveryStatus: string;
   expiresAt: string | null;
   invitedBy: string | null;
   acceptedUserId: string | null;
+  acceptedRoleAssignmentId: string | null;
   sendCount: number;
+  correlationId: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -731,11 +736,12 @@ export type AdminStaffInvite = {
 /** Super-admin gated in backend — returns invites or throws on 403. */
 export async function listAdminStaffInvites(
   accessToken: string,
-  query?: { status?: string },
+  query?: { status?: string; organizationId?: string },
   opts?: AdminReadOptions,
 ): Promise<AdminStaffInvite[]> {
   const params = new URLSearchParams();
   if (query?.status) params.set("status", query.status);
+  if (query?.organizationId) params.set("organizationId", query.organizationId);
   const qs = params.toString();
   return fetchApiData<AdminStaffInvite[]>(
     `/admin/staff/invites${qs ? `?${qs}` : ""}`,
@@ -743,14 +749,62 @@ export async function listAdminStaffInvites(
   );
 }
 
+export type CreateIdentityInviteInput = {
+  organizationId: string;
+  email: string;
+  fullName: string;
+  phone?: string | null;
+  roleCode: string;
+  branchIds: string[];
+  expiresInHours?: number;
+  correlationId?: string;
+};
+
+function invitationWrite(accessToken: string, path: string, method: "POST" | "PATCH", body?: unknown) {
+  return fetchApiData<AdminStaffInvite>(path, {
+    method,
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export function bootstrapOrganizationOwner(accessToken: string, input: Omit<CreateIdentityInviteInput, "roleCode" | "branchIds">) {
+  return invitationWrite(accessToken, `/admin/identity/organizations/${input.organizationId}/bootstrap-owner`, "POST", {
+    email: input.email, fullName: input.fullName, phone: input.phone ?? null, expiresInHours: input.expiresInHours, correlationId: input.correlationId,
+  });
+}
+
+export function createIdentityStaffInvite(accessToken: string, input: CreateIdentityInviteInput) {
+  return invitationWrite(accessToken, "/admin/staff/invites", "POST", input);
+}
+
+export function resendIdentityStaffInvite(accessToken: string, id: string) {
+  return invitationWrite(accessToken, `/admin/staff/invites/${id}/resend`, "POST");
+}
+
+export function revokeIdentityStaffInvite(accessToken: string, id: string) {
+  return invitationWrite(accessToken, `/admin/staff/invites/${id}/revoke`, "POST");
+}
+
+export function updateIdentityStaffAssignment(accessToken: string, id: string, input: { roleCode: string; branchIds: string[] }) {
+  return fetchApiData<{ userRoleId: string; roleCode: string; branchIds: string[] }>(`/admin/staff/assignments/${id}`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
 export const ASSIGNABLE_STAFF_ROLE_CODES = [
-  "branch-manager",
+  "branch_manager",
+  "kitchen_manager",
   "cashier",
-  "kitchen",
   "rider",
-  "customer-support",
-  "host",
-  "waiter",
+  "support",
+  "finance",
+  "hr",
+  "auditor",
 ] as const;
 
 export type StaffAssignment = {
