@@ -12,6 +12,63 @@ export const ADMIN_READ_TIMEOUT_MS = 15_000;
 /** Bounded default timeout for admin writes (never auto-retried). */
 export const ADMIN_WRITE_TIMEOUT_MS = 20_000;
 
+export type BranchReadinessCheck = {
+  key: string; label: string; category: string; severity: "BLOCKER" | "WARNING" | "INFO";
+  state: "PASS" | "FAIL" | "NOT_APPLICABLE" | "UNKNOWN";
+  source: "LIVE" | "DERIVED" | "UNAVAILABLE"; explanation: string; remediationPath?: string;
+};
+
+export type BranchReadiness = {
+  branchId: string; branchName: string; organizationId: string;
+  readinessState: "READY" | "READY_WITH_WARNINGS" | "BLOCKED" | "NOT_CONFIGURED";
+  readinessScore: number; totalChecks: number; passedChecks: number; warningChecks: number;
+  blockingChecks: number; lastEvaluatedAt: string;
+  activeConfigurationVersion: { versionId: string; revision: number; activatedAt: string } | null;
+  groups: Array<{ category: string; checks: BranchReadinessCheck[] }>;
+  recommendedActions: Array<{ checkKey: string; label: string; remediationPath?: string }>;
+};
+
+export type EffectiveConfiguration = {
+  branchId: string; organizationId: string; values: Array<{
+    key: string; label: string; category: string; dataType: string; required: boolean;
+    source: "ORGANIZATION" | "BRANCH_OVERRIDE" | "SCHEMA_DEFAULT"; value: unknown;
+    masked: boolean; active: boolean; versionId: string | null; activatedAt: string | null;
+    lastChangedAt: string | null;
+  }>;
+};
+
+export type ConfigurationHistory = {
+  entries: Array<{
+    id: string; timestamp: string; actorId: string | null; action: string; organizationId: string;
+    branchId: string | null; scopeType: string; configurationKey: string | null; label: string;
+    previousStateMetadata: unknown; newStateMetadata: unknown; fromVersionId: string | null;
+    toVersionId: string | null; reason: string | null; correlationId: string | null;
+  }>;
+  pagination: { limit: number; offset: number; total: number; returned: number };
+};
+
+export function fetchBranchReadinessList(accessToken: string, opts?: AdminReadOptions) {
+  return fetchApiData<BranchReadiness[]>("/admin/branches/readiness", readInit(accessToken, opts));
+}
+
+export function fetchBranchEffectiveConfiguration(accessToken: string, branchId: string, opts?: AdminReadOptions) {
+  return fetchApiData<EffectiveConfiguration>(
+    `/admin/branches/${encodeURIComponent(branchId)}/configuration/effective`, readInit(accessToken, opts));
+}
+
+export function fetchBranchConfigurationHistory(accessToken: string, branchId: string,
+  query?: { key?: string; action?: string; limit?: number; offset?: number }, opts?: AdminReadOptions) {
+  const params = new URLSearchParams();
+  if (query?.key) params.set("key", query.key);
+  if (query?.action) params.set("action", query.action);
+  if (query?.limit != null) params.set("limit", String(query.limit));
+  if (query?.offset != null) params.set("offset", String(query.offset));
+  const suffix = params.toString();
+  return fetchApiData<ConfigurationHistory>(
+    `/admin/branches/${encodeURIComponent(branchId)}/configuration/history${suffix ? `?${suffix}` : ""}`,
+    readInit(accessToken, opts));
+}
+
 export type AdminOrderListItem = {
   id: string;
   orderNumber: string;
