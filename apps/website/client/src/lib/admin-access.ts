@@ -16,6 +16,11 @@ export function canAccessAdmin(input: AdminPrincipalInput): boolean {
   return isStaffPrincipal(input);
 }
 
+export function canAccessBranchReadiness(input: AdminPrincipalInput): boolean {
+  return input.isSuperAdmin || input.roles.some((role) =>
+    ["platform_super_admin", "super-admin", "organization_owner", "branch_manager", "branch-manager"].includes(role));
+}
+
 export function canReadOrders(input: AdminPrincipalInput): boolean {
   return input.isSuperAdmin || input.permissions.includes("order.manage") || input.permissions.includes("order.read");
 }
@@ -429,6 +434,7 @@ const NAV_BLUEPRINT: Array<
     requiresTableService?: boolean;
     requiresFloorConfig?: boolean;
     requiresAiTeam?: boolean;
+    requiresBranchReadiness?: boolean;
     ownerOnly?: boolean;
   }
 > = [
@@ -450,8 +456,7 @@ const NAV_BLUEPRINT: Array<
   { key: "promotions", label: "Marketing & Coupons", href: "/admin/marketing", group: "Commerce", requiresMarketing: true, ownerOnly: true },
   { key: "customers", label: "CRM", href: "/admin/crm", group: "Customers", requiresOrdersApi: true },
   { key: "loyalty", label: "Loyalty & Rewards", href: "/admin/loyalty", group: "Customers", requiresLoyalty: true, ownerOnly: true },
-  // Support / Branches admin / AI Command Center / Integrations remain deep-linkable Coming Soon
-  // routes but are omitted from primary nav (RC4-7 placeholder cleanup).
+  { key: "branches", label: "Branch readiness", href: "/admin/branches", group: "Management", requiresBranchReadiness: true },
   { key: "staff", label: "Staff schedule", href: "/admin/hr", group: "Management", requiresHr: true },
   { key: "finance", label: "Finance", href: "/admin/finance", group: "Management", requiresFinance: true, ownerOnly: true },
   { key: "reports", label: "Reports", href: "/admin/reports", group: "Management", requiresReports: true },
@@ -478,6 +483,7 @@ export function getAdminNavItems(input: AdminPrincipalInput): AdminNavItem[] {
   const tableServiceApi = canAccessTableService(input);
   const floorConfigApi = canManageFloorConfiguration(input);
   const aiTeamApi = canAccessAiTeam(input);
+  const branchReadinessApi = canAccessBranchReadiness(input);
   const bmOnly = isBranchManagerOnly(input);
   const kitchenOnly = isKitchenOnly(input);
 
@@ -508,7 +514,8 @@ export function getAdminNavItems(input: AdminPrincipalInput): AdminNavItem[] {
           (item.requiresSettings && settingsApi) ||
           (item.requiresTableService && tableServiceApi) ||
           (item.requiresFloorConfig && floorConfigApi) ||
-          (item.requiresAiTeam && aiTeamApi),
+          (item.requiresAiTeam && aiTeamApi) ||
+          (item.requiresBranchReadiness && branchReadinessApi),
       ),
     };
   });

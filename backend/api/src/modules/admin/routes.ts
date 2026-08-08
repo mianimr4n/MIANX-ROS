@@ -38,6 +38,10 @@ import {
   createBranchReadinessService,
   type BranchReadinessService,
 } from "../../services/branches/readiness.js";
+import {
+  createBranchControlPlaneService,
+  type BranchControlPlaneService,
+} from "../../services/branches/control-plane.js";
 import { createDashboardSummariesService } from "../../services/dashboard/summaries.js";
 import {
   assertCanReadInvites,
@@ -137,6 +141,7 @@ export interface AdminRouterDependencies {
   manualContact: ManualContactService;
   envStatus: EnvironmentStatus;
   branchReadiness?: BranchReadinessService;
+  branchControlPlane?: BranchControlPlaneService;
   inviteAppOrigin: string;
   staffAssignments: StaffAssignmentService;
   bookingPolicy: BookingPolicyService;
@@ -522,20 +527,33 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
   );
 
   const readiness = readinessService;
+  const branchControlPlane = dependencies.branchControlPlane ??
+    createBranchControlPlaneService(dependencies.envStatus, readinessService);
+
+  router.get(
+    "/branches/readiness",
+    requireAuthenticatedUser,
+    async (req, res, next) => {
+      try {
+        const principal = (req as AuthorizedRequest).principal!;
+        return res.json({ ok: true, data: await branchControlPlane.list(principal) });
+      } catch (error) {
+        return next(error);
+      }
+    },
+  );
 
   router.get(
     "/branches/:branchId/readiness",
     requireAuthenticatedUser,
     async (req, res, next) => {
       try {
+        const branchId = z.string().uuid().safeParse(req.params.branchId);
+        if (!branchId.success) {
+          throw new ApiError(400, "INVALID_BRANCH_ID", "Branch ID must be a UUID.");
+        }
         const principal = (req as AuthorizedRequest).principal!;
-        const report = await readiness.getBranchReadiness(
-          {
-            isSuperAdmin: principal.isSuperAdmin,
-            branchIds: principal.branchIds,
-          },
-          req.params.branchId,
-        );
+        const report = await branchControlPlane.detail(principal, branchId.data);
         return res.json({ ok: true, data: report });
       } catch (error) {
         return next(error);

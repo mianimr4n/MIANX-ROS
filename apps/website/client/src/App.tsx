@@ -79,6 +79,7 @@ const AdminFinance = lazy(() => import("./pages/admin/AdminFinance"));
 const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
 const AdminHr = lazy(() => import("./pages/admin/AdminHr"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminBranches = lazy(() => import("./pages/admin/AdminBranches"));
 const AdminBranchManager = lazy(() => import("./pages/admin/AdminBranchManager"));
 const AdminKitchenDashboard = lazy(() => import("./pages/admin/AdminKitchenDashboard"));
 const AdminFloorConsole = lazy(() => import("./pages/admin/AdminFloorConsole"));
@@ -134,9 +135,6 @@ function isCustomerAuthChrome(path: string) {
 
 function SupportComingSoon() {
   return <AdminComingSoon moduleName="Support" />;
-}
-function BranchesComingSoon() {
-  return <AdminComingSoon moduleName="Branches" />;
 }
 function AiComingSoon() {
   return <AdminComingSoon moduleName="AI Command Center" />;
@@ -216,7 +214,7 @@ function Router() {
         <Route path="/admin/waitlist" component={AdminWaitlist} />
         <Route path="/admin/ai-team" component={AdminAiTeam} />
         <Route path="/admin/support" component={SupportComingSoon} />
-        <Route path="/admin/branches" component={BranchesComingSoon} />
+        <Route path="/admin/branches" component={AdminBranches} />
         <Route path="/admin/ai-command-center" component={AiComingSoon} />
         <Route path="/admin/integrations" component={IntegrationsComingSoon} />
         <Route path="/admin" component={AdminIndexRedirect} />

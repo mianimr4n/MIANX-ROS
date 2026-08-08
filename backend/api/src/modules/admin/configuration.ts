@@ -80,6 +80,12 @@ const versionsQuery = z.object({
   scopeId: z.string().uuid(),
   key: keyParam.optional(),
 }).strict();
+const historyQuery = z.object({
+  key: keyParam.optional(),
+  action: z.enum(["create", "update", "activate", "rollback", "delete"]).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+}).strict();
 const SECRET_REFERENCE = /^[A-Z][A-Z0-9_]{2,127}$/;
 
 function createServiceClient(envStatus: EnvironmentStatus): SupabaseClient {
@@ -102,7 +108,8 @@ function resLocal(req: Request, key: string): unknown {
 }
 
 function maskValue(schema: ConfigurationSchema, value: unknown, principal: Principal): unknown {
-  return schema.data_type === "secret_ref" && !principal.isSuperAdmin ? "<REDACTED>" : value;
+  void principal;
+  return schema.data_type === "secret_ref" ? "<REDACTED>" : value;
 }
 
 function numberRule(rules: Record<string, unknown>, key: string): number | undefined {
@@ -173,7 +180,7 @@ async function findActive(client: SupabaseClient, schemaId: string, scopeType: s
   const { data, error } = await client.from("configuration_versions").select("id, value, activated_at, created_at")
     .eq("id", (pointer as ActivePointer).version_id).maybeSingle();
   if (error) throw new ApiError(500, "CONFIGURATION_VALUE_READ_FAILED", error.message);
-  return data as { id: string; value: unknown } | null;
+  return data as { id: string; value: unknown; activated_at: string | null; created_at: string } | null;
 }
 
 async function findVersion(client: SupabaseClient, versionId: string) {
@@ -242,12 +249,16 @@ export function createAdminConfigurationRouter(deps: AdminConfigurationRouterDep
     scopeType: "organization" | "branch", scopeId: string, write = false) => {
     if (scopeType === "organization") {
       await assertOrganization(client, scopeId);
+      if (!principal.isSuperAdmin && !(principal.organizationIds ?? []).includes(scopeId)) {
+        throw new ApiError(403, "ORGANIZATION_ACCESS_DENIED", "Organization access denied.");
+      }
       if (!principal.isSuperAdmin && write) throw new ApiError(403, "ORGANIZATION_ACCESS_DENIED", "Organization access denied.");
       return;
     }
     const organizationId = await loadBranchOrganization(client, scopeId);
     await assertOrganization(client, organizationId);
-    if (!principal.isSuperAdmin && !principal.branchIds.includes(scopeId)) {
+    if (!principal.isSuperAdmin && !principal.branchIds.includes(scopeId) &&
+      !(principal.ownedOrganizationIds ?? []).includes(organizationId)) {
       throw new ApiError(403, "BRANCH_ACCESS_DENIED", "Branch access denied.");
     }
   };
@@ -383,6 +394,86 @@ export function createAdminConfigurationRouter(deps: AdminConfigurationRouterDep
   router.post("/configuration/versions/:versionId/rollback", requireAuthenticatedUser,
     requireSuperAdmin, lifecycle("rollback"));
 
+  router.get("/branches/:branchId/configuration/effective", requireAuthenticatedUser,
+    requirePermission("admin.access"), async (req, res, next) => {
+      try {
+        const branch = uuidParam.safeParse(req.params.branchId);
+        if (!branch.success) throw new ApiError(400, "INVALID_BRANCH_ID", "Branch ID must be a UUID.");
+        const principal = (req as AuthorizedRequest).principal!;
+        const client = serviceClient();
+        const organizationId = await loadBranchOrganization(client, branch.data);
+        await assertScopeAccess(client, principal, "branch", branch.data);
+        const { data: schemaRows, error: schemaError } = await client.from("configuration_schemas")
+          .select("*").order("key", { ascending: true });
+        if (schemaError) throw new ApiError(500, "CONFIGURATION_SCHEMA_READ_FAILED", schemaError.message);
+        const schemas = (schemaRows ?? []) as ConfigurationSchema[];
+        const keys = [...new Set(schemas.map((schema) => schema.key))];
+        const values = await Promise.all(keys.map(async (configurationKey) => {
+          const branchSchema = schemas.find((schema) => schema.key === configurationKey && schema.scope_type === "branch") ?? null;
+          const organizationSchema = schemas.find((schema) => schema.key === configurationKey && schema.scope_type === "organization") ?? null;
+          const branchValue = branchSchema
+            ? await findActive(client, branchSchema.id, "branch", branch.data) : null;
+          const organizationValue = !branchValue && organizationSchema
+            ? await findActive(client, organizationSchema.id, "organization", organizationId) : null;
+          const active = branchValue ?? organizationValue;
+          const source = branchValue ? "BRANCH_OVERRIDE" : organizationValue ? "ORGANIZATION" : "SCHEMA_DEFAULT";
+          const schema = branchValue ? branchSchema! : organizationValue ? organizationSchema! : branchSchema ?? organizationSchema!;
+          return {
+            key: schema.key, label: schema.label, category: schema.key.split(/[._-]/)[0] || "general",
+            dataType: schema.data_type, required: schema.is_required, source,
+            value: maskValue(schema, active?.value ?? schema.default_value, principal),
+            masked: schema.data_type === "secret_ref", active: Boolean(active),
+            versionId: active?.id ?? null, activatedAt: active?.activated_at ?? null,
+            lastChangedAt: active?.activated_at ?? active?.created_at ?? null,
+          };
+        }));
+        return res.json({ ok: true, data: { branchId: branch.data, organizationId, values } });
+      } catch (error) { return next(error); }
+    });
+
+  router.get("/branches/:branchId/configuration/history", requireAuthenticatedUser,
+    requirePermission("admin.access"), async (req, res, next) => {
+      try {
+        const branch = uuidParam.safeParse(req.params.branchId);
+        const parsed = historyQuery.safeParse(req.query);
+        if (!branch.success) throw new ApiError(400, "INVALID_BRANCH_ID", "Branch ID must be a UUID.");
+        if (!parsed.success) throw new ApiError(400, "VALIDATION_ERROR", "Query validation failed.", parsed.error.flatten());
+        const principal = (req as AuthorizedRequest).principal!;
+        const client = serviceClient();
+        const organizationId = await loadBranchOrganization(client, branch.data);
+        await assertScopeAccess(client, principal, "branch", branch.data);
+        const { data: schemaRows, error: schemaError } = await client.from("configuration_schemas").select("id,key,label,data_type");
+        if (schemaError) throw new ApiError(500, "CONFIGURATION_SCHEMA_READ_FAILED", schemaError.message);
+        const schemaById = new Map((schemaRows ?? []).map((row) => [row.id, row as ConfigurationSchema]));
+        const canReadOrganizationHistory = principal.isSuperAdmin ||
+          (principal.ownedOrganizationIds ?? []).includes(organizationId);
+        let query = client.from("configuration_change_log").select("*", { count: "exact" })
+          .in("scope_id", canReadOrganizationHistory ? [branch.data, organizationId] : [branch.data])
+          .order("changed_at", { ascending: false })
+          .range(parsed.data.offset, parsed.data.offset + parsed.data.limit - 1);
+        if (parsed.data.key) query = query.eq("configuration_key", parsed.data.key);
+        if (parsed.data.action) query = query.eq("change_type", parsed.data.action);
+        const { data, error, count } = await query;
+        if (error) throw new ApiError(500, "CONFIGURATION_HISTORY_READ_FAILED", error.message);
+        const entries = (data ?? []).map((row) => {
+          const schema = schemaById.get(row.schema_id);
+          const secret = schema?.data_type === "secret_ref";
+          return {
+            id: row.id, timestamp: row.changed_at, actorId: row.changed_by,
+            action: row.change_type, organizationId, branchId: row.scope_type === "branch" ? row.scope_id : null,
+            scopeType: row.scope_type, configurationKey: row.configuration_key ?? schema?.key ?? null,
+            label: schema?.label ?? row.configuration_key ?? "Configuration change",
+            previousStateMetadata: secret ? { redacted: true } : row.previous_value_metadata,
+            newStateMetadata: secret ? { redacted: true } : row.new_value_metadata,
+            fromVersionId: row.from_version_id, toVersionId: row.to_version_id,
+            reason: row.reason, correlationId: row.correlation_id,
+          };
+        });
+        return res.json({ ok: true, data: { entries, pagination: { limit: parsed.data.limit,
+          offset: parsed.data.offset, total: count ?? entries.length, returned: entries.length } } });
+      } catch (error) { return next(error); }
+    });
+
   router.get("/branches/:branchId/configuration/:key/effective", requireAuthenticatedUser,
     requirePermission("admin.access"), async (req, res, next) => {
       try {
@@ -391,11 +482,9 @@ export function createAdminConfigurationRouter(deps: AdminConfigurationRouterDep
         if (!branch.success) throw new ApiError(400, "INVALID_BRANCH_ID", "Branch ID must be a UUID.");
         if (!key.success) throw new ApiError(400, "INVALID_CONFIGURATION_KEY", "Configuration key is invalid.");
         const principal = (req as AuthorizedRequest).principal!;
-        if (!principal.isSuperAdmin && !principal.branchIds.includes(branch.data)) {
-          throw new ApiError(403, "BRANCH_ACCESS_DENIED", "Branch access denied.");
-        }
         const client = serviceClient();
         const organizationId = await loadBranchOrganization(client, branch.data);
+        await assertScopeAccess(client, principal, "branch", branch.data);
         const branchSchema = await findSchema(client, "branch", key.data);
         const organizationSchema = await findSchema(client, "organization", key.data);
         if (!branchSchema && !organizationSchema) throw new ApiError(404, "SCHEMA_NOT_FOUND", "Configuration key was not found.");
