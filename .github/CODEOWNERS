@@ -1,0 +1,75 @@
+# CODEOWNERS — https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# Each line: pattern <owner1> <owner2> ...
+# Owners will be automatically requested for review on PRs touching these paths.
+
+# =============================================================================
+# Default — fallthrough owner for anything not matched below
+# =============================================================================
+*                           @mianimr4n
+
+# =============================================================================
+# Database / Supabase migrations — requires founder review
+# =============================================================================
+/supabase/migrations/       @mianimr4n
+/supabase/config.toml       @mianimr4n
+
+# =============================================================================
+# API Routes — backend review
+# =============================================================================
+/backend/api/src/modules/   @mianimr4n
+/backend/api/src/middleware/ @mianimr4n
+/backend/api/src/services/  @mianimr4n
+/backend/api/tests/         @mianimr4n
+
+# =============================================================================
+# Auth / Security — requires founder review
+# =============================================================================
+/backend/api/src/middleware/auth.ts        @mianimr4n
+/backend/api/src/middleware/authorization.ts @mianimr4n
+/.env.example               @mianimr4n
+/SECURITY.md                @mianimr4n
+
+# =============================================================================
+# Customer Website
+# =============================================================================
+/apps/website/client/src/pages/         @mianimr4n
+/apps/website/client/src/components/    @mianimr4n
+/apps/website/client/src/App.tsx        @mianimr4n
+/apps/website/vite.config.ts            @mianimr4n
+
+# =============================================================================
+# Admin Panel — requires founder review
+# =============================================================================
+/apps/website/client/src/pages/admin/   @mianimr4n
+/apps/website/client/src/components/admin/ @mianimr4n
+
+# =============================================================================
+# Infrastructure
+# =============================================================================
+/.github/workflows/         @mianimr4n
+/backend/api/Dockerfile     @mianimr4n
+/render.yaml                @mianimr4n
+/vercel.json                @mianimr4n
+
+# =============================================================================
+# Documentation
+# =============================================================================
+/README.md                  @mianimr4n
+/AGENTS.md                  @mianimr4n
+/CHANGELOG.md               @mianimr4n
+/CONTRIBUTING.md            @mianimr4n
+/SECURITY.md                @mianimr4n
+/docs/00-governance/        @mianimr4n
+
+# =============================================================================
+# Tests — requires review
+# =============================================================================
+/tests/                     @mianimr4n
+/e2e/                       @mianimr4n
+
+# =============================================================================
+# Phase 2 configuration control plane
+# =============================================================================
+/backend/api/src/modules/admin/configuration.ts @mianimr4n
+/supabase/migrations/*phase2*   @mianimr4n
+/supabase/migrations/*identity* @mianimr4n

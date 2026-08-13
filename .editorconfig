@@ -1,0 +1,66 @@
+# EditorConfig — https://editorconfig.org
+# Maintains consistent coding style across editors & IDEs
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 100
+
+[*.{ts,tsx,js,jsx,mjs,cjs}]
+indent_size = 2
+max_line_length = 100
+
+[*.{json,jsonc,json5}]
+indent_size = 2
+max_line_length = off
+
+[*.{yml,yaml}]
+indent_size = 2
+max_line_length = off
+
+[*.{md,mdx}]
+trim_trailing_whitespace = false
+max_line_length = off
+
+[*.{css,scss}]
+indent_size = 2
+max_line_length = off
+
+[*.sql]
+indent_size = 2
+end_of_line = lf
+
+[Makefile]
+indent_style = tab
+
+[*.{sh,bash}]
+indent_size = 2
+end_of_line = lf
+
+# Supabase config
+[*.toml]
+indent_size = 2
+end_of_line = lf
+
+# Environment files
+[.env*]
+indent_size = 2
+end_of_line = lf
+
+# Caddyfile (if added later)
+[Caddyfile]
+indent_style = tab
+end_of_line = lf
+
+# Lockfiles (don't reformat)
+[pnpm-lock.yaml]
+max_line_length = off
+
+[*.lock]
+max_line_length = off

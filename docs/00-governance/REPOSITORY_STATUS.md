@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-04 — **Phase 1.1 released** as annotated `v1.5.1` at `bfe60cc…` / `dpl_FgHub…`; gate **PASSED**; Phase 2 runtime **not started**; prior `v1.5.0` unchanged @ `830dbc8…` / `dpl_BtPH8…`
+**Last reconciled:** 2026-08-14 — **Phase 2.1-2.4 + IDENTITY-01 merged to `main`** as `f3fce11…` (PRs #205-#209); release `v1.6.0` annotated; Phase 2.2-2.6 (WhatsApp, CRM, Delivery, Accounting, AI) **not started**; prior `v1.5.1` @ `bfe60cc…` unchanged
 
 ---
 
@@ -36,24 +36,26 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main (runtime release) | `bfe60cc6a3074e08e61f85b458b19e724325eba4` | PR #202 merge / `v1.5.1` peeled; docs tip may advance after closeout |
-| Latest released baseline | `v1.5.1` @ `bfe60cc6a3074e08e61f85b458b19e724325eba4` | Annotated tag object `6b86be34fc9ea15152383038d75d93d964068e2e`; **no** GitHub Release |
-| Prior released tag | `v1.5.0` @ `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | Unchanged; object `d52f3a4729f398143463e72e8147e4cb0ada1faa` |
-| Prior released tag | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | Unchanged |
-| Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | Unchanged |
+| Repository main (current tip) | `f3fce1138def9822c0b3cb22b0c8b8b4424551d6` | PR #209 merge — Phase 2.4 branch readiness control plane |
+| Latest released baseline | `v1.6.0` @ `f3fce1138def9822c0b3cb22b0c8b8b4424551d6` | Phase 2 configuration control plane + identity onboarding foundation; annotated tag; GitHub Release pending |
+| Prior released baseline | `v1.5.1` @ `bfe60cc6a3074e08e61f85b458b19e724325eba4` | Phase 1.1 professional readiness; tag object `6b86be34…` |
+| Prior released tag | `v1.5.0` @ `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | RC6 Phase 1 final closeout |
+| Prior released tag | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | RC5 final closeout |
+| Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | RC4 release closeout |
 | RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
-| Production website commit | `bfe60cc6a3074e08e61f85b458b19e724325eba4` | Vercel `dpl_FgHubLsuWo5ahYri18mjayCCw9nu` |
+| Production website commit | `bfe60cc6a3074e08e61f85b458b19e724325eba4` | Vercel `dpl_FgHubLsuWo5ahYri18mjayCCw9nu` (Phase 1.1; Phase 2 not yet deployed) |
 | Prior Production website (rollback) | `830dbc8…` / `dpl_BtPH8AvtUsKHwjJaQAf7gEVMMpom` | Not executed |
-| Production API (observed tip) | `bfe60cc…` | Process tip; Phase 1.1 did **not** intentionally change backend product (`BACKEND_RUNTIME_UNCHANGED`) |
-| Production database | Migrations through `20260801180000` | No Phase 1.1 migrations |
+| Production API (observed tip) | `bfe60cc…` | Process tip; Phase 2 migrations **not yet applied to Production** |
+| Production database | Migrations through `20260801180000` | Phase 2 migrations (`20260805190000` through `20260807100000`) pending Production application |
 | Phase 1.1 gate | **PASSED** — Production certified | `phase1-1-production-closeout/` |
+| Phase 2.1-2.4 + IDENTITY-01 gate | **MERGED to main** — `v1.6.0` tagged; Production deployment pending separate authorization | PRs #205, #206, #207, #208, #209 |
 
 ## Current Repository Status
 
 | Area | Status |
 |------|--------|
 | Repository Governance | Active |
-| Architecture | Approved |
+| Architecture | Approved (Phase 2.1-2.4 ADRs accepted) |
 | Requirements | Active |
 | Documentation | Active |
 | Repository Evidence | Current |
@@ -62,7 +64,17 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | RC4 | Released (`v1.3.0`) |
 | RC5 | **Released** (`v1.4.0`; certified + Production website verified) |
 | RC6 Phase 1 | **Released** (`v1.5.0`) | PASS WITH LIMITATIONS — see `rc6-phase1-closeout/` |
-| Phase 1.1 Professional readiness | **Released** (`v1.5.1`); gate **PASSED** | `phase1-1-production-closeout/` · Phase 2 **not started** |
+| Phase 1.1 Professional readiness | **Released** (`v1.5.1`) | `phase1-1-production-closeout/` |
+| Phase 2.1 Configuration Schema | **Released** (`v1.6.0`) | PR #205 — `24f2058` |
+| Phase 2.2 Settings Persistence | **Released** (`v1.6.0`) | PR #206 — `9da2fd5` |
+| Phase 2.3 Versioning/Activation/Rollback | **Released** (`v1.6.0`) | PR #207 — `095c541` |
+| IDENTITY-01 Tenant Onboarding | **Released** (`v1.6.0`) | PR #208 — `237cc5b` |
+| Phase 2.4 Branch Readiness Control Plane | **Released** (`v1.6.0`) | PR #209 — `f3fce11` |
+| Phase 2.2 WhatsApp Foundation | **Not started** | ADR-003 through ADR-004 PROPOSED |
+| Phase 2.3 CRM Customer Master | **Not started** | ADR-005 through ADR-006 PROPOSED |
+| Phase 2.4 Delivery & Rider Completion | **Not started** | ADR-007 through ADR-010 PROPOSED |
+| Phase 2.5 Accounting Depth | **Not started** | ADR-011 PROPOSED |
+| Phase 2.6 AI Command Center | **Not started** | ADR-013 through ADR-015 PROPOSED |
 
 ---
 
@@ -70,13 +82,18 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **Phase 1.1 complete** — next: Phase 2 readiness decision only |
+| Current Delivery Slice | **Phase 2.1-2.4 + IDENTITY-01 complete** — `v1.6.0` tagged; next: Phase 2.2 WhatsApp Foundation OR Opening Operations Milestone 2 (Payments + Notifications + Devices) |
 | Phase 1.1 | **PASSED** / Production certified / `v1.5.1` |
-| Phase 2 runtime | **Not started** — separate start decision required |
-| Planning | `docs/planning/PHASE1_1_*.md` |
-| Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc6-production-cutover/` (re-verified on `830dbc8…`) |
+| Phase 2.1 Configuration Schema | **MERGED** (`v1.6.0`) — PR #205 — `24f2058` |
+| Phase 2.2 Settings Persistence | **MERGED** (`v1.6.0`) — PR #206 — `9da2fd5` |
+| Phase 2.3 Versioning/Activation/Rollback | **MERGED** (`v1.6.0`) — PR #207 — `095c541` |
+| IDENTITY-01 Tenant Onboarding | **MERGED** (`v1.6.0`) — PR #208 — `237cc5b` |
+| Phase 2.4 Branch Readiness Control Plane | **MERGED** (`v1.6.0`) — PR #209 — `f3fce11` |
+| Phase 2 runtime — remaining domains | **Not started** — Phase 2.2 WhatsApp, 2.3 CRM, 2.4 Delivery, 2.5 Accounting, 2.6 AI |
+| Planning | `docs/testing/acceptance-evidence/phase2-readiness-audit/PHASE2_SCOPE_MATRIX.md` |
+| Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc6-production-cutover/` (re-verified on `830dbc8…`); Phase 2 not yet deployed to Production |
 | RC6 Phase 1 release blockers | **None** — annotated `v1.5.0` created |
-| Released baseline | `v1.5.0` @ `830dbc8…` (tag object `d52f3a47…`); prior `v1.4.0` @ `96f1e80…` unchanged |
+| Released baseline | `v1.6.0` @ `f3fce11…`; prior `v1.5.1` @ `bfe60cc…`; `v1.5.0` @ `830dbc8…` |
 | Anchor honesty | `docs/testing/acceptance-evidence/rc6-v1.5.0-anchor-sync/` |
 | Northern Bypass | `coming-soon` (unchanged) |
 | Royal Orchard target opening | **14 August 2026** — software readiness ≠ restaurant Production-ready |
