@@ -33,6 +33,12 @@ jobs:
       - name: Typecheck
         run: pnpm check
 
+      - name: Build website
+        run: pnpm build:website
+
+      - name: Build backend API
+        run: pnpm --filter @telepizza/api build
+
       - name: Test
         run: pnpm test
 

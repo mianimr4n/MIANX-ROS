@@ -30,7 +30,7 @@ import {
 const readyEnv = {
   API_PORT: "4000",
   API_CORS_ORIGIN: "http://localhost:3000",
-  API_JWT_SECRET: "super-secret-token-123",
+  API_JWT_SECRET: "test-only-not-a-real-secret-do-not-use-in-production-0123456789abcdef",
   SUPABASE_URL: "https://example.supabase.co",
   SUPABASE_ANON_KEY: "anon-key",
   SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
