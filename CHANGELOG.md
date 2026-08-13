@@ -15,11 +15,84 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
 ### Planned
 - Phase 2.2 — Customer Support and WhatsApp Foundation
 - Phase 2.3 — CRM and Authoritative Customer Master
-- Phase 2.4 — Delivery and Rider Completion (state machine, POD, COD, GPS)
+- Phase 2.4 — Delivery and Rider Completion (POD, COD, GPS — ADR-008 through ADR-010)
 - Phase 2.5 — Accounting and Profitability Depth (periods, CoGS, payroll posting)
 - Phase 2.6 — AI Command Center (forecasts, drafts, approval inbox)
 - Opening Operations Milestone 2 — Payments, Notifications, Device Verification
 - Northern Bypass branch activation
+
+---
+
+## [1.8.0] — 2026-08-14
+
+### Phase 2 foundations — Delivery State Machine + Accounting Immutability
+
+This release introduces **database-enforced immutability** for two critical
+lifecycles: deliveries (ADR-007) and journal entries (ADR-011). Both
+implementations are additive — no existing flow changes — and ship with full
+test coverage (82 new test cases).
+
+### Added — ADR-007 Delivery State Machine (Phase 2.4 foundation)
+
+- **Migration `20260814180000_adr_007_delivery_state_machine.sql`**
+  - New `delivery_state_transitions` table (append-only audit log; UPDATE/DELETE
+    rejected by trigger)
+  - `trg_validate_delivery_state_transition` trigger on `deliveries` —
+    enforces valid transitions per ADR-007:
+    `pending → assigned | cancelled`
+    `assigned → picked-up | cancelled | failed`
+    `picked-up → delivered | failed`
+    `delivered / failed / cancelled → (terminal)`
+  - `delivery_valid_next_states(current_state)` SQL helper function
+  - Lifecycle timestamps (`assigned_at`, `picked_up_at`, `delivered_at`)
+    auto-populated by trigger
+  - RLS policy for branch-scoped reads
+- **TypeScript validator** `backend/api/src/services/deliveries/state-machine.ts`
+  - `validNextDeliveryStates`, `isValidDeliveryTransition`,
+    `assertValidDeliveryTransition`, `isTerminalDeliveryStatus`,
+    `deliveryTimestampColumnForStatus`
+  - Mirrors SQL rules exactly — produces 422 ApiError BEFORE DB rejects
+- **Tests** `backend/api/tests/delivery-state-machine.test.ts` (82 cases,
+  exhaustive transition matrix coverage)
+- **ADR-007** status updated from PROPOSED → ACCEPTED
+  (`docs/13-adr/ADR-007-delivery-state-machine.md`)
+
+### Added — ADR-011 Accounting Immutability (Phase 2.5 foundation)
+
+- **Migration `20260814180100_adr_011_accounting_immutability.sql`**
+  - `trg_journal_entry_immutability` on `journal_entries` — blocks UPDATE/DELETE
+    on posted entries except for the documented reversal flow:
+    - `status: posted → voided` ✅ (used by `reverse_journal_entry_atomic`)
+    - Setting `reversed_by_journal_id` / `reverses_journal_id` ✅ (linkage)
+    - All other field changes ❌ (rejected with clear error)
+  - `trg_journal_entry_line_immutability` on `journal_entry_lines` — blocks
+    UPDATE/DELETE on lines of posted OR voided entries
+  - Bypass hook `app.bypass_immutability = 'on'` for trusted future maintenance
+    procedures (not used by application today)
+- **Existing reversal RPC preserved** — `reverse_journal_entry_atomic()`
+  continues to work unchanged (its operations are explicitly permitted)
+- **Tests** `backend/api/tests/accounting-immutability.test.ts` — validates
+  migration structure, confirms no conflict with existing RPC, verifies
+  existing column reuse (no duplicates)
+- **ADR-011** status updated from PROPOSED → ACCEPTED
+  (`docs/13-adr/ADR-011-accounting-immutability.md`)
+
+### Documentation
+
+- New ADR artifacts: `docs/13-adr/ADR-007-*.md`, `docs/13-adr/ADR-011-*.md`
+- `docs/00-governance/ADR_INDEX.md` updated with ADR-007, ADR-011 entries
+- `docs/00-governance/REPOSITORY_STATUS.md` updated to reflect
+  Phase 2.4 / 2.5 foundation merges
+
+### Verification
+
+- 742 backend tests pass (84 → 86 files, 660 → 742 tests; +82 new)
+- 1065 db/static tests pass (unchanged)
+- 0 type errors
+- 0 vulnerabilities
+- No breaking API changes
+- No frontend behavior changes
+- Additive migrations only — backward compatible
 
 ---
 

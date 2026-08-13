@@ -72,8 +72,8 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Phase 2.4 Branch Readiness Control Plane | **Released** (`v1.6.0`) | PR #209 — `f3fce11` |
 | Phase 2.2 WhatsApp Foundation | **Not started** | ADR-003 through ADR-004 PROPOSED |
 | Phase 2.3 CRM Customer Master | **Not started** | ADR-005 through ADR-006 PROPOSED |
-| Phase 2.4 Delivery & Rider Completion | **Not started** | ADR-007 through ADR-010 PROPOSED |
-| Phase 2.5 Accounting Depth | **Not started** | ADR-011 PROPOSED |
+| Phase 2.4 Delivery & Rider Completion | **Foundation merged** (`v1.8.0`) | ADR-007 ACCEPTED (state machine + audit log); ADR-008 through ADR-010 still PROPOSED |
+| Phase 2.5 Accounting Depth | **Foundation merged** (`v1.8.0`) | ADR-011 ACCEPTED (immutability trigger); ADR-012 still PROPOSED |
 | Phase 2.6 AI Command Center | **Not started** | ADR-013 through ADR-015 PROPOSED |
 
 ---
