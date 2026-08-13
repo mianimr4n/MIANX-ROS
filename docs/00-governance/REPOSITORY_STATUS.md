@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-14 — **Phase 2.1-2.4 + IDENTITY-01 merged to `main`** as `f3fce11…` (PRs #205-#209); release `v1.6.0` annotated; Phase 2.2-2.6 (WhatsApp, CRM, Delivery, Accounting, AI) **not started**; prior `v1.5.1` @ `bfe60cc…` unchanged
+**Last reconciled:** 2026-08-14 — **v1.8.0 released** (`7388e07…`, PR #212 — ADR-007 Delivery State Machine + ADR-011 Accounting Immutability foundations merged); prior `v1.6.0` @ `f3fce11…` (Phase 2.1-2.4 + IDENTITY-01, PRs #205-#209); Phase 2.2 WhatsApp, 2.3 CRM, 2.6 AI still **not started**; prior `v1.5.1` @ `bfe60cc…` unchanged
 
 ---
 
@@ -36,8 +36,9 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main (current tip) | `f3fce1138def9822c0b3cb22b0c8b8b4424551d6` | PR #209 merge — Phase 2.4 branch readiness control plane |
-| Latest released baseline | `v1.6.0` @ `f3fce1138def9822c0b3cb22b0c8b8b4424551d6` | Phase 2 configuration control plane + identity onboarding foundation; annotated tag; GitHub Release pending |
+| Repository main (current tip) | `7388e07ed699cffeae62de1c3449e7228d9ceef4` | PR #212 squash merge — ADR-007 + ADR-011 foundations |
+| Latest released baseline | `v1.8.0` @ `7388e07ed699cffeae62de1c3449e7228d9ceef4` | ADR-007 Delivery State Machine + ADR-011 Accounting Immutability foundations; annotated tag + GitHub Release published |
+| Prior released baseline | `v1.6.0` @ `f3fce1138def9822c0b3cb22b0c8b8b4424551d6` | Phase 2 configuration control plane + identity onboarding foundation; annotated tag; GitHub Release published |
 | Prior released baseline | `v1.5.1` @ `bfe60cc6a3074e08e61f85b458b19e724325eba4` | Phase 1.1 professional readiness; tag object `6b86be34…` |
 | Prior released tag | `v1.5.0` @ `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | RC6 Phase 1 final closeout |
 | Prior released tag | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | RC5 final closeout |
@@ -49,6 +50,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Production database | Migrations through `20260801180000` | Phase 2 migrations (`20260805190000` through `20260807100000`) pending Production application |
 | Phase 1.1 gate | **PASSED** — Production certified | `phase1-1-production-closeout/` |
 | Phase 2.1-2.4 + IDENTITY-01 gate | **MERGED to main** — `v1.6.0` tagged; Production deployment pending separate authorization | PRs #205, #206, #207, #208, #209 |
+| Phase 2.4/2.5 foundation gate (ADR-007 + ADR-011) | **MERGED to main** — `v1.8.0` tagged; Production deployment pending separate authorization | PR #212 (squash `7388e07`) |
 
 ## Current Repository Status
 
@@ -82,7 +84,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **Phase 2.1-2.4 + IDENTITY-01 complete** — `v1.6.0` tagged; next: Phase 2.2 WhatsApp Foundation OR Opening Operations Milestone 2 (Payments + Notifications + Devices) |
+| Current Delivery Slice | **v1.8.0 tagged** — Phase 2.4 (ADR-007) + Phase 2.5 (ADR-011) foundations merged; next: complete Phase 2.4 (ADR-008/009/010 rider & dispatch) or Phase 2.5 (ADR-012 accounting events) |
 | Phase 1.1 | **PASSED** / Production certified / `v1.5.1` |
 | Phase 2.1 Configuration Schema | **MERGED** (`v1.6.0`) — PR #205 — `24f2058` |
 | Phase 2.2 Settings Persistence | **MERGED** (`v1.6.0`) — PR #206 — `9da2fd5` |
