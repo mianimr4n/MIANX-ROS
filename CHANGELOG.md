@@ -84,12 +84,26 @@ test coverage (82 new test cases).
 - `docs/00-governance/REPOSITORY_STATUS.md` updated to reflect
   Phase 2.4 / 2.5 foundation merges
 
+### Fixed (pre-merge hotfix in PR #212)
+
+- ADR-007 RLS policy `delivery_transitions_branch_read` referenced
+  `user_roles.status` which does not exist on that table. Changed to
+  `user_roles.assignment_status = 'ACTIVE'` (the actual column, added in
+  migration `20260728180000_opening_m1_people_floor_booking.sql`). Without
+  this fix the migration failed at statement 16 during local Supabase seed
+  with `SQLSTATE 42703: column ur.status does not exist`, which was the
+  root cause of the initial Owner Playwright CI failure on the PR.
+
 ### Verification
 
 - 742 backend tests pass (84 → 86 files, 660 → 742 tests; +82 new)
 - 1065 db/static tests pass (unchanged)
 - 0 type errors
 - 0 vulnerabilities
+- CI: Typecheck and test — PASS
+- CI: Owner Playwright — PASS (after hotfix)
+- CI: CodeQL Analyze + Dependency Scan — PASS
+- Vercel Preview — Ready
 - No breaking API changes
 - No frontend behavior changes
 - Additive migrations only — backward compatible
