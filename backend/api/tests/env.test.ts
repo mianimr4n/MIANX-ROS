@@ -5,7 +5,7 @@ import { evaluateLocalSafety, getEnvironmentStatus } from "../src/config/env.js"
 const localBase = {
   PORT: "4100",
   CORS_ORIGIN: "http://localhost:3000",
-  API_JWT_SECRET: "super-secret-token-123",
+  API_JWT_SECRET: "test-only-not-a-real-secret-do-not-use-in-production-0123456789abcdef",
   SUPABASE_ANON_KEY: "anon-key",
   SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
   TELEPIZZA_ENV: "local",
