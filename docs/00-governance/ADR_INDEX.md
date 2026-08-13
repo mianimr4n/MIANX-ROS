@@ -42,6 +42,8 @@ Active
 | ADR-002 | Repository Evidence Model | Planned | - | Not yet authored under `docs/13-adr/` |
 | ADR-003 | Acceptance Gate Model | Planned | - | Policy draft in [`ACCEPTANCE_GATES.md`](./ACCEPTANCE_GATES.md); ADR file pending |
 | ADR-004 | Release Governance | Planned | - | Policy draft in [`RELEASE_POLICY.md`](./RELEASE_POLICY.md); ADR file pending |
+| ADR-007 | Delivery State Machine & Transition Rules | Accepted | 1.0 | [`docs/13-adr/ADR-007-delivery-state-machine.md`](../13-adr/ADR-007-delivery-state-machine.md) — implemented in `v1.8.0` |
+| ADR-011 | Accounting Immutability & Double-Entry Reversals | Accepted | 1.0 | [`docs/13-adr/ADR-011-accounting-immutability.md`](../13-adr/ADR-011-accounting-immutability.md) — implemented in `v1.8.0` |
 
 ---
 
