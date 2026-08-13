@@ -165,7 +165,7 @@ create policy "delivery_transitions_branch_read"
       and d.branch_id in (
         select ur.branch_id from public.user_roles ur
         where ur.user_id = auth.uid()
-        and ur.status = 'active'
+        and ur.assignment_status = 'ACTIVE'
       )
     )
   );
