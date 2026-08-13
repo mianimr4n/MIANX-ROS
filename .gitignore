@@ -39,7 +39,10 @@ supabase/.branches/
 supabase/.temp/
 supabase/.cache/
 supabase/.DS_Store
-.vercel
+
+# Vercel project linking files (contain project IDs — never commit)
+.vercel/
+**/.vercel/
 
 # Local agent recovery / dumps (never commit)
 .phase1-dump/
