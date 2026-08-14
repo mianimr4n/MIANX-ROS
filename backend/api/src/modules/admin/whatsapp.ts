@@ -278,9 +278,9 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.post(
     "/whatsapp/conversations/:conversationId/messages",
+    writeRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
-    writeRateLimiter,
     validateBody(sendMessageSchema),
     async (req, res, next) => {
       try {
@@ -317,9 +317,9 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.post(
     "/whatsapp/conversations/:conversationId/assign",
+    writeRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
-    writeRateLimiter,
     validateBody(assignAgentSchema),
     async (req, res, next) => {
       try {
@@ -348,9 +348,9 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.post(
     "/whatsapp/conversations/:conversationId/status",
+    writeRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
-    writeRateLimiter,
     validateBody(transitionStatusSchema),
     async (req, res, next) => {
       try {
@@ -400,9 +400,9 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.post(
     "/whatsapp/templates",
+    writeRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
-    writeRateLimiter,
     validateBody(createTemplateSchema),
     async (req, res, next) => {
       try {
@@ -426,9 +426,9 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.patch(
     "/whatsapp/templates/:templateId",
+    writeRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
-    writeRateLimiter,
     validateBody(updateTemplateSchema),
     async (req, res, next) => {
       try {
@@ -453,9 +453,9 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.delete(
     "/whatsapp/templates/:templateId",
+    writeRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
-    writeRateLimiter,
     async (req, res, next) => {
       try {
         const templateId = req.params.templateId;
