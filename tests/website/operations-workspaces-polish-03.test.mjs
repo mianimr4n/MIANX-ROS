@@ -73,15 +73,18 @@ describe("POLISH-03 operations workspaces", () => {
     assert.doesNotMatch(filters, /Channel[\s\S]*Planned for Phase 2/);
   });
 
-  it("WhatsApp frames order attribution and hides inbox chrome", () => {
+  it("WhatsApp frames order attribution and shows live inbox chrome (Phase 2.2)", () => {
     const header = read("apps/website/client/src/components/admin/whatsapp/WhatsAppHeader.tsx");
     assert.match(header, /not a conversation inbox/i);
     assert.doesNotMatch(header, /Templates · Planned for Phase 2/);
     const workspace = read("apps/website/client/src/components/admin/whatsapp/ConversationWorkspace.tsx");
-    assert.match(workspace, /No conversation store/);
-    assert.doesNotMatch(workspace, /MessageComposer/);
+    // Phase 2.2: workspace now has LIVE conversation store + composer.
+    assert.match(workspace, /WhatsApp conversations/);
+    assert.match(workspace, /listWhatsAppConversations/);
+    assert.match(workspace, /MessageComposer/);
     const banner = read("apps/website/client/src/components/admin/whatsapp/WhatsAppIntegrationBanner.tsx");
-    assert.match(banner, /not an inbox/i);
+    // Phase 2.2: banner now announces the live inbox (no longer "not an inbox").
+    assert.match(banner, /WhatsApp inbox is live/);
     assert.match(banner, /order_source = whatsapp/);
   });
 

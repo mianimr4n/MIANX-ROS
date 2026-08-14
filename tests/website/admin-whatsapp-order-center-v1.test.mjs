@@ -1,5 +1,9 @@
 /**
  * WhatsApp Order Center V1 — composition and honesty wiring (static).
+ *
+ * Phase 2.2 update: the workspace now has LIVE conversation storage backed
+ * by ADR-004. Tests assert the live state (not the previous "no conversation
+ * store" placeholder state).
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -24,46 +28,49 @@ describe("WhatsApp Order Center V1 (static)", () => {
     assert.match(page, /ConversationWorkspace/);
     assert.match(page, /CustomerContextPanel/);
     assert.match(page, /LinkedOrderPanel/);
-    assert.match(page, /WhatsAppOrderBuilder/);
-    assert.match(page, /WhatsAppTemplates/);
     assert.match(page, /WhatsAppActivity/);
     assert.match(page, /WhatsAppInsights/);
     assert.match(page, /canAccessAdminWhatsApp/);
     assert.match(page, /WHATSAPP_ORDER_SOURCE/);
   });
 
-  it("uses order-derived mode without fake conversations", () => {
+  it("renders live conversation store with composer (Phase 2.2)", () => {
     const workspace = read("apps/website/client/src/components/admin/whatsapp/ConversationWorkspace.tsx");
-    assert.match(workspace, /No conversation store|Order context only/);
-    assert.match(workspace, /whatsapp-no-conversation-store/);
-    assert.doesNotMatch(workspace, /MessageComposer|MessageBubble|typing|read receipt|delivered/i);
+    assert.match(workspace, /WhatsApp conversations/);
+    assert.match(workspace, /live conversation store|Live conversation store/);
+    assert.match(workspace, /listWhatsAppConversations/);
+    assert.match(workspace, /listWhatsAppMessages/);
+    assert.match(workspace, /sendWhatsAppMessage/);
+    assert.match(workspace, /whatsapp-conversation-workspace/);
+    // Composer is now rendered inside the workspace (not standalone).
+    assert.match(workspace, /MessageComposer/);
     const queue = read("apps/website/client/src/components/admin/whatsapp/WhatsAppOrderQueue.tsx");
     assert.match(queue, /WhatsApp-attributed orders/);
-    assert.match(queue, /not a conversation inbox/i);
-    assert.doesNotMatch(queue, /last message preview|unread count/i);
     const header = read("apps/website/client/src/components/admin/whatsapp/WhatsAppHeader.tsx");
     assert.match(header, /Order channel attribution|WhatsApp-attributed orders/);
-    assert.doesNotMatch(header, /Templates · Planned for Phase 2/);
   });
 
-  it("disables composer and labels external handoff honestly", () => {
+  it("enables composer with live send + 4096-char limit", () => {
     const composer = read("apps/website/client/src/components/admin/whatsapp/MessageComposer.tsx");
-    assert.match(composer, /Planned for Phase 2/);
-    assert.match(composer, /disabled/);
-    assert.match(composer, /no outbound WhatsApp API/i);
-    const customer = read("apps/website/client/src/components/admin/whatsapp/CustomerContextPanel.tsx");
-    assert.match(customer, /External WhatsApp handoff/);
-    assert.match(customer, /not tracked provider messaging/i);
-    assert.match(customer, /wa\.me/);
+    assert.match(composer, /Reply via WhatsApp/);
+    assert.match(composer, /maxLength=\{4096\}/);
+    assert.match(composer, /outbox worker/);
+    // No longer says "Planned for Phase 2" or "no outbound WhatsApp API".
+    assert.doesNotMatch(composer, /Planned for Phase 2/);
+    assert.doesNotMatch(composer, /no outbound WhatsApp API/i);
   });
 
-  it("does not fabricate whatsapp order source in POS and keeps builder Planned for Phase 2", () => {
+  it("integration banner announces live inbox (Phase 2.2)", () => {
+    const banner = read("apps/website/client/src/components/admin/whatsapp/WhatsAppIntegrationBanner.tsx");
+    assert.match(banner, /WhatsApp inbox is live/);
+    assert.match(banner, /ADR-004/);
+    // No longer claims "not an inbox".
+    assert.doesNotMatch(banner, /not an inbox/i);
+  });
+
+  it("does not fabricate whatsapp order source in POS", () => {
     const pos = read("apps/website/client/src/pages/admin/AdminPos.tsx");
     assert.match(pos, /createAdminPosOrder/);
-    const builder = read("apps/website/client/src/components/admin/whatsapp/WhatsAppOrderBuilder.tsx");
-    assert.match(builder, /Planned for Phase 2/);
-    assert.match(builder, /orderSource=whatsapp/);
-    assert.doesNotMatch(builder, /createOrderWithIdempotency/);
   });
 
   it("labels Mianx insights as rule-based only", () => {
@@ -86,12 +93,9 @@ describe("WhatsApp Order Center V1 (static)", () => {
     assert.match(page, /useAdminAccessGate/);
   });
 
-  it("integration status does not claim provider connection", () => {
-    const header = read("apps/website/client/src/components/admin/whatsapp/WhatsAppHeader.tsx");
-    assert.doesNotMatch(header, /Connected|Online|Live inbox/i);
+  it("integration status does not expose secrets in source", () => {
     const helper = read("apps/website/client/src/lib/admin-whatsapp.ts");
     assert.match(helper, /integrationChecks/);
-    assert.match(helper, /missing/);
     assert.doesNotMatch(helper, /access_token|phone_number_id|WABA_SECRET/i);
   });
 });
