@@ -57,3 +57,64 @@ Stage Summary:
   - Phase 2.4: Rider & dispatch (ADR-008, ADR-009, ADR-010) — not started
   - Phase 2.5: Accounting events (ADR-012) — not started
   - Phase 2.6: AI (ADR-013) — not started
+
+---
+Task ID: phase-2.4-delivery-rider
+Agent: main
+Task: Complete Phase 2.4 (Delivery & Rider Completion) — ADR-008/009/010 end-to-end (docs + migration + services + admin routes + tests + PR + Production migration apply)
+
+Work Log:
+- Authored 3 ADR markdown files:
+  - docs/13-adr/ADR-008-rider-location-retention.md (Rider GPS retention & privacy policy)
+  - docs/13-adr/ADR-009-proof-of-delivery.md (POD data format & storage)
+  - docs/13-adr/ADR-010-cod-financial-ownership.md (COD reconciliation + GL posting)
+- Updated docs/00-governance/ADR_INDEX.md to mark ADR-008/009/010 as Accepted v1.0.
+- Wrote single combined SQL migration: supabase/migrations/20260817000000_adr_008_009_010_delivery_rider.sql (additive, ~700 lines):
+  - Permission seed: delivery.access (granted to super-admin, branch-manager, customer-support, cashier, rider, kitchen)
+  - ADR-008: rider_locations table, RLS (rider self + branch staff + super-admin), purge_expired_rider_locations() TTL function (24h retention, idempotent)
+  - ADR-009: delivery_pod table (UNIQUE on delivery_id), RLS (rider + branch staff + customer), immutability trigger (block UPDATE/DELETE after delivered), extended ADR-007 transition validator to require POD before 'delivered'
+  - ADR-010: cod_collections table (UNIQUE on delivery_id), RLS (rider + branch staff + branch-manager for reconcile), reconciliation state machine (pending → reconciled/shortage/overage), post_cod_collection_journal() trigger that fires create_journal_entry_atomic + finance_postings link (idempotent)
+- Implemented 4 backend TypeScript modules:
+  - backend/api/src/services/deliveries/rider-location-service.ts (ingest, listForDelivery, getLatestForRider)
+  - backend/api/src/services/deliveries/rider-location-ttl.ts (runOnce + startRiderLocationTtlJob lifecycle wrapper)
+  - backend/api/src/services/deliveries/pod-service.ts (capturePod, getPod, podExistsForDelivery)
+  - backend/api/src/services/deliveries/cod-service.ts (recordCollection, getCollection, listCollections, reconcile, resolveShortageOrOverage)
+- Implemented admin router: backend/api/src/modules/admin/delivery-rider.ts (10 endpoints, all rate-limited):
+  - POST /rider-locations, GET /rider-locations/delivery/:id, GET /rider-locations/rider/:id/latest
+  - POST /delivery-pod, GET /delivery-pod/:deliveryId
+  - POST /cod/collections, GET /cod/collections, GET /cod/collections/:id
+  - POST /cod/collections/:id/reconcile, POST /cod/collections/:id/resolve
+- Wired dependencies: app-dependencies.ts (3 new services), modules/index.ts, modules/admin/routes.ts.
+- Wired lifecycle: main.ts (startRiderLocationTtlJob + startWhatsAppPiiAnonymizationJob).
+- Wrote 3 test files (51 new tests, all passing):
+  - backend/api/tests/rider-location-service.test.ts (16 cases)
+  - backend/api/tests/delivery-pod-service.test.ts (14 cases)
+  - backend/api/tests/cod-service.test.ts (21 cases)
+- Type-check clean. 918 backend tests passing total (was 867; +51 new).
+- PR #223 was opened but merged empty (local branch state issue — commit b2b9ff5 ended up on local main instead of feature branch).
+- PR #224 was opened with the actual code (commit c969316). All 6 CI checks passed (Typecheck, CodeQL, Analyze, Dependency Scan, Vercel Preview, Owner Playwright).
+- FU-1 hotfix during CI: GET DIAGNOSTICS cannot use an expression on the LHS. Fixed by introducing v_batch_deleted temp variable. Committed as c969316.
+- PR #224 squash-merged as 2eaaa9b.
+- Applied migration to Production Supabase (project pyeowxvacgypohrbvgee):
+  - Preflight: confirmed rider_locations, delivery_pod, cod_collections tables do NOT exist (expected).
+  - Applied 20260817000000_adr_008_009_010_delivery_rider.sql via Supabase Management API (HTTP 201).
+  - Verified: all 3 tables exist, all 5 functions exist (purge_expired_rider_locations, enforce_delivery_pod_immutability, post_cod_collection_journal, set_cod_updated_at, validate_delivery_state_transition), all 7 key columns exist, delivery.access permission seeded.
+
+Stage Summary:
+- ✅ **Phase 2.4 (Delivery & Rider Completion) is FEATURE-COMPLETE.**
+  - PR #224 merged as 2eaaa9b.
+  - Production Supabase migration applied + verified.
+  - 918 backend tests passing (was 867 → +51 new tests).
+- ✅ **All 3 ADRs implemented end-to-end:**
+  - ADR-008 (Rider Location Retention): rider_locations table + TTL purge function + 3 admin endpoints + lifecycle job
+  - ADR-009 (POD): delivery_pod table + immutability trigger + extended ADR-007 transition validator + 2 admin endpoints
+  - ADR-010 (COD Financial Ownership): cod_collections table + reconciliation state machine + GL posting trigger via create_journal_entry_atomic + 5 admin endpoints
+- ⏳ **PENDING USER ACTIONS** (no code blockers):
+  1. (Optional) Set TELEPIZZA_RIDER_LOCATION_TTL_JOB=1 on Render to enable the hourly TTL purge job.
+  2. Configure Supabase Storage bucket 'delivery-pod' on the Supabase dashboard (write for authenticated riders; read for branch staff + the order's customer).
+  3. Configure chart_of_accounts rows for each branch: account_code='CASH' (ASSET) and account_code='ACCOUNTS_RECEIVABLE' (ASSET) — required for COD reconciliation to produce GL postings.
+- **Phase 2.4 status**: COMPLETE. Next Phase 2 workstreams remaining:
+  - Phase 2.3: CRM (ADR-005, ADR-006) — STARTING NEXT
+  - Phase 2.5: Accounting events (ADR-012) — pending
+  - Phase 2.6: AI (ADR-013, ADR-014, ADR-015) — pending
+  - Phase 2.1: Settings (ADR-001, ADR-002) — partially done via migrations, ADR docs pending

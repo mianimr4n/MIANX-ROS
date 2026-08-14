@@ -220,6 +220,14 @@ import {
   createCodService,
   type CodService,
 } from "./services/deliveries/cod-service.js";
+import {
+  createCustomerIdentityService,
+  type CustomerIdentityService,
+} from "./services/customers/identity-service.js";
+import {
+  createCustomerMergeService,
+  type CustomerMergeService,
+} from "./services/customers/merge-service.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -285,6 +293,10 @@ export interface AppDependencies {
   deliveryPodService: DeliveryPodService;
   /** Phase 2.4 — Cash on Delivery collection + reconciliation (ADR-010). */
   codService: CodService;
+  /** Phase 2.3 — Customer identity lookup + canonical mapping (ADR-005). */
+  customerIdentityService: CustomerIdentityService;
+  /** Phase 2.3 — Customer account merge + reversal (ADR-006). */
+  customerMergeService: CustomerMergeService;
   inviteAppOrigin: string;
   envStatus: EnvironmentStatus;
 }
@@ -368,6 +380,8 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     riderLocationService: createRiderLocationService(envStatus),
     deliveryPodService: createDeliveryPodService(envStatus),
     codService: createCodService(envStatus),
+    customerIdentityService: createCustomerIdentityService(envStatus),
+    customerMergeService: createCustomerMergeService(envStatus),
     inviteAppOrigin: envStatus.config.corsOrigin,
     envStatus,
   };
