@@ -208,6 +208,18 @@ import {
   createWhatsAppAdminService,
   type WhatsAppAdminService,
 } from "./services/whatsapp/admin-service.js";
+import {
+  createRiderLocationService,
+  type RiderLocationService,
+} from "./services/deliveries/rider-location-service.js";
+import {
+  createDeliveryPodService,
+  type DeliveryPodService,
+} from "./services/deliveries/pod-service.js";
+import {
+  createCodService,
+  type CodService,
+} from "./services/deliveries/cod-service.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -267,6 +279,12 @@ export interface AppDependencies {
   whatsappAdapter: MessageProviderAdapter | null;
   /** WhatsApp admin service (conversations, templates, send). Always present. */
   whatsappAdmin: WhatsAppAdminService;
+  /** Phase 2.4 — Rider location ingest + TTL (ADR-008). */
+  riderLocationService: RiderLocationService;
+  /** Phase 2.4 — Proof of Delivery capture + read (ADR-009). */
+  deliveryPodService: DeliveryPodService;
+  /** Phase 2.4 — Cash on Delivery collection + reconciliation (ADR-010). */
+  codService: CodService;
   inviteAppOrigin: string;
   envStatus: EnvironmentStatus;
 }
@@ -347,6 +365,9 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     manualContact: createManualContactService(envStatus),
     whatsappAdapter: resolveWhatsAppAdapter(envStatus),
     whatsappAdmin: createWhatsAppAdminService(envStatus),
+    riderLocationService: createRiderLocationService(envStatus),
+    deliveryPodService: createDeliveryPodService(envStatus),
+    codService: createCodService(envStatus),
     inviteAppOrigin: envStatus.config.corsOrigin,
     envStatus,
   };
