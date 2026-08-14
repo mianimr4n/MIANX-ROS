@@ -1,10 +1,11 @@
 import { createApp } from "./app.js";
 import { defaultLogger, installProcessErrorHandlers } from "./observability/index.js";
 import { startNotificationWorker } from "./services/notifications/outbox-worker.js";
+import { startInboundWorker } from "./services/whatsapp/inbound-worker.js";
 
 installProcessErrorHandlers(defaultLogger);
 
-const { app, envStatus } = createApp();
+const { app, envStatus, dependencies } = createApp();
 const isProduction = process.env.NODE_ENV === "production";
 
 if (envStatus.safetyBlockers.length > 0) {
@@ -49,4 +50,10 @@ app.listen(envStatus.config.port, () => {
 
   // Start notification outbox worker for mock|sandbox (not production unless TELEPIZZA_NOTIFICATION_WORKER=1).
   startNotificationWorker(envStatus, 15_000);
+
+  // Start WhatsApp inbound worker — drains whatsapp_inbound_events queue into
+  // whatsapp_messages + whatsapp_conversations (ADR-004 §7). Same lifecycle
+  // rules as the notification worker: not in production unless
+  // TELEPIZZA_WHATSAPP_WORKER=1.
+  startInboundWorker(envStatus, dependencies.whatsappAdapter, 10_000);
 });
