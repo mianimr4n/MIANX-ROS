@@ -70,6 +70,7 @@ import { createAdminLoyaltyRouter } from "./loyalty.js";
 import { createAdminMarketingRouter } from "./marketing.js";
 import { createAdminWhatsAppRouter } from "./whatsapp.js";
 import { createAdminDeliveryRiderRouter } from "./delivery-rider.js";
+import { createAdminCustomersRouter } from "./customers.js";
 import type { OpeningOperationsService } from "../../services/opening/operations.js";
 import type { OpeningGovernanceService } from "../../services/opening/governance.js";
 import type { OpeningDryRunService } from "../../services/opening/dry-run.js";
@@ -176,6 +177,8 @@ export interface AdminRouterDependencies {
   riderLocationService: import("../../services/deliveries/rider-location-service.js").RiderLocationService;
   deliveryPodService: import("../../services/deliveries/pod-service.js").DeliveryPodService;
   codService: import("../../services/deliveries/cod-service.js").CodService;
+  customerIdentityService: import("../../services/customers/identity-service.js").CustomerIdentityService;
+  customerMergeService: import("../../services/customers/merge-service.js").CustomerMergeService;
 }
 
 function toSafeInvite(invite: {
@@ -782,6 +785,18 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       riderLocationService: dependencies.riderLocationService,
       podService: dependencies.deliveryPodService,
       codService: dependencies.codService,
+    }),
+  );
+
+  // Phase 2.3 — CRM (ADR-005/006).
+  // Customer identity lookup, search, identity CRUD,
+  // customer merge (super-admin only), merge reversal, merge log.
+  router.use(
+    createAdminCustomersRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      identityService: dependencies.customerIdentityService,
+      mergeService: dependencies.customerMergeService,
     }),
   );
 
