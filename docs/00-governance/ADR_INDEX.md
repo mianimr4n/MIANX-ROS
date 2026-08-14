@@ -38,8 +38,8 @@ Active
 
 | ADR | Title | Status | Version | Artifact |
 |-----|-------|--------|---------|----------|
-| ADR-001 | Repository Governance v1 | Active | 1.0 | Policy recorded in [`GOVERNANCE.md`](./GOVERNANCE.md) |
-| ADR-002 | Repository Evidence Model | Planned | - | Not yet authored under `docs/13-adr/` |
+| ADR-001 | Branch Configuration Inheritance & Overrides | Accepted | 1.0 | [`docs/13-adr/ADR-001-branch-configuration-inheritance.md`](../13-adr/ADR-001-branch-configuration-inheritance.md) — implemented in `v1.9.0` |
+| ADR-002 | Settings Versioning, Activation & Rollback Model | Accepted | 1.0 | [`docs/13-adr/ADR-002-settings-versioning-rollback.md`](../13-adr/ADR-002-settings-versioning-rollback.md) — implemented in `v1.9.0` |
 | ADR-003 | Provider-Secret Boundary Architecture | Accepted | 1.0 | [`docs/13-adr/ADR-003-provider-secret-boundary.md`](../13-adr/ADR-003-provider-secret-boundary.md) — implemented in `v1.9.0` |
 | ADR-004 | WhatsApp Conversation Ownership & Routing | Accepted | 1.0 | [`docs/13-adr/ADR-004-whatsapp-conversation-ownership.md`](../13-adr/ADR-004-whatsapp-conversation-ownership.md) — implemented in `v1.9.0` |
 | ADR-005 | Canonical Customer Identity Strategy | Accepted | 1.0 | [`docs/13-adr/ADR-005-canonical-customer-identity.md`](../13-adr/ADR-005-canonical-customer-identity.md) — implemented in `v1.9.0` |
@@ -54,9 +54,8 @@ Active
 | ADR-014 | AI Human-Approval Gate Architecture | Accepted | 1.0 | [`docs/13-adr/ADR-014-ai-approval-gate.md`](../13-adr/ADR-014-ai-approval-gate.md) — implemented in `v1.9.0` |
 | ADR-015 | AI Prompt & Data Retention Policy | Accepted | 1.0 | [`docs/13-adr/ADR-015-ai-prompt-retention.md`](../13-adr/ADR-015-ai-prompt-retention.md) — implemented in `v1.9.0` |
 
-> **Note:** All Phase 2 ADRs (ADR-001 through ADR-015) are now either
-> Active or have standalone ADR files authored. ADR-001 and ADR-002
-> (Settings) have migrations applied; standalone ADR docs are pending.
+> **Note:** All Phase 2 ADRs (ADR-001 through ADR-015) now have standalone
+> ADR files authored under `docs/13-adr/` and are marked Accepted.
 
 ---
 
