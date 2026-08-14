@@ -137,5 +137,6 @@ export function createApp(
   return {
     app,
     envStatus,
+    dependencies,
   };
 }
