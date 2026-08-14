@@ -152,7 +152,8 @@ security definer
 set search_path = public
 as $$
 declare
-  v_deleted bigint;
+  v_deleted bigint := 0;
+  v_batch_deleted bigint;
   v_cutoff timestamptz;
 begin
   if p_retention_hours < 1 then
@@ -170,14 +171,16 @@ begin
       and coalesce(d.delivered_at, d.updated_at) < v_cutoff
   );
 
-  get diagnostics v_deleted = row_count;
+  get diagnostics v_batch_deleted = row_count;
+  v_deleted := v_deleted + coalesce(v_batch_deleted, 0);
 
   -- Also delete orphan pings (no delivery_id) older than retention
   delete from public.rider_locations
   where delivery_id is null
     and created_at < v_cutoff;
 
-  get diagnostics v_deleted = v_deleted + row_count;
+  get diagnostics v_batch_deleted = row_count;
+  v_deleted := v_deleted + coalesce(v_batch_deleted, 0);
 
   return jsonb_build_object(
     'deleted', v_deleted,
