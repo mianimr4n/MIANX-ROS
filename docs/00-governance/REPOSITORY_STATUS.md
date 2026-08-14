@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-14 — **v1.8.0 deployed to Production** (PR #212 — ADR-007 + ADR-011 foundations applied to Production Supabase via `supabase db push`; migrations `20260814180000` + `20260814180100` now live; Production API + website confirmed healthy at SHA `554430f`); prior `v1.6.0` @ `f3fce11…` (Phase 2.1-2.4 + IDENTITY-01, PRs #205-#209); Phase 2.2 WhatsApp, 2.3 CRM, 2.6 AI still **not started**; prior `v1.5.1` @ `bfe60cc…` unchanged
+**Last reconciled:** 2026-08-15 — **FU-1 (Issue #215) fixed + deployed to Production** (PR #216 — `enforce_journal_entry_immutability()` bypass branch now returns `old` for DELETE; verified on Production with all 6 functional tests passing); Production migration tip now `20260815000000`; v1.8.0 + FU-1 fully live in Production; Phase 2.2 WhatsApp, 2.3 CRM, 2.6 AI still **not started**; prior `v1.5.1` @ `bfe60cc…` unchanged
 
 ---
 
@@ -36,21 +36,21 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main (current tip) | `554430f879fb2672e3a750638f1c9a08dd28f0cc` | PR #213 squash merge — v1.8.0 release follow-up docs (REPOSITORY_STATUS + CHANGELOG) on top of PR #212 |
-| Latest released baseline | `v1.8.0` @ `7388e07ed699cffeae62de1c3449e7228d9ceef4` | ADR-007 Delivery State Machine + ADR-011 Accounting Immutability foundations; annotated tag + GitHub Release published; **Production deployed** (DB + API + website) |
+| Repository main (current tip) | `1e3832ea38288a8182cf6ec43cf33437a943da34` | PR #216 squash merge — FU-1 fix (ADR-011 bypass DELETE) |
+| Latest released baseline | `v1.8.0` @ `7388e07ed699cffeae62de1c3449e7228d9ceef4` | ADR-007 Delivery State Machine + ADR-011 Accounting Immutability foundations; annotated tag + GitHub Release published; **Production deployed** (DB + API + website + FU-1 fix) |
 | Prior released baseline | `v1.6.0` @ `f3fce1138def9822c0b3cb22b0c8b8b4424551d6` | Phase 2 configuration control plane + identity onboarding foundation; annotated tag; GitHub Release published |
 | Prior released baseline | `v1.5.1` @ `bfe60cc6a3074e08e61f85b458b19e724325eba4` | Phase 1.1 professional readiness; tag object `6b86be34…` |
 | Prior released tag | `v1.5.0` @ `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | RC6 Phase 1 final closeout |
 | Prior released tag | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | RC5 final closeout |
 | Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | RC4 release closeout |
 | RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
-| Production website commit | `554430f879fb2672e3a750638f1c9a08dd28f0cc` | Vercel auto-deployed on PR #213 merge; URL `https://telepizza-website.vercel.app` (HTTP 200 verified) |
+| Production website commit | `1e3832ea38288a8182cf6ec43cf33437a943da34` | Vercel auto-deployed on PR #216 merge; URL `https://telepizza-website.vercel.app` (HTTP 200 verified) |
 | Prior Production website (rollback) | `bfe60cc…` / `dpl_FgHubLsuWo5ahYri18mjayCCw9nu` | Phase 1.1 baseline; superseded by v1.8.0 deploy |
-| Production API (observed tip) | `554430f879fb2672e3a750638f1c9a08dd28f0cc` | Render `srv-d9bdnprtqb8s73cda6t0`; URL `https://telepizza-api.onrender.com`; `/healthz` + `/readyz` HTTP 200 verified; DB connectivity ok |
-| Production database | Migrations through `20260814180100` | v1.8.0 migrations applied via `supabase db push` (2026-08-14); ADR-007 trigger + ADR-011 triggers verified live |
+| Production API (observed tip) | `1e3832ea38288a8182cf6ec43cf33437a943da34` | Render `srv-d9bdnprtqb8s73cda6t0`; URL `https://telepizza-api.onrender.com`; `/healthz` + `/readyz` HTTP 200 verified; DB connectivity ok |
+| Production database | Migrations through `20260815000000` | v1.8.0 migrations + FU-1 fix applied via `supabase db push` (2026-08-14 + 2026-08-15); ADR-007 trigger + ADR-011 triggers + FU-1 fix verified live |
 | Phase 1.1 gate | **PASSED** — Production certified | `phase1-1-production-closeout/` |
 | Phase 2.1-2.4 + IDENTITY-01 gate | **DEPLOYED to Production** — `v1.6.0` tagged | PRs #205, #206, #207, #208, #209 |
-| Phase 2.4/2.5 foundation gate (ADR-007 + ADR-011) | **DEPLOYED to Production** — `v1.8.0` tagged; migrations applied; API + website live | PR #212 (squash `7388e07`); Production deploy 2026-08-14 |
+| Phase 2.4/2.5 foundation gate (ADR-007 + ADR-011) | **DEPLOYED to Production** — `v1.8.0` tagged; migrations applied; API + website live; FU-1 fix applied | PR #212 (squash `7388e07`); FU-1 fix PR #216 (squash `1e3832e`); Production deploy 2026-08-14 + 2026-08-15 |
 
 ## Current Repository Status
 
@@ -84,7 +84,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **v1.8.0 Production-deployed** — Phase 2.4 (ADR-007) + Phase 2.5 (ADR-011) foundations live in Production; next: complete Phase 2.4 (ADR-008/009/010 rider & dispatch) or Phase 2.5 (ADR-012 accounting events) — OR fix the ADR-011 bypass DELETE bug (see Follow-ups) |
+| Current Delivery Slice | **v1.8.0 + FU-1 Production-deployed** — Phase 2.4 (ADR-007) + Phase 2.5 (ADR-011) foundations + FU-1 fix all live in Production; next: complete Phase 2.4 (ADR-008/009/010 rider & dispatch) or Phase 2.5 (ADR-012 accounting events) |
 | Phase 1.1 | **PASSED** / Production certified / `v1.5.1` |
 | Phase 2.1 Configuration Schema | **MERGED** (`v1.6.0`) — PR #205 — `24f2058` |
 | Phase 2.2 Settings Persistence | **MERGED** (`v1.6.0`) — PR #206 — `9da2fd5` |
@@ -110,7 +110,7 @@ Admin ERP core modules remain LIVE on `main` with documented gaps (tables below)
 
 | ID | Severity | Title | Status | Notes |
 | --- | --- | --- | --- | --- |
-| FU-1 | P2 | ADR-011 `app.bypass_immutability` hook returns `new` (NULL) for DELETE, silently cancelling the DELETE instead of allowing it | **Open** — discovered during 2026-08-14 Production verification | `enforce_journal_entry_immutability()` line 47: `if v_bypass = 'on' then return new; end if;` — for BEFORE DELETE, `NEW` is NULL, which cancels the operation per PL/pgSQL semantics. Sibling function `enforce_journal_entry_line_immutability()` correctly returns `old` for DELETE-with-bypass. Not a v1.8.0 release blocker (bypass hook is documented as reserved for future trusted maintenance RPCs; not used by application code today). Fix: mirror the line-level function's pattern — `if TG_OP = 'DELETE' then return old; end if; return new;` inside the bypass branch. Add regression test. |
+| FU-1 | P2 | ADR-011 `app.bypass_immutability` hook returns `new` (NULL) for DELETE, silently cancelling the DELETE instead of allowing it | **Fixed in Production** — PR #216 (squash `1e3832e`) merged + deployed 2026-08-15 | `enforce_journal_entry_immutability()` line 47: `if v_bypass = 'on' then return new; end if;` — for BEFORE DELETE, `NEW` is NULL, which cancels the operation per PL/pgSQL semantics. Sibling function `enforce_journal_entry_line_immutability()` correctly returns `old` for DELETE-with-bypass. **Fix (migration `20260815000000`):** mirror the line-level function's pattern — `if (TG_OP = 'DELETE') then return old; end if; return new;` inside the bypass branch. +15 regression tests added. Production-verified with 6 functional tests (DELETE/UPDATE × bypass on/off). Issue #215 closed. |
 
 ### Merged delivery through PR #133 (2026-07-30)
 

@@ -10,6 +10,41 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
 
 ---
 
+## [1.8.1] — 2026-08-15
+
+### Fixed
+
+- **FU-1 (Issue #215, P2)** — `enforce_journal_entry_immutability()` bypass
+  branch returned `new` (NULL for BEFORE DELETE) which silently cancelled
+  DELETE operations when `app.bypass_immutability = 'on'` was set. The
+  sibling function `enforce_journal_entry_line_immutability()` already had
+  the correct pattern (returns `old` for DELETE-with-bypass); the entry-level
+  function was inconsistent.
+  - **Migration `20260815000000_adr_011_fix_bypass_delete.sql`** — redefines
+    `enforce_journal_entry_immutability()` with the correct bypass-DELETE
+    pattern: `if (TG_OP = 'DELETE') then return old; end if; return new;`
+    inside the bypass branch. Idempotent (`create or replace function`),
+    transactional (`begin/commit`), does NOT touch the line-level function
+    (already correct) or any triggers.
+  - **+15 regression tests** in `backend/api/tests/accounting-immutability.test.ts`
+    (new describe block `ADR-011 FU-1 fix — bypass_immutability DELETE bug
+    (Issue #215)`). Tests cover: the actual fix pattern (returns OLD for
+    DELETE), absence of the old buggy pattern (bare `return new` after
+    bypass check), preserved immutability guarantees (without bypass),
+    idempotency, transactional safety, and non-interference with sibling
+    function/triggers.
+  - **Production verification**: 6 functional tests passed on Production
+    Supabase (DELETE/UPDATE × bypass on/off). All existing data untouched.
+  - **Backward compatibility**:
+    | Scenario | Before fix | After fix |
+    | --- | --- | --- |
+    | bypass OFF + UPDATE posted entry | rejected | rejected (unchanged) |
+    | bypass OFF + DELETE posted entry | rejected | rejected (unchanged) |
+    | bypass ON + UPDATE posted entry | allowed | allowed (unchanged) |
+    | bypass ON + DELETE posted entry | silently cancelled (BUG) | allowed (FIXED) |
+
+---
+
 ## [Unreleased]
 
 ### Planned
@@ -20,16 +55,6 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
 - Phase 2.6 — AI Command Center (forecasts, drafts, approval inbox)
 - Opening Operations Milestone 2 — Payments, Notifications, Device Verification
 - Northern Bypass branch activation
-
-### Fixed (v1.8.1 candidate)
-- **FU-1 (Issue #215, P2)** — `enforce_journal_entry_immutability()` bypass
-  branch returned `new` (NULL for BEFORE DELETE) which silently cancelled
-  DELETE operations when `app.bypass_immutability = 'on'` was set. Fix
-  migration `20260815000000_adr_011_fix_bypass_delete.sql` makes the
-  function consistent with its sibling `enforce_journal_entry_line_immutability()`
-  by returning `old` for DELETE-with-bypass. Core immutability guarantee
-  (without bypass) is unchanged. +15 regression tests added to
-  `backend/api/tests/accounting-immutability.test.ts`.
 
 ---
 
