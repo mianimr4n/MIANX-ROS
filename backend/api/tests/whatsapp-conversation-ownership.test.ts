@@ -227,8 +227,11 @@ describe("ADR-004 — WhatsApp Conversation Ownership migration", () => {
     );
   });
 
-  it("conversations RLS allows super-admin cross-branch read", () => {
-    expect(MIGRATION_SQL).toMatch(/role_code = 'super-admin'/);
+  it("conversations RLS allows super-admin cross-branch read via JOIN to roles.code", () => {
+    // ADR-004 RLS uses a JOIN to roles.code = 'super-admin' (NOT ur.role_code,
+    // which doesn't exist — user_roles has role_id FK to roles.id).
+    expect(MIGRATION_SQL).toMatch(/join public\.roles r on r\.id = ur\.role_id/i);
+    expect(MIGRATION_SQL).toMatch(/r\.code = 'super-admin'/);
   });
 
   it("messages RLS inherits branch scoping via conversation join", () => {

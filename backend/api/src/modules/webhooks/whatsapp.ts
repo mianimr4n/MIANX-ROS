@@ -25,6 +25,7 @@ import { Router } from "express";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { EnvironmentStatus } from "../../config/env.js";
 import type { MessageProviderAdapter } from "../../services/providers/adapter.js";
+import { whatsAppWebhookRateLimitMiddleware } from "../../services/whatsapp/webhook-rate-limit.js";
 
 export interface WhatsAppWebhookDependencies {
   envStatus: EnvironmentStatus;
@@ -103,16 +104,29 @@ export function createWhatsAppWebhookRouter(deps: WhatsAppWebhookDependencies): 
     }
 
     // Meta expects the challenge as plaintext in the response body.
+    // Sanitize: the challenge MUST be a numeric string (Meta sends a Unix-ms
+    // timestamp). Reject anything else to prevent reflected XSS even though
+    // we set Content-Type: text/plain (defense in depth — browsers may sniff).
+    if (!/^\d{1,20}$/.test(challenge)) {
+      return res.status(400).json({
+        ok: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "hub.challenge must be a numeric string.",
+        },
+      });
+    }
     return res.status(200).type("text/plain").send(challenge);
   });
 
   // ---------------------------------------------------------------------------
   // POST — Inbound message + status callback
   // ---------------------------------------------------------------------------
-  // Step 1: Verify X-Hub-Signature-256 HMAC-SHA256 (500ms budget).
-  // Step 2: Return 200 OK immediately — Meta retries on non-2xx.
-  // Step 3: Enqueue raw payload to whatsapp_inbound_events for async processing.
-  router.post("/", async (req, res) => {
+  // Step 1: Rate limit (per IP, in-memory, 200/min).
+  // Step 2: Verify X-Hub-Signature-256 HMAC-SHA256 (500ms budget).
+  // Step 3: Return 200 OK immediately — Meta retries on non-2xx.
+  // Step 4: Enqueue raw payload to whatsapp_inbound_events for async processing.
+  router.post("/", whatsAppWebhookRateLimitMiddleware, async (req, res) => {
     // If WhatsApp is disabled, return 404 so Meta stops retrying.
     if (envStatus.config.whatsappMode === "disabled" || !adapter) {
       return res.status(404).json({

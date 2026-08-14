@@ -102,6 +102,26 @@ describe("WhatsApp webhook receiver (ADR-004 §7)", () => {
       expect(response.text).toBe("1234567890");
     });
 
+    it("returns 400 when hub.challenge is not numeric (XSS defense)", async () => {
+      const env = makeEnv();
+      const { app } = createApp(env, {
+        authTokenVerifier: makeMockAuthVerifier(),
+        authProfileRepository: makeMockAuthProfileRepository(),
+        whatsappAdapter: makeMockAdapter(),
+      } as Partial<AppDependencies>);
+
+      const response = await request(app)
+        .get("/api/v1/webhooks/whatsapp")
+        .query({
+          "hub.mode": "subscribe",
+          "hub.verify_token": "test-verify-token-12345",
+          "hub.challenge": "<script>alert(1)</script>",
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.code).toBe("VALIDATION_ERROR");
+    });
+
     it("returns 401 when verify token does not match", async () => {
       const env = makeEnv();
       const { app } = createApp(env, {

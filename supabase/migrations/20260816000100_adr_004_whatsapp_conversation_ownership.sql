@@ -443,7 +443,8 @@ create trigger trg_whatsapp_message_no_delete
 -- ---------------------------------------------------------------------------
 alter table public.whatsapp_conversations enable row level security;
 
--- Branch-scoped read: agent can read conversations for their branch
+-- Branch-scoped read: agent can read conversations for their branch.
+-- Super-admin bypasses via JOIN to roles.code = 'super-admin'.
 create policy "whatsapp_conversations_branch_read"
   on public.whatsapp_conversations for select
   to authenticated, anon
@@ -454,10 +455,12 @@ create policy "whatsapp_conversations_branch_read"
       and ur.assignment_status = 'ACTIVE'
     )
     or exists (
-      select 1 from public.user_roles ur
-      where ur.user_id = auth.uid()
-      and ur.assignment_status = 'ACTIVE'
-      and ur.role_code = 'super-admin'
+      select 1
+        from public.user_roles ur
+        join public.roles r on r.id = ur.role_id
+        where ur.user_id = auth.uid()
+        and ur.assignment_status = 'ACTIVE'
+        and r.code = 'super-admin'
     )
   );
 
@@ -491,10 +494,12 @@ create policy "whatsapp_messages_branch_read"
           and ur.assignment_status = 'ACTIVE'
         )
         or exists (
-          select 1 from public.user_roles ur
-          where ur.user_id = auth.uid()
-          and ur.assignment_status = 'ACTIVE'
-          and ur.role_code = 'super-admin'
+          select 1
+            from public.user_roles ur
+            join public.roles r on r.id = ur.role_id
+            where ur.user_id = auth.uid()
+            and ur.assignment_status = 'ACTIVE'
+            and r.code = 'super-admin'
         )
       )
     )
@@ -528,10 +533,12 @@ create policy "whatsapp_conversation_events_branch_read"
           and ur.assignment_status = 'ACTIVE'
         )
         or exists (
-          select 1 from public.user_roles ur
-          where ur.user_id = auth.uid()
-          and ur.assignment_status = 'ACTIVE'
-          and ur.role_code = 'super-admin'
+          select 1
+            from public.user_roles ur
+            join public.roles r on r.id = ur.role_id
+            where ur.user_id = auth.uid()
+            and ur.assignment_status = 'ACTIVE'
+            and r.code = 'super-admin'
         )
       )
     )
