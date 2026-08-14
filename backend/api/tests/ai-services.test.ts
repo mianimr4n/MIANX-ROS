@@ -362,7 +362,7 @@ describe("ADR-014 — AI Approval Service", () => {
   beforeEach(() => {
     calls.length = 0;
     tableBehavior = {
-      ai_approvals: {
+      ai_action_approvals: {
         insertSingle: async (payload) => ({
           data: {
             id: APPROVAL_ID, ...(payload as Record<string, unknown>),
@@ -494,8 +494,8 @@ describe("ADR-014 — AI Approval Service", () => {
     });
 
     it("rejects approval in non-pending status", async () => {
-      const original = tableBehavior.ai_approvals!.maybeSingle!;
-      tableBehavior.ai_approvals!.maybeSingle = async () => ({
+      const original = tableBehavior.ai_action_approvals!.maybeSingle!;
+      tableBehavior.ai_action_approvals!.maybeSingle = async () => ({
         data: {
           id: APPROVAL_ID,
           status: "approved",
@@ -510,7 +510,7 @@ describe("ADR-014 — AI Approval Service", () => {
           actorUserId: ACTOR_USER_ID,
         }),
       ).rejects.toMatchObject({ code: "APPROVAL_NOT_PENDING" });
-      tableBehavior.ai_approvals!.maybeSingle = original;
+      tableBehavior.ai_action_approvals!.maybeSingle = original;
     });
   });
 

@@ -1,7 +1,7 @@
 /**
  * AI approval service (ADR-014).
  *
- * Wraps the `ai_approvals` table. AI-suggested state-mutating actions
+ * Wraps the `ai_action_approvals` table. AI-suggested state-mutating actions
  * are advisory only — they require explicit human approval before
  * execution.
  *
@@ -202,7 +202,7 @@ export function createAiApprovalService(envStatus: EnvironmentStatus): AiApprova
 
       const client = supabase();
       const { data, error } = await client
-        .from("ai_approvals")
+        .from("ai_action_approvals")
         .insert({
           ai_call_log_id: input.aiCallLogId ?? null,
           action_type: input.actionType,
@@ -229,7 +229,7 @@ export function createAiApprovalService(envStatus: EnvironmentStatus): AiApprova
 
       // Load existing to validate state
       const { data: existing, error: loadError } = await client
-        .from("ai_approvals")
+        .from("ai_action_approvals")
         .select("*")
         .eq("id", approvalId)
         .maybeSingle();
@@ -249,14 +249,14 @@ export function createAiApprovalService(envStatus: EnvironmentStatus): AiApprova
       // Check expiry
       if (new Date(existingRow.expiresAt) < new Date()) {
         await client
-          .from("ai_approvals")
+          .from("ai_action_approvals")
           .update({ status: "expired" })
           .eq("id", approvalId);
         throw new ApiError(409, "APPROVAL_EXPIRED", "Approval has expired (past 7-day window).");
       }
 
       const { data, error } = await client
-        .from("ai_approvals")
+        .from("ai_action_approvals")
         .update({
           status: "approved",
           decided_by: actorUserId,
@@ -287,7 +287,7 @@ export function createAiApprovalService(envStatus: EnvironmentStatus): AiApprova
 
       const client = supabase();
       const { data: existing, error: loadError } = await client
-        .from("ai_approvals")
+        .from("ai_action_approvals")
         .select("status, expires_at")
         .eq("id", approvalId)
         .maybeSingle();
@@ -305,7 +305,7 @@ export function createAiApprovalService(envStatus: EnvironmentStatus): AiApprova
       }
 
       const { data, error } = await client
-        .from("ai_approvals")
+        .from("ai_action_approvals")
         .update({
           status: "rejected",
           decided_by: actorUserId,
@@ -332,7 +332,7 @@ export function createAiApprovalService(envStatus: EnvironmentStatus): AiApprova
 
       const client = supabase();
       const { data, error } = await client
-        .from("ai_approvals")
+        .from("ai_action_approvals")
         .update({
           status: "executed",
           executed_at: new Date().toISOString(),
@@ -358,14 +358,14 @@ export function createAiApprovalService(envStatus: EnvironmentStatus): AiApprova
 
       const client = supabase();
       const { data: existing } = await client
-        .from("ai_approvals")
+        .from("ai_action_approvals")
         .select("execution_retry_count")
         .eq("id", approvalId)
         .maybeSingle();
       const retryCount = existing ? Number((existing as { execution_retry_count: number }).execution_retry_count) : 0;
 
       const { data, error } = await client
-        .from("ai_approvals")
+        .from("ai_action_approvals")
         .update({
           status: "failed",
           execution_result: { failure_reason: failureReason.trim(), retry_count: retryCount + 1 },
@@ -386,7 +386,7 @@ export function createAiApprovalService(envStatus: EnvironmentStatus): AiApprova
     async getApproval({ approvalId }) {
       const client = supabase();
       const { data, error } = await client
-        .from("ai_approvals")
+        .from("ai_action_approvals")
         .select("*")
         .eq("id", approvalId)
         .maybeSingle();
@@ -400,7 +400,7 @@ export function createAiApprovalService(envStatus: EnvironmentStatus): AiApprova
       const off = Math.max(offset ?? 0, 0);
       const client = supabase();
 
-      let q = client.from("ai_approvals").select("*", { count: "exact" });
+      let q = client.from("ai_action_approvals").select("*", { count: "exact" });
 
       if (status) q = q.eq("status", status);
       if (requestedBy) q = q.eq("requested_by", requestedBy);

@@ -9,7 +9,7 @@
 --     • Permission: ai.use (granted to all admin staff)
 --
 --   ADR-014 — AI Human-Approval Gate Architecture
---     • Table: ai_approvals (pending → approved → executed state machine)
+--     • Table: ai_action_approvals (pending → approved → executed state machine)
 --     • Permission: ai.approve (granted to super-admin, branch-manager only)
 --     • CHECK constraint on action_type (allowlist of permitted action types)
 --
@@ -278,9 +278,9 @@ grant execute on function public.upsert_ai_prompt_log(varchar, numeric, numeric,
   to service_role;
 
 -- ---------------------------------------------------------------------------
--- ADR-014: ai_approvals (human-approval gate)
+-- ADR-014: ai_action_approvals (human-approval gate)
 -- ---------------------------------------------------------------------------
-create table if not exists public.ai_approvals (
+create table if not exists public.ai_action_approvals (
   id uuid primary key default gen_random_uuid(),
   ai_call_log_id bigint references public.ai_call_logs (id) on delete set null,
   action_type text not null check (
@@ -314,29 +314,29 @@ create table if not exists public.ai_approvals (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
-comment on table public.ai_approvals is
+comment on table public.ai_action_approvals is
   'ADR-014: AI human-approval gate. AI suggestions are advisory only; state-mutating actions require explicit human approval.';
 
-create index if not exists idx_ai_approvals_status
-  on public.ai_approvals (status, requested_at desc);
+create index if not exists idx_ai_action_approvals_status
+  on public.ai_action_approvals (status, requested_at desc);
 
-create index if not exists idx_ai_approvals_requested_by
-  on public.ai_approvals (requested_by, requested_at desc);
+create index if not exists idx_ai_action_approvals_requested_by
+  on public.ai_action_approvals (requested_by, requested_at desc);
 
-create index if not exists idx_ai_approvals_decided_by
-  on public.ai_approvals (decided_by, decided_at desc)
+create index if not exists idx_ai_action_approvals_decided_by
+  on public.ai_action_approvals (decided_by, decided_at desc)
   where decided_by is not null;
 
-create index if not exists idx_ai_approvals_expires
-  on public.ai_approvals (expires_at)
+create index if not exists idx_ai_action_approvals_expires
+  on public.ai_action_approvals (expires_at)
   where status = 'pending';
 
-alter table public.ai_approvals enable row level security;
+alter table public.ai_action_approvals enable row level security;
 
 -- Branch staff can read approvals (branch_id is in metadata if applicable)
-drop policy if exists "ai_approvals_staff_read" on public.ai_approvals;
-create policy "ai_approvals_staff_read"
-  on public.ai_approvals for select
+drop policy if exists "ai_action_approvals_staff_read" on public.ai_action_approvals;
+create policy "ai_action_approvals_staff_read"
+  on public.ai_action_approvals for select
   to authenticated
   using (
     exists (
@@ -351,9 +351,9 @@ create policy "ai_approvals_staff_read"
   );
 
 -- Only ai.approve holders can UPDATE status (approve/reject)
-drop policy if exists "ai_approvals_approver_update" on public.ai_approvals;
-create policy "ai_approvals_approver_update"
-  on public.ai_approvals for update
+drop policy if exists "ai_action_approvals_approver_update" on public.ai_action_approvals;
+create policy "ai_action_approvals_approver_update"
+  on public.ai_action_approvals for update
   to authenticated
   using (
     exists (
@@ -368,9 +368,9 @@ create policy "ai_approvals_approver_update"
   );
 
 -- ai.use holders can INSERT (create new pending approval from AI suggestion)
-drop policy if exists "ai_approvals_use_insert" on public.ai_approvals;
-create policy "ai_approvals_use_insert"
-  on public.ai_approvals for insert
+drop policy if exists "ai_action_approvals_use_insert" on public.ai_action_approvals;
+create policy "ai_action_approvals_use_insert"
+  on public.ai_action_approvals for insert
   to authenticated
   with check (
     exists (
@@ -384,12 +384,12 @@ create policy "ai_approvals_use_insert"
     )
   );
 
-revoke all on public.ai_approvals from public, anon;
-grant select, insert, update on public.ai_approvals to authenticated;
-grant all on public.ai_approvals to service_role;
+revoke all on public.ai_action_approvals from public, anon;
+grant select, insert, update on public.ai_action_approvals to authenticated;
+grant all on public.ai_action_approvals to service_role;
 
 -- Trigger to update updated_at
-create or replace function public.set_ai_approvals_updated_at()
+create or replace function public.set_ai_action_approvals_updated_at()
 returns trigger
 language plpgsql
 as $func$
@@ -399,10 +399,10 @@ begin
 end;
 $func$;
 
-drop trigger if exists set_ai_approvals_updated_at on public.ai_approvals;
-create trigger set_ai_approvals_updated_at
-  before update on public.ai_approvals
-  for each row execute function public.set_ai_approvals_updated_at();
+drop trigger if exists set_ai_action_approvals_updated_at on public.ai_action_approvals;
+create trigger set_ai_action_approvals_updated_at
+  before update on public.ai_action_approvals
+  for each row execute function public.set_ai_action_approvals_updated_at();
 
 commit;
 
