@@ -6,17 +6,24 @@ export function WhatsAppKPIs({
   snapshot,
   loading,
   windowNote,
+  conversationStats,
 }: {
   snapshot: WhatsAppKpiSnapshot | null;
   loading: boolean;
   windowNote: string;
+  conversationStats?: {
+    openCount: number | null;
+    unreadCount: number | null;
+    failedMessages: number | null;
+    activeAgents: number | null;
+  } | null;
 }) {
   return (
     <section aria-label="WhatsApp key performance indicators" className="mb-6">
       <AdminSectionTitle
         eyebrow="WhatsApp"
         title="Operational KPIs"
-        description={`${windowNote} Conversation metrics require message storage.`}
+        description={`${windowNote} Conversation metrics from ADR-004 message store.`}
       />
       {loading && !snapshot ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-busy="true">
@@ -59,38 +66,38 @@ export function WhatsAppKPIs({
           />
           <AdminKpiCard
             title="Open conversations"
-            value="—"
-            source="UNAVAILABLE"
-            unavailable
-            detail="No conversation storage"
+            value={conversationStats?.openCount != null ? String(conversationStats.openCount) : "—"}
+            source={conversationStats?.openCount != null ? "LIVE" : "UNAVAILABLE"}
+            unavailable={conversationStats?.openCount == null}
+            detail="status IN (open, in_progress, escalated)"
           />
           <AdminKpiCard
             title="Unread conversations"
-            value="—"
-            source="UNAVAILABLE"
-            unavailable
-            detail="No message inbox API"
+            value={conversationStats?.unreadCount != null ? String(conversationStats.unreadCount) : "—"}
+            source={conversationStats?.unreadCount != null ? "LIVE" : "UNAVAILABLE"}
+            unavailable={conversationStats?.unreadCount == null}
+            detail="unread_count > 0 across open conversations"
           />
           <AdminKpiCard
             title="First response time"
             value="—"
-            source="UNAVAILABLE"
+            source="FOUNDATION"
             unavailable
-            detail="Requires inbound message timestamps"
+            detail="Aggregation pipeline queued (Phase 2.3 CRM analytics)"
           />
           <AdminKpiCard
             title="Failed messages"
-            value="—"
-            source="UNAVAILABLE"
-            unavailable
-            detail="Requires provider delivery webhooks"
+            value={conversationStats?.failedMessages != null ? String(conversationStats.failedMessages) : "—"}
+            source={conversationStats?.failedMessages != null ? "LIVE" : "UNAVAILABLE"}
+            unavailable={conversationStats?.failedMessages == null}
+            detail="delivery_status=failed OR permanently_failed"
           />
           <AdminKpiCard
             title="Active agents"
-            value="—"
-            source="FOUNDATION"
-            unavailable
-            detail="Conversation assignment not implemented"
+            value={conversationStats?.activeAgents != null ? String(conversationStats.activeAgents) : "—"}
+            source={conversationStats?.activeAgents != null ? "LIVE" : "UNAVAILABLE"}
+            unavailable={conversationStats?.activeAgents == null}
+            detail="Distinct assigned_agent_id in open conversations"
           />
         </div>
       )}

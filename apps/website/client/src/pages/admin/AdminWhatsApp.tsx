@@ -10,9 +10,7 @@ import { WhatsAppFilters, type WhatsAppFilterState } from "@/components/admin/wh
 import { WhatsAppHeader } from "@/components/admin/whatsapp/WhatsAppHeader";
 import { WhatsAppInsights } from "@/components/admin/whatsapp/WhatsAppInsights";
 import { WhatsAppKPIs } from "@/components/admin/whatsapp/WhatsAppKPIs";
-import { WhatsAppOrderBuilder } from "@/components/admin/whatsapp/WhatsAppOrderBuilder";
 import { WhatsAppOrderQueue } from "@/components/admin/whatsapp/WhatsAppOrderQueue";
-import { WhatsAppTemplates } from "@/components/admin/whatsapp/WhatsAppTemplates";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminAccessGate } from "@/hooks/useAdminAccessGate";
 import { useAdminBranch } from "@/contexts/AdminBranchContext";
@@ -248,7 +246,11 @@ export default function AdminWhatsApp() {
           onPrev={() => writeUrl({ offset: Math.max(0, urlState.offset - PAGE_SIZE) })}
           onNext={() => writeUrl({ offset: urlState.offset + PAGE_SIZE })}
         />
-        <ConversationWorkspace hasSelection={Boolean(selected)} />
+        <ConversationWorkspace
+          accessToken={session?.access_token ?? null}
+          branchIdFilter={branchIdFilter}
+          hasOrderSelection={Boolean(selected)}
+        />
         <div className="space-y-4">
           <CustomerContextPanel order={selected} customer={customer} branchLabelById={branchLabelById} />
         </div>
@@ -269,22 +271,25 @@ export default function AdminWhatsApp() {
 
       <div className="mb-6">
         <details
-          className="rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-3"
-          data-testid="whatsapp-deferred-capabilities"
+          className="rounded-2xl border border-solid border-[var(--admin-border)] bg-[var(--admin-panel)] px-4 py-3"
+          data-testid="whatsapp-available-capabilities"
+          open
         >
           <summary className="cursor-pointer text-sm font-semibold text-[var(--admin-ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-red)]">
-            Deferred WhatsApp provider capabilities
+            WhatsApp provider capabilities (Phase 2.2 — live)
           </summary>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--admin-muted)]">
-            <li>Provider connection and webhook delivery</li>
-            <li>Message / conversation storage and unread state</li>
-            <li>Templates, composer, and agent assignment</li>
-            <li>First-response timing and provider analytics</li>
+            <li>Provider connection + inbound webhook delivery (ADR-004 §7)</li>
+            <li>Conversation + message storage with unread state + immutability triggers (ADR-004 §5)</li>
+            <li>Template CRUD via /admin/whatsapp/templates (ADR-004 §1)</li>
+            <li>Outbound send (text + template) via outbox worker (ADR-004 §8)</li>
+            <li>Agent assignment + state-machine transitions (ADR-004 §4)</li>
+            <li>Audit log of conversation events (ADR-004 §4)</li>
           </ul>
-          <div className="sr-only">
-            <WhatsAppOrderBuilder />
-            <WhatsAppTemplates />
-          </div>
+          <p className="mt-3 text-xs text-[var(--admin-muted)]">
+            First-response-time aggregation is queued for Phase 2.3 CRM analytics. PII anonymization (24-month) is
+            scheduled as a separate follow-up.
+          </p>
         </details>
       </div>
 

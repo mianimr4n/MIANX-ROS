@@ -4768,3 +4768,264 @@ export function postSupplierPaymentJournal(
     timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
   });
 }
+
+// ---------------------------------------------------------------------------
+// Phase 2.2 — WhatsApp admin routes (ADR-004 §1, §4, §5)
+// ---------------------------------------------------------------------------
+
+export type WhatsAppConversationStatus =
+  | "open"
+  | "in_progress"
+  | "escalated"
+  | "resolved"
+  | "closed";
+
+export type WhatsAppConversationListItem = {
+  id: string;
+  branchId: string;
+  customerId: string | null;
+  contactPhone: string;
+  status: WhatsAppConversationStatus;
+  assignedAgentId: string | null;
+  linkedOrderId: string | null;
+  unreadCount: number;
+  lastMessageAt: string | null;
+  lastMessagePreview: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type WhatsAppConversationDetail = WhatsAppConversationListItem & {
+  providerConfigId: string;
+  providerConversationId: string | null;
+  closedAt: string | null;
+  piiAnonymizedAt: string | null;
+};
+
+export type WhatsAppMessageRow = {
+  id: string;
+  conversationId: string;
+  direction: "inbound" | "outbound";
+  providerMessageId: string | null;
+  fromPhone: string | null;
+  toPhone: string | null;
+  content: string | null;
+  contentType: string;
+  templateKey: string | null;
+  templateLanguage: string | null;
+  templateParameters: unknown;
+  deliveryStatus: string;
+  providerTimestamp: string | null;
+  failureReason: string | null;
+  retryCount: number;
+  createdAt: string;
+};
+
+export type WhatsAppConversationEventRow = {
+  id: number;
+  conversationId: string;
+  eventType: string;
+  actorUserId: string | null;
+  actorRole: string | null;
+  previousValue: unknown;
+  newValue: unknown;
+  reason: string | null;
+  createdAt: string;
+};
+
+export type WhatsAppTemplateRow = {
+  id: string;
+  templateKey: string;
+  providerTemplateId: string;
+  language: string;
+  category: "marketing" | "utility" | "authentication";
+  bodyText: string;
+  variables: unknown;
+  isActive: boolean;
+  providerStatus: "pending" | "approved" | "rejected" | "paused";
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type WhatsAppConversationListResult = {
+  conversations: WhatsAppConversationListItem[];
+  pagination: { limit: number; offset: number; total: number };
+};
+
+export async function listWhatsAppConversations(
+  accessToken: string,
+  query?: {
+    status?: WhatsAppConversationStatus | null;
+    q?: string | null;
+    limit?: number;
+    offset?: number;
+  },
+  opts?: AdminReadOptions,
+): Promise<WhatsAppConversationListResult> {
+  const params = new URLSearchParams();
+  if (query?.status) params.set("status", query.status);
+  if (query?.q) params.set("q", query.q);
+  params.set("limit", String(query?.limit ?? 50));
+  params.set("offset", String(query?.offset ?? 0));
+  const envelope = await fetchApiEnvelope<WhatsAppConversationListItem[]>(
+    `/admin/whatsapp/conversations?${params.toString()}`,
+    readInit(accessToken, opts),
+  );
+  const pagination = (envelope.meta?.pagination ?? {
+    limit: query?.limit ?? 50,
+    offset: query?.offset ?? 0,
+    total: envelope.data.length,
+  }) as WhatsAppConversationListResult["pagination"];
+  return { conversations: envelope.data, pagination };
+}
+
+export async function getWhatsAppConversation(
+  accessToken: string,
+  conversationId: string,
+  opts?: AdminReadOptions,
+): Promise<WhatsAppConversationDetail> {
+  return fetchApiData<WhatsAppConversationDetail>(
+    `/admin/whatsapp/conversations/${conversationId}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export async function listWhatsAppMessages(
+  accessToken: string,
+  conversationId: string,
+  query?: { limit?: number },
+  opts?: AdminReadOptions,
+): Promise<WhatsAppMessageRow[]> {
+  const params = new URLSearchParams();
+  if (query?.limit) params.set("limit", String(query.limit));
+  const qs = params.toString();
+  return fetchApiData<WhatsAppMessageRow[]>(
+    `/admin/whatsapp/conversations/${conversationId}/messages${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export async function listWhatsAppConversationEvents(
+  accessToken: string,
+  conversationId: string,
+  query?: { limit?: number },
+  opts?: AdminReadOptions,
+): Promise<WhatsAppConversationEventRow[]> {
+  const params = new URLSearchParams();
+  if (query?.limit) params.set("limit", String(query.limit));
+  const qs = params.toString();
+  return fetchApiData<WhatsAppConversationEventRow[]>(
+    `/admin/whatsapp/conversations/${conversationId}/events${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export async function sendWhatsAppMessage(
+  accessToken: string,
+  conversationId: string,
+  body: {
+    contentType: "text" | "template";
+    text?: string | null;
+    templateKey?: string | null;
+    templateLanguage?: string | null;
+    templateParameters?: unknown[] | null;
+  },
+): Promise<{ messageId: string; conversationId: string; deliveryStatus: string }> {
+  return fetchApiData(`/admin/whatsapp/conversations/${conversationId}/messages`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export async function assignWhatsAppConversation(
+  accessToken: string,
+  conversationId: string,
+  agentUserId: string | null,
+): Promise<{ assignedAgentId: string | null }> {
+  return fetchApiData(`/admin/whatsapp/conversations/${conversationId}/assign`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ agentUserId }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export async function transitionWhatsAppConversationStatus(
+  accessToken: string,
+  conversationId: string,
+  toStatus: WhatsAppConversationStatus,
+  reason?: string | null,
+): Promise<{ status: WhatsAppConversationStatus }> {
+  return fetchApiData(`/admin/whatsapp/conversations/${conversationId}/status`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ toStatus, reason: reason ?? null }),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export async function listWhatsAppTemplates(
+  accessToken: string,
+  query?: { activeOnly?: boolean },
+  opts?: AdminReadOptions,
+): Promise<WhatsAppTemplateRow[]> {
+  const params = new URLSearchParams();
+  if (query?.activeOnly) params.set("active", "true");
+  const qs = params.toString();
+  return fetchApiData<WhatsAppTemplateRow[]>(
+    `/admin/whatsapp/templates${qs ? `?${qs}` : ""}`,
+    readInit(accessToken, opts),
+  );
+}
+
+export async function createWhatsAppTemplate(
+  accessToken: string,
+  body: {
+    templateKey: string;
+    providerTemplateId: string;
+    language?: string;
+    category: "marketing" | "utility" | "authentication";
+    bodyText: string;
+    variables?: unknown[];
+    isActive?: boolean;
+    providerStatus?: "pending" | "approved" | "rejected" | "paused";
+  },
+): Promise<WhatsAppTemplateRow> {
+  return fetchApiData(`/admin/whatsapp/templates`, {
+    method: "POST",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export async function updateWhatsAppTemplate(
+  accessToken: string,
+  templateId: string,
+  body: {
+    isActive?: boolean;
+    providerStatus?: "pending" | "approved" | "rejected" | "paused";
+    bodyText?: string;
+    variables?: unknown[];
+  },
+): Promise<WhatsAppTemplateRow> {
+  return fetchApiData(`/admin/whatsapp/templates/${templateId}`, {
+    method: "PATCH",
+    headers: { ...bearerHeaders(accessToken), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
+
+export async function deleteWhatsAppTemplate(
+  accessToken: string,
+  templateId: string,
+): Promise<void> {
+  await fetchApiEnvelope<void>(`/admin/whatsapp/templates/${templateId}`, {
+    method: "DELETE",
+    headers: bearerHeaders(accessToken),
+    timeoutMs: ADMIN_WRITE_TIMEOUT_MS,
+  });
+}
