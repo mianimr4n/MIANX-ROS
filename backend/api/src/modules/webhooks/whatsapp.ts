@@ -22,10 +22,27 @@
  */
 
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { EnvironmentStatus } from "../../config/env.js";
 import type { MessageProviderAdapter } from "../../services/providers/adapter.js";
-import { whatsAppWebhookRateLimitMiddleware } from "../../services/whatsapp/webhook-rate-limit.js";
+
+/**
+ * Per-IP rate limit for the POST webhook. Meta sends bursts of webhook
+ * deliveries (one per message + status callbacks), so 200/min/IP is
+ * generous for legitimate traffic. Uses express-rate-limit (CodeQL-recognized)
+ * rather than a custom in-memory limiter.
+ */
+const webhookRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    ok: false,
+    error: { code: "RATE_LIMITED", message: "Too many webhook requests from this IP. Please retry later." },
+  },
+});
 
 export interface WhatsAppWebhookDependencies {
   envStatus: EnvironmentStatus;
@@ -126,7 +143,7 @@ export function createWhatsAppWebhookRouter(deps: WhatsAppWebhookDependencies): 
   // Step 2: Verify X-Hub-Signature-256 HMAC-SHA256 (500ms budget).
   // Step 3: Return 200 OK immediately — Meta retries on non-2xx.
   // Step 4: Enqueue raw payload to whatsapp_inbound_events for async processing.
-  router.post("/", whatsAppWebhookRateLimitMiddleware, async (req, res) => {
+  router.post("/", webhookRateLimiter, async (req, res) => {
     // If WhatsApp is disabled, return 404 so Meta stops retrying.
     if (envStatus.config.whatsappMode === "disabled" || !adapter) {
       return res.status(404).json({
