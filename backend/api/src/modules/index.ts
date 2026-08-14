@@ -182,6 +182,7 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
       loyaltyDepth: dependencies.loyaltyDepth,
       marketing: dependencies.marketing,
       marketingDepth: dependencies.marketingDepth,
+      whatsappAdmin: dependencies.whatsappAdmin,
       branchOrderManagement: dependencies.branchOrderManagement,
       restaurantTables: dependencies.restaurantTables,
       restaurantBills: dependencies.restaurantBills,
