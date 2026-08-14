@@ -188,6 +188,7 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
       codService: dependencies.codService,
       customerIdentityService: dependencies.customerIdentityService,
       customerMergeService: dependencies.customerMergeService,
+      domainEventService: dependencies.domainEventService,
       branchOrderManagement: dependencies.branchOrderManagement,
       restaurantTables: dependencies.restaurantTables,
       restaurantBills: dependencies.restaurantBills,

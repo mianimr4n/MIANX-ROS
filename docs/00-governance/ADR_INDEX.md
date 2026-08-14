@@ -49,9 +49,9 @@ Active
 | ADR-009 | Proof of Delivery (POD) Data Format & Storage | Accepted | 1.0 | [`docs/13-adr/ADR-009-proof-of-delivery.md`](../13-adr/ADR-009-proof-of-delivery.md) — implemented in `v1.9.0` |
 | ADR-010 | Cash on Delivery (COD) Financial Ownership | Accepted | 1.0 | [`docs/13-adr/ADR-010-cod-financial-ownership.md`](../13-adr/ADR-010-cod-financial-ownership.md) — implemented in `v1.9.0` |
 | ADR-011 | Accounting Immutability & Double-Entry Reversals | Accepted | 1.0 | [`docs/13-adr/ADR-011-accounting-immutability.md`](../13-adr/ADR-011-accounting-immutability.md) — implemented in `v1.8.0` |
+| ADR-012 | Domain Event & Shared Audit Architecture | Accepted | 1.0 | [`docs/13-adr/ADR-012-domain-event-audit.md`](../13-adr/ADR-012-domain-event-audit.md) — implemented in `v1.9.0` |
 
-> **Note:** ADR-005 (Canonical Customer Identity), ADR-006 (Customer Account Merge),
-> ADR-012 (Domain Event & Shared Audit), and ADR-013/014/015 (AI)
+> **Note:** ADR-013/014/015 (AI)
 > are tracked in
 > [`docs/testing/acceptance-evidence/phase2-readiness-audit/OPEN_DECISIONS.md`](../testing/acceptance-evidence/phase2-readiness-audit/OPEN_DECISIONS.md)
 > and will be added to this index when their standalone ADR files are authored.
