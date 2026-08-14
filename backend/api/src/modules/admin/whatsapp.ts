@@ -111,17 +111,16 @@ interface BranchContext {
 }
 
 /**
- * Per-IP rate limit for write endpoints (send message, assign, transition,
- * template mutations). Read endpoints (GET conversations/messages/events/
- * templates) are not rate-limited here — they're already gated by auth + branch
- * scoping, and the principal's session token provides identity-based throttling
- * at the gateway layer.
+ * Per-IP rate limit for ALL admin WhatsApp routes (reads + writes).
  *
  * 60/min/IP is generous for legitimate admin operators; bursts above this
- * indicate either a buggy client retry loop or an abusive session. Uses
- * express-rate-limit (CodeQL-recognized).
+ * indicate either a buggy client retry loop or a stolen session token being
+ * abused. Read endpoints are also rate-limited because they can be used for
+ * data exfiltration if a session is compromised.
+ *
+ * Uses express-rate-limit (CodeQL-recognized).
  */
-const writeRateLimiter = rateLimit({
+const adminRateLimiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 60,
   standardHeaders: true,
@@ -165,6 +164,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.get(
     "/whatsapp/conversations",
+    adminRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
     async (req, res, next) => {
@@ -201,6 +201,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.get(
     "/whatsapp/conversations/:conversationId",
+    adminRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
     async (req, res, next) => {
@@ -226,6 +227,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.get(
     "/whatsapp/conversations/:conversationId/messages",
+    adminRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
     async (req, res, next) => {
@@ -252,6 +254,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.get(
     "/whatsapp/conversations/:conversationId/events",
+    adminRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
     async (req, res, next) => {
@@ -278,7 +281,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.post(
     "/whatsapp/conversations/:conversationId/messages",
-    writeRateLimiter,
+    adminRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
     validateBody(sendMessageSchema),
@@ -317,7 +320,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.post(
     "/whatsapp/conversations/:conversationId/assign",
-    writeRateLimiter,
+    adminRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
     validateBody(assignAgentSchema),
@@ -348,7 +351,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.post(
     "/whatsapp/conversations/:conversationId/status",
-    writeRateLimiter,
+    adminRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
     validateBody(transitionStatusSchema),
@@ -385,6 +388,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.get(
     "/whatsapp/templates",
+    adminRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
     async (req, res, next) => {
@@ -400,7 +404,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.post(
     "/whatsapp/templates",
-    writeRateLimiter,
+    adminRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
     validateBody(createTemplateSchema),
@@ -426,7 +430,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.patch(
     "/whatsapp/templates/:templateId",
-    writeRateLimiter,
+    adminRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
     validateBody(updateTemplateSchema),
@@ -453,7 +457,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
 
   router.delete(
     "/whatsapp/templates/:templateId",
-    writeRateLimiter,
+    adminRateLimiter,
     requireAuthenticatedUser,
     requireWhatsAppAccess,
     async (req, res, next) => {
