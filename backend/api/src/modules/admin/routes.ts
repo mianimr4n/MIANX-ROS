@@ -69,6 +69,7 @@ import { createAdminReportsRouter } from "./reports.js";
 import { createAdminLoyaltyRouter } from "./loyalty.js";
 import { createAdminMarketingRouter } from "./marketing.js";
 import { createAdminWhatsAppRouter } from "./whatsapp.js";
+import { createAdminDeliveryRiderRouter } from "./delivery-rider.js";
 import type { OpeningOperationsService } from "../../services/opening/operations.js";
 import type { OpeningGovernanceService } from "../../services/opening/governance.js";
 import type { OpeningDryRunService } from "../../services/opening/dry-run.js";
@@ -172,6 +173,9 @@ export interface AdminRouterDependencies {
   marketing: MarketingService;
   marketingDepth: import("../../services/marketing/depth.js").MarketingDepthService;
   whatsappAdmin: import("../../services/whatsapp/admin-service.js").WhatsAppAdminService;
+  riderLocationService: import("../../services/deliveries/rider-location-service.js").RiderLocationService;
+  deliveryPodService: import("../../services/deliveries/pod-service.js").DeliveryPodService;
+  codService: import("../../services/deliveries/cod-service.js").CodService;
 }
 
 function toSafeInvite(invite: {
@@ -765,6 +769,19 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       whatsappAdmin: dependencies.whatsappAdmin,
+    }),
+  );
+
+  // Phase 2.4 — Delivery & Rider completion (ADR-008/009/010).
+  // Rider location ingest + read, Proof of Delivery capture + read,
+  // COD collection record + reconciliation.
+  router.use(
+    createAdminDeliveryRiderRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      riderLocationService: dependencies.riderLocationService,
+      podService: dependencies.deliveryPodService,
+      codService: dependencies.codService,
     }),
   );
 

@@ -3,6 +3,8 @@ import { defaultLogger, installProcessErrorHandlers } from "./observability/inde
 import { startNotificationWorker } from "./services/notifications/outbox-worker.js";
 import { startInboundWorker } from "./services/whatsapp/inbound-worker.js";
 import { startWhatsAppOutboxWorker } from "./services/whatsapp/outbox-worker.js";
+import { startWhatsAppPiiAnonymizationJob } from "./services/whatsapp/pii-anonymization.js";
+import { startRiderLocationTtlJob } from "./services/deliveries/rider-location-ttl.js";
 
 installProcessErrorHandlers(defaultLogger);
 
@@ -62,4 +64,14 @@ app.listen(envStatus.config.port, () => {
   // whatsapp_messages rows, calls the provider adapter, updates delivery_status
   // (ADR-004 §5, §8). Same lifecycle rules as the inbound worker.
   startWhatsAppOutboxWorker(envStatus, dependencies.whatsappAdapter, 15_000);
+
+  // Start WhatsApp 24-month PII anonymization job (ADR-004 §9).
+  // Runs daily. Not in production unless TELEPIZZA_WHATSAPP_PII_JOB=1.
+  startWhatsAppPiiAnonymizationJob(envStatus);
+
+  // Start rider location TTL purge job (ADR-008 §2).
+  // Runs hourly. Deletes rider_locations rows 24h after the parent delivery
+  // reaches a terminal state. Not in production unless
+  // TELEPIZZA_RIDER_LOCATION_TTL_JOB=1.
+  startRiderLocationTtlJob(envStatus);
 });
