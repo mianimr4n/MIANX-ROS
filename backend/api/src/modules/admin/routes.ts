@@ -71,6 +71,7 @@ import { createAdminMarketingRouter } from "./marketing.js";
 import { createAdminWhatsAppRouter } from "./whatsapp.js";
 import { createAdminDeliveryRiderRouter } from "./delivery-rider.js";
 import { createAdminCustomersRouter } from "./customers.js";
+import { createAdminAuditRouter } from "./audit.js";
 import type { OpeningOperationsService } from "../../services/opening/operations.js";
 import type { OpeningGovernanceService } from "../../services/opening/governance.js";
 import type { OpeningDryRunService } from "../../services/opening/dry-run.js";
@@ -179,6 +180,7 @@ export interface AdminRouterDependencies {
   codService: import("../../services/deliveries/cod-service.js").CodService;
   customerIdentityService: import("../../services/customers/identity-service.js").CustomerIdentityService;
   customerMergeService: import("../../services/customers/merge-service.js").CustomerMergeService;
+  domainEventService: import("../../services/audit/domain-event-service.js").DomainEventService;
 }
 
 function toSafeInvite(invite: {
@@ -797,6 +799,16 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authProfileRepository: dependencies.authProfileRepository,
       identityService: dependencies.customerIdentityService,
       mergeService: dependencies.customerMergeService,
+    }),
+  );
+
+  // Phase 2.5 — Domain Event Audit (ADR-012).
+  // Cross-domain queryable audit log. Branch-scoped reads.
+  router.use(
+    createAdminAuditRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      domainEventService: dependencies.domainEventService,
     }),
   );
 

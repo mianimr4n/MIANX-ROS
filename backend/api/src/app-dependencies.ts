@@ -228,6 +228,10 @@ import {
   createCustomerMergeService,
   type CustomerMergeService,
 } from "./services/customers/merge-service.js";
+import {
+  createDomainEventService,
+  type DomainEventService,
+} from "./services/audit/domain-event-service.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -297,6 +301,8 @@ export interface AppDependencies {
   customerIdentityService: CustomerIdentityService;
   /** Phase 2.3 — Customer account merge + reversal (ADR-006). */
   customerMergeService: CustomerMergeService;
+  /** Phase 2.5 — Domain event audit log (ADR-012). */
+  domainEventService: DomainEventService;
   inviteAppOrigin: string;
   envStatus: EnvironmentStatus;
 }
@@ -382,6 +388,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     codService: createCodService(envStatus),
     customerIdentityService: createCustomerIdentityService(envStatus),
     customerMergeService: createCustomerMergeService(envStatus),
+    domainEventService: createDomainEventService(envStatus),
     inviteAppOrigin: envStatus.config.corsOrigin,
     envStatus,
   };

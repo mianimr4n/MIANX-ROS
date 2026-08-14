@@ -118,3 +118,51 @@ Stage Summary:
   - Phase 2.5: Accounting events (ADR-012) — pending
   - Phase 2.6: AI (ADR-013, ADR-014, ADR-015) — pending
   - Phase 2.1: Settings (ADR-001, ADR-002) — partially done via migrations, ADR docs pending
+
+---
+Task ID: phase-2.3-crm
+Agent: main
+Task: Complete Phase 2.3 (CRM) — ADR-005/006 end-to-end (docs + migration + services + admin routes + tests + PR + Production migration apply)
+
+Work Log:
+- Authored 2 ADR markdown files:
+  - docs/13-adr/ADR-005-canonical-customer-identity.md (canonical customers.id + customer_identities table)
+  - docs/13-adr/ADR-006-customer-account-merge.md (merge_customers_atomic + 30-day reversal window)
+- Updated docs/00-governance/ADR_INDEX.md to mark ADR-005/006 as Accepted v1.0.
+- Wrote single combined SQL migration: supabase/migrations/20260818000000_adr_005_006_crm.sql (additive, ~700 lines):
+  - Permission seed: customer.read (granted to super-admin, branch-manager, customer-support, cashier) + customer.merge (granted to super-admin only)
+  - Extended customers.status CHECK with 'merged' value; added customers.merged_into_id column
+  - ADR-005: customer_identities table (UNIQUE on identity_type+value), RLS, normalize_phone_e164() function, resolve_customer_by_identity() RPC, auto_create_customer_identities() INSERT trigger, backfill DO block with conflict logging
+  - ADR-006: customer_merge_log table (append-only via trigger), merge_customers_atomic() RPC (transfers FKs from source→target, marks source merged, logs to merge_log), reverse_customer_merge() RPC (within 30-day window, transfers FKs back)
+- Implemented 2 backend TypeScript services:
+  - backend/api/src/services/customers/identity-service.ts (resolveCustomer, normalizePhone, getCustomer, listIdentities, addIdentity, searchCustomers)
+  - backend/api/src/services/customers/merge-service.ts (mergeCustomers, reverseMerge, listMergeLog, getMergeLogEntry)
+- Implemented admin router: backend/api/src/modules/admin/customers.ts (8 endpoints, all rate-limited):
+  - GET /customers (search), GET /customers/:id, GET /customers/:id/identities, POST /customers/:id/identities, POST /customers/resolve
+  - POST /customers/merge (super-admin only), POST /customers/merge/:id/reverse (super-admin only), GET /customers/merge-log
+- Wired dependencies: app-dependencies.ts (2 new services), modules/index.ts, modules/admin/routes.ts.
+- Wrote test file: backend/api/tests/customer-identity-merge-service.test.ts (36 cases, all passing).
+- Type-check clean. 954 backend tests passing total (was 918; +36 new).
+- PR #225 squash-merged as 59bf158 (all 6 CI checks green).
+- Applied migration to Production Supabase (project pyeowxvacgypohrbvgee):
+  - All 3 new tables verified (customer_identities, customer_merge_log, customer_identity_backfill_conflicts)
+  - All 6 new functions verified (normalize_phone_e164, resolve_customer_by_identity, auto_create_customer_identities, merge_customers_atomic, reverse_customer_merge, enforce_merge_log_append_only)
+  - All 5 key columns verified (customers.merged_into_id, customer_identities.identity_type, customer_identities.value, customer_merge_log.merge_window_expires_at, customer_merge_log.reversed_at)
+  - Permissions customer.read + customer.merge seeded
+  - Backfill: 0 customer_identities rows (no customers in production yet), 0 conflicts
+
+Stage Summary:
+- ✅ **Phase 2.3 (CRM) is FEATURE-COMPLETE.**
+  - PR #225 merged as 59bf158.
+  - Production Supabase migration applied + verified.
+  - 954 backend tests passing (was 918 → +36 new tests).
+- ✅ **All 2 ADRs implemented end-to-end:**
+  - ADR-005 (Canonical Customer Identity): customer_identities table + normalize_phone_e164 + resolve_customer_by_identity + auto-create trigger + backfill + 5 admin endpoints
+  - ADR-006 (Customer Account Merge): customer_merge_log + merge_customers_atomic + reverse_customer_merge + 3 admin endpoints (super-admin only)
+- ⏳ **PENDING USER ACTIONS** (no code blockers):
+  1. Frontend wiring (admin customer search + merge UI) — separate PR
+  2. Duplicate detection job (scans customer_identities for potential duplicates) — separate PR
+- **Phase 2.3 status**: COMPLETE. Next Phase 2 workstreams remaining:
+  - Phase 2.5: Accounting events (ADR-012) — STARTING NEXT
+  - Phase 2.6: AI (ADR-013, ADR-014, ADR-015) — pending
+  - Phase 2.1: Settings (ADR-001, ADR-002) — partially done via migrations, ADR docs pending
