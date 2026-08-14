@@ -204,6 +204,10 @@ import {
   createFinancePhase2Service,
   type FinancePhase2Service,
 } from "./services/finance/phase2.js";
+import {
+  createWhatsAppAdminService,
+  type WhatsAppAdminService,
+} from "./services/whatsapp/admin-service.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -261,6 +265,8 @@ export interface AppDependencies {
   manualContact: ManualContactService;
   /** WhatsApp provider adapter (ADR-003/004). Null when TELEPIZZA_WHATSAPP_MODE=disabled. */
   whatsappAdapter: MessageProviderAdapter | null;
+  /** WhatsApp admin service (conversations, templates, send). Always present. */
+  whatsappAdmin: WhatsAppAdminService;
   inviteAppOrigin: string;
   envStatus: EnvironmentStatus;
 }
@@ -340,6 +346,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     outboxWorker: createOutboxWorker(envStatus),
     manualContact: createManualContactService(envStatus),
     whatsappAdapter: resolveWhatsAppAdapter(envStatus),
+    whatsappAdmin: createWhatsAppAdminService(envStatus),
     inviteAppOrigin: envStatus.config.corsOrigin,
     envStatus,
   };

@@ -2,6 +2,7 @@ import { createApp } from "./app.js";
 import { defaultLogger, installProcessErrorHandlers } from "./observability/index.js";
 import { startNotificationWorker } from "./services/notifications/outbox-worker.js";
 import { startInboundWorker } from "./services/whatsapp/inbound-worker.js";
+import { startWhatsAppOutboxWorker } from "./services/whatsapp/outbox-worker.js";
 
 installProcessErrorHandlers(defaultLogger);
 
@@ -56,4 +57,9 @@ app.listen(envStatus.config.port, () => {
   // rules as the notification worker: not in production unless
   // TELEPIZZA_WHATSAPP_WORKER=1.
   startInboundWorker(envStatus, dependencies.whatsappAdapter, 10_000);
+
+  // Start WhatsApp outbound outbox worker — drains pending outbound
+  // whatsapp_messages rows, calls the provider adapter, updates delivery_status
+  // (ADR-004 §5, §8). Same lifecycle rules as the inbound worker.
+  startWhatsAppOutboxWorker(envStatus, dependencies.whatsappAdapter, 15_000);
 });

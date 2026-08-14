@@ -68,6 +68,7 @@ import { createAdminFinanceRouter } from "./finance.js";
 import { createAdminReportsRouter } from "./reports.js";
 import { createAdminLoyaltyRouter } from "./loyalty.js";
 import { createAdminMarketingRouter } from "./marketing.js";
+import { createAdminWhatsAppRouter } from "./whatsapp.js";
 import type { OpeningOperationsService } from "../../services/opening/operations.js";
 import type { OpeningGovernanceService } from "../../services/opening/governance.js";
 import type { OpeningDryRunService } from "../../services/opening/dry-run.js";
@@ -170,6 +171,7 @@ export interface AdminRouterDependencies {
   loyaltyDepth: import("../../services/loyalty/depth.js").LoyaltyDepthService;
   marketing: MarketingService;
   marketingDepth: import("../../services/marketing/depth.js").MarketingDepthService;
+  whatsappAdmin: import("../../services/whatsapp/admin-service.js").WhatsAppAdminService;
 }
 
 function toSafeInvite(invite: {
@@ -752,6 +754,17 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       openingDryRun: dependencies.openingDryRun,
+    }),
+  );
+
+  // Phase 2.2 Follow-up PR #3 — WhatsApp admin routes (ADR-004 §1, §4, §5).
+  // Conversations list/detail/messages/events, send outbound (text/template),
+  // agent assignment, state-machine transitions, template CRUD.
+  router.use(
+    createAdminWhatsAppRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      whatsappAdmin: dependencies.whatsappAdmin,
     }),
   );
 
