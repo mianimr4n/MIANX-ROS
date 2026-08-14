@@ -25,16 +25,19 @@ comment on column public.whatsapp_messages.provider_next_attempt_at is
   'Next time the outbound worker may attempt to send this row. NULL = eligible immediately. Set on failure to enforce exponential backoff (ADR-004 §5).';
 
 -- Partial index for the outbox worker's claim query.
--- Drops first if exists to keep the migration idempotent.
+-- Note: the time-based filter (provider_next_attempt_at <= now()) is NOT
+-- included in the partial index predicate because `now()` is STABLE, not
+-- IMMUTABLE — PostgreSQL rejects non-immutable functions in index predicates.
+-- The index narrows to outbound+pending/failed rows only; the time check
+-- is applied at query time.
 drop index if exists public.whatsapp_messages_outbox_pending_idx;
 create index if not exists whatsapp_messages_outbox_pending_idx
   on public.whatsapp_messages (created_at)
   where direction = 'outbound'
-    and delivery_status in ('pending', 'failed')
-    and (provider_next_attempt_at is null or provider_next_attempt_at <= timezone('utc', now()));
+    and delivery_status in ('pending', 'failed');
 
 comment on index public.whatsapp_messages_outbox_pending_idx is
-  'Partial index for the WhatsApp outbound worker claim query (ADR-004 §5). Covers pending + retryable-failed rows whose backoff has elapsed.';
+  'Partial index for the WhatsApp outbound worker claim query (ADR-004 §5). Covers outbound rows in pending or failed delivery_status. The provider_next_attempt_at time check is applied at query time (now() is STABLE, not IMMUTABLE, so cannot be in the index predicate).';
 
 commit;
 
