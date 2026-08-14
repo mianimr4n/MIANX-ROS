@@ -6,6 +6,7 @@ import { createAppDependencies, type AppDependencies } from "./app-dependencies.
 import { errorHandler, notFoundHandler } from "./common/http.js";
 import { getEnvironmentStatus } from "./config/env.js";
 import { apiModules, registerApiModules } from "./modules/index.js";
+import { createWhatsAppWebhookRouter } from "./modules/webhooks/whatsapp.js";
 import {
   buildHealthDiagnostics,
   buildVersionPayload,
@@ -41,7 +42,17 @@ export function createApp(
   // Request ID + structured access logs (before body parsers so all requests are covered).
   app.use(createRequestLoggingMiddleware());
   // 2mb covers admin menu JPG/PNG uploads (base64) without opening unbounded payloads.
-  app.use(express.json({ limit: "2mb" }));
+  // The `verify` hook captures the raw body Buffer on req.rawBody for routes that
+  // need HMAC verification (WhatsApp webhook per ADR-004 §7). Other routes ignore it.
+  app.use(
+    express.json({
+      limit: "2mb",
+      verify: (req, _res, buf) => {
+        (req as { rawBody?: Buffer }).rawBody = buf;
+        return true;
+      },
+    }),
+  );
 
   app.get("/healthz", async (_req, res) => {
     const dbConnectivity = await probeSupabaseConnectivity(envStatus.config.supabaseUrl, {
@@ -108,6 +119,18 @@ export function createApp(
   });
 
   registerApiModules(app, dependencies);
+
+  // WhatsApp webhook receiver (ADR-004 §7). Mounted AFTER the global JSON
+  // parser (which captures raw body via verify hook) but BEFORE the 404
+  // handler. The webhook reads req.rawBody for HMAC verification.
+  app.use(
+    "/api/v1/webhooks/whatsapp",
+    createWhatsAppWebhookRouter({
+      envStatus,
+      adapter: dependencies.whatsappAdapter,
+    }),
+  );
+
   app.use(notFoundHandler);
   app.use(errorHandler);
 
