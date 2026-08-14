@@ -166,3 +166,50 @@ Stage Summary:
   - Phase 2.5: Accounting events (ADR-012) — STARTING NEXT
   - Phase 2.6: AI (ADR-013, ADR-014, ADR-015) — pending
   - Phase 2.1: Settings (ADR-001, ADR-002) — partially done via migrations, ADR docs pending
+
+---
+Task ID: phase-2.5-audit
+Agent: main
+Task: Complete Phase 2.5 (Audit) — ADR-012 end-to-end (doc + migration + service + admin routes + tests + PR + Production migration apply)
+
+Work Log:
+- Authored docs/13-adr/ADR-012-domain-event-audit.md (centralized append-only domain_events table; cross-domain query projection; emit_domain_event RPC; AFTER INSERT triggers on existing audit tables to mirror events).
+- Updated docs/00-governance/ADR_INDEX.md to mark ADR-012 as Accepted v1.0.
+- Wrote SQL migration: supabase/migrations/20260819000000_adr_012_domain_event_audit.sql (additive):
+  - Permission seed: audit.read (granted to super-admin, branch-manager, customer-support)
+  - domain_events table (event_type CHECK format, domain enum, entity_id, branch_id, actor_user_id, actor_role, metadata JSONB, correlation_id, occurred_at)
+  - 6 indexes (domain+entity, event_type, branch, actor, correlation, occurred_at) + GIN on metadata
+  - RLS: branch-scoped read (branch staff see their branch + null branch events); service_role write
+  - Append-only trigger (block UPDATE + DELETE)
+  - emit_domain_event() helper RPC (validates event_type format)
+  - AFTER INSERT triggers on existing audit tables to mirror events:
+    - delivery_state_transitions → delivery.transitioned
+    - customer_merge_log → customer.merged (also customer.merge_reversed on UPDATE of reversed_at)
+    - whatsapp_conversation_events → whatsapp.<event_type> (conditional via DO block)
+    - order_status_logs → order.transitioned (conditional via DO block)
+- Implemented TypeScript service: backend/api/src/services/audit/domain-event-service.ts (emitEvent, listEvents, getEvent, listEventsForEntity, listEventsByCorrelation)
+- Implemented admin router: backend/api/src/modules/admin/audit.ts (4 endpoints, all rate-limited):
+  - GET /audit/events, GET /audit/events/:id, GET /audit/events/by-entity, GET /audit/events/by-correlation
+- Wired dependencies: app-dependencies.ts, modules/index.ts, modules/admin/routes.ts.
+- Wrote test file: backend/api/tests/domain-event-service.test.ts (17 cases, all passing).
+- Type-check clean. 971 backend tests passing total (was 954; +17 new).
+- FU-1 hotfix during CI: nested `$$` blocks cause syntax error. PostgreSQL parses inner `$$` as the end of the outer `do $$` block. Fixed by using distinct delimiters: outer `do $_$ ... $_$` and inner `as $func$ ... $func$`. Committed as 89b32b1.
+- PR #226 squash-merged as 9af1d31 (all 6 CI checks green after fix).
+- Applied migration to Production Supabase (project pyeowxvacgypohrbvgee):
+  - domain_events table verified
+  - All 6 functions verified (emit_domain_event, enforce_domain_events_append_only, mirror_delivery_transition_to_domain_events, mirror_customer_merge_to_domain_events, mirror_whatsapp_event_to_domain_events, mirror_order_transition_to_domain_events)
+  - audit.read permission seeded
+
+Stage Summary:
+- ✅ **Phase 2.5 (Audit) is FEATURE-COMPLETE.**
+  - PR #226 merged as 9af1d31.
+  - Production Supabase migration applied + verified.
+  - 971 backend tests passing (was 954 → +17 new tests).
+- ✅ **ADR-012 implemented end-to-end:**
+  - domain_events table + emit_domain_event RPC + append-only trigger
+  - 4 mirror triggers on existing audit tables (delivery transitions, customer merges, whatsapp events, order transitions)
+  - Branch-scoped RLS + correlation_id for cross-domain tracing
+  - 4 admin endpoints (list, get, by-entity, by-correlation)
+- **Phase 2.5 status**: COMPLETE. Next Phase 2 workstreams remaining:
+  - Phase 2.6: AI (ADR-013, ADR-014, ADR-015) — STARTING NEXT
+  - Phase 2.1: Settings (ADR-001, ADR-002) — partially done via migrations, ADR docs pending

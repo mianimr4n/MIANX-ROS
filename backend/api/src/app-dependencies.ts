@@ -232,6 +232,14 @@ import {
   createDomainEventService,
   type DomainEventService,
 } from "./services/audit/domain-event-service.js";
+import {
+  createAiPromptLogService,
+  type AiPromptLogService,
+} from "./services/ai/prompt-log-service.js";
+import {
+  createAiApprovalService,
+  type AiApprovalService,
+} from "./services/ai/approval-service.js";
 
 export interface AppDependencies {
   catalogDataSource: CatalogDataSource;
@@ -303,6 +311,10 @@ export interface AppDependencies {
   customerMergeService: CustomerMergeService;
   /** Phase 2.5 — Domain event audit log (ADR-012). */
   domainEventService: DomainEventService;
+  /** Phase 2.6 — AI prompt log + call log (ADR-013/015). */
+  aiPromptLogService: AiPromptLogService;
+  /** Phase 2.6 — AI approval gate (ADR-014). */
+  aiApprovalService: AiApprovalService;
   inviteAppOrigin: string;
   envStatus: EnvironmentStatus;
 }
@@ -389,6 +401,8 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     customerIdentityService: createCustomerIdentityService(envStatus),
     customerMergeService: createCustomerMergeService(envStatus),
     domainEventService: createDomainEventService(envStatus),
+    aiPromptLogService: createAiPromptLogService(envStatus),
+    aiApprovalService: createAiApprovalService(envStatus),
     inviteAppOrigin: envStatus.config.corsOrigin,
     envStatus,
   };
