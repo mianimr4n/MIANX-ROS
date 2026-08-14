@@ -72,6 +72,7 @@ import { createAdminWhatsAppRouter } from "./whatsapp.js";
 import { createAdminDeliveryRiderRouter } from "./delivery-rider.js";
 import { createAdminCustomersRouter } from "./customers.js";
 import { createAdminAuditRouter } from "./audit.js";
+import { createAdminAiRouter } from "./ai-governance.js";
 import type { OpeningOperationsService } from "../../services/opening/operations.js";
 import type { OpeningGovernanceService } from "../../services/opening/governance.js";
 import type { OpeningDryRunService } from "../../services/opening/dry-run.js";
@@ -181,6 +182,8 @@ export interface AdminRouterDependencies {
   customerIdentityService: import("../../services/customers/identity-service.js").CustomerIdentityService;
   customerMergeService: import("../../services/customers/merge-service.js").CustomerMergeService;
   domainEventService: import("../../services/audit/domain-event-service.js").DomainEventService;
+  aiPromptLogService: import("../../services/ai/prompt-log-service.js").AiPromptLogService;
+  aiApprovalService: import("../../services/ai/approval-service.js").AiApprovalService;
 }
 
 function toSafeInvite(invite: {
@@ -809,6 +812,18 @@ export function createAdminRouter(dependencies: AdminRouterDependencies) {
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       domainEventService: dependencies.domainEventService,
+    }),
+  );
+
+  // Phase 2.6 — AI Governance (ADR-013/014/015).
+  // AI call logs (no raw prompts), prompt hash logs (trend analytics),
+  // approval gate (advisory AI; super-admin/branch-manager approve).
+  router.use(
+    createAdminAiRouter({
+      authTokenVerifier: dependencies.authTokenVerifier,
+      authProfileRepository: dependencies.authProfileRepository,
+      promptLogService: dependencies.aiPromptLogService,
+      approvalService: dependencies.aiApprovalService,
     }),
   );
 

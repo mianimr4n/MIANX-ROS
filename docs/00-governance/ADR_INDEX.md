@@ -50,11 +50,13 @@ Active
 | ADR-010 | Cash on Delivery (COD) Financial Ownership | Accepted | 1.0 | [`docs/13-adr/ADR-010-cod-financial-ownership.md`](../13-adr/ADR-010-cod-financial-ownership.md) — implemented in `v1.9.0` |
 | ADR-011 | Accounting Immutability & Double-Entry Reversals | Accepted | 1.0 | [`docs/13-adr/ADR-011-accounting-immutability.md`](../13-adr/ADR-011-accounting-immutability.md) — implemented in `v1.8.0` |
 | ADR-012 | Domain Event & Shared Audit Architecture | Accepted | 1.0 | [`docs/13-adr/ADR-012-domain-event-audit.md`](../13-adr/ADR-012-domain-event-audit.md) — implemented in `v1.9.0` |
+| ADR-013 | AI Provider Boundary & Data Governance | Accepted | 1.0 | [`docs/13-adr/ADR-013-ai-provider-boundary.md`](../13-adr/ADR-013-ai-provider-boundary.md) — implemented in `v1.9.0` |
+| ADR-014 | AI Human-Approval Gate Architecture | Accepted | 1.0 | [`docs/13-adr/ADR-014-ai-approval-gate.md`](../13-adr/ADR-014-ai-approval-gate.md) — implemented in `v1.9.0` |
+| ADR-015 | AI Prompt & Data Retention Policy | Accepted | 1.0 | [`docs/13-adr/ADR-015-ai-prompt-retention.md`](../13-adr/ADR-015-ai-prompt-retention.md) — implemented in `v1.9.0` |
 
-> **Note:** ADR-013/014/015 (AI)
-> are tracked in
-> [`docs/testing/acceptance-evidence/phase2-readiness-audit/OPEN_DECISIONS.md`](../testing/acceptance-evidence/phase2-readiness-audit/OPEN_DECISIONS.md)
-> and will be added to this index when their standalone ADR files are authored.
+> **Note:** All Phase 2 ADRs (ADR-001 through ADR-015) are now either
+> Active or have standalone ADR files authored. ADR-001 and ADR-002
+> (Settings) have migrations applied; standalone ADR docs are pending.
 
 ---
 
