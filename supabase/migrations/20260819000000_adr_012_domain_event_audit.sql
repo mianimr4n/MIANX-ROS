@@ -283,7 +283,7 @@ create trigger trg_mirror_customer_merge
 
 -- whatsapp_conversation_events → domain_events (whatsapp.<event_type>)
 -- Only fire if the table exists (ADR-004 may not be applied in all envs)
-do $$
+do $_$
 begin
   if exists (
     select 1 from information_schema.tables
@@ -294,7 +294,7 @@ begin
     language plpgsql
     security definer
     set search_path = public
-    as $$
+    as $func$
     declare
       v_branch_id uuid;
       v_event_id bigint;
@@ -318,17 +318,17 @@ begin
 
       return new;
     end;
-    $$;
+    $func$;
 
     drop trigger if exists trg_mirror_whatsapp_event on public.whatsapp_conversation_events;
     create trigger trg_mirror_whatsapp_event
       after insert on public.whatsapp_conversation_events
       for each row execute function public.mirror_whatsapp_event_to_domain_events();
   end if;
-end $$;
+end $_$;
 
 -- order_status_logs → domain_events (order.transitioned)
-do $$
+do $_$
 begin
   if exists (
     select 1 from information_schema.tables
@@ -339,7 +339,7 @@ begin
     language plpgsql
     security definer
     set search_path = public
-    as $$
+    as $func$
     declare
       v_branch_id uuid;
       v_event_id bigint;
@@ -362,14 +362,14 @@ begin
 
       return new;
     end;
-    $$;
+    $func$;
 
     drop trigger if exists trg_mirror_order_transition on public.order_status_logs;
     create trigger trg_mirror_order_transition
       after insert on public.order_status_logs
       for each row execute function public.mirror_order_transition_to_domain_events();
   end if;
-end $$;
+end $_$;
 
 commit;
 
