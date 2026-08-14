@@ -27,6 +27,7 @@
  */
 
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import { z } from "zod";
 
 import { ApiError, validateBody } from "../../common/http.js";
@@ -108,6 +109,28 @@ interface BranchContext {
   branchIds: string[];
   isSuperAdmin: boolean;
 }
+
+/**
+ * Per-IP rate limit for write endpoints (send message, assign, transition,
+ * template mutations). Read endpoints (GET conversations/messages/events/
+ * templates) are not rate-limited here — they're already gated by auth + branch
+ * scoping, and the principal's session token provides identity-based throttling
+ * at the gateway layer.
+ *
+ * 60/min/IP is generous for legitimate admin operators; bursts above this
+ * indicate either a buggy client retry loop or an abusive session. Uses
+ * express-rate-limit (CodeQL-recognized).
+ */
+const writeRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    ok: false,
+    error: { code: "RATE_LIMITED", message: "Too many WhatsApp write requests from this IP. Please retry later." },
+  },
+});
 
 function resolveBranchContext(req: AuthorizedRequest): BranchContext {
   const principal = req.principal;
@@ -257,6 +280,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
     "/whatsapp/conversations/:conversationId/messages",
     requireAuthenticatedUser,
     requireWhatsAppAccess,
+    writeRateLimiter,
     validateBody(sendMessageSchema),
     async (req, res, next) => {
       try {
@@ -295,6 +319,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
     "/whatsapp/conversations/:conversationId/assign",
     requireAuthenticatedUser,
     requireWhatsAppAccess,
+    writeRateLimiter,
     validateBody(assignAgentSchema),
     async (req, res, next) => {
       try {
@@ -325,6 +350,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
     "/whatsapp/conversations/:conversationId/status",
     requireAuthenticatedUser,
     requireWhatsAppAccess,
+    writeRateLimiter,
     validateBody(transitionStatusSchema),
     async (req, res, next) => {
       try {
@@ -376,6 +402,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
     "/whatsapp/templates",
     requireAuthenticatedUser,
     requireWhatsAppAccess,
+    writeRateLimiter,
     validateBody(createTemplateSchema),
     async (req, res, next) => {
       try {
@@ -401,6 +428,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
     "/whatsapp/templates/:templateId",
     requireAuthenticatedUser,
     requireWhatsAppAccess,
+    writeRateLimiter,
     validateBody(updateTemplateSchema),
     async (req, res, next) => {
       try {
@@ -427,6 +455,7 @@ export function createAdminWhatsAppRouter(deps: AdminWhatsAppRouterDependencies)
     "/whatsapp/templates/:templateId",
     requireAuthenticatedUser,
     requireWhatsAppAccess,
+    writeRateLimiter,
     async (req, res, next) => {
       try {
         const templateId = req.params.templateId;
