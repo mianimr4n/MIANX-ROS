@@ -19,6 +19,28 @@ export interface ApiEnvironment {
   whatsappMode: IntegrationMode;
   paymentMode: IntegrationMode;
   webhookMode: IntegrationMode;
+  /** WhatsApp Cloud API credentials (ADR-003). Secrets NEVER in DB. */
+  whatsapp: WhatsAppEnvConfig;
+}
+
+/**
+ * WhatsApp Cloud API configuration (ADR-003 — Provider-Secret Boundary).
+ * All fields are resolved from process.env at startup. The actual access
+ * token and app secret are NEVER persisted to the database.
+ */
+export interface WhatsAppEnvConfig {
+  /** Meta Graph API version (e.g. "v21.0"). */
+  apiVersion: string;
+  /** phone_number_id from the WABA. Non-secret; also stored in whatsapp_provider_configs. */
+  phoneNumberId: string;
+  /** WABA ID (numeric, as string). Non-secret. */
+  businessAccountId: string;
+  /** System User access token. SECRET — env var only, NEVER logged or returned by APIs. */
+  accessToken: string;
+  /** App Secret from Meta App → Settings → Basic. Used for X-Hub-Signature-256 HMAC verification. SECRET. */
+  appSecret: string;
+  /** Verify token for webhook handshake (any opaque string). SECRET. */
+  verifyToken: string;
 }
 
 export interface EnvironmentStatus {
@@ -208,6 +230,26 @@ export function evaluateLocalSafety(source: NodeJS.ProcessEnv, config: ApiEnviro
     }
   }
 
+  // ADR-003: WhatsApp Cloud API env vars must be set when whatsappMode is sandbox|live.
+  // In mock/disabled mode they're optional (mock never calls Meta).
+  if (config.whatsappMode === "sandbox" || config.whatsappMode === "live") {
+    const required = [
+      ["WHATSAPP_ACCESS_TOKEN", config.whatsapp.accessToken],
+      ["WHATSAPP_PHONE_NUMBER_ID", config.whatsapp.phoneNumberId],
+      ["WHATSAPP_BUSINESS_ACCOUNT_ID", config.whatsapp.businessAccountId],
+      ["WHATSAPP_APP_SECRET", config.whatsapp.appSecret],
+      ["WHATSAPP_VERIFY_TOKEN", config.whatsapp.verifyToken],
+    ] as const;
+    for (const [key, value] of required) {
+      if (!value) {
+        blockers.push({
+          key,
+          message: `${key} is required when TELEPIZZA_WHATSAPP_MODE=${config.whatsappMode}. Per ADR-003, secrets must be set in environment variables, NEVER in DB.`,
+        });
+      }
+    }
+  }
+
   if (source.TELEPIZZA_ALLOW_REMOTE_SUPABASE === "1" && (envClass === "local" || envClass === "test")) {
     blockers.push({
       key: "TELEPIZZA_ALLOW_REMOTE_SUPABASE",
@@ -279,6 +321,14 @@ export function getEnvironmentStatus(source: NodeJS.ProcessEnv = process.env): E
       envClass,
       issues,
     ),
+    whatsapp: {
+      apiVersion: (source.WHATSAPP_API_VERSION ?? "v21.0").trim() || "v21.0",
+      phoneNumberId: (source.WHATSAPP_PHONE_NUMBER_ID ?? "").trim(),
+      businessAccountId: (source.WHATSAPP_BUSINESS_ACCOUNT_ID ?? "").trim(),
+      accessToken: (source.WHATSAPP_ACCESS_TOKEN ?? "").trim(),
+      appSecret: (source.WHATSAPP_APP_SECRET ?? "").trim(),
+      verifyToken: (source.WHATSAPP_VERIFY_TOKEN ?? "").trim(),
+    },
   };
 
   const inviteSmtpUrl = source.EMAIL_SMTP_URL?.trim() ?? "";

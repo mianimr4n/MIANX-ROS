@@ -81,6 +81,11 @@ export const apiModules: ApiModuleDescriptor[] = [
     basePath: "/api/v1/ai",
     summary: "AI Platform foundation — teams, agents, and pending task reads (admin.access).",
   },
+  {
+    name: "webhooks/whatsapp",
+    basePath: "/api/v1/webhooks/whatsapp",
+    summary: "WhatsApp Cloud API inbound webhook (ADR-003/004). GET = Meta subscription handshake; POST = signature-verified inbound message + status callback queue.",
+  },
 ];
 
 export function registerApiModules(app: Express, dependencies: AppDependencies) {

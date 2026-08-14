@@ -78,6 +78,12 @@ describe("getEnvironmentStatus", () => {
       TELEPIZZA_WHATSAPP_MODE: "sandbox",
       TELEPIZZA_PAYMENT_MODE: "sandbox",
       TELEPIZZA_WEBHOOK_MODE: "disabled",
+      // ADR-003: sandbox WhatsApp mode requires these env vars
+      WHATSAPP_ACCESS_TOKEN: "test-token",
+      WHATSAPP_PHONE_NUMBER_ID: "test-phone-id",
+      WHATSAPP_BUSINESS_ACCOUNT_ID: "test-waba-id",
+      WHATSAPP_APP_SECRET: "test-app-secret",
+      WHATSAPP_VERIFY_TOKEN: "test-verify-token",
     });
 
     expect(status.safetyBlockers).toEqual([]);

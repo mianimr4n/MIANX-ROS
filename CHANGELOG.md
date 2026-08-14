@@ -10,6 +10,133 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
 
 ---
 
+## [Unreleased] — Phase 2.2 WhatsApp Foundation (ADR-003 + ADR-004)
+
+### Added
+
+- **ADR-003 — Provider-Secret Boundary Architecture** (`docs/13-adr/ADR-003-provider-secret-boundary.md`).
+  Cross-cutting security ADR governing how ALL provider credentials (WhatsApp,
+  future LLM, future maps) are stored. Secrets live ONLY in server-side env
+  vars; the DB stores reference keys (`config_ref`) that the backend resolves
+  to env-var names at runtime. Formalizes the policy already documented in
+  `SECURITY.md` line 80.
+
+- **ADR-004 — WhatsApp Conversation Ownership & Routing** (`docs/13-adr/ADR-004-whatsapp-conversation-ownership.md`).
+  WhatsApp-specific ADR covering: branch ownership of conversations, agent RLS
+  scoping with super-admin cross-branch visibility, provisional customer
+  identity for unknown phone numbers, conversation state machine
+  (open → in_progress → resolved/escalated → closed), message immutability
+  (mirror ADR-007/011 patterns), 24-month PII retention with anonymization,
+  idempotent webhook upsert via `wamid` UNIQUE, and the provider adapter
+  contract (`MessageProviderAdapter` interface).
+
+- **Migrations**:
+  - `20260816000000_adr_003_provider_secret_boundary.sql` — creates
+    `whatsapp_provider_configs` table (non-secret metadata only: phone_number_id,
+    business_account_id, display_name, default_branch_id, is_default). NO
+    secret columns. Partial unique index enforces exactly one default. RLS:
+    authenticated/anon can read active configs; service_role only can write.
+  - `20260816000100_adr_004_whatsapp_conversation_ownership.sql` — creates
+    `whatsapp_conversations`, `whatsapp_messages`, `whatsapp_conversation_events`
+    (append-only), `whatsapp_message_templates`, `whatsapp_inbound_events`
+    (raw webhook queue). Extends `customers.status` with `'provisional'`.
+    Adds conversation state machine trigger, message immutability trigger
+    (inbound = append-only; outbound body immutable once sent), append-only
+    triggers on audit tables, `'created'` event trigger on new conversations.
+    Branch-scoped RLS on all tables using the canonical
+    `assignment_status = 'ACTIVE'` pattern.
+
+- **Backend — env config** (`backend/api/src/config/env.ts`):
+  - New `WhatsAppEnvConfig` interface + `whatsapp` field on `ApiEnvironment`.
+  - New env vars: `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`,
+    `WHATSAPP_BUSINESS_ACCOUNT_ID`, `WHATSAPP_APP_SECRET`,
+    `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_API_VERSION` (default `v21.0`).
+  - `evaluateLocalSafety()` now requires all 5 WhatsApp secrets when
+    `TELEPIZZA_WHATSAPP_MODE=sandbox|live` (defense in depth for ADR-003).
+  - `.env.example` updated with documented WhatsApp env var block.
+
+- **Backend — provider adapter contract** (`backend/api/src/services/providers/adapter.ts`):
+  - `MessageProviderAdapter` interface with `sendMessage()`,
+    `verifyWebhookSignature()`, `normalizeWebhookEvent()`.
+  - `MessageContent` (text | template), `MessageResult`, `NormalizedInboundEvent`,
+    `NormalizedStatusEvent`, `NormalizedWebhookEvent` types.
+
+- **Backend — WhatsApp adapters** (`backend/api/src/services/whatsapp/`):
+  - `mock-client.ts` — mock adapter for `TELEPIZZA_WHATSAPP_MODE=mock` (local
+    dev + test). Writes outbound messages as JSON files to
+    `backend/api/.whatsapp-outbox/`. Accepts all webhook signatures. Exports
+    `computeHubSignature()` helper for Cloud API adapter tests.
+  - `cloud-api-client.ts` — Meta Cloud API adapter for sandbox|live mode.
+    POSTs to `https://graph.facebook.com/<version>/<phone_number_id>/messages`.
+    Verifies `X-Hub-Signature-256` using `WHATSAPP_APP_SECRET` with
+    `timingSafeEqual` (constant-time comparison). Supports text + template
+    messages.
+  - `adapter-factory.ts` — `resolveWhatsAppAdapter(envStatus)` picks the
+    right adapter based on `TELEPIZZA_WHATSAPP_MODE`. Returns `null` when
+    disabled.
+
+- **Backend — webhook receiver** (`backend/api/src/modules/webhooks/whatsapp.ts`):
+  - `GET /api/v1/webhooks/whatsapp` — Meta webhook subscription handshake.
+    Compares `hub.verify_token` against `WHATSAPP_VERIFY_TOKEN` env var.
+    Returns `hub.challenge` as plaintext. No DB access.
+  - `POST /api/v1/webhooks/whatsapp` — inbound message + status callback.
+    Verifies `X-Hub-Signature-256` HMAC (500ms budget), returns 200 OK
+    immediately, enqueues raw payload to `whatsapp_inbound_events` for async
+    processing. Returns 404 when WhatsApp disabled; 401 on bad signature;
+    500 on DB insert failure (so Meta retries).
+  - Raw body captured via `express.json({ verify })` hook in `app.ts` —
+    stores Buffer on `req.rawBody` without breaking JSON parsing for other
+    routes.
+  - Lazily creates Supabase client (avoids crashing app at startup if env
+    vars missing; webhook returns 503 if called before env ready).
+
+- **Backend — app wiring**:
+  - `app.ts` registers the webhook router at `/api/v1/webhooks/whatsapp`.
+  - `app-dependencies.ts` adds `whatsappAdapter: MessageProviderAdapter | null`
+    field, wired via `resolveWhatsAppAdapter(envStatus)`.
+  - `modules/index.ts` adds `webhooks/whatsapp` to `apiModules` descriptor
+    (now 13 modules; `/healthz` reflects this).
+
+- **Tests** (67 new tests, all passing):
+  - `tests/whatsapp-provider-secret-boundary.test.ts` (17 tests) — parse-based
+    migration tests for ADR-003. Verifies table shape, absence of secret
+    columns, RLS policies, partial unique index, updated_at trigger.
+  - `tests/whatsapp-conversation-ownership.test.ts` (41 tests) — parse-based
+    migration tests for ADR-004. Verifies all 5 new tables, state machine
+    function + trigger, append-only triggers, message immutability trigger,
+    RLS policies using `assignment_status = 'ACTIVE'` pattern, super-admin
+    cross-branch read, `'created'` event trigger.
+  - `tests/whatsapp-webhook.test.ts` (9 tests) — supertest HTTP tests
+    covering GET handshake (200/401/400/404), POST signature verification
+    (401/200/404), and `computeHubSignature` helper correctness.
+
+### Changed
+
+- `evaluateLocalSafety()` in `env.ts` now validates WhatsApp env vars when
+  mode is sandbox|live. Existing test `allows cloud Supabase for staging with
+  explicit override` updated to set the 5 required WHATSAPP_* env vars.
+- `app.test.ts` module count assertion updated from 12 → 13 (webhooks/whatsapp
+  added).
+- `rc3-supplier-portal.test.ts` test fixture updated to include the new
+  `whatsapp: WhatsAppEnvConfig` field on `ApiEnvironment`.
+
+### Operational notes
+
+- **No Production migration applied yet.** This PR ships the migrations +
+  code; Production deployment requires separate authorization and a
+  `supabase db push` (or equivalent Management API call) to apply
+  `20260816000000` and `20260816000100`.
+- **Default `TELEPIZZA_WHATSAPP_MODE=disabled`** — no behavior change for
+  existing deployments. Setting `TELEPIZZA_WHATSAPP_MODE=mock` enables the
+  mock adapter (writes JSON files, no network). Setting `sandbox` or `live`
+  requires all 5 `WHATSAPP_*` env vars.
+- **Frontend wiring is a follow-up.** The existing `AdminWhatsApp.tsx` page
+  still shows the honest-gap integration checks as `missing`. A separate PR
+  will flip those to `present` once the admin routes (conversation list,
+  send message) are wired.
+
+---
+
 ## [1.8.1] — 2026-08-15
 
 ### Fixed

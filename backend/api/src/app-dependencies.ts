@@ -1,5 +1,7 @@
 import type { EnvironmentStatus } from "./config/env.js";
 import type { AuthTokenVerifier } from "./middleware/auth.js";
+import type { MessageProviderAdapter } from "./services/providers/adapter.js";
+import { resolveWhatsAppAdapter } from "./services/whatsapp/adapter-factory.js";
 import {
   createSupabaseAuthProfileRepository,
   createSupabaseAuthTokenVerifier,
@@ -257,6 +259,8 @@ export interface AppDependencies {
   deposits: DepositService;
   outboxWorker: OutboxWorker;
   manualContact: ManualContactService;
+  /** WhatsApp provider adapter (ADR-003/004). Null when TELEPIZZA_WHATSAPP_MODE=disabled. */
+  whatsappAdapter: MessageProviderAdapter | null;
   inviteAppOrigin: string;
   envStatus: EnvironmentStatus;
 }
@@ -335,6 +339,7 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     deposits: createDepositService(envStatus),
     outboxWorker: createOutboxWorker(envStatus),
     manualContact: createManualContactService(envStatus),
+    whatsappAdapter: resolveWhatsAppAdapter(envStatus),
     inviteAppOrigin: envStatus.config.corsOrigin,
     envStatus,
   };
