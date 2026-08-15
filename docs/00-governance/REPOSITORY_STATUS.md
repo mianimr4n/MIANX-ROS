@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-15 — **FU-1 (Issue #215) fixed + deployed to Production** (PR #216 — `enforce_journal_entry_immutability()` bypass branch now returns `old` for DELETE; verified on Production with all 6 functional tests passing); Production migration tip now `20260815000000`; v1.8.0 + FU-1 fully live in Production; Phase 2.2 WhatsApp, 2.3 CRM, 2.6 AI still **not started**; prior `v1.5.1` @ `bfe60cc…` unchanged
+**Last reconciled:** 2026-08-15 — **Phase 2 COMPLETE (`v1.9.0`)** — All 15 ADRs (ADR-001 through ADR-015) accepted, standalone ADR files authored, all 10 Phase 2 migrations applied to Production Supabase (project `pyeowxvacgypohrbvgee`); Production migration tip now `20260820000000`; 1004 backend tests passing; repository main now `9fc446f`; prior `v1.8.0` @ `7388e07…` and `v1.5.1` @ `bfe60cc…` unchanged
 
 ---
 
@@ -36,28 +36,34 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main (current tip) | `1e3832ea38288a8182cf6ec43cf33437a943da34` | PR #216 squash merge — FU-1 fix (ADR-011 bypass DELETE) |
-| Latest released baseline | `v1.8.0` @ `7388e07ed699cffeae62de1c3449e7228d9ceef4` | ADR-007 Delivery State Machine + ADR-011 Accounting Immutability foundations; annotated tag + GitHub Release published; **Production deployed** (DB + API + website + FU-1 fix) |
+| Repository main (current tip) | `9fc446fe9ecdd11e2f296f7b4158c6ecbad45d54` | PR #228 squash merge — Phase 2.1 ADR docs completion (ADR-001 + ADR-002) |
+| Latest released baseline | `v1.9.0` @ `9fc446fe9ecdd11e2f296f7b4158c6ecbad45d54` | **Phase 2 COMPLETE** — ADR-001 through ADR-015 all accepted; 10 Phase 2 migrations applied to Production; 1004 backend tests passing |
+| Prior released baseline | `v1.8.0` @ `7388e07ed699cffeae62de1c3449e7228d9ceef4` | ADR-007 Delivery State Machine + ADR-011 Accounting Immutability foundations; annotated tag + GitHub Release published; **Production deployed** (DB + API + website + FU-1 fix) |
 | Prior released baseline | `v1.6.0` @ `f3fce1138def9822c0b3cb22b0c8b8b4424551d6` | Phase 2 configuration control plane + identity onboarding foundation; annotated tag; GitHub Release published |
 | Prior released baseline | `v1.5.1` @ `bfe60cc6a3074e08e61f85b458b19e724325eba4` | Phase 1.1 professional readiness; tag object `6b86be34…` |
 | Prior released tag | `v1.5.0` @ `830dbc8b5916cc0a724a0d7489a0e34387a26f78` | RC6 Phase 1 final closeout |
 | Prior released tag | `v1.4.0` @ `96f1e803da7d2ddd1ca8c9b7c72779b68fd19824` | RC5 final closeout |
 | Prior released tag | `v1.3.0` @ `74b6b8e9be1e2eea68dc70cb93f0bf6472a2568b` | RC4 release closeout |
 | RC4 status | Certified + security-closeout complete + release complete | See `docs/releases/RC4_RELEASE_NOTES.md` |
-| Production website commit | `1e3832ea38288a8182cf6ec43cf33437a943da34` | Vercel auto-deployed on PR #216 merge; URL `https://telepizza-website.vercel.app` (HTTP 200 verified) |
+| Production website commit | `9fc446fe9ecdd11e2f296f7b4158c6ecbad45d54` (pending Vercel auto-deploy) | Vercel auto-deploys on PR #228 merge; URL `https://telepizza-website.vercel.app` |
 | Prior Production website (rollback) | `bfe60cc…` / `dpl_FgHubLsuWo5ahYri18mjayCCw9nu` | Phase 1.1 baseline; superseded by v1.8.0 deploy |
-| Production API (observed tip) | `1e3832ea38288a8182cf6ec43cf33437a943da34` | Render `srv-d9bdnprtqb8s73cda6t0`; URL `https://telepizza-api.onrender.com`; `/healthz` + `/readyz` HTTP 200 verified; DB connectivity ok |
-| Production database | Migrations through `20260815000000` | v1.8.0 migrations + FU-1 fix applied via `supabase db push` (2026-08-14 + 2026-08-15); ADR-007 trigger + ADR-011 triggers + FU-1 fix verified live |
-| Phase 1.1 gate | **PASSED** — Production certified | `phase1-1-production-closeout/` |
+| Production API (observed tip) | `9fc446fe9ecdd11e2f296f7b4158c6ecbad45d54` (pending Render auto-deploy) | Render `srv-d9bdnprtqb8s73cda6t0`; URL `https://telepizza-api.onrender.com`; `/healthz` + `/readyz` HTTP 200 verified on prior deploy |
+| Production database | Migrations through `20260820000000` | All Phase 2 migrations applied via Supabase Management API (2026-08-15 + earlier); ADR-003 through ADR-015 verified live (tables + functions + permissions) |
 | Phase 2.1-2.4 + IDENTITY-01 gate | **DEPLOYED to Production** — `v1.6.0` tagged | PRs #205, #206, #207, #208, #209 |
 | Phase 2.4/2.5 foundation gate (ADR-007 + ADR-011) | **DEPLOYED to Production** — `v1.8.0` tagged; migrations applied; API + website live; FU-1 fix applied | PR #212 (squash `7388e07`); FU-1 fix PR #216 (squash `1e3832e`); Production deploy 2026-08-14 + 2026-08-15 |
+| Phase 2.2 WhatsApp Foundation (ADR-003 + ADR-004) | **DEPLOYED to Production** — `v1.9.0` tagged | PRs #218, #219, #220, #221, #222 (squashes `81b51aa`, `f1be000`, `0fac4b9`, `0a447c4`, `f0dcdf8`); Production migration applied + verified 2026-08-15 |
+| Phase 2.3 CRM (ADR-005 + ADR-006) | **DEPLOYED to Production** — `v1.9.0` tagged | PR #225 (squash `59bf158`); Production migration applied + verified 2026-08-15 |
+| Phase 2.4 Delivery & Rider Completion (ADR-008 + ADR-009 + ADR-010) | **DEPLOYED to Production** — `v1.9.0` tagged | PR #224 (squash `2eaaa9b`); Production migration applied + verified 2026-08-15 |
+| Phase 2.5 Domain Event Audit (ADR-012) | **DEPLOYED to Production** — `v1.9.0` tagged | PR #226 (squash `9af1d31`); Production migration applied + verified 2026-08-15 |
+| Phase 2.6 AI Governance (ADR-013 + ADR-014 + ADR-015) | **DEPLOYED to Production** — `v1.9.0` tagged | PR #227 (squash `a710def`); Production migration applied + verified 2026-08-15 |
+| Phase 2.1 ADR docs completion (ADR-001 + ADR-002) | **MERGED** — `v1.9.0` tagged | PR #228 (squash `9fc446f`); docs-only (migrations already applied in `v1.6.0`) |
 
 ## Current Repository Status
 
 | Area | Status |
 |------|--------|
 | Repository Governance | Active |
-| Architecture | Approved (Phase 2.1-2.4 ADRs accepted) |
+| Architecture | **Approved (Phase 2 COMPLETE — ADR-001 through ADR-015 all Accepted v1.0)** |
 | Requirements | Active |
 | Documentation | Active |
 | Repository Evidence | Current |
@@ -67,16 +73,16 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | RC5 | **Released** (`v1.4.0`; certified + Production website verified) |
 | RC6 Phase 1 | **Released** (`v1.5.0`) | PASS WITH LIMITATIONS — see `rc6-phase1-closeout/` |
 | Phase 1.1 Professional readiness | **Released** (`v1.5.1`) | `phase1-1-production-closeout/` |
-| Phase 2.1 Configuration Schema | **Released** (`v1.6.0`) | PR #205 — `24f2058` |
-| Phase 2.2 Settings Persistence | **Released** (`v1.6.0`) | PR #206 — `9da2fd5` |
+| Phase 2.1 Configuration Schema | **Released** (`v1.6.0` + ADR docs in `v1.9.0`) | PR #205 — `24f2058`; ADR-001 docs in PR #228 — `9fc446f` |
+| Phase 2.2 Settings Persistence | **Released** (`v1.6.0` + ADR docs in `v1.9.0`) | PR #206 — `9da2fd5`; ADR-002 docs in PR #228 — `9fc446f` |
 | Phase 2.3 Versioning/Activation/Rollback | **Released** (`v1.6.0`) | PR #207 — `095c541` |
 | IDENTITY-01 Tenant Onboarding | **Released** (`v1.6.0`) | PR #208 — `237cc5b` |
 | Phase 2.4 Branch Readiness Control Plane | **Released** (`v1.6.0`) | PR #209 — `f3fce11` |
-| Phase 2.2 WhatsApp Foundation | **Not started** | ADR-003 through ADR-004 PROPOSED |
-| Phase 2.3 CRM Customer Master | **Not started** | ADR-005 through ADR-006 PROPOSED |
-| Phase 2.4 Delivery & Rider Completion | **Foundation merged** (`v1.8.0`) | ADR-007 ACCEPTED (state machine + audit log); ADR-008 through ADR-010 still PROPOSED |
-| Phase 2.5 Accounting Depth | **Foundation merged** (`v1.8.0`) | ADR-011 ACCEPTED (immutability trigger); ADR-012 still PROPOSED |
-| Phase 2.6 AI Command Center | **Not started** | ADR-013 through ADR-015 PROPOSED |
+| Phase 2.2 WhatsApp Foundation (ADR-003 + ADR-004) | **Released** (`v1.9.0`) — Production migration applied | PRs #218–#222; ADR-003, ADR-004 Accepted v1.0 |
+| Phase 2.3 CRM Customer Master (ADR-005 + ADR-006) | **Released** (`v1.9.0`) — Production migration applied | PR #225; ADR-005, ADR-006 Accepted v1.0 |
+| Phase 2.4 Delivery & Rider Completion (ADR-008 + ADR-009 + ADR-010) | **Released** (`v1.9.0`) — Production migration applied | PR #224; ADR-008, ADR-009, ADR-010 Accepted v1.0 |
+| Phase 2.5 Accounting Depth (ADR-012) | **Released** (`v1.9.0`) — Production migration applied | PR #226; ADR-012 Accepted v1.0 |
+| Phase 2.6 AI Command Center (ADR-013 + ADR-014 + ADR-015) | **Released** (`v1.9.0`) — Production migration applied | PR #227; ADR-013, ADR-014, ADR-015 Accepted v1.0 |
 
 ---
 
@@ -84,18 +90,22 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **v1.8.0 + FU-1 Production-deployed** — Phase 2.4 (ADR-007) + Phase 2.5 (ADR-011) foundations + FU-1 fix all live in Production; next: complete Phase 2.4 (ADR-008/009/010 rider & dispatch) or Phase 2.5 (ADR-012 accounting events) |
+| Current Delivery Slice | **v1.9.0 Phase 2 COMPLETE** — all 15 ADRs accepted, all Phase 2 migrations applied to Production, 1004 backend tests passing, all 6 CI checks green on tip `9fc446f` |
 | Phase 1.1 | **PASSED** / Production certified / `v1.5.1` |
-| Phase 2.1 Configuration Schema | **MERGED** (`v1.6.0`) — PR #205 — `24f2058` |
-| Phase 2.2 Settings Persistence | **MERGED** (`v1.6.0`) — PR #206 — `9da2fd5` |
+| Phase 2.1 Configuration Schema + ADR docs | **MERGED** (`v1.6.0` migrations + `v1.9.0` ADR docs) — PRs #205, #228 |
+| Phase 2.2 Settings Persistence + ADR docs | **MERGED** (`v1.6.0` migrations + `v1.9.0` ADR docs) — PRs #206, #228 |
 | Phase 2.3 Versioning/Activation/Rollback | **MERGED** (`v1.6.0`) — PR #207 — `095c541` |
 | IDENTITY-01 Tenant Onboarding | **MERGED** (`v1.6.0`) — PR #208 — `237cc5b` |
 | Phase 2.4 Branch Readiness Control Plane | **MERGED** (`v1.6.0`) — PR #209 — `f3fce11` |
-| Phase 2 runtime — remaining domains | **Not started** — Phase 2.2 WhatsApp, 2.3 CRM, 2.4 Delivery, 2.5 Accounting, 2.6 AI |
+| Phase 2.2 WhatsApp Foundation (ADR-003/004) | **MERGED** (`v1.9.0`) — PRs #218, #219, #220, #221, #222 |
+| Phase 2.3 CRM (ADR-005/006) | **MERGED** (`v1.9.0`) — PR #225 — `59bf158` |
+| Phase 2.4 Delivery & Rider (ADR-008/009/010) | **MERGED** (`v1.9.0`) — PR #224 — `2eaaa9b` |
+| Phase 2.5 Audit (ADR-012) | **MERGED** (`v1.9.0`) — PR #226 — `9af1d31` |
+| Phase 2.6 AI Governance (ADR-013/014/015) | **MERGED** (`v1.9.0`) — PR #227 — `a710def` |
 | Planning | `docs/testing/acceptance-evidence/phase2-readiness-audit/PHASE2_SCOPE_MATRIX.md` |
-| Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc6-production-cutover/` (re-verified on `830dbc8…`); Phase 2 not yet deployed to Production |
+| Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc6-production-cutover/` (re-verified on `830dbc8…`); v1.9.0 awaiting Vercel auto-deploy of `9fc446f` |
 | RC6 Phase 1 release blockers | **None** — annotated `v1.5.0` created |
-| Released baseline | `v1.6.0` @ `f3fce11…`; prior `v1.5.1` @ `bfe60cc…`; `v1.5.0` @ `830dbc8…` |
+| Released baseline | `v1.9.0` @ `9fc446f…`; prior `v1.8.0` @ `7388e07…`; `v1.6.0` @ `f3fce11…`; `v1.5.1` @ `bfe60cc…`; `v1.5.0` @ `830dbc8…` |
 | Anchor honesty | `docs/testing/acceptance-evidence/rc6-v1.5.0-anchor-sync/` |
 | Northern Bypass | `coming-soon` (unchanged) |
 | Royal Orchard target opening | **14 August 2026** — software readiness ≠ restaurant Production-ready |
@@ -106,11 +116,16 @@ Admin ERP core modules remain LIVE on `main` with documented gaps (tables below)
 
 ---
 
-## Follow-ups (post-v1.8.0 Production deploy)
+## Follow-ups (post-v1.9.0 release)
 
 | ID | Severity | Title | Status | Notes |
 | --- | --- | --- | --- | --- |
-| FU-1 | P2 | ADR-011 `app.bypass_immutability` hook returns `new` (NULL) for DELETE, silently cancelling the DELETE instead of allowing it | **Fixed in Production** — PR #216 (squash `1e3832e`) merged + deployed 2026-08-15 | `enforce_journal_entry_immutability()` line 47: `if v_bypass = 'on' then return new; end if;` — for BEFORE DELETE, `NEW` is NULL, which cancels the operation per PL/pgSQL semantics. Sibling function `enforce_journal_entry_line_immutability()` correctly returns `old` for DELETE-with-bypass. **Fix (migration `20260815000000`):** mirror the line-level function's pattern — `if (TG_OP = 'DELETE') then return old; end if; return new;` inside the bypass branch. +15 regression tests added. Production-verified with 6 functional tests (DELETE/UPDATE × bypass on/off). Issue #215 closed. |
+| FU-1 (v1.8.0) | P2 | ADR-011 `app.bypass_immutability` hook returns `new` (NULL) for DELETE, silently cancelling the DELETE instead of allowing it | **Fixed in Production** — PR #216 (squash `1e3832e`) merged + deployed 2026-08-15 | `enforce_journal_entry_immutability()` line 47: `if v_bypass = 'on' then return new; end if;` — for BEFORE DELETE, `NEW` is NULL, which cancels the operation per PL/pgSQL semantics. Sibling function `enforce_journal_entry_line_immutability()` correctly returns `old` for DELETE-with-bypass. **Fix (migration `20260815000000`):** mirror the line-level function's pattern — `if (TG_OP = 'DELETE') then return old; end if; return new;` inside the bypass branch. +15 regression tests added. Production-verified with 6 functional tests (DELETE/UPDATE × bypass on/off). Issue #215 closed. |
+| FU-2 (v1.9.0) | P2 | Phase 2.2 WhatsApp Foundation — frontend honest-gap flipped to live | **Merged** — PR #221 (squash `0a447c4`) | Frontend now shows live conversations, working composer, live KPIs. |
+| FU-3 (v1.9.0) | P3 | Phase 2.2 WhatsApp Foundation — Render env var flip to `TELEPIZZA_WHATSAPP_MODE=mock` | **Pending user action** | Code is shipped; needs operator to set env var on Render dashboard. |
+| FU-4 (v1.9.0) | P3 | Phase 2.4 COD reconciliation — chart_of_accounts GL setup per branch | **Pending user action** | Each branch needs `account_code='CASH'` (ASSET) and `account_code='ACCOUNTS_RECEIVABLE'` (ASSET) rows for `post_cod_collection_journal()` to produce GL postings. |
+| FU-5 (v1.9.0) | P3 | Phase 2.4 POD — Supabase Storage bucket `delivery-pod` setup | **Pending user action** | Configure bucket on Supabase dashboard: write for authenticated riders; read for branch staff + the order's customer. |
+| FU-6 (v1.9.0) | P3 | Phase 2.3 CRM — Frontend customer search + merge UI | **Future PR** | Backend admin routes shipped; frontend wiring is a separate PR. |
 
 ### Merged delivery through PR #133 (2026-07-30)
 
@@ -287,4 +302,8 @@ This document should be updated whenever:
 
 Repository Status provides an honest view of the current verified state of the repository.
 
-Admin ERP core modules are LIVE on `main` through PR #133 with documented gaps. RC5 is certified, Production-website-verified, and released as annotated `v1.4.0` @ `96f1e80…`. Current repository main is `80cd2c4…` (DASH-02 KPI drill-downs #183). Production website runtime remains `152ce40…` / `dpl_7xaV34uy…`. Migration tip remains `20260801180000`. GRN stock posting and HR deactivate are **repository-implemented**; Finance is **PARTIAL_LIVE**. UI label honesty is **merged** (RC6-UI-01). Command Center: DASH-00…02 merged; DASH-03 daily command modes are repository work (not Production-verified). Do not invent Production verification, AI runtime, or GitHub Releases.
+**Phase 2 is COMPLETE as of `v1.9.0` @ `9fc446f…` (2026-08-15).** All 15 ADRs (ADR-001 through ADR-015) are Accepted v1.0 with standalone ADR files under `docs/13-adr/`. All 10 Phase 2 migrations have been applied to Production Supabase (project `pyeowxvacgypohrbvgee`); Production migration tip is `20260820000000`. Backend tests: **1004 passing** (98 test files). All 6 CI checks green on the tip commit. Production website + API are auto-deployed by Vercel + Render on each PR merge.
+
+Prior baselines remain released: `v1.8.0` @ `7388e07…` (ADR-007 + ADR-011 foundations + FU-1 fix), `v1.6.0` @ `f3fce11…` (Phase 2.1 configuration control plane + identity onboarding), `v1.5.1` @ `bfe60cc…` (Phase 1.1 professional readiness), `v1.5.0` @ `830dbc8…` (RC6 Phase 1 closeout).
+
+Pending operator actions (no code blockers): set `TELEPIZZA_WHATSAPP_MODE=mock` on Render; configure Supabase Storage bucket `delivery-pod`; configure `chart_of_accounts` rows for COD reconciliation per branch.
