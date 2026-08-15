@@ -56,6 +56,10 @@ Active
 | ADR-016 | OTP Verification Architecture | Accepted | 1.0 | [`docs/13-adr/ADR-016-otp-verification-architecture.md`](../13-adr/ADR-016-otp-verification-architecture.md) — implemented in `v1.10.0` (Phase 3) |
 | ADR-017 | Phone-First Auth & Session Handoff | Accepted | 1.0 | [`docs/13-adr/ADR-017-phone-first-auth-session-handoff.md`](../13-adr/ADR-017-phone-first-auth-session-handoff.md) — implemented in `v1.10.0` (Phase 3) |
 | ADR-018 | Order Lifecycle State Machine & Staff Transition API | Accepted | 1.0 | [`docs/13-adr/ADR-018-order-lifecycle-state-machine.md`](../13-adr/ADR-018-order-lifecycle-state-machine.md) — implemented in `v2.0.0` (Phase 5 closeout) |
+| ADR-019 | RBAC Authorization Principal & Permission Model | Accepted | 1.0 | [`docs/13-adr/ADR-019-rbac-authorization-principal.md`](../13-adr/ADR-019-rbac-authorization-principal.md) — implemented in `v2.1.0` (Phase 6 closeout) |
+| ADR-020 | Canonical Single-Price Menu Catalog & Atomic Price Audit | Accepted | 1.0 | [`docs/13-adr/ADR-020-canonical-single-price-menu-catalog.md`](../13-adr/ADR-020-canonical-single-price-menu-catalog.md) — implemented in `v2.1.0` (Phase 6 closeout) |
+| ADR-021 | Deals, Coupons & Loyalty Promotion Engine | Accepted | 1.0 | [`docs/13-adr/ADR-021-deals-coupons-loyalty-engine.md`](../13-adr/ADR-021-deals-coupons-loyalty-engine.md) — implemented in `v2.1.0` (Phase 6 closeout) |
+| ADR-022 | Reports & Analytics Framework — Query-Time KPI Registry | Accepted | 1.0 | [`docs/13-adr/ADR-022-reports-analytics-framework.md`](../13-adr/ADR-022-reports-analytics-framework.md) — implemented in `v2.1.0` (Phase 6 closeout) |
 
 > **Note:** All Phase 2 ADRs (ADR-001 through ADR-015) now have standalone
 > ADR files authored under `docs/13-adr/` and are marked Accepted.
@@ -64,6 +68,11 @@ Active
 > ADR-018 formally accepts the Sprint 4.4 frozen Order Lifecycle
 > architecture as the canonical Phase 5 decision and records the as-built
 > implementation against the as-designed matrix.
+> ADR-019 through ADR-022 formally accept the Sprint 3 / RC3 / RC4-11
+> as-built Admin & ERP Core architecture as the canonical Phase 6
+> decision: RBAC permission model, single-price menu catalog, three-engine
+> promotions surface (coupons + campaigns + loyalty), and query-time
+> analytics registry.
 
 ---
 

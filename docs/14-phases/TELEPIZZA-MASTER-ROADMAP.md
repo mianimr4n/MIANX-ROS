@@ -111,7 +111,25 @@ Do **not** treat current Multan pilot numbers as permanently locked forever. Fin
 
 Admin dashboard · User/staff · Roles · Branches · Menu/price · Deals · Order control · Reports · Audit · Settings
 
-**Status:** Not started (after Phase 5 operational APIs)
+**Status:** ✅ COMPLETE (v2.1.0) — Production-verified 95/95 PASS
+
+**Close report:** `docs/testing/acceptance-evidence/phase6-closeout/PHASE6_FINAL_GATE.md`
+**Formal ADRs:**
+- `docs/13-adr/ADR-019-rbac-authorization-principal.md` (v2.1.0) — RBAC permission model
+- `docs/13-adr/ADR-020-canonical-single-price-menu-catalog.md` (v2.1.0) — menu catalog + atomic price audit
+- `docs/13-adr/ADR-021-deals-coupons-loyalty-engine.md` (v2.1.0) — three-engine promotions surface
+- `docs/13-adr/ADR-022-reports-analytics-framework.md` (v2.1.0) — query-time KPI registry
+
+**Work items:**
+- ✅ Admin dashboard (Owner Workspace, Operations, System Health, Opening Readiness)
+- ✅ User/staff & Roles (RBAC, staff invites, staff assignments, HR lifecycle)
+- ✅ Branches (ADR-001 — closed in v1.9.0)
+- ✅ Menu/price (canonical single-price catalog, atomic price audit RPC, modifier system)
+- ✅ Deals (menu-level deal SKUs + coupons + loyalty rewards)
+- ✅ Order control (ADR-018 — closed in v2.0.0)
+- ✅ Reports (query-time KPI registry, exception center, deferred scheduled reports)
+- ✅ Audit (ADR-012 — closed in v1.9.0)
+- ✅ Settings (ADR-001 / ADR-002 — closed in v1.9.0)
 
 ---
 
@@ -200,9 +218,9 @@ PRODUCTION V1.0 = LIVE
 
 | Now | Next |
 |---|---|
-| Phase 5 **PASS AND CLOSED** (v2.0.0) | **Phase 6** — Admin and ERP Core |
+| Phase 6 **PASS AND CLOSED** (v2.1.0) | **Phase 7** — POS System |
 | Phase 3 eng paused | Ops continues Meta/Twilio in parallel |
-| Phase 6 implementation | After Phase 5 close (UNLOCKED) |
+| Phase 7 implementation | After Phase 6 close (UNLOCKED) |
 
 ---
 
