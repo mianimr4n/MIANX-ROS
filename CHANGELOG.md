@@ -10,16 +10,44 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
 
 ---
 
-## [Unreleased] — Phase 2.2 WhatsApp Foundation (ADR-003 + ADR-004)
+## [1.9.0] — 2026-08-15 — Phase 2 Complete (ADR-001 through ADR-015)
 
-### Added
+**Phase 2 — Customer Support, CRM, Delivery & Rider, Accounting Audit, AI Governance — is FEATURE-COMPLETE.**
+
+This release ships **15 ADRs** (ADR-001 through ADR-015), all marked Accepted v1.0
+with standalone ADR markdown files under `docs/13-adr/`. All 10 Phase 2 migrations
+have been applied to Production Supabase (project `pyeowxvacgypohrbvgee`). Test
+count grew from 824 (start of Phase 2.2) to **1004 backend tests** (+180 new tests).
+All 6 CI checks are green on the tip commit (`9fc446f`).
+
+### Phase 2.1 — Branch Configuration & Settings Versioning (ADR-001 + ADR-002)
+
+- **ADR-001 — Branch Configuration Inheritance & Overrides** (`docs/13-adr/ADR-001-branch-configuration-inheritance.md`).
+  Establishes the inheritance chain: tenant defaults → brand defaults → branch
+  overrides. A branch-level override only needs to set the keys it wishes to
+  override; all other keys fall through to the parent scope. Already shipped as
+  migrations `20260805190000_phase2_01_configuration_schema_versions.sql`
+  (creates `configuration_schemas`, `configuration_versions`, `configuration_change_log`)
+  and `20260805200000_phase2_01_configuration_audit_hardening.sql` (RLS + append-only
+  trigger on `configuration_change_log`). This release only authors the standalone
+  ADR markdown file and marks ADR-001 Accepted v1.0 in `ADR_INDEX.md`.
+
+- **ADR-002 — Settings Versioning, Activation & Rollback Model** (`docs/13-adr/ADR-002-settings-versioning-rollback.md`).
+  Each settings change creates a new row in `configuration_versions` with status
+  `draft` → `active` → `archived`, with exactly one `active` version per
+  `(schema_id, scope_id)` enforced by a partial unique index. Rollback is a
+  state transition (not a DELETE), preserving the full audit trail. Already
+  shipped via migrations `20260806150140_phase2_02_settings_persistence_foundation.sql`
+  and `20260806170223_phase2_03_versioning_activation_rollback.sql`. This release
+  authors the standalone ADR markdown file and marks ADR-002 Accepted v1.0.
+
+### Phase 2.2 — WhatsApp Foundation (ADR-003 + ADR-004)
 
 - **ADR-003 — Provider-Secret Boundary Architecture** (`docs/13-adr/ADR-003-provider-secret-boundary.md`).
   Cross-cutting security ADR governing how ALL provider credentials (WhatsApp,
   future LLM, future maps) are stored. Secrets live ONLY in server-side env
   vars; the DB stores reference keys (`config_ref`) that the backend resolves
-  to env-var names at runtime. Formalizes the policy already documented in
-  `SECURITY.md` line 80.
+  to env-var names at runtime.
 
 - **ADR-004 — WhatsApp Conversation Ownership & Routing** (`docs/13-adr/ADR-004-whatsapp-conversation-ownership.md`).
   WhatsApp-specific ADR covering: branch ownership of conversations, agent RLS
@@ -27,113 +55,199 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
   identity for unknown phone numbers, conversation state machine
   (open → in_progress → resolved/escalated → closed), message immutability
   (mirror ADR-007/011 patterns), 24-month PII retention with anonymization,
-  idempotent webhook upsert via `wamid` UNIQUE, and the provider adapter
-  contract (`MessageProviderAdapter` interface).
+  idempotent webhook upsert via `wamid` UNIQUE.
 
-- **Migrations**:
-  - `20260816000000_adr_003_provider_secret_boundary.sql` — creates
-    `whatsapp_provider_configs` table (non-secret metadata only: phone_number_id,
-    business_account_id, display_name, default_branch_id, is_default). NO
-    secret columns. Partial unique index enforces exactly one default. RLS:
-    authenticated/anon can read active configs; service_role only can write.
-  - `20260816000100_adr_004_whatsapp_conversation_ownership.sql` — creates
-    `whatsapp_conversations`, `whatsapp_messages`, `whatsapp_conversation_events`
-    (append-only), `whatsapp_message_templates`, `whatsapp_inbound_events`
-    (raw webhook queue). Extends `customers.status` with `'provisional'`.
-    Adds conversation state machine trigger, message immutability trigger
-    (inbound = append-only; outbound body immutable once sent), append-only
-    triggers on audit tables, `'created'` event trigger on new conversations.
-    Branch-scoped RLS on all tables using the canonical
-    `assignment_status = 'ACTIVE'` pattern.
+- **Migrations applied to Production**:
+  - `20260816000000_adr_003_provider_secret_boundary.sql` — `whatsapp_provider_configs` table (non-secret metadata only).
+  - `20260816000100_adr_004_whatsapp_conversation_ownership.sql` — 5 tables: `whatsapp_conversations`, `whatsapp_messages`, `whatsapp_conversation_events`, `whatsapp_message_templates`, `whatsapp_inbound_events`. Extends `customers.status` with `'provisional'`.
+  - `20260816000200_fix_whatsapp_message_immutability_content_column.sql` — FU-1: immutability trigger references `content` column (not legacy `body`).
+  - `20260816000250_add_whatsapp_messages_next_attempt_at.sql` — FU-2: `provider_next_attempt_at` column + partial index for outbox worker.
+  - `20260816000300_add_whatsapp_anonymize_pii_rpc.sql` — FU-3: `whatsapp_anonymize_pii()` SECURITY DEFINER RPC.
 
-- **Backend — env config** (`backend/api/src/config/env.ts`):
-  - New `WhatsAppEnvConfig` interface + `whatsapp` field on `ApiEnvironment`.
-  - New env vars: `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`,
-    `WHATSAPP_BUSINESS_ACCOUNT_ID`, `WHATSAPP_APP_SECRET`,
-    `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_API_VERSION` (default `v21.0`).
-  - `evaluateLocalSafety()` now requires all 5 WhatsApp secrets when
-    `TELEPIZZA_WHATSAPP_MODE=sandbox|live` (defense in depth for ADR-003).
-  - `.env.example` updated with documented WhatsApp env var block.
+- **Backend modules**:
+  - `services/whatsapp/mock-client.ts` — mock adapter for `TELEPIZZA_WHATSAPP_MODE=mock`.
+  - `services/whatsapp/cloud-api-client.ts` — Meta Cloud API adapter with HMAC-SHA256 signature verification (`timingSafeEqual`).
+  - `services/whatsapp/adapter-factory.ts` — `resolveWhatsAppAdapter(envStatus)` picks adapter by mode.
+  - `services/whatsapp/inbound-worker.ts` — drains `whatsapp_inbound_events` → `whatsapp_messages` with idempotent upsert on `provider_message_id` (wamid), creates provisional customers for unknown phone numbers, triggers conversation state-machine transitions.
+  - `services/whatsapp/outbox-worker.ts` — drains outbound `whatsapp_messages`, calls adapter.sendMessage, exponential backoff with `provider_next_attempt_at`, permanently_failed on MAX_RETRIES, inserts `message_sent`/`message_failed` audit events.
+  - `services/whatsapp/admin-service.ts` — service layer for conversations/messages/events/templates/send/assign/transition. Branch-scoped with super-admin bypass.
+  - `services/whatsapp/pii-anonymization.ts` — `runWhatsAppPiiAnonymization()` + `startWhatsAppPiiAnonymizationJob()` lifecycle wrapper. Calls `whatsapp_anonymize_pii()` RPC with batched IDs (25 per call).
+  - `modules/webhooks/whatsapp.ts` — GET handshake + POST signature-verified inbound queue.
+  - `modules/admin/whatsapp.ts` — 11 admin endpoints (conversations + templates), all rate-limited.
+  - `app.ts` — `express.json({ verify })` raw body capture for HMAC.
 
-- **Backend — provider adapter contract** (`backend/api/src/services/providers/adapter.ts`):
-  - `MessageProviderAdapter` interface with `sendMessage()`,
-    `verifyWebhookSignature()`, `normalizeWebhookEvent()`.
-  - `MessageContent` (text | template), `MessageResult`, `NormalizedInboundEvent`,
-    `NormalizedStatusEvent`, `NormalizedWebhookEvent` types.
+- **Frontend wiring** (PR #221): flipped honest-gap language in `WhatsAppIntegrationBanner` ("WhatsApp inbox is live"), `ConversationWorkspace` (live conversation list + message thread + composer), `MessageComposer` (working form with 4096-char limit), `WhatsAppKPIs` (LIVE badge when `conversationStats` provided). Added 11 typed functions to `apps/website/client/src/lib/admin-api.ts`.
 
-- **Backend — WhatsApp adapters** (`backend/api/src/services/whatsapp/`):
-  - `mock-client.ts` — mock adapter for `TELEPIZZA_WHATSAPP_MODE=mock` (local
-    dev + test). Writes outbound messages as JSON files to
-    `backend/api/.whatsapp-outbox/`. Accepts all webhook signatures. Exports
-    `computeHubSignature()` helper for Cloud API adapter tests.
-  - `cloud-api-client.ts` — Meta Cloud API adapter for sandbox|live mode.
-    POSTs to `https://graph.facebook.com/<version>/<phone_number_id>/messages`.
-    Verifies `X-Hub-Signature-256` using `WHATSAPP_APP_SECRET` with
-    `timingSafeEqual` (constant-time comparison). Supports text + template
-    messages.
-  - `adapter-factory.ts` — `resolveWhatsAppAdapter(envStatus)` picks the
-    right adapter based on `TELEPIZZA_WHATSAPP_MODE`. Returns `null` when
-    disabled.
+- **5 PRs merged**: #218 (foundation), #219 (inbound worker), #220 (outbox + admin routes), #221 (frontend + PII job), #222 (FU-2 hotfix — partial index cannot use `now()`).
 
-- **Backend — webhook receiver** (`backend/api/src/modules/webhooks/whatsapp.ts`):
-  - `GET /api/v1/webhooks/whatsapp` — Meta webhook subscription handshake.
-    Compares `hub.verify_token` against `WHATSAPP_VERIFY_TOKEN` env var.
-    Returns `hub.challenge` as plaintext. No DB access.
-  - `POST /api/v1/webhooks/whatsapp` — inbound message + status callback.
-    Verifies `X-Hub-Signature-256` HMAC (500ms budget), returns 200 OK
-    immediately, enqueues raw payload to `whatsapp_inbound_events` for async
-    processing. Returns 404 when WhatsApp disabled; 401 on bad signature;
-    500 on DB insert failure (so Meta retries).
-  - Raw body captured via `express.json({ verify })` hook in `app.ts` —
-    stores Buffer on `req.rawBody` without breaking JSON parsing for other
-    routes.
-  - Lazily creates Supabase client (avoids crashing app at startup if env
-    vars missing; webhook returns 503 if called before env ready).
+### Phase 2.3 — CRM (ADR-005 + ADR-006)
 
-- **Backend — app wiring**:
-  - `app.ts` registers the webhook router at `/api/v1/webhooks/whatsapp`.
-  - `app-dependencies.ts` adds `whatsappAdapter: MessageProviderAdapter | null`
-    field, wired via `resolveWhatsAppAdapter(envStatus)`.
-  - `modules/index.ts` adds `webhooks/whatsapp` to `apiModules` descriptor
-    (now 13 modules; `/healthz` reflects this).
+- **ADR-005 — Canonical Customer Identity Strategy** (`docs/13-adr/ADR-005-canonical-customer-identity.md`).
+  `customers.id` is the canonical identifier. `customer_identities` table maps
+  multiple identity types (phone, email, whatsapp) to a single customer.
+  `normalize_phone_e164()` function ensures Pakistani numbers (`+92XXXXXXXXXX`)
+  are stored consistently. `resolve_customer_by_identity()` RPC provides
+  idempotent lookup. `auto_create_customer_identities()` INSERT trigger
+  backfills the identities table from existing `customers.phone` / `email` columns.
 
-- **Tests** (67 new tests, all passing):
-  - `tests/whatsapp-provider-secret-boundary.test.ts` (17 tests) — parse-based
-    migration tests for ADR-003. Verifies table shape, absence of secret
-    columns, RLS policies, partial unique index, updated_at trigger.
-  - `tests/whatsapp-conversation-ownership.test.ts` (41 tests) — parse-based
-    migration tests for ADR-004. Verifies all 5 new tables, state machine
-    function + trigger, append-only triggers, message immutability trigger,
-    RLS policies using `assignment_status = 'ACTIVE'` pattern, super-admin
-    cross-branch read, `'created'` event trigger.
-  - `tests/whatsapp-webhook.test.ts` (9 tests) — supertest HTTP tests
-    covering GET handshake (200/401/400/404), POST signature verification
-    (401/200/404), and `computeHubSignature` helper correctness.
+- **ADR-006 — Customer Account Merge & Reversal Process** (`docs/13-adr/ADR-006-customer-account-merge.md`).
+  `merge_customers_atomic()` RPC transfers all FKs from source → target
+  customer in a single transaction, marks source `status = 'merged'` with
+  `merged_into_id` pointer, and logs to `customer_merge_log` (append-only).
+  `reverse_customer_merge()` RPC allows reversal within a 30-day window;
+  after the window expires, the merge is permanent.
 
-### Changed
+- **Migration applied to Production**: `20260818000000_adr_005_006_crm.sql`.
+  - 3 new tables: `customer_identities`, `customer_merge_log`, `customer_identity_backfill_conflicts`.
+  - 6 new functions: `normalize_phone_e164`, `resolve_customer_by_identity`, `auto_create_customer_identities`, `merge_customers_atomic`, `reverse_customer_merge`, `enforce_merge_log_append_only`.
+  - Extended `customers.status` CHECK with `'merged'` value; added `customers.merged_into_id` column.
+  - Backfill DO block with conflict logging (Production: 0 conflicts, 0 identities inserted — no customers in production yet).
 
-- `evaluateLocalSafety()` in `env.ts` now validates WhatsApp env vars when
-  mode is sandbox|live. Existing test `allows cloud Supabase for staging with
-  explicit override` updated to set the 5 required WHATSAPP_* env vars.
-- `app.test.ts` module count assertion updated from 12 → 13 (webhooks/whatsapp
-  added).
-- `rc3-supplier-portal.test.ts` test fixture updated to include the new
-  `whatsapp: WhatsAppEnvConfig` field on `ApiEnvironment`.
+- **Backend modules**:
+  - `services/customers/identity-service.ts` — `resolveCustomer`, `normalizePhone`, `getCustomer`, `listIdentities`, `addIdentity`, `searchCustomers`.
+  - `services/customers/merge-service.ts` — `mergeCustomers`, `reverseMerge`, `listMergeLog`, `getMergeLogEntry`.
+  - `modules/admin/customers.ts` — 8 endpoints (search, get, identities, resolve, merge, reverse, merge-log). All rate-limited; merge + reverse super-admin only.
+
+- **Tests**: `customer-identity-merge-service.test.ts` (36 cases). PR #225 merged as `59bf158`.
+
+### Phase 2.4 — Delivery & Rider Completion (ADR-008 + ADR-009 + ADR-010)
+
+- **ADR-008 — Rider Location Retention & Privacy Policy** (`docs/13-adr/ADR-008-rider-location-retention.md`).
+  `rider_locations` table stores GPS pings with 24-hour retention. `purge_expired_rider_locations()`
+  TTL function deletes rows older than 24 hours (idempotent, runs as a lifecycle job).
+  RLS: rider self + branch staff + super-admin.
+
+- **ADR-009 — Proof of Delivery (POD) Data Format & Storage** (`docs/13-adr/ADR-009-proof-of-delivery.md`).
+  `delivery_pod` table (UNIQUE on `delivery_id`) stores POD data: signature
+  (base64 PNG), photo URL (Supabase Storage bucket `delivery-pod`), recipient
+  name, GPS coordinates, timestamp. Immutability trigger blocks UPDATE/DELETE
+  after `delivered` status. Extended ADR-007 transition validator to require
+  POD before transitioning to `delivered`.
+
+- **ADR-010 — Cash on Delivery (COD) Financial Ownership** (`docs/13-adr/ADR-010-cod-financial-ownership.md`).
+  `cod_collections` table (UNIQUE on `delivery_id`) records COD amount collected
+  by rider. Reconciliation state machine: `pending` → `reconciled` / `shortage`
+  / `overage`. `post_cod_collection_journal()` trigger fires
+  `create_journal_entry_atomic` + `finance_postings` link (idempotent) —
+  automatically posts the COD collection to the branch's GL when marked
+  `reconciled`.
+
+- **Migration applied to Production**: `20260817000000_adr_008_009_010_delivery_rider.sql`.
+  - 3 new tables: `rider_locations`, `delivery_pod`, `cod_collections`.
+  - 5 new functions: `purge_expired_rider_locations`, `enforce_delivery_pod_immutability`, `post_cod_collection_journal`, `set_cod_updated_at`, `validate_delivery_state_transition` (extended).
+  - Permission `delivery.access` seeded (granted to super-admin, branch-manager, customer-support, cashier, rider, kitchen).
+
+- **Backend modules**:
+  - `services/deliveries/rider-location-service.ts` — `ingest`, `listForDelivery`, `getLatestForRider`.
+  - `services/deliveries/rider-location-ttl.ts` — `runOnce` + `startRiderLocationTtlJob` lifecycle wrapper.
+  - `services/deliveries/pod-service.ts` — `capturePod`, `getPod`, `podExistsForDelivery`.
+  - `services/deliveries/cod-service.ts` — `recordCollection`, `getCollection`, `listCollections`, `reconcile`, `resolveShortageOrOverage`.
+  - `modules/admin/delivery-rider.ts` — 10 endpoints (rider-locations, delivery-pod, cod collections + reconcile + resolve). All rate-limited.
+
+- **Tests**: 51 new tests across 3 files (`rider-location-service.test.ts` 16 cases, `delivery-pod-service.test.ts` 14 cases, `cod-service.test.ts` 21 cases). PR #224 merged as `2eaaa9b`.
+
+### Phase 2.5 — Domain Event Audit (ADR-012)
+
+- **ADR-012 — Domain Event & Shared Audit Architecture** (`docs/13-adr/ADR-012-domain-event-audit.md`).
+  Centralized append-only `domain_events` table for cross-domain query
+  projection. Each event has `event_type` (regex-validated format
+  `<domain>.<verb>`), `domain` enum, `entity_id`, `branch_id`, `actor_user_id`,
+  `actor_role`, `metadata` JSONB, `correlation_id` (for tracing across
+  domains), `occurred_at`. `emit_domain_event()` helper RPC validates the
+  event_type format. AFTER INSERT triggers on existing audit tables mirror
+  events into `domain_events`:
+  - `delivery_state_transitions` → `delivery.transitioned`
+  - `customer_merge_log` → `customer.merged` (and `customer.merge_reversed` on UPDATE of `reversed_at`)
+  - `whatsapp_conversation_events` → `whatsapp.<event_type>` (conditional)
+  - `order_status_logs` → `order.transitioned` (conditional)
+
+- **Migration applied to Production**: `20260819000000_adr_012_domain_event_audit.sql`.
+  - 1 new table: `domain_events`.
+  - 6 indexes (domain+entity, event_type, branch, actor, correlation, occurred_at) + GIN on `metadata`.
+  - RLS: branch-scoped read (branch staff see their branch + null branch events); service_role write.
+  - 6 new functions: `emit_domain_event`, `enforce_domain_events_append_only`, 4 mirror triggers.
+  - Permission `audit.read` seeded (granted to super-admin, branch-manager, customer-support).
+
+- **Backend modules**:
+  - `services/audit/domain-event-service.ts` — `emitEvent`, `listEvents`, `getEvent`, `listEventsForEntity`, `listEventsByCorrelation`.
+  - `modules/admin/audit.ts` — 4 endpoints (list, get, by-entity, by-correlation). All rate-limited.
+
+- **FU-1 hotfix during CI**: nested `$$` blocks cause syntax error — PostgreSQL parses inner `$$` as the end of the outer `do $$` block. Fixed by using distinct delimiters: outer `do $_$ ... $_$` and inner `as $func$ ... $func$`.
+
+- **Tests**: 17 new tests in `domain-event-service.test.ts`. PR #226 merged as `9af1d31`.
+
+### Phase 2.6 — AI Governance (ADR-013 + ADR-014 + ADR-015)
+
+- **ADR-013 — AI Provider Boundary & Data Governance** (`docs/13-adr/ADR-013-ai-provider-boundary.md`).
+  `ai_provider_configs` table stores non-secret metadata (provider name, model,
+  base URL); API keys live in env vars per ADR-003. `ai_call_logs` table records
+  per-call audit: actor, provider, model, `prompt_sha256` (hash only — raw
+  prompts NEVER stored), tokens, latency, cost, success. PII redaction utility
+  `services/ai/pii-redaction.ts` redacts E.164 phones, Pakistani mobiles,
+  emails, credit cards, CNICs before hashing.
+
+- **ADR-014 — AI Human-Approval Gate Architecture** (`docs/13-adr/ADR-014-ai-approval-gate.md`).
+  `ai_action_approvals` table (renamed from `ai_approvals` in FU-1 to avoid
+  conflict with existing Phase 4 foundation table). State machine:
+  `pending` → `approved` → `executed`; `pending` → `rejected`; `pending` →
+  `expired` after 7 days. CHECK constraint on `action_type` (allowlist of 9
+  permitted action types). Permission `ai.approve` granted to super-admin +
+  branch-manager only.
+
+- **ADR-015 — AI Prompt & Data Retention Policy** (`docs/13-adr/ADR-015-ai-prompt-retention.md`).
+  `ai_prompt_logs` table stores hashed metadata only; UNIQUE on
+  `prompt_sha256`; `occurrence_count`, `avg_latency_ms`, `avg_cost_usd` for
+  trend analytics. `upsert_ai_prompt_log()` RPC increments count + rolling
+  averages. Raw prompts NEVER stored in database (only SHA-256 hash of
+  redacted prompt).
+
+- **Migration applied to Production**: `20260820000000_adr_013_014_015_ai.sql`.
+  - 4 new tables: `ai_provider_configs`, `ai_call_logs`, `ai_action_approvals`, `ai_prompt_logs`.
+  - 1 new function: `upsert_ai_prompt_log`.
+  - 2 new permissions: `ai.use` (granted to super-admin, branch-manager, customer-support), `ai.approve` (granted to super-admin, branch-manager only).
+
+- **Backend modules**:
+  - `services/ai/pii-redaction.ts` — redacts E.164 phones, Pakistani mobiles, emails, credit cards, CNICs; `detectPromptLanguage` heuristic for en/ur.
+  - `services/ai/approval-service.ts` — `createApproval`, `approve`, `reject`, `markExecuted`, `markFailed`, `listApprovals`.
+  - `services/ai/prompt-log-service.ts` — `hashPrompt`, `logCall`, `listCallLogs`, `listPromptLogs`.
+  - `modules/admin/ai-governance.ts` — 7 endpoints (approvals CRUD + call-logs + prompt-logs). All rate-limited.
+
+- **FU-1 hotfix during CI**: existing migration `20260730120000_ai_platform_foundation.sql` already creates `public.ai_approvals` (Phase 4 foundation, simpler schema with `task_id` FK). The new ADR-014 migration used `CREATE TABLE IF NOT EXISTS` which was a no-op, then index creation failed with `column "requested_at" does not exist`. Fix: rename the new ADR-014 table to `ai_action_approvals`.
+
+- **Tests**: 33 new tests in `ai-services.test.ts` (PII redaction, prompt log, approval services). PR #227 merged as `a710def`.
+
+### Phase 2.1 — ADR Documentation Completion (ADR-001 + ADR-002)
+
+- PR #228 authored the standalone ADR markdown files for ADR-001 (Branch
+  Configuration Inheritance & Overrides) and ADR-002 (Settings Versioning,
+  Activation & Rollback Model). Both ADRs were already implemented via
+  earlier migrations; this PR only adds documentation and marks ADR-001/002
+  as Accepted v1.0 in `ADR_INDEX.md`. With this PR, all 15 Phase 2 ADRs
+  (ADR-001 through ADR-015) have standalone ADR files under `docs/13-adr/`.
+
+### Production Deployment Status
+
+| Phase | Migration | Status |
+| --- | --- | --- |
+| 2.1 (ADR-001/002) | `20260805190000` + `20260805200000` + `20260806150140` + `20260806170223` | ✅ Applied (v1.6.0) |
+| 2.2 (ADR-003/004) | `20260816000000` + `20260816000100` + 3 FU migrations | ✅ Applied |
+| 2.3 (ADR-005/006) | `20260818000000` | ✅ Applied |
+| 2.4 (ADR-008/009/010) | `20260817000000` | ✅ Applied |
+| 2.5 (ADR-012) | `20260819000000` | ✅ Applied |
+| 2.6 (ADR-013/014/015) | `20260820000000` | ✅ Applied |
 
 ### Operational notes
 
-- **No Production migration applied yet.** This PR ships the migrations +
-  code; Production deployment requires separate authorization and a
-  `supabase db push` (or equivalent Management API call) to apply
-  `20260816000000` and `20260816000100`.
-- **Default `TELEPIZZA_WHATSAPP_MODE=disabled`** — no behavior change for
-  existing deployments. Setting `TELEPIZZA_WHATSAPP_MODE=mock` enables the
-  mock adapter (writes JSON files, no network). Setting `sandbox` or `live`
-  requires all 5 `WHATSAPP_*` env vars.
-- **Frontend wiring is a follow-up.** The existing `AdminWhatsApp.tsx` page
-  still shows the honest-gap integration checks as `missing`. A separate PR
-  will flip those to `present` once the admin routes (conversation list,
-  send message) are wired.
+- **Default `TELEPIZZA_WHATSAPP_MODE=disabled`** — no behavior change for existing deployments. Operators can opt in by setting `TELEPIZZA_WHATSAPP_MODE=mock|sandbox|live` + the 5 `WHATSAPP_*` env vars.
+- **Workers are opt-in** in Production: set `TELEPIZZA_WHATSAPP_WORKER=1` to enable inbound + outbound WhatsApp workers; set `TELEPIZZA_RIDER_LOCATION_TTL_JOB=1` to enable the hourly rider-location TTL purge; set `TELEPIZZA_WHATSAPP_PII_JOB=1` to enable the 24-month PII anonymization job.
+- **COD reconciliation requires GL setup**: each branch needs `chart_of_accounts` rows with `account_code='CASH'` (ASSET) and `account_code='ACCOUNTS_RECEIVABLE'` (ASSET) for `post_cod_collection_journal()` to produce GL postings.
+- **POD storage bucket**: configure Supabase Storage bucket `delivery-pod` (write for authenticated riders; read for branch staff + the order's customer).
+
+### Test summary
+
+- **Backend tests**: 824 (start of Phase 2.2) → **1004** (+180 new tests).
+- **Test files**: 98 test files, all passing.
+- **CI**: all 6 checks green on the v1.9.0 tip commit (`9fc446f`): Typecheck and test, Analyze (javascript-typescript), Dependency Scan (pnpm audit), Owner Playwright.
 
 ---
 
