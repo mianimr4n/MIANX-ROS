@@ -53,9 +53,13 @@ Active
 | ADR-013 | AI Provider Boundary & Data Governance | Accepted | 1.0 | [`docs/13-adr/ADR-013-ai-provider-boundary.md`](../13-adr/ADR-013-ai-provider-boundary.md) — implemented in `v1.9.0` |
 | ADR-014 | AI Human-Approval Gate Architecture | Accepted | 1.0 | [`docs/13-adr/ADR-014-ai-approval-gate.md`](../13-adr/ADR-014-ai-approval-gate.md) — implemented in `v1.9.0` |
 | ADR-015 | AI Prompt & Data Retention Policy | Accepted | 1.0 | [`docs/13-adr/ADR-015-ai-prompt-retention.md`](../13-adr/ADR-015-ai-prompt-retention.md) — implemented in `v1.9.0` |
+| ADR-016 | OTP Verification Architecture | Accepted | 1.0 | [`docs/13-adr/ADR-016-otp-verification-architecture.md`](../13-adr/ADR-016-otp-verification-architecture.md) — implemented in `v1.10.0` (Phase 3) |
+| ADR-017 | Phone-First Auth & Session Handoff | Accepted | 1.0 | [`docs/13-adr/ADR-017-phone-first-auth-session-handoff.md`](../13-adr/ADR-017-phone-first-auth-session-handoff.md) — implemented in `v1.10.0` (Phase 3) |
 
 > **Note:** All Phase 2 ADRs (ADR-001 through ADR-015) now have standalone
 > ADR files authored under `docs/13-adr/` and are marked Accepted.
+> Phase 3 ADRs (ADR-016, ADR-017) cover customer phone / WhatsApp OTP
+> authentication and session handoff.
 
 ---
 

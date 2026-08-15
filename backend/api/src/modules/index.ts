@@ -95,6 +95,8 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
       authTokenVerifier: dependencies.authTokenVerifier,
       authProfileRepository: dependencies.authProfileRepository,
       staffInviteRepository: dependencies.staffInviteRepository,
+      otpServiceDeps: dependencies.otpServiceDeps ?? undefined,
+      sessionServiceDeps: dependencies.sessionServiceDeps,
     }),
   );
   app.use(

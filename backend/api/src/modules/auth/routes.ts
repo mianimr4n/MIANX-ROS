@@ -10,14 +10,25 @@ import {
 import { isAccountActive } from "../../services/auth/principal.js";
 import type { AuthPrincipalRepository } from "../../services/auth/supabase.js";
 import type { StaffInviteRepository } from "../../services/staff/invites.js";
+import type { OtpServiceDeps } from "../../services/otp/otp-service.js";
+import type { SessionServiceDeps } from "../../services/otp/session-service.js";
+import {
+  generateOtp,
+  verifyOtp,
+  OtpError,
+} from "../../services/otp/otp-service.js";
+import {
+  issueSession,
+  refreshSession,
+  revokeSession,
+  revokeAllSessions,
+  listSessions,
+  SessionError,
+} from "../../services/otp/session-service.js";
 
 const loginSchema = z.object({
   email: z.email(),
   password: z.string().min(8).max(128),
-});
-
-const refreshSchema = z.object({
-  refreshToken: z.string().min(10),
 });
 
 const acceptInviteSchema = z.object({
@@ -45,6 +56,10 @@ export interface AuthRouterDependencies {
   authTokenVerifier: AuthTokenVerifier;
   authProfileRepository: AuthPrincipalRepository;
   staffInviteRepository: StaffInviteRepository;
+  /** Phase 3 — OTP service deps (ADR-016). Optional: legacy tests may omit. */
+  otpServiceDeps?: OtpServiceDeps;
+  /** Phase 3 — Session service deps (ADR-017). Optional: legacy tests may omit. */
+  sessionServiceDeps?: SessionServiceDeps;
 }
 
 function classifyProfileLoadFailure(error: unknown): string {
@@ -70,18 +85,14 @@ export function createAuthRouter(dependencies: AuthRouterDependencies) {
   const requireAuth = createRequireAuth(dependencies.authTokenVerifier);
 
   /**
-   * Deprecated for customer auth. Website signs in via Supabase Auth directly.
+   * POST /auth/login — staff email/password login (DEPRECATED for customers).
+   * Customers MUST use /auth/otp/request → /auth/otp/verify → /auth/phone-login.
+   * Staff should use /staff/login (a future alias) or this endpoint with email+password.
    * Kept as an explicit stub so clients do not invent a second password stack.
    */
   router.post("/login", validateBody(loginSchema), (_req, res) =>
-    sendNotImplemented(res, "Deprecated password login — use Supabase Auth on the client", [
+    sendNotImplemented(res, "Deprecated password login — use Supabase Auth on the client or /auth/phone-login for customers", [
       "auth.login",
-    ]),
-  );
-
-  router.post("/refresh", validateBody(refreshSchema), (_req, res) =>
-    sendNotImplemented(res, "Deprecated token refresh — use Supabase Auth session refresh", [
-      "auth.refresh",
     ]),
   );
 
@@ -246,6 +257,239 @@ export function createAuthRouter(dependencies: AuthRouterDependencies) {
           next: "sign_in_with_email_password",
         },
       });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  // ==========================================================================
+  // Phase 3 — Phone-First Auth (ADR-016 + ADR-017)
+  // ==========================================================================
+
+  const otpRequestSchema = z.object({
+    phone: z.string().trim().min(7).max(30),
+    channel: z.enum(["whatsapp", "sms", "email"]).optional(),
+    purpose: z
+      .enum(["customer_login", "customer_register", "phone_reverify", "recovery"])
+      .optional(),
+  });
+
+  const otpVerifySchema = z.object({
+    otpRequestId: z.string().uuid(),
+    otp: z.string().regex(/^\d{6}$/, "OTP must be exactly 6 digits."),
+  });
+
+  const phoneLoginSchema = z.object({
+    otpRequestId: z.string().uuid(),
+  });
+
+  const phoneRefreshSchema = z.object({
+    refreshToken: z.string().min(10),
+  });
+
+  /**
+   * POST /auth/otp/request — issue a new OTP (ADR-016).
+   * Returns { otpRequestId, channel, expiresAt }. NEVER returns the plaintext OTP.
+   */
+  router.post("/otp/request", validateBody(otpRequestSchema), async (req, res, next) => {
+    if (!dependencies.otpServiceDeps) {
+      return sendNotImplemented(res, "OTP service not configured", ["auth.otp.request"]);
+    }
+    try {
+      const result = await generateOtp(dependencies.otpServiceDeps, {
+        phone: req.body.phone,
+        channel: req.body.channel,
+        purpose: req.body.purpose,
+        ip: typeof req.ip === "string" ? req.ip : undefined,
+        userAgent:
+          typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"] : undefined,
+      });
+      return res.status(201).json({
+        ok: true,
+        data: result,
+      });
+    } catch (error) {
+      if (error instanceof OtpError) {
+        const headers: Record<string, string> = {};
+        if (error.retryAfterSeconds) {
+          headers["Retry-After"] = String(error.retryAfterSeconds);
+        }
+        return res
+          .status(error.statusCode)
+          .set(headers)
+          .json({
+            ok: false,
+            error: {
+              code: error.code,
+              message: error.message,
+              ...(error.retryAfterSeconds ? { retryAfterSeconds: error.retryAfterSeconds } : {}),
+            },
+          });
+      }
+      return next(error);
+    }
+  });
+
+  /**
+   * POST /auth/otp/verify — verify a submitted OTP (ADR-016).
+   * Returns { verified, status, customerId?, remainingAttempts?, failureReason? }.
+   * Does NOT issue a session — call /auth/phone-login next.
+   */
+  router.post("/otp/verify", validateBody(otpVerifySchema), async (req, res, next) => {
+    if (!dependencies.otpServiceDeps) {
+      return sendNotImplemented(res, "OTP service not configured", ["auth.otp.verify"]);
+    }
+    try {
+      const result = await verifyOtp(dependencies.otpServiceDeps, {
+        otpRequestId: req.body.otpRequestId,
+        otp: req.body.otp,
+        ip: typeof req.ip === "string" ? req.ip : undefined,
+        userAgent:
+          typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"] : undefined,
+      });
+      return res.status(result.verified ? 200 : 401).json({
+        ok: result.verified,
+        data: result,
+      });
+    } catch (error) {
+      if (error instanceof OtpError) {
+        const headers: Record<string, string> = {};
+        if (error.retryAfterSeconds) {
+          headers["Retry-After"] = String(error.retryAfterSeconds);
+        }
+        return res
+          .status(error.statusCode)
+          .set(headers)
+          .json({
+            ok: false,
+            error: { code: error.code, message: error.message },
+          });
+      }
+      return next(error);
+    }
+  });
+
+  /**
+   * POST /auth/phone-login — exchange a verified OTP for session tokens (ADR-017).
+   * Returns { accessToken, refreshToken, expiresAt }.
+   */
+  router.post("/phone-login", validateBody(phoneLoginSchema), async (req, res, next) => {
+    if (!dependencies.sessionServiceDeps) {
+      return sendNotImplemented(res, "Session service not configured", ["auth.phone_login"]);
+    }
+    try {
+      const result = await issueSession(dependencies.sessionServiceDeps, {
+        otpRequestId: req.body.otpRequestId,
+        ip: typeof req.ip === "string" ? req.ip : undefined,
+        userAgent:
+          typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"] : undefined,
+      });
+      return res.status(200).json({
+        ok: true,
+        data: {
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          expiresAt: result.expiresAt,
+          authUserId: result.authUserId,
+          ...(result.customerId ? { customerId: result.customerId } : {}),
+        },
+      });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  /**
+   * POST /auth/refresh — exchange a refresh token for a new access token (ADR-017).
+   * Rotates the refresh token (revokes old, issues new).
+   */
+  router.post("/refresh", validateBody(phoneRefreshSchema), async (req, res, next) => {
+    if (!dependencies.sessionServiceDeps) {
+      return sendNotImplemented(res, "Session service not configured", ["auth.refresh"]);
+    }
+    try {
+      const result = await refreshSession(
+        dependencies.sessionServiceDeps,
+        req.body.refreshToken,
+        {
+          ip: typeof req.ip === "string" ? req.ip : undefined,
+          userAgent:
+            typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"] : undefined,
+        },
+      );
+      return res.status(200).json({
+        ok: true,
+        data: {
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          expiresAt: result.expiresAt,
+        },
+      });
+    } catch (error) {
+      if (error instanceof SessionError) {
+        return res.status(error.statusCode).json({
+          ok: false,
+          error: { code: error.code, message: error.message },
+        });
+      }
+      return next(error);
+    }
+  });
+
+  /**
+   * POST /auth/logout — revoke the current refresh token (ADR-017).
+   * Requires auth (so we can identify the user) + a refresh token in the body.
+   */
+  router.post("/logout", requireAuth, validateBody(phoneRefreshSchema), async (req, res, next) => {
+    if (!dependencies.sessionServiceDeps) {
+      return sendNotImplemented(res, "Session service not configured", ["auth.logout"]);
+    }
+    try {
+      const result = await revokeSession(
+        dependencies.sessionServiceDeps.supabase,
+        req.body.refreshToken,
+        "user_logout",
+      );
+      return res.status(200).json({ ok: true, data: { revoked: result.revoked } });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  /**
+   * POST /auth/logout-all — revoke ALL refresh tokens for the current user (ADR-017).
+   */
+  router.post("/logout-all", requireAuth, async (req, res, next) => {
+    if (!dependencies.sessionServiceDeps) {
+      return sendNotImplemented(res, "Session service not configured", ["auth.logout_all"]);
+    }
+    try {
+      const auth = (req as AuthenticatedRequest).auth!;
+      const count = await revokeAllSessions(
+        dependencies.sessionServiceDeps.supabase,
+        auth.authUserId,
+        "user_logout",
+      );
+      return res.status(200).json({ ok: true, data: { revokedCount: count } });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  /**
+   * GET /auth/sessions — list active sessions for the current user (ADR-017).
+   */
+  router.get("/sessions", requireAuth, async (req, res, next) => {
+    if (!dependencies.sessionServiceDeps) {
+      return sendNotImplemented(res, "Session service not configured", ["auth.sessions"]);
+    }
+    try {
+      const auth = (req as AuthenticatedRequest).auth!;
+      const sessions = await listSessions(
+        dependencies.sessionServiceDeps.supabase,
+        auth.authUserId,
+      );
+      return res.status(200).json({ ok: true, data: sessions });
     } catch (error) {
       return next(error);
     }
