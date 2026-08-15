@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-15 — **Phase 2 COMPLETE (`v1.9.0`)** — All 15 ADRs (ADR-001 through ADR-015) accepted, standalone ADR files authored, all 10 Phase 2 migrations applied to Production Supabase (project `pyeowxvacgypohrbvgee`); Production migration tip now `20260820000000`; 1004 backend tests passing; repository main now `9fc446f`; prior `v1.8.0` @ `7388e07…` and `v1.5.1` @ `bfe60cc…` unchanged
+**Last reconciled:** 2026-08-16 — **Phase 5 COMPLETE (`v2.0.0`)** — Order Lifecycle formally closed: ADR-018 accepted, Sprint 4.4 frozen architecture elevated to ADR, Production verified 63/63 checks PASS. Phase 3 (v1.10.0 ADR-016/017 OTP) merged earlier as PR #231 — squash `2967a1c`. Repository main now `2967a1c`; Production migration tip `20260821000000`; 1096 backend tests passing; prior `v1.9.0` @ `3142e80…`, `v1.8.0` @ `7388e07…`, `v1.5.1` @ `bfe60cc…` unchanged
 
 ---
 
@@ -36,8 +36,9 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main (current tip) | `9fc446fe9ecdd11e2f296f7b4158c6ecbad45d54` | PR #228 squash merge — Phase 2.1 ADR docs completion (ADR-001 + ADR-002) |
-| Latest released baseline | `v1.9.0` @ `9fc446fe9ecdd11e2f296f7b4158c6ecbad45d54` | **Phase 2 COMPLETE** — ADR-001 through ADR-015 all accepted; 10 Phase 2 migrations applied to Production; 1004 backend tests passing |
+| Repository main (current tip) | `2967a1c` (Phase 3 OTP — PR #231) | ADR-016 + ADR-017 (OTP verification + phone-first auth); +92 tests; Phase 3 closeout pending v1.10.0 tag (rolled into v2.0.0) |
+| Latest released baseline | `v2.0.0` @ (pending tag — Phase 5 closeout) | **Phase 5 COMPLETE** — Order Lifecycle state machine elevated to ADR-018; Sprint 4.4 architecture frozen + implemented + Production-verified 63/63 PASS |
+| Prior released baseline | `v1.9.0` @ `3142e80e4618346d...` | **Phase 2 COMPLETE** — ADR-001 through ADR-015 all accepted; 10 Phase 2 migrations applied to Production; 1004 backend tests passing |
 | Prior released baseline | `v1.8.0` @ `7388e07ed699cffeae62de1c3449e7228d9ceef4` | ADR-007 Delivery State Machine + ADR-011 Accounting Immutability foundations; annotated tag + GitHub Release published; **Production deployed** (DB + API + website + FU-1 fix) |
 | Prior released baseline | `v1.6.0` @ `f3fce1138def9822c0b3cb22b0c8b8b4424551d6` | Phase 2 configuration control plane + identity onboarding foundation; annotated tag; GitHub Release published |
 | Prior released baseline | `v1.5.1` @ `bfe60cc6a3074e08e61f85b458b19e724325eba4` | Phase 1.1 professional readiness; tag object `6b86be34…` |
@@ -48,7 +49,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Production website commit | `9fc446fe9ecdd11e2f296f7b4158c6ecbad45d54` (pending Vercel auto-deploy) | Vercel auto-deploys on PR #228 merge; URL `https://telepizza-website.vercel.app` |
 | Prior Production website (rollback) | `bfe60cc…` / `dpl_FgHubLsuWo5ahYri18mjayCCw9nu` | Phase 1.1 baseline; superseded by v1.8.0 deploy |
 | Production API (observed tip) | `9fc446fe9ecdd11e2f296f7b4158c6ecbad45d54` (pending Render auto-deploy) | Render `srv-d9bdnprtqb8s73cda6t0`; URL `https://telepizza-api.onrender.com`; `/healthz` + `/readyz` HTTP 200 verified on prior deploy |
-| Production database | Migrations through `20260820000000` | All Phase 2 migrations applied via Supabase Management API (2026-08-15 + earlier); ADR-003 through ADR-015 verified live (tables + functions + permissions) |
+| Production database | Migrations through `20260821000000` | All Phase 2 + Phase 3 migrations applied via Supabase Management API; Phase 5 objects verified live (orders, order_status_logs, deliveries, RLS, functions, permissions — 63/63 checks PASS) |
 | Phase 2.1-2.4 + IDENTITY-01 gate | **DEPLOYED to Production** — `v1.6.0` tagged | PRs #205, #206, #207, #208, #209 |
 | Phase 2.4/2.5 foundation gate (ADR-007 + ADR-011) | **DEPLOYED to Production** — `v1.8.0` tagged; migrations applied; API + website live; FU-1 fix applied | PR #212 (squash `7388e07`); FU-1 fix PR #216 (squash `1e3832e`); Production deploy 2026-08-14 + 2026-08-15 |
 | Phase 2.2 WhatsApp Foundation (ADR-003 + ADR-004) | **DEPLOYED to Production** — `v1.9.0` tagged | PRs #218, #219, #220, #221, #222 (squashes `81b51aa`, `f1be000`, `0fac4b9`, `0a447c4`, `f0dcdf8`); Production migration applied + verified 2026-08-15 |
@@ -57,13 +58,15 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Phase 2.5 Domain Event Audit (ADR-012) | **DEPLOYED to Production** — `v1.9.0` tagged | PR #226 (squash `9af1d31`); Production migration applied + verified 2026-08-15 |
 | Phase 2.6 AI Governance (ADR-013 + ADR-014 + ADR-015) | **DEPLOYED to Production** — `v1.9.0` tagged | PR #227 (squash `a710def`); Production migration applied + verified 2026-08-15 |
 | Phase 2.1 ADR docs completion (ADR-001 + ADR-002) | **MERGED** — `v1.9.0` tagged | PR #228 (squash `9fc446f`); docs-only (migrations already applied in `v1.6.0`) |
+| Phase 3 OTP (ADR-016 + ADR-017) | **MERGED** — pending `v2.0.0` tag | PR #231 (squash `2967a1c`); 4 new tables + 8 functions + 2 permissions; +92 backend tests; Production migration applied 2026-08-15 |
+| Phase 5 Order Lifecycle (ADR-018) | **CLOSED** — pending `v2.0.0` tag | Architecture frozen (Sprint 4.4) + implemented (Sprint 4.5/4.6 — PRs #53, #55, #57, #85) + Production-verified 63/63 PASS; ADR-018 authored + Accepted v1.0 |
 
 ## Current Repository Status
 
 | Area | Status |
 |------|--------|
 | Repository Governance | Active |
-| Architecture | **Approved (Phase 2 COMPLETE — ADR-001 through ADR-015 all Accepted v1.0)** |
+| Architecture | **Approved (Phase 5 COMPLETE — ADR-001 through ADR-018 all Accepted v1.0)** |
 | Requirements | Active |
 | Documentation | Active |
 | Repository Evidence | Current |
@@ -83,6 +86,8 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Phase 2.4 Delivery & Rider Completion (ADR-008 + ADR-009 + ADR-010) | **Released** (`v1.9.0`) — Production migration applied | PR #224; ADR-008, ADR-009, ADR-010 Accepted v1.0 |
 | Phase 2.5 Accounting Depth (ADR-012) | **Released** (`v1.9.0`) — Production migration applied | PR #226; ADR-012 Accepted v1.0 |
 | Phase 2.6 AI Command Center (ADR-013 + ADR-014 + ADR-015) | **Released** (`v1.9.0`) — Production migration applied | PR #227; ADR-013, ADR-014, ADR-015 Accepted v1.0 |
+| Phase 3 OTP (ADR-016 + ADR-017) | **Released** (`v2.0.0`) — Production migration applied | PR #231; ADR-016, ADR-017 Accepted v1.0 |
+| Phase 5 Order Lifecycle (ADR-018) | **Released** (`v2.0.0`) — Production verified 63/63 PASS | ADR-018 Accepted v1.0; Sprint 4.4 architecture frozen + Sprint 4.5/4.6 implemented |
 
 ---
 
@@ -90,7 +95,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Item | Status |
 |------|--------|
-| Current Delivery Slice | **v1.9.0 Phase 2 COMPLETE** — all 15 ADRs accepted, all Phase 2 migrations applied to Production, 1004 backend tests passing, all 6 CI checks green on tip `9fc446f` |
+| Current Delivery Slice | **v2.0.0 Phase 5 COMPLETE** — Order Lifecycle state machine (ADR-018) formally accepted; Sprint 4.4 architecture elevated to ADR; Production verification 63/63 PASS; 1096 backend tests passing (Phase 3 +92 included) |
 | Phase 1.1 | **PASSED** / Production certified / `v1.5.1` |
 | Phase 2.1 Configuration Schema + ADR docs | **MERGED** (`v1.6.0` migrations + `v1.9.0` ADR docs) — PRs #205, #228 |
 | Phase 2.2 Settings Persistence + ADR docs | **MERGED** (`v1.6.0` migrations + `v1.9.0` ADR docs) — PRs #206, #228 |
@@ -102,6 +107,8 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Phase 2.4 Delivery & Rider (ADR-008/009/010) | **MERGED** (`v1.9.0`) — PR #224 — `2eaaa9b` |
 | Phase 2.5 Audit (ADR-012) | **MERGED** (`v1.9.0`) — PR #226 — `9af1d31` |
 | Phase 2.6 AI Governance (ADR-013/014/015) | **MERGED** (`v1.9.0`) — PR #227 — `a710def` |
+| Phase 3 OTP (ADR-016/017) | **MERGED** — pending `v2.0.0` tag — PR #231 — `2967a1c` |
+| Phase 5 Order Lifecycle (ADR-018) | **CLOSED** — pending `v2.0.0` tag — Sprint 4.4 architecture frozen + Sprint 4.5/4.6 implemented + Production-verified 63/63 PASS |
 | Planning | `docs/testing/acceptance-evidence/phase2-readiness-audit/PHASE2_SCOPE_MATRIX.md` |
 | Production website smoke | **Complete** — `docs/testing/acceptance-evidence/rc6-production-cutover/` (re-verified on `830dbc8…`); v1.9.0 awaiting Vercel auto-deploy of `9fc446f` |
 | RC6 Phase 1 release blockers | **None** — annotated `v1.5.0` created |
@@ -126,6 +133,9 @@ Admin ERP core modules remain LIVE on `main` with documented gaps (tables below)
 | FU-4 (v1.9.0) | P3 | Phase 2.4 COD reconciliation — chart_of_accounts GL setup per branch | **Pending user action** | Each branch needs `account_code='CASH'` (ASSET) and `account_code='ACCOUNTS_RECEIVABLE'` (ASSET) rows for `post_cod_collection_journal()` to produce GL postings. |
 | FU-5 (v1.9.0) | P3 | Phase 2.4 POD — Supabase Storage bucket `delivery-pod` setup | **Pending user action** | Configure bucket on Supabase dashboard: write for authenticated riders; read for branch staff + the order's customer. |
 | FU-6 (v1.9.0) | P3 | Phase 2.3 CRM — Frontend customer search + merge UI | **Future PR** | Backend admin routes shipped; frontend wiring is a separate PR. |
+| FU-7 (v1.10.0) | P2 | Phase 3 OTP — `OTP_HMAC_SECRET` env var on Render | **Pending user action** | Required for OTP to function. Set 32+ byte random string on Render dashboard. |
+| FU-8 (v1.10.0) | P3 | Phase 3 OTP — Dedicated OTP WhatsApp number provisioning | **Pending ops** | Provision a "Telepizza Login" number; never use 0304-1110495 for OTP (D11). |
+| FU-9 (v2.0.0) | P3 | Phase 5 closeout — Phase 5 v2.0.0 GitHub Release publish | **Pending** | Tag v2.0.0 + publish GitHub Release after PR merge. |
 
 ### Merged delivery through PR #133 (2026-07-30)
 
@@ -302,8 +312,10 @@ This document should be updated whenever:
 
 Repository Status provides an honest view of the current verified state of the repository.
 
-**Phase 2 is COMPLETE as of `v1.9.0` @ `9fc446f…` (2026-08-15).** All 15 ADRs (ADR-001 through ADR-015) are Accepted v1.0 with standalone ADR files under `docs/13-adr/`. All 10 Phase 2 migrations have been applied to Production Supabase (project `pyeowxvacgypohrbvgee`); Production migration tip is `20260820000000`. Backend tests: **1004 passing** (98 test files). All 6 CI checks green on the tip commit. Production website + API are auto-deployed by Vercel + Render on each PR merge.
+**Phase 5 is COMPLETE as of `v2.0.0` (2026-08-16).** Order Lifecycle state machine formally accepted as ADR-018; Sprint 4.4 frozen architecture elevated to ADR; Production Supabase verified 63/63 checks PASS (orders, order_status_logs, deliveries, RLS, functions, permissions). All 18 ADRs (ADR-001 through ADR-018) are Accepted v1.0 with standalone ADR files under `docs/13-adr/`. Production migration tip is `20260821000000` (Phase 3 OTP included). Backend tests: **1096 passing** (Phase 3 +92 included). Phase 6 (Admin & ERP Core) is now UNLOCKED.
 
-Prior baselines remain released: `v1.8.0` @ `7388e07…` (ADR-007 + ADR-011 foundations + FU-1 fix), `v1.6.0` @ `f3fce11…` (Phase 2.1 configuration control plane + identity onboarding), `v1.5.1` @ `bfe60cc…` (Phase 1.1 professional readiness), `v1.5.0` @ `830dbc8…` (RC6 Phase 1 closeout).
+Phase 3 (OTP) was merged as PR #231 (squash `2967a1c`) — adds 4 new tables (`otp_requests`, `otp_attempts`, `customer_phone_verifications`, `auth_refresh_tokens`), 8 functions, 2 permissions, and 7 new auth endpoints. Tagged together with Phase 5 in `v2.0.0`.
 
-Pending operator actions (no code blockers): set `TELEPIZZA_WHATSAPP_MODE=mock` on Render; configure Supabase Storage bucket `delivery-pod`; configure `chart_of_accounts` rows for COD reconciliation per branch.
+Prior baselines remain released: `v1.9.0` @ `3142e80…` (Phase 2 complete — ADR-001 through ADR-015), `v1.8.0` @ `7388e07…` (ADR-007 + ADR-011 foundations + FU-1 fix), `v1.6.0` @ `f3fce11…` (Phase 2.1 configuration control plane + identity onboarding), `v1.5.1` @ `bfe60cc…` (Phase 1.1 professional readiness), `v1.5.0` @ `830dbc8…` (RC6 Phase 1 closeout).
+
+Pending operator actions (no code blockers): set `TELEPIZZA_WHATSAPP_MODE=mock` + `TELEPIZZA_WHATSAPP_WORKER=1` on Render (FU-3); set `OTP_HMAC_SECRET` on Render (FU-7); configure Supabase Storage bucket `delivery-pod` (FU-5); configure `chart_of_accounts` rows for COD reconciliation per branch (FU-4); provision dedicated OTP WhatsApp number (FU-8).

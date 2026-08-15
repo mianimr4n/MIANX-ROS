@@ -96,11 +96,14 @@ Do **not** treat current Multan pilot numbers as permanently locked forever. Fin
 
 | Work | Status |
 |---|---|
-| Architecture freeze (branch / kitchen / rider / cancel / audit / RLS) | ▶ **Sprint 4.4 — plan-only (this turn)** |
-| Branch confirm/reject · Kitchen preparing/ready | 🔒 After 4.4 + Slice 2D |
-| Rider assignment · Dispatch · Delivered | 🔒 After staff transition APIs |
-| Cancellation matrix · Order history/audit · Notifications | 🔒 Implementation slices after architecture close |
-| Branch/RLS enforcement (Slice 2D) | ▶ PR ready — await owner review / prod migration apply (hard gate before POS/Kitchen/Rider UI) |
+| Architecture freeze (branch / kitchen / rider / cancel / audit / RLS) | ✅ FROZEN — Sprint 4.4 (elevated to ADR-018 in v2.0.0) |
+| Branch confirm/reject · Kitchen preparing/ready | ✅ Complete (Sprint 4.5 — PR #53) |
+| Rider assignment · Dispatch · Delivered | ✅ Complete (Sprint 4.6 — PR #85) |
+| Cancellation matrix · Order history/audit · Notifications | ✅ Complete (audit + domain_events mirror) |
+| Branch/RLS enforcement (Slice 2D) | ✅ Complete — Production verified 63/63 PASS |
+
+**Close report:** `docs/testing/acceptance-evidence/phase5-closeout/PHASE5_FINAL_GATE.md`
+**Formal ADR:** `docs/13-adr/ADR-018-order-lifecycle-state-machine.md` (v2.0.0)
 
 ---
 
@@ -197,9 +200,9 @@ PRODUCTION V1.0 = LIVE
 
 | Now | Next |
 |---|---|
-| Phase 4 **PASS AND CLOSED** | **Sprint 4.4** Order Lifecycle Architecture (**plan-only**) |
+| Phase 5 **PASS AND CLOSED** (v2.0.0) | **Phase 6** — Admin and ERP Core |
 | Phase 3 eng paused | Ops continues Meta/Twilio in parallel |
-| Phase 5 implementation | After 4.4 architecture **APPROVED / FROZEN** + Slice 2D for staff UI unlock |
+| Phase 6 implementation | After Phase 5 close (UNLOCKED) |
 
 ---
 

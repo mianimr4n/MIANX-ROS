@@ -55,11 +55,15 @@ Active
 | ADR-015 | AI Prompt & Data Retention Policy | Accepted | 1.0 | [`docs/13-adr/ADR-015-ai-prompt-retention.md`](../13-adr/ADR-015-ai-prompt-retention.md) — implemented in `v1.9.0` |
 | ADR-016 | OTP Verification Architecture | Accepted | 1.0 | [`docs/13-adr/ADR-016-otp-verification-architecture.md`](../13-adr/ADR-016-otp-verification-architecture.md) — implemented in `v1.10.0` (Phase 3) |
 | ADR-017 | Phone-First Auth & Session Handoff | Accepted | 1.0 | [`docs/13-adr/ADR-017-phone-first-auth-session-handoff.md`](../13-adr/ADR-017-phone-first-auth-session-handoff.md) — implemented in `v1.10.0` (Phase 3) |
+| ADR-018 | Order Lifecycle State Machine & Staff Transition API | Accepted | 1.0 | [`docs/13-adr/ADR-018-order-lifecycle-state-machine.md`](../13-adr/ADR-018-order-lifecycle-state-machine.md) — implemented in `v2.0.0` (Phase 5 closeout) |
 
 > **Note:** All Phase 2 ADRs (ADR-001 through ADR-015) now have standalone
 > ADR files authored under `docs/13-adr/` and are marked Accepted.
 > Phase 3 ADRs (ADR-016, ADR-017) cover customer phone / WhatsApp OTP
 > authentication and session handoff.
+> ADR-018 formally accepts the Sprint 4.4 frozen Order Lifecycle
+> architecture as the canonical Phase 5 decision and records the as-built
+> implementation against the as-designed matrix.
 
 ---
 
