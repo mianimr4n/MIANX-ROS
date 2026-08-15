@@ -233,6 +233,12 @@ import {
   type DomainEventService,
 } from "./services/audit/domain-event-service.js";
 import {
+  createOtpServiceDeps,
+  createSessionServiceDeps,
+} from "./services/otp/otp-factory.js";
+import type { OtpServiceDeps } from "./services/otp/otp-service.js";
+import type { SessionServiceDeps } from "./services/otp/session-service.js";
+import {
   createAiPromptLogService,
   type AiPromptLogService,
 } from "./services/ai/prompt-log-service.js";
@@ -315,6 +321,10 @@ export interface AppDependencies {
   aiPromptLogService: AiPromptLogService;
   /** Phase 2.6 — AI approval gate (ADR-014). */
   aiApprovalService: AiApprovalService;
+  /** Phase 3 — OTP service deps (ADR-016). Null when OTP_HMAC_SECRET not set. */
+  otpServiceDeps: OtpServiceDeps | null;
+  /** Phase 3 — Session service deps (ADR-017). Always present. */
+  sessionServiceDeps: SessionServiceDeps;
   inviteAppOrigin: string;
   envStatus: EnvironmentStatus;
 }
@@ -403,6 +413,10 @@ export function createAppDependencies(envStatus: EnvironmentStatus): AppDependen
     domainEventService: createDomainEventService(envStatus),
     aiPromptLogService: createAiPromptLogService(envStatus),
     aiApprovalService: createAiApprovalService(envStatus),
+    otpServiceDeps: process.env.OTP_HMAC_SECRET
+      ? createOtpServiceDeps(envStatus, resolveWhatsAppAdapter(envStatus))
+      : null,
+    sessionServiceDeps: createSessionServiceDeps(envStatus),
     inviteAppOrigin: envStatus.config.corsOrigin,
     envStatus,
   };
