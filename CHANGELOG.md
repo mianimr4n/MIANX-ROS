@@ -10,6 +10,126 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
 
 ---
 
+## [2.0.0] — 2026-08-16 — Phase 5 Complete (Order Lifecycle) + Phase 3 OTP
+
+**Phase 5 — Order Lifecycle — is FEATURE-COMPLETE and Production-verified (63/63 PASS).**
+**Phase 3 — Customer Phone / WhatsApp OTP — is FEATURE-COMPLETE** (merged earlier as PR #231, tagged together in v2.0.0).
+
+This release ships **3 ADRs**: ADR-016 (OTP Verification Architecture),
+ADR-017 (Phone-First Auth & Session Handoff), and ADR-018 (Order Lifecycle
+State Machine & Staff Transition API). All 18 ADRs (ADR-001 through ADR-018)
+are now Accepted v1.0 with standalone ADR markdown files under `docs/13-adr/`.
+
+Backend tests: **1096 passing** (was 1004 at v1.9.0; +92 from Phase 3 OTP).
+All 6 CI checks green. Phase 6 (Admin & ERP Core) is now UNLOCKED.
+
+### Phase 5 — Order Lifecycle (ADR-018)
+
+- **ADR-018 — Order Lifecycle State Machine & Staff Transition API**
+  (`docs/13-adr/ADR-018-order-lifecycle-state-machine.md`).
+  Formally accepts the Sprint 4.4 frozen architecture
+  (`docs/architecture/SPRINT-04-4-ORDER-LIFECYCLE-ARCHITECTURE.md`) as the
+  canonical Phase 5 decision. Records the as-built implementation against the
+  as-designed matrix:
+  - Frozen `orders.status` enum: `pending → confirmed → preparing → ready →
+    dispatched → completed`, with `cancelled` as a side-state reachable from
+    `pending` / `confirmed` / `preparing` / `ready`. Text + CHECK constraint
+    (not enum type) for migration safety.
+  - Cancellation matrix: 15-minute guest self-cancel window on `pending`
+    only; staff cancel with mandatory `reason_code` (`customer_cancelled`,
+    `rejected_by_branch`, `staff_cancelled`, `duplicate`, `test`); BM/SA-only
+    for `preparing`/`ready` cancels; no cancel on `dispatched`/`completed`.
+  - `order_status_logs` append-only audit table; every transition recorded
+    with `actor_type`, `actor_user_id`, `reason_code`, `note`; mirrored
+    into `domain_events` (ADR-012) as `order.transitioned` for cross-domain
+    correlation via `correlation_id`.
+  - Delivery lane (ADR-007) mirrors to `orders.status`: `picked-up →
+    dispatched`, `delivered → completed`, in a single transaction.
+  - Slice 2D RLS enabled on `orders`, `order_items`, `order_status_logs`,
+    `deliveries` with branch-scoped staff SELECT, customer-self-scoped
+    customer SELECT, and service-role write only. 5 SECURITY DEFINER
+    helpers (`current_app_user_id`, `current_user_is_active`,
+    `current_user_is_super_admin`, `current_user_branch_ids`,
+    `current_user_has_branch_access`) with pinned `search_path = public`.
+  - API surface: 9 staff lifecycle endpoints under
+    `/api/v1/admin/orders/:id/{confirm,reject,preparing,ready,dispatch,complete,cancel}`,
+    kitchen queue read under `/api/v1/staff/kitchen/tickets`, rider
+    delivery endpoints under `/api/v1/riders/deliveries/:id/{assign,transition}`.
+    All require Bearer → `AuthPrincipal` → `requirePermission('order.manage'
+    | 'delivery.assign' | 'delivery.update')` + `requireBranchAccess`.
+    Idempotent repeats return `200` without appending a new audit row.
+  - Implemented incrementally across Sprint 4.5 (PR #53 — staff transition
+    APIs), Sprint 4.5 production close (PR #55), Sprint 4.5A customer
+    onboarding (PR #57), Sprint 4.6 restaurant ops foundation (PR #85),
+    Sprint 4.6 review blockers remediation (commit `b345b42`), and Slice 2D
+    RLS (migration `20260716140000_sprint3_slice2d_order_branch_rls.sql`).
+  - **Production verification: 63/63 checks PASS** via
+    `scripts/phase_5_verify.py` — 6 tables, 10 `orders` columns, 6
+    `deliveries` columns, 7 `orders.status` CHECK values, 6 `deliveries.status`
+    CHECK values, 9 functions, 4 RLS-enabled tables with 8 policies, 4
+    permissions, 9 `order_status_logs` columns.
+
+- **Phase 5 Final Gate** (`docs/testing/acceptance-evidence/phase5-closeout/PHASE5_FINAL_GATE.md`).
+  Records the full close: scope, gate criteria (all PASS), production
+  verification breakdown, API surface (as-built), cancellation matrix,
+  out-of-scope deferrals, pending operator actions, and Phase 6 unlock.
+
+### Phase 3 — Customer Phone / WhatsApp OTP (ADR-016 + ADR-017)
+
+- **ADR-016 — OTP Verification Architecture**
+  (`docs/13-adr/ADR-016-otp-verification-architecture.md`).
+  HMAC-SHA256 OTP hashing (constant-time verification), per-phone + per-IP
+  rate limits, 90-day PII retention, D11 hard rule (ordering number
+  `0304-1110495` is NEVER used for OTP), append-only `otp_attempts` audit,
+  domain event mirror (`customer.otp_verified`).
+
+- **ADR-017 — Phone-First Auth & Session Handoff**
+  (`docs/13-adr/ADR-017-phone-first-auth-session-handoff.md`).
+  `auth_refresh_tokens` table with rotation, `customers.last_login_at`,
+  7 new auth endpoints (`/auth/otp/request`, `/auth/otp/verify`,
+  `/auth/phone-login`, `/auth/refresh`, `/auth/logout`, `/auth/logout-all`,
+  `/auth/sessions`), stateless HS256 JWT access tokens, customer
+  provisioning flow (resolve via ADR-005 → create provisional → create
+  `auth.users` with placeholder email).
+
+- Migration applied: `supabase/migrations/20260821000000_adr_016_017_otp.sql`
+  (additive, ~740 lines). 4 new tables, 8 new functions, 2 new permissions
+  (`otp.manage`, `otp.read`), `customers.last_login_at` column, append-only
+  trigger on `otp_attempts`, conditional domain event mirror triggers
+  (`customer.otp_verified`, `auth.session_revoked` — ADR-012), RLS on all
+  4 tables (service_role write; authenticated owner SELECT+UPDATE on
+  `auth_refresh_tokens` for self-service logout), 6 CHECK constraints
+  enforcing state-machine invariants on `otp_requests`.
+
+- PR #231 (squash `2967a1c`) — all 6 CI checks green (CodeQL, Analyze,
+  Dependency Scan, Typecheck and test, Owner Playwright, Vercel Preview
+  Comments). +92 new tests (40 in `otp-service.test.ts`, 53 in
+  `otp-migration.test.ts`). Production migration applied + verified
+  2026-08-15.
+
+### Pending operator actions (no code blockers)
+
+- **FU-3** — Set `TELEPIZZA_WHATSAPP_MODE=mock` + `TELEPIZZA_WHATSAPP_WORKER=1`
+  on Render dashboard (carried from v1.9.0).
+- **FU-7** — Set `OTP_HMAC_SECRET` env var on Render (32+ byte random
+  string). **REQUIRED** for Phase 3 OTP to function.
+- **FU-4** — Configure `chart_of_accounts` rows per branch (`CASH` +
+  `ACCOUNTS_RECEIVABLE`) for COD reconciliation (carried from v1.9.0).
+- **FU-5** — Configure Supabase Storage bucket `delivery-pod` for ADR-009
+  POD uploads (carried from v1.9.0).
+- **FU-8** — Provision a dedicated "Telepizza Login" WhatsApp number for
+  OTP delivery; never use `0304-1110495` for OTP (D11).
+
+### Deferred to later phases
+
+- **Payment gateway** — Phase 11 (Finance & Reporting).
+- **POS / Kitchen / Rider UIs** — Phases 6–9 build on the Phase 5 API surface.
+- **SMS provider (Twilio Verify)** for OTP fallback — future PR.
+- **Frontend wiring** for customer phone-login UI — future PR.
+- **`/staff/login` endpoint alias** (ADR-017 §3) — future PR.
+
+---
+
 ## [1.9.0] — 2026-08-15 — Phase 2 Complete (ADR-001 through ADR-015)
 
 **Phase 2 — Customer Support, CRM, Delivery & Rider, Accounting Audit, AI Governance — is FEATURE-COMPLETE.**
