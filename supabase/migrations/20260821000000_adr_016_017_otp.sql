@@ -556,18 +556,20 @@ create policy "customer_phone_verifications_staff_read"
       and (
         -- Super-admin sees all.
         exists (
-          select 1 from public.staff_assignments sa
-          join public.roles r on r.id = sa.role_id
-          where sa.user_id = auth.uid()
-            and sa.assignment_status = 'ACTIVE'
+          select 1 from public.user_roles ur
+          join public.roles r on r.id = ur.role_id
+          where ur.user_id = auth.uid()
+            and ur.assignment_status = 'ACTIVE'
             and r.code = 'super-admin'
         )
-        -- Branch staff see customers in their branch.
+        -- Branch staff see customers who placed orders in their branch.
         or c.id in (
           select o.customer_id from public.orders o
-          join public.staff_assignments sa on sa.branch_id = o.branch_id
-          where sa.user_id = auth.uid()
-            and sa.assignment_status = 'ACTIVE'
+          where o.branch_id in (
+            select ur.branch_id from public.user_roles ur
+            where ur.user_id = auth.uid()
+              and ur.assignment_status = 'ACTIVE'
+          )
         )
       )
     )

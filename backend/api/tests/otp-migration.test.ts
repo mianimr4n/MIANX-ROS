@@ -237,6 +237,11 @@ describe("ADR-016 §3 — RLS policies", () => {
     expect(MIGRATION_SQL).toMatch(/auth_refresh_tokens_owner_select/i);
     expect(MIGRATION_SQL).toMatch(/auth_refresh_tokens_owner_update/i);
   });
+
+  it("uses the canonical user_roles table (NOT staff_assignments) in RLS policies", () => {
+    expect(MIGRATION_SQL).toMatch(/public\.user_roles ur/i);
+    expect(MIGRATION_SQL).not.toMatch(/staff_assignments/i);
+  });
 });
 
 describe("ADR-016 §4 — Permissions", () => {

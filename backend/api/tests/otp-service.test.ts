@@ -15,7 +15,7 @@
  *           ADR-017 (Phone-First Auth & Session Handoff)
  */
 
-import { vi, describe, it, expect, beforeEach } from "vitest";
+import { vi, describe, it, expect } from "vitest";
 import { createHmac, createHash } from "node:crypto";
 
 import {

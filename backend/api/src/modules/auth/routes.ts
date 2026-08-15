@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import rateLimit from "express-rate-limit";
 
 import { ApiError, sendNotImplemented, validateBody } from "../../common/http.js";
 import {
@@ -83,6 +84,74 @@ function classifyProfileLoadFailure(error: unknown): string {
 export function createAuthRouter(dependencies: AuthRouterDependencies) {
   const router = Router();
   const requireAuth = createRequireAuth(dependencies.authTokenVerifier);
+
+  // ---------------------------------------------------------------------------
+  // Phase 3 — Rate limiters (CodeQL-recognized via express-rate-limit).
+  // ADR-016 §5 + ADR-017 §6.
+  //
+  // These are IP-based outer limits. The OTP service enforces additional
+  // per-phone rate limits (3/10min, 5/hour, 10/day) at the DB layer.
+  // ---------------------------------------------------------------------------
+
+  /** OTP request: 10 per IP per hour. Generous for legit retry-on-typo; tight enough to block enumeration. */
+  const otpRequestRateLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      ok: false,
+      error: { code: "RATE_LIMITED_OTP_REQUEST", message: "Too many OTP requests from this IP. Please retry later." },
+    },
+  });
+
+  /** OTP verify: 10 per IP per minute. Tight because each verify is cheap. */
+  const otpVerifyRateLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      ok: false,
+      error: { code: "RATE_LIMITED_OTP_VERIFY", message: "Too many OTP verify attempts from this IP. Please retry later." },
+    },
+  });
+
+  /** Phone login: 5 per IP per minute. */
+  const phoneLoginRateLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      ok: false,
+      error: { code: "RATE_LIMITED_PHONE_LOGIN", message: "Too many phone-login attempts from this IP. Please retry later." },
+    },
+  });
+
+  /** Refresh: 30 per IP per minute (refresh happens frequently). */
+  const refreshRateLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      ok: false,
+      error: { code: "RATE_LIMITED_REFRESH", message: "Too many token-refresh attempts from this IP." },
+    },
+  });
+
+  /** Logout + logout-all + sessions: 10 per IP per minute. */
+  const logoutRateLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      ok: false,
+      error: { code: "RATE_LIMITED_LOGOUT", message: "Too many logout requests from this IP." },
+    },
+  });
 
   /**
    * POST /auth/login — staff email/password login (DEPRECATED for customers).
@@ -291,7 +360,7 @@ export function createAuthRouter(dependencies: AuthRouterDependencies) {
    * POST /auth/otp/request — issue a new OTP (ADR-016).
    * Returns { otpRequestId, channel, expiresAt }. NEVER returns the plaintext OTP.
    */
-  router.post("/otp/request", validateBody(otpRequestSchema), async (req, res, next) => {
+  router.post("/otp/request", otpRequestRateLimiter, validateBody(otpRequestSchema), async (req, res, next) => {
     if (!dependencies.otpServiceDeps) {
       return sendNotImplemented(res, "OTP service not configured", ["auth.otp.request"]);
     }
@@ -335,7 +404,7 @@ export function createAuthRouter(dependencies: AuthRouterDependencies) {
    * Returns { verified, status, customerId?, remainingAttempts?, failureReason? }.
    * Does NOT issue a session — call /auth/phone-login next.
    */
-  router.post("/otp/verify", validateBody(otpVerifySchema), async (req, res, next) => {
+  router.post("/otp/verify", otpVerifyRateLimiter, validateBody(otpVerifySchema), async (req, res, next) => {
     if (!dependencies.otpServiceDeps) {
       return sendNotImplemented(res, "OTP service not configured", ["auth.otp.verify"]);
     }
@@ -373,7 +442,7 @@ export function createAuthRouter(dependencies: AuthRouterDependencies) {
    * POST /auth/phone-login — exchange a verified OTP for session tokens (ADR-017).
    * Returns { accessToken, refreshToken, expiresAt }.
    */
-  router.post("/phone-login", validateBody(phoneLoginSchema), async (req, res, next) => {
+  router.post("/phone-login", phoneLoginRateLimiter, validateBody(phoneLoginSchema), async (req, res, next) => {
     if (!dependencies.sessionServiceDeps) {
       return sendNotImplemented(res, "Session service not configured", ["auth.phone_login"]);
     }
@@ -403,7 +472,7 @@ export function createAuthRouter(dependencies: AuthRouterDependencies) {
    * POST /auth/refresh — exchange a refresh token for a new access token (ADR-017).
    * Rotates the refresh token (revokes old, issues new).
    */
-  router.post("/refresh", validateBody(phoneRefreshSchema), async (req, res, next) => {
+  router.post("/refresh", refreshRateLimiter, validateBody(phoneRefreshSchema), async (req, res, next) => {
     if (!dependencies.sessionServiceDeps) {
       return sendNotImplemented(res, "Session service not configured", ["auth.refresh"]);
     }
@@ -440,7 +509,7 @@ export function createAuthRouter(dependencies: AuthRouterDependencies) {
    * POST /auth/logout — revoke the current refresh token (ADR-017).
    * Requires auth (so we can identify the user) + a refresh token in the body.
    */
-  router.post("/logout", requireAuth, validateBody(phoneRefreshSchema), async (req, res, next) => {
+  router.post("/logout", logoutRateLimiter, requireAuth, validateBody(phoneRefreshSchema), async (req, res, next) => {
     if (!dependencies.sessionServiceDeps) {
       return sendNotImplemented(res, "Session service not configured", ["auth.logout"]);
     }
@@ -459,7 +528,7 @@ export function createAuthRouter(dependencies: AuthRouterDependencies) {
   /**
    * POST /auth/logout-all — revoke ALL refresh tokens for the current user (ADR-017).
    */
-  router.post("/logout-all", requireAuth, async (req, res, next) => {
+  router.post("/logout-all", logoutRateLimiter, requireAuth, async (req, res, next) => {
     if (!dependencies.sessionServiceDeps) {
       return sendNotImplemented(res, "Session service not configured", ["auth.logout_all"]);
     }
@@ -479,7 +548,7 @@ export function createAuthRouter(dependencies: AuthRouterDependencies) {
   /**
    * GET /auth/sessions — list active sessions for the current user (ADR-017).
    */
-  router.get("/sessions", requireAuth, async (req, res, next) => {
+  router.get("/sessions", logoutRateLimiter, requireAuth, async (req, res, next) => {
     if (!dependencies.sessionServiceDeps) {
       return sendNotImplemented(res, "Session service not configured", ["auth.sessions"]);
     }
