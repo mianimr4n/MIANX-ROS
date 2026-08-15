@@ -10,6 +10,181 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
 
 ---
 
+## [2.1.0] — 2026-08-16 — Phase 6 Complete (Admin and ERP Core)
+
+**Phase 6 — Admin and ERP Core — is FEATURE-COMPLETE and Production-verified (95/95 PASS).**
+
+This release ships **4 ADRs**: ADR-019 (RBAC Authorization Principal & Permission
+Model), ADR-020 (Canonical Single-Price Menu Catalog & Atomic Price Audit),
+ADR-021 (Deals, Coupons & Loyalty Promotion Engine), and ADR-022 (Reports &
+Analytics Framework — Query-Time KPI Registry). All 22 ADRs (ADR-001 through
+ADR-022) are now Accepted v1.0 with standalone ADR markdown files under
+`docs/13-adr/`.
+
+Phase 6 is a **closeout phase**: the underlying code has been in Production since
+Sprint 3 / RC3 / RC4-11 (July–August 2026). This phase formally accepts the
+as-built architecture via the 4 new ADRs and verifies Production readiness
+end-to-end with 95 checks across 10 categories (RBAC tables, role catalog,
+permission catalog, RBAC invariants, menu catalog, promo tables, loyalty RPCs
++ tiers, analytics tables + invariants, settings + branches, audit re-verify).
+**No new database migrations** — Phase 6 is documentation + verification only.
+
+Backend tests: **1096 passing** (unchanged from v2.0.0 — no new code, only ADRs
+and verification). All 6 CI checks green. Phase 7 (POS System) is now UNLOCKED.
+
+### ADR-019 — RBAC Authorization Principal & Permission Model
+
+- Formally accepts the as-built authorization surface: `users → user_roles →
+  roles → role_permissions → permissions` 5-table graph, branch-scoped via
+  `user_role_branches`.
+- Documents the dual role namespace (legacy kebab-case `super-admin` /
+  `branch-manager` / `customer-support` + canonical underscored
+  `platform_super_admin` / `organization_owner` / `branch_manager` etc.) — both
+  resolve to the same permission set via the IDENTITY-01 mirror grants.
+- Records the `isSuperAdmin` short-circuit (`platform_super_admin` and
+  `super-admin` both bypass per-permission lookup).
+- Records the `CUSTOMER_FORBIDDEN_PERMISSIONS` allowlist
+  (`backend/api/src/services/auth/principal.ts:51-66`) as defense-in-depth
+  against customer privilege escalation, alongside the
+  `enforce_customer_role_zero_permissions` trigger.
+- Documents the middleware pipeline: `createRequireAuth` (JWT) →
+  `createRequireAuthenticatedUser` (DB principal + active status) →
+  `requirePermission(code)` (role_permissions check) → service-layer branch
+  scoping (`assertBranchMembership` / `resolveScopedBranchIds`).
+- Records the staff assignment constraints: `ASSIGNABLE_STAFF_ROLES`
+  (`branch-manager, cashier, kitchen, rider, customer-support, host, waiter`)
+  and `FORBIDDEN_ROLE_CODES` (`super-admin, owner, founder, admin, customer`).
+
+### ADR-020 — Canonical Single-Price Menu Catalog & Atomic Price Audit
+
+- Formally accepts the Sprint 4 Phase B frozen architecture: every sellable
+  SKU is one `menu_items` row with exactly one `price` (NOT NULL, `CHECK >= 0`).
+- Documents the deprecation of `menu_item_variants` (retained read-only for
+  historical `order_items.variant_id` readability) and the
+  `menu_variant_sku_mappings` 1:1 mapping table.
+- Records the `trg_prevent_menu_item_variant_writes` trigger (hard block on
+  any INSERT/UPDATE/DELETE to `menu_item_variants` unless
+  `telepizza.allow_variant_writes='on'`).
+- Documents the `update_menu_item_price_atomic` RPC: single-transaction price
+  update + audit row insert; idempotent via `(resource_id, action,
+  correlation_id)` unique index; optimistic concurrency via
+  `p_expected_old_price`.
+- Records the `menu_audit_events` append-only audit table (before_data /
+  after_data JSONB snapshots, correlation_id, actor_user_id).
+- Documents the inactive `branch_menu_item_overrides` reservation (founder
+  approval required before any code reads it; per-branch promotions flow
+  through coupons / loyalty rewards instead).
+- Records the orthogonal modifier system (`modifier_groups`,
+  `modifier_options`, `item_modifier_groups`, `order_item_modifiers`).
+
+### ADR-021 — Deals, Coupons & Loyalty Promotion Engine
+
+- Formally accepts the three-engine promotions surface as the canonical
+  architecture: **Coupons** (single-use discount codes) + **Marketing
+  campaigns & consent** (bulk WhatsApp/SMS/email/push) + **Loyalty program**
+  (points ledger + tier definitions + reward catalogue). Three independent
+  engines, no shared table.
+- Documents the `coupon_validate_discount` read-only validation RPC (quote
+  path validates without writing; create path writes `coupon_redemptions` in
+  the same transaction as the order).
+- Records the loyalty ledger's double-entry-shaped model: 5 atomic RPCs
+  (`loyalty_earn_for_order_atomic`, `loyalty_burn_atomic`,
+  `loyalty_adjust_atomic`, `loyalty_expire_atomic`, `loyalty_reverse_atomic`),
+  each with `FOR UPDATE` lock on `loyalty_accounts`, balance non-negativity
+  check, and idempotency key support.
+- Documents the 3 idempotency indexes on `loyalty_transactions`:
+  `loyalty_transactions_earn_order_uidx` (one earn per order),
+  `uq_loyalty_txn_idempotency` (burn/adjust/expire/reverse replay is no-op),
+  `uq_loyalty_txn_reverse_once` (one reverse per original transaction).
+- Records the loyalty reward approval workflow: `draft → awaiting_approval →
+  approved` (or `rejected`); only `approved AND is_active` rewards are
+  redeemable.
+- Documents the 4 loyalty tier definitions (member / silver / gold / platinum
+  with thresholds 0 / 500 / 2000 / 5000 lifetime earned points and multipliers
+  ×1.0 / ×1.1 / ×1.25 / ×1.5).
+- Records the **honest provider states only** invariant for marketing
+  campaigns: `queued | suppressed | submitted | provider_accepted |
+  provider_rejected | failed` — **no `delivered` status** (WhatsApp/SMS
+  providers cannot reliably report per-message delivery).
+- Documents the 10 deterministic marketing segments (new_customers,
+  returning_customers, inactive_customers, loyalty_members, tier_members,
+  high_frequency, high_spend, coupon_users, lapsed_customers,
+  consented_audiences) with documented `formula`, `authoritative_source`,
+  `time_window`, `exclusions`.
+- Records the explicit-attribution-only invariant (`marketing_attribution_links`
+  records coupon/campaign/reward/provider ref; no timing-based inference).
+
+### ADR-022 — Reports & Analytics Framework — Query-Time KPI Registry
+
+- Formally accepts the RC4-11 analytics architecture: **query-time
+  computation, no materialized views, no cron jobs**. Verified: zero
+  `MATERIALIZED VIEW` objects in `public` schema; `pg_cron` extension NOT
+  installed.
+- Documents the `FORMULA_REGISTRY` (`backend/api/src/services/analytics/registry.ts`)
+  as the single authoritative metric contract catalog (`REGISTRY_VERSION =
+  "rc4-2.analytics.v1"`). 6 modules: `sales`, `finance`, `hr`, `inventory`,
+  `purchasing`, `loyalty`.
+- Records the engine's delegation pattern: finance metrics delegate to
+  `FinanceService` (ADR-011 immutable ledger), HR to `HrPayrollService`,
+  loyalty to `LoyaltyService` (ADR-021 ledger) — no formula duplication.
+- Documents the **deferred scheduled-report execution** model:
+  `analytics_scheduled_reports.execution_status` defaults to `'deferred'`,
+  `deferred_reason` defaults to `'No analytics worker is deployed; schedule
+  definitions are stored only.'`. Honest about the absence of a worker.
+- Records the Exception Center (`analytics_exceptions`) + Data Quality Check
+  (`analytics_data_quality_checks`) auxiliary tables — manually populated,
+  no automatic anomaly detection.
+- Documents the `ANALYTICS_TIMEZONE = "Asia/Karachi"` invariant (engine
+  interprets date ranges as Asia/Karachi midnight boundaries; database stores
+  UTC, conversion at query time).
+
+### Production verification (95/95 PASS)
+
+`scripts/phase_6_verify.py` — 10 categories, 95 checks, all PASS:
+
+| Category | Checks | Result |
+|---|---|---|
+| 1. RBAC tables (ADR-019) | 11 | ✅ 11/11 |
+| 2. RBAC role catalog | 2 | ✅ 2/2 |
+| 3. RBAC permission catalog | 2 | ✅ 2/2 |
+| 4. RBAC invariants | 5 | ✅ 5/5 |
+| 5. Menu catalog (ADR-020) | 19 | ✅ 19/19 |
+| 6. Coupons + Marketing + Loyalty tables (ADR-021) | 19 | ✅ 19/19 |
+| 7. Loyalty atomic RPCs + tiers | 10 | ✅ 10/10 |
+| 8. Analytics tables + invariants (ADR-022) | 9 | ✅ 9/9 |
+| 9. Settings + Branches (ADR-001 / ADR-002) | 7 | ✅ 7/7 |
+| 10. Audit (ADR-012 — re-verify) | 8 | ✅ 8/8 |
+| **TOTAL** | **95** | **✅ 95/95** |
+
+### Deferred items (out of scope for Phase 6)
+
+- Materialized views for heavy analytics metrics (not needed at current data
+  volume; query-time < 100ms).
+- Scheduled-report execution worker (`execution_status='deferred'` is honest).
+- Column-level security on analytics exports.
+- Unified promotions search (coupons + loyalty + campaigns in one view).
+- Mirror `loyalty_marketing_audit_events` into `domain_events`.
+- Modifier group/option audit trail.
+- Retroactive tier demotion.
+- Per-branch menu pricing (activate `branch_menu_item_overrides`).
+- Customer-facing loyalty redemption UI (backend complete; frontend wiring is
+  a separate workstream).
+
+### Pending operator actions (no code blockers)
+
+| # | Action | Priority | Source |
+|---|---|---|---|
+| 1 | Set `TELEPIZZA_WHATSAPP_MODE=mock` on Render | P1 | FU-3 (v1.9.0) |
+| 2 | Set `TELEPIZZA_WHATSAPP_WORKER=1` on Render | P1 | FU-3 (v1.9.0) |
+| 3 | Set `OTP_HMAC_SECRET` on Render (32+ byte random) | P2 | FU-7 (v1.10.0) |
+| 4 | Configure `chart_of_accounts` rows per branch (CASH + ACCOUNTS_RECEIVABLE) | P2 | FU-4 (v1.9.0) |
+| 5 | Configure Supabase Storage bucket `delivery-pod` | P3 | FU-5 (v1.9.0) |
+| 6 | Provision dedicated "Telepizza Login" WhatsApp number for OTP | P3 | FU-8 (v1.10.0) |
+| 7 | (Optional) Set `TELEPIZZA_RIDER_LOCATION_TTL_JOB=1` on Render | P3 | v1.9.0 |
+| 8 | (Optional) Set `TELEPIZZA_WHATSAPP_PII_JOB=1` on Render | P3 | v1.9.0 |
+
+---
+
 ## [2.0.0] — 2026-08-16 — Phase 5 Complete (Order Lifecycle) + Phase 3 OTP
 
 **Phase 5 — Order Lifecycle — is FEATURE-COMPLETE and Production-verified (63/63 PASS).**
