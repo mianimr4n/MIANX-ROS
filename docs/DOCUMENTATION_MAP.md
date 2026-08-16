@@ -7,44 +7,79 @@
 Owner-facing operating documentation for Telepizza ROS opening readiness.
 
 ## Current verified state
-Verified against repository main `17cc5e9cee8f65eb5c10fcc069ea3b863931a8b8` (includes PR #102 Decision Log append-only classification and PR #111 reservations/waitlist query-contract fix). Last verified date: **2026-07-28**.
+Verified against repository main `94e5d69` (Phase 12 closeout — PR #239 squash merge, 2026-08-16). Phase 12 (Customer and Staff Apps) is COMPLETE & SHIPPED as `v2.7.0`. All 12 phases (0 through 12) PASS AND CLOSED. All 41 ADRs (ADR-001 through ADR-041) Accepted v1.0 with standalone files under `docs/13-adr/`. Phase 13 (AI and Automation) is UNLOCKED. Production DB migration tip remains `20260821000000` (Phase 3 OTP baseline — unchanged through Phase 5/6/7/8/9/10/11/12 closeouts). Last verified date: **2026-08-16**.
+
+## Phase release history
+
+| Phase | Tag | PR | ADRs | Status |
+| --- | --- | --- | --- | --- |
+| Phase 5 — Order Lifecycle | `v2.0.0` | #232 | ADR-018 | ✅ COMPLETE |
+| Phase 6 — Admin and ERP Core | `v2.1.0` | #233 | ADR-019/020/021/022 | ✅ COMPLETE |
+| Phase 7 — POS System | `v2.2.0` | #234 | ADR-023/024/025/026 | ✅ COMPLETE |
+| Phase 8 — Kitchen Dashboard | `v2.3.0` | #235 | ADR-027/028/029 | ✅ COMPLETE |
+| Phase 9 — Rider and Delivery App | `v2.4.0` | #236 | ADR-030/031/032 | ✅ COMPLETE |
+| Phase 10 — Inventory and Procurement | `v2.5.0` | #237 | ADR-033/034/035 | ✅ COMPLETE |
+| Phase 11 — Finance and Reporting | `v2.6.0` | #238 | ADR-036/037/038 | ✅ COMPLETE |
+| Phase 12 — Customer and Staff Apps | `v2.7.0` | #239 | ADR-039/040/041 | ✅ COMPLETE |
+| Phase 13 — AI and Automation | — | — | — | 🔓 UNLOCKED |
 
 ## What is LIVE
-- Website on Vercel (`telepizza-website`)
-- API on Render (`telepizza-api`)
-- PostgreSQL + Auth on Supabase
+- Website on Vercel (`telepizza-website`) — React + Vite SPA with 25+ customer pages + PWA manifest
+- API on Render (`telepizza-api`) — Express + Supabase/Postgres, 350+ routes across 32 admin router modules + 4 rider routes + 2 kitchen routes
+- PostgreSQL + Auth on Supabase — Production migrations through `20260821000000`
 - Royal Orchard branch status = `operating`
 - Northern Bypass branch status = `coming-soon`
-- Canonical staff roles: super-admin, branch-manager, kitchen, cashier, rider, customer-support, host, waiter
+- Canonical staff roles: super-admin, organization-owner, branch-manager, kitchen-manager, cashier, rider, support, host, waiter (ADR-019 RBAC)
+- Phone-first auth (ADR-017) + order lifecycle (ADR-018) + loyalty wallet (ADR-021) + canonical single-price catalog (ADR-020)
+- POS cashier workflow (ADR-023/024/025/026) + KDS (ADR-027/028/029) + delivery (ADR-030/031/032) + inventory (ADR-033/034/035) + finance (ADR-036/037/038) + customer/staff apps (ADR-039/040/041)
 
 ## What is DERIVED
-- Executive Dashboard KPIs derived from live order/kitchen/delivery APIs
-- Mianx.ai Operations Insights = deterministic rule summaries (not generative AI)
+- Executive Dashboard KPIs derived from live order/kitchen/delivery/finance/inventory APIs
+- 25-module owner workspace analytics aggregation (sales, finance, executive, branch_comparison, etc.)
+- Mianx.ai Operations Insights = deterministic rule summaries (not generative AI — Phase 13 will introduce generative AI agents)
 
-## What is FOUNDATION
-- Inventory ledger, purchasing settlement, full GL/finance ledger, analytics warehouse
-- Autonomous AI workforce / background agent runtime
+## What is FOUNDATION (deferred for future activation)
+- Native mobile app (iOS/Android via React Native/Expo) — web-first PWA serves mobile web for V1
+- Service worker / offline cache / push notifications (Web Push + FCM + APNs)
+- Online card payment gateway — Phase 7 ships cash-only + card_terminal/bank_manual/complimentary
+- Realtime updates via Supabase Realtime channels
+- `pos_sessions` table + multi-tender `payment_splits` + bank deposit slip
+- Per-branch pricing + multi-timezone support
+- `rider_daily_summaries` table + per-rider KPI dashboard + live rider map + auto-dispatch engine
+- `franchisee` role + franchise agreement tracking + royalty computation + multi-tenant SaaS isolation
+- Customer 360 unified view + ticketing system + refund initiation workflow
+- Mobile-optimized staff UI + PWA-installable admin + kitchen handheld view
+- Per-item prep ticks + KOT print format + fiscal printer + `kitchen_stations` + server-side SLA + auto-priority
+- Dedicated `inventory_transfers` table + low-stock alerts + FIFO/WAC costing + `inventory_cost_history`
+- Automated GL posting from kitchen/PO/invoice + multi-currency consolidation + bank reconciliation + dedicated `refunds` table + partial-refund API + `discounts` master table
+- Autonomous AI workforce / background agent runtime (Phase 13 scope)
 - Kubernetes, microservices, Prisma, native mobile apps, event bus (legacy archive claims — not Production)
+
+Each FOUNDATION item above has an explicit trigger condition in the relevant ADR's "Deferred to future ADRs" section.
 
 ## What is UNAVAILABLE
 - Private credentials, service-role keys, and private absolute evidence paths in Production UI
 - Owner/Founder database roles (display labels only; authorization remains `super-admin` with `branch_id = null`)
 
 ## Known blockers
-- Orders/Kitchen/Delivery truth alignment remains a follow-on on `feature/opening-readiness-final`
+- Devices (POS/KDS/printer/rider/internet/UPS) not yet verified onsite at Royal Orchard
+- Online payment provider not yet enabled in Production (cash-only + card_terminal/bank_manual/complimentary are live)
+- Kitchen alerts notification channel not yet configured
+- SOPs (5), staff training (7 roles), and role rehearsals (6 + end-to-end) not yet scheduled/approved
+- Founder go/no-go decision not yet recorded
 - Protected test order `TP-260727-000001` stays `pending` (Behari Roll) with no kitchen ticket until confirmation
 
 ## Owner decision required
-Confirm opening-day staffing, devices, and provider readiness for Royal Orchard before 14 August 2026 10:00 Asia/Karachi.
+Confirm opening-day payments, devices, SOPs, training, and rehearsal readiness for Royal Orchard before Phase 15 (Final Production Launch). Software readiness on `main` is not the same as restaurant Production-ready.
 
 ## Next implementation action
-Continue opening-readiness work on the same branch: OMS/KDS/delivery truth, RBAC wording, full opening dashboard completion.
+**Phase 13 (AI and Automation) is UNLOCKED.** Phase 13 scope: demand forecasting · inventory prediction · delivery optimization · support AI · marketing automation · fraud signals · Mianx.ai agents · operational AI teams. Engineering side is stable. Phase 13 audit + ADR drafting is the next major workstream.
 
 ## Source of truth
 Repository evidence under `docs/`, `apps/website`, `backend/api`, `supabase/`, plus Production smoke evidence outside Git.
 
 ## Last verified date
-2026-07-28
+2026-08-16
 
 ## Related routes/files/services
 - Website: `apps/website`
