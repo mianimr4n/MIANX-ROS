@@ -78,3 +78,6 @@ scripts/_tmp_*.mjs
 /playwright-report-rc5-qa-01/
 /blob-report/
 /playwright/.cache/
+
+# Session-local tool artifacts (read tool outputs, stash extracts, etc.)
+tool-results/

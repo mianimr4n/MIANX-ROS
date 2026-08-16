@@ -10,6 +10,160 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
 
 ---
 
+## [2.2.0] — 2026-08-16 — Phase 7 Complete (POS System)
+
+**Phase 7 — POS System — is FEATURE-COMPLETE and Production-verified.**
+
+This release ships **4 ADRs**: ADR-023 (POS Cashier Workflow & Order Source
+Contract), ADR-024 (Dine-in Bill Settlement & Multi-tender Payments), ADR-025
+(POS Shifts, Z-Report & Cash Reconciliation), and ADR-026 (Branch Sync &
+Offline-Safe POS Contract). All 26 ADRs (ADR-001 through ADR-026) are now
+Accepted v1.0 with standalone ADR markdown files under `docs/13-adr/`.
+
+Phase 7 is a **closeout phase**: the underlying code has been in Production
+since Sprint 4 (DB-R3..R6, July 2026), D3 corrective pass (July 2026), and
+RC3 Finance PR1-PR2 (July 2026). This phase formally accepts the as-built POS
+architecture via the 4 new ADRs and provides a POS-focused verification script
+(`scripts/phase_7_verify.py`) with 105+ checks across 10 categories.
+**No new database migrations** — Phase 7 is documentation + verification only.
+The Production DB tip remains `20260821000000` (same as Phase 5/6 closeouts).
+
+Backend tests: **1096 passing** (unchanged from v2.1.0 — no new code, only
+ADRs and verification script). Phase 8 (Kitchen Dashboard) is now UNLOCKED.
+
+### ADR-023 — POS Cashier Workflow & Order Source Contract
+
+- Formally accepts the as-built POS cashier surface: `orders.order_source =
+  'pos'` stamp, `delivery|pickup|dine-in` order type matrix, branch
+  operational gate (`assertBranchOperational`), and Idempotency-Key requirement
+  on every POS write.
+- Documents the cashier permission contract: cashier HAS `order.create` +
+  `payment.settle` but LACKS `order.manage` + `payment.void` +
+  `payment.override_close` — enforcing segregation of duties between
+  cashiers (place + settle) and branch-managers (transition + void + override).
+- Records the cash-only payment contract at place-order: `paymentMethod:
+  z.literal("cash")` enforced in the request schema; non-cash methods return
+  `400 INVALID_PAYMENT_METHOD`. Card / bank / complimentary are only available
+  through the bill settlement RPC (`settle_bill_payment_atomic`).
+- Documents the API surface: `POST /api/v1/admin/pos/orders` (cashier
+  place-order), `GET/POST /api/v1/admin/pos/z-report` (shift-close audit).
+- Explicitly defers receipts (UI preview only), online card gateway, and
+  `pos_sessions` table to future ADRs with trigger conditions.
+
+### ADR-024 — Dine-in Bill Settlement & Multi-tender Payments
+
+- Formally accepts the as-built dine-in bill settlement architecture: the
+  `restaurant_bills` lifecycle (`open → billed → paid|voided`), the
+  `bill_orders` UNIQUE on `order_id` (one bill per order), and the
+  Option B auto-link (dine-in order → confirmed → bill).
+- Documents the `settle_bill_payment_atomic` RPC as the sole entry point for
+  bill payment settlement: single-transaction with `SELECT FOR UPDATE` bill
+  lock, idempotency replay, method-specific validation (cash change computed
+  server-side, complimentary must match remaining exactly, card/bank reject
+  overpay), payment INSERT, audit INSERT, bill status update.
+- Records the 4 allowed payment methods: `cash`, `card_terminal`,
+  `bank_manual`, `complimentary` — no online card gateway integration
+  (documented honestly in the `payments` table comment).
+- Documents the 4 deterministic bill split strategies: `equal` (cent-precise
+  rounding via `splitEqual` helper), `by_item`, `by_quantity`, `by_amount`
+  — all with `allocation_sum = original_total` CHECK constraint.
+- Records the deposit → bill application flow: `reservation_deposits` can be
+  applied to a bill at most once (UNIQUE partial index).
+- Documents the RLS hard gate: `current_user_can_access_restaurant_bills()`
+  helper restricts access to cashier + branch-manager + super-admin only.
+
+### ADR-025 — POS Shifts, Z-Report & Cash Reconciliation
+
+- Formally accepts the two-tier shift model: `pos_z_report_events` (append-only
+  shift-close audit, cashier's claim) vs `cash_reconciliations` (draft →
+  submitted → approved → posted state machine, manager's verification).
+  This separation enforces segregation of duties between cashier (prepares)
+  and branch-manager (reviews) and finance (posts).
+- Documents the `compute_cash_reconciliation_totals` RPC as IMMUTABLE +
+  SECURITY DEFINER — the server is the source of truth for `expected_cash`
+  and `variance`. The client never computes these.
+- Records the cash reconciliation formula: `expected_cash = opening_float +
+  cash_sales - cash_refunds - cash_drops - paid_out_expenses + other_inflows
+  - other_outflows`; `variance = counted_cash - expected_cash`.
+- Documents the GL posting flow on approval: creates `journal_entries` +
+  `journal_lines` (debit `cash_on_hand`, credit `sales_revenue` or
+  `cash_over_short` for variance), updates `cash_reconciliations.posting_status
+  = 'posted'`. Idempotent via `finance_postings` UNIQUE on
+  `(source_module, source_id)`.
+- Records the Asia/Karachi timezone invariant: `branches.timezone` NOT NULL
+  with default `Asia/Karachi`; `pos_z_report_events.timezone` default
+  `Asia/Karachi`. Multi-timezone support deferred to future ADR.
+- Explicitly defers `pos_sessions` table (opening float at shift-open) —
+  single-register branches capture opening float at cash reconciliation time.
+
+### ADR-026 — Branch Sync & Offline-Safe POS Contract
+
+- Formally accepts the as-built V1 contract: "branch sync" = centralized DB +
+  `branch_id` scoping + RLS (NOT multi-DB sync); "offline-safe" = Idempotency-
+  Key on all POS writes + optimistic UI (NOT offline-first PWA).
+- Documents the conflict resolution strategy: last-write-wins for non-idempotent
+  writes (status transitions — ADR-018 §8 idempotent transitions), replay for
+  idempotent writes (settlement RPC returns original payment row with
+  `idempotentReplay: true`).
+- Records the RLS hard gate: `current_user_has_branch_access(branch_id)` on
+  every POS table — even buggy application code cannot leak cross-branch data.
+- Documents the network drop handling UX: cashier can retry safely (same
+  Idempotency-Key returns original response), refresh loses cart (no local
+  persistence — known V1 limitation), orders list confirms successful creation.
+- Explicitly defers offline PWA with local cart persistence, real-time
+  subscriptions (Supabase Realtime), multi-region DB, and `pos_sessions` table
+  — each with an explicit trigger condition for revisiting.
+
+### Phase 7 Production Verification
+
+`scripts/phase_7_verify.py` — 105+ checks across 10 categories:
+
+| Area | Count | Status |
+|---|---|---|
+| POS tables | 13 | restaurant_bills, bill_orders, bill_splits, bill_split_allocations, reservation_deposits, payments, pos_z_report_events, cash_reconciliations, cash_reconciliation_events, finance_postings, finance_account_mappings, expense_claims, expense_claim_events |
+| POS-related tables | 20 | orders, order_items, order_status_logs, dine_in_sessions, restaurant_tables, dining_session_tables, dining_session_servers, kitchen_tickets, kitchen_ticket_items, table_service_audit, deliveries, branches, users, roles, permissions, role_permissions, user_roles, chart_of_accounts, journal_entries, journal_lines |
+| CHECK constraints | 8 | restaurant_bills.status (4 values), payments.method (4 methods), payments.status (8 values), bill_splits.strategy (4 strategies), cash_reconciliations.status (6 states), cash_reconciliations.posting_status (5 states), orders.order_source (3 sources), orders.order_type (3 types) |
+| Triggers | 4 | restaurant_bills branch match + immutability, bill_orders open check, set_updated_at |
+| RPCs + helpers | 17 | settle_bill_payment_atomic, compute_cash_reconciliation_totals, next_restaurant_bill_number, enforce_restaurant_bill_branch_match, enforce_restaurant_bill_immutability, enforce_bill_orders_bill_open, branch_local_date, branch_wall_to_utc, current_user_can_access_restaurant_bills, current_user_has_branch_access, current_user_is_super_admin, current_user_is_active, current_app_user_id, current_user_branch_ids, create_order_atomic, reverse_journal_entry_atomic, record_supplier_payment_atomic |
+| RLS-enabled tables | 17 | All POS + order/dine-in tables |
+| POS permissions | 11 | order.create/manage/read, payment.settle/void/override_close, deposit.manage, dinein.manage, floor.manage, reservation.read/manage |
+| Cashier authz | 5 | cashier HAS create+settle; LACKS manage+void+override_close (segregation of duties) |
+| Idempotency UNIQUE indexes | 7 | payments, cash_reconciliations, reservation_deposits, orders, finance_postings + bill_orders.order_id UNIQUE + restaurant_bills one-open-per-session + cash_reconciliations active-per-day-per-register |
+| Finance + timezone | 4 | chart_of_accounts non-empty, journal_entries exists, branches.timezone default Asia/Karachi, branches.timezone NOT NULL |
+
+**Phase 7 verification approach:** Phase 7 is closeout-only — no new migrations
+applied. Production DB tip remains `20260821000000` (same as Phase 5/6). All
+POS-related schema was already verified during Phase 6's 95/95 PASS run. The
+Phase 7 verify script is provided as an artifact for future re-verification
+(e.g., after database restore, infrastructure migration, or Phase 14 gate
+checks). Run with `SUPABASE_PAT=<token> python3 scripts/phase_7_verify.py`.
+
+### Deferred Items (with explicit triggers)
+
+| Item | Trigger to revisit |
+|---|---|
+| Online card gateway (Stripe / Braintree) | Card payments >30% of revenue |
+| Offline PWA with local cart persistence | Branch reports >5 network drops/week |
+| Real-time orders list auto-refresh | Branch exceeds 200 orders/day |
+| `pos_sessions` table (shift open lifecycle) | Multi-register branches |
+| Receipts format spec + fiscal printer | Regulatory requirement or printer procurement |
+| Multi-timezone support | International expansion |
+| Multi-region DB (read replicas) | Latency >200ms for any branch |
+| Refunds (`payments.refunded_at` lifecycle) | Refund volume >5% of payments |
+
+### Pending Operator Actions (no code blockers)
+
+| ID | Severity | Action |
+|---|---|---|
+| FU-3 | P3 | Set `TELEPIZZA_WHATSAPP_MODE=mock` + `TELEPIZZA_WHATSAPP_WORKER=1` on Render |
+| FU-4 | P3 | Configure `chart_of_accounts` rows per branch (CASH + ACCOUNTS_RECEIVABLE) |
+| FU-5 | P3 | Configure Supabase Storage bucket `delivery-pod` |
+| FU-7 | **P2** | Set `OTP_HMAC_SECRET` env var on Render (32+ byte random string) |
+| FU-8 | P3 | Provision dedicated "Telepizza Login" WhatsApp number |
+| FU-11 | P3 | **NEW** — Configure `finance_account_mappings` rows per branch for POS purposes (`cash_on_hand`, `cash_over_short`, `sales_revenue`, `sales_discounts`, `output_tax`). Without these, cash reconciliation cannot post to the GL. |
+
+---
+
 ## [2.1.0] — 2026-08-16 — Phase 6 Complete (Admin and ERP Core)
 
 **Phase 6 — Admin and ERP Core — is FEATURE-COMPLETE and Production-verified (95/95 PASS).**

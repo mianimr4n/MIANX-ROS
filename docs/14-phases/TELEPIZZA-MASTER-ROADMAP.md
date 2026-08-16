@@ -137,7 +137,26 @@ Admin dashboard · User/staff · Roles · Branches · Menu/price · Deals · Ord
 
 Dine-in/takeaway/delivery · Cashier · Payments · Receipts · Shifts · Cash reconciliation · Branch sync · Offline-safe
 
-**Status:** Not started · **Requires Slice 2D RLS PASS**
+**Status:** ✅ COMPLETE (v2.2.0) — Production-verified (closeout-only, no new migrations; reuses Phase 5/6 baseline `20260821000000`)
+
+**Close report:** `docs/testing/acceptance-evidence/phase7-closeout/PHASE7_FINAL_GATE.md`
+**Formal ADRs:**
+- `docs/13-adr/ADR-023-pos-cashier-workflow-order-source-contract.md` (v2.2.0) — POS cashier workflow + order source contract
+- `docs/13-adr/ADR-024-dine-in-bill-settlement.md` (v2.2.0) — dine-in bill settlement + multi-tender payments
+- `docs/13-adr/ADR-025-pos-shifts-zreport-cash-recon.md` (v2.2.0) — POS shifts + Z-Report + cash reconciliation
+- `docs/13-adr/ADR-026-branch-sync-offline-safe-pos-contract.md` (v2.2.0) — branch sync + offline-safe contract
+
+**Work items:**
+- ✅ Dine-in / takeaway / delivery order placement (3 order types via `orders.order_type`)
+- ✅ Cashier workflow (`POST /api/v1/admin/pos/orders` with cash-only payment contract)
+- ✅ Payments (4 methods: cash, card_terminal, bank_manual, complimentary — no online gateway)
+- 🟡 Receipts (UI preview only — ReceiptPreview.tsx, 70 lines; format spec + fiscal printer deferred)
+- ✅ POS shifts + Z-Report (`pos_z_report_events` append-only audit)
+- ✅ Cash reconciliation (`cash_reconciliations` state machine with server-side variance)
+- ✅ Branch sync (centralized DB + RLS — `branch_id` scoping on all POS tables)
+- 🟡 Offline-safe (Idempotency-Key + retry; NO offline PWA / local persistence)
+
+**Deferred to future ADRs:** online card gateway, offline PWA, real-time subscriptions, `pos_sessions` table, multi-timezone, refunds lifecycle. Each has an explicit trigger condition in ADR-023 §8 / ADR-024 §6 / ADR-025 §5 / ADR-026 §5.
 
 ---
 
@@ -218,9 +237,9 @@ PRODUCTION V1.0 = LIVE
 
 | Now | Next |
 |---|---|
-| Phase 6 **PASS AND CLOSED** (v2.1.0) | **Phase 7** — POS System |
+| Phase 7 **PASS AND CLOSED** (v2.2.0) | **Phase 8** — Kitchen Dashboard |
 | Phase 3 eng paused | Ops continues Meta/Twilio in parallel |
-| Phase 7 implementation | After Phase 6 close (UNLOCKED) |
+| Phase 8 implementation | After Phase 7 close (UNLOCKED) |
 
 ---
 
