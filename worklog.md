@@ -1017,3 +1017,40 @@ Stage Summary:
 - ⏳ **6 Operator Follow-ups remain open** (no code blockers, inherited from prior phases): FU-3 (WhatsApp WABA template approval), FU-4 (FBR tax registration), FU-5 (transactional email provider), FU-7 (Phase 15 production phone numbers), FU-8 (Mapbox/Google Maps API key for turn-by-turn nav), FU-11 (FCM project for push notifications).
 - ✅ **Phase 13 (AI and Automation) is UNLOCKED.** Dependencies satisfied: Phase 5 (ADR-018), Phase 6 (ADR-019/020/021/022), Phase 7 (ADR-023/024/025/026), Phase 8 (ADR-027/028/029), Phase 9 (ADR-030/031/032), Phase 10 (ADR-033/034/035), Phase 11 (ADR-036/037/038), Phase 12 (ADR-039/040/041). ADR-013/014/015 AI governance (shipped v1.9.0 Phase 2.6) + Phase 6 analytics registry + Phase 9 rider_locations + Phase 11 finance GL + Phase 12 customer/staff/rider/franchise/support/delivery surface provide the data + UI foundation for Phase 13's demand forecasting, inventory prediction, delivery optimization, support AI, marketing automation, fraud signals, and operational AI teams.
 - **Phase 12 status**: COMPLETE & SHIPPED. Repository main now 94e5d69. Production DB tip 20260821000000 (unchanged). All 41 ADRs Accepted v1.0. Next major workstream: Phase 13 (AI and Automation) — UNLOCKED.
+
+---
+Task ID: dashboard-status-refresh-v2.7.1
+Agent: main
+Task: User reported "dashboard abhi bi phase 2 par hy" — refresh stale owner-facing dashboard/status docs to Phase 12 baseline (v2.7.0), then proceed to Phase 13.
+
+Work Log:
+- Read worklog.md tail (phase-12-shipped entry) — confirmed Phase 12 COMPLETE & SHIPPED at v2.7.0 (PR #239 squash-merged as 94e5d69, annotated tag v2.7.0, GitHub Release published). Repository main at f1932ab (94e5d69 + worklog append). All 41 ADRs Accepted v1.0. Phase 13 UNLOCKED.
+- Read docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md to confirm Phase 13 scope: "AI and Automation — demand forecasting · inventory prediction · delivery optimization · support AI · marketing automation · fraud signals · Mianx.ai agents · operational AI teams".
+- Audited owner-facing dashboard/status docs for staleness — identified 6 stale files stuck at Phase 1.1 / Phase 2 era (2026-07-28 / 2026-07-29 / 2026-07-30 / 2026-08-04):
+  1. docs/00-governance/PROJECT_STATUS.md — STALE (2026-07-29, references PR #113-#120, "Phase 2 runtime not started")
+  2. docs/17-releases/RELEASE_HISTORY.md — STALE (says v1.5.1 is latest, "Phase 2 runtime: Not started")
+  3. docs/testing/DASHBOARD_AUDIT_REPORT.md — STALE (2026-07-30, says "Owner Handover status: READY WITH PHASE 2 BACKLOG")
+  4. README.md (root) — STALE (mentions "D1 – Executive Dashboard v1" as current delivery slice)
+  5. docs/README.md — STALE (2026-08-04, "Phase 2 not started")
+  6. docs/DOCUMENTATION_MAP.md — STALE (2026-07-28, references PR #102/#111)
+- Verified docs/00-governance/REPOSITORY_STATUS.md was ALREADY at Phase 12 baseline (reconciled during v2.7.0 closeout) — no update needed.
+- Created branch dashboard-status-refresh-v2.7.1 from f1932ab.
+- Authored comprehensive refreshes (main agent — critical content requiring full audit context, no subagent delegation):
+  - PROJECT_STATUS.md — full rewrite: 8-row phase release history table, LIVE capabilities across all 12 phases, FOUNDATION items consolidated with ADR trigger conditions, 6 Operator Follow-ups, Phase 13 unlock.
+  - RELEASE_HISTORY.md — full rewrite: canonical anchors updated to v2.7.0 / 94e5d69 / Production DB tip 20260821000000, Phase 5-12 release history table with PR numbers + SHAs + ADRs + GitHub Release links, Phase 12 surface verification matrix, pre-Phase-5 historical anchors preserved.
+  - DASHBOARD_AUDIT_REPORT.md — reconciled 2026-07-30 "Phase 2 backlog" verdict: 8 original backlog items resolved (5 SHIPPED in Phase 6/10/11, 2 PARTIAL with explicit DEFERRED tracking, 1 DEFERRED to Phase 13), 21-module status matrix updated with current LIVE/PARTIAL/DEFERRED status + ADR references.
+  - README.md — updated "What Ships Today" + "Repository Focus" + "Repository Status" sections, removed stale D1 marker, added Phase 12 closeout anchor block.
+  - docs/README.md — updated "Last verified" + "Start here (Owner)" table, replaced stale RC6 planning section with Phase 5-13 release history table.
+  - docs/DOCUMENTATION_MAP.md — full rewrite of "Current verified state" + LIVE/DERIVED/FOUNDATION/UNAVAILABLE sections, added Phase release history table, consolidated FOUNDATION items with ADR trigger conditions.
+- Added CHANGELOG.md entry for [2.7.1] covering all 6 refreshed files + verification + compatibility.
+- Authored docs/releases/v2.7.1_RELEASE_NOTES.md (~180 lines): headline, 6 file refresh subsections, deferred items table, operator follow-ups, compatibility, Phase 13 unlock.
+
+Stage Summary:
+- ✅ 6 stale owner-facing dashboard/status docs refreshed to Phase 12 baseline (v2.7.0):
+  - PROJECT_STATUS.md, RELEASE_HISTORY.md, DASHBOARD_AUDIT_REPORT.md, README.md, docs/README.md, docs/DOCUMENTATION_MAP.md
+- ✅ Added CHANGELOG entry [2.7.1] + release notes file docs/releases/v2.7.1_RELEASE_NOTES.md
+- ✅ Docs-only release — no new migrations, no code, no ADRs. Production DB tip unchanged at 20260821000000.
+- ✅ All 41 ADRs remain Accepted v1.0. Phase 13 (AI and Automation) remains UNLOCKED.
+- ⏳ Next: commit + push + open PR + wait CI + merge + tag v2.7.1 + GitHub Release.
+- ⏳ After: Begin Phase 13 audit + ADR drafting.
+

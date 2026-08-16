@@ -10,6 +10,62 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
 
 ---
 
+## [2.7.1] — 2026-08-16 — Dashboard & Status Docs Refresh (Phase 12 baseline)
+
+**Docs-only refresh** — no new migrations, no code, no ADRs. This release
+synchronizes the owner-facing dashboard and status documents to the
+Phase 12 baseline (`v2.7.0`). Five living documents were previously
+stuck at the 2026-07-28 / 2026-08-04 era (Phase 1.1 / Phase 2) and are
+now reconciled to the current state (Phase 12 COMPLETE · `v2.7.0` ·
+PR #239 · `94e5d69` · 41 ADRs · Phase 13 UNLOCKED).
+
+### Files refreshed
+
+- `README.md` (root) — updated "What Ships Today" + "Repository Focus"
+  + "Repository Status" sections to reflect Phase 12 baseline. Removed
+  stale "D1 – Executive Dashboard v1" current-slice marker.
+- `docs/README.md` — updated "Last verified" line + "Start here (Owner)"
+  table to point at the master roadmap and release history. Replaced
+  stale "RC6 planning" section with full Phase 5–13 release history
+  table.
+- `docs/DOCUMENTATION_MAP.md` — full rewrite of "Current verified state"
+  + "What is LIVE / DERIVED / FOUNDATION / UNAVAILABLE" sections to
+  reflect Phase 12 shipped surface (25+ customer pages + 37 admin pages
+  + 350+ routes + 41 ADRs).
+- `docs/00-governance/PROJECT_STATUS.md` — full rewrite. Replaced
+  2026-07-29 state (PR #113–#120) with comprehensive Phase 12 state:
+  8-row phase release history table, LIVE capabilities across all 12
+  phases, FOUNDATION items consolidated with ADR trigger conditions,
+  6 Operator Follow-ups (FU-3/4/5/7/8/11), Phase 13 unlock.
+- `docs/17-releases/RELEASE_HISTORY.md` — full rewrite. Replaced stale
+  `v1.5.1` / "Phase 2 runtime: Not started" anchors with `v2.7.0` /
+  Phase 13 UNLOCKED. Added full Phase 5–12 release history table with
+  PR numbers, SHAs, ADRs, and GitHub Release links.
+- `docs/testing/DASHBOARD_AUDIT_REPORT.md` — reconciled 2026-07-30
+  "Phase 2 backlog" verdict with Phase 5–12 closeout waves. The 8
+  original Phase 2 backlog items are now resolved: 5 SHIPPED (coupons,
+  loyalty, reports Excel/PDF, HR attendance/payroll, three-way match),
+  2 PARTIAL (menu bulk/nested tree, inventory transfers/FIFO/WAC) with
+  explicit DEFERRED tracking, 1 DEFERRED (AI autonomous runtime →
+  Phase 13). Module status matrix updated for all 21 admin modules.
+
+### Verification
+
+- No new code → no migration, no backend tests, no UI changes.
+- `docs/00-governance/REPOSITORY_STATUS.md` was already at Phase 12
+  baseline (reconciled during the v2.7.0 closeout). This release brings
+  the other 5 status/dashboard docs into alignment with that source of
+  truth.
+
+### Compatibility
+
+- Docs-only — no runtime impact, no migration, no breaking change.
+- Production DB tip unchanged at `20260821000000`.
+- All 41 ADRs (ADR-001 through ADR-041) remain Accepted v1.0.
+- Phase 13 (AI and Automation) remains UNLOCKED.
+
+---
+
 ## [2.7.0] — 2026-08-16 — Phase 12 Complete (Customer and Staff Apps)
 
 **Phase 12 — Customer and Staff Apps — is FEATURE-COMPLETE and Production-verified.**

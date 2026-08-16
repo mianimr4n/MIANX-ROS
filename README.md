@@ -16,9 +16,10 @@ The repository contains customer-facing applications, operational systems, backe
 
 | Surface | Location | Notes |
 | --- | --- | --- |
-| Customer website | `apps/website` | React + Vite · menu, cart, checkout, account |
-| Backend API | `backend/api` | Express · Supabase/Postgres |
-| Database | `supabase/migrations` | Forward-only SQL migrations |
+| Customer website (PWA) | `apps/website` | React + Vite · 25+ customer pages · phone-first auth · loyalty wallet · order tracking |
+| Admin ERP (Staff App) | `apps/website/client/src/pages/admin/` | 37 admin pages · 5 ops pages · 32 router modules totaling 350+ routes |
+| Backend API | `backend/api` | Express · Supabase/Postgres · 1096 backend tests |
+| Database | `supabase/migrations` | Forward-only SQL migrations · Production tip `20260821000000` |
 | Canonical menu data | `data/catalog/` | Manifest + generated website fallback |
 
 **Repository evidence determines implemented capability.**
@@ -27,13 +28,13 @@ The repository contains customer-facing applications, operational systems, backe
 
 ## Repository Focus
 
-Current engineering workstreams:
+Phases 0 through 12 are **PASS AND CLOSED** (latest: `v2.7.0` · Phase 12 — Customer and Staff Apps · ADR-039/040/041). All 41 ADRs (ADR-001 through ADR-041) Accepted v1.0.
 
-- Customer Platform
-- Admin ERP Foundation
-- Executive Dashboard workstream
+Current engineering workstream:
 
-Future platform capabilities are tracked through the roadmap and architecture documents.
+- **Phase 13 — AI and Automation** (UNLOCKED): demand forecasting · inventory prediction · delivery optimization · support AI · marketing automation · fraud signals · Mianx.ai agents · operational AI teams
+
+Future platform capabilities are tracked through the master roadmap: [`docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md`](docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md).
 
 ---
 
@@ -41,15 +42,15 @@ Future platform capabilities are tracked through the roadmap and architecture do
 
 | Area | Status |
 | ------ | -------- |
-| Architecture | Approved |
+| Architecture | Approved — 41 ADRs Accepted v1.0 |
 | Requirements | Maintained |
-| Implementation | Repository evidence defines implemented capability |
-| Current Delivery Slice | D1 – Executive Dashboard v1 |
+| Implementation | Phase 12 COMPLETE — `v2.7.0` shipped 2026-08-16 |
+| Current Phase | Phase 13 (AI and Automation) — UNLOCKED, not yet started |
 | Verification | See [`docs/00-governance/REPOSITORY_STATUS.md`](docs/00-governance/REPOSITORY_STATUS.md) |
 
 > This section reflects repository governance and does **not** imply production release, merge, deployment, or Founder sign-off.
 >
-> Executive Dashboard v1 current honesty: Architecture PASS · Implementation PASS · Repository verification PASS · Acceptance PASS WITH LIMITATIONS · **Released** (merge `f685599` / PR #100). Known AV1 limitations remain documented in [`docs/00-governance/REPOSITORY_STATUS.md`](docs/00-governance/REPOSITORY_STATUS.md).
+> Phase 12 closeout: PR #239 squash-merged as `94e5d69` · annotated tag `v2.7.0` · GitHub Release published at https://github.com/mianimr4n/telepizza/releases/tag/v2.7.0 · 6/6 CI checks PASS · Production DB tip unchanged at `20260821000000` (closeout-only). See [`docs/00-governance/REPOSITORY_STATUS.md`](docs/00-governance/REPOSITORY_STATUS.md) for the authoritative status and [`docs/releases/v2.7.0_RELEASE_NOTES.md`](docs/releases/v2.7.0_RELEASE_NOTES.md) for full release notes.
 
 ---
 
