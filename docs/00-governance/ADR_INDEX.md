@@ -60,6 +60,10 @@ Active
 | ADR-020 | Canonical Single-Price Menu Catalog & Atomic Price Audit | Accepted | 1.0 | [`docs/13-adr/ADR-020-canonical-single-price-menu-catalog.md`](../13-adr/ADR-020-canonical-single-price-menu-catalog.md) — implemented in `v2.1.0` (Phase 6 closeout) |
 | ADR-021 | Deals, Coupons & Loyalty Promotion Engine | Accepted | 1.0 | [`docs/13-adr/ADR-021-deals-coupons-loyalty-engine.md`](../13-adr/ADR-021-deals-coupons-loyalty-engine.md) — implemented in `v2.1.0` (Phase 6 closeout) |
 | ADR-022 | Reports & Analytics Framework — Query-Time KPI Registry | Accepted | 1.0 | [`docs/13-adr/ADR-022-reports-analytics-framework.md`](../13-adr/ADR-022-reports-analytics-framework.md) — implemented in `v2.1.0` (Phase 6 closeout) |
+| ADR-023 | POS Cashier Workflow & Order Source Contract | Accepted | 1.0 | [`docs/13-adr/ADR-023-pos-cashier-workflow-order-source-contract.md`](../13-adr/ADR-023-pos-cashier-workflow-order-source-contract.md) — implemented in `v2.2.0` (Phase 7 closeout) |
+| ADR-024 | Dine-in Bill Settlement & Multi-tender Payments | Accepted | 1.0 | [`docs/13-adr/ADR-024-dine-in-bill-settlement.md`](../13-adr/ADR-024-dine-in-bill-settlement.md) — implemented in `v2.2.0` (Phase 7 closeout) |
+| ADR-025 | POS Shifts, Z-Report & Cash Reconciliation | Accepted | 1.0 | [`docs/13-adr/ADR-025-pos-shifts-zreport-cash-recon.md`](../13-adr/ADR-025-pos-shifts-zreport-cash-recon.md) — implemented in `v2.2.0` (Phase 7 closeout) |
+| ADR-026 | Branch Sync & Offline-Safe POS Contract | Accepted | 1.0 | [`docs/13-adr/ADR-026-branch-sync-offline-safe-pos-contract.md`](../13-adr/ADR-026-branch-sync-offline-safe-pos-contract.md) — implemented in `v2.2.0` (Phase 7 closeout) |
 
 > **Note:** All Phase 2 ADRs (ADR-001 through ADR-015) now have standalone
 > ADR files authored under `docs/13-adr/` and are marked Accepted.
@@ -73,6 +77,12 @@ Active
 > decision: RBAC permission model, single-price menu catalog, three-engine
 > promotions surface (coupons + campaigns + loyalty), and query-time
 > analytics registry.
+> ADR-023 through ADR-026 formally accept the Sprint 4 / DB-R6 / D3 / RC3
+> Finance as-built POS architecture as the canonical Phase 7 decision:
+> cashier workflow + order source contract, dine-in bill settlement +
+> multi-tender payments, POS shifts + Z-Report + cash reconciliation, and
+> branch sync + offline-safe contract (centralized DB + RLS + Idempotency-
+> Key, with explicit deferral of offline PWA).
 
 ---
 
