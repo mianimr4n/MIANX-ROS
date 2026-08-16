@@ -10,6 +10,240 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
 
 ---
 
+## [2.6.0] — 2026-08-16 — Phase 11 Complete (Finance and Reporting)
+
+**Phase 11 — Finance and Reporting — is FEATURE-COMPLETE and Production-verified.**
+
+This release ships **3 ADRs**: ADR-036 (Branch GL, P&L, Balance Sheet &
+Cash Flow Contract), ADR-037 (Cash Reconciliation, Z-Report & COD
+Financial Ownership Contract), and ADR-038 (Tax, AR, AP, COGS & Expense
+Posting Contract). All 38 ADRs (ADR-001 through ADR-038) are now
+Accepted v1.0 with standalone ADR markdown files under `docs/13-adr/`.
+
+Phase 11 is a **closeout phase**: the underlying code has been live in
+Production across multiple prior waves — v1.8.0 (foundation orders +
+payments + ADR-010 COD + ADR-011 immutability), v1.9.0 (Phase 2.5
+account mappings), v2.0.0 (D3 corrective payments expansion + bill
+splits + reservation deposits + `close_dining_session_atomic`), v2.1.0
+(Phase 6 analytics registry + admin reports routes), v2.2.0 (Phase 7
+POS + Z-report + cash reconciliations + `branch_payment_methods`), and
+v2.3.0 (Phase 8 RC4 Finance Phase 2 — `tax_definitions` + AR + finance
+periods + balance sheet + cash flow indirect + COGS events). The
+finance admin surface (`modules/admin/finance.ts`, 30 routes) +
+payments admin surface (`modules/admin/payments.ts`, 9 routes) +
+reports admin surface (`modules/admin/reports.ts`, 12 routes) + POS
+admin surface (`modules/admin/pos.ts`, 3 routes) + COD admin surface
+(in `modules/admin/delivery-rider.ts`, 5 routes) all ship in
+Production. The owner-facing finance dashboard at `/admin/finance`
+(296 lines) + reports dashboard at `/admin/reports` (149 lines) + POS
+cashier page at `/admin/pos` (632 lines) all live. 8 finance
+components (1,527 lines), 12 reports components (1,114 lines), 13 POS
+components (1,119 lines), and 2 dashboard panels (509 lines) ship
+alongside. This phase formally accepts the as-built finance/reporting
+architecture via the 3 new ADRs and provides a finance-focused
+verification script (`scripts/phase_11_verify.py`) with 70+ checks
+across 10 categories. **No new database migrations** — Phase 11 is
+documentation + verification only. The Production DB tip remains
+`20260821000000` (same as Phase 5/6/7/8/9/10 closeouts).
+
+Backend tests: **1096 passing** (unchanged from v2.5.0 — no new code,
+only ADRs and verification script). Phase 12 (Customer and Staff Apps)
+is now UNLOCKED.
+
+### ADR-036 — Branch GL, P&L, Balance Sheet & Cash Flow Contract
+
+- Formally accepts the as-built branch General Ledger:
+  `chart_of_accounts` table with 5 account types (ASSET, LIABILITY,
+  EQUITY, REVENUE, EXPENSE), UNIQUE `(branch_id, account_code)`,
+  optional `parent_account_id` for hierarchical reporting.
+- Documents the double-entry journal: `journal_entries` 3-state status
+  (draft/posted/voided) + `reference_type`/`reference_id` source
+  linking + `reversed_by_journal_id` + `reverses_journal_id` self-FK
+  for symmetric reversal chains. `journal_entry_lines` CHECK enforces
+  exactly one of `debit`/`credit` positive per line.
+- Locks the atomic journal creation contract:
+  `create_journal_entry_atomic` SECURITY DEFINER RPC validates
+  (a) sum of debits = sum of credits, (b) ≥2 lines, (c) all accounts
+  belong to the same branch. `reverse_journal_entry_atomic` RPC posts
+  an equal-and-opposite posted entry + marks original `voided` — both
+  protected by ADR-011 immutability triggers
+  (`enforce_journal_entry_immutability` + `enforce_journal_entry_line_
+  immutability` BEFORE UPDATE/DELETE).
+- Documents the period control surface: `finance_periods` 3-state
+  (open/soft_closed/closed) + `finance_assert_period_allows_posting`
+  SECURITY DEFINER RPC gates every controlled GL posting service.
+- Locks the financial statements: `finance_trial_balance`,
+  `finance_profit_loss` (Revenue credit−debit; Expense debit−credit;
+  netIncome), `finance_balance_sheet` (assets−liabilities−equity+
+  current earnings, dynamic from posted journals), `finance_cash_flow_
+  indirect` (operating+investing+financing from account mappings;
+  unclassified movements returned explicitly, never silent).
+- Documents the account mappings foundation:
+  `finance_account_mappings` (purpose→account_id per branch; 20
+  canonical purposes + `expense_category:*` prefix) +
+  `finance_cash_accounts` + `finance_cash_register_entries` +
+  `finance_exceptions` 3-state queue (never silently drops posting
+  failures) + `finance_postings` UNIQUE (source_module, source_id)
+  idempotency ledger.
+- Explicitly defers: per-branch pricing (ADR-020), automated GL
+  posting from kitchen/PO/invoice/sales order (manual
+  `/finance/{sales,ap,cogs}/post` endpoints exist), multi-currency
+  consolidation (PKR-only), inter-branch transfers, fiscal-year close
+  automation, bank reconciliation, fixed-asset depreciation.
+
+### ADR-037 — Cash Reconciliation, Z-Report & COD Financial Ownership Contract
+
+- Formally accepts the as-built Z-Report: `pos_z_report_events`
+  append-only audit (branch_id, business_date, total_orders,
+  total_cash_sales, expected_cash, payload jsonb, timezone default
+  'Asia/Karachi'). `PosZReportService.getReport` computes cash-drawer
+  expectation; `confirmClose` inserts the audit row.
+- Documents the cash reconciliations: `cash_reconciliations` 6-state
+  (draft/submitted/approved/rejected/posted/voided) with
+  server-computed expected_cash + variance, posting_status 5-state,
+  journal_entry_id FK, z_report_event_id FK, idempotency_key UNIQUE.
+- Locks the immutable totals contract:
+  `compute_cash_reconciliation_totals` IMMUTABLE function —
+  server-side recomputation prevents client-side tampering.
+- Documents the COD reconciliation: `cod_collections` 4-state
+  (pending/reconciled/shortage/overage) with UNIQUE on delivery_id.
+  `post_cod_collection_journal` SECURITY DEFINER trigger function
+  (ADR-010) fires on reconciliation_status → reconciled; idempotent via
+  `finance_postings` UNIQUE `source_module='cod_collection'`. Attached
+  via `trg_cod_collection_post_journal` AFTER UPDATE trigger.
+- Documents the payments surface: `payments` 8-state status
+  (pending/authorized/completed/paid/failed/voided/
+  partially_refunded/refunded), 4 payment methods
+  (cash/card_terminal/bank_manual/complimentary), cash_tendered +
+  cash_change, idempotency_key UNIQUE, chk_payments_order_or_bill
+  (order_id OR restaurant_bill_id required).
+- Documents the bill splits + reservation deposits: `bill_splits`
+  (4 strategies) + `bill_split_allocations` + `reservation_deposits`
+  7-state lifecycle.
+- Locks the atomic settlement RPCs: `settle_bill_payment_atomic` +
+  `close_dining_session_atomic` SECURITY DEFINER.
+- Explicitly defers: `pos_sessions` table (POS-BILLING-FOUNDATION §2),
+  online card gateway (Stripe/Braintree), multi-tender `payment_splits`
+  table (multi-tender handled via multiple payments rows), bank deposit
+  slip generation, multi-timezone (Asia/Karachi only).
+
+### ADR-038 — Tax, AR, AP, COGS & Expense Posting Contract
+
+- Formally accepts the as-built tax definitions: `tax_definitions`
+  table with branch_id optional, UNIQUE (branch_id, tax_code), rate
+  numeric 0-1, tax_basis (exclusive/inclusive), classification
+  (input/output), effective_from/effective_to, payable/receivable
+  account FKs, is_active defaults false (no hardcoded jurisdiction
+  rates — operator must seed via FU-19).
+- Documents the pure tax helpers: `services/finance/tax-calc.ts` —
+  `roundMoney` (half-up 2dp), `calculateLineTax` (exclusive:
+  subtotal×rate; inclusive: subtotal−subtotal/(1+rate)),
+  `calculateInvoiceTaxTotals` (applies discount before tax).
+- Locks the AR surface: `customer_invoices` 7-state (DRAFT/ISSUED/
+  PARTIALLY_PAID/PAID/OVERDUE/VOID/CREDITED) + `customer_invoice_lines`
+  + `customer_receipts` 4-state with idempotency_key + unapplied_amount
+  + `customer_receipt_allocations` UNIQUE (receipt_id, invoice_id) +
+  `customer_credit_notes` 3-state (DRAFT/ISSUED/VOID).
+- Documents the AP surface: `supplier_invoices` 3-way match foundation
+  (match_status + variance_amount + matched_grn_id) +
+  `supplier_payments` 4-state payment_method (cash/bank_transfer/
+  cheque/other) with idempotency_key UNIQUE.
+- Locks the atomic AP payment: `record_supplier_payment_atomic`
+  SECURITY DEFINER RPC — two overloads (7-arg legacy + 8-arg with
+  idempotency). Validates branch/supplier match, 3-way match
+  discrepancy block, overage block, idempotent replay, status roll
+  pending → partially_paid → paid.
+- Documents the expense claims: `expense_claims` 6-state
+  (draft/submitted/approved/rejected/paid/voided) with posting_status
+  5-state, journal_entry_id FK, idempotency_key UNIQUE, UNIQUE
+  (branch_id, expense_number) + `expense_claim_events` audit.
+- Locks the COGS surface: `inventory_cogs_events` cost_source 4-state
+  (last_purchase_cost_price/unavailable/weighted_average/fifo) +
+  status 4-state (pending/posted/deferred/skipped) + idempotency_key
+  UNIQUE + `inventory_consumption_events` idempotent + reversible via
+  `reversed_event_id` self-FK.
+- Documents the controlled GL posting services: `postSalesFromOrder`
+  (debit AR/cash, credit sales_revenue/output_tax/sales_discounts),
+  `postSupplierInvoice` (debit AP/expenses, credit bank_clearing),
+  `postCogsEvent` (debit cogs, credit inventory_asset),
+  `postPayrollAccrual`, `postPayrollSettlement`. All gated on
+  `requireMapping` + `assertPeriodAllows` + `recordException` —
+  never silently fails.
+- Explicitly defers: seeded jurisdiction rates, automated COGS GL
+  posting from kitchen consume, weighted-average/FIFO costing,
+  `inventory_cost_history` table, `sale` movement type wiring for
+  finished-goods, automated procurement-to-GL automation, automated
+  3-way match (DB-level trigger), supplier-side invoice submission,
+  partial-cancel of order line items, dedicated `refunds` table,
+  partial-refund API, discounts master table for non-coupon discounts.
+
+### Verification
+
+- `scripts/phase_11_verify.py` — 70+ checks across 10 categories
+  (foundation finance tables, ADR-036 RPCs + ADR-011 immutability
+  triggers, ADR-037 cash tables, ADR-037 RPCs, ADR-038 tax/AR/AP/COGS
+  tables, ADR-038 RPCs, RLS on ~30 finance tables, permissions + roles
+  seeded, CHECK constraints, API + frontend surface prerequisites).
+- All finance migrations already in Production (foundation `20260713190000`
+  orders/payments + `20260725110000` D3 corrective + `20260729010000`
+  branch_payment_methods + `20260730210000` pos_z_report_events +
+  `20260730260000` finance_core + `20260731010000` finance_account_mappings
+  + `20260731020000` cash_reconciliations + `20260731030000` expense_claims
+  + `20260731040000` finance_posting_and_ap_idempotency + `20260730270000`
+  supplier_invoices_payments + `20260731180000` rc4_inventory_recipes_cogs
+  + `20260731190000` rc4_finance_phase2_foundation + `20260731200000` /
+  `20260731210000` rc4_payroll_calculation_foundation + `20260814180100` /
+  `20260815000000` adr_011_accounting_immutability + FU-1 fix +
+  `20260817000000` adr_008_009_010_delivery_rider COD +
+  `20260819000000` adr_012_domain_event_audit).
+- Production DB tip unchanged: `20260821000000` (Phase 3 OTP, same as
+  Phase 5/6/7/8/9/10 closeouts).
+- No new code — backend tests remain at 1096 passing.
+
+### Production Deployment Status
+
+- Database migrations: ✅ Already in Production (no new migrations in
+  v2.6.0)
+- Production DB tip: `20260821000000_adr_016_017_otp.sql` (unchanged
+  since Phase 5)
+- Backend API: ✅ Already deployed (59 finance/payment/report/POS/COD
+  routes live — 30 finance + 9 payments + 12 reports + 3 POS + 5 COD)
+- Frontend: ✅ Already deployed (AdminFinance + AdminReports + AdminPos
+  + finance/reports/POS component families + 2 dashboard panels)
+- Backend tests: 1096 passing (unchanged from v2.5.0)
+
+### Phase 12 Unlock
+
+Phase 12 (Customer and Staff Apps) is now UNLOCKED. Dependencies
+satisfied through Phase 11.
+
+The Phase 11 finance GL + ADR-011 immutability + Phase 7 payments/bill
+splits/deposits + Phase 9 COD reconciliation + Phase 11 AR/AP surfaces
++ Phase 6 reports & analytics registry provide the data foundation for
+Phase 12's customer-facing order history, loyalty wallet, invoice
+download, and rider/staff app finance summaries.
+
+### Closing
+
+Phase 11 (Finance and Reporting) is **COMPLETE & SHIPPED** as
+v2.6.0. The closeout formally elevates the as-built finance surface —
+which has been live in Production since v1.8.0 (foundation orders +
+payments + ADR-010 COD + ADR-011 immutability), v1.9.0 (Phase 2.5
+account mappings), v2.0.0 (D3 corrective payments expansion + bill
+splits + reservation deposits + close_dining_session), v2.1.0 (Phase 6
+analytics registry + admin reports routes), v2.2.0 (Phase 7 POS +
+Z-report + cash reconciliations + branch_payment_methods), and v2.3.0
+(Phase 8 RC4 Finance Phase 2 — tax + AR + periods + balance sheet +
+cash flow + COGS events) — to three new ADRs (ADR-036, ADR-037,
+ADR-038). No new migrations and no new code were required. All 38 ADRs
+are now Accepted v1.0 with standalone files under `docs/13-adr/`.
+
+The remaining PARTIAL gaps (Discounts, Refunds) are explicitly deferred
+with documented trigger conditions. The backend contract is stable and
+will not change when these gaps are filled in future phases.
+
+---
+
 ## [2.5.0] — 2026-08-16 — Phase 10 Complete (Inventory and Procurement)
 
 **Phase 10 — Inventory and Procurement — is FEATURE-COMPLETE and Production-verified.**

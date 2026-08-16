@@ -243,7 +243,27 @@ Ingredients · Recipe/BOM · Stock · Branch inventory · POs · Suppliers · Wa
 
 Revenue · Expenses · Payments · Cash · Branch P&L · Taxes · Discounts · Refunds · Reconciliation · Reports
 
-**Status:** Not started
+**Status:** ✅ COMPLETE (v2.6.0) — Production-verified (closeout-only, no new migrations; reuses Phase 5/6/7/8/9/10 baseline `20260821000000`)
+
+**Close report:** `docs/testing/acceptance-evidence/phase11-closeout/PHASE11_FINAL_GATE.md`
+**Formal ADRs:**
+- `docs/13-adr/ADR-036-branch-gl-pnl-balance-sheet-cash-flow-contract.md` (v2.6.0) — branch GL + CoA + journal_entries (3-state) + balanced journal_entry_lines + create/reverse_journal_entry_atomic SECURITY DEFINER RPCs + finance_trial_balance / profit_loss / balance_sheet / cash_flow_indirect financial-statement RPCs + finance_periods 3-state period control + finance_account_mappings (20 purposes) + finance_exceptions queue + finance_postings idempotency UNIQUE + ADR-011 immutability triggers on journal_entries + journal_entry_lines (per-branch pricing + automated GL posting from kitchen/PO/invoice + multi-currency consolidation DEFERRED)
+- `docs/13-adr/ADR-037-cash-reconciliation-zreport-cod-financial-ownership-contract.md` (v2.6.0) — Z-report append-only audit + cash_reconciliations 6-state with server-side compute_cash_reconciliation_totals IMMUTABLE RPC + COD 4-state reconciliation with ADR-010 post_cod_collection_journal trigger (idempotent via finance_postings) + payments 8-state 4-method + bill_splits 4 strategies + reservation_deposits 7-state + branch_payment_methods config + settle_bill_payment_atomic / close_dining_session_atomic SECURITY DEFINER RPCs (pos_sessions + online card gateway + multi-tender payment_splits + bank deposit slip + multi-timezone DEFERRED)
+- `docs/13-adr/ADR-038-tax-ar-ap-cogs-expense-posting-contract.md` (v2.6.0) — tax_definitions (configurable rates, exclusive/inclusive basis, input/output classification) + AR surface (customer_invoices 7-state + customer_receipts + customer_receipt_allocations + customer_credit_notes 3-state) + AP surface (supplier_invoices 3-way match + supplier_payments + record_supplier_payment_atomic 8-arg + 7-arg overloads) + expense_claims 6-state + inventory_cogs_events (4-state cost_source, 4-state status) + inventory_consumption_events (idempotent + reversible) + controlled GL posting services (postSalesFromOrder / postSupplierInvoice / postCogsEvent / postPayrollAccrual / postPayrollSettlement) gated on mapping-required + period-gated + exception-recording (seeded jurisdiction rates + automated COGS GL posting + weighted-average/FIFO costing + inventory_cost_history + dedicated refunds table + partial-refund API + discounts master table DEFERRED)
+
+**Work items:**
+- ✅ Revenue (`orders.subtotal/discount_amount/tax_amount/delivery_fee/total_amount`, `customer_invoices` 7-state AR, `customer_receipts` + allocations, `postSalesFromOrder` controlled GL post service, `/finance/sales/post-from-order/:orderId` route, `finance_profit_loss` RPC, `sales.gross/net/aov` analytics metrics)
+- ✅ Expenses (`expense_claims` 6-state + `expense_claim_events` audit, `tryPostExpenseJournal` + `postSupplierInvoice` controlled GL post services, `/finance/expenses/*` routes, `ExpensePanel` in FinancePanels.tsx)
+- ✅ Payments (`payments` 8-state status, 4 payment methods, cash_tendered/change, idempotency_key UNIQUE, `settle_bill_payment_atomic` SECURITY DEFINER RPC, `bill_splits` 4 strategies, `reservation_deposits` 7-state, `branch_payment_methods` config, 9 routes in `modules/admin/payments.ts`, `PaymentSettlementService` 357 lines)
+- ✅ Cash (`pos_z_report_events` append-only Asia/Karachi audit, `cash_reconciliations` 6-state with `compute_cash_reconciliation_totals` IMMUTABLE RPC, `finance_cash_accounts` cash/bank, `finance_cash_register_entries`, `PosZReportService` 175 lines, `tryPostCashVarianceJournal` controlled GL post)
+- ✅ Branch P&L (`finance_profit_loss` + `finance_balance_sheet` + `finance_cash_flow_indirect` RPCs, all branch-scoped + RLS, `finance_periods` 3-state + `finance_assert_period_allows_posting` SECURITY DEFINER gate, `StatementsPanel` in LedgerPanel.tsx, analytics registry has 8 finance metrics incl. `finance.profit`, `finance.margin`)
+- ✅ Taxes (`tax_definitions` with rate 0-1, tax_basis exclusive/inclusive, classification input/output, effective_from/to, payable/receivable account FKs, `tax-calc.ts` pure helpers half-up rounding, line/invoice tax calculation, `/finance/tax-definitions` GET+PUT routes, `orders.tax_amount` column, `output_tax` mapping purpose)
+- 🟡 Discounts (`orders.discount_amount` column exists, `sales_discounts` mapping purpose, `sales.discounts` analytics metric, coupon system ADR-021 + loyalty rewards EXIST; NO `discounts` master table for non-coupon discounts (staff-discretionary/happy-hour/bulk); NO `discount_reason` audit; NO multi-line discount allocation on `order_items` — DEFERRED per ADR-018/021)
+- 🟡 Refunds (`payments.refunded_at` + `voided_at` + `partially_refunded`/`refunded` status EXIST, `customer_credit_notes` 3-state EXIST, `refunds` mapping purpose, `cash_reconciliations.cash_refunds` column, `sales.refunds` analytics metric, `voidPayment` service; NO dedicated `refunds` table for operational refund tracking; NO `/api/v1/admin/refunds` route; NO refund lifecycle service (`voidPayment` sets `voided_at` not `refunded_at`); NO partial-refund API (only full void) — DEFERRED per ADR-018/024/026)
+- ✅ Reconciliation (`cash_reconciliations` 6-state with server-side variance + GL posting link, `cod_collections` 4-state with auto-GL posting trigger, `finance_cash_register_entries.reconciliation_status`, `finance_postings` UNIQUE per source_module+source_id idempotency, `reverse_journal_entry_atomic` RPC, ADR-010 trigger fires on COD reconcile, ADR-011 immutability guards posted journals, `FinanceAttentionSnapshot` exposes reconciliation queues)
+- ✅ Reports (12 routes in `modules/admin/reports.ts` — sales, orders/export, analytics workspace/modules/drilldown/export/scheduled/exceptions/data-quality; 25-module analytics registry incl. finance, sales, executive, branch_comparison; CSV/Excel/PDF export; `getOwnerWorkspace` aggregates 25 modules; scheduled reports execution_status='deferred' by design — analytics worker not deployed; AdminReports.tsx 149 lines + 12 supporting components 1114 lines; ADR-022 formally accepted)
+
+**Deferred to future ADRs:** per-branch pricing, automated GL posting from kitchen/PO/invoice/sales order, multi-currency consolidation, inter-branch transfers, fiscal-year close automation, bank reconciliation, fixed-asset depreciation, `pos_sessions` table, online card gateway, multi-tender `payment_splits` table, bank deposit slip generation, multi-timezone, seeded jurisdiction tax rates, weighted-average/FIFO costing methods, `inventory_cost_history` table, `sale` movement type wiring for finished-goods, automated procurement-to-GL automation, automated 3-way match (DB-level trigger), supplier-side invoice submission, partial-cancel of order line items, dedicated `refunds` table, partial-refund API, discounts master table for non-coupon discounts, finance domain event mirror triggers. Each has an explicit trigger condition in ADR-018 §"Negative consequences" / ADR-020 / ADR-021 / ADR-023-026 / ADR-036 / ADR-037 / ADR-038.
 
 ---
 
@@ -292,9 +312,9 @@ PRODUCTION V1.0 = LIVE
 
 | Now | Next |
 |---|---|
-| Phase 10 **PASS AND CLOSED** (v2.5.0) | **Phase 11** — Finance and Reporting |
+| Phase 11 **PASS AND CLOSED** (v2.6.0) | **Phase 12** — Customer and Staff Apps |
 | Phase 3 eng paused | Ops continues Meta/Twilio in parallel |
-| Phase 11 implementation | After Phase 10 close (UNLOCKED) |
+| Phase 12 implementation | After Phase 11 close (UNLOCKED) |
 
 ---
 
