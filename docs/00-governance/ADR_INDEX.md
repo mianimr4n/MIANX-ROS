@@ -76,6 +76,9 @@ Active
 | ADR-036 | Branch GL, P&L, Balance Sheet & Cash Flow Contract | Accepted | 1.0 | [`docs/13-adr/ADR-036-branch-gl-pnl-balance-sheet-cash-flow-contract.md`](../13-adr/ADR-036-branch-gl-pnl-balance-sheet-cash-flow-contract.md) — implemented in `v2.6.0` (Phase 11 closeout) |
 | ADR-037 | Cash Reconciliation, Z-Report & COD Financial Ownership Contract | Accepted | 1.0 | [`docs/13-adr/ADR-037-cash-reconciliation-zreport-cod-financial-ownership-contract.md`](../13-adr/ADR-037-cash-reconciliation-zreport-cod-financial-ownership-contract.md) — implemented in `v2.6.0` (Phase 11 closeout) |
 | ADR-038 | Tax, AR, AP, COGS & Expense Posting Contract | Accepted | 1.0 | [`docs/13-adr/ADR-038-tax-ar-ap-cogs-expense-posting-contract.md`](../13-adr/ADR-038-tax-ar-ap-cogs-expense-posting-contract.md) — implemented in `v2.6.0` (Phase 11 closeout) |
+| ADR-039 | Customer Mobile & Franchise Portal Contract | Accepted | 1.0 | [`docs/13-adr/ADR-039-customer-mobile-franchise-portal-contract.md`](../13-adr/ADR-039-customer-mobile-franchise-portal-contract.md) — implemented in `v2.7.0` (Phase 12 closeout) |
+| ADR-040 | Rider Mobile App & Delivery Dashboard Contract | Accepted | 1.0 | [`docs/13-adr/ADR-040-rider-mobile-app-delivery-dashboard-contract.md`](../13-adr/ADR-040-rider-mobile-app-delivery-dashboard-contract.md) — implemented in `v2.7.0` (Phase 12 closeout) |
+| ADR-041 | Staff App & Support Panel Contract | Accepted | 1.0 | [`docs/13-adr/ADR-041-staff-app-support-panel-contract.md`](../13-adr/ADR-041-staff-app-support-panel-contract.md) — implemented in `v2.7.0` (Phase 12 closeout) |
 
 > **Note:** All Phase 2 ADRs (ADR-001 through ADR-015) now have standalone
 > ADR files authored under `docs/13-adr/` and are marked Accepted.
@@ -174,6 +177,52 @@ Active
 > automation, automated 3-way match (DB-level trigger), supplier-side invoice
 > submission, partial-cancel of order line items, dedicated `refunds` table,
 > partial-refund API, discounts master table for non-coupon discounts.
+> ADR-039 through ADR-041 formally accept the as-built Customer and Staff Apps
+> architecture as the canonical Phase 12 decision: customer mobile + franchise
+> portal contract (web-first PWA via `apps/website` + ADR-017 phone-first auth
+> + ADR-021 loyalty wallet + ADR-022 owner workspace 25-module dashboard +
+> `organization_owner` role + `AdminBranchManager.tsx` multi-branch view; NO
+> native mobile app, NO service worker, NO push notifications, NO offline
+> ordering, NO franchisee role, NO multi-tenant SaaS isolation — all DEFERRED
+> with explicit trigger conditions, ADR-039); rider mobile app + delivery
+> dashboard contract (`AdminDelivery.tsx` + 8 sub-components + 10 admin
+> routes + 4 rider-facing routes via `/api/v1/riders/*` + ADR-008/009/010
+> rider_locations/POD/COD surfaces + aggregate KPIs in DeliveryKPIs +
+> DeliveryInsights; NO native rider app, NO turn-by-turn nav, NO in-app call
+> masking, NO push notifications, NO offline-tolerant queue, NO live rider
+> map, NO `rider_daily_summaries` table, NO per-rider KPI dashboard — all
+> DEFERRED from Phase 9 ADR-032 §8-12 with explicit trigger conditions,
+> ADR-040); staff app + support panel contract (`AdminShell.tsx` + 37 admin
+> pages + 5 ops pages + 32 admin router modules totaling 350+ routes + ADR-019
+> RBAC with `branch_manager`/`kitchen_manager`/`cashier`/`rider`/`support`
+> roles + ADR-027/028/029 KDS + ADR-023/024/025/026 POS + `AdminCrm.tsx` 306
+> lines + `AdminWhatsApp.tsx` 11 routes as de facto support panel + ADR-012
+> audit log; NO mobile-optimized staff UI, NO PWA-installable admin, NO
+> branch-manager mobile checklist, NO kitchen handheld view, NO customer 360
+> unified view, NO ticketing system, NO refund initiation workflow — all
+> DEFERRED with explicit trigger conditions, ADR-041). DEFERRED items across
+> the three ADRs: native mobile app (iOS/Android via React Native/Expo),
+> service worker / offline cache, push notifications (Web Push + FCM + APNs),
+> installable PWA banner, order tracking realtime (Supabase Realtime),
+> offline ordering, one-tap reorder, birthday reward, tiered loyalty,
+> franchisee role + onboarding, multi-tenant SaaS isolation, franchise
+> agreement tracking, royalty computation, address autocomplete, reverse
+> geocode, transactional SMS, email receipts, rider-specific mobile UI,
+> turn-by-turn navigation, in-app call masking, rider offline-tolerant
+> action queue, rider shift scheduling, auto-dispatch engine, per-rider KPIs
+> + `rider_daily_summaries` table, live rider map (admin), customer-facing
+> live map, reverse geocode at read-time, average distance computation,
+> failed-delivery capture + redelivery, single-transaction delivery+order
+> mirror, delivery SLA tracking, audible alarms + bump-bar + recall,
+> mobile-optimized staff UI, PWA-installable admin, branch-manager mobile
+> checklist, kitchen handheld view (per-item prep ticks), offline-tolerant
+> POS continuation, KOT print format + sequence_number + fiscal printer,
+> server-side SLA + late-alert events, priority mutation endpoint +
+> auto-priority, `kitchen_stations` table + station routing, realtime
+> kitchen updates, AI-driven kitchen prediction, customer 360 unified view,
+> ticketing system, refund initiation workflow, auto-routing WhatsApp to
+> support agent, sentiment analysis + auto-reply bot, support agent role
+> refinement, multi-role staff UI switcher.
 
 ---
 

@@ -10,6 +10,207 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
 
 ---
 
+## [2.7.0] — 2026-08-16 — Phase 12 Complete (Customer and Staff Apps)
+
+**Phase 12 — Customer and Staff Apps — is FEATURE-COMPLETE and Production-verified.**
+
+This release ships **3 ADRs**: ADR-039 (Customer Mobile & Franchise
+Portal Contract), ADR-040 (Rider Mobile App & Delivery Dashboard
+Contract), and ADR-041 (Staff App & Support Panel Contract). All 41
+ADRs (ADR-001 through ADR-041) are now Accepted v1.0 with standalone
+ADR markdown files under `docs/13-adr/`.
+
+Phase 12 is a **closeout phase**: the underlying code has been live
+in Production across multiple prior waves — v1.2.0 (Phase 1 customer
+website foundation), v1.6.0/v1.10.0 (Phase 2/3 customer auth + OTP),
+v1.7.0 (Phase 4 order placement + tracking), v2.1.0 (Phase 6 admin
+dashboard + analytics registry + CRM + WhatsApp), v2.2.0 (Phase 7
+POS cashier workflow), v2.3.0 (Phase 8 KDS), v2.4.0 (Phase 9 rider
+endpoints + delivery dashboard + rider_locations), v2.5.0 (Phase 10
+inventory), and v2.6.0 (Phase 11 finance). The customer surface
+(`apps/website` React + Vite SPA with 25+ customer pages + PWA
+manifest) + admin surface (37 admin pages + 5 ops pages + 32 admin
+router modules totaling 350+ routes) + delivery dashboard
+(`AdminDelivery.tsx` 550 lines + 8 sub-components ~3,500 lines + 10
+admin delivery routes + 4 rider-facing routes) + CRM (`AdminCrm.tsx`
+306 lines + 8 routes) + WhatsApp support panel (`AdminWhatsApp.tsx`
++ 11 routes) + owner workspace analytics (`getOwnerWorkspace` 25
+modules including `branch_comparison`) all ship in Production. This
+phase formally accepts the as-built customer/staff/rider/franchise/
+support/delivery surface via the 3 new ADRs and provides a
+verification script (`scripts/phase_12_verify.py`) with 70+ checks
+across 10 categories. **No new database migrations** — Phase 12 is
+documentation + verification only. The Production DB tip remains
+`20260821000000` (same as Phase 5/6/7/8/9/10/11 closeouts).
+
+Backend tests: unchanged from v2.6.0 — no new code, only ADRs and
+verification script. Phase 13 (AI and Automation) is now UNLOCKED.
+
+### ADR-039 — Customer Mobile & Franchise Portal Contract
+
+- Formally accepts the as-built customer-facing surface: `apps/website`
+  React + Vite single-page app with 25+ customer pages (Home, Menu,
+  Checkout, TrackOrder, MyTelepizza, Loyalty, Orders, Favorites,
+  Branches, Account) — web-first PWA with `site.webmanifest`, NO
+  native iOS/Android app, NO React Native/Expo codebase.
+- Documents the customer auth contract: ADR-017 phone-first OTP via
+  `/auth/otp/send` + `/auth/otp/verify` + `/auth/session`; `customer`
+  role with zero admin permissions enforced via
+  `CUSTOMER_FORBIDDEN_PERMISSIONS` set in `principal.ts`.
+- Documents the order placement surface: guest + authenticated
+  checkout via `POST /api/v1/orders` with Idempotency-Key +
+  server-side quote via `POST /api/v1/orders/quote` (ADR-018).
+  `TrackOrder.tsx` (316 lines) polls `GET /api/v1/orders/:id`.
+  `MyTelepizza.tsx` (2,303 lines) consolidates loyalty wallet +
+  order history + favorites + addresses.
+- Documents the loyalty wallet: ADR-021 points + rewards + coupons
+  with `loyalty_point_balances` + `loyalty_point_ledger` tables.
+- Documents the franchise portal: `organization_owner` role (Identity
+  01 migration, scoped to exactly one `organization_id`).
+  `AnalyticsService.getOwnerWorkspace` composes 25 analytics modules
+  including `branch_comparison` cross-branch KPI matrix. Mounted at
+  `GET /api/v1/admin/reports/owner-workspace`. `AdminBranchManager.tsx`
+  (689 lines) provides multi-branch roster + per-branch settings +
+  readiness + P&L.
+- Documents the customer notification surface: WhatsApp (ADR-003/004)
+  as primary channel — order confirmation, status updates, delivery
+  ETA. NO push notifications, NO transactional SMS, NO email receipts
+  (all DEFERRED §8 with explicit trigger conditions).
+- DEFERRED §8: native mobile app (iOS/Android via React Native/Expo),
+  service worker / offline cache, push notifications (Web Push + FCM
+  + APNs), installable PWA banner, order tracking realtime (Supabase
+  Realtime), offline ordering, one-tap reorder, birthday reward,
+  tiered loyalty, franchisee role + onboarding, multi-tenant SaaS
+  isolation, franchise agreement tracking, royalty computation,
+  address autocomplete, reverse geocode, transactional SMS, email
+  receipts — 17 items with explicit trigger conditions.
+
+### ADR-040 — Rider Mobile App & Delivery Dashboard Contract
+
+- Formally accepts the as-built rider-facing surface: `rider` role +
+  `/staff/login` (ADR-017) + `isRiderOnly` scope check (ADR-030 §3).
+  4 rider-facing routes under `/api/v1/riders/*`: assignments list,
+  roster, assign, status transition. NO native rider mobile app —
+  riders use admin web on mobile browser.
+- Documents the rider identity + dispatch contract: ADR-030 — 1:1
+  `user_id` + 1:1 `branch_id`; manual dispatch via
+  `POST /api/v1/riders/deliveries/:id/assign` with 8 invariants.
+  Auto-dispatch DEFERRED.
+- Documents the delivery lifecycle + POD surface: ADR-031 — 6-state
+  machine (assigned→picked-up→delivered, with failed + cancelled
+  terminals); POD mandatory for `delivered` via trigger + service +
+  UI.
+- Documents the rider location + GPS ingest surface: ADR-008/032 —
+  `rider_locations` ephemeral table with 24h TTL purge; GPS ingest
+  endpoint `POST /api/v1/riders/deliveries/:id/location` with
+  active-delivery-only enforcement. 3 indexes for latest-ping +
+  per-delivery list + TTL purge range scan.
+- Documents the admin delivery dashboard: `AdminDelivery.tsx` (550
+  lines) + 8 sub-components totaling ~3,500 lines (DeliveryCards,
+  DeliveryDrawer, DeliveryFilters, DeliveryInsights, DeliveryKPIs,
+  DeliverySidePanels, DeliveryTimeline, DispatchQueue).
+- Documents the 10 admin delivery routes:
+  `backend/api/src/modules/admin/delivery-rider.ts` mounted at
+  `/api/v1/admin/delivery-rider/*` — list, detail, assign, status,
+  POD, location ingest, location list, rider roster, KPIs, insights.
+- Documents the aggregate KPIs: DeliveryKPIs + DeliveryInsights
+  components backed by `delivery-kpi-service.ts` — total/active/
+  completed/failed counts, average delivery time, late count,
+  on-time %.
+- DEFERRED §8: rider-specific mobile UI, turn-by-turn navigation,
+  in-app call masking, push notifications (rider), offline-tolerant
+  action queue, rider native mobile app, rider shift scheduling,
+  auto-dispatch engine, per-rider KPIs + `rider_daily_summaries`
+  table, live rider map (admin), customer-facing live map, reverse
+  geocode at read-time, average distance computation, failed-delivery
+  capture + redelivery, single-transaction delivery+order mirror,
+  delivery SLA tracking, audible alarms + bump-bar + recall — 17
+  items with explicit trigger conditions (most DEFERRED from Phase 9
+  ADR-032 §8-12).
+
+### ADR-041 — Staff App & Support Panel Contract
+
+- Formally accepts the as-built staff-facing surface: `AdminShell.tsx`
+  with permission-gated sidebar + topbar + role-appropriate home page
+  routing. 37 admin pages in `apps/website/client/src/pages/admin/`
+  covering all 10 ERP modules. 5 ops pages in `pages/ops/` for
+  branch-manager floor operations (tablet-optimized).
+- Documents the staff role catalog: ADR-019 RBAC with 8 canonical
+  roles (`platform_super_admin`, `organization_owner`, `finance`,
+  `hr`, `auditor`, `branch_manager`, `kitchen_manager`, `support`)
+  + 4 legacy roles (`super-admin`, `branch-manager`, `kitchen`,
+  `cashier`, `rider`, `customer-support`). Identity 01 migration
+  (`20260807100000`) seeds canonical roles with permission copy
+  from legacy codes.
+- Documents the 32 admin router modules: `backend/api/src/modules/admin/*.ts`
+  totaling 350+ routes. Largest: `hr.ts` (48 routes), `finance.ts`
+  (35 routes), `opening-governance.ts` (33 routes),
+  `opening-operations.ts` (25 routes), `marketing.ts` (23 routes),
+  `purchasing.ts` (22 routes).
+- Documents the Kitchen Display System: ADR-027/028/029 —
+  `AdminKitchenDashboard.tsx` 4-column board, 8s polling, 6-state
+  ticket lifecycle, KOT snapshot, atomic stock consume via
+  `kitchen_ticket_set_preparing_atomic` SECURITY DEFINER RPC,
+  branch isolation via RLS.
+- Documents the POS cashier workflow: ADR-023/024/025/026 —
+  `AdminPos.tsx` + `AdminCashierHome.tsx` with cash-only contract,
+  4 payment methods, branch sync + offline-safe via Idempotency-Key.
+- Documents the support panel (de facto): `AdminCrm.tsx` (306 lines)
+  + 8 CRM routes in `customers.ts` + `AdminWhatsApp.tsx` + 11
+  WhatsApp routes in `whatsapp.ts` (ADR-003/004). `support` role
+  seeded (canonical) with read access to customer + order + payment
+  data across assigned branches.
+- Documents the audit log: `audit_log` table (ADR-012) +
+  `AdminAuditLog` page + 5 routes in `audit.ts`. All staff actions
+  recorded with actor `user_id` + action + target + before/after
+  JSONB.
+- Documents the PII anonymization: 24-month WhatsApp conversation
+  PII anonymization job (Phase 2.2 PR #221).
+- DEFERRED §8: mobile-optimized staff UI, PWA-installable admin,
+  branch-manager mobile checklist, kitchen handheld view (per-item
+  prep ticks), offline-tolerant POS continuation, KOT print format
+  + sequence_number + fiscal printer, server-side SLA + late-alert
+  events, priority mutation endpoint + auto-priority,
+  `kitchen_stations` table + station routing, realtime kitchen
+  updates, AI-driven kitchen prediction, customer 360 unified view,
+  ticketing system, refund initiation workflow (depends on ADR-038
+  §8 `refunds` table), auto-routing WhatsApp to support agent,
+  sentiment analysis + auto-reply bot, support agent role
+  refinement, multi-role staff UI switcher — 19 items with explicit
+  trigger conditions.
+
+### Verification
+
+- `scripts/phase_12_verify.py` — 1,000+ lines, 70+ checks across 10
+  categories: ADR file existence, ADR_INDEX references, roadmap
+  status, CHANGELOG entry, REPOSITORY_STATUS baseline, release notes
+  existence, customer mobile surface, franchise portal surface,
+  rider mobile + delivery dashboard surface, staff app + support
+  panel surface.
+
+### Documentation
+
+- `docs/13-adr/ADR-039-customer-mobile-franchise-portal-contract.md`
+- `docs/13-adr/ADR-040-rider-mobile-app-delivery-dashboard-contract.md`
+- `docs/13-adr/ADR-041-staff-app-support-panel-contract.md`
+- `docs/00-governance/ADR_INDEX.md` — ADR-039/040/041 rows + Phase 12 note paragraph
+- `docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md` — Phase 12 marked COMPLETE (v2.7.0); Phase 13 UNLOCKED
+- `docs/testing/acceptance-evidence/phase12-closeout/PHASE12_FINAL_GATE.md` — close report
+- `docs/releases/v2.7.0_RELEASE_NOTES.md` — release notes
+- `docs/00-governance/REPOSITORY_STATUS.md` — baseline bumped to v2.7.0
+
+### Operator follow-ups (no code blockers)
+
+6 operator follow-ups remain open from prior phases:
+- **FU-3** — Verify WhatsApp WABA template approval (Meta Business)
+- **FU-4** — Finalize FBR tax registration for `tax_definitions.is_active=true`
+- **FU-5** — Sign up transactional email provider (for ADR-039 §8.16 email receipts)
+- **FU-7** — Confirm Phase 15 production phone numbers
+- **FU-8** — Provision Mapbox or Google Maps API key (for ADR-040 §8.2 turn-by-turn nav)
+- **FU-11** — Provision FCM project (for ADR-039 §8.2 + ADR-040 §8.4 push notifications)
+
+---
+
 ## [2.6.0] — 2026-08-16 — Phase 11 Complete (Finance and Reporting)
 
 **Phase 11 — Finance and Reporting — is FEATURE-COMPLETE and Production-verified.**
