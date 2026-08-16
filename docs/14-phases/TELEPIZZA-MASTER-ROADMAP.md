@@ -215,7 +215,27 @@ Rider login · Assignment · Pickup · Navigation · Out-for-delivery · POD · 
 
 Ingredients · Recipe/BOM · Stock · Branch inventory · POs · Suppliers · Wastage · Transfers · Alerts · Costing
 
-**Status:** Not started
+**Status:** ✅ COMPLETE (v2.5.0) — Production-verified (closeout-only, no new migrations; reuses Phase 5/6/7/8/9 baseline `20260821000000`)
+
+**Close report:** `docs/testing/acceptance-evidence/phase10-closeout/PHASE10_FINAL_GATE.md`
+**Formal ADRs:**
+- `docs/13-adr/ADR-033-inventory-stock-master-movement-ledger-contract.md` (v2.5.0) — inventory stock master + movement ledger + atomic adjustment (8 movement types, adjust_inventory_stock_atomic RPC, low-stock alerts + dedicated transfers + batch tracking DEFERRED)
+- `docs/13-adr/ADR-034-recipe-bom-cogs-costing-contract.md` (v2.5.0) — versioned recipes + BOM + COGS (one-active-per-menu_item UNIQUE, idempotent + reversible consumption events, last_known cost_source, modifier-effect consume + COGS GL posting DEFERRED)
+- `docs/13-adr/ADR-035-procurement-suppliers-grn-contract.md` (v2.5.0) — suppliers + PO + GRN + invoices + payments + supplier portal (8-state PO machine, 3-state GRN machine, 3-way match foundation, 20-route supplier portal, automated 3-way match + multi-branch consolidation DEFERRED)
+
+**Work items:**
+- ✅ Ingredients / Stock master (`inventory_items` branch-scoped, 3-state status, current_stock/minimum_stock/reorder_level, cost_price)
+- ✅ Recipe/BOM (`inventory_recipes` versioned, one-active-per-menu_item, `inventory_recipe_lines` with waste_factor, `inventory_recipe_modifier_effects` documented)
+- ✅ Stock movements (immutable ledger, 8 movement types: receipt/adjustment/transfer_in/transfer_out/waste/sale_consumption/purchase/sale)
+- ✅ Branch inventory (RLS via `current_user_has_branch_access`, super-admin bypass)
+- ✅ POs (`purchase_orders` 8-state machine, approval gate, UNIQUE `(branch_id, po_number)`)
+- ✅ Suppliers (`suppliers` branch-scoped, status + approval_status split, supplier portal users)
+- ✅ Wastage (`waste` movement type via `adjust_inventory_stock_atomic` RPC)
+- 🟡 Transfers (`transfer_in` / `transfer_out` movement types EXIST in CHECK constraint; dedicated `inventory_transfers` table + transfer endpoint DEFERRED — currently requires two manual adjustments)
+- 🟡 Alerts (`minimum_stock` + `reorder_level` columns EXIST; automated low-stock alert notification DEFERRED)
+- ✅ Costing (`inventory_cogs_events` with `last_known` cost_source; `weighted_average`/`fifo` DEFERRED to Phase 11)
+
+**Deferred to future ADRs:** low-stock alerts, dedicated `inventory_transfers` table, batch/lot tracking, cost history, DB-level immutability trigger on stock_movements, units master table, multi-warehouse, `sale` movement wiring, stock count workflow, modifier-effect consumption, COGS GL posting, weighted-average/FIFO costing, recipe versioning rollback, soft-fail mode, recipe yield factor enforcement, recipe import/export, automated 3-way match, DB-level PO state-machine trigger, negative-quantity GRN lines, multi-branch PO consolidation, supplier SSO, supplier-side invoice submission, procurement-to-GL automation, supplier performance scoring, multi-level approval workflow, RFQ flow, supplier-side PO acknowledgment SLA, contract management, inventory reservation. Each has an explicit trigger condition in ADR-033 §8 / ADR-034 §10 / ADR-035 §9.
 
 ---
 
@@ -272,9 +292,9 @@ PRODUCTION V1.0 = LIVE
 
 | Now | Next |
 |---|---|
-| Phase 9 **PASS AND CLOSED** (v2.4.0) | **Phase 10** — Inventory and Procurement |
+| Phase 10 **PASS AND CLOSED** (v2.5.0) | **Phase 11** — Finance and Reporting |
 | Phase 3 eng paused | Ops continues Meta/Twilio in parallel |
-| Phase 10 implementation | After Phase 9 close (UNLOCKED) |
+| Phase 11 implementation | After Phase 10 close (UNLOCKED) |
 
 ---
 
