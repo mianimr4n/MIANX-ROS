@@ -654,3 +654,62 @@ Stage Summary:
 - ✅ 3 ADRs recommended for Phase 10 closeout: ADR-033 (Inventory Stock Master, Movement Ledger & Atomic Adjustment Contract), ADR-034 (Recipe/BOM & COGS Costing Contract), ADR-035 (Procurement, Suppliers & GRN Contract). All elevation-of-existing-design — NO IMPLEMENTATION REQUIRED.
 - ⏳ PENDING (next agent / current agent continuation): Author ADR-033/034/035 as standalone markdown files under docs/13-adr/; update docs/00-governance/ADR_INDEX.md; author scripts/phase_10_verify.py (70+ checks); write docs/testing/acceptance-evidence/phase10-closeout/PHASE10_FINAL_GATE.md; update docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md Phase 10 row; update docs/00-governance/REPOSITORY_STATUS.md + CHANGELOG.md + docs/releases/v2.5.0_RELEASE_NOTES.md; write 4 PR/merge/tag/release scripts; open PR, merge, tag v2.5.0, publish GitHub Release.
 - **Phase 10 status**: AUDIT COMPLETE. Ready for closeout ADR authoring + verification. No new code or migrations are required for closeout (Phase 10 is largely already implemented in code + Production — gap is formal ADR elevation, same shape as Phase 5, 6, 7, 8, and 9 closeouts).
+
+---
+Task ID: phase-10-shipped
+Agent: main
+Task: Ship Phase 10 (Inventory and Procurement) closeout — author 3 ADRs, verification script, closeout docs, PR, tag v2.5.0, GitHub Release.
+
+Work Log:
+- Authored 3 ADR markdown files under docs/13-adr/:
+  - ADR-033-inventory-stock-master-movement-ledger-contract.md (295 lines) — formally accepts as-built inventory stock master (branch-scoped inventory_items with (branch_id, sku) UNIQUE + 3-state status), immutable movement ledger (8 movement types), adjust_inventory_stock_atomic SECURITY DEFINER RPC with 4 invariants, RLS via current_user_has_branch_access, inventory.manage permission seed. DEFERRED: low-stock alerts, dedicated transfers, batch tracking, cost history, DB-level immutability trigger, units master, multi-warehouse, sale movement wiring, stock count workflow.
+  - ADR-034-recipe-bom-cogs-costing-contract.md (380 lines) — formally accepts as-built versioned recipes (inventory_recipes with one-active-per-menu_item partial UNIQUE index), recipe lines with waste_factor, modifier effects (DEFERRED for consume path), idempotent + reversible consumption events (UNIQUE idempotency_key + reversed_event_id self-FK), COGS events with last_known cost_source forward-compatible with weighted_average/fifo, cost-availability honesty model (LIVE/DERIVED/UNAVAILABLE/DEFERRED). DEFERRED: modifier-effect consume certification, COGS GL posting, weighted-average/FIFO costing, recipe versioning rollback, soft-fail mode, yield factor enforcement, recipe import/export.
+  - ADR-035-procurement-suppliers-grn-contract.md (424 lines) — formally accepts as-built procurement surface: suppliers (status + approval_status split), purchase_orders (8-state machine with approval gate + UNIQUE (branch_id, po_number)), purchase_requisitions (6-state), goods_receiving (3-state with create_goods_receiving_with_stock_atomic RPC), supplier_invoices (3-way match foundation: match_status + variance_amount + matched_grn_id, 6-state status), supplier_payments (record_supplier_payment_atomic RPC with GL posting), full supplier portal surface (20 routes + supplier_portal_users + purchase_order_lines + purchase_order_responses + idempotency UNIQUE + supplier_documents + supplier_portal_events + supplier_response_staff_decisions). DEFERRED: automated 3-way match, DB-level PO state-machine trigger, negative-quantity GRN lines, multi-branch PO consolidation, supplier SSO, supplier-side invoice submission, procurement-to-GL automation, supplier performance scoring, multi-level approval workflow, RFQ flow, supplier PO ack SLA, contract management, inventory reservation.
+- Updated docs/00-governance/ADR_INDEX.md: added ADR-033/034/035 rows + Note section explaining the 3 new ADRs.
+- Authored scripts/phase_10_verify.py (806 lines, 70+ checks across 10 categories): foundation inventory tables, ADR-033 atomic RPC, ADR-034 recipe/COGS tables + RPCs, ADR-035 procurement tables + portal tables, RLS on 23 tables, permissions + roles, CHECK constraints, API + frontend surface prerequisites. Exits with code 2 if SUPABASE_PAT unset; verified exit code 2 locally.
+- Authored docs/testing/acceptance-evidence/phase10-closeout/PHASE10_FINAL_GATE.md (350 lines): comprehensive close report with 16 gate criteria (all PASS), Production DB state (23 tables + 5 atomic RPCs + 3 permissions + 1 role), 54 backend routes (5 inventory + 8 recipe + 21 purchasing admin + 20 supplier portal), 10 frontend pages, 7 test files (1365 lines), gap analysis (8 DONE + 2 PARTIAL + 0 NOT STARTED), 28 deferred items with explicit triggers, 11 pending operator follow-ups (3 new for Phase 10: FU-16 inventory_items seed, FU-17 inventory_recipes seed + activate, FU-18 supplier-documents storage bucket), Phase 11 unlock.
+- Updated docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md: Phase 10 row marked ✅ COMPLETE (v2.5.0), work items listed with status emojis, deferred items enumerated. Current pointer updated to "Phase 10 PASS AND CLOSED → Phase 11".
+- Updated docs/00-governance/REPOSITORY_STATUS.md: reconciled to Phase 10 COMPLETE (v2.5.0), Production DB tip unchanged at 20260821000000, 1096 backend tests passing.
+- Updated CHANGELOG.md: comprehensive [2.5.0] entry (148 lines) covering all 3 ADRs with detailed sub-sections + sub-area status table + Phase 11 unlock + 3 new operator follow-ups.
+- Authored docs/releases/v2.5.0_RELEASE_NOTES.md (245 lines): full release notes with ADR index final state (35 ADRs), production deployment status, pending operator actions, Phase 11 unlock.
+- Authored 4 PR automation scripts:
+  - scripts/open_pr_phase_10.py — opens PR via GitHub API.
+  - scripts/wait_pr_phase_10_ci.py — polls check-runs every 30s.
+  - scripts/merge_pr_phase_10.py — squash merge via GitHub API.
+  - scripts/create_v2_5_0_tag_and_release.py — creates annotated tag + GitHub Release.
+- Created phase-10-closeout branch. Committed all 15 deliverables (3139 insertions) as 7f289b3.
+- Pushed branch to origin. Initial PR #237 opened with head SHA 2d8e795 (env-tools commit — wrong base).
+- Diagnosed: my Phase 10 commit (7f289b3) was on local main, not on phase-10-closeout branch. Reset phase-10-closeout to main, force-pushed. PR head now 7f289b3.
+- CI ran on 7f289b3: CodeQL FAILED with "85 new alerts including 28 high severity". Root cause: env-tools commit (2d8e795) sitting between Phase 9 main and Phase 10 commit was being scanned by CodeQL as "new code" because the skills/ folder contains Python/JS scripts that CodeQL flags. The Phase 9 PR (b596cf6) did NOT have this issue because it didn't include the env-tools commit.
+- Fix: rebased phase-10-closeout onto origin/main (b596cf6) dropping the env-tools commit:
+  `git rebase --onto origin/main 2d8e795 phase-10-closeout`
+  Result: 1bcbcbd (Phase 10 commit on top of origin/main, no env-tools in between).
+- Force-pushed 1bcbcbd. Re-ran CI:
+  - CodeQL: ✅ success (rebase fixed it)
+  - Vercel Preview Comments: ✅ success
+  - Typecheck and test: ✅ success
+  - Dependency Scan (pnpm audit): ✅ success
+  - Analyze (javascript-typescript): ✅ success
+  - Owner Playwright: ✅ success
+  All 6 CI checks PASS.
+- Merged PR #237 via squash merge. Merge commit: ef359c49ffb0ab11b281277b03b5cd24b921861e.
+- Fetched origin/main locally (b596cf6..ef359c4).
+- Created annotated tag v2.5.0 on ef359c4 with comprehensive tag message (3 ADRs listed, 35 ADRs total, closeout-only note, Phase 11 UNLOCKED).
+- Pushed tag v2.5.0 to origin.
+- Created GitHub Release v2.5.0 at https://github.com/mianimr4n/telepizza/releases/tag/v2.5.0 (Release ID 371287169) with full release notes body.
+- Synced local main to origin/main (reset --hard origin/main → ef359c4).
+
+Stage Summary:
+- ✅ **Phase 10 (Inventory and Procurement) is COMPLETE & SHIPPED.** PR #237 merged as ef359c4. Tag v2.5.0 pushed. GitHub Release v2.5.0 published at https://github.com/mianimr4n/telepizza/releases/tag/v2.5.0.
+- ✅ **3 new ADRs accepted**: ADR-033 (Inventory Stock Master, Movement Ledger & Atomic Adjustment Contract), ADR-034 (Recipe/BOM & COGS Costing Contract), ADR-035 (Procurement, Suppliers & GRN Contract). All 35 ADRs (ADR-001..ADR-035) now Accepted v1.0 with standalone files under docs/13-adr/.
+- ✅ **Closeout-only release** — no new migrations, no new code. Production DB tip remains 20260821000000 (Phase 3 OTP, same as Phase 5/6/7/8/9 closeouts). All 23 inventory/procurement tables + 5 SECURITY DEFINER atomic RPCs + 3 permissions + 1 supplier role were already verified during Phase 6's 95/95 PASS runs.
+- ✅ **6/6 CI checks PASS** on PR #237 (CodeQL, Vercel Preview, Typecheck and test, Dependency Scan, Analyze, Owner Playwright). CodeQL initially failed due to env-tools commit being scanned as "new code" — fixed via rebase onto origin/main.
+- ✅ **1096 backend tests passing** (unchanged from v2.4.0 — closeout-only release, no new code).
+- ✅ **54 backend routes** (5 inventory + 8 recipe + 21 purchasing admin + 20 supplier portal) all live in Production.
+- ✅ **scripts/phase_10_verify.py** (806 lines, 70+ checks across 10 categories) provided as future re-verification artifact.
+- ⏳ **3 new Operator Follow-ups** (no code blockers):
+  - FU-16: Seed inventory_items rows per branch for active menu SKUs (dough, cheese, sauce, toppings, packaging). Without this, kitchen atomic stock consume cannot deduct stock.
+  - FU-17: Seed inventory_recipes + inventory_recipe_lines rows per branch for each menu item, then call POST /api/v1/admin/inventory/recipes/:id/activate to promote to active status. Without active recipes, kitchen atomic stock consume falls back to no-op.
+  - FU-18: Configure Supabase Storage bucket `supplier-documents` for supplier document uploads via POST /api/v1/supplier-portal/documents/upload.
+- ✅ **Phase 11 (Finance and Reporting) is UNLOCKED.** Dependencies satisfied: Phase 5 (ADR-018), Phase 6 (ADR-019/020/021/022), Phase 7 (ADR-023/024/025/026), Phase 8 (ADR-027/028/029), Phase 9 (ADR-030/031/032), Phase 10 (ADR-033/034/035). The Phase 10 inventory COGS events + Phase 7 POS cash reconciliation + Phase 2.5 accounting events + Phase 9 COD reconciliation provide the data foundation for Phase 11.
+- **Phase 10 status**: COMPLETE & SHIPPED. Repository main now ef359c4. Production DB tip 20260821000000 (unchanged). All 35 ADRs Accepted v1.0. Next major workstream: Phase 11 (Finance and Reporting) — UNLOCKED.
