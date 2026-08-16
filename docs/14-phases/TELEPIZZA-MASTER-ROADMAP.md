@@ -271,7 +271,23 @@ Revenue · Expenses · Payments · Cash · Branch P&L · Taxes · Discounts · R
 
 Customer mobile · Rider app · Staff app · Franchise portal · Support panel · Delivery dashboard
 
-**Status:** Not started
+**Status:** ✅ COMPLETE (v2.7.0) — Production-verified (closeout-only, no new migrations; reuses Phase 5/6/7/8/9/10/11 baseline `20260821000000`)
+
+**Close report:** `docs/testing/acceptance-evidence/phase12-closeout/PHASE12_FINAL_GATE.md`
+**Formal ADRs:**
+- `docs/13-adr/ADR-039-customer-mobile-franchise-portal-contract.md` (v2.7.0) — customer mobile + franchise portal contract (web-first PWA via `apps/website` + ADR-017 phone-first auth + ADR-021 loyalty wallet + ADR-022 owner workspace 25-module dashboard + `organization_owner` role + `AdminBranchManager.tsx` multi-branch view; NO native mobile app, NO service worker, NO push notifications, NO offline ordering, NO franchisee role, NO multi-tenant SaaS isolation — all DEFERRED with explicit trigger conditions)
+- `docs/13-adr/ADR-040-rider-mobile-app-delivery-dashboard-contract.md` (v2.7.0) — rider mobile app + delivery dashboard contract (`AdminDelivery.tsx` + 8 sub-components + 10 admin routes + 4 rider-facing routes via `/api/v1/riders/*` + ADR-008/009/010 rider_locations/POD/COD surfaces + aggregate KPIs in DeliveryKPIs + DeliveryInsights; NO native rider app, NO turn-by-turn nav, NO in-app call masking, NO push notifications, NO offline-tolerant queue, NO live rider map, NO `rider_daily_summaries` table, NO per-rider KPI dashboard — all DEFERRED from Phase 9 ADR-032 §8-12 with explicit trigger conditions)
+- `docs/13-adr/ADR-041-staff-app-support-panel-contract.md` (v2.7.0) — staff app + support panel contract (`AdminShell.tsx` + 37 admin pages + 5 ops pages + 32 admin router modules totaling 350+ routes + ADR-019 RBAC with `branch_manager`/`kitchen_manager`/`cashier`/`rider`/`support` roles + ADR-027/028/029 KDS + ADR-023/024/025/026 POS + `AdminCrm.tsx` 306 lines + `AdminWhatsApp.tsx` 11 routes as de facto support panel + ADR-012 audit log; NO mobile-optimized staff UI, NO PWA-installable admin, NO branch-manager mobile checklist, NO kitchen handheld view, NO customer 360 unified view, NO ticketing system, NO refund initiation workflow — all DEFERRED with explicit trigger conditions)
+
+**Work items:**
+- ✅ Customer mobile (`apps/website` React + Vite SPA, PWA manifest, ADR-017 phone-first auth, ADR-018 order lifecycle, ADR-021 loyalty wallet, `TrackOrder.tsx` 316 lines polling `GET /api/v1/orders/:id`, `MyTelepizza.tsx` 2,303 lines consolidating loyalty + history + favorites + addresses)
+- 🟡 Rider app (rider role + `/staff/login` + 4 routes under `/api/v1/riders/*`; uses admin web on mobile browser; NO native mobile app, NO turn-by-turn nav, NO in-app call masking, NO push notifications, NO offline-tolerant queue — DEFERRED per ADR-040 §8.1-§8.6)
+- 🟡 Staff app (`AdminShell.tsx` + 37 admin pages + 5 ops pages; desktop-first; NO mobile-optimized staff UI, NO PWA-installable admin, NO branch-manager mobile checklist, NO kitchen handheld view, NO offline-tolerant POS continuation — DEFERRED per ADR-041 §8.1-§8.5)
+- 🟡 Franchise portal (`organization_owner` role + `getOwnerWorkspace` 25-module dashboard + `AdminBranchManager.tsx` 689 lines multi-branch view + `branch_comparison` analytics module; NO `franchisee` role, NO franchise agreement tracking, NO royalty computation, NO multi-tenant SaaS isolation — DEFERRED per ADR-039 §8.9-§8.12)
+- 🟡 Support panel (`AdminCrm.tsx` 306 lines + `customers.ts` 8 routes + `AdminWhatsApp.tsx` + `whatsapp.ts` 11 routes as de facto support panel; `support` role seeded; NO customer 360 unified view, NO ticketing system, NO refund initiation workflow, NO auto-routing — DEFERRED per ADR-041 §8.13-§8.17)
+- ✅ Delivery dashboard (`AdminDelivery.tsx` 550 lines + 8 sub-components totaling ~3,500 lines + 10 admin routes in `delivery-rider.ts` + aggregate KPIs in `DeliveryKPIs` + `DeliveryInsights`; `rider_locations` GPS ingest with 24h TTL purge per ADR-008; NO live rider map, NO per-rider KPIs, NO `rider_daily_summaries` table, NO customer-facing live map — DEFERRED per ADR-040 §8.9-§8.11)
+
+**Deferred to future ADRs:** native mobile app (iOS/Android via React Native/Expo), service worker / offline cache, push notifications (Web Push + FCM + APNs), installable PWA banner, order tracking realtime (Supabase Realtime), offline ordering, one-tap reorder, birthday reward, tiered loyalty, franchisee role + onboarding, multi-tenant SaaS isolation, franchise agreement tracking, royalty computation, address autocomplete, reverse geocode, transactional SMS, email receipts, rider-specific mobile UI, turn-by-turn navigation, in-app call masking, rider offline-tolerant action queue, rider shift scheduling, auto-dispatch engine, per-rider KPIs + `rider_daily_summaries` table, live rider map (admin), customer-facing live map, reverse geocode at read-time, average distance computation, failed-delivery capture + redelivery, single-transaction delivery+order mirror, delivery SLA tracking, audible alarms + bump-bar + recall, mobile-optimized staff UI, PWA-installable admin, branch-manager mobile checklist, kitchen handheld view (per-item prep ticks), offline-tolerant POS continuation, KOT print format + sequence_number + fiscal printer, server-side SLA + late-alert events, priority mutation endpoint + auto-priority, `kitchen_stations` table + station routing, realtime kitchen updates, AI-driven kitchen prediction, customer 360 unified view, ticketing system, refund initiation workflow, auto-routing WhatsApp to support agent, sentiment analysis + auto-reply bot, support agent role refinement, multi-role staff UI switcher. Each has an explicit trigger condition in ADR-039 §8 / ADR-040 §8 / ADR-041 §8.
 
 ---
 
@@ -312,9 +328,9 @@ PRODUCTION V1.0 = LIVE
 
 | Now | Next |
 |---|---|
-| Phase 11 **PASS AND CLOSED** (v2.6.0) | **Phase 12** — Customer and Staff Apps |
+| Phase 12 **PASS AND CLOSED** (v2.7.0) | **Phase 13** — AI and Automation |
 | Phase 3 eng paused | Ops continues Meta/Twilio in parallel |
-| Phase 12 implementation | After Phase 11 close (UNLOCKED) |
+| Phase 13 implementation | After Phase 12 close (UNLOCKED) |
 
 ---
 
