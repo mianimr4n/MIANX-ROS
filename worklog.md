@@ -1093,3 +1093,389 @@ Stage Summary:
 - ✅ **Phase 13 (AI and Automation) remains UNLOCKED.** No dependency changes.
 - **Dashboard refresh status**: COMPLETE & SHIPPED. Repository main now 791ce89. Production DB tip 20260821000000 (unchanged). All 41 ADRs Accepted v1.0. Next major workstream: Phase 13 (AI and Automation) — UNLOCKED. User instruction was to update dashboard first, THEN start Phase 13 — dashboard is now updated.
 
+---
+Task ID: phase-13-audit
+Agent: Explore
+Task: Read-only audit of Phase 13 (AI and Automation) surface — characterize existing AI governance, surfaces, deferred items, data foundation, provider readiness, and Mianx.ai operating model. Produce scope proposal for Phase 13 closeout ADRs (ADR-042+). No code or non-worklog file changes.
+
+Work Log:
+- Read worklog tail — confirmed Phase 12 COMPLETE & SHIPPED at v2.7.0 (PR #239 → 94e5d69) + dashboard refresh v2.7.1 SHIPPED (PR #240 → 791ce89). Repository main now at 50a209a. All 41 ADRs Accepted v1.0. Production DB tip 20260821000000. Phase 13 UNLOCKED.
+- Read all 3 AI governance ADRs in full:
+  - `docs/13-adr/ADR-013-ai-provider-boundary.md` (123 lines, ACCEPTED v1.0, 2026-08-14, shipped v1.9.0)
+  - `docs/13-adr/ADR-014-ai-approval-gate.md` (140 lines, ACCEPTED v1.0, 2026-08-14, shipped v1.9.0)
+  - `docs/13-adr/ADR-015-ai-prompt-retention.md` (138 lines, ACCEPTED v1.0, 2026-08-14, shipped v1.9.0)
+- Enumerated existing AI code surfaces (all from Phase 2.6 v1.9.0 — no Phase 13 additions yet):
+  - Backend services: `backend/api/src/services/ai/{pii-redaction,approval-service,platform,prompt-log-service}.ts` (948 lines total)
+  - Backend routes: `backend/api/src/modules/admin/ai-governance.ts` (350 lines, 6 endpoints) + `backend/api/src/modules/ai/routes.ts` (75 lines, 2 endpoints — teams/tasks platform reads)
+  - Frontend: `apps/website/client/src/pages/admin/AdminAiTeam.tsx` (551 lines) + `apps/website/client/src/lib/mianx-team.ts` (566 lines — 14 typed agents)
+  - Migrations: `supabase/migrations/20260730120000_ai_platform_foundation.sql` (173 lines — 4 tables: ai_teams/ai_agents/ai_tasks/ai_approvals) + `supabase/migrations/20260820000000_adr_013_014_015_ai.sql` (411 lines — 3 tables: ai_provider_configs/ai_call_logs/ai_prompt_logs/ai_action_approvals + 1 RPC `upsert_ai_prompt_log`)
+  - Documentation: `docs/11-ai/{README,AGENT_REGISTRY,MIANX_AI_TEAM_OPERATING_MODEL}.md` (3 files, ~160 lines)
+  - Release notes: `docs/releases/v1.9.0_RELEASE_NOTES.md` (Phase 2.6 section, lines 67-76)
+- Audited env var readiness — `backend/api/src/config/env.ts` (360 lines) has NO `AI_PROVIDER` / `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` env var accessor; only 4 integration modes are wired (email, whatsapp, payment, webhook). NO `aiMode` field on `ApiEnvironment`. Provider keys are documented as a Phase 13 operator action (FU-12 equivalent) in v1.9.0 release notes §"AI provider setup".
+- Audited analytics/reports registry — 25 modules confirmed (`ANALYTICS_MODULE_IDS` in `services/analytics/types.ts`): executive, sales, finance, product, inventory, procurement, supplier, kitchen, delivery, workforce, payroll, loyalty, marketing, customer, branch_comparison, scheduled_reports, export_csv, export_excel, export_pdf, drill_down, formula_registry, metric_contracts, data_quality, exception_center, owner_bi_workspace. ZERO AI-specific modules — all KPIs are deterministic SQL aggregates; scheduled reports execution_status='deferred' by design (worker not deployed).
+- Grepped for LLM provider clients — NO `openai` / `anthropic` / `chatCompletion` / `generateText` / `provider-proxy` symbols anywhere in `backend/api/src`. The `provider-proxy.ts` service referenced in ADR-013 §"Implementation references" was NEVER built — only `pii-redaction.ts` (redaction utility, pure function) + `prompt-log-service.ts` (audit log CRUD) + `approval-service.ts` (state-machine) + `platform.ts` (Supabase read-only reads of ai_teams/ai_agents/ai_tasks) exist. The proxy that would actually forward redacted prompts to OpenAI/Anthropic and write `ai_call_logs` is a Phase 13 build target.
+- Audited Mianx.ai brand presence — 33 client-side files reference "mianx"/"Mianx" (Insights panels across all admin pages + AdminAiTeam.tsx + mianx-team.ts + dashboard summary cards). All are DETERMINISTIC rule-based summaries (per AGENT_REGISTRY.md §"What is DERIVED": "Mianx.ai Operations Insights = deterministic rule summaries (not generative AI)"). NO LLM calls.
+- Read Phase 13 scope in master roadmap (`docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md` line 294-298): "Demand forecasting · Inventory prediction · Delivery optimization · Support AI · Marketing automation · Fraud signals · Mianx.ai agents · Operational AI teams" (8 scope items — broadest phase scope to date).
+- Read §8 deferred-items sections of Phase 12 closeout ADRs (ADR-039/040/041) — confirmed 5 explicit AI deferrals targeting Phase 13:
+  - ADR-039 §8.2 (customer push notifications — depends on Phase 13 marketing automation campaign scheduler)
+  - ADR-040 §8.4 (rider push notifications — depends on Phase 13 marketing automation OR dedicated rider-notification service)
+  - ADR-040 §8.8 (auto-dispatch engine — proximity/load scoring on `orders.status='confirmed'`; depends on §8.7 rider shift scheduling)
+  - ADR-041 §8.12 (AI-driven kitchen prediction — predicted prep time per ticket; trigger: "Phase 13 AI track active AND kitchen data has 90+ days of history")
+  - ADR-041 §8.17 (sentiment analysis + auto-reply bot — trigger: "Phase 13 AI track active AND WhatsApp conversation volume >100/day"; depends on ADR-013/014/015 AI governance)
+- Also confirmed implicit AI references in earlier-phase ADRs:
+  - ADR-029 §7 (kitchen timers) — explicitly REJECTS AI prediction in V1; cross-references ADR-013 as deferred integration for kitchen prediction
+  - ADR-016 §"OTP inspection" + ADR-017 §"Fraud detection" — fraud investigation infrastructure exists (otp_attempts IP+user-agent audit, 90-day retention) but NO anomaly-detection AI consumes it
+  - ADR-035 §9 — supplier performance scoring deferred to "Phase 11" (now closed out without AI scoring — gap for Phase 13)
+- Audited data foundation maturity for AI training/inference — confirmed MATURE: orders+order_items (Phase 4 + ADR-018 lifecycle), stock_movements (Phase 10 ADR-033 atomic ledger), deliveries+rider_locations (Phase 9 ADR-007/008/031 + 24h TTL), journal_entries+journal_entry_lines+finance_postings (Phase 11 ADR-036/037/038), users+customers+customer_identities (Phase 2.3 ADR-005/006), loyalty_point_ledger (Phase 6 ADR-021), whatsapp_messages+conversations (Phase 2.2 ADR-004 with 24-month PII retention). GAPS: no `rider_daily_summaries` (per-rider KPIs DEFERRED ADR-040 §8.9), no `inventory_cost_history` (DEFERRED ADR-038 §8), no `customer_invoices` auto-issuance (manual; DEFERRED ADR-038 §8), no scheduled-reports worker (execution_status='deferred' but no cron), no warehouse materialized views (analytics is query-time not ETL).
+- Audited the 6 core AI teams seeded in `20260730120000_ai_platform_foundation.sql` (lines 136-167): executive / customer-experience / marketing / restaurant-operations / finance / analytics. Each is an empty container (no agents seeded). The 14 Mianx.ai agents in `mianx-team.ts` are TYPED CLIENT-SIDE definitions (`MIANX_AGENT_REGISTRY` array) — they do NOT have corresponding rows in `ai_agents` table. Bridging these two registries (DB seed + LLM-backed execution) is a Phase 13 build target.
+- Verified Phase 13 ADR numbering: 41 standalone ADR markdown files exist in `docs/13-adr/` (ADR-001 through ADR-041 + README.md). Next available ADR number is **ADR-042**.
+
+Stage Summary:
+
+### AREA 1 — AI Governance ADRs (ADR-013 / ADR-014 / ADR-015)
+
+**Status:** All 3 ACCEPTED v1.0 on 2026-08-14, shipped in v1.9.0 (Phase 2.6). Migration tip `20260820000000_adr_013_014_015_ai.sql` (consolidated 3-ADR migration, 411 lines, 4 tables + 1 RPC).
+
+**ADR-013 — AI Provider Boundary & Data Governance (accepted contract):**
+- All AI calls MUST route through `/api/v1/admin/ai/*` backend proxy (direct client→provider calls FORBIDDEN)
+- PII redaction before forwarding: E.164 phones → `[PHONE]`, emails → `[EMAIL]`, credit cards → `[CARD]`, Pakistani CNIC → `[CNIC]`; order contents/amounts/addresses left intact (operational data, not PII)
+- Provider credentials in `process.env` ONLY (per ADR-003 Provider-Secret Boundary); `ai_provider_configs` table stores non-secret metadata (provider_code, base_url, default_model, max_tokens, temperature, is_active, config_ref env-var prefix)
+- Per-call audit log in `ai_call_logs`: actor_user_id, branch_id, provider, model, prompt_sha256 (hash of REDACTED prompt — NOT raw), prompt_token_count, prompt_char_count, prompt_language, completion_token_count, latency_ms, cost_usd, success, error_message, metadata JSONB, called_at
+- Rate limiting: 60 calls/min/user, 120/min/IP
+- Allowlist of providers (only `is_active=true` rows callable; adding a provider requires super-admin + env var)
+- Response redaction (defense-in-depth — model may echo PII back)
+
+**ADR-014 — AI Human-Approval Gate Architecture (accepted contract):**
+- AI outputs are ADVISORY ONLY — every state-mutating action requires explicit human "Approve" click
+- `ai_action_approvals` table (renamed from `ai_approvals` in v1.9.0 FU-1 to avoid conflict with the Phase-4-foundation `ai_approvals` table that has `task_id` FK)
+- State machine: `pending → approved → executed` / `pending → rejected` (terminal) / `pending → expired` (auto after 7 days) / `approved → failed` (retry up to 3× with exponential backoff)
+- Approval requires `ai.approve` permission (granted to super-admin + branch-manager only); customer-support + others may VIEW but not approve
+- Action types allowlisted via CHECK constraint: `order.cancel`, `order.refund`, `order.update_status`, `customer.merge`, `customer.adjust_loyalty`, `inventory.adjust_stock`, `inventory.create_po`, `hr.adjust_schedule`, `marketing.send_campaign` (9 types — adding a new type requires migration)
+- Execution is atomic + idempotent (background worker calls domain service e.g. `orders.cancel()`)
+- NO auto-execution bypass — even super-admin cannot configure auto-execution; requires NEW ADR to supersede
+- Audit trail: every state transition mirrored into `domain_events` (ADR-012)
+
+**ADR-015 — AI Prompt & Data Retention Policy (accepted contract):**
+- Raw prompts NEVER stored in DB — `ai_call_logs` stores only `prompt_sha256` (SHA-256 of REDACTED prompt) + token/char counts + detected language
+- Raw prompts MAY live in provider's dashboard (OpenAI/Anthropic retain 30+ days); Telepizza does NOT duplicate
+- `ai_prompt_logs` table for hashed metadata analytics: prompt_sha256 UNIQUE, first_seen_at, last_seen_at, occurrence_count, avg_latency_ms, avg_cost_usd, prompt_language, metadata JSONB
+- Hash computed AFTER redaction (deterministic for same redacted prompt → trend analytics without storing prompt)
+- Completion text NEVER stored (delivered to caller then discarded; caller persists response in own table e.g. `ai_insights` subject to normal PII rules)
+- 90-day retention on `ai_call_logs` (scheduled DELETE job — DEFERRED)
+- 24-month retention on `ai_prompt_logs` (then archived to cold storage — DEFERRED)
+- NO foreign keys to raw prompts anywhere
+
+**Deferred items (from each ADR's "Future work" section):**
+- ADR-013 §"Future work": (a) Named-entity redaction via Microsoft Presidio (current regex covers ~95%); (b) Streaming responses for chat UIs (currently buffers full response); (c) Cost budget alerts (daily AI spend > threshold → email super-admin)
+- ADR-014 §"Future work": (a) Auto-expiry job for `pending` approvals past `expires_at`; (b) Approval notifications via WebSocket push to approvers (currently polling only); (c) Delegated approval authority (BM delegates to a specific support agent for a time window — requires separate delegation table)
+- ADR-015 §"Future work": (a) 90-day cleanup job for `ai_call_logs`; (b) Opt-in raw prompt storage (`ai_prompt_raw_opt_in` table for fine-tuning dataset with explicit consent); (c) Prompt classification (auto-categorize into "order status query" / "refund request" etc. — currently `metadata->>'topic'` is manual)
+
+### AREA 2 — Existing AI surfaces in the codebase
+
+**MIGRATIONS (2 files, 584 lines total):**
+- `supabase/migrations/20260730120000_ai_platform_foundation.sql` (173 lines) — Phase 4 precursor. Creates 4 tables: `ai_teams`, `ai_agents`, `ai_tasks`, `ai_approvals` (Phase-4 schema, simpler — `task_id` FK, `pending/approved/rejected` 3-state). Seeds 6 core teams: executive / customer-experience / marketing / restaurant-operations / finance / analytics. NO agents seeded (empty containers). RLS: authenticated staff can SELECT; service_role has ALL.
+- `supabase/migrations/20260820000000_adr_013_014_015_ai.sql` (411 lines) — Phase 2.6 v1.9.0 consolidated ADR-013/014/015 migration. Creates 4 tables: `ai_provider_configs` (non-secret metadata, config_ref env-var prefix), `ai_call_logs` (per-call audit, prompt_sha256 only), `ai_prompt_logs` (hashed metadata, UNIQUE on prompt_sha256), `ai_action_approvals` (6-state human-approval gate, 9 action types allowlisted). Creates 1 RPC: `upsert_ai_prompt_log(varchar, numeric, numeric, varchar, jsonb)` SECURITY DEFINER. Seeds 3 permissions: `ai.use`, `ai.approve`, `ai.read` (granted to super-admin/branch-manager/customer-support per matrix).
+
+**BACKEND SERVICES (4 files, 948 lines total):**
+- `backend/api/src/services/ai/pii-redaction.ts` (74 lines) — pure functions: `redactPii(prompt)` + `detectPromptLanguage(prompt)` (Urdu heuristic). No DB calls. Implements ADR-013 §2.
+- `backend/api/src/services/ai/approval-service.ts` (421 lines) — `AiApprovalService` with `createApproval` / `listApprovals` / `getApproval` / `approve` / `reject` methods. Implements ADR-014 state machine. Exports `AI_APPROVAL_ACTION_TYPES` + `AI_APPROVAL_STATUSES` constants for route-layer Zod validation.
+- `backend/api/src/services/ai/prompt-log-service.ts` (273 lines) — `AiPromptLogService` with `listCallLogs` (ADR-013 audit reads) + `listPromptLogs` (ADR-015 trend analytics). Branch-scoped with super-admin bypass.
+- `backend/api/src/services/ai/platform.ts` (180 lines) — `AiPlatformService` with `listTeamsWithAgents` + `listPendingTasks`. Read-only Supabase queries against `ai_teams` / `ai_agents` / `ai_tasks`. Service-role client.
+
+**BACKEND ROUTES (2 files, 425 lines total):**
+- `backend/api/src/modules/admin/ai-governance.ts` (350 lines) — 6 admin endpoints mounted at `/api/v1/admin/ai/*`:
+  - `GET /ai/call-logs` (ADR-013 audit reads)
+  - `GET /ai/prompt-logs` (ADR-015 trend analytics)
+  - `POST /ai/approvals` (create pending from AI suggestion; `ai.use` or `ai.approve`)
+  - `GET /ai/approvals` (list with filters)
+  - `GET /ai/approvals/:id` (single detail)
+  - `POST /ai/approvals/:id/approve` (state transition; `ai.approve` only — super-admin/branch-manager)
+  - `POST /ai/approvals/:id/reject` (state transition; `ai.approve` only)
+  - Rate-limited (60/min/IP). Auth: `ai.read` OR `ai.use` OR `admin.access` for reads; `ai.approve` for approve/reject.
+- `backend/api/src/modules/ai/routes.ts` (75 lines) — 2 platform-read endpoints mounted at `/api/v1/ai/*`:
+  - `GET /ai/teams` (list teams with agents)
+  - `GET /ai/tasks?limit=N` (list pending tasks)
+  - Auth: `admin.access`. NO mutation endpoints — explicitly "Mutations / execution engines are intentionally out of this slice."
+
+**FRONTEND (2 files, 1,117 lines total):**
+- `apps/website/client/src/pages/admin/AdminAiTeam.tsx` (551 lines) — Mianx.ai Team Center at `/admin/ai-team`. Renders 14 agent cards from `buildMianxAgentCards()` (deterministic). Pulls live operational signals: orders (AdminOperationsDashboard), opening readiness, kitchen tickets, delivery assignments, reservations, waitlist, system health. NO LLM calls — purely a typed rule-based agent dashboard. Honesty rules enforced: "No fake AI autonomy" / "No background-working animation without an executing task" / "LIVE only from successful live API responses".
+- `apps/website/client/src/lib/mianx-team.ts` (566 lines) — typed 14-agent registry: `MIANX_AGENT_REGISTRY` array + `buildMianxAgentCards()` factory + `summarizeAgentStatuses()` aggregator. Agent IDs: chief-of-staff / opening-readiness / branch-operations / order-control / kitchen-control / delivery-control / pos-cash / dine-in-reservations / menu-pricing / customer-support / inventory-purchasing / finance-payments / security-access / reliability-deployment.
+
+**DOCUMENTATION (3 files in `docs/11-ai/`, ~160 lines total):**
+- `docs/11-ai/README.md` (7 lines) — index pointer to MIANX_AI_TEAM_OPERATING_MODEL.md
+- `docs/11-ai/AGENT_REGISTRY.md` (79 lines) — owner-facing operating doc. Last verified 2026-07-28 (STALE — predates Phase 5-12). Lists 14 agents + status labels (COMPLETE/ACTIVE/BLOCKED/WAITING_ON_HUMAN/FOUNDATION/UNAVAILABLE) + source labels (LIVE_API/DERIVED_API/RELEASE_EVIDENCE/CONFIGURED_PLAN/FOUNDATION).
+- `docs/11-ai/MIANX_AI_TEAM_OPERATING_MODEL.md` (76 lines) — operating model. Last verified 2026-07-28 (STALE). Explicit honesty rules: "No fake chat transcripts" / "No claim of autonomous background agents" / "FOUNDATION agents explain missing dependencies".
+
+**WHAT EXISTS TODAY vs WHAT IS DEFERRED:**
+
+| Surface | EXISTS today (Phase 2.6 v1.9.0) | DEFERRED to Phase 13 |
+|---|---|---|
+| Provider proxy (redact→forward→log) | ❌ NOT BUILT (only `pii-redaction.ts` pure utility exists) | ✅ Build `provider-proxy.ts` — actual OpenAI/Anthropic HTTP client that writes `ai_call_logs` |
+| Provider configs | ✅ `ai_provider_configs` table + `config_ref` env-var prefix pattern | ⏳ Operator action: insert provider rows + set `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` env vars (FU-12 equivalent) |
+| Approval gate | ✅ `ai_action_approvals` table + 5 routes + 421-line service | ⏳ Auto-expiry job, WebSocket notifications, delegated approval |
+| Prompt retention | ✅ `ai_prompt_logs` + `upsert_ai_prompt_log` RPC + 90-day/24-month retention policy | ⏳ Cleanup jobs, opt-in raw storage, prompt classification |
+| Mianx.ai Team Center UI | ✅ `/admin/ai-team` with 14 deterministic agent cards | ⏳ LLM-backed agent execution (currently no LLM calls — pure rule logic) |
+| AI teams/agents DB | ✅ 6 teams seeded (empty), 0 agents seeded | ⏳ Seed the 14 Mianx agents into `ai_agents` table (currently only in client-side `mianx-team.ts`) |
+| Demand forecasting | ❌ NOT BUILT | ✅ Phase 13 scope item 1 |
+| Inventory prediction | ❌ NOT BUILT | ✅ Phase 13 scope item 2 |
+| Delivery optimization / auto-dispatch | ❌ NOT BUILT (DEFERRED ADR-040 §8.8) | ✅ Phase 13 scope item 3 |
+| Support AI / sentiment / auto-reply | ❌ NOT BUILT (DEFERRED ADR-041 §8.17) | ✅ Phase 13 scope item 4 |
+| Marketing automation | ❌ NOT BUILT (campaign scheduler; ADR-039 §8.2 + ADR-040 §8.4 depend on it) | ✅ Phase 13 scope item 5 |
+| Fraud signals / anomaly detection | ❌ NOT BUILT (otp_attempts IP audit exists but no consumer) | ✅ Phase 13 scope item 6 |
+| Operational AI teams | ❌ NOT BUILT (no agent execution runtime) | ✅ Phase 13 scope item 8 |
+
+### AREA 3 — Phase 12 deferred items explicitly targeting Phase 13
+
+5 explicit AI deferrals in Phase 12 closeout ADRs:
+
+| # | Source ADR § | Deferred item | Trigger condition | Depends on |
+|---|---|---|---|---|
+| 1 | ADR-039 §8.2 | Push notifications (customer Web Push + FCM + APNs) | Marketing requests abandoned-cart recovery OR owner signs up for FCM | Phase 13 marketing automation (campaign scheduler) |
+| 2 | ADR-040 §8.4 | Push notifications (rider FCM + APNs) | §8.1 rider mobile UI shipped AND rider adoption >80% | Phase 13 marketing automation OR dedicated rider-notification service |
+| 3 | ADR-040 §8.8 | Auto-dispatch engine (proximity + load + last-assignment-time scoring; rider self-assign queue) | Manual assignment workload >50 actions/day OR branch manager requests automation | §8.7 rider shift scheduling (to know who is active) |
+| 4 | ADR-041 §8.12 | AI-driven kitchen prediction (predicted prep time per ticket based on item mix + historical prep times; auto-priority based on predicted lateness) | Phase 13 AI track active AND kitchen data has 90+ days of history | Phase 13 AI and Automation track |
+| 5 | ADR-041 §8.17 | Sentiment analysis + auto-reply bot (sentiment per WhatsApp message; auto-reply for common queries; human handoff on negative sentiment) | Phase 13 AI track active AND WhatsApp conversation volume >100/day | Phase 13 AI and Automation track + ADR-013/014/015 AI governance |
+
+Additional implicit AI deferrals from earlier-phase ADRs:
+- ADR-029 §7 + §"Non-goals" — AI-driven kitchen prediction explicitly REJECTED in V1; cross-references ADR-013 as deferred integration. (Folded into ADR-041 §8.12 above.)
+- ADR-035 §9 — supplier performance scoring (on-time delivery rate, quality rejection rate) deferred to "Phase 11"; Phase 11 closed without AI scoring → carries forward to Phase 13.
+- ADR-016 (OTP) + ADR-017 (phone-first auth) — fraud investigation infrastructure exists (otp_attempts IP+user-agent audit, 90-day retention, sudden-login-from-new-country mentioned) but NO anomaly-detection AI consumes it. Phase 13 scope item 6 (fraud signals) would close this.
+
+### AREA 4 — Data foundation for AI training/inference
+
+**MATURE data sources (ready for AI consumption):**
+
+| Domain | Source tables / APIs | Phase / ADR | AI use case |
+|---|---|---|---|
+| Sales history | `orders` + `order_items` + `order_status_logs` | Phase 4 / ADR-018 | Demand forecasting (time-series), basket analysis, customer segmentation |
+| Inventory movements | `stock_movements` + `inventory_stock_master` + `adjust_inventory_stock_atomic` RPC | Phase 10 / ADR-033 | Inventory prediction (reorder timing, wastage forecasting), anomaly detection |
+| Recipes + COGS | `recipes` + `recipe_bom` + `inventory_cogs_events` + `inventory_consumption_events` | Phase 10 / ADR-034 | Cost prediction, recipe-substitution recommendations |
+| Procurement | `purchase_orders` + `goods_receiving` + `supplier_invoices` + `supplier_payments` + `supplier_response_*` | Phase 10 / ADR-035 | Supplier performance scoring (deferred), PO lead-time prediction, 3-way match anomaly |
+| Delivery | `deliveries` + `rider_locations` (24h TTL) + `delivery_pod` + `cod_collections` + `delivery_state_transitions` | Phase 5/9 / ADR-007/008/009/010/031 | Delivery optimization, ETA prediction, auto-dispatch scoring |
+| Customer identity | `users` + `customers` + `customer_identities` + `customer_addresses` + `customer_merge_log` | Phase 2.3/4 / ADR-005/006 | Customer 360 unified view, churn prediction, loyalty tier assignment |
+| Loyalty | `loyalty_point_ledger` + `loyalty_rewards` + `coupon_redemptions` | Phase 6 / ADR-021 | Marketing automation (segmentation, reward recommendation) |
+| Finance GL | `journal_entries` + `journal_entry_lines` + `finance_postings` + `finance_account_mappings` (20 purposes) | Phase 11 / ADR-036/037/038 | Fraud signals (anomalous journal patterns), automated GL posting |
+| WhatsApp | `whatsapp_conversations` + `whatsapp_messages` + `whatsapp_conversation_events` (24-month PII retention) | Phase 2.2 / ADR-003/004 | Support AI (sentiment, auto-reply, intent classification) |
+| Audit / domain events | `domain_events` (cross-domain append-only) + `audit_log` | Phase 2.5 / ADR-012 | Fraud signals (cross-domain anomaly correlation), audit-trail AI summaries |
+| Reports / analytics | 25-module analytics registry (`services/analytics/registry.ts`) + `getOwnerWorkspace` aggregator | Phase 6 / ADR-022 | AI Insights panels (already exist as deterministic summaries — Phase 13 elevates to LLM-backed) |
+| OTP / auth | `otp_attempts` (IP + user-agent + 90-day retention) + `otp_codes` | Phase 3 / ADR-016/017 | Fraud signals (login anomaly detection) |
+
+**DATA SOURCES WITH GAPS (must close before AI can consume):**
+
+| Gap | Source ADR § | Blocker for AI use case |
+|---|---|---|
+| `rider_daily_summaries` table NOT built | ADR-040 §8.9 | Per-rider KPI ML (would need historical per-rider aggregates) |
+| `inventory_cost_history` table NOT built | ADR-038 §8 | Cost-prediction ML (currently only `last_known` cost_source; weighted-average/FIFO deferred) |
+| `customer_invoices` auto-issuance NOT built (manual) | ADR-038 §8 | AR aging prediction (daily volume <30/branch trigger) |
+| Scheduled-reports worker NOT deployed (execution_status='deferred') | ADR-022 | Time-series feature materialization (no nightly aggregate refresh) |
+| Warehouse materialized views NOT built (analytics is query-time not ETL) | ADR-022 | ML feature store (would need pre-computed features for inference latency) |
+| `refunds` table NOT built (only `payments.refunded_at` flag) | ADR-038 §8 / ADR-041 §8.15 | Refund fraud signal (no operational refund lifecycle to learn from) |
+| `discounts` master table NOT built (only `orders.discount_amount` column) | ADR-038 §8 | Discount-abuse fraud signal (no discount-reason audit) |
+| `support_tickets` table NOT built | ADR-041 §8.14 | Support AI training data (currently WhatsApp-only — no structured ticket history) |
+| `kitchen_ticket_sla_due_at` NOT built (no server-side SLA tracking) | ADR-041 §8.7 | Kitchen prediction training labels (no "was this ticket late?" ground truth) |
+| Rider `distance_km` NOT computed (no `delivery_lat/lng` on `orders`) | ADR-040 §8.13 | Delivery ETA ML (would need haversine distance per delivery) |
+
+### AREA 5 — AI provider / LLM integration readiness
+
+**Env var pattern (NOT yet wired):**
+- `backend/api/src/config/env.ts` (360 lines) — confirmed NO `AI_PROVIDER` / `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `aiMode` env var accessor.
+- The `ApiEnvironment` interface has 4 integration modes: `emailMode`, `whatsappMode`, `paymentMode`, `webhookMode` — NO `aiMode` field.
+- ADR-013 §3 specifies the pattern: provider keys in `process.env` only (per ADR-003); `ai_provider_configs.config_ref` column stores the env-var prefix (e.g. `OPENAI_API_KEY`). But no code resolves `config_ref` → `process.env[config_ref]` today.
+- v1.9.0 release notes §"AI provider setup" (line 127-129) documents this as a Phase 13 operator action: "Configure `ai_provider_configs` rows for each AI provider (OpenAI, Anthropic, etc.). Set API keys in env vars (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc.) per ADR-003 — never in the database."
+
+**AI client/service abstraction (PARTIAL):**
+- `services/ai/pii-redaction.ts` — pure utility, exists ✅
+- `services/ai/prompt-log-service.ts` — audit-log CRUD, exists ✅
+- `services/ai/approval-service.ts` — approval state machine, exists ✅
+- `services/ai/platform.ts` — read-only team/agent/task queries, exists ✅
+- `services/ai/provider-proxy.ts` — **DOES NOT EXIST** ❌ (referenced in ADR-013 §"Implementation references" but never built). This is the core Phase 13 build target: the actual HTTP client that forwards redacted prompts to OpenAI/Anthropic/etc., writes `ai_call_logs`, calls `upsert_ai_prompt_log` RPC, and returns redacted responses.
+
+**Mianx.ai integration pattern:**
+- "Mianx.ai" is currently a **brand label** for deterministic rule-based Operations Insights panels (per `docs/11-ai/AGENT_REGISTRY.md` §"What is DERIVED": "Mianx.ai Operations Insights = deterministic rule summaries (not generative AI)").
+- 33 client-side files reference "mianx"/"Mianx" — all are deterministic React components (Insights panels across admin pages + AdminAiTeam.tsx + mianx-team.ts + dashboard summary cards).
+- NO actual `mianx.ai` SDK / API / internal LLM endpoint integration. The "Mianx.ai" name is a Telepizza-internal brand for the operating-team metaphor, not a real third-party provider.
+- Phase 13 scope item 7 ("Mianx.ai agents") + item 8 ("operational AI teams") would formalize the elevation of these 14 deterministic agents to LLM-backed agents (using ADR-013 proxy + ADR-014 approval gate + ADR-015 retention).
+
+### AREA 6 — Operational AI agents (Mianx.ai)
+
+**Mianx.ai Team Center (`/admin/ai-team`):**
+- Route: `/admin/ai-team` (super-admin only — `canAccessAiTeam` gate in `apps/website/client/src/lib/admin-access.ts`)
+- Page: `apps/website/client/src/pages/admin/AdminAiTeam.tsx` (551 lines)
+- Renders 14 typed agent cards via `buildMianxAgentCards()` from `lib/mianx-team.ts`
+- Each card shows: department, name, mission, status, verified signal, current problem, next action, source type, human-approval-required flag
+- Pulls live operational signals: AdminOperationsDashboard (orders), OpeningReadiness, kitchen tickets, delivery assignments, reservations, waitlist, system health
+- Honesty rules enforced: NO fake chat transcripts, NO autonomous background agents, FOUNDATION agents explain missing dependencies, LIVE only from successful live API responses, Status→Problem→Next Action on every card, NO background-working animation without an executing task
+- Title: "Mianx.ai Operating Team" — "Status → Problem → Next Action. Honest operating signals only — no fabricated agent chat and no autonomous background workforce."
+
+**14 registered agents (`MIANX_AGENT_REGISTRY` in `apps/website/client/src/lib/mianx-team.ts`):**
+
+| # | Agent ID | Name | Department | Mission |
+|---|---|---|---|---|
+| 1 | `chief-of-staff` | Mianx.ai Chief of Staff | Command | coordinate the opening plan and surface Owner decisions |
+| 2 | `opening-readiness` | Opening Readiness Lead | Opening | track people, providers, devices and branch prerequisites |
+| 3 | `branch-operations` | Branch Operations Agent | Branches | monitor branch operating status and readiness |
+| 4 | `order-control` | Order Control Agent | Orders | monitor pending, confirmed and active order truth |
+| 5 | `kitchen-control` | Kitchen Control Agent | Kitchen | monitor kitchen tickets, queue and preparation states |
+| 6 | `delivery-control` | Delivery Control Agent | Delivery | monitor delivery assignments and rider readiness |
+| 7 | `pos-cash` | POS & Cash Agent | POS | monitor POS/menu readiness without claiming accounting settlement |
+| 8 | `dine-in-reservations` | Dine-in & Reservations Agent | Floor | monitor tables, reservations and waitlist readiness |
+| 9 | `menu-pricing` | Menu & Pricing Agent | Menu | (mission in registry) |
+| 10 | `customer-support` | Customer Support Agent | Support | (mission in registry) |
+| 11 | `inventory-purchasing` | Inventory & Purchasing Agent | Inventory | (mission in registry) |
+| 12 | `finance-payments` | Finance & Payments Agent | Finance | (mission in registry) |
+| 13 | `security-access` | Security & Access Agent | Security | (mission in registry) |
+| 14 | `reliability-deployment` | Reliability & Deployment Agent | Reliability | (mission in registry) |
+
+**Operating model (from `MIANX_AI_TEAM_OPERATING_MODEL.md`):**
+- "Mianx.ai Team Center is an Owner command surface that coordinates opening readiness using a typed fourteen-agent registry plus verified APIs."
+- Status labels: COMPLETE / ACTIVE / BLOCKED / WAITING_ON_HUMAN / FOUNDATION / UNAVAILABLE
+- Source labels: LIVE_API / DERIVED_API / RELEASE_EVIDENCE / CONFIGURED_PLAN / FOUNDATION
+- Last verified date: 2026-07-28 (STALE — predates Phase 5-12; needs refresh as part of Phase 13 ADR work)
+
+**GAP between current Mianx.ai surface and Phase 13 scope:**
+- Today: 14 deterministic agents that READ operational state and surface Status→Problem→Next Action. They CANNOT act, CANNOT call LLMs, CANNOT execute state-mutating workflows.
+- Phase 13 target (scope items 7-8 "Mianx.ai agents · Operational AI teams"): elevate these 14 agents to LLM-backed agents that can (a) consume ADR-013 proxy for natural-language reasoning, (b) emit ADR-014 approval suggestions for state-mutating actions, (c) be seeded into the `ai_agents` DB table (currently only client-side typed definitions), (d) execute approved actions via the existing domain services.
+
+---
+
+## GAP ANALYSIS — Current state vs Phase 13 scope
+
+| Phase 13 scope item | Current state | Gap to close |
+|---|---|---|
+| 1. Demand forecasting | ❌ NOT BUILT — sales history is mature (`orders`+`order_items`+`order_status_logs`) but no forecasting model consumes it | Build forecasting service on top of `sales.gross/net/aov` analytics metrics; needs scheduled-reports worker (ADR-022 deferral) for nightly materialization |
+| 2. Inventory prediction | ❌ NOT BUILT — `stock_movements` ledger mature but `inventory_cost_history` + `rider_daily_summaries`-equivalent for inventory NOT built | Build reorder-timing prediction; needs `inventory_cost_history` (ADR-038 §8) for cost-prediction features |
+| 3. Delivery optimization | ❌ NOT BUILT — `deliveries`+`rider_locations` mature but no auto-dispatch engine (ADR-040 §8.8) | Build auto-dispatch scoring service; depends on rider shift scheduling (ADR-040 §8.7) for "who is active" |
+| 4. Support AI | ❌ NOT BUILT — WhatsApp `whatsapp_messages` 24-month retention mature but no sentiment / auto-reply (ADR-041 §8.17) | Build sentiment classifier + auto-reply bot via ADR-013 proxy; trigger = WhatsApp volume >100/day |
+| 5. Marketing automation | ❌ NOT BUILT — `loyalty_point_ledger` + `coupon_redemptions` mature but no campaign scheduler (ADR-039 §8.2 + ADR-040 §8.4 depend on it) | Build campaign scheduler + segment engine; closes push-notification dependencies |
+| 6. Fraud signals | ❌ NOT BUILT — `otp_attempts` IP audit + `domain_events` cross-domain log mature but no anomaly-detection consumer | Build fraud-signal service consuming `otp_attempts` + `journal_entries` + `payments` + `domain_events`; closes ADR-016/017 fraud-detection mentions |
+| 7. Mianx.ai agents | ⚠️ PARTIAL — 14 deterministic agents exist client-side only; NO LLM calls; NOT seeded in `ai_agents` DB table | Elevate to LLM-backed via ADR-013 proxy; seed DB rows; bridge `MIANX_AGENT_REGISTRY` ↔ `ai_agents` table |
+| 8. Operational AI teams | ⚠️ PARTIAL — 6 empty team containers seeded in `ai_teams` (executive/customer-experience/marketing/restaurant-operations/finance/analytics); 0 agents seeded | Seed 14 Mianx agents into appropriate teams; build agent-execution runtime on top of `ai_tasks` table (currently has 6-state machine but no executor) |
+
+---
+
+## PHASE 13 SCOPE PROPOSAL — 5 Candidate ADRs
+
+Following the established closeout pattern (Phase 5: 1 ADR; Phase 6/7: 4 ADRs each; Phase 8/9/10/11/12: 3 ADRs each), and given Phase 13's broadest-yet scope (8 items vs typical 3-5), I propose **5 ADRs** to give clean 1:1 mapping for most scope items while grouping related deferrals. (Could be consolidated to 3 if owner prefers the recent cadence — see note below.)
+
+### ADR-042 — Demand Forecasting & Inventory Prediction Contract
+
+**Scope summary:** Establishes the demand-forecasting and inventory-prediction AI surface. Builds a forecasting service on top of the mature `orders` + `order_items` + `stock_movements` data foundation, producing per-branch per-SKU demand predictions (7-day / 14-day / 30-day horizons) and reorder-timing predictions. All predictions flow through ADR-013 provider proxy (LLM-assisted narrative) + ADR-014 approval gate (state-mutating actions like `inventory.create_po` already in the allowlist). Closes ADR-035 §9 supplier-performance-scoring deferral (carried forward from Phase 11).
+
+**Key deferred items it would track:**
+- Forecasting model selection (statistical baseline vs LLM-assisted narrative vs hybrid)
+- `inventory_cost_history` table (ADR-038 §8 prerequisite for cost-prediction features)
+- Scheduled-reports worker deployment (ADR-022 deferral — needed for nightly feature materialization)
+- Warehouse materialized views for ML feature store
+- Forecast accuracy tracking + drift detection
+- Supplier lead-time prediction (closes ADR-035 §9 carry-forward)
+
+### ADR-043 — Delivery Optimization & Auto-Dispatch Contract
+
+**Scope summary:** Establishes the delivery-optimization AI surface. Builds the auto-dispatch engine (DEFERRED ADR-040 §8.8) that scores riders by proximity + load + last-assignment-time on `orders.status='confirmed'`. Adds ETA prediction per delivery (consuming `rider_locations` 24h TTL + `deliveries` history). Closes ADR-040 §8.8 + §8.13 (average distance computation) + §8.16 (delivery SLA tracking) deferrals. All dispatch suggestions flow through ADR-014 approval gate (new action type `delivery.auto_dispatch` to be added to the CHECK allowlist via migration).
+
+**Key deferred items it would track:**
+- `rider_shifts` table (ADR-040 §8.7 prerequisite — "who is active")
+- `rider_daily_summaries` table (ADR-040 §8.9 — per-rider KPI features)
+- `orders.delivery_lat/lng` columns (ADR-040 §8.13 — haversine distance)
+- `delivery_sla_thresholds` per branch + `deliveries.sla_due_at` (ADR-040 §8.16)
+- Failed-delivery capture + redelivery flow (ADR-040 §8.14 — needed for ETA model training labels)
+- Auto-dispatch action type addition to `ai_action_approvals.action_type` CHECK constraint
+
+### ADR-044 — Support AI & WhatsApp Sentiment Auto-Reply Contract
+
+**Scope summary:** Establishes the support-AI surface. Builds sentiment analysis per WhatsApp message + auto-reply bot for common queries (order status, hours, menu) + human handoff on negative sentiment or complex query (DEFERRED ADR-041 §8.17). Consumes the mature `whatsapp_messages` 24-month retention corpus. All auto-replies flow through ADR-013 provider proxy (LLM generates response) + ADR-014 approval gate (state-mutating actions like `order.refund` already in allowlist). Closes ADR-041 §8.17 deferral.
+
+**Key deferred items it would track:**
+- `support_tickets` table (ADR-041 §8.14 — structured training data; currently WhatsApp-only)
+- Customer 360 unified view (ADR-041 §8.13 — context for support AI handoff)
+- Auto-routing WhatsApp to support agent (ADR-041 §8.16 — rules engine shares routing infra with AI handoff)
+- Refund initiation workflow (ADR-041 §8.15 — closes refunds loop for AI-suggested refunds)
+- Sentiment classification schema (positive/neutral/negative + confidence score) — likely `whatsapp_messages.sentiment_label` + `sentiment_score` columns
+- Auto-reply template library + A/B testing framework
+- Human-handoff escalation rules (negative sentiment → senior agent; complex query → human)
+
+### ADR-045 — Marketing Automation & Campaign AI Contract
+
+**Scope summary:** Establishes the marketing-automation surface. Builds the campaign scheduler (the dependency that ADR-039 §8.2 customer push notifications + ADR-040 §8.4 rider push notifications both wait on). Adds AI-assisted segment definition (natural-language → SQL segment via ADR-013 proxy), AI-assisted campaign content generation (subject lines, WhatsApp message body, push notification copy), and send-time optimization. Consumes the mature `loyalty_point_ledger` + `coupon_redemptions` + `customer_identities` data. Closes ADR-039 §8.2 + ADR-040 §8.4 push-notification dependencies. Adds new `marketing.send_campaign` action type to `ai_action_approvals` (already in allowlist).
+
+**Key deferred items it would track:**
+- Campaign scheduler (the Phase 13 dependency for push notifications)
+- FCM project onboarding (FU-11 Operator Follow-up — push notifications infra)
+- Web Push API integration for installed PWA (ADR-039 §8.2)
+- Rider push notifications (ADR-040 §8.4 — FCM + APNs)
+- Birthday reward job (ADR-039 §8.7 — scheduled `loyalty_point_ledger` entry on birthday)
+- Tiered loyalty (ADR-039 §8.8 — `loyalty_tiers` table; trigger: >5,000 active members)
+- AI-assisted segment definition (NL → SQL via ADR-013 proxy)
+- Send-time optimization (per-customer best-send-time model)
+- Campaign A/B testing + performance attribution
+
+### ADR-046 — Fraud Signals & Mianx.ai Operational AI Teams Elevation Contract
+
+**Scope summary:** Establishes the fraud-signal surface AND formalizes the elevation of the 14 deterministic Mianx.ai agents to LLM-backed operational AI teams. On the fraud side: builds anomaly-detection service consuming `otp_attempts` IP+user-agent audit (ADR-016/017 mentions) + `journal_entries` + `payments` + `domain_events` cross-domain log; surfaces fraud signals to Security & Access Agent (agent #13). On the Mianx.ai side: bridges the client-side `MIANX_AGENT_REGISTRY` (14 typed agents in `lib/mianx-team.ts`) to the DB `ai_agents` table (currently empty), builds the agent-execution runtime on top of `ai_tasks` (6-state machine exists but no executor), and elevates each agent from deterministic-rules-only to LLM-assisted reasoning via ADR-013 proxy. Closes ADR-041 §8.12 (AI-driven kitchen prediction — consumed by Kitchen Control Agent #5) + the implicit ADR-016/017 fraud-detection deferral.
+
+**Key deferred items it would track:**
+- Fraud-signal service (login anomaly, journal anomaly, payment anomaly, refund-abuse pattern)
+- `refunds` table (ADR-038 §8 / ADR-041 §8.15 — refund-fraud signal needs operational refund lifecycle)
+- `discounts` master table (ADR-038 §8 — discount-abuse signal needs discount-reason audit)
+- 14 Mianx agents seeded into `ai_agents` DB table (currently only client-side typed definitions)
+- Agent-execution runtime (background worker draining `ai_tasks` 6-state machine — currently no executor)
+- AI-driven kitchen prediction (ADR-041 §8.12 — predicted prep time per ticket; consumed by Kitchen Control Agent)
+- `kitchen_ticket_sla_due_at` column (ADR-041 §8.7 — training labels for kitchen prediction)
+- Refresh `docs/11-ai/AGENT_REGISTRY.md` + `MIANX_AI_TEAM_OPERATING_MODEL.md` (last verified 2026-07-28 — STALE, predates Phase 5-12)
+- Mianx.ai agent → ADR-014 action-type mapping (which agents can suggest which action types)
+
+---
+
+**NOTE on ADR count:** The 5-ADR proposal above gives clean 1:1 mapping for most scope items. If the owner prefers the recent Phase 8-12 cadence of 3 ADRs per phase, the natural consolidation is:
+- **ADR-042** = Demand Forecasting + Inventory + Procurement AI (scope items 1-2 + ADR-035 carry-forward)
+- **ADR-043** = Delivery Optimization + Support AI + Marketing Automation (scope items 3-5; closes ADR-039 §8.2, ADR-040 §8.4/§8.8, ADR-041 §8.17)
+- **ADR-044** = Fraud Signals + Mianx.ai Operational AI Teams Elevation (scope items 6-8; closes ADR-041 §8.12 + ADR-016/017 implicit)
+
+**Cross-cutting dependencies for ALL Phase 13 ADRs:**
+- ADR-013 provider proxy MUST be built first (the `provider-proxy.ts` service referenced in ADR-013 §"Implementation references" but never implemented). Without this, no LLM call can be made and no `ai_call_logs` row is ever written. This is the foundational Phase 13 build target.
+- `aiMode` env-var integration into `backend/api/src/config/env.ts` (4 integration modes today: email/whatsapp/payment/webhook — add `aiMode`).
+- Operator action FU-12 (provisional ID): insert `ai_provider_configs` rows for OpenAI/Anthropic + set `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` env vars per ADR-003.
+- 6 empty `ai_teams` containers (executive / customer-experience / marketing / restaurant-operations / finance / analytics) seeded in `20260730120000` need their 14 agents populated.
+- `docs/11-ai/AGENT_REGISTRY.md` + `MIANX_AI_TEAM_OPERATING_MODEL.md` last-verified dates (2026-07-28) must be refreshed to current Phase 12 baseline as part of any Phase 13 ADR's documentation update.
+
+**Next actions:**
+1. Owner decision: 5-ADR scope (proposed above) vs 3-ADR consolidation (note above) — recommend 5 ADRs given Phase 13 is broadest-scope phase to date.
+2. Owner decision: which LLM provider to wire first (OpenAI vs Anthropic vs both) — gates `ai_provider_configs` seed + env var provisioning.
+3. Owner decision: auto-dispatch action type addition to `ai_action_approvals.action_type` CHECK constraint (requires migration to add `delivery.auto_dispatch`).
+4. Owner decision: Mianx.ai agent → DB seed mapping (which of the 6 seeded teams does each of the 14 agents belong to).
+5. After owner decisions: draft ADR-042 through ADR-046 as standalone markdown files in `docs/13-adr/`, following the established ADR template (Context / Decision / Consequences / Implementation references / Future work / §8 Deferred items with explicit trigger conditions).
+
+**Audit scope:** READ-ONLY. No code changes, no ADR files created, no migrations authored. Only this worklog append. All 41 ADRs remain Accepted v1.0. Production DB tip unchanged at 20260821000000. Repository main unchanged at 50a209a.
+
+
+---
+Task ID: phase-13-planning
+Agent: main
+Task: Begin Phase 13 (AI and Automation) — user instruction: "phir phase 13 shoro karna" (after dashboard refresh). Produce Phase 13 planning document + ADR candidates + owner decisions list.
+
+Work Log:
+- Read worklog.md tail (phase-13-audit entry from Explore subagent + dashboard-status-refresh-v2.7.1-shipped entry) — confirmed audit complete with 5 candidate ADRs proposed (ADR-042 through ADR-046) + cross-cutting prerequisite (provider-proxy.ts build) + 5 owner decisions identified.
+- Verified repository state: main at 50a209a (post-v2.7.1 dashboard refresh), all 41 ADRs Accepted v1.0, Production DB tip unchanged at 20260821000000.
+- Authored docs/14-phases/PHASE-13-PLANNING.md (~520 lines) — comprehensive Phase 13 planning document covering:
+  - §1 Executive summary (Phase 13 is broadest-scope phase — 8 items; first CODE phase since Phase 4; requires foundational build + 5 ADRs + new migrations + new services + new UI)
+  - §2 Audit findings (6 subsections: AI governance foundation solid; provider-proxy.ts NEVER BUILT; aiMode env-var missing; Mianx.ai is BRAND not LLM integration; 5 explicit AI deferrals in Phase 12 ADRs; data foundation MATURE with 10 gaps)
+  - §3 Phase 13 scope proposal — 5 candidate ADRs (ADR-042 Demand Forecasting, ADR-043 Delivery Optimization + Auto-Dispatch, ADR-044 Support AI + WhatsApp Sentiment, ADR-045 Marketing Automation, ADR-046 Fraud Signals + Mianx.ai Elevation) with scope summaries + key deferred items each
+  - §4 Alternative 3-ADR consolidation (recommendation: 5 ADRs)
+  - §5 Cross-cutting prerequisite — provider-proxy.ts build (BLOCKS all 5 ADRs) + implementation plan + estimated 2-3 days
+  - §6 Owner decisions required (5 decisions: ADR count, LLM provider, auto-dispatch action type, Mianx agent → team mapping, sequencing)
+  - §7 Implementation roadmap (Phase 13.0 foundational → 13.1-13.5 sequential ADRs → 13.6 closeout; total 37-53 engineering days ~7-10 weeks)
+  - §8 Versioning proposal (v3.0.0 — first major release since Phase 4)
+  - §9 Risk register (7 risks with mitigations)
+  - §10 Acceptance gate (12 criteria)
+  - §11 Next actions (owner review → owner decisions → engineering begins Phase 13.0)
+
+Stage Summary:
+- ✅ Phase 13 audit complete (read-only — Explore subagent, worklog Task ID phase-13-audit).
+- ✅ Phase 13 planning document authored: docs/14-phases/PHASE-13-PLANNING.md (~520 lines).
+- ✅ 5 candidate ADRs proposed: ADR-042 (Demand Forecasting & Inventory Prediction), ADR-043 (Delivery Optimization & Auto-Dispatch), ADR-044 (Support AI & WhatsApp Sentiment Auto-Reply), ADR-045 (Marketing Automation & Campaign AI), ADR-046 (Fraud Signals & Mianx.ai Operational AI Teams Elevation).
+- ✅ Cross-cutting prerequisite identified: provider-proxy.ts (the foundational AI HTTP client referenced in ADR-013 §"Implementation references" but NEVER BUILT — blocks all 5 ADRs).
+- ✅ 5 owner decisions identified and documented in §6.
+- ⏳ AWAITING OWNER REVIEW: 5-ADR scope vs 3-ADR consolidation, LLM provider choice (OpenAI/Anthropic/both), auto-dispatch action type addition, Mianx agent → team mapping, Phase 13 sequencing.
+- ⏳ After owner review: engineering begins Phase 13.0 (foundational build — provider-proxy.ts + aiMode env wiring + FU-12 documentation) → then drafts ADR-042 through ADR-046 → then implements Phase 13.1 through 13.5 sequentially.
+- **Phase 13 status**: PLANNING COMPLETE. Awaiting owner decisions before implementation begins.
+
