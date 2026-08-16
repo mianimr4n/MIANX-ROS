@@ -981,3 +981,39 @@ Stage Summary:
 - ✅ Verification: scripts/phase_12_verify.py — 278 passed, 0 failed.
 - ⏳ Next: Create phase-12-closeout branch, commit + push, open PR, wait CI, merge, tag v2.7.0, publish GitHub Release.
 - **Phase 12 status**: PLANNING COMPLETE. Ready for branch creation + PR + tag + release.
+
+---
+Task ID: phase-12-shipped
+Agent: main
+Task: Ship Phase 12 (Customer and Staff Apps) closeout — author 3 ADRs, verification script, closeout docs, PR, tag v2.7.0, GitHub Release.
+
+Work Log:
+- Read worklog.md tail (phase-12-planning entry) to confirm Phase 12 planning was COMPLETE — 3 ADRs authored (ADR-039/040/041), 51 DEFERRED items consolidated, 278-check verification script passing. Confirmed working tree on phase-12-closeout branch with all deliverables committed as 89955a1.
+- Diagnosed branch state issue: initial commit 89955a1 went to local main instead of phase-12-closeout (same issue encountered during Phase 11). Fixed via: `git branch -f phase-12-closeout 89955a1` (move branch pointer to the commit) + `git reset --hard origin/main` (reset main back to 35f2228). Force-pushed phase-12-closeout to origin.
+- Opened PR #239 via scripts/open_pr_phase_12.py. Head SHA: 89955a1dcdc069e8cc6da7c5795a8b6e35ae52d8. mergeable_state: unknown (initially).
+- Polled CI via direct GitHub API (wait_pr_phase_12_ci.py ran but Bash tool's persistent shell auto-switched back to main between invocations — switched approach to inline curl polling). After ~2 min wait, all 6/6 CI checks PASS:
+  - CodeQL: ✅ success
+  - Vercel Preview Comments: ✅ success
+  - Analyze (javascript-typescript): ✅ success
+  - Dependency Scan (pnpm audit): ✅ success
+  - Typecheck and test: ✅ success
+  - Owner Playwright: ✅ success (longest-running check, completed within 2 min of polling)
+- Merged PR #239 via scripts/merge_pr_phase_12.py (squash merge). Merge commit: 94e5d69dd8c6fdb69f3ffbc652f7e32790bca78a.
+- Fetched origin/main locally (35f2228..94e5d69).
+- Created annotated tag v2.7.0 on 94e5d69 via scripts/create_v2_7_0_tag_and_release.py. Tag message covers 3 ADRs + 41 ADRs total + closeout-only nature + Phase 13 UNLOCKED.
+- Pushed tag v2.7.0 to origin.
+- Created GitHub Release v2.7.0 at https://github.com/mianimr4n/telepizza/releases/tag/v2.7.0 (Release ID 371313202) with full release notes body covering headline + 3 ADR highlights + verification (278 checks) + production deployment status (350+ routes) + ADR index final state (41 ADRs) + Phase 13 unlock + closing.
+- Synced local main to origin/main (94e5d69).
+
+Stage Summary:
+- ✅ **Phase 12 (Customer and Staff Apps) is COMPLETE & SHIPPED.** PR #239 merged as 94e5d69. Tag v2.7.0 pushed. GitHub Release v2.7.0 published at https://github.com/mianimr4n/telepizza/releases/tag/v2.7.0.
+- ✅ **3 new ADRs accepted**: ADR-039 (Customer Mobile & Franchise Portal Contract), ADR-040 (Rider Mobile App & Delivery Dashboard Contract), ADR-041 (Staff App & Support Panel Contract). All 41 ADRs (ADR-001..ADR-041) now Accepted v1.0 with standalone files under docs/13-adr/.
+- ✅ **Closeout-only release** — no new migrations, no new code. Production DB tip remains 20260821000000 (Phase 3 OTP, same as Phase 5/6/7/8/9/10/11 closeouts). All customer/staff/rider/franchise/support/delivery surface was already verified during prior phases' migration runs. Backend tests unchanged from v2.6.0 (closeout-only).
+- ✅ **6/6 CI checks PASS** on PR #239 (CodeQL, Vercel Preview, Typecheck and test, Dependency Scan, Analyze, Owner Playwright). No CI failures — clean docs-only PR.
+- ✅ **350+ backend routes** live in Production: 32 admin router modules (hr 48 + finance 35 + opening-governance 33 + opening-operations 25 + marketing 23 + purchasing 22 + loyalty 19 + reservations 14 + reports 13 + whatsapp 11 + delivery-rider 10 + payments 9 + customers 8 + inventory 8 + inventory-recipes 8 + pos 7 + orders 7 + ai-governance 6 + tables 6 + table-sessions 6 + staff-assignments 5 + audit 5 + branch-profile 5 + dashboard 5 + delivery-settings 5 + floor 5 + settings 5 + bills 4 + configuration 4 + booking-policy 3 + organization-settings 3 + opening-dry-run 3) + 4 rider-facing routes + 2 kitchen routes. All branch-scoped via RLS.
+- ✅ **Frontend surface**: 25+ customer pages (Home/Menu/Checkout/TrackOrder/MyTelepizza/Loyalty/Orders/Favorites/Branches/Account/etc.) + 37 admin pages + 5 ops pages + 8 delivery dashboard components (~3,500 lines) — all live in Production.
+- ✅ **scripts/phase_12_verify.py** (705 lines, 278 checks across 10 categories) provided as future re-verification artifact. All 278 checks PASS.
+- ✅ **Phase 12 gap analysis**: 1 DONE (Delivery dashboard — AdminDelivery.tsx + 8 sub-components + 10 admin routes + 4 rider routes + ADR-008/009/010 surfaces + aggregate KPIs), 5 PARTIAL (Customer mobile — web-first PWA exists but native app/service worker/push/offline DEFERRED; Rider app — admin web on mobile browser exists but native app/turn-by-turn/in-app call/push/offline queue DEFERRED from Phase 9 ADR-032 §8-12; Staff app — admin shell + 37 pages exists but mobile-optimized UI/PWA-installable/checklist/handheld view DEFERRED; Franchise portal — organization_owner + owner workspace exists but franchisee role/agreement/royalty/multi-tenant SaaS DEFERRED; Support panel — AdminCrm + AdminWhatsApp as de facto exists but customer 360/ticketing/refund workflow DEFERRED), 0 NOT STARTED. All PARTIAL gaps explicitly deferred with documented trigger conditions in ADR-039 §8 / ADR-040 §8 / ADR-041 §8.
+- ⏳ **6 Operator Follow-ups remain open** (no code blockers, inherited from prior phases): FU-3 (WhatsApp WABA template approval), FU-4 (FBR tax registration), FU-5 (transactional email provider), FU-7 (Phase 15 production phone numbers), FU-8 (Mapbox/Google Maps API key for turn-by-turn nav), FU-11 (FCM project for push notifications).
+- ✅ **Phase 13 (AI and Automation) is UNLOCKED.** Dependencies satisfied: Phase 5 (ADR-018), Phase 6 (ADR-019/020/021/022), Phase 7 (ADR-023/024/025/026), Phase 8 (ADR-027/028/029), Phase 9 (ADR-030/031/032), Phase 10 (ADR-033/034/035), Phase 11 (ADR-036/037/038), Phase 12 (ADR-039/040/041). ADR-013/014/015 AI governance (shipped v1.9.0 Phase 2.6) + Phase 6 analytics registry + Phase 9 rider_locations + Phase 11 finance GL + Phase 12 customer/staff/rider/franchise/support/delivery surface provide the data + UI foundation for Phase 13's demand forecasting, inventory prediction, delivery optimization, support AI, marketing automation, fraud signals, and operational AI teams.
+- **Phase 12 status**: COMPLETE & SHIPPED. Repository main now 94e5d69. Production DB tip 20260821000000 (unchanged). All 41 ADRs Accepted v1.0. Next major workstream: Phase 13 (AI and Automation) — UNLOCKED.
