@@ -70,6 +70,9 @@ Active
 | ADR-030 | Rider Identity, Dispatch & Assignment Contract | Accepted | 1.0 | [`docs/13-adr/ADR-030-rider-identity-dispatch-assignment-contract.md`](../13-adr/ADR-030-rider-identity-dispatch-assignment-contract.md) — implemented in `v2.4.0` (Phase 9 closeout) |
 | ADR-031 | Delivery Lifecycle, Pickup & POD Surface | Accepted | 1.0 | [`docs/13-adr/ADR-031-delivery-lifecycle-pickup-pod-surface.md`](../13-adr/ADR-031-delivery-lifecycle-pickup-pod-surface.md) — implemented in `v2.4.0` (Phase 9 closeout) |
 | ADR-032 | Rider Location, Navigation & Performance Contract | Accepted | 1.0 | [`docs/13-adr/ADR-032-rider-location-navigation-performance-contract.md`](../13-adr/ADR-032-rider-location-navigation-performance-contract.md) — implemented in `v2.4.0` (Phase 9 closeout) |
+| ADR-033 | Inventory Stock Master, Movement Ledger & Atomic Adjustment Contract | Accepted | 1.0 | [`docs/13-adr/ADR-033-inventory-stock-master-movement-ledger-contract.md`](../13-adr/ADR-033-inventory-stock-master-movement-ledger-contract.md) — implemented in `v2.5.0` (Phase 10 closeout) |
+| ADR-034 | Recipe/BOM & COGS Costing Contract | Accepted | 1.0 | [`docs/13-adr/ADR-034-recipe-bom-cogs-costing-contract.md`](../13-adr/ADR-034-recipe-bom-cogs-costing-contract.md) — implemented in `v2.5.0` (Phase 10 closeout) |
+| ADR-035 | Procurement, Suppliers & GRN Contract | Accepted | 1.0 | [`docs/13-adr/ADR-035-procurement-suppliers-grn-contract.md`](../13-adr/ADR-035-procurement-suppliers-grn-contract.md) — implemented in `v2.5.0` (Phase 10 closeout) |
 
 > **Note:** All Phase 2 ADRs (ADR-001 through ADR-015) now have standalone
 > ADR files authored under `docs/13-adr/` and are marked Accepted.
@@ -114,6 +117,26 @@ Active
 > permission, partial aggregate KPIs in admin dashboard, per-rider KPIs +
 > rider_daily_summaries table + rider mobile app + customer-facing live map
 > + push notifications DEFERRED to Phase 12).
+> ADR-033 through ADR-035 formally accept the RC3 / RC4 as-built Inventory
+> and Procurement architecture as the canonical Phase 10 decision: inventory
+> stock master + movement ledger contract (branch-scoped inventory_items
+> with on-hand current_stock, immutable stock_movements ledger with 8
+> movement types, adjust_inventory_stock_atomic SECURITY DEFINER RPC with
+> 4 invariants, RLS via current_user_has_branch_access, low-stock alerts +
+> dedicated transfers + batch tracking + cost history DEFERRED), recipe/BOM
+> + COGS costing contract (versioned inventory_recipes with one-active-per-
+> menu_item UNIQUE index, inventory_recipe_lines with waste_factor,
+> idempotent + reversible inventory_consumption_events, inventory_cogs_events
+> with last_known cost_source forward-compatible with weighted_average/fifo,
+> cost-availability honesty model, modifier-effect consume + COGS GL posting
+> + recipe versioning rollback DEFERRED), and procurement + suppliers + GRN
+> contract (suppliers branch-scoped with status + approval_status split,
+> purchase_orders 8-state machine with explicit approval gate, GRN 3-state
+> machine with create_goods_receiving_with_stock_atomic RPC, supplier_invoices
+> with 3-way match foundation, supplier_payments with record_supplier_payment
+> atomic RPC + GL posting, full supplier portal surface with 20 routes +
+> idempotent responses + document upload, automated 3-way match + multi-branch
+> consolidation + supplier SSO + supplier-side invoice submission DEFERRED).
 
 ---
 

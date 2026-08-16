@@ -598,3 +598,59 @@ Stage Summary:
 - ✅ 3 ADRs recommended for Phase 9 closeout: ADR-030 (Rider Identity, Dispatch & Assignment Contract), ADR-031 (Delivery Lifecycle, Pickup & POD Surface), ADR-032 (Rider Location, Navigation & Performance Contract). All elevation-of-existing-design — NO IMPLEMENTATION REQUIRED.
 - ⏳ PENDING (next agent / current agent continuation): Author ADR-030/031/032 as standalone markdown files under docs/13-adr/; update docs/00-governance/ADR_INDEX.md; author scripts/phase_9_verify.py (70+ checks); write docs/testing/acceptance-evidence/phase9-closeout/PHASE9_FINAL_GATE.md; update docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md Phase 9 row; update docs/00-governance/REPOSITORY_STATUS.md + CHANGELOG.md + docs/releases/v2.4.0_RELEASE_NOTES.md; write 4 PR/merge/tag/release scripts; open PR, merge, tag v2.4.0, publish GitHub Release.
 - **Phase 9 status**: AUDIT COMPLETE. Ready for closeout ADR authoring + verification. No new code or migrations are required for closeout (Phase 9 is largely already implemented in code + Production — gap is formal ADR elevation, same shape as Phase 5, 6, 7, and 8 closeouts).
+
+---
+Task ID: phase-10-audit
+Agent: main
+Task: Audit Phase 10 (Inventory and Procurement) scope — verify Phase 9 closeout (v2.4.0) was shipped, inventory existing as-built inventory/procurement surface, identify ADR scope.
+
+Work Log:
+- Synced local main with origin/main: rebased local env-tools commit (95f2437) onto origin/main (b596cf6 — Phase 9 closeout v2.4.0). Local main now 2d8e795 (env-tools) on top of b596cf6 (Phase 9). The 2949 "modified" files in working tree are just mode changes (100644 → 100755) — harmless.
+- Verified Phase 9 closeout (v2.4.0) is fully shipped on origin: PR #236 merged as b596cf6, tag v2.4.0 pushed (annotated, points to b596cf6^{} = b596cf6), GitHub Release v2.4.0 published at https://github.com/mianimr4n/telepizza/releases/tag/v2.4.0.
+- Read PHASE9_FINAL_GATE.md (227 lines) — all 16 gate criteria PASS. 3 ADRs accepted (ADR-030/031/032). All 32 ADRs Accepted v1.0. Phase 9 closeout-only — no new migrations, no new code, Production DB tip remains 20260821000000.
+- Read v2.4.0_RELEASE_NOTES.md (159 lines). Phase 10 (Inventory and Procurement) is UNLOCKED per Phase 9 close report.
+- Read MASTER-ROADMAP.md (302 lines). Phase 10 row: "Ingredients · Recipe/BOM · Stock · Branch inventory · POs · Suppliers · Wastage · Transfers · Alerts · Costing — Not started". Current pointer: "Phase 9 PASS AND CLOSED → Phase 10".
+- Audited Phase 10 as-built surface (everything below already in Production — RC3 + RC4):
+  - 6 inventory/procurement migrations (RC3 + RC4):
+    - 20260730160000_inventory_backend.sql — inventory_items + stock_movements + inventory.manage permission (RC3).
+    - 20260730170000_purchasing_backend.sql — suppliers + purchase_orders + purchasing.manage permission (RC3).
+    - 20260730180000_fix_purchasing_missing_tables.sql — idempotent re-create + purchase_requisitions + goods_receiving (RC3).
+    - 20260730220000_atomic_inventory_and_grn_stock.sql — adjust_inventory_stock_atomic + create_goods_receiving_with_stock_atomic RPCs + goods_receiving_lines + movement_type extended to 8 values (RC3).
+    - 20260730230000_kitchen_recipe_stock_consume.sql — menu_item_inventory_components + original kitchen_ticket_set_preparing_atomic RPC (RC3).
+    - 20260730270000_supplier_invoices_payments.sql — supplier_invoices + supplier_payments + record_supplier_payment_atomic RPC (RC3).
+    - 20260731120000_supplier_portal_foundation.sql — supplier_portal_users + purchase_order_lines + purchase_order_responses + purchase_order_delivery_refs + supplier_documents + supplier_portal_events + supplier role + supplier.portal permission + current_user_supplier_ids() function (RC3).
+    - 20260731130000_supplier_portal_hardening.sql — purchase_order_responses.response_type CHECK tightened + supplier_response_staff_decisions table + UNIQUE idempotency_key index + supplier_documents.document_type CHECK (RC3).
+    - 20260731180000_rc4_inventory_recipes_cogs.sql — inventory_recipes + inventory_recipe_lines + inventory_recipe_modifier_effects + inventory_consumption_events + inventory_consumption_event_lines + inventory_stock_exceptions + inventory_recipe_audit_events + inventory_cogs_events + REPLACE'd kitchen_ticket_set_preparing_atomic + inventory_reverse_kitchen_consumption_atomic RPC (RC4).
+  - Backend code: 4 service files (inventory/management.ts 449 lines + inventory/recipes.ts 681 lines + inventory/units.ts 97 lines + purchasing/management.ts 1087 lines + supplier-portal/management.ts 1507 lines) + 3 admin routers (admin/inventory.ts 195 lines + admin/inventory-recipes.ts 252 lines + admin/purchasing.ts 687 lines) + 1 supplier portal router (modules/supplier-portal/routes.ts 421 lines). Total 4876 lines backend.
+  - Backend routes: 54 routes total (5 inventory + 8 recipe + 21 purchasing admin + 20 supplier portal).
+  - Frontend: AdminInventory.tsx (310 lines) + AdminPurchasing.tsx (517 lines) + AdminSupplierOperations.tsx (114 lines) + 7 supplier portal pages (745 lines) + 14 supporting components (~1500 lines). Total ~3186 lines frontend.
+  - Tests: 7 backend test files (1365 lines total) — inventory.test.ts (238), inventory-adjust-atomic.test.ts (185), inventory-recipes.test.ts (246), inventory-units.test.ts (37), purchasing.test.ts (391), grn-stock-posting-atomic.test.ts (168), rc3-supplier-portal.test.ts (100).
+  - Atomic RPCs: 5 SECURITY DEFINER functions in Production — adjust_inventory_stock_atomic, create_goods_receiving_with_stock_atomic, kitchen_ticket_set_preparing_atomic, inventory_reverse_kitchen_consumption_atomic, record_supplier_payment_atomic. Plus current_user_supplier_ids() STABLE helper.
+  - 23 inventory/procurement tables — all RLS-enabled via current_user_has_branch_access(branch_id) for SELECT, service_role for write.
+  - 3 permissions seeded: inventory.manage (super-admin + branch-manager), purchasing.manage (super-admin + branch-manager), supplier.portal (supplier role only).
+  - State machines: PO 8-state (draft/submitted/approved/ordered/partially_received/received/cancelled/rejected), GRN 3-state (draft/posted/cancelled), requisition 6-state (draft/submitted/approved/rejected/converted/cancelled), supplier invoice 6-state (draft/pending_approval/approved/paid/disputed/cancelled), 3-way match 4-state (unmatched/matched/variance/exception_approved), inventory_items status 3-state (active/inactive/discontinued), recipe 3-state (draft/active/inactive), consumption event status 3-state (posted/reversed/noop), consumption event_type 2-state (consume/reverse), cogs cost_source 4-value (last_known/weighted_average/fifo/manual — only last_known wired).
+  - 8 movement types in stock_movements CHECK: receipt, adjustment, transfer_in, transfer_out, waste, sale_consumption, purchase, sale.
+- Gap analysis vs Phase 10 scope (10 sub-areas):
+  - ✅ Ingredients — DONE: inventory_items table with branch scope, 3-state status, cost_price, minimum_stock, reorder_level.
+  - ✅ Recipe/BOM — DONE: inventory_recipes versioned + one-active-per-menu_item UNIQUE partial index + inventory_recipe_lines with waste_factor + inventory_recipe_modifier_effects documented (DEFERRED for consume).
+  - ✅ Stock — DONE: current_stock + stock_movements immutable ledger + adjust_inventory_stock_atomic RPC with 4 invariants.
+  - ✅ Branch inventory — DONE: RLS via current_user_has_branch_access(branch_id), super-admin bypass.
+  - ✅ POs — DONE: purchase_orders 8-state machine + approval gate + UNIQUE (branch_id, po_number).
+  - ✅ Suppliers — DONE: suppliers branch-scoped + status/approval_status split + supplier portal (20 routes).
+  - ✅ Wastage — DONE: waste movement type via adjust_inventory_stock_atomic RPC.
+  - ⚠️ Transfers — PARTIAL: transfer_in / transfer_out movement types EXIST in CHECK constraint. NO dedicated inventory_transfers table or transfer endpoint. Currently requires two manual adjustments.
+  - ⚠️ Alerts — PARTIAL: minimum_stock + reorder_level columns EXIST. NO automated low-stock alert notification. Display-only in InventoryKPIs.
+  - ✅ Costing — DONE: inventory_cogs_events with last_known cost_source. weighted_average/fifo methods forward-compatible (CHECK constraint allows).
+- Summary: 8 DONE, 2 PARTIAL, 0 NOT STARTED. All PARTIAL gaps are explicitly labeled as deferred in the as-built UI or ADRs. Phase 10 is closeout-only (no new migrations, no new code) — same shape as Phase 7/8/9 closeouts.
+- Recommended ADRs for Phase 10 closeout (3 closeout ADRs elevating as-built design, NO IMPLEMENTATION REQUIRED):
+  - ADR-033 — Inventory Stock Master, Movement Ledger & Atomic Adjustment Contract: elevation of inventory_items + stock_movements + adjust_inventory_stock_atomic RPC + 8 movement types + RLS. DEFERRED: low-stock alerts, dedicated inventory_transfers table, batch tracking, cost history, DB-level immutability trigger, units master table.
+  - ADR-034 — Recipe/BOM & COGS Costing Contract: elevation of inventory_recipes + inventory_recipe_lines + inventory_recipe_modifier_effects + inventory_consumption_events + inventory_cogs_events + kitchen_ticket_set_preparing_atomic + inventory_reverse_kitchen_consumption_atomic. DEFERRED: modifier-effect consume certification, COGS GL posting, weighted_average/fifo costing, recipe versioning rollback.
+  - ADR-035 — Procurement, Suppliers & GRN Contract: elevation of suppliers + purchase_orders + purchase_requisitions + goods_receiving + goods_receiving_lines + create_goods_receiving_with_stock_atomic + supplier_invoices + supplier_payments + record_supplier_payment_atomic + full supplier portal surface. DEFERRED: automated 3-way match, DB-level PO state-machine trigger, negative-quantity GRN lines, multi-branch PO consolidation, supplier SSO, supplier-side invoice submission.
+
+Stage Summary:
+- ✅ Phase 10 (Inventory and Procurement) audit complete. Comprehensive inventory of 9 inventory/procurement migrations (RC3 + RC4), 23 tables (all RLS-enabled), 5 SECURITY DEFINER atomic RPCs, 3 permissions + 1 supplier role, 54 backend routes (5+8+21+20), ~4876 lines backend + ~3186 lines frontend, 7 test files (1365 lines).
+- ✅ Production DB tip confirmed: 20260821000000_adr_016_017_otp.sql. All inventory/procurement migrations (20260730160000 through 20260731180000) already in Production.
+- ✅ Gap analysis complete. Of 10 Phase 10 sub-areas: 8 DONE, 2 PARTIAL (transfers, alerts), 0 NOT STARTED. All PARTIAL gaps are explicitly labeled as deferred in the as-built UI or ADRs.
+- ✅ 3 ADRs recommended for Phase 10 closeout: ADR-033 (Inventory Stock Master, Movement Ledger & Atomic Adjustment Contract), ADR-034 (Recipe/BOM & COGS Costing Contract), ADR-035 (Procurement, Suppliers & GRN Contract). All elevation-of-existing-design — NO IMPLEMENTATION REQUIRED.
+- ⏳ PENDING (next agent / current agent continuation): Author ADR-033/034/035 as standalone markdown files under docs/13-adr/; update docs/00-governance/ADR_INDEX.md; author scripts/phase_10_verify.py (70+ checks); write docs/testing/acceptance-evidence/phase10-closeout/PHASE10_FINAL_GATE.md; update docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md Phase 10 row; update docs/00-governance/REPOSITORY_STATUS.md + CHANGELOG.md + docs/releases/v2.5.0_RELEASE_NOTES.md; write 4 PR/merge/tag/release scripts; open PR, merge, tag v2.5.0, publish GitHub Release.
+- **Phase 10 status**: AUDIT COMPLETE. Ready for closeout ADR authoring + verification. No new code or migrations are required for closeout (Phase 10 is largely already implemented in code + Production — gap is formal ADR elevation, same shape as Phase 5, 6, 7, 8, and 9 closeouts).

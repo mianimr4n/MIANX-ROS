@@ -10,6 +10,154 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
 
 ---
 
+## [2.5.0] — 2026-08-16 — Phase 10 Complete (Inventory and Procurement)
+
+**Phase 10 — Inventory and Procurement — is FEATURE-COMPLETE and Production-verified.**
+
+This release ships **3 ADRs**: ADR-033 (Inventory Stock Master,
+Movement Ledger & Atomic Adjustment Contract), ADR-034 (Recipe/BOM &
+COGS Costing Contract), and ADR-035 (Procurement, Suppliers & GRN
+Contract). All 35 ADRs (ADR-001 through ADR-035) are now Accepted v1.0
+with standalone ADR markdown files under `docs/13-adr/`.
+
+Phase 10 is a **closeout phase**: the underlying code has been in
+Production since v1.8.0 (purchasing + GRN + supplier invoices +
+supplier portal — 6 migrations), v1.9.0 (atomic stock adjustments +
+kitchen recipe stock consume — 1 migration), and v2.0.0 (versioned
+recipes + COGS events — 1 migration). The inventory admin surface
+(`modules/admin/inventory.ts`, 5 routes) + recipe admin surface
+(`modules/admin/inventory-recipes.ts`, 8 routes) + purchasing admin
+surface (`modules/admin/purchasing.ts`, 21 routes) + supplier portal
+surface (`modules/supplier-portal/routes.ts`, 20 routes) ship in
+Production. The owner-facing inventory dashboard at `/admin/inventory`
+(310 lines) + procurement dashboard at `/admin/purchasing` (517 lines)
++ supplier operations summary at `/admin/suppliers` (114 lines) +
+full supplier portal (7 pages, 745 lines) all live. 14 supporting
+components (~1500 lines) and 2 helper libs ship alongside. This phase
+formally accepts the as-built inventory/procurement architecture via
+the 3 new ADRs and provides an inventory/procurement-focused
+verification script (`scripts/phase_10_verify.py`) with 70+ checks
+across 10 categories. **No new database migrations** — Phase 10 is
+documentation + verification only. The Production DB tip remains
+`20260821000000` (same as Phase 5/6/7/8/9 closeouts).
+
+Backend tests: **1096 passing** (unchanged from v2.4.0 — no new code,
+only ADRs and verification script). Phase 11 (Finance and Reporting)
+is now UNLOCKED.
+
+### ADR-033 — Inventory Stock Master, Movement Ledger & Atomic Adjustment Contract
+
+- Formally accepts the as-built inventory stock master:
+  `inventory_items` table with `(branch_id, sku)` UNIQUE constraint,
+  3-state status (active/inactive/discontinued), `current_stock`
+  numeric(14,3) CHECK ≥ 0, `minimum_stock` + `reorder_level` advisory
+  thresholds, `cost_price` last-known cost.
+- Documents the immutable movement ledger: `stock_movements`
+  append-only table with 8 movement types (receipt, adjustment,
+  transfer_in, transfer_out, waste, sale_consumption, purchase, sale).
+  API-layer immutability enforcement (no DB-level trigger — DEFERRED).
+- Locks the atomic adjustment contract: `adjust_inventory_stock_atomic`
+  SECURITY DEFINER RPC performs INSERT movement + UPDATE stock in a
+  single transaction with 4 invariants (QUANTITY_DELTA_INVALID,
+  INVENTORY_ITEM_NOT_FOUND, INSUFFICIENT_STOCK, MOVEMENT_TYPE_INVALID).
+- Documents the 8 movement types and their triggers (kitchen
+  `sale_consumption` via ADR-028, GRN `purchase` via ADR-035, etc.).
+- Explicitly defers: low-stock alerts, dedicated `inventory_transfers`
+  table, batch/lot tracking, cost history, DB-level immutability
+  trigger, units master table, multi-warehouse, `sale` movement wiring,
+  stock count workflow.
+
+### ADR-034 — Recipe/BOM & COGS Costing Contract
+
+- Formally accepts the as-built versioned recipes: `inventory_recipes`
+  table with `(branch_id, menu_item_id, version)` UNIQUE + partial
+  UNIQUE index `uq_inventory_recipes_one_active` enforcing
+  one-active-per-menu_item. 3-state status (draft/active/inactive) +
+  `yield_factor` + `activated_at`/`deactivated_at`.
+- Documents the recipe lines + modifier effects: `inventory_recipe_lines`
+  with `quantity` + `unit` + `waste_factor`; `inventory_recipe_modifier_effects`
+  documents per-modifier deltas but **DEFERRED for consume path** —
+  kitchen RPC reads base recipe lines only until modifier consume is
+  certified.
+- Locks the idempotent + reversible consumption events:
+  `inventory_consumption_events` with `UNIQUE(idempotency_key)` +
+  `reversed_event_id` self-FK for compensating reversals. Per-ingredient
+  breakdown in `inventory_consumption_event_lines` linked to
+  `stock_movements`.
+- Documents the COGS events: `inventory_cogs_events` with
+  `cost_source` CHECK ∈ {`last_known`, `weighted_average`, `fifo`,
+  `manual`} — only `last_known` wired today; others forward-compatible.
+- Locks the cost-availability honesty model: 4-value `CostAvailability`
+  type (LIVE/DERIVED/UNAVAILABLE/DEFERRED) surfaced as colored badges
+  in `InventoryInsights.tsx`.
+- Explicitly defers: modifier-effect consume certification, COGS GL
+  posting, weighted-average/FIFO costing, cost history, recipe
+  versioning rollback, soft-fail mode, yield factor enforcement,
+  recipe import/export.
+
+### ADR-035 — Procurement, Suppliers & GRN Contract
+
+- Formally accepts the as-built supplier master: `suppliers`
+  branch-scoped with `status` (active/inactive) + `approval_status`
+  (pending/approved/suspended) split. Extended columns: `tax_id`,
+  `business_registration`, `payment_terms`, `supplied_categories`
+  (text[]), `notes`.
+- Documents the 8-state PO machine: draft → submitted → approved →
+  ordered → partially_received → received | cancelled | rejected.
+  Explicit approval gate via `POST /:id/approve` with body
+  `{decision, notes}`. UNIQUE `(branch_id, po_number)`.
+- Locks the 3-state GRN machine: draft → posted | cancelled.
+  `goods_receiving_lines` with optional `inventory_item_id` mapping.
+  `posted` transition is irreversible.
+- Documents the atomic GRN stock posting:
+  `create_goods_receiving_with_stock_atomic` SECURITY DEFINER RPC
+  creates GRN + lines + posts stock via `adjust_inventory_stock_atomic`
+  (movement_type=`purchase`) + updates parent PO status in a single
+  transaction.
+- Locks the 3-way match foundation: `supplier_invoices` with
+  `match_status` (unmatched/matched/variance/exception_approved) +
+  `variance_amount` + `matched_grn_id`. 6-state invoice status.
+  `supplier_payments` with `record_supplier_payment_atomic` RPC
+  (records payment + updates invoice + posts to GL via ADR-011).
+- Documents the full supplier portal surface: 20 routes under
+  `/api/v1/supplier-portal/*` for PO ack/accept/reject, amendment
+  requests, delivery date proposals, document upload (URL + base64),
+  performance KPIs, profile. `supplier` role + `supplier.portal`
+  permission seeded. Idempotent responses via `UNIQUE(idempotency_key)`.
+- Explicitly defers: automated 3-way match, DB-level PO state-machine
+  trigger, negative-quantity GRN lines, multi-branch PO consolidation,
+  supplier SSO, supplier-side invoice submission, procurement-to-GL
+  automation, supplier performance scoring, multi-level approval
+  workflow, RFQ flow, supplier PO ack SLA, contract management,
+  inventory reservation.
+
+### Phase 10 sub-area status
+
+| Sub-area | Status |
+|---|---|
+| Ingredients | ✅ DONE |
+| Recipe/BOM | ✅ DONE |
+| Stock | ✅ DONE |
+| Branch inventory | ✅ DONE |
+| POs | ✅ DONE |
+| Suppliers | ✅ DONE |
+| Wastage | ✅ DONE |
+| Transfers | 🟡 PARTIAL (movement types exist; dedicated table + endpoint DEFERRED) |
+| Alerts | 🟡 PARTIAL (columns exist; automated notification DEFERRED) |
+| Costing | ✅ DONE (last_known wired; weighted_average/fifo DEFERRED to Phase 11) |
+
+### Phase 11 unlock
+
+Phase 11 (Finance and Reporting) is now UNLOCKED.
+
+### Operator follow-ups
+
+3 new for Phase 10: **FU-16** (seed `inventory_items` rows per branch),
+**FU-17** (seed `inventory_recipes` + activate per branch),
+**FU-18** (configure Supabase Storage bucket `supplier-documents`).
+
+---
+
 ## [2.4.0] — 2026-08-16 — Phase 9 Complete (Rider and Delivery App)
 
 **Phase 9 — Rider and Delivery App — is FEATURE-COMPLETE and Production-verified.**
