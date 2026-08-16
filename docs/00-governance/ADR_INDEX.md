@@ -67,6 +67,9 @@ Active
 | ADR-027 | Kitchen Ticket Lifecycle & Queue Contract | Accepted | 1.0 | [`docs/13-adr/ADR-027-kitchen-ticket-lifecycle-queue-contract.md`](../13-adr/ADR-027-kitchen-ticket-lifecycle-queue-contract.md) — implemented in `v2.3.0` (Phase 8 closeout) |
 | ADR-028 | Kitchen Order Ticket (KOT) Snapshot & Per-Item Status Model | Accepted | 1.0 | [`docs/13-adr/ADR-028-kot-snapshot-per-item-status.md`](../13-adr/ADR-028-kot-snapshot-per-item-status.md) — implemented in `v2.3.0` (Phase 8 closeout) |
 | ADR-029 | Kitchen Timers, Priority & Display Contract | Accepted | 1.0 | [`docs/13-adr/ADR-029-kitchen-timers-priority-display-contract.md`](../13-adr/ADR-029-kitchen-timers-priority-display-contract.md) — implemented in `v2.3.0` (Phase 8 closeout) |
+| ADR-030 | Rider Identity, Dispatch & Assignment Contract | Accepted | 1.0 | [`docs/13-adr/ADR-030-rider-identity-dispatch-assignment-contract.md`](../13-adr/ADR-030-rider-identity-dispatch-assignment-contract.md) — implemented in `v2.4.0` (Phase 9 closeout) |
+| ADR-031 | Delivery Lifecycle, Pickup & POD Surface | Accepted | 1.0 | [`docs/13-adr/ADR-031-delivery-lifecycle-pickup-pod-surface.md`](../13-adr/ADR-031-delivery-lifecycle-pickup-pod-surface.md) — implemented in `v2.4.0` (Phase 9 closeout) |
+| ADR-032 | Rider Location, Navigation & Performance Contract | Accepted | 1.0 | [`docs/13-adr/ADR-032-rider-location-navigation-performance-contract.md`](../13-adr/ADR-032-rider-location-navigation-performance-contract.md) — implemented in `v2.4.0` (Phase 9 closeout) |
 
 > **Note:** All Phase 2 ADRs (ADR-001 through ADR-015) now have standalone
 > ADR files authored under `docs/13-adr/` and are marked Accepted.
@@ -97,6 +100,20 @@ Active
 > PREP_WARN=20m / PREP_TARGET=15m display constants, priority field EXISTS
 > with mutation DEFERRED, KITCHEN_STATION_CATALOG display-only with
 > kitchen_stations table DEFERRED, no realtime / sounds / bump / recall).
+> ADR-030 through ADR-032 formally accept the Sprint 4.6 / ADR-007/008/009/010
+> as-built Rider and Delivery App architecture as the canonical Phase 9
+> decision: rider identity + dispatch contract (rider role + 1:1 user_id +
+> 1:1 branch_id, manual dispatch only with same-branch + state-machine +
+> rider-active invariants, auto-dispatch DEFERRED), delivery lifecycle +
+> pickup + POD surface (6-state machine with order mirror via
+> mirrorOrderStatus + compensating rollback, picked-up IS the out-for-delivery
+> state, POD-mandatory-for-delivered enforcement chain, failed-delivery
+> capture + redelivery flow + customer-facing POD view DEFERRED), and rider
+> location + navigation + performance contract (rider_locations ephemeral
+> table with 24h TTL purge, GPS ingest endpoint with delivery.access
+> permission, partial aggregate KPIs in admin dashboard, per-rider KPIs +
+> rider_daily_summaries table + rider mobile app + customer-facing live map
+> + push notifications DEFERRED to Phase 12).
 
 ---
 

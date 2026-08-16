@@ -189,7 +189,25 @@ Kitchen queue · KOT · Preparing/ready · Timers · Item status · Priority · 
 
 Rider login · Assignment · Pickup · Navigation · Out-for-delivery · POD · Failed delivery · Performance
 
-**Status:** Not started
+**Status:** ✅ COMPLETE (v2.4.0) — Production-verified (closeout-only, no new migrations; reuses Phase 5/6/7/8 baseline `20260821000000`)
+
+**Close report:** `docs/testing/acceptance-evidence/phase9-closeout/PHASE9_FINAL_GATE.md`
+**Formal ADRs:**
+- `docs/13-adr/ADR-030-rider-identity-dispatch-assignment-contract.md` (v2.4.0) — rider identity (1:1 user_id + 1:1 branch_id) + manual dispatch contract (8 invariants, idempotent assignment, auto-dispatch DEFERRED)
+- `docs/13-adr/ADR-031-delivery-lifecycle-pickup-pod-surface.md` (v2.4.0) — delivery lifecycle + pickup + POD surface (6-state machine elevation, order mirror via mirrorOrderStatus + compensating rollback, picked-up IS out-for-delivery, POD-mandatory-for-delivered enforcement chain, failed-delivery capture + redelivery DEFERRED)
+- `docs/13-adr/ADR-032-rider-location-navigation-performance-contract.md` (v2.4.0) — rider location (ADR-008 elevation) + navigation + partial performance surface (GPS ingest endpoint, 24h TTL purge, aggregate KPIs, per-rider KPIs + rider_daily_summaries + rider mobile app + customer live map DEFERRED to Phase 12)
+
+**Work items:**
+- ✅ Rider login (`rider` role + `/staff/login` + ADR-019 RBAC; `isRiderOnly` scope check; no dedicated `/api/v1/rider/*` surface — uses `/api/v1/riders/*`)
+- ✅ Assignment (`POST /api/v1/riders/deliveries/:id/assign` with `delivery.assign`; 8 invariants enforced; manual only)
+- ✅ Pickup (`POST /api/v1/riders/deliveries/:id/status` body `{status:'picked-up'}`; mirrors `orders.status='dispatched'`)
+- 🟡 Navigation (rider_locations table + ingest endpoint exist; NO map UI in AdminDelivery — `DeliveryMapFoundation` placeholder only; NO turn-by-turn; customer TrackOrder.tsx has NO live map — DEFERRED to Phase 12)
+- ✅ Out-for-delivery (`picked-up` IS the "out for delivery" state — ADR-018 §4 explicitly rejected separate `out_for_delivery` status)
+- ✅ POD (ADR-009 fully implemented; mandatory for `delivered` via trigger + service + UI; `POST /api/v1/admin/delivery-pod` captures; immutability after delivered)
+- 🟡 Failed delivery (`failed` terminal state in state machine; NO dedicated failed-delivery capture endpoint; riders cannot trigger `failed` from API — must escalate to BM/SA; NO `failure_reason`/`failure_category`/`return_to_branch` fields — DEFERRED)
+- 🟡 Performance (aggregate KPIs in DeliveryKPIs + DeliveryInsights + DeliveryPerformance; NO per-rider KPI dashboard; NO `rider_daily_summaries` table — DEFERRED to Phase 12)
+
+**Deferred to future ADRs:** auto-dispatch engine (rider scoring by proximity/load, auto-assign on confirmed), rider self-assign queue, rider shift scheduling integration, rider capacity cap, multi-branch riders, rider vehicle + license tracking, failed-delivery capture (`delivery_failures` table + rider-triggered endpoint), redelivery flow (`original_delivery_id` FK), customer-facing POD view (`/api/v1/orders/:id/pod`), live rider map (Supabase Realtime channels + customer RLS), single-transaction delivery+order mirror, delivery SLA tracking, `rider_daily_summaries` table, per-rider KPI dashboard, rider mobile app (turn-by-turn, in-app call, offline-tolerant), customer-facing live map, audible alarms + push notifications, TTL job failsafe, reverse geocoding at read-time. Each has an explicit trigger condition in ADR-030 §6 / ADR-031 §6-10 / ADR-032 §8-12.
 
 ---
 
@@ -254,9 +272,9 @@ PRODUCTION V1.0 = LIVE
 
 | Now | Next |
 |---|---|
-| Phase 8 **PASS AND CLOSED** (v2.3.0) | **Phase 9** — Rider and Delivery App |
+| Phase 9 **PASS AND CLOSED** (v2.4.0) | **Phase 10** — Inventory and Procurement |
 | Phase 3 eng paused | Ops continues Meta/Twilio in parallel |
-| Phase 9 implementation | After Phase 8 close (UNLOCKED) |
+| Phase 10 implementation | After Phase 9 close (UNLOCKED) |
 
 ---
 

@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""
+Merge Phase 9 closeout PR via GitHub API (squash merge).
+
+Reads PR number from env or arg, performs squash merge, prints merge commit SHA.
+"""
+import json
+import os
+import sys
+import urllib.request
+import urllib.error
+
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
+REPO = "mianimr4n/telepizza"
+PR_NUMBER = int(os.environ.get("PHASE9_PR_NUMBER", sys.argv[1] if len(sys.argv) > 1 else "236"))
+
+if not GITHUB_TOKEN:
+    print("ERROR: GITHUB_TOKEN env var required")
+    sys.exit(2)
+
+commit_title = f"docs(v2.4.0): Phase 9 complete — ADR-030/031/032 + close report + roadmap update (#{PR_NUMBER})"
+commit_message = """Phase 9 (Rider and Delivery App) closeout:
+
+- 3 new ADRs accepted: ADR-030 (Rider Identity/Dispatch/Assignment Contract),
+  ADR-031 (Delivery Lifecycle/Pickup/POD Surface), ADR-032 (Rider
+  Location/Navigation/Performance Contract).
+- All 32 ADRs (ADR-001..ADR-032) now Accepted v1.0 with standalone files.
+- Closeout-only release — no new migrations, no new code. Production DB tip
+  remains 20260821000000 (Phase 3 OTP, same as Phase 5/6/7/8 closeouts).
+- scripts/phase_9_verify.py provided (70+ checks across 10 categories).
+- Phase 10 (Inventory and Procurement) UNLOCKED.
+"""
+
+url = f"https://api.github.com/repos/{REPO}/pulls/{PR_NUMBER}/merge"
+headers = {
+    "Accept": "application/vnd.github+json",
+    "Authorization": f"Bearer {GITHUB_TOKEN}",
+    "X-GitHub-Api-Version": "2022-11-28",
+}
+payload = json.dumps({
+    "commit_title": commit_title,
+    "commit_message": commit_message,
+    "merge_method": "squash",
+}).encode()
+
+req = urllib.request.Request(url, data=payload, headers=headers, method="PUT")
+try:
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        result = json.loads(resp.read().decode())
+        print(f"PR #{PR_NUMBER} merged: {result.get('message', 'OK')}")
+        print(f"  merge commit SHA: {result.get('sha', 'unknown')}")
+except urllib.error.HTTPError as e:
+    body = e.read().decode()
+    print(f"HTTP {e.code}: {body[:500]}")
+    sys.exit(1)
+except Exception as e:
+    print(f"ERROR: {e}")
+    sys.exit(1)

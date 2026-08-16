@@ -10,6 +10,171 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
 
 ---
 
+## [2.4.0] — 2026-08-16 — Phase 9 Complete (Rider and Delivery App)
+
+**Phase 9 — Rider and Delivery App — is FEATURE-COMPLETE and Production-verified.**
+
+This release ships **3 ADRs**: ADR-030 (Rider Identity, Dispatch &
+Assignment Contract), ADR-031 (Delivery Lifecycle, Pickup & POD Surface),
+and ADR-032 (Rider Location, Navigation & Performance Contract). All 32
+ADRs (ADR-001 through ADR-032) are now Accepted v1.0 with standalone ADR
+markdown files under `docs/13-adr/`.
+
+Phase 9 is a **closeout phase**: the underlying code has been in Production
+since v1.8.0 (ADR-007 delivery state machine) and v1.9.0 (ADR-008/009/010 —
+rider location, POD, COD). The rider identity + dispatch surface
+(`modules/riders/routes.ts`, 4 routes) and the rider/delivery admin surface
+(`modules/admin/delivery-rider.ts`, 9 routes) ship in Production. Two
+parallel admin UIs ship in Production: the owner ERP dispatch view at
+`/admin/delivery` (550 lines) and the ops dispatch board at `/ops/dispatch`
+(162 lines), plus the customer-facing tracking page at `/track/:orderNumber`
+(316 lines, status pills only — no live map). 8 supporting components under
+`components/admin/delivery/` (1187 lines total) and 2 helper libs
+(`lib/admin-delivery.ts` 139 lines + `lib/ops-api.ts` 235 lines). This phase
+formally accepts the as-built rider/delivery architecture via the 3 new ADRs
+and provides a rider/delivery-focused verification script
+(`scripts/phase_9_verify.py`) with 70+ checks across 10 categories. **No new
+database migrations** — Phase 9 is documentation + verification only. The
+Production DB tip remains `20260821000000` (same as Phase 5/6/7/8 closeouts).
+
+Backend tests: **1096 passing** (unchanged from v2.3.0 — no new code, only
+ADRs and verification script). Phase 10 (Inventory and Procurement) is now
+UNLOCKED.
+
+### ADR-030 — Rider Identity, Dispatch & Assignment Contract
+
+- Formally accepts the as-built rider identity model: `rider` role + 1:1
+  `user_id` UNIQUE on `riders` table + 1:1 `branch_id NOT NULL` (every rider
+  belongs to exactly one branch). Rider logs in via standard `/staff/login`
+  (no dedicated `/api/v1/rider/*` surface — uses `/api/v1/riders/*` with
+  role-based access differentiation).
+- Documents the manual dispatch contract: `POST /api/v1/riders/deliveries/:id/assign`
+  with `delivery.assign` permission (BM/SA only). 8 invariants enforced in
+  order: permission → delivery exists → branch in scope → branch operational
+  → rider exists → rider same branch → rider not inactive → delivery state
+  ∈ {pending, assigned}.
+- Locks idempotent assignment: same rider + same state = no-op success
+  (`idempotentReplay: true`). Re-assignment to a different rider IS
+  supported while in `assigned` state (full audit trail preserved).
+- Documents the `isRiderOnly(scope)` helper: when actor is rider-only
+  (not BM/SA), list-assignments auto-filters to rider's own deliveries
+  via `riders.user_id = scope.userId` lookup. A rider cannot see another
+  rider's deliveries.
+- **Defers** auto-dispatch engine (rider scoring by proximity/load,
+  automatic assignment on order confirmed), rider self-assign queue,
+  rider shift scheduling integration, rider capacity cap, multi-branch
+  riders, rider vehicle + license tracking. Each has an explicit trigger
+  condition in ADR-030 §6.
+
+### ADR-031 — Delivery Lifecycle, Pickup & POD Surface
+
+- Formally accepts the as-built delivery lifecycle: 6-state machine
+  (`pending → assigned → picked-up → delivered | failed | cancelled`)
+  with ADR-007 elevation + `delivery_state_transitions` append-only audit
+  table + `delivery_valid_next_states()` IMMUTABLE function +
+  `trg_validate_delivery_state_transition` BEFORE UPDATE trigger.
+- Locks the rider-facing transition endpoint: `POST /api/v1/riders/deliveries/:id/status`
+  body `{status: 'assigned'|'picked-up'|'delivered', notes?}` — accepts
+  only 3 values. **Riders cannot trigger `failed` or `cancelled`** from
+  this endpoint (must escalate to BM/SA).
+- Documents the order mirror contract: `picked-up → orders.dispatched`
+  and `delivered → orders.completed` via `mirrorOrderStatus()` with
+  **compensating rollback** pattern (if order mirror fails, delivery is
+  rolled back to previous status). `order_status_logs` records the mirror
+  transition with actor_user_id = rider's user id.
+- Locks the POD-mandatory-for-delivered enforcement chain (ADR-009
+  elevation): SQL trigger + service-layer pre-check + frontend UI gating
+  (defense in depth). POD row is immutable after delivery reaches
+  `delivered` (trigger blocks UPDATE/DELETE).
+- Confirms `picked-up` IS the "out for delivery" state (ADR-018 §4
+  explicitly rejected separate `out_for_delivery` status — single
+  delivery lane, picked-up = rider has food, en route).
+- **Defers** failed-delivery capture (`delivery_failures` table +
+  `failure_reason`/`failure_category`/`return_to_branch` fields +
+  rider-triggered endpoint), redelivery flow (`original_delivery_id` FK +
+  RPC), customer-facing POD view (`/api/v1/orders/:id/pod`), live rider
+  map (Supabase Realtime channels + customer RLS), single-transaction
+  delivery+order mirror, delivery SLA tracking. Each has an explicit
+  trigger condition in ADR-031 §6-10.
+
+### ADR-032 — Rider Location, Navigation & Performance Contract
+
+- Formally accepts the as-built rider location surface (ADR-008 elevation):
+  `rider_locations` table with ephemeral GPS pings (lat/lng/heading/speed/
+  accuracy_m/recorded_at/delivery_id/rider_id). 3 RLS policies (rider
+  self-read, self-insert, branch-staff-read). 3 indexes for ingest + read
+  paths + TTL purge.
+- Locks the storage scope: pings accepted only when rider has active
+  delivery (`deliveries.status IN ('assigned', 'picked-up')` AND rider is
+  the assigned rider). Service-layer rejects pings outside active
+  assignment (HTTP 409 `RIDER_NOT_ON_ACTIVE_DELIVERY`).
+- Documents the TTL purge contract: `purge_expired_rider_locations(integer)`
+  SECURITY DEFINER function deletes pings 24h after parent delivery
+  reaches terminal state. Idempotent. Only terminal-state deliveries are
+  purged (in-flight pings NEVER deleted). Job wired in `main.ts` via
+  `startRiderLocationTtlJob()` (hourly, gated by
+  `TELEPIZZA_RIDER_LOCATION_TTL_JOB=1`).
+- Locks per-ping metadata minimality: only lat/lng/heading/speed/accuracy/
+  recorded_at/delivery_id/rider_id stored. NO reverse-geocoded address,
+  NO device IDs, NO battery level, NO app telemetry, NO IP address.
+- Documents the GPS ingest endpoint: `POST /api/v1/admin/rider-locations`
+  with `delivery.access` permission, rate-limited at 240/min per IP
+  (accommodates 5-second polling × multiple riders).
+- Locks the partial performance surface: aggregate KPIs in `DeliveryKPIs`
+  (delivery count, avg minutes, late count via `DELIVERY_LATE_MINUTES`
+  client-side threshold) + `DeliveryInsights` (rule-based only, no LLM) +
+  `DeliveryPerformance` panel. `averageDeliveryMinutes` computes mean of
+  `(delivered_at - created_at)` — rough aggregate, not per-rider.
+- **Defers** per-rider KPI dashboard, `rider_daily_summaries` table
+  (pre-aggregated per-rider per-day stats, computed before TTL purge),
+  rider mobile app (turn-by-turn, in-app call, offline-tolerant),
+  customer-facing live map (Realtime + map + customer RLS), audible
+  alarms + push notifications, TTL job failsafe, reverse geocoding at
+  read-time. Each has an explicit trigger condition in ADR-032 §8-12.
+
+### Phase 9 Verification
+
+- `scripts/phase_9_verify.py` — 70+ checks across 10 categories:
+  1. Foundation tables (riders, deliveries) + columns + UNIQUE constraints
+  2. ADR-007 audit (delivery_state_transitions + append-only triggers)
+  3. ADR-008/009/010 tables (rider_locations, delivery_pod, cod_collections)
+  4. CHECK constraints (deliveries.status 6 values, riders.status 4 values,
+     cod_collections.reconciliation_status 4 values)
+  5. SQL functions + triggers (delivery_valid_next_states returns correct
+     values for all 6 input states, purge_expired_rider_locations,
+     enforce_delivery_transition_append_only, trg_validate_delivery_state_transition)
+  6. RLS enabled on all 6 rider/delivery tables
+  7. rider role + delivery.access/assign/update/read permissions seeded
+  8. Rider actor authz (rider has delivery.read/update/access; BM has all 4)
+  9. Idempotency UNIQUE indexes (delivery_pod.delivery_id, cod_collections.delivery_id,
+     deliveries.order_id)
+  10. API + frontend surface prerequisites (9 backend files + 10 frontend files)
+- SUPABASE_PAT env var required to execute (run with
+  `SUPABASE_PAT=<token> python3 scripts/phase_9_verify.py`).
+
+### Pending Operator Follow-ups (no code blockers)
+
+Inherited from prior phases plus one new for Phase 9:
+
+1. **FU-3** (Phase 2.2): Set `TELEPIZZA_WHATSAPP_MODE=mock` + `TELEPIZZA_WHATSAPP_WORKER=1` on Render.
+2. **FU-7** (Phase 3, P2): Set `OTP_HMAC_SECRET` on Render (32+ byte random string).
+3. **FU-4** (Phase 2.5): Configure `chart_of_accounts` rows per branch.
+4. **FU-5** (Phase 2.4): Configure Supabase Storage bucket `delivery-pod` — required for POD photo/signature uploads.
+5. **FU-8** (Phase 3): Provision dedicated "Telepizza Login" WhatsApp number (never `0304-1110495` for OTP).
+6. **FU-11** (Phase 7): Configure `finance_account_mappings` rows per branch for POS purposes.
+7. **FU-13** (Phase 8): Seed `menu_item_inventory_components` rows per branch for kitchen atomic stock consume.
+8. **FU-15** (NEW, Phase 9): Set `TELEPIZZA_RIDER_LOCATION_TTL_JOB=1` on Render — without this env var, the hourly `purge_expired_rider_locations` job does not run, and `rider_locations` rows accumulate indefinitely (per ADR-008 §3 + ADR-032 §3).
+
+### Phase 10 Unlock
+
+Phase 10 (Inventory and Procurement) is now UNLOCKED. The Phase 8 kitchen
+atomic stock consume (`kitchen_ticket_set_preparing_atomic` RPC, ADR-028)
+already deducts from `inventory_items` — Phase 10 will build the full
+procurement loop (POs, GRN, suppliers, wastage, transfers, costing) on top
+of the existing inventory backend shipped in RC3.
+
+---
+
 ## [2.3.0] — 2026-08-16 — Phase 8 Complete (Kitchen Dashboard)
 
 **Phase 8 — Kitchen Dashboard — is FEATURE-COMPLETE and Production-verified.**
