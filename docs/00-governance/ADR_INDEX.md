@@ -64,6 +64,9 @@ Active
 | ADR-024 | Dine-in Bill Settlement & Multi-tender Payments | Accepted | 1.0 | [`docs/13-adr/ADR-024-dine-in-bill-settlement.md`](../13-adr/ADR-024-dine-in-bill-settlement.md) — implemented in `v2.2.0` (Phase 7 closeout) |
 | ADR-025 | POS Shifts, Z-Report & Cash Reconciliation | Accepted | 1.0 | [`docs/13-adr/ADR-025-pos-shifts-zreport-cash-recon.md`](../13-adr/ADR-025-pos-shifts-zreport-cash-recon.md) — implemented in `v2.2.0` (Phase 7 closeout) |
 | ADR-026 | Branch Sync & Offline-Safe POS Contract | Accepted | 1.0 | [`docs/13-adr/ADR-026-branch-sync-offline-safe-pos-contract.md`](../13-adr/ADR-026-branch-sync-offline-safe-pos-contract.md) — implemented in `v2.2.0` (Phase 7 closeout) |
+| ADR-027 | Kitchen Ticket Lifecycle & Queue Contract | Accepted | 1.0 | [`docs/13-adr/ADR-027-kitchen-ticket-lifecycle-queue-contract.md`](../13-adr/ADR-027-kitchen-ticket-lifecycle-queue-contract.md) — implemented in `v2.3.0` (Phase 8 closeout) |
+| ADR-028 | Kitchen Order Ticket (KOT) Snapshot & Per-Item Status Model | Accepted | 1.0 | [`docs/13-adr/ADR-028-kot-snapshot-per-item-status.md`](../13-adr/ADR-028-kot-snapshot-per-item-status.md) — implemented in `v2.3.0` (Phase 8 closeout) |
+| ADR-029 | Kitchen Timers, Priority & Display Contract | Accepted | 1.0 | [`docs/13-adr/ADR-029-kitchen-timers-priority-display-contract.md`](../13-adr/ADR-029-kitchen-timers-priority-display-contract.md) — implemented in `v2.3.0` (Phase 8 closeout) |
 
 > **Note:** All Phase 2 ADRs (ADR-001 through ADR-015) now have standalone
 > ADR files authored under `docs/13-adr/` and are marked Accepted.
@@ -83,6 +86,17 @@ Active
 > multi-tender payments, POS shifts + Z-Report + cash reconciliation, and
 > branch sync + offline-safe contract (centralized DB + RLS + Idempotency-
 > Key, with explicit deferral of offline PWA).
+> ADR-027 through ADR-029 formally accept the Sprint 4 / DB-R5 / REQ-KIT-012
+> as-built Kitchen Dashboard architecture as the canonical Phase 8 decision:
+> kitchen ticket lifecycle + queue contract (one ticket per order, 6-state
+> machine, ORDER_STATUS_MIRROR, polling-not-realtime), KOT snapshot model
+> (frozen item_name + modifiers_snapshot JSONB, idempotent Option B creation
+> on order confirm, atomic stock consume via kitchen_ticket_set_preparing_atomic
+> RPC, per-item is_completed DEFERRED, KOT print + sequence_number DEFERRED),
+> and kitchen display contract (client-side elapsed timer with fallback chain,
+> PREP_WARN=20m / PREP_TARGET=15m display constants, priority field EXISTS
+> with mutation DEFERRED, KITCHEN_STATION_CATALOG display-only with
+> kitchen_stations table DEFERRED, no realtime / sounds / bump / recall).
 
 ---
 

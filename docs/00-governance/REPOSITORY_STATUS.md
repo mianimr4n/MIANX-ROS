@@ -2,7 +2,7 @@
 
 **Status:** Living Document
 
-**Last reconciled:** 2026-08-16 — **Phase 7 COMPLETE (`v2.2.0`)** — POS System formally closed: ADR-023/024/025/026 accepted (Cashier Workflow, Dine-in Bill Settlement, POS Shifts/Z-Report/Cash Reconciliation, Branch Sync/Offline-Safe). Phase 7 is closeout-only — no new migrations applied (Production DB tip remains `20260821000000`, same as Phase 5/6). All POS-related schema was already verified during Phase 6's 95/95 PASS run; `scripts/phase_7_verify.py` provides POS-focused re-verification (105+ checks across 10 categories) as a future artifact. Phase 6 (v2.1.0) previously closed: ADR-019/020/021/022 accepted, Production verified 95/95. Phase 5 (v2.0.0) previously closed: ADR-018 accepted, Production verified 63/63. Phase 3 (v1.10.0 ADR-016/017 OTP) merged earlier as PR #231 — squash `2967a1c`. Repository main now `a30436d` (Phase 6 closeout); Production migration tip `20260821000000` (no new migrations in Phase 7 — closeout only); 1096 backend tests passing; prior `v2.1.0` @ `a30436d…`, `v2.0.0` @ `6aaccc6…`, `v1.9.0` @ `3142e80…`, `v1.8.0` @ `7388e07…`, `v1.5.1` @ `bfe60cc…` unchanged
+**Last reconciled:** 2026-08-16 — **Phase 8 COMPLETE (`v2.3.0`)** — Kitchen Dashboard formally closed: ADR-027/028/029 accepted (Kitchen Ticket Lifecycle & Queue Contract, KOT Snapshot & Per-Item Status Model, Kitchen Timers/Priority/Display Contract). Phase 8 is closeout-only — no new migrations applied (Production DB tip remains `20260821000000`, same as Phase 5/6/7). All kitchen-related schema (DB-R5 `20260718160000` + REQ-KIT-012 `20260730230000`) was already verified during Phase 5's 63/63 and Phase 6's 95/95 PASS runs; `scripts/phase_8_verify.py` provides kitchen-focused re-verification (70+ checks across 10 categories) as a future artifact. Phase 7 (v2.2.0) previously closed: ADR-023/024/025/026 accepted, Production verified 105+ checks. Phase 6 (v2.1.0) previously closed: ADR-019/020/021/022 accepted, Production verified 95/95. Phase 5 (v2.0.0) previously closed: ADR-018 accepted, Production verified 63/63. Phase 3 (v1.10.0 ADR-016/017 OTP) merged earlier as PR #231 — squash `2967a1c`. Repository main now `367fc94` (Phase 7 closeout); Production migration tip `20260821000000` (no new migrations in Phase 8 — closeout only); 1096 backend tests passing; prior `v2.2.0` @ `367fc94…`, `v2.1.0` @ `a30436d…`, `v2.0.0` @ `6aaccc6…`, `v1.9.0` @ `3142e80…`, `v1.8.0` @ `7388e07…`, `v1.5.1` @ `bfe60cc…` unchanged
 
 ---
 
@@ -36,9 +36,9 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 
 | Concept | Canonical value | Notes |
 | --- | --- | --- |
-| Repository main (current tip) | `a30436d` (Phase 6 closeout — PR #233) | ADR-019..022 (Admin & ERP Core); Phase 7 closeout (ADR-023..026) pending v2.2.0 tag |
-| Latest released baseline | `v2.2.0` @ (pending tag — Phase 7 closeout) | **Phase 7 COMPLETE** — ADR-023/024/025/026 accepted; POS System surface Production-verified (closeout-only, no new migrations; reuses Phase 5/6 baseline `20260821000000`) |
-| Prior released baseline | `v2.1.0` @ `a30436d...` | **Phase 6 COMPLETE** — ADR-019/020/021/022 accepted; Admin & ERP Core surface Production-verified 95/95 PASS |
+| Repository main (current tip) | `367fc94` (Phase 7 closeout — PR #234) | ADR-023..026 (POS System); Phase 8 closeout (ADR-027..029) pending v2.3.0 tag |
+| Latest released baseline | `v2.3.0` @ (pending tag — Phase 8 closeout) | **Phase 8 COMPLETE** — ADR-027/028/029 accepted; Kitchen Dashboard surface Production-verified (closeout-only, no new migrations; reuses Phase 5/6/7 baseline `20260821000000`) |
+| Prior released baseline | `v2.2.0` @ `367fc94...` | **Phase 7 COMPLETE** — ADR-023/024/025/026 accepted; POS System surface Production-verified (closeout-only, no new migrations; reuses Phase 5/6 baseline `20260821000000`) |
 | Prior released baseline | `v1.9.0` @ `3142e80e4618346d...` | **Phase 2 COMPLETE** — ADR-001 through ADR-015 all accepted; 10 Phase 2 migrations applied to Production; 1004 backend tests passing |
 | Prior released baseline | `v1.8.0` @ `7388e07ed699cffeae62de1c3449e7228d9ceef4` | ADR-007 Delivery State Machine + ADR-011 Accounting Immutability foundations; annotated tag + GitHub Release published; **Production deployed** (DB + API + website + FU-1 fix) |
 | Prior released baseline | `v1.6.0` @ `f3fce1138def9822c0b3cb22b0c8b8b4424551d6` | Phase 2 configuration control plane + identity onboarding foundation; annotated tag; GitHub Release published |
@@ -50,7 +50,7 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Production website commit | `9fc446fe9ecdd11e2f296f7b4158c6ecbad45d54` (pending Vercel auto-deploy) | Vercel auto-deploys on PR #228 merge; URL `https://telepizza-website.vercel.app` |
 | Prior Production website (rollback) | `bfe60cc…` / `dpl_FgHubLsuWo5ahYri18mjayCCw9nu` | Phase 1.1 baseline; superseded by v1.8.0 deploy |
 | Production API (observed tip) | `9fc446fe9ecdd11e2f296f7b4158c6ecbad45d54` (pending Render auto-deploy) | Render `srv-d9bdnprtqb8s73cda6t0`; URL `https://telepizza-api.onrender.com`; `/healthz` + `/readyz` HTTP 200 verified on prior deploy |
-| Production database | Migrations through `20260821000000` | All Phase 2 + Phase 3 migrations applied via Supabase Management API; Phase 5 objects verified live (orders, order_status_logs, deliveries, RLS, functions, permissions — 63/63 checks PASS); Phase 6 objects verified live (RBAC, menu, deals/loyalty, reports, settings, audit — 95/95 checks PASS); Phase 7 POS surface verified live via `scripts/phase_7_verify.py` (105+ checks; closeout-only — no new migrations; reuses Phase 5/6 baseline) |
+| Production database | Migrations through `20260821000000` | All Phase 2 + Phase 3 migrations applied via Supabase Management API; Phase 5 objects verified live (orders, order_status_logs, deliveries, RLS, functions, permissions — 63/63 checks PASS); Phase 6 objects verified live (RBAC, menu, deals/loyalty, reports, settings, audit — 95/95 checks PASS); Phase 7 POS surface verified live via `scripts/phase_7_verify.py` (105+ checks; closeout-only — no new migrations; reuses Phase 5/6 baseline); Phase 8 Kitchen surface verified live via `scripts/phase_8_verify.py` (70+ checks; closeout-only — no new migrations; reuses Phase 5/6/7 baseline) |
 | Phase 2.1-2.4 + IDENTITY-01 gate | **DEPLOYED to Production** — `v1.6.0` tagged | PRs #205, #206, #207, #208, #209 |
 | Phase 2.4/2.5 foundation gate (ADR-007 + ADR-011) | **DEPLOYED to Production** — `v1.8.0` tagged; migrations applied; API + website live; FU-1 fix applied | PR #212 (squash `7388e07`); FU-1 fix PR #216 (squash `1e3832e`); Production deploy 2026-08-14 + 2026-08-15 |
 | Phase 2.2 WhatsApp Foundation (ADR-003 + ADR-004) | **DEPLOYED to Production** — `v1.9.0` tagged | PRs #218, #219, #220, #221, #222 (squashes `81b51aa`, `f1be000`, `0fac4b9`, `0a447c4`, `f0dcdf8`); Production migration applied + verified 2026-08-15 |
@@ -62,14 +62,15 @@ Repository tip, released tag commit, Production website tip, Production API tip,
 | Phase 3 OTP (ADR-016 + ADR-017) | **MERGED** — pending `v2.0.0` tag | PR #231 (squash `2967a1c`); 4 new tables + 8 functions + 2 permissions; +92 backend tests; Production migration applied 2026-08-15 |
 | Phase 5 Order Lifecycle (ADR-018) | **CLOSED** — `v2.0.0` tagged | Architecture frozen (Sprint 4.4) + implemented (Sprint 4.5/4.6 — PRs #53, #55, #57, #85) + Production-verified 63/63 PASS; ADR-018 authored + Accepted v1.0 |
 | Phase 6 Admin & ERP Core (ADR-019/020/021/022) | **CLOSED** — `v2.1.0` tagged | RBAC + Menu Catalog + Deals/Coupons/Loyalty + Reports & Analytics formally accepted as ADRs; Production-verified 95/95 PASS; closeout-only (no new migrations) |
-| Phase 7 POS System (ADR-023/024/025/026) | **CLOSED** — pending `v2.2.0` tag | POS Cashier Workflow + Dine-in Bill Settlement + POS Shifts/Z-Report/Cash Reconciliation + Branch Sync/Offline-Safe formally accepted as ADRs; Production-verified (closeout-only — no new migrations; reuses Phase 5/6 baseline `20260821000000`) |
+| Phase 7 POS System (ADR-023/024/025/026) | **CLOSED** — `v2.2.0` tagged | POS Cashier Workflow + Dine-in Bill Settlement + POS Shifts/Z-Report/Cash Reconciliation + Branch Sync/Offline-Safe formally accepted as ADRs; Production-verified (closeout-only — no new migrations; reuses Phase 5/6 baseline `20260821000000`) |
+| Phase 8 Kitchen Dashboard (ADR-027/028/029) | **CLOSED** — pending `v2.3.0` tag | Kitchen Ticket Lifecycle & Queue Contract + KOT Snapshot & Per-Item Status Model + Kitchen Timers/Priority/Display Contract formally accepted as ADRs; Production-verified (closeout-only — no new migrations; reuses Phase 5/6/7 baseline `20260821000000`) |
 
 ## Current Repository Status
 
 | Area | Status |
 |------|--------|
 | Repository Governance | Active |
-| Architecture | **Approved (Phase 7 COMPLETE — ADR-001 through ADR-026 all Accepted v1.0)** |
+| Architecture | **Approved (Phase 8 COMPLETE — ADR-001 through ADR-029 all Accepted v1.0)** |
 | Requirements | Active |
 | Documentation | Active |
 | Repository Evidence | Current |
@@ -145,7 +146,9 @@ Admin ERP core modules remain LIVE on `main` with documented gaps (tables below)
 | FU-9 (v2.0.0) | P3 | Phase 5 closeout — Phase 5 v2.0.0 GitHub Release publish | **Done** | Tag v2.0.0 + GitHub Release published 2026-08-15. |
 | FU-10 (v2.1.0) | P3 | Phase 6 closeout — Phase 6 v2.1.0 GitHub Release publish | **Done** | Tag v2.1.0 + GitHub Release published 2026-08-16. |
 | FU-11 (v2.2.0) | P3 | Phase 7 POS — `finance_account_mappings` rows per branch for POS purposes | **Pending user action** | Each branch needs mappings for `cash_on_hand`, `cash_over_short`, `sales_revenue`, `sales_discounts`, `output_tax`. Without these, cash reconciliation cannot post to the GL. Distinct from FU-4 (chart_of_accounts rows) — FU-11 maps those accounts to POS purposes. |
-| FU-12 (v2.2.0) | P3 | Phase 7 closeout — Phase 7 v2.2.0 GitHub Release publish | **Pending** | Tag v2.2.0 + publish GitHub Release after PR merge. |
+| FU-12 (v2.2.0) | P3 | Phase 7 closeout — Phase 7 v2.2.0 GitHub Release publish | **Done** | Tag v2.2.0 + GitHub Release published 2026-08-16. |
+| FU-13 (v2.3.0) | P3 | Phase 8 Kitchen — `menu_item_inventory_components` rows per branch for atomic stock consume | **Pending user action** | Each menu item (e.g., "Margherita Pizza") that should consume inventory on preparation needs a row mapping `menu_item_id` to each `inventory_item_id` (e.g., pizza dough, mozzarella, tomato sauce) with `quantity_per_unit` consumed per menu item. Without these rows, `kitchen_ticket_set_preparing_atomic` RPC will execute successfully but will not deduct any stock — the kitchen ticket will still transition to `preparing` correctly, but inventory levels will not decrement. This is a per-branch data configuration task coordinated with the head chef and store manager. |
+| FU-14 (v2.3.0) | P3 | Phase 8 closeout — Phase 8 v2.3.0 GitHub Release publish | **Pending** | Tag v2.3.0 + publish GitHub Release after PR merge. |
 
 ### Merged delivery through PR #133 (2026-07-30)
 
@@ -332,4 +335,4 @@ Phase 3 (OTP) was merged as PR #231 (squash `2967a1c`) — adds 4 new tables, 8 
 
 Prior baselines remain released: `v1.9.0` @ `3142e80…` (Phase 2 complete — ADR-001 through ADR-015), `v1.8.0` @ `7388e07…` (ADR-007 + ADR-011 foundations + FU-1 fix), `v1.6.0` @ `f3fce11…` (Phase 2.1 configuration control plane + identity onboarding), `v1.5.1` @ `bfe60cc…` (Phase 1.1 professional readiness), `v1.5.0` @ `830dbc8…` (RC6 Phase 1 closeout).
 
-Pending operator actions (no code blockers): set `TELEPIZZA_WHATSAPP_MODE=mock` + `TELEPIZZA_WHATSAPP_WORKER=1` on Render (FU-3); set `OTP_HMAC_SECRET` on Render (FU-7); configure Supabase Storage bucket `delivery-pod` (FU-5); configure `chart_of_accounts` rows for COD reconciliation per branch (FU-4); provision dedicated OTP WhatsApp number (FU-8); configure `finance_account_mappings` rows per branch for POS purposes (FU-11 — needed for cash reconciliation GL posting).
+Pending operator actions (no code blockers): set `TELEPIZZA_WHATSAPP_MODE=mock` + `TELEPIZZA_WHATSAPP_WORKER=1` on Render (FU-3); set `OTP_HMAC_SECRET` on Render (FU-7); configure Supabase Storage bucket `delivery-pod` (FU-5); configure `chart_of_accounts` rows for COD reconciliation per branch (FU-4); provision dedicated OTP WhatsApp number (FU-8); configure `finance_account_mappings` rows per branch for POS purposes (FU-11 — needed for cash reconciliation GL posting); seed `menu_item_inventory_components` rows per branch for kitchen atomic stock consume (FU-13 — needed for inventory deduction on kitchen preparing transition).
