@@ -73,6 +73,9 @@ Active
 | ADR-033 | Inventory Stock Master, Movement Ledger & Atomic Adjustment Contract | Accepted | 1.0 | [`docs/13-adr/ADR-033-inventory-stock-master-movement-ledger-contract.md`](../13-adr/ADR-033-inventory-stock-master-movement-ledger-contract.md) — implemented in `v2.5.0` (Phase 10 closeout) |
 | ADR-034 | Recipe/BOM & COGS Costing Contract | Accepted | 1.0 | [`docs/13-adr/ADR-034-recipe-bom-cogs-costing-contract.md`](../13-adr/ADR-034-recipe-bom-cogs-costing-contract.md) — implemented in `v2.5.0` (Phase 10 closeout) |
 | ADR-035 | Procurement, Suppliers & GRN Contract | Accepted | 1.0 | [`docs/13-adr/ADR-035-procurement-suppliers-grn-contract.md`](../13-adr/ADR-035-procurement-suppliers-grn-contract.md) — implemented in `v2.5.0` (Phase 10 closeout) |
+| ADR-036 | Branch GL, P&L, Balance Sheet & Cash Flow Contract | Accepted | 1.0 | [`docs/13-adr/ADR-036-branch-gl-pnl-balance-sheet-cash-flow-contract.md`](../13-adr/ADR-036-branch-gl-pnl-balance-sheet-cash-flow-contract.md) — implemented in `v2.6.0` (Phase 11 closeout) |
+| ADR-037 | Cash Reconciliation, Z-Report & COD Financial Ownership Contract | Accepted | 1.0 | [`docs/13-adr/ADR-037-cash-reconciliation-zreport-cod-financial-ownership-contract.md`](../13-adr/ADR-037-cash-reconciliation-zreport-cod-financial-ownership-contract.md) — implemented in `v2.6.0` (Phase 11 closeout) |
+| ADR-038 | Tax, AR, AP, COGS & Expense Posting Contract | Accepted | 1.0 | [`docs/13-adr/ADR-038-tax-ar-ap-cogs-expense-posting-contract.md`](../13-adr/ADR-038-tax-ar-ap-cogs-expense-posting-contract.md) — implemented in `v2.6.0` (Phase 11 closeout) |
 
 > **Note:** All Phase 2 ADRs (ADR-001 through ADR-015) now have standalone
 > ADR files authored under `docs/13-adr/` and are marked Accepted.
@@ -137,6 +140,40 @@ Active
 > atomic RPC + GL posting, full supplier portal surface with 20 routes +
 > idempotent responses + document upload, automated 3-way match + multi-branch
 > consolidation + supplier SSO + supplier-side invoice submission DEFERRED).
+> ADR-036 through ADR-038 formally accept the RC3 / RC4 / D3 as-built Finance
+> and Reporting architecture as the canonical Phase 11 decision: branch GL +
+> Chart of Accounts (5-type CoA, branch-scoped, UNIQUE branch+account_code) +
+> double-entry `journal_entries` (3-state draft/posted/voided) + balanced
+> `journal_entry_lines` + `create_journal_entry_atomic` / `reverse_journal_entry_atomic`
+> SECURITY DEFINER RPCs + `finance_trial_balance` / `finance_profit_loss` /
+> `finance_balance_sheet` / `finance_cash_flow_indirect` financial-statement
+> RPCs + `finance_periods` 3-state period control + ADR-011 immutability
+> triggers on journal_entries + journal_entry_lines (ADR-036); cash
+> reconciliation 6-state with server-side `compute_cash_reconciliation_totals`
+> IMMUTABLE RPC + Z-Report append-only audit + COD 4-state reconciliation with
+> ADR-010 `post_cod_collection_journal` trigger + payments 8-state with 4
+> methods + multi-tender `bill_splits` (4 strategies) + `reservation_deposits`
+> 7-state + per-branch `branch_payment_methods` config (ADR-037); tax
+> definitions (configurable rates, exclusive/inclusive basis, input/output
+> classification, effective dates) + AR surface (`customer_invoices` 7-state +
+> `customer_receipts` + `customer_receipt_allocations` + `customer_credit_notes`
+> 3-state) + AP surface (`supplier_invoices` 3-way match foundation +
+> `supplier_payments` + `record_supplier_payment_atomic` 8-arg + 7-arg
+> overloads) + `expense_claims` 6-state + `inventory_cogs_events` +
+> `inventory_consumption_events` + controlled GL posting services
+> (postSalesFromOrder / postSupplierInvoice / postCogsEvent / postPayrollAccrual
+> / postPayrollSettlement) gated on mapping-required + period-gated +
+> exception-recording + 20 mapping purposes (ADR-038). DEFERRED items across
+> the three ADRs: per-branch pricing, automated GL posting from kitchen/PO/
+> invoice/sales order, multi-currency consolidation, inter-branch transfers,
+> fiscal-year close automation, bank reconciliation, fixed-asset depreciation,
+> `pos_sessions` table, online card gateway, multi-tender `payment_splits`
+> table, bank deposit slip generation, multi-timezone, seeded jurisdiction tax
+> rates, weighted-average/FIFO costing methods, `inventory_cost_history` table,
+> `sale` movement type wiring for finished-goods, automated procurement-to-GL
+> automation, automated 3-way match (DB-level trigger), supplier-side invoice
+> submission, partial-cancel of order line items, dedicated `refunds` table,
+> partial-refund API, discounts master table for non-coupon discounts.
 
 ---
 
