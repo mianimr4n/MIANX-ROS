@@ -369,3 +369,91 @@ Stage Summary:
   6. FU-11 (NEW): Configure finance_account_mappings rows per branch for POS purposes (cash_on_hand, cash_over_short, sales_revenue, sales_discounts, output_tax). Without these, cash reconciliation cannot post to the GL.
 - **Phase 7 status**: READY TO CLOSE. v2.2.0 PR + tag + release next.
 - **Next major workstream**: Phase 8 (Kitchen Dashboard) — UNLOCKED after v2.2.0. Dependencies all satisfied: Slice 2D RLS (Sprint 3), Order Lifecycle (ADR-018 closed in v2.0.0), RBAC (ADR-019 closed in v2.1.0), POS Cashier (ADR-023 closed in v2.2.0), Dine-in Bill Settlement (ADR-024 closed in v2.2.0 — kitchen ticket creation on order confirm via DB-R5).
+
+---
+Task ID: phase-7-shipped
+Agent: main
+Task: Confirm Phase 7 (POS System) is fully shipped — PR merged, v2.2.0 tag pushed, GitHub Release published. Update worklog to reflect actual completion state (prior closeout summary said "READY TO CLOSE" but the PR/tag/release have all since landed).
+
+Work Log:
+- Verified git state: local main is clean at 367fc94 (Phase 7 closeout PR #234 squash-merge). Working tree clean.
+- Verified tag state: v2.2.0 exists locally AND on remote, annotated tag object b967d64, pointing at commit 367fc94789a623da2d9d7ff4786ee491ea10f192.
+- Verified PR #234 via GitHub API: merged: True, merge_commit_sha: 367fc94789a623da2d9d7ff4786ee491ea10f192, state: closed, html_url: https://github.com/mianimr4n/telepizza/pull/234.
+- Verified GitHub Release via API: name "v2.2.0 — Phase 7 Complete (POS System)", published_at 2026-08-16T00:20:02Z, draft: false, prerelease: false, html_url https://github.com/mianimr4n/telepizza/releases/tag/v2.2.0, target_commitish: main.
+- Verified Phase 7 artifacts on disk: ADR-023/024/025/026 markdown files, PHASE7_FINAL_GATE.md, v2.2.0_RELEASE_NOTES.md, scripts/phase_7_verify.py (105+ checks / 10 categories), 4 PR/merge/tag/release scripts.
+- Verified CHANGELOG.md has the [2.2.0] — 2026-08-16 — Phase 7 Complete (POS System) entry at the top.
+- Verified docs/00-governance/REPOSITORY_STATUS.md is reconciled to 2026-08-16 — Phase 7 COMPLETE (v2.2.0).
+
+Stage Summary:
+- ✅ Phase 7 (POS System) is FULLY SHIPPED.
+  - PR #234 merged as 367fc94 (squash).
+  - Annotated tag v2.2.0 pushed to origin (tag object b967d64).
+  - GitHub Release v2.2.0 — Phase 7 Complete (POS System) published at 2026-08-16T00:20:02Z — https://github.com/mianimr4n/telepizza/releases/tag/v2.2.0
+  - 4 ADRs accepted: ADR-023 (POS Cashier Workflow & Order Source Contract), ADR-024 (Dine-in Bill Settlement & Multi-tender Payments), ADR-025 (POS Shifts, Z-Report & Cash Reconciliation), ADR-026 (Branch Sync & Offline-Safe POS Contract).
+  - All 26 ADRs (ADR-001..ADR-026) Accepted v1.0 with standalone files under docs/13-adr/.
+  - Closeout-only release — no new migrations applied. Production DB tip remains 20260821000000 (same as Phase 5/6 closeouts).
+  - scripts/phase_7_verify.py provided as future re-verification artifact (105+ checks across 10 categories). SUPABASE_PAT required to execute; run with `SUPABASE_PAT=<token> python3 scripts/phase_7_verify.py`.
+- ⏳ OPERATOR FOLLOW-UPS (no code blockers, all inherited from prior phases plus one new):
+  1. FU-3: Set TELEPIZZA_WHATSAPP_MODE=mock + TELEPIZZA_WHATSAPP_WORKER=1 on Render.
+  2. FU-7 (P2): Set OTP_HMAC_SECRET on Render (32+ byte random string).
+  3. FU-4: Configure chart_of_accounts rows per branch (CASH + ACCOUNTS_RECEIVABLE).
+  4. FU-5: Configure Supabase Storage bucket 'delivery-pod'.
+  5. FU-8: Provision dedicated "Telepizza Login" WhatsApp number (never 0304-1110495 for OTP).
+  6. FU-11: Configure finance_account_mappings rows per branch for POS purposes (cash_on_hand, cash_over_short, sales_revenue, sales_discounts, output_tax). Without these, cash reconciliation cannot post to the GL.
+- **Phase 7 status**: COMPLETE & SHIPPED. v2.2.0 live on GitHub.
+- **Next major workstream**: Phase 8 (Kitchen Dashboard) — UNLOCKED. Dependencies all satisfied: Slice 2D RLS (Sprint 3), Order Lifecycle (ADR-018 closed in v2.0.0), RBAC (ADR-019 closed in v2.1.0), POS Cashier (ADR-023 closed in v2.2.0), Dine-in Bill Settlement (ADR-024 closed in v2.2.0 — kitchen ticket creation on order confirm via DB-R5).
+
+---
+Task ID: phase-8-audit
+Agent: Explore
+Task: Audit Phase 8 (Kitchen Dashboard) implementation state — comprehensive inventory of kitchen-related architecture docs, ADRs, migrations, backend code, frontend code, tests, production DB tip, gap analysis, and ADR recommendations for Phase 8 closeout-or-implement decision.
+
+Work Log:
+- Read worklog.md completely (371 lines at time of audit). Studied phase-7-audit (lines 274-317) as structural template; phase-7-closeout + phase-7-shipped for "done" shape; all prior phase entries for codebase evolution context.
+- Inventoried 22 architecture files under docs/architecture/ that touch the kitchen surface. Most relevant: SPRINT-04-6-RESTAURANT-OPS-FOUNDATION.md (77 lines, polling 7-10s not websockets), SPRINT-04-4-ORDER-LIFECYCLE-ARCHITECTURE.md (317 lines, §4.2 specifies kitchen queue read API), POS-BILLING-FOUNDATION.md (83 lines, confirms DB-R5 kitchen ticket creation on same confirm path), ROS_CURRENT_STATE_ASSESSMENT_2026-07-25.md (classifies both /admin/kitchen + /admin/kitchen-dashboard as "Partially Implemented"; documents three parallel kitchen UIs as known debt).
+- Confirmed NO dedicated kitchen architecture doc exists — same shape as Phase 7 finding that NO dedicated POS ADR existed. Kitchen design currently lives across SPRINT-04-4, SPRINT-04-6, POS-BILLING-FOUNDATION.md, and partially under ADR-018/019/024.
+- Inventoried 26 ADRs under docs/13-adr/ (ADR-001 through ADR-026). 6 ADRs touch kitchen surface: ADR-018 (Order Lifecycle — §5 lists kitchen_tickets as verified table; §2 transition matrix confirmed→preparing→ready), ADR-019 (RBAC — kitchen role alias + ASSIGNABLE_STAFF_ROLES), ADR-024 (Dine-in Bill Settlement — §3 confirms Option B auto-link: order→confirmed→attachConfirmedDineInOrderToBill→kitchen_ticket created), ADR-001 (Branch Config — "kitchen lead time"), ADR-002 (Settings Versioning — "kitchen lead times"), ADR-023 (POS Cashier — dine-in order placement outcome includes kitchen ticket creation). NO dedicated kitchen ADR exists.
+- Inventoried 2 kitchen-related migrations under supabase/migrations/ (both already in Production):
+  - 20260718160000_db_r5_kitchen_tickets.sql (244 lines): kitchen_tickets + kitchen_ticket_items tables, status enum (queued|accepted|preparing|ready|completed|cancelled), priority int default 0, sequence_number int nullable, 4 RLS policies, enforce_kitchen_ticket_branch_match trigger, current_user_can_access_kitchen_tickets SECURITY DEFINER helper. Explicit deferred comment: "kitchen_stations / station routing — Phase 8 / later slice."
+  - 20260730230000_kitchen_recipe_stock_consume.sql (224 lines): menu_item_inventory_components table, kitchen_ticket_set_preparing_atomic RPC (atomic stock consume on preparing transition), movement_type='sale' addition.
+- Confirmed Production DB tip = 20260821000000_adr_016_017_otp.sql (Phase 3 OTP). NO newer kitchen migrations exist beyond these two.
+- Inventoried backend kitchen code under backend/api/src/:
+  - Modules: modules/kitchen/routes.ts (99 lines, 2 routes: GET /api/v1/kitchen/tickets, PATCH /tickets/:id/status). NOTE: modules/admin/kitchen.ts does NOT exist — kitchen module lives under modules/kitchen/, not modules/admin/.
+  - Services: services/kitchen/tickets.ts (605 lines — KitchenTicketsService with listTickets, transitionTicket, createKitchenTicketForConfirmedOrder, cancelKitchenTicketForOrder, assertKitchenActor, assertBranchInScope); services/kitchen/transitions.ts (95 lines — KITCHEN_TICKET_STATUSES, KITCHEN_TICKET_FINAL_STATUSES, ALLOWED_TRANSITIONS matrix, ORDER_STATUS_MIRROR, planKitchenTicketTransition).
+  - Order lifecycle wiring: services/orders/management.ts (889 lines — lines 805-818 call createKitchenTicketForConfirmedOrder on order→confirmed, cancelKitchenTicketForOrder on order→cancelled).
+  - Wiring: app-dependencies.ts (KitchenTicketsService factory), modules/index.ts (/api/v1/kitchen route), main.ts (NO kitchen lifecycle job — request-driven).
+- Inventoried frontend kitchen code under apps/website/client/src/:
+  - 2 admin pages: AdminKitchen.tsx (435 lines, owner ERP, 8s polling, 8 KPIs, PARTIAL_LIVE); AdminKitchenDashboard.tsx (622 lines, kitchen manager KDS, 8s polling, 7 KPIs, 4 view modes).
+  - 10 components under components/admin/kitchen/ (1386 lines total): KitchenBoard (112 — 4-column queue), KitchenCard (181 — per-ticket card with timer pill + priority badges + items list), KitchenDetailsPanel (260 — right-side drawer), KitchenFilters (161), KitchenInsights (116 — Mianx.ai rule-based only), KitchenKPIs (122 — 8 KPI cards), KitchenManagerShell (217 — kitchen-only nav with live Karachi clock + sync badge), KitchenPerformance (86), KitchenStationsPanel (48 — collapsed <details> with 5 display-only stations), KitchenTimeline (83).
+  - 2 helper libs: lib/admin-kitchen.ts (208 lines — constants, elapsedMinutes, ticketTimerStartIso, timerTone, priorityBadges, nextKitchenActions, averagePrepMinutes); lib/ops-api.ts (lines 57-179 — KitchenTicket type + listKitchenTickets + patchKitchenTicketStatus).
+  - 3 access helpers: lib/admin-access.ts + lib/staff-access.ts (canAccessKitchen, canAccessAdminKitchen, canAccessKitchenManagerDashboard, isKitchenOnly).
+- Three parallel kitchen surfaces (RC1 known limitation): /admin/kitchen (Owner ERP), /admin/kitchen-dashboard (Kitchen Manager KDS), /ops/kitchen (ops command path). Routes wired in App.tsx lines 185 + 204.
+- NO Supabase Realtime channels anywhere in kitchen code. Polling: 8s on both surfaces. Clock tick: 30s on AdminKitchen, 15s on AdminKitchenDashboard.
+- Inventoried kitchen-related tests:
+  - Database: tests/database/db-r5-kitchen-tickets.test.mjs (119 lines, 9 tests); tests/database/rc4-inventory-recipes.test.mjs (36 lines, 2 tests asserting kitchen_ticket_set_preparing_atomic is sole consume trigger).
+  - Backend: backend/api/tests/kitchen-tickets.test.ts (418 lines, 5 tests); backend/api/tests/kitchen-tickets.authz.test.ts (164 lines, 4 tests); backend/api/tests/kitchen-transitions.test.ts (44 lines, 4 tests).
+  - Website: tests/website/admin-kitchen-display-v1.test.mjs (70 lines, 5 tests); tests/website/admin-kitchen-manager-dashboard-v1.test.mjs (111 lines, 8 tests); tests/website/kitchen-completion-rc2.test.mjs (128 lines, 9 tests).
+  - E2e: NO dedicated kitchen playwright spec. Kitchen surfaces appear in 11 e2e specs as role/route smoke checks (d4/role-matrix, d3/dashboard-smoke, d3/failure-states, rc5/owner-critical-smoke, rc5/owner-command-center-integration, rc5/owner-smoke-readonly.guard, polish-qa/multi-role, polish-qa/certification, dashboard-ux/task-based-acceptance, opening/opening-scope-full, menu/canonical-menu-price-journey).
+  - Playwright configs: NO playwright.kitchen.config.ts exists. 21 other playwright configs present.
+- Production verification: DB tip 20260821000000 confirmed. Both kitchen migrations already in Production (precede tip). scripts/phase_5_verify.py checks kitchen_tickets existence (Phase 5 63/63 PASS). scripts/phase_7_verify.py checks kitchen_tickets + kitchen_ticket_items existence (Phase 7 closeout, 105+ checks PASS). scripts/phase_8_verify.py: DOES NOT EXIST — next agent should author.
+- Gap analysis (Phase 8 = Kitchen queue · KOT · Preparing/ready · Timers · Item status · Priority · Branch isolation):
+  - ✅ Kitchen queue — DONE: GET /api/v1/kitchen/tickets, KitchenBoard 4-column queue, 8s polling, branch scope enforced. GAP: NO realtime (8s polling only, explicit non-goal).
+  - ⚠️ KOT (Kitchen Order Ticket) — PARTIAL: kitchen_tickets + kitchen_ticket_items tables with item_name_snapshot + modifiers_snapshot + is_completed. Frontend renders items+modifiers. GAPS: NO KOT print format, NO sequence_number population (always null), NO print endpoint, NO fiscal printer, "KOT" terminology NOT used as domain label. All labeled "Planned for Phase 2".
+  - ✅ Preparing/ready — DONE: Both in KITCHEN_TICKET_STATUSES enum. Full transition matrix with cancelled branches. ORDER_STATUS_MIRROR maps preparing/ready/cancelled onto orders.status. started_at set on preparing via atomic RPC, ready_at set on ready.
+  - ⚠️ Timers — PARTIAL: Client-side elapsed from startedAt→acceptedAt→createdAt fallback chain. Display thresholds PREP_WARN=15m / PREP_TARGET=20m as client constants. GAPS: NO server-side SLA, NO late-alert events, NO audible alarm, NO push notifications.
+  - ⚠️ Item status — PARTIAL: is_completed boolean EXISTS on kitchen_ticket_items. Fetched by frontend. GAPS: NO endpoint to mutate per-item status, NO UI affordance to tick items complete, is_completed always false in practice.
+  - ⚠️ Priority — PARTIAL: priority integer column EXISTS (default 0). Frontend derives normal/high/delayed badges from priority + elapsed. GAPS: NO backend endpoint to set priority, NO channel-based auto-priority computation, NO manual VIP/urgent escalation, sequence_number never set, priority always 0 in practice.
+  - ✅ Branch isolation — DONE: RLS enabled on kitchen_tickets + kitchen_ticket_items. current_user_can_access_kitchen_tickets helper (kitchen/branch-manager only, denies rider/cashier/customer). enforce_kitchen_ticket_branch_match trigger. Backend assertKitchenActor + assertBranchInScope defense-in-depth. Cross-branch transition returns 403 KITCHEN_ACCESS_DENIED.
+- Summary: 3 DONE (queue, preparing/ready, branch isolation), 4 PARTIAL (KOT, timers, item status, priority), 0 NOT STARTED. All PARTIAL gaps are explicitly labeled as deferred in the as-built UI (RC1 + ROS Current State Assessment accept these as known limitations).
+- Recommended ADRs for Phase 8 closeout (current highest = ADR-026; recommend 3 new ADRs — ADR-027/028/029, all elevation-of-existing-design, NO IMPLEMENTATION REQUIRED flags):
+  - ADR-027 — Kitchen Ticket Lifecycle & Queue Contract: elevation of as-built design (kitchen_tickets + kitchen_ticket_items schema, status machine queued→accepted→preparing→ready→completed|cancelled, ALLOWED_TRANSITIONS matrix, ORDER_STATUS_MIRROR mapping, idempotent transition contract, API surface, branch isolation via RLS + helpers, polling-not-realtime contract).
+  - ADR-028 — Kitchen Order Ticket (KOT) Snapshot & Per-Item Status Model: elevation of KOT data (kitchen_ticket_items with frozen snapshots, idempotent Option B creation on order confirm, atomic stock consume on preparing via kitchen_ticket_set_preparing_atomic RPC, per-item is_completed DEFERRED for mutation API + UI prep ticks, sequence_number DEFERRED for KOT numbering, print format + fiscal printer DEFERRED — same pattern as Phase 7 receipts deferral).
+  - ADR-029 — Kitchen Timers, Priority & Display Contract: elevation of display contract (client-side elapsed timer from fallback chain, display thresholds as client constants not SLA, priority integer field DEFERRED for mutation endpoint + channel-based auto-priority, KITCHEN_STATION_CATALOG display-only DEFERRED for kitchen_stations table + ticket-to-station routing API, NO realtime/sounds/bump/recall deferred per RC1).
+
+Stage Summary:
+- ✅ Phase 8 (Kitchen Dashboard) audit complete. Comprehensive inventory of 22 architecture docs touching kitchen, 26 ADRs (6 touch kitchen surface but NONE is kitchen-dedicated), 2 kitchen migrations (both already in Production), 2 backend modules + 2 services + order lifecycle wiring, 2 admin pages (1057 lines) + 10 components (1386 lines) + 2 helper libs, 8 kitchen-specific test files (46 tests) + 11 e2e specs touching kitchen as smoke.
+- ✅ Production DB tip confirmed: 20260821000000_adr_016_017_otp.sql. Both kitchen migrations (20260718160000 DB-R5 + 20260730230000 recipe stock consume) already in Production.
+- ✅ Gap analysis complete. Of 7 Phase 8 sub-areas: 3 DONE (queue, preparing/ready, branch isolation), 4 PARTIAL (KOT, timers, item status, priority), 0 NOT STARTED. All PARTIAL gaps are explicitly labeled as deferred in the as-built UI.
+- ✅ 3 ADRs recommended for Phase 8 closeout: ADR-027 (Kitchen Ticket Lifecycle & Queue Contract), ADR-028 (KOT Snapshot & Per-Item Status Model), ADR-029 (Kitchen Timers, Priority & Display Contract). All elevation-of-existing-design — NO IMPLEMENTATION REQUIRED.
+- ⏳ PENDING (next agent): Author ADR-027/028/029 as standalone markdown files under docs/13-adr/; update docs/00-governance/ADR_INDEX.md; author scripts/phase_8_verify.py (105+ checks); write docs/testing/acceptance-evidence/phase8-closeout/PHASE8_FINAL_GATE.md; update docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md Phase 8 row; update docs/00-governance/REPOSITORY_STATUS.md + CHANGELOG.md + docs/releases/v2.3.0_RELEASE_NOTES.md; write 4 PR/merge/tag/release scripts; open PR, merge, tag v2.3.0, publish GitHub Release.
+- **Phase 8 status**: AUDIT COMPLETE. Ready for closeout ADR authoring + verification. No new code or migrations are required for closeout (Phase 8 is largely already implemented in code + Production — gap is formal ADR elevation, same shape as Phase 5, 6, and 7 closeouts).

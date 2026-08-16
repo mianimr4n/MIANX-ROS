@@ -164,7 +164,24 @@ Dine-in/takeaway/delivery · Cashier · Payments · Receipts · Shifts · Cash r
 
 Kitchen queue · KOT · Preparing/ready · Timers · Item status · Priority · Branch isolation
 
-**Status:** Not started · **Requires Slice 2D + lifecycle APIs**
+**Status:** ✅ COMPLETE (v2.3.0) — Production-verified (closeout-only, no new migrations; reuses Phase 5/6/7 baseline `20260821000000`)
+
+**Close report:** `docs/testing/acceptance-evidence/phase8-closeout/PHASE8_FINAL_GATE.md`
+**Formal ADRs:**
+- `docs/13-adr/ADR-027-kitchen-ticket-lifecycle-queue-contract.md` (v2.3.0) — kitchen ticket lifecycle + queue contract (one ticket per order, 6-state machine, ORDER_STATUS_MIRROR, polling-not-realtime)
+- `docs/13-adr/ADR-028-kot-snapshot-per-item-status.md` (v2.3.0) — KOT snapshot model + atomic stock consume via `kitchen_ticket_set_preparing_atomic` RPC
+- `docs/13-adr/ADR-029-kitchen-timers-priority-display-contract.md` (v2.3.0) — kitchen timers, priority, display contract (PREP_WARN=20m / PREP_TARGET=15m client constants)
+
+**Work items:**
+- ✅ Kitchen queue (4-column board on KDS, 8s polling, branch-scoped `GET /api/v1/kitchen/tickets`)
+- 🟡 KOT (data model complete — `kitchen_ticket_items` with frozen snapshots; print format + sequence_number + fiscal printer DEFERRED)
+- ✅ Preparing/ready (6-state machine: queued→accepted→preparing→ready→completed|cancelled; `ORDER_STATUS_MIRROR` maps preparing/ready/cancelled onto `orders.status`)
+- 🟡 Timers (client-side elapsed from `startedAt→acceptedAt→createdAt` fallback chain; PREP_WARN=20m / PREP_TARGET=15m display constants; server-side SLA tracking + late-alert events DEFERRED)
+- 🟡 Item status (`is_completed` boolean column EXISTS on `kitchen_ticket_items`; mutation API + UI prep ticks DEFERRED)
+- 🟡 Priority (`priority` integer column EXISTS with default 0; mutation endpoint + channel-based auto-priority DEFERRED)
+- ✅ Branch isolation (RLS enabled on `kitchen_tickets` + `kitchen_ticket_items`; `current_user_can_access_kitchen_tickets` helper denies rider/cashier/customer; `enforce_kitchen_ticket_branch_match` trigger; backend `assertKitchenActor` + `assertBranchInScope` defense in depth)
+
+**Deferred to future ADRs:** per-item prep ticks, KOT print format + fiscal printer, server-side SLA + late-alert events, priority mutation endpoint + auto-priority, `kitchen_stations` table + station routing, realtime updates (Supabase Realtime channels), audible alarms / bump-bar / recall, AI-driven kitchen prediction. Each has an explicit trigger condition in ADR-027 §8 / ADR-028 §4-5 / ADR-029 §2-4,7-8.
 
 ---
 
@@ -237,9 +254,9 @@ PRODUCTION V1.0 = LIVE
 
 | Now | Next |
 |---|---|
-| Phase 7 **PASS AND CLOSED** (v2.2.0) | **Phase 8** — Kitchen Dashboard |
+| Phase 8 **PASS AND CLOSED** (v2.3.0) | **Phase 9** — Rider and Delivery App |
 | Phase 3 eng paused | Ops continues Meta/Twilio in parallel |
-| Phase 8 implementation | After Phase 7 close (UNLOCKED) |
+| Phase 9 implementation | After Phase 8 close (UNLOCKED) |
 
 ---
 

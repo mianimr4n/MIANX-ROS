@@ -10,6 +10,181 @@ For full release notes see [`docs/releases/`](./docs/releases/) and
 
 ---
 
+## [2.3.0] — 2026-08-16 — Phase 8 Complete (Kitchen Dashboard)
+
+**Phase 8 — Kitchen Dashboard — is FEATURE-COMPLETE and Production-verified.**
+
+This release ships **3 ADRs**: ADR-027 (Kitchen Ticket Lifecycle & Queue
+Contract), ADR-028 (Kitchen Order Ticket (KOT) Snapshot & Per-Item Status
+Model), and ADR-029 (Kitchen Timers, Priority & Display Contract). All 29
+ADRs (ADR-001 through ADR-029) are now Accepted v1.0 with standalone ADR
+markdown files under `docs/13-adr/`.
+
+Phase 8 is a **closeout phase**: the underlying code has been in Production
+since Sprint 4.5 / 4.6 (DB-R5 `20260718160000`, July 2026) and extended with
+recipe stock consume (`20260730230000`, July 2026). Two parallel kitchen UIs
+ship in Production: the owner/admin ERP view at `/admin/kitchen` (435 lines)
+and the kitchen-manager full-screen KDS at `/admin/kitchen-dashboard`
+(622 lines). 10 supporting components under `components/admin/kitchen/`
+(1386 lines total) and 2 helper libs (208 + ops-api.ts). This phase formally
+accepts the as-built kitchen architecture via the 3 new ADRs and provides a
+kitchen-focused verification script (`scripts/phase_8_verify.py`) with 70+
+checks across 10 categories. **No new database migrations** — Phase 8 is
+documentation + verification only. The Production DB tip remains
+`20260821000000` (same as Phase 5/6/7 closeouts).
+
+Backend tests: **1096 passing** (unchanged from v2.2.0 — no new code, only
+ADRs and verification script). Phase 9 (Rider and Delivery App) is now
+UNLOCKED.
+
+### ADR-027 — Kitchen Ticket Lifecycle & Queue Contract
+
+- Formally accepts the as-built kitchen ticket lifecycle: one ticket per
+  order (`kitchen_tickets.order_id UNIQUE`), 6-state status machine
+  (`queued → accepted → preparing → ready → completed | cancelled`),
+  `ALLOWED_TRANSITIONS` matrix, `ORDER_STATUS_MIRROR` mapping
+  (preparing/ready/cancelled onto `orders.status`), idempotent transition
+  contract (`idempotentReplay` flag — no duplicate audit logs), and API
+  surface (`GET /api/v1/kitchen/tickets`, `PATCH /tickets/:id/status`).
+- Documents branch isolation boundary: 3 layers (RLS + helper + service
+  defense in depth). `current_user_can_access_kitchen_tickets(p_branch_id)`
+  SECURITY DEFINER helper denies rider/cashier/customer; only kitchen +
+  branch-manager + super-admin pass.
+- Locks the **polling-not-realtime contract**: 8s polling on both
+  `/admin/kitchen` and `/admin/kitchen-dashboard`. NO Supabase Realtime
+  channels on `kitchen_tickets` or `kitchen_ticket_items`. Realtime is
+  an explicit non-goal with trigger condition (kitchen device count
+  > 20 per branch OR customer-facing order tracker requires sub-second
+  kitchen status updates).
+
+### ADR-028 — Kitchen Order Ticket (KOT) Snapshot & Per-Item Status Model
+
+- Formally accepts the as-built KOT data model: `kitchen_ticket_items`
+  table with frozen `item_name_snapshot` (text NOT NULL — NOT a FK to
+  `menu_items`) + `modifiers_snapshot` (JSONB default `'[]'`) + `quantity`
+  + `is_completed` boolean. UNIQUE on `(kitchen_ticket_id, order_item_id)`
+  prevents duplicate snapshots.
+- Documents idempotent Option B creation on order confirm:
+  `createKitchenTicketForConfirmedOrder(supabase, orderId)` in
+  `services/kitchen/tickets.ts` — sole entry point for ticket creation.
+  Unique violation (PostgreSQL `23505`) is caught as idempotent no-op.
+  NO database trigger — DB-R5 migration explicitly chose Option B.
+- Locks the atomic stock consume contract: `kitchen_ticket_set_preparing_atomic`
+  SECURITY DEFINER RPC (migration `20260730230000`) performs `SELECT FOR UPDATE`
+  + idempotent replay + transition guard + recipe aggregation +
+  stock sufficiency check + `stock_movements` insert + `inventory_items`
+  decrement + ticket status update + order status mirror — all in a
+  single transaction. Service-role only.
+- **Defers** per-item prep ticks (`PATCH /tickets/:id/items/:itemId` endpoint
+  + UI checkbox affordance) — `is_completed` column EXISTS but is always
+  false in V1. Trigger: when operators request per-item prep tracking.
+- **Defers** KOT print format + `sequence_number` population + fiscal
+  printer integration — same pattern as Phase 7 receipts deferral.
+  Trigger: when printer hardware is in scope (likely ADR-030+ when authored).
+
+### ADR-029 — Kitchen Timers, Priority & Display Contract
+
+- Formally accepts the as-built display contract: client-side elapsed timer
+  from `ticketTimerStartIso()` fallback chain (`startedAt → acceptedAt →
+  createdAt`). Display thresholds `PREP_WARN_MINUTES=20` and
+  `PREP_TARGET_MINUTES=15` as client constants (NOT server-side SLA).
+  `timerTone()` returns green (0-14m) / yellow (15-19m) / red (20m+).
+- Documents the priority field contract: `priority` integer column EXISTS
+  with default 0. `priorityBadges(priority, minutesElapsed)` returns
+  `["normal"]` for fresh tickets, `["delayed"]` for tickets > 20m, and
+  `["high", "delayed"]` if both conditions are met. **However, priority
+  is always 0 in V1** — no mutation endpoint exists, no channel-based
+  auto-priority on ticket create. Trigger: when operators request manual
+  VIP/urgent escalation.
+- Locks the `KITCHEN_STATION_CATALOG` as display-only: 5 stations
+  (pizza/oven/packing/drinks/desserts) hardcoded in `lib/admin-kitchen.ts`.
+  `KitchenStationsPanel.tsx` renders as collapsed `<details>` with
+  `data-testid="kitchen-stations-deferred"`. Trigger: when operators
+  request per-station ticket routing (requires `kitchen_stations` table
+  + ticket-to-station routing API).
+- **Defers** server-side SLA tracking + `emit_domain_event('kitchen.ticket_late')`
+  + audible alarms + push notifications — RC1 accepted limitation. Trigger:
+  when operators require automated escalation to branch-manager on delayed
+  tickets.
+- **Defers** AI-driven kitchen prediction — `KitchenInsights.tsx` is
+  rule-based only (no LLM call, no autonomous action). Trigger: when
+  operators request predictive SLA alerts AND the ADR-013 AI provider
+  boundary is integrated with kitchen domain events.
+
+### Production verification matrix (70+ checks / 10 categories)
+
+`scripts/phase_8_verify.py` performs 70+ checks across 10 categories:
+
+1. **Kitchen tables** (6 checks): `kitchen_tickets`, `kitchen_ticket_items`,
+   `menu_item_inventory_components`, `stock_movements`, `inventory_items`,
+   `inventory_movements`.
+2. **Kitchen-related order/inventory tables** (12 checks): `orders`,
+   `order_items`, `order_status_logs`, `inventory_items`, `branches`,
+   `users`, `roles`, `permissions`, `role_permissions`, `user_roles`,
+   `menu_items`, `menu_item_variants`.
+3. **CHECK constraints** (4 checks): `kitchen_tickets.status` (all 6
+   statuses), `kitchen_ticket_items.quantity > 0`,
+   `menu_item_inventory_components.quantity_per_unit > 0`,
+   `stock_movements.movement_type` includes `'sale'`.
+4. **Triggers + functions** (8 checks): `enforce_kitchen_ticket_branch_match`,
+   `trg_kitchen_tickets_branch_match`, `current_user_can_access_kitchen_tickets`,
+   `set_kitchen_tickets_updated_at`, `kitchen_ticket_set_preparing_atomic`
+   (SECURITY DEFINER verified), `inventory_reverse_kitchen_consumption_atomic`.
+5. **RLS enabled** (5 checks): RLS on `kitchen_tickets`, `kitchen_ticket_items`,
+   `menu_item_inventory_components`; 2 policies each on `kitchen_tickets`
+   + `kitchen_ticket_items` (SELECT + UPDATE).
+6. **Kitchen role + permissions** (2 checks): `kitchen` role exists; kitchen
+   user count (assignable).
+7. **Kitchen actor authz** (3 checks): helper function source denies rider,
+   restricts to kitchen + branch-manager, requires `user_type <> 'customer'`.
+8. **Idempotency UNIQUE indexes** (3 checks): `kitchen_tickets.order_id`
+   UNIQUE, `kitchen_ticket_items` UNIQUE on `(kitchen_ticket_id, order_item_id)`,
+   `menu_item_inventory_components` UNIQUE on `(menu_item_id, inventory_item_id)`.
+9. **API surface prerequisites** (11 checks): `accepted_by_user_id` FK to
+   `public.users`; 4 timestamp columns (accepted_at, started_at, ready_at,
+   completed_at); `priority` integer default 0; `sequence_number` integer
+   nullable; `is_completed` boolean default false; `item_name_snapshot` text
+   NOT NULL; `modifiers_snapshot` jsonb default `'[]'`.
+10. **Timezone + display contract** (8 checks): `branches.timezone` default
+    `'Asia/Karachi'`; 3 indexes on `kitchen_tickets`; 1 index on
+    `kitchen_ticket_items`; 2 indexes on `menu_item_inventory_components`;
+    table comment mentions "stations deferred".
+
+### Deferred items (with explicit trigger conditions)
+
+| Concern | Deferred to | Trigger |
+|---|---|---|
+| Per-item prep ticks | ADR-028 §4 | Operators request per-item prep tracking |
+| KOT print + sequence_number + fiscal printer | ADR-028 §5 | Print format specified + printer hardware in scope |
+| Server-side SLA + late-alert events | ADR-029 §2 | Operators require automated escalation on > 20m |
+| Priority mutation endpoint + auto-priority | ADR-029 §3 | Operators request VIP/urgent escalation |
+| `kitchen_stations` table + routing | ADR-029 §4 | Operators request per-station ticket routing |
+| Realtime updates | ADR-027 §8 | Kitchen device count > 20 per branch |
+| Audible alarms / bump-bar / recall | ADR-029 §8 | Hardware/display-pairing in scope |
+| AI-driven kitchen prediction | ADR-029 §7 | Operators request predictive SLA + ADR-013 integration |
+
+### Pending operator actions
+
+| # | Follow-up | Status |
+|---|---|---|
+| FU-3 | Set `TELEPIZZA_WHATSAPP_MODE=mock` + `TELEPIZZA_WHATSAPP_WORKER=1` on Render | Pending |
+| FU-7 | Set `OTP_HMAC_SECRET` on Render (32+ byte random string) | Pending |
+| FU-4 | Configure `chart_of_accounts` rows per branch (`CASH` + `ACCOUNTS_RECEIVABLE`) | Pending |
+| FU-5 | Configure Supabase Storage bucket `delivery-pod` | Pending |
+| FU-8 | Provision dedicated "Telepizza Login" WhatsApp number | Pending |
+| FU-11 | Configure `finance_account_mappings` rows per branch for POS | Pending |
+| FU-13 (NEW) | Seed `menu_item_inventory_components` rows per branch for kitchen atomic stock consume — without these, `kitchen_ticket_set_preparing_atomic` will not deduct any stock on preparing transition. Per-branch data configuration task coordinated with the head chef and store manager. | Pending |
+
+### Phase 9 unlock
+
+Phase 9 (Rider and Delivery App) is **UNLOCKED**. Dependencies satisfied:
+Order Lifecycle (ADR-018), RBAC (ADR-019), Delivery State Machine (ADR-007),
+Rider Location (ADR-008), POD (ADR-009), COD (ADR-010), Kitchen Ticket
+Lifecycle (ADR-027), KOT Snapshot (ADR-028). Phase 9 will likely be another
+closeout-only release elevating the as-built rider surface to formal ADRs.
+
+---
+
 ## [2.2.0] — 2026-08-16 — Phase 7 Complete (POS System)
 
 **Phase 7 — POS System — is FEATURE-COMPLETE and Production-verified.**
