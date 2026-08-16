@@ -1054,3 +1054,42 @@ Stage Summary:
 - ⏳ Next: commit + push + open PR + wait CI + merge + tag v2.7.1 + GitHub Release.
 - ⏳ After: Begin Phase 13 audit + ADR drafting.
 
+
+---
+Task ID: dashboard-status-refresh-v2.7.1-shipped
+Agent: main
+Task: Ship dashboard & status docs refresh v2.7.1 — open PR, wait CI, merge, tag, GitHub Release.
+
+Work Log:
+- Committed dashboard-status-refresh-v2.7.1 work as d76af3d (9 files changed, 763 insertions, 208 deletions).
+- Diagnosed branch state issue (same as Phase 11/12): commit went to local main instead of dashboard-status-refresh-v2.7.1 branch. Fixed via `git branch -f dashboard-status-refresh-v2.7.1 d76af3d` + `git reset --hard origin/main` + force-push.
+- Opened PR #240 via scripts/open_pr_dashboard_refresh.py. Head SHA: d76af3d04484e89c48abceed4d017be79c13515e.
+- Polled CI via direct GitHub API. After ~3 min wait, all 6/6 CI checks PASS:
+  - CodeQL: ✅ success
+  - Vercel Preview Comments: ✅ success
+  - Typecheck and test: ✅ success
+  - Owner Playwright: ✅ success (longest-running check)
+  - Analyze (javascript-typescript): ✅ success
+  - Dependency Scan (pnpm audit): ✅ success
+- Merged PR #240 via scripts/merge_pr_dashboard_refresh.py (squash merge). Merge commit: 791ce891524cac016c751ac2c5559e4a5810cafe.
+- Fetched origin/main locally (f1932ab..791ce89).
+- Created annotated tag v2.7.1 on 791ce89 via scripts/create_v2_7_1_tag_and_release.py. Tag object: 56e0dcdd724c970ce4ecdcf2c86641cfa6903c82.
+- Created GitHub Release v2.7.1 at https://github.com/mianimr4n/telepizza/releases/tag/v2.7.1 (Release ID 371340401) with full release notes body covering headline + 6 file refresh subsections + auxiliary files + verification + compatibility + Phase 13 unlock.
+- Synced local main to origin/main (791ce89). Fetched v2.7.1 tag locally.
+
+Stage Summary:
+- ✅ **Dashboard & Status Docs Refresh v2.7.1 is COMPLETE & SHIPPED.** PR #240 merged as 791ce89. Tag v2.7.1 pushed. GitHub Release v2.7.1 published at https://github.com/mianimr4n/telepizza/releases/tag/v2.7.1.
+- ✅ **6 stale owner-facing docs reconciled** to Phase 12 baseline:
+  - README.md (root)
+  - docs/README.md
+  - docs/DOCUMENTATION_MAP.md
+  - docs/00-governance/PROJECT_STATUS.md
+  - docs/17-releases/RELEASE_HISTORY.md
+  - docs/testing/DASHBOARD_AUDIT_REPORT.md
+- ✅ **2 auxiliary files added**: docs/releases/v2.7.1_RELEASE_NOTES.md (~180 lines) + CHANGELOG.md [2.7.1] entry.
+- ✅ **6/6 CI checks PASS** on PR #240 (CodeQL, Vercel Preview, Typecheck and test, Owner Playwright, Analyze, Dependency Scan). No CI failures — clean docs-only PR.
+- ✅ **Docs-only release** — no new code, no migration, no ADRs. Production DB tip unchanged at 20260821000000.
+- ✅ **All 41 ADRs remain Accepted v1.0.** No ADR changes in this release.
+- ✅ **Phase 13 (AI and Automation) remains UNLOCKED.** No dependency changes.
+- **Dashboard refresh status**: COMPLETE & SHIPPED. Repository main now 791ce89. Production DB tip 20260821000000 (unchanged). All 41 ADRs Accepted v1.0. Next major workstream: Phase 13 (AI and Automation) — UNLOCKED. User instruction was to update dashboard first, THEN start Phase 13 — dashboard is now updated.
+
