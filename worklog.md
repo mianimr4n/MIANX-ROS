@@ -1582,3 +1582,76 @@ Stage Summary:
 - ⏳ **Next: ADR-042 drafting** (Demand Forecasting & Inventory Prediction — Phase 13.1).
 - ⏳ **Operator action: execute FU-12** — provision OpenAI + Anthropic API keys + seed ai_provider_configs rows + smoke-test proxy.
 - **Phase 13 status**: 13.0 SHIPPED. 13.1-13.6 IN PROGRESS. Repository main unchanged (5ba2baf) — work on local branch.
+
+---
+Task ID: phase-13.0-foundational-shipped
+Agent: main
+Task: Ship Phase 13.0 Foundational Build — open PR, wait CI, merge, tag v3.0.0-rc.1.
+
+Work Log:
+- Staged 11 files (5 new + 6 modified): provider-proxy.ts + ai-provider-proxy.test.ts + FU-12-ai-provider-keys.md + PHASE-13-PLANNING.md (§12 added) + env.ts (aiMode wiring) + .env.example + 4 whatsapp/rc3 test makeEnvStatus fixes + worklog append.
+- Created phase-13.0-foundational branch from main (HEAD: fc3f9eb).
+- Diagnosed branch state issue: committed feat(phase-13.0) to local main by accident (reflog showed HEAD@{1} was a checkout back to main BEFORE the commit). Cherry-picked a686c89 onto phase-13.0-foundational as 8c2f790, then reset local main to fc3f9eb, then force-pushed phase-13.0-foundational.
+- Opened PR #242 via scripts/open_pr_phase_13_0_foundational.py. Head SHA: 8c2f7903baf8074527858070bf0d8765478e7a2b. mergeable_state=blocked initially.
+- Polled CI via scripts/wait_pr_phase_13_0_ci.py (extended timeout to 25 min). After ~5 min wait (longer than v2.7.1 due to Analyze + Owner Playwright running longer on a code PR), all 6/6 CI checks PASS:
+  - CodeQL: ✅ success
+  - Vercel Preview Comments: ✅ success
+  - Typecheck and test: ✅ success (longest-running check — runs the full 1115-test backend suite)
+  - Owner Playwright: ✅ success (~5 min)
+  - Dependency Scan (pnpm audit): ✅ success
+  - Analyze (javascript-typescript): ✅ success
+- Merged PR #242 via scripts/merge_pr_phase_13_0.py (squash merge). Merge commit: f471d579fb2feb6c9f1e24e3f2c3062aac790549. 12 files changed, +1718/-5 (slight delta vs my staged 11 files because the squash also captured the existing scripts/merge_pr_phase_13_planning.py helper that was on main from PR #241).
+- Synced local main to origin/main (4442dab..f471d57). Local main now at f471d57.
+- Created tag v3.0.0-rc.1 at f471d57 + published as GitHub Release (prerelease=true). Release URL: https://github.com/mianimr4n/telepizza/releases/tag/v3.0.0-rc.1
+
+Stage Summary:
+- ✅ **Phase 13.0 Foundational Build is COMPLETE & SHIPPED.** PR #242 merged as f471d57.
+- ✅ **provider-proxy.ts (~600 lines)** — the foundational AI HTTP client. Enforces all 7 ADR-013 rules + ADR-015 §1 (no raw prompts).
+- ✅ **aiMode env-var wired** into config/env.ts — 4 modes (disabled / mock / sandbox / live). Local/test defaults to "mock"; staging/production to "disabled" until FU-12 closed.
+- ✅ **FU-12 Operator Follow-up authored** — docs/15-runbooks/FU-12-ai-provider-keys.md (~220 lines, 6-step procedure + SQL + failure modes + cost guardrails + 10-item checklist).
+- ✅ **18 integration tests passing** — covering PII redaction (pre + post HTTP), all 4 aiMode values, OpenAI + Anthropic HTTP routing, rate limiting (60/min user + 120/min IP), provider-not-configured + missing-API-key failure paths.
+- ✅ **4 existing test files updated** to add aiMode to makeEnvStatus() helpers (rc3-supplier-portal + 3 whatsapp tests).
+- ✅ **PHASE-13-PLANNING.md updated** with §12 "Phase 13.0 Foundational Build — SHIPPED" section.
+- ✅ **Backend test suite: 101 files / 1115 tests PASSING** (up from 1096 in Phase 12 closeout — +19 net new).
+- ✅ **TypeScript check: clean** (0 errors).
+- ✅ **6/6 CI checks PASS** on PR #242.
+- ✅ **v3.0.0-rc.1 tag + GitHub Release published** (prerelease=true). First release candidate for Phase 13.
+- ⏳ **FU-12 OPEN** — operator must provision OpenAI + Anthropic API keys + seed ai_provider_configs rows + smoke-test the proxy (runbook at docs/15-runbooks/FU-12-ai-provider-keys.md).
+- ⏳ **Next: ADR-042 drafting** (Demand Forecasting & Inventory Prediction — Phase 13.1).
+- **Phase 13 status**: 13.0 SHIPPED. 13.1-13.6 IN PROGRESS. Repository main now at f471d57. Production DB tip unchanged at 20260821000000.
+
+---
+Task ID: fu-12-tabletop-execution
+Agent: main
+Task: Execute FU-12 Operator Follow-up (provision OpenAI + Anthropic API keys + seed ai_provider_configs rows + smoke-test the proxy). Runbook at docs/15-runbooks/FU-12-ai-provider-keys.md. Executed locally in mock mode (sandboxed env — no real OpenAI/Anthropic/Supabase/Vercel access); production items still pending real operator action.
+
+Work Log:
+- Read worklog.md tail (phase-13.0-foundational-shipped entry) — confirmed Phase 13.0 SHIPPED at f471d57, FU-12 OPEN, awaiting operator action.
+- Read docs/15-runbooks/FU-12-ai-provider-keys.md (~220 lines, 6-step procedure). Identified that the runbook prescribes different env-var configurations for production (live mode + real keys) vs local/test (mock mode + NO real keys). Local execution path is explicitly permitted by the runbook itself: "For local/test (NEVER set real keys here — local defaults to TELEPIZZA_AI_MODE=mock which never makes an HTTP call)".
+- Read backend/api/src/services/ai/provider-proxy.ts (~600 lines) to confirm: (1) mock mode returns deterministic stub + writes log row, (2) rate-limit buckets are per-actor + per-IP at 60/min + 120/min respectively, (3) provider-not-configured throws AI_PROVIDER_NOT_CONFIGURED (400) for explicit provider, AI_NO_ACTIVE_PROVIDER (503) when no provider specified.
+- Read supabase/migrations/20260820000000_adr_013_014_015_ai.sql (lines 59-93) to confirm ai_provider_configs schema (provider_code, provider_name, config_ref, base_url, default_model, max_tokens, temperature, is_active, metadata). Runbook SQL seed matches schema exactly.
+- Read backend/api/tests/ai-provider-proxy.test.ts (lines 1-200 + 460-499) to confirm existing test pattern: mock @supabase/supabase-js with tableBehavior chain builder, mock global fetch, stub promptLogService, existing tests already cover AI_PROVIDER_NOT_CONFIGURED + AI_NO_ACTIVE_PROVIDER error paths.
+- Created scripts/fu-12-seed-ai-provider-configs.sql (~80 lines): idempotent SQL seed for OpenAI + Anthropic rows with ON CONFLICT (provider_code) DO UPDATE; includes verification SELECT at the end. Production-runnable via `psql "$DATABASE_URL" -f scripts/fu-12-seed-ai-provider-configs.sql`.
+- Created backend/api/tests/fu-12-smoke.test.ts (~370 lines, 13 tests): exercises the EXACT runbook Step 4 + Step 5 flows in mock mode. Mirrors the existing ai-provider-proxy.test.ts mock pattern. Tests cover: (1) smoke call with runbook prompt "Say hello in 3 words" + provider=openai, (2) smoke call with provider=anthropic, (3) ai_call_logs row verification with success=true + non-null redactedPrompt + costUsd=0, (4) PII redaction (phone number → [PHONE]) on PII-bearing variant of smoke prompt, (5) AI_PROVIDER_NOT_CONFIGURED 400 when explicit provider has no row, (6) AI_NO_ACTIVE_PROVIDER 503 when no provider specified + none configured, (7) 65-call burst — calls 1-60 succeed + calls 61-65 throw AI_RATE_LIMIT_USER, (8) 125-call burst from 125 distinct users sharing one IP — calls 1-120 succeed + calls 121-125 throw AI_RATE_LIMIT_IP, (9) system calls (actorUserId=null) don't trip per-user bucket, (10-13) acceptance-criteria self-checks (file existence, smoke returns non-empty, log row visible, rate-limit trips at call 61).
+- Initial test run: 2 failures. (a) Wrong assertion: "Say hello in 3 words" is not PII so survives redaction unchanged — removed the incorrect `not.toContain("Say hello")` assertion and replaced with `toBe("Say hello in 3 words")` (positive verification that the redactedPrompt field carries the post-redaction string). (b) State leak: previous test's `tableBehavior.ai_provider_configs` persisted into the AI_NO_ACTIVE_PROVIDER test, so the call resolved with provider="openai" instead of throwing. Fixed by explicitly setting `tableBehavior.ai_provider_configs = { maybeSingle: async () => ({ data: null, error: null }) }` to override any leftover behavior. Also split the single failure case into TWO separate tests — one for AI_PROVIDER_NOT_CONFIGURED (explicit provider not configured, 400) and one for AI_NO_ACTIVE_PROVIDER (no provider specified + none configured, 503), matching the existing ai-provider-proxy.test.ts pattern at lines 464-493.
+- Re-ran tests: 13/13 passing in 17ms.
+- Ran full backend test suite: 102 files / 1128 tests passing (was 101 files / 1115 tests pre-FU-12 — +1 file, +13 tests). No regressions in the existing 1115 tests.
+- Ran TypeScript check (tsc --noEmit): clean, 0 errors.
+- Updated docs/15-runbooks/FU-12-ai-provider-keys.md:
+  - Status line at top: OPEN → "TABLETOP EXECUTED (2026-08-17) — local mock-mode smoke + rate-limit verified; production keys + production Supabase seed + production host env vars STILL PENDING an operator with real OpenAI/Anthropic/Supabase/Vercel access"
+  - Added "Tabletop executed" date line.
+  - Added `backend/api/tests/fu-12-smoke.test.ts` + `scripts/fu-12-seed-ai-provider-configs.sql` to Related line.
+  - Added new "## Tabletop execution record (2026-08-17)" section before "## Failure modes and recovery": per-step table (what was executed + result), artifacts produced list, "What still requires a real operator" (6 items), and "When this runbook can be flipped to CLOSED" criteria.
+  - Updated "## Acceptance criteria (close-out checklist)" at the bottom: split into two groups — 6 items verified locally (checked) + 7 items still pending real operator action (unchecked). The "Status line at top of this doc flipped from TABLETOP EXECUTED to CLOSED" item is in the pending group (NOT closed yet because production items remain).
+
+Stage Summary:
+- ✅ **FU-12 TABLETOP EXECUTED (2026-08-17)** — local mock-mode verification complete. NOT fully CLOSED — production items (real keys + real Supabase seed + real host env vars + live smoke + live rate-limit) still require an operator with real OpenAI/Anthropic/Supabase/Vercel access.
+- ✅ **SQL seed artifact saved**: scripts/fu-12-seed-ai-provider-configs.sql (~80 lines, production-runnable, idempotent, with verification SELECT).
+- ✅ **New test file**: backend/api/tests/fu-12-smoke.test.ts (~370 lines, 13 tests, runs as part of CI). Covers runbook Step 4 (smoke) + Step 5 (rate-limit) in mock mode.
+- ✅ **Backend test suite: 102 files / 1128 tests PASSING** (up from 101 files / 1115 tests — +1 file, +13 tests, 0 regressions).
+- ✅ **TypeScript check: clean** (0 errors).
+- ✅ **FU-12 runbook updated** with Tabletop execution record + acceptance criteria split (6 verified + 7 pending).
+- ⏳ **Production operator-action items still PENDING** (6 items in §"What still requires a real operator"): real API keys, prod host env vars, prod Supabase seed, live smoke test, live rate-limit test, monthly budget caps.
+- ⏳ **PR + tag pending** — runbook update + new test file + SQL seed script committed locally; awaiting user direction on whether to ship as PR (likely v3.0.0-rc.2) or hold for the next Phase 13 ADR draft.
+- ⏳ **FU-12 cannot be flipped to CLOSED** until the 6 production operator-action items are completed against real infrastructure.
+- **Phase 13 status**: 13.0 SHIPPED (v3.0.0-rc.1) + FU-12 TABLETOP EXECUTED. 13.1-13.6 IN PROGRESS. Repository main unchanged (f471d57) — work on local branch pending PR decision. Production DB tip unchanged at 20260821000000.
