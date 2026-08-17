@@ -212,6 +212,7 @@ function makeEnvStatus(overrides: Partial<EnvironmentStatus["config"]> = {}): En
       whatsappMode: "mock",
       paymentMode: "mock",
       webhookMode: "mock",
+      aiMode: "mock",
       whatsapp: {
         apiVersion: "v21.0",
         phoneNumberId: "test",

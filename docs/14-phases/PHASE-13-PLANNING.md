@@ -1,10 +1,10 @@
 # Phase 13 — AI and Automation — Planning Document
 
-**Status:** PLANNING — pending owner decisions  
-**Date:** 2026-08-16  
-**Author:** Engineering (main agent audit + Explore subagent deep-dive)  
-**Audit baseline:** Repository main `50a209a` (post-v2.7.1 dashboard refresh) · All 41 ADRs Accepted v1.0 · Production DB tip `20260821000000`  
-**Related:** `docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md` · `docs/13-adr/ADR-013-ai-provider-boundary.md` · `docs/13-adr/ADR-014-ai-approval-gate.md` · `docs/13-adr/ADR-015-ai-prompt-retention.md` · `worklog.md` (Task ID: `phase-13-audit`)
+**Status:** PHASE 13.0 FOUNDATIONAL BUILD SHIPPED (v3.0.0-rc.1) — ADR drafting + implementation in progress  
+**Date:** 2026-08-16 (planning) · 2026-08-17 (Phase 13.0 foundational build)  
+**Author:** Engineering (main agent audit + Explore subagent deep-dive + Phase 13.0 implementation)  
+**Audit baseline:** Repository main `5ba2baf` (post-Phase 13 planning ship) · All 41 ADRs Accepted v1.0 · Production DB tip `20260821000000`  
+**Related:** `docs/14-phases/TELEPIZZA-MASTER-ROADMAP.md` · `docs/13-adr/ADR-013-ai-provider-boundary.md` · `docs/13-adr/ADR-014-ai-approval-gate.md` · `docs/13-adr/ADR-015-ai-prompt-retention.md` · `docs/15-runbooks/FU-12-ai-provider-keys.md` · `worklog.md` (Task ID: `phase-13-audit`, `phase-13-planning`, `phase-13.0-foundational`)
 
 ---
 
@@ -360,3 +360,120 @@ Phase 13 is PASS AND CLOSED when:
 ---
 
 **Phase 13 planning status:** AWAITING OWNER REVIEW.
+
+---
+
+## 12. Phase 13.0 Foundational Build — SHIPPED (2026-08-17)
+
+Phase 13.0 (the cross-cutting prerequisite from §5) has been built and
+shipped as `v3.0.0-rc.1`. This unblocks all 5 ADRs (ADR-042 through
+ADR-046) for implementation.
+
+### What was built
+
+| Artifact | Path | Lines |
+|---|---|---|
+| **`provider-proxy.ts`** — the foundational AI HTTP client | `backend/api/src/services/ai/provider-proxy.ts` | ~600 |
+| **`aiMode` env-var wiring** — stub / sandbox / live / disabled | `backend/api/src/config/env.ts` (+32 lines) | ~32 |
+| **FU-12 Operator Follow-up** — provider API keys runbook | `docs/15-runbooks/FU-12-ai-provider-keys.md` | ~220 |
+| **Integration tests** — 18 tests covering PII redaction, rate limiting, provider routing, mock/live modes | `backend/api/tests/ai-provider-proxy.test.ts` | ~530 |
+| **`.env.example` documentation** — `TELEPIZZA_AI_MODE` + provider keys | `.env.example` | +15 lines |
+
+### ADR-013 §1-7 contract enforcement
+
+The proxy enforces every rule in ADR-013:
+
+1. **§1 Backend-proxy-only** — this service is the ONLY way to call
+   an LLM from the Telepizza backend. No `fetch("https://api.openai.com")`
+   exists outside this file.
+2. **§2 PII redaction before forwarding** — `redactPii()` from
+   `pii-redaction.ts` is called on the prompt BEFORE the HTTP call.
+   Tests verify the provider never sees raw phone/email/CNIC/card.
+3. **§3 Provider credentials in env vars only** — keys resolved from
+   `process.env.OPENAI_API_KEY` / `ANTHROPIC_API_KEY`. NEVER read from
+   `ai_provider_configs` (which stores only non-secret metadata).
+4. **§4 Per-call audit log** — `promptLogService.logCall()` is called
+   on every code path: success, HTTP failure, missing-API-key failure,
+   provider-not-configured failure. The catch-all ensures no LLM call
+   ever escapes audit.
+5. **§5 Rate limiting** — in-memory token bucket: 60 calls/min/user +
+   120 calls/min/IP-hash. Tested end-to-end (the 61st call returns
+   `429 AI_RATE_LIMIT_USER`).
+6. **§6 Provider allowlist** — only providers in `ai_provider_configs`
+   with `is_active=true` can be called. Missing config row throws
+   `400 AI_PROVIDER_NOT_CONFIGURED`.
+7. **§7 Response redaction** — `redactPii()` is run on the completion
+   text BEFORE returning to the caller (defense-in-depth against the
+   model echoing PII back).
+
+### ADR-015 §1 (no raw prompts) enforcement
+
+The proxy never stores raw prompts. It:
+- Hashes the redacted prompt via `promptLogService.logCall()` (which
+  computes SHA-256 internally before inserting into `ai_call_logs`)
+- Stores `prompt_token_count`, `prompt_char_count`, `prompt_language`
+  as derived metadata, NOT raw text
+- The `prompt_sha256` column in `ai_call_logs` is the SHA-256 of the
+  redacted prompt, not the raw prompt
+
+### Test coverage
+
+18 integration tests cover:
+
+- **aiMode=disabled** — refuses calls, writes no log row
+- **aiMode=mock** (default local/test) — deterministic stub, no HTTP,
+  still writes log row, redacts PII in echo
+- **aiMode=live** — real `fetch` (mocked in tests):
+  - OpenAI Chat Completions routing + Bearer auth + body shape
+  - Anthropic Messages API routing + `x-api-key` + `anthropic-version`
+  - PII redaction in prompt BEFORE HTTP call (assertion: provider
+    sees `[PHONE]`, not `+923001234567`)
+  - PII redaction in response BEFORE returning (assertion: caller
+    sees `[PHONE]`, not the model echoing `+923001234567`)
+  - HTTP 5xx failure → logs `success=false` with error message,
+    rethrows as `AI_PROVIDER_HTTP_ERROR`
+  - Missing API key → throws `AI_API_KEY_MISSING`, logs failure row
+  - Provider config's `default_model` used when no model option given
+- **Provider routing** — explicit provider vs first-active fallback
+  vs not-configured vs no-active-provider-anywhere
+- **Rate limiting** — 61st user call returns 429; 121st IP call
+  returns 429 (uses `__testInternals.__resetBuckets()` between tests)
+- **Input validation** — empty prompt + non-string prompt both
+  throw `400 INVALID_PROMPT`
+
+### Test result
+
+```
+✓ tests/ai-provider-proxy.test.ts (18 tests) 24ms
+Test Files  1 passed (1)
+Tests  18 passed (18)
+```
+
+Full backend suite: **101 test files, 1115 tests passing** (was 1096
+in Phase 12 closeout → +19 net new = 18 provider-proxy tests +
+the makeEnvStatus consistency updates to 4 whatsapp tests).
+
+### Owner decisions carried forward (defaults applied)
+
+| # | Decision | Default applied | Status |
+|---|---|---|---|
+| 1 | ADR count | **5 ADRs** (per §3 recommendation) | Awaiting owner explicit confirm |
+| 2 | LLM provider | **Both OpenAI + Anthropic** — `ai_provider_configs` supports multiple; FU-12 documents both | FU-12 OPEN |
+| 3 | Auto-dispatch action type | **Yes** — to be added in ADR-043 migration (Phase 13.2) | ADR-043 drafting pending |
+| 4 | Mianx agent → team mapping | Engineering proposal from §6 applied to ADR-046 draft (Phase 13.5) | ADR-046 drafting pending |
+| 5 | Phase 13 sequencing | **Foundational first, then sequential** — Phase 13.0 now done, ADR-042 next | ✅ Phase 13.0 shipped |
+
+### What's next
+
+1. **Owner reviews this doc + FU-12 runbook** — explicit confirm or
+   override the 5 defaults above (any override may adjust downstream
+   ADR scope).
+2. **Engineering drafts ADR-042** (Demand Forecasting & Inventory
+   Prediction) — Phase 13.1.
+3. **Operator executes FU-12** — provision OpenAI + Anthropic API keys
+   + seed `ai_provider_configs` rows + smoke-test the proxy.
+4. **Engineering implements Phase 13.1-13.5** sequentially per §7.
+
+---
+
+**Phase 13.0 status:** SHIPPED (v3.0.0-rc.1). Phase 13.1-13.6 IN PROGRESS.
