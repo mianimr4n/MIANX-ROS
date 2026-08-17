@@ -53,6 +53,7 @@ describe("supplier portal response contracts", () => {
         whatsappMode: "disabled" as const,
         paymentMode: "disabled" as const,
         webhookMode: "disabled" as const,
+        aiMode: "disabled" as const,
         whatsapp: {
           apiVersion: "v21.0",
           phoneNumberId: "",

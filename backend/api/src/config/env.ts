@@ -19,6 +19,17 @@ export interface ApiEnvironment {
   whatsappMode: IntegrationMode;
   paymentMode: IntegrationMode;
   webhookMode: IntegrationMode;
+  /**
+   * AI integration mode (ADR-013 §1 — backend-proxy-only).
+   *   - "disabled": AI features refuse to start (503 AI_DISABLED)
+   *   - "mock":     returns deterministic stubs; no HTTP to provider
+   *   - "sandbox":  same as mock; provider tag = "sandbox"
+   *   - "live":     real HTTP call to OpenAI / Anthropic via provider-proxy.ts
+   *
+   * Local/test defaults to "mock". Staging/production defaults to "disabled"
+   * until the operator provisions OPENAI_API_KEY / ANTHROPIC_API_KEY (FU-12).
+   */
+  aiMode: IntegrationMode;
   /** WhatsApp Cloud API credentials (ADR-003). Secrets NEVER in DB. */
   whatsapp: WhatsAppEnvConfig;
 }
@@ -220,6 +231,7 @@ export function evaluateLocalSafety(source: NodeJS.ProcessEnv, config: ApiEnviro
       ["TELEPIZZA_WHATSAPP_MODE", config.whatsappMode],
       ["TELEPIZZA_PAYMENT_MODE", config.paymentMode],
       ["TELEPIZZA_WEBHOOK_MODE", config.webhookMode],
+      ["TELEPIZZA_AI_MODE", config.aiMode],
     ] as const) {
       if (mode === "live") {
         blockers.push({
@@ -318,6 +330,13 @@ export function getEnvironmentStatus(source: NodeJS.ProcessEnv = process.env): E
       "TELEPIZZA_WEBHOOK_MODE",
       source.TELEPIZZA_WEBHOOK_MODE,
       localFallbackModes,
+      envClass,
+      issues,
+    ),
+    aiMode: resolveIntegrationMode(
+      "TELEPIZZA_AI_MODE",
+      source.TELEPIZZA_AI_MODE,
+      envClass === "local" || envClass === "test" ? "mock" : "disabled",
       envClass,
       issues,
     ),
