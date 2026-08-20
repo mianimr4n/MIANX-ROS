@@ -94,6 +94,26 @@ const catalogDataSource: CatalogDataSource = {
       ],
     };
   },
+  async getBrandConfig() {
+    return {
+      name: "Telepizza",
+      legalName: "Telepizza Pakistan",
+      tagline: "Love At First Bite",
+      region: "Pakistan",
+      logoPrimary: "/images/telepizza-logo-primary.jpg",
+      logoWordmark: "/images/telepizza-logo.png",
+      favicon: "/favicon.jpg",
+      phone: "0304-1110495",
+      hours: "10:00 AM \u2013 2:30 AM",
+      city: "Multan",
+      colors: {
+        primary: "#E31E24",
+        primaryDark: "#B5121B",
+        accent: "#F5B800",
+        background: "#FFF7F3",
+      },
+    };
+  },
 };
 
 const ordersDataSource: OrdersDataSource = {
@@ -193,7 +213,7 @@ describe("Telepizza API app", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.ok).toBe(true);
-    expect(response.body.modules).toHaveLength(13);
+    expect(response.body.modules).toHaveLength(14);
     expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("me");
     expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("kitchen");
     expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("dine-in");
@@ -201,6 +221,7 @@ describe("Telepizza API app", () => {
     expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("ai");
     expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("supplier-portal");
     expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("webhooks/whatsapp");
+    expect(response.body.modules.map((m: { name: string }) => m.name)).toContain("brand");
   });
 
   it("returns readiness issues when required variables are missing", async () => {

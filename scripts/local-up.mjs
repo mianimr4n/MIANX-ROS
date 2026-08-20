@@ -76,7 +76,7 @@ Next manual commands (Windows / local):
        persistent 42501 → investigate role/table/action (do not blanket GRANT)
        Production privilege changes are not part of local startup
   6) Start API + website:
-       pnpm --filter @telepizza/api dev
+       pnpm --filter @mianx/ros-api dev
        pnpm dev:website
   7) Health:
        node scripts/local-health-check.mjs

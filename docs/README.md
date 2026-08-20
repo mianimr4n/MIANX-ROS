@@ -1,8 +1,10 @@
-# Telepizza Documentation Map
+# Mianx ROS Documentation Map
 
 **Status:** ACTIVE Owner-first documentation spine
 **Authority:** Navigation for Founder / Owner (super-admin) and engineering
-**Last verified:** 2026-08-16 — **Phase 12 COMPLETE (`v2.7.0`)** — PR #239 squash-merged as `94e5d69` · annotated tag `v2.7.0` · GitHub Release published · 6/6 CI checks PASS · Production DB tip unchanged at `20260821000000` (closeout-only — same as Phase 5/6/7/8/9/10/11) · All 41 ADRs (ADR-001 through ADR-041) Accepted v1.0 · Phase 13 (AI and Automation) UNLOCKED. See `00-governance/REPOSITORY_STATUS.md` and `testing/acceptance-evidence/phase12-closeout/`.
+**Last verified:** 2026-08-16 — **Phase 12 COMPLETE (`v2.7.0`)** — PR #239 squash-merged as `94e5d69` · annotated tag `v2.7.0` · GitHub Release published · 6/6 CI checks PASS · Production DB tip unchanged at `20260821000000` (closeout-only — same as Phase 5/6/7/8/9/10/11) · All 41 ADRs (ADR-001 through ADR-041) Accepted v1.0 · Phase 13 (AI and Automation) IN PROGRESS · Multi-Tenant Foundation Phase A shipped (`organizations`/`brands` live). See `00-governance/REPOSITORY_STATUS.md` and `testing/acceptance-evidence/phase12-closeout/`.
+
+**Naming:** "Mianx ROS" is the platform. "Telepizza" is the platform's first tenant, and still appears throughout historical docs, tests, and ADRs because that's what was true when they were written — this is intentional, not an inconsistency to fix.
 
 ---
 
@@ -12,7 +14,7 @@
 | --- | --- |
 | [DOCUMENTATION_MAP.md](./DOCUMENTATION_MAP.md) | Full canonical map |
 | [00-governance/PROJECT_STATUS.md](./00-governance/PROJECT_STATUS.md) | Project status (Phase 12 shipped, Phase 13 unlocked) |
-| [14-phases/TELEPIZZA-MASTER-ROADMAP.md](./14-phases/TELEPIZZA-MASTER-ROADMAP.md) | Master phase roadmap (Phases 0–15) |
+| [14-phases/MIANX-ROS-MASTER-ROADMAP.md](./14-phases/MIANX-ROS-MASTER-ROADMAP.md) | Master phase roadmap (Phases 0–15) |
 | [17-releases/RELEASE_HISTORY.md](./17-releases/RELEASE_HISTORY.md) | Release history (`v2.0.0` → `v2.7.0`) |
 | [11-ai/MIANX_AI_TEAM_OPERATING_MODEL.md](./11-ai/MIANX_AI_TEAM_OPERATING_MODEL.md) | Mianx.ai Team Center model (Phase 13 foundation) |
 | [15-runbooks/OPENING_DAY_RUNBOOK.md](./15-runbooks/OPENING_DAY_RUNBOOK.md) | Opening day actions |
@@ -70,6 +72,10 @@ Classic ACTIVE paths remain valid: `architecture/`, `database/`, `operations/`, 
 
 Branches: Royal Orchard = operating · Northern Bypass = coming-soon
 
+## Tenants
+
+Tenant source of truth is now `public.organizations` / `public.brands` (Multi-Tenant Foundation Phase A). Telepizza Pakistan is the seeded first tenant — see `organizations` row `00000000-0000-4000-8000-000000000001`. Do not assume Telepizza is the only tenant when writing new backend/frontend code going forward.
+
 ---
 
 ## ARCHIVE / REFERENCE
@@ -94,7 +100,7 @@ Historical packs remain under `18-reference/archive/`. Legacy ZIP corpus is cata
 | Phase 14 — Full Integration and QA | — | — | — | 🔒 Not started |
 | Phase 15 — Final Production Launch | — | — | — | 🔒 Not started |
 
-All releases since Phase 5 are **closeout-only** (no new migrations). See [`17-releases/RELEASE_HISTORY.md`](./17-releases/RELEASE_HISTORY.md) for full release notes links and [`14-phases/TELEPIZZA-MASTER-ROADMAP.md`](./14-phases/TELEPIZZA-MASTER-ROADMAP.md) for the authoritative master roadmap.
+All releases since Phase 5 are **closeout-only** (no new migrations). See [`17-releases/RELEASE_HISTORY.md`](./17-releases/RELEASE_HISTORY.md) for full release notes links and [`14-phases/MIANX-ROS-MASTER-ROADMAP.md`](./14-phases/MIANX-ROS-MASTER-ROADMAP.md) for the authoritative master roadmap.
 
 ---
 

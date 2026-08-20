@@ -4,7 +4,7 @@
 **Audience:** Founder / Owner (super-admin) / Engineering
 
 ## Purpose
-Owner-facing operating documentation for Telepizza ROS opening readiness.
+Owner-facing operating documentation for Mianx ROS — a multi-tenant restaurant operating platform. Telepizza Pakistan is the platform's first tenant; this doc set was built against that tenant's opening readiness and remains the reference implementation.
 
 ## Current verified state
 Verified against repository main `94e5d69` (Phase 12 closeout — PR #239 squash merge, 2026-08-16). Phase 12 (Customer and Staff Apps) is COMPLETE & SHIPPED as `v2.7.0`. All 12 phases (0 through 12) PASS AND CLOSED. All 41 ADRs (ADR-001 through ADR-041) Accepted v1.0 with standalone files under `docs/13-adr/`. Phase 13 (AI and Automation) is UNLOCKED. Production DB migration tip remains `20260821000000` (Phase 3 OTP baseline — unchanged through Phase 5/6/7/8/9/10/11/12 closeouts). Last verified date: **2026-08-16**.
@@ -46,7 +46,8 @@ Verified against repository main `94e5d69` (Phase 12 closeout — PR #239 squash
 - `pos_sessions` table + multi-tender `payment_splits` + bank deposit slip
 - Per-branch pricing + multi-timezone support
 - `rider_daily_summaries` table + per-rider KPI dashboard + live rider map + auto-dispatch engine
-- `franchisee` role + franchise agreement tracking + royalty computation + multi-tenant SaaS isolation
+- `franchisee` role + franchise agreement tracking + royalty computation
+- Multi-tenant SaaS isolation — `organizations`/`brands` tables shipped (Phase A); tenant-context resolution + RLS enforcement across existing tables still pending (Phase B)
 - Customer 360 unified view + ticketing system + refund initiation workflow
 - Mobile-optimized staff UI + PWA-installable admin + kitchen handheld view
 - Per-item prep ticks + KOT print format + fiscal printer + `kitchen_stations` + server-side SLA + auto-priority

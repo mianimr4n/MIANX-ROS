@@ -37,7 +37,7 @@ jobs:
         run: pnpm build:website
 
       - name: Build backend API
-        run: pnpm --filter @telepizza/api build
+        run: pnpm --filter @mianx/ros-api build
 
       - name: Test
         run: pnpm test
@@ -97,7 +97,7 @@ jobs:
       - name: Start backend API
         run: |
           nohup node scripts/rc5/run-with-local-env.mjs backend/api/.env.local -- \
-            pnpm --filter @telepizza/api exec tsx src/main.ts \
+            pnpm --filter @mianx/ros-api exec tsx src/main.ts \
             > /tmp/telepizza-api.log 2>&1 &
           echo $! > /tmp/telepizza-api.pid
 

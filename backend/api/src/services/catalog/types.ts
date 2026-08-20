@@ -109,7 +109,32 @@ export interface MenuCatalog {
   toppings: MenuCatalogSku[];
 }
 
+/**
+ * Tenant brand identity, sourced from public.brands (MIANX-ROS-01/02).
+ * Shape mirrors apps/website/client/src/lib/brand.ts's BRAND constant so the
+ * frontend can swap a hardcoded object for a fetched one with no other changes.
+ */
+export interface BrandConfig {
+  name: string;
+  legalName: string;
+  tagline: string;
+  region: string;
+  logoPrimary: string;
+  logoWordmark: string;
+  favicon: string;
+  phone: string;
+  hours: string;
+  city: string;
+  colors: {
+    primary: string;
+    primaryDark: string;
+    accent: string;
+    background: string;
+  };
+}
+
 export interface CatalogDataSource {
   listBranches(): Promise<BranchSummary[]>;
   getMenuCatalog(): Promise<MenuCatalog>;
+  getBrandConfig(): Promise<BrandConfig>;
 }

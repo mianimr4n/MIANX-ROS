@@ -5,6 +5,7 @@ import { createAdminRouter } from "./admin/routes.js";
 import { createAiRouter } from "./ai/routes.js";
 import { createAuthRouter } from "./auth/routes.js";
 import { createBranchesRouter } from "./branches/routes.js";
+import { createBrandRouter } from "./brand/routes.js";
 import { createDineInRouter } from "./dine-in/routes.js";
 import { createKitchenRouter } from "./kitchen/routes.js";
 import { createMeRouter } from "./me/routes.js";
@@ -35,6 +36,11 @@ export const apiModules: ApiModuleDescriptor[] = [
     name: "branches",
     basePath: "/api/v1/branches",
     summary: "Branch lookup and routing.",
+  },
+  {
+    name: "brand",
+    basePath: "/api/v1/brand",
+    summary: "Public brand identity config (name, logo, colors, contact) sourced from public.brands.",
   },
   {
     name: "menu",
@@ -110,6 +116,7 @@ export function registerApiModules(app: Express, dependencies: AppDependencies) 
     }),
   );
   app.use("/api/v1/branches", createBranchesRouter(dependencies.catalogDataSource));
+  app.use("/api/v1/brand", createBrandRouter(dependencies.catalogDataSource));
   app.use("/api/v1/menu", createMenuRouter(dependencies.catalogDataSource));
   app.use(
     "/api/v1/orders",
