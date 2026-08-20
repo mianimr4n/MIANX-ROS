@@ -63,7 +63,7 @@ ok =
     "pnpm",
     [
       "--filter",
-      "@telepizza/api",
+      "@mianx/ros-api",
       "exec",
       "vitest",
       "run",
@@ -75,7 +75,7 @@ ok =
       shell: process.platform === "win32",
     },
   ) && ok;
-ok = run("website build", "pnpm", ["--filter", "telepizza-pakistan", "build"]) && ok;
+ok = run("website build", "pnpm", ["--filter", "mianx-ros-website", "build"]) && ok;
 ok =
   run(
     "admin static suites",

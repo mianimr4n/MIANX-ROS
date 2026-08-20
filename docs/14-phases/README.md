@@ -4,7 +4,7 @@
 
 | Document | Role |
 |---|---|
-| [TELEPIZZA-MASTER-ROADMAP.md](TELEPIZZA-MASTER-ROADMAP.md) | Locked master sequence (owner-approved 2026-07-16) |
+| [MIANX-ROS-MASTER-ROADMAP.md](MIANX-ROS-MASTER-ROADMAP.md) | Locked master sequence (owner-approved 2026-07-16) |
 | [PROJECT-MILESTONE-AND-ROADMAP.md](PROJECT-MILESTONE-AND-ROADMAP.md) | Milestone companion |
 
 **Archived root roadmaps:** `../18-reference/archive/root-legacy/`

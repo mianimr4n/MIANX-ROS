@@ -1,4 +1,4 @@
-# Telepizza Master Roadmap — Locked Order
+# Mianx ROS Master Roadmap — Locked Order
 
 **Status:** ✅ **LOCKED** as master sequence (owner-approved 2026-07-16)
 **Date:** 2026-07-16
@@ -334,4 +334,4 @@ PRODUCTION V1.0 = LIVE
 
 ---
 
-**TELEPIZZA MASTER ROADMAP: LOCKED**
+**MIANX ROS MASTER ROADMAP: LOCKED**

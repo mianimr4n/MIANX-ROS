@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import type { EnvironmentStatus } from "../../config/env.js";
 import type {
+  BrandConfig,
   BranchSummary,
   CatalogDataSource,
   MenuCatalog,
@@ -10,6 +11,23 @@ import type {
   MenuCatalogSku,
 } from "./types.js";
 import { splitMenuCatalogForCustomer } from "./visibility.js";
+
+interface BrandRow {
+  name: string;
+  legal_name: string | null;
+  tagline: string | null;
+  region: string | null;
+  logo_primary_url: string | null;
+  logo_wordmark_url: string | null;
+  favicon_url: string | null;
+  phone: string | null;
+  hours: string | null;
+  city: string | null;
+  color_primary: string | null;
+  color_primary_dark: string | null;
+  color_accent: string | null;
+  color_background: string | null;
+}
 
 interface BranchRow {
   id: string;
@@ -171,6 +189,79 @@ async function fetchBranches(client: SupabaseClient): Promise<BranchSummary[]> {
     hours: getHours(row.status, row.opening_hours),
     status: row.status,
   }));
+}
+
+/**
+ * Telepizza's brand values, used only if public.brands has no active row
+ * (e.g. a local dev DB that hasn't run the MIANX-ROS-01/02 seed inserts).
+ * Never used in an environment where those migrations have run.
+ */
+const FALLBACK_BRAND: BrandConfig = {
+  name: "Telepizza",
+  legalName: "Telepizza Pakistan",
+  tagline: "Love At First Bite",
+  region: "Pakistan",
+  logoPrimary: "/images/telepizza-logo-primary.jpg",
+  logoWordmark: "/images/telepizza-logo.png",
+  favicon: "/favicon.jpg",
+  phone: "0304-1110495",
+  hours: "10:00 AM – 2:30 AM",
+  city: "Multan",
+  colors: {
+    primary: "#E31E24",
+    primaryDark: "#B5121B",
+    accent: "#F5B800",
+    background: "#FFF7F3",
+  },
+};
+
+/**
+ * Resolves the platform's single active brand.
+ *
+ * NOTE: this always returns the first active brand and does not yet resolve
+ * *which* tenant's brand to serve — there is only one tenant (Telepizza)
+ * live today, so this is unambiguous. Once a second tenant exists, this
+ * needs a tenant-resolution parameter (subdomain/branch/explicit slug) —
+ * see the Multi-Tenant Foundation Phase B notes before adding a second
+ * brand row in production.
+ */
+async function fetchBrandConfig(client: SupabaseClient): Promise<BrandConfig> {
+  const { data, error } = await client
+    .from("brands")
+    .select(
+      "name, legal_name, tagline, region, logo_primary_url, logo_wordmark_url, favicon_url, phone, hours, city, color_primary, color_primary_dark, color_accent, color_background",
+    )
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Unable to load brand config from Supabase: ${error.message}`);
+  }
+
+  const row = data as BrandRow | null;
+  if (!row) {
+    return FALLBACK_BRAND;
+  }
+
+  return {
+    name: row.name,
+    legalName: row.legal_name ?? FALLBACK_BRAND.legalName,
+    tagline: row.tagline ?? FALLBACK_BRAND.tagline,
+    region: row.region ?? FALLBACK_BRAND.region,
+    logoPrimary: row.logo_primary_url ?? FALLBACK_BRAND.logoPrimary,
+    logoWordmark: row.logo_wordmark_url ?? FALLBACK_BRAND.logoWordmark,
+    favicon: row.favicon_url ?? FALLBACK_BRAND.favicon,
+    phone: row.phone ?? FALLBACK_BRAND.phone,
+    hours: row.hours ?? FALLBACK_BRAND.hours,
+    city: row.city ?? FALLBACK_BRAND.city,
+    colors: {
+      primary: row.color_primary ?? FALLBACK_BRAND.colors.primary,
+      primaryDark: row.color_primary_dark ?? FALLBACK_BRAND.colors.primaryDark,
+      accent: row.color_accent ?? FALLBACK_BRAND.colors.accent,
+      background: row.color_background ?? FALLBACK_BRAND.colors.background,
+    },
+  };
 }
 
 async function fetchModifierGroupsByItemSlug(
@@ -382,6 +473,10 @@ export function createSupabaseCatalogDataSource(envStatus: EnvironmentStatus): C
     async getMenuCatalog() {
       const client = createSupabaseAdminClient(envStatus);
       return fetchMenuCatalog(client);
+    },
+    async getBrandConfig() {
+      const client = createSupabaseAdminClient(envStatus);
+      return fetchBrandConfig(client);
     },
   };
 }

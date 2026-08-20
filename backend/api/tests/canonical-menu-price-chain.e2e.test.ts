@@ -346,6 +346,26 @@ const catalogDataSource: CatalogDataSource = {
       skus: store.map(toCatalogSku),
     });
   },
+  async getBrandConfig() {
+    return {
+      name: "Telepizza",
+      legalName: "Telepizza Pakistan",
+      tagline: "Love At First Bite",
+      region: "Pakistan",
+      logoPrimary: "/images/telepizza-logo-primary.jpg",
+      logoWordmark: "/images/telepizza-logo.png",
+      favicon: "/favicon.jpg",
+      phone: "0304-1110495",
+      hours: "10:00 AM \u2013 2:30 AM",
+      city: "Multan",
+      colors: {
+        primary: "#E31E24",
+        primaryDark: "#B5121B",
+        accent: "#F5B800",
+        background: "#FFF7F3",
+      },
+    };
+  },
 };
 
 const ordersDataSource: OrdersDataSource = {
