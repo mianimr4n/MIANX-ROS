@@ -92,6 +92,18 @@ Mostly `modules/admin/*.ts` route handlers (thin layers that call into Bucket A/
 
 ---
 
+## Group 1 status: VERIFIED SAFE (2026-08-22 pass)
+
+Every file in this group already routes through `assertBranchMembership` (`services/branches/operational-status.ts`) before touching branch data, and that function's `isSuperAdmin` bypass is confirmed aliased 1:1 to `isPlatformSuperAdmin` (`services/auth/principal.ts` line 99: `const isSuperAdmin = isPlatformSuperAdmin`) — not a broader flag an org-level admin could hold. Since `AuthPrincipal.branchIds` is already populated per-organization (via `user_roles.organization_id`), this means: **regular users can never touch a branch outside their own organization today, and the only bypass is the genuinely-platform-wide super admin role, which is supposed to span tenants.** This pattern was independently verified in `services/branches/profile.ts`, `services/branches/readiness.ts`, and `services/settings/branch.ts` — all three call it before any query.
+
+One real gap found and fixed: `services/branches/lookup.ts` is a raw lookup utility (`loadBranchRow`/`loadBranchByCode`) that does **not** call `assertBranchMembership` itself — it's used by callers that may not always have an authenticated actor to check against (e.g. resolving a branch by code from a public request). Fixed by adding `organization_id` to its returned row shape and a new `assertBranchBelongsToOrganization()` helper any caller can opt into. No existing caller was forced to change.
+
+`services/time/branch-timezone.ts` was reclassified: despite the filename, it has zero database queries — pure IANA timezone math, tenant-agnostic by nature. No work needed; this should have been Bucket D, not Group 1's Bucket B.
+
+**Implication for the remaining 11 groups:** the same quick check (does this file already route through a `branchIds`/`organizationIds`-checking guard before querying, and is that guard's super-admin bypass genuinely platform-scoped?) should be applied to every Bucket B file before assuming it needs new code. This is likely to substantially shrink the real workload from what a first read of the bucket counts suggests — verify, don't assume, per group.
+
+---
+
 ## What this inventory does NOT do
 
 - It does not implement any scoping — Bucket B/C are a map, not a patch.
