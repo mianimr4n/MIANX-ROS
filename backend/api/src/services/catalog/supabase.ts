@@ -292,11 +292,20 @@ async function fetchModifierGroupsByItemSlug(
 }
 
 async function fetchMenuCatalog(client: SupabaseClient): Promise<MenuCatalog> {
+  // TODO(ADR-046 follow-up): hardcoded to Telepizza's organization_id until a
+  // tenant-resolution strategy for anonymous/public traffic is decided (see
+  // ADR-045 Section 1, "anonymous public reads"). There is exactly one
+  // tenant today, so this is unambiguous; do not remove this filter when
+  // adding a second tenant without first deciding how public requests
+  // resolve which tenant they're asking about.
+  const organizationId = "00000000-0000-4000-8000-000000000001";
+
   const [categoriesResult, itemsResult, modifiersBySlug] = await Promise.all([
     client
       .from("menu_categories")
       .select("id, name, slug, sort_order")
       .eq("is_active", true)
+      .eq("organization_id", organizationId)
       .order("sort_order", { ascending: true }),
     client
       .from("menu_items")
@@ -304,6 +313,7 @@ async function fetchMenuCatalog(client: SupabaseClient): Promise<MenuCatalog> {
         "id, slug, name, description, image_url, price, product_group_slug, size_label, size_code, sort_order, badge, product_type, is_available, is_featured, category:menu_categories(name, slug)",
       )
       .eq("is_available", true)
+      .eq("organization_id", organizationId)
       .order("name", { ascending: true }),
     fetchModifierGroupsByItemSlug(client),
   ]);
